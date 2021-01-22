@@ -23,7 +23,7 @@ module.exports = {
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
-      title: 'OpenLime',
+      title: 'OpenLIME',
       template: __dirname + '/dist/index.html',
       inject: false
     }),

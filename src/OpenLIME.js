@@ -1,6 +1,6 @@
 import { Canvas } from './Canvas.js'
 
-class OpenLime {
+class OpenLIME {
 
 	constructor(div, options) {
 		console.log("This is just a test");
@@ -9,5 +9,5 @@ class OpenLime {
 }
 
 
-export { OpenLime }
+export { OpenLIME }
 

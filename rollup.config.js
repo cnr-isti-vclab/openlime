@@ -12,17 +12,17 @@ function header() {
 
 export default [
 	{
-		input: './src/OpenLime.js',
+		input: './src/OpenLIME.js',
 		output: [{
 			format: 'umd',
-			name: 'OpenLime',
+			name: 'OpenLIME',
 			file: 'build/openlime.min.js',
 			plugins: [terser()],
 			globals: {  }
 		},
 		{
 			format: 'umd',
-			name: 'Nexus3D',
+			name: 'OpenLIME',
 			file: 'build/openlime.js',
 			globals: { }
 		}],

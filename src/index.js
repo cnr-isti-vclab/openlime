@@ -1,3 +1,3 @@
-import { OpenLime} from './OpenLime.js'
+import { OpenLIME} from './OpenLime.js'
 
-let lime = new OpenLime({ 'test': 'just a test' });
+let lime = new OpenLIME({ 'test': 'just a test' });
