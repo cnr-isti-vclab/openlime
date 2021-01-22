@@ -26,3 +26,46 @@ Run rollup to compile a lib (build/openlime.min.js) that can be used for <script
 rollup -c rollup.config.js 
 ```
 
+Documentation is created using documentation.js. To generate the docs, install documentation
+
+```bash
+sudo npm install -g documentation
+```
+
+and generate the docs.
+
+
+```bash
+npm run documentation
+```
+
+Documentation.js supports markdown syntax and JSDoc syntax.
+
+
+
+JSON example of the configuration:
+
+
+{
+	camera: { 
+	},
+	canvas: {
+		rasters: [
+			{
+				id:
+				name:
+				width: //optional
+				height: //optional
+				url: 
+				layout: <image|google|deepzoom|zoomify|iip|iiif> //ooptional if can be recovered from the url.
+				
+
+			}
+		]
+	},
+	overlay: {
+	}
+}
+
+
+

@@ -11,7 +11,8 @@
     "start": "webpack-dev-server --hot",
     "build": "webpack --mode development",
     "rollup": "rollup -c rollup.config.js",
-    "buildlib": "webpack -c webpacklib.config.js --mode development"
+    "buildlib": "webpack -c webpacklib.config.js --mode development",
+    "documentation": "documentation build src/** -f html -o docs"
   },
   "repository": {
     "type": "git",
