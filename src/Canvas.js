@@ -1,10 +1,21 @@
+import { Camera } from './Camera.js'
 
 class Canvas {
-	constructor(element, options) {
-		console.log("Canvas constructor");
+	constructor(canvas, overlay, options) {
+		let initial = 
+		Object.assign(this, { 
+			preserveDrawingBuffer: false, 
+			viewport: [0, 0, 0, 0], 
+			gl: null 
+		});
+
+		if(options)
+			Object.assign(this, options);
+
+		this.camera = new Camera(this.camera);
+
+		this.initElement(canvas);
 		
-		this.initElement(element);
-		this.viewport = [0, 0, 0, 0];
 	}
 
 	resize(width, height) {
@@ -15,24 +26,37 @@ class Canvas {
 		this.redraw();
 	}
 
-	initElement(element) {
-		if(!element)
+	initElement(canvas) {
+		if(!canvas)
 			throw "Missing element parameter"
 
-		if(typeof(element) == 'string') {
-			element = document.querySelector(element);
-			if(!element)
+		if(typeof(canvas) == 'string') {
+			canvas = document.querySelector(canvas);
+			if(!canvas)
 				throw "Could not find dom element.";
 		}
 
-		if(!element.tagName) {
+		if(!canvas.tagName)
 			throw "Element is not a DOM element"
-		}
 
-		if(element.tagName != "CANVAS") {
-			this.canvas = document.createElement("canvas");
-		} else
-			this.canvas = element;
+		if(canvas.tagName != "CANVAS")
+			throw "Element is not a canvas element";
+
+
+		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
+		this.gl = this.gl || 
+			canvas.getContext("webgl2", glopt) || 
+			canvas.getContext("webgl", glopt) || 
+			canvas.getContext("experimental-webgl", glopt) ;
+
+		if (!this.gl)
+			throw "Could not create a WebGL context";
+
+		this.canvas = canvas;
+	}
+
+	draw(time) {
+		let pos = this.camera.getCurrentTransform(time);
 	}
 }
 

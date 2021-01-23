@@ -23,3 +23,5 @@ class Layer {
 		this.needsUpdate = true;
 	}
 }
+
+export { Layer }
