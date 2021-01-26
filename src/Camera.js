@@ -15,7 +15,9 @@ class Camera {
 			minZoom: 'full'
 		});
 		Object.assign(this, options);
-		this.source = this.target = new Transform(this.target);
+		this.target = new Transform(this.target);
+		this.source = this.target.copy();
+		console.log(this.target, this.source);
 	}
 
 	getCurrentTransform(time) {

@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "bc6b9bad7b2e2ba0e581";
+/******/ 	var hotCurrentHash = "55aea8d0ee4855542a02";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -859,14 +859,63 @@
 /************************************************************************/
 /******/ ({
 
-/***/ "./src/OpenLime.js":
-/*!*************************!*\
-  !*** ./src/OpenLime.js ***!
-  \*************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ "./src/Camera.js":
+/*!***********************!*\
+  !*** ./src/Camera.js ***!
+  \***********************/
+/*! exports provided: Camera */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-eval("let OpenLime = function(options) {\n\n\tconsole.log(\"This is just a test\");\n}\n\n\n//# sourceURL=webpack:///./src/OpenLime.js?");
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"Camera\", function() { return Camera; });\n/* harmony import */ var _Transform_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Transform.js */ \"./src/Transform.js\");\n\n\n/**\n * @param {object} options\n * * *bounded*: limit translation of the camera to the boundary of the scene.\n * * *maxZoom*: maximum zoom, 1:maxZoom is screen pixel to image pixel ratio.\n */\n\nclass Camera {\n\n\tconstructor(options) {\n\t\tObject.assign(this, {\n\t\t\tbounded: true,\n\t\t\tmaxZoom: 4,\n\t\t\tminZoom: 'full'\n\t\t});\n\t\tObject.assign(this, options);\n\t\tthis.target = new _Transform_js__WEBPACK_IMPORTED_MODULE_0__[\"Transform\"](this.target);\n\t\tthis.source = this.target.copy();\n\t\tconsole.log(this.target, this.source);\n\t}\n\n\tgetCurrentTransform(time) {\n\t\tif(time < this.target.source)\n\t\t\treturn this.source;\n\t\tif(time > this.target.t)\n\t\t\treturn this.target;\n\n\t\tlet pos = new _Transform_js__WEBPACK_IMPORTED_MODULE_0__[\"Transform\"]();\n\t\tpos.interpolate(this.source, this.target, time);\n\t\treturn pos;\n\t}\n}\n\n\n\n\n//# sourceURL=webpack:///./src/Camera.js?");
+
+/***/ }),
+
+/***/ "./src/Canvas.js":
+/*!***********************!*\
+  !*** ./src/Canvas.js ***!
+  \***********************/
+/*! exports provided: Canvas */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"Canvas\", function() { return Canvas; });\n/* harmony import */ var _Camera_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Camera.js */ \"./src/Camera.js\");\n\n\nclass Canvas {\n\tconstructor(canvas, overlay, options) {\n\t\tlet initial = \n\t\tObject.assign(this, { \n\t\t\tpreserveDrawingBuffer: false, \n\t\t\tviewport: [0, 0, 0, 0], \n\t\t\tgl: null \n\t\t});\n\n\t\tif(options)\n\t\t\tObject.assign(this, options);\n\n\t\tthis.camera = new _Camera_js__WEBPACK_IMPORTED_MODULE_0__[\"Camera\"](this.camera);\n\n\t\tthis.initElement(canvas);\n\t\t\n\t}\n\n\tresize(width, height) {\n\t\tthis.canvas.width = width;\n\t\tthis.canvas.height = height;\n\n//\t\tthis.layers.forEach((layer) => { layer.prefetch(); });\n\t\tthis.redraw();\n\t}\n\n\tinitElement(canvas) {\n\t\tif(!canvas)\n\t\t\tthrow \"Missing element parameter\"\n\n\t\tif(typeof(canvas) == 'string') {\n\t\t\tcanvas = document.querySelector(canvas);\n\t\t\tif(!canvas)\n\t\t\t\tthrow \"Could not find dom element.\";\n\t\t}\n\n\t\tif(!canvas.tagName)\n\t\t\tthrow \"Element is not a DOM element\"\n\n\t\tif(canvas.tagName != \"CANVAS\")\n\t\t\tthrow \"Element is not a canvas element\";\n\n\n\t\tlet glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };\n\t\tthis.gl = this.gl || \n\t\t\tcanvas.getContext(\"webgl2\", glopt) || \n\t\t\tcanvas.getContext(\"webgl\", glopt) || \n\t\t\tcanvas.getContext(\"experimental-webgl\", glopt) ;\n\n\t\tif (!this.gl)\n\t\t\tthrow \"Could not create a WebGL context\";\n\n\t\tthis.canvas = canvas;\n\t}\n\n\tdraw(time) {\n\t\tlet pos = this.camera.getCurrentTransform(time);\n\t\tconsole.log(pos);\n\t\treturn pos.t == this.camera.target.t;\n\t}\n}\n\n\n\n\n//# sourceURL=webpack:///./src/Canvas.js?");
+
+/***/ }),
+
+/***/ "./src/OpenLIME.js":
+/*!*************************!*\
+  !*** ./src/OpenLIME.js ***!
+  \*************************/
+/*! exports provided: OpenLIME */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"OpenLIME\", function() { return OpenLIME; });\n/* harmony import */ var _Canvas_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Canvas.js */ \"./src/Canvas.js\");\n\n\n/**\n * Manages an OpenLIME viewer functionality on a canvas\n * how do I write more substantial documentation.\n *\n * @param {element} element of the DOM or selector (es. '#canvasid'), or a canvas.\n * @param {string} options is a url to a JSON describing the viewer content\n * @param {object} options is a JSON describing the viewer content\n *  * **animate**: default *true*, calls requestAnimation() and manages refresh.\n *  * test:\n */\n\nclass OpenLIME {\n\n\tconstructor(element, options) {\n\t\tif(typeof(element) == 'string')\n\t\t\telement = document. querySelector(element);\n\n\t\tif(!element)\n\t\t\tthrow \"Missing element parameter\";\n\n\t\tthis.containerElement = element;\n\t\tthis.canvasElement = element.querySelector('canvas');\n\t\tif(!this.canvasElement) {\n\t\t\tthis.canvasElement = document.createElement('canvas');\n\t\t\telement.appendChild(this.canvasElement);\n\t\t}\n\t\tthis.canvasElement.addEventListener('resize', (e) => this.resize());\n\n\t\tObject.assign(this, { background: [0, 0, 0, 1] });\n\n\t\tthis.canvas = new _Canvas_js__WEBPACK_IMPORTED_MODULE_0__[\"Canvas\"](this.canvasElement, this.canvas);\n\t}\n\n\t/**\n\t* Resize the canvas (and the overlay) and triggers a redraw.\n\t*/\n\tresize(event) {\n\t\tconsole.log(event);\n\t\tredraw();\n\t}\n\n\t/**\n\t*\n\t* Schedule a drawing.\n\t*/\n\tredraw() {\n\t\tif(this.animaterequest) return;\n\t\tthis.animaterequest = requestAnimationFrame( (time) => { this.draw(time); });\n\t}\n\n\t/**\n\t* Do not call this if OpenLIME is animating, use redraw()\n\t* @param {time} time as in performance.now()\n\t*/\n\tdraw(time) {\n\t\tconsole.log('drawing');\n\t\tif(!time) time = performance.now();\n\t\tthis.animaterequest = null;\n\n\t\tlet gl = this.canvas.gl;\n\t\tgl.viewport(0, 0, this.canvas.width, this.canvas.height);\n\t\tvar b = this.background;\n\t\tgl.clearColor(b[0], b[1], b[2], b[3], b[4]);\n\t\tgl.clear(gl.COLOR_BUFFER_BIT);\n\n\t\tlet done = this.canvas.draw(time);\n\t\tif(!done)\n\t\t\tthis.redraw();\n\t}\n}\n\n\n\n\n\n//# sourceURL=webpack:///./src/OpenLIME.js?");
+
+/***/ }),
+
+/***/ "./src/Raster.js":
+/*!***********************!*\
+  !*** ./src/Raster.js ***!
+  \***********************/
+/*! exports provided: Raster */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"Raster\", function() { return Raster; });\n/**\n * Raster is a providers of images and planes of coefficies.\n * It support all files format supported by browser and a set of tiled formats.\n *\n * Layout can be:\n * * image: a single image (.jpg, .png etc.)\n * * google: there is no config file, so layout, suffix is mandatory if not .jpg,  and url is the base folder of the tiles.\n * * deepzoom: requires only url, can be autodetected from the extension (.dzi)\n * * zoomify: requires url, can be autodetected, from the ImageProperties.xml, suffix is required if not .jpg\n * * iip: requires url, can be autodetected from the url\n * * iiif: layout is mandatory, url should point to base url {scheme}://{server}{/prefix}/{identifier}\n *\n * @param {string} id an unique id for each raster\n * @param {url} url of the content\n * @param {object} options \n * * *layout*: <image|google|deepzoom|zoomify|iip|iiif> default is image.\n * * *type*: rgb (default value) for standard images, rgba when including alpha, grayscale8,  grayscale16 for other purpouses.\n * * *attribute*: <color|kd|ks|gloss|normals|dem> meaning of the image.\n * * *colorSpace*: <linear|srgb> colorspace used for rendering.\n */\n\nclass Raster {\n\n\tconstructor(id, url, options) {\n\t\tif(!id)\n\t\t\tthrow \"Missing id argument\";\n\t\tif(!url)\n\t\t\tthrow \"Missing url argument\";\n\n\t\tthis.id = id;\n\t\tthis.url = url;\n\n\t\tObject.assign(this, { \n\t\t\twidth: 0, height: 0, layout: 'image', suffix: 'jpg', \n\t\t\ttilesize: 0, overlap: 0, nlevels: 0,\n\t\t\ttype: 'rgb', colorSpace: 'srgb',\n\t\t\tstatus: 'loading',\n\t\t\tready: []\n\t\t });\n\n\t\tif(options) {\n\t\t\tif(typeof(options.ready) == 'function')\n\t\t\t\toptions.ready = [options.ready];\n\n\t\t\tObject.assign(this, options);\n\t\t}\n\n\t\tswitch(this.layout) {\n\t\t\tcase 'image':    this.status = 'ready'; this.emit('ready'); break;\n\t\t\tcase 'google':   this.initGoogle(); break;\n\t\t\tcase 'deepzoom': this.initDeepzoom(); break;\n\t\t}\n\t}\n\n\temit(event) {\n\t\tfor(let callback of this[event])\n\t\t\tcallback(this);\n\t}\n\n\n/**\n *  url points to the folder (without /)\n *  width and height must be defined\n */\n\tinitGoogle() {\n\t\tif(!this.width || !this.height)\n\t\t\tthrow \"Google rasters require to specify width and height\";\n\n\t\tthis.tilesize = 256;\n\t\tthis.overlap = 0;\n\n\t\tlet max = Math.max(this.width, this.height)/this.tilesize;\n\t\tthis.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;\n\n\t\tthis.getTileURL = (x, y, level) => {\n\t\t\tvar ilevel = parseInt(this.nlevels - 1 - level);\n\t\t\treturn this.url + \"/\" + ilevel + \"/\" + y + \"/\" + x + '.' + this.suffix;\n\t\t};\n\t\tthis.status = 'ready';\n\t\tthis.emit('ready');\n\t}\n\n\n/**\n * Expects the url to point to .dzi config file\n */\n\tinitDeepzoom() {\n\t\t(async () => {\n\t\t\tvar response = await fetch(this.url);\n\t\t\tif(!response.ok) {\n\t\t\t\tthis.status = \"Failed loading \" + this.url + \": \" + response.statusText;\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tlet text = await response.text();\n\t\t\tlet xml = (new window.DOMParser()).parseFromString(text, \"text/xml\");\n\n\t\t\tlet doc = xml.documentElement;\n\t\t\tthis.suffix = doc.getAttribute('Format');\n\t\t\tthis.tilesize = doc.getAttribute('TileSize');\n\t\t\tthis.overlap = doc.getAttribute('Overlap');\n\n\t\t\tlet size = doc.querySelector('Size');\n\t\t\tthis.width = size.getAttribute('Width');\n\t\t\tthis.height = size.getAttribute('Height');\n\n\t\t\tlet max = Math.max(this.width, this.height)/this.tilesize;\n\t\t\tthis.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;\n\n\t\t\tthis.url = this.url.substr(0, this.url.lastIndexOf(\".\")) + '_files/';\n\n\t\t\tthis.getTileURL = (x, y, level) => {\n\t\t\t\tlet ilevel = parseInt(this.nlevels - 1 - level);\n\t\t\t\treturn this.url + ilevel + '/' + x + '_' + y + '.' + this.suffix;\n\t\t\t}; \n\n\t\t\tthis.status = 'ready';\n\t\t\tthis.emit('ready');\n\n\t\t})().catch(e => { console.log(e); this.status = e; });\n\t}\n\n\n/**\n * Expects the url to point to ImageProperties.xml file.\n */\n\tinitZoomify() {\n\t\tt.overlap = 0;\n\t\t(async () => {\n\t\t\tvar response = await fetch(this.url);\n\t\t\tif(!response.ok) {\n\t\t\t\tthis.status = \"Failed loading \" + this.url + \": \" + response.statusText;\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tlet text = await response.text();\n\n\t\t\tlet tmp = response.split('\"');\n\t\t\tthis.tilesize = parseInt(tmp[11]);\n\n\t\t\tlet max = Math.max(t.width, t.height)/t.tilesize;\n\t\t\tthis.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;\n\n\t\t\tthis.url = this.url.substr(0, this.url.lastIndexOf(\"/\"));\n\n\t\t\tt.getTileURL = (x, y, level) => {\n\t\t\t\tlet ilevel = parseInt(this.nlevels - 1 - level);\n\t\t\t\tlet index = this.index(level, x, y)>>>0;\n\t\t\t\tlet group = index >> 8;\n\t\t\t\treturn this.url + \"/TileGroup\" + group + \"/\" + ilevel + \"-\" + x + \"-\" + y + \".\" + this.suffix;\n\t\t\t};\n\n\t\t\tthis.status = 'ready';\n\t\t\tthis.emit('ready');\n\n\t\t})().catch(e => { console.log(e); this.status = e; });\n\t}\n}\n\n\n\n\n//# sourceURL=webpack:///./src/Raster.js?");
+
+/***/ }),
+
+/***/ "./src/Transform.js":
+/*!**************************!*\
+  !*** ./src/Transform.js ***!
+  \**************************/
+/*! exports provided: Transform */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"Transform\", function() { return Transform; });\n\n/**\n * \n * @param {number} x position\n * @param {number} y position\n * @param {number} z scale\n * @param {number} a rotation\n * @param {number} t time\n *\n */\n\nclass Transform {\n\tconstructor(x, y, z, a, t) {\n\t\tif(x === null) {\n\t\t\tlet initial = { x: 0.0, y: 0.0, z: 1.0, a: 0.0, t: 0.0 };\n\t\t\tObject.assing(this, initial());\n\t\t\treturn;\n\t\t}\n\t\tthis.x = x ? x : 0.0;\n\t\tthis.y = y ? y : 0.0;\n\t\tthis.z = z ? z : 1.0;\n\t\tthis.a = a ? a : 0.0;\n\t\tthis.t = t ? t : 0.0;\n\t}\n\n\tcopy() {\n\t\treturn Object.assign({}, this);\n\t}\n\n\tinterpolate(source, target, time) {\n\t\tif(time < source.t) return source;\n\t\tif(time > target.t) return target;\n\n\t\tlet t = (target.t - source.t);\n\t\tif(t < 0.0001)\n\t\t\treturn target;\n\n\t\tlet tt = (time - source.t)/t;\n\t\tlet st = (target.t - t)/t;\n\n\t\tfor(let i of ['x', 'y', 'z', 'a'])\n\t\t\tthis[i] = (st*source[i] + tt*target[i]);\n\t\tthis.t = time;\n\t}\n}\n\n\n\n\n//# sourceURL=webpack:///./src/Transform.js?");
 
 /***/ }),
 
@@ -878,7 +927,7 @@ eval("let OpenLime = function(options) {\n\n\tconsole.log(\"This is just a test\
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _OpenLime_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./OpenLime.js */ \"./src/OpenLime.js\");\n/* harmony import */ var _OpenLime_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_OpenLime_js__WEBPACK_IMPORTED_MODULE_0__);\n\n\nlet lime = new _OpenLime_js__WEBPACK_IMPORTED_MODULE_0__[\"OpenLime\"]({ 'test': 'just a test' });\n\n\n//# sourceURL=webpack:///./src/index.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _OpenLIME_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./OpenLIME.js */ \"./src/OpenLIME.js\");\n/* harmony import */ var _Raster_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Raster.js */ \"./src/Raster.js\");\n\n\n\nlet lime = new _OpenLIME_js__WEBPACK_IMPORTED_MODULE_0__[\"OpenLIME\"]('#openlime');\n\nlet raster = new _Raster_js__WEBPACK_IMPORTED_MODULE_1__[\"Raster\"]('normal', 'assets/svbrdf/normalMap.dzi', { layout: 'deepzoom', 'ready': runDeepzoomTest } );\n\n\nfunction runDeepzoomTest(event) {\n\tlet url = raster.getTileURL(2, 0, 0);\n\tconsole.log(url);\n}\n\nlime.draw();\n\n\n\n//# sourceURL=webpack:///./src/index.js?");
 
 /***/ })
 

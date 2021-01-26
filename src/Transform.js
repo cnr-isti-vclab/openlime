@@ -23,15 +23,21 @@ class Transform {
 		this.t = t ? t : 0.0;
 	}
 
+	copy() {
+		return Object.assign({}, this);
+	}
+
 	interpolate(source, target, time) {
-		let t = (target.time - source.time);
-		if(t < 0.0001) {
-			Object.assign(this, target);
-			this.t = time;
-			return;
-		}
-		let tt = (time - source.time)/t;
-		let st = (target.time - time)/t;
+		if(time < source.t) return source;
+		if(time > target.t) return target;
+
+		let t = (target.t - source.t);
+		if(t < 0.0001)
+			return target;
+
+		let tt = (time - source.t)/t;
+		let st = (target.t - t)/t;
+
 		for(let i of ['x', 'y', 'z', 'a'])
 			this[i] = (st*source[i] + tt*target[i]);
 		this.t = time;

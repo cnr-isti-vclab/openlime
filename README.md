@@ -25,6 +25,10 @@ Run rollup to compile a lib (build/openlime.min.js) that can be used for <script
 ```bash
 rollup -c rollup.config.js 
 ```
+or
+```bash
+npm run rollup
+```
 
 Documentation is created using documentation.js. To generate the docs, install documentation
 
