@@ -26,18 +26,19 @@ class Layer {
 			visible: true,
 			zindex: 0,
 			opacity: 1.0,
-			layout: null,
+
 			rasters: [],
 			controls: {},
 			shaders: {},
 			layout: 'image',
 			shader: null, //current shader.
+			gl: null,
 
 			prefetchBorder: 1,
 			mipmapBias: 0.5,
 			maxRequest: 4,
 
-			update: [],  //update callbacks for a redraw
+			signals: { update: [] },  //update callbacks for a redraw
 
 	//internal stuff, should not be passed as options.
 			tiles: [],      //keep references to each texture (and status) indexed by level, x and y.
@@ -63,14 +64,35 @@ class Layer {
 
 
 		//layout needs to becommon among all rasters.
-		if(typeof(this.layout) != 'object' && this.rasters.length)
-			this.layout = new Layout(this.rasters[0], this.layout);
+		if(typeof(this.layout) != 'object' && this.rasters.length) 
+			this.setLayout(new Layout(this.rasters[0], this.layout));
 
 		if(this.shader)
 			this.shader = new Shader(this.shader);
 	}
 
-	
+	addEvent(event, callback) {
+		this.signals[event].push(callback);
+	}
+
+	emit(event) {
+		for(let r of this.signals[event])
+			r(this);
+	}
+
+	setLayout(layout) {
+		let callback = () => { 
+			this.status = 'ready';
+			this.setupTiles(); //setup expect status to be ready!
+			this.emit('update');
+		};
+		if(layout.status == 'ready') //layout already initialized.
+			callback();
+		else
+			layout.addEvent('ready', callback);
+		this.layout = layout;
+	}
+
 
 /**
  * @param {bool} visible
@@ -89,7 +111,8 @@ class Layer {
 	}
 
 
-	draw(transform, gl) {
+	draw(transform) {
+		console.log('Layer draw');
 		//how linear or srgb should be specified here.
 //		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
 		if(this.status != 'ready')
@@ -98,32 +121,57 @@ class Layer {
 		if(!this.shader)
 			throw "Shader not specified!";
 
-		this.prepareWebGL(gl);
+		if(!this.tiles || !this.tiles[0])
+			return;
 
-//		find which quads to draw
+		this.prepareWebGL();
 
-//		draw quads.
-		drawTile(gl, transform, 0, 0, 0);
+//		find which quads to draw and in case request for them
+		if(!(0 in this.requested) && this.tiles[0].missing != 0)
+			this.loadTile({index: 0, level: 0, x: 0, y: 0});
+
+
+//		compute transform matric and draw quads.
+
+		let dx = transform.x;
+		let dy = transform.y;
+		let dz = this.zindex;
+		let z = 0.005; //transform.z;
+		let matrix = [
+			z, 0, 0, 0, 
+			0, z, 0, 0,
+			0, 0, z, 0,
+			dx, dy, 0, 1];
+
+		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
+
+
+		if(this.tiles[0].missing == 0)
+			this.drawTile(transform, 0, 0, 0);
 
 //		gl.uniform1f(t.opacitylocation, t.opacity);
 	}
 
-	drawTile(gl, transform, level, x, y) {
+	drawTile(transform, level, x, y) {
 		var index = this.layout.index(level, x, y);
 		let tile = this.tiles[index];
-		if(tile.missing != 0) 
-			throw "Attempt to draw tile still missing textures"
+//		if(tile.missing != 0) 
+//			throw "Attempt to draw tile still missing textures"
 
 		//setup matrix
 
 		//setup coords and tex (depends on layout/overlay boundaries).
-		
+		let c = this.layout.tileCoords(level, x, y);
+
 		//update coords and texture buffers
-		updateTileBuffers(gl, coords, tcoords);
+		this.updateTileBuffers(c.coords, c.tcoords);
+
+		console.log("Updated coords: ", c.coords);
 
 		//bind textures
+		let gl = this.gl;
 		for(var i = 0; i < this.shader.samplers; i++) {
-			let id = this.shader.samplers[i];
+			let id = this.shader.samplers[i].id;
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
@@ -132,36 +180,64 @@ class Layer {
 
 
 
-	updateTileBuffers() {
-		//TODO join buffers, and just make one call per draw! (except the bufferData, which is per node)
-		gl.bindBuffer(gl.ARRAY_BUFFER, t.vbuffer);
+	updateTileBuffers(coords, tcoords) {
+		let gl = this.gl;
+		//TODO to reduce the number of calls (probably not needed) we can join buffers, and just make one call per draw! (except the bufferData, which is per node)
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
 
-		gl.vertexAttribPointer(t.coordattrib, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(t.coordattrib);
+		gl.vertexAttribPointer(this.shader.coordattrib, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.shader.coordattrib);
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, t.tbuffer);
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, tcoords, gl.STATIC_DRAW);
 
-		gl.vertexAttribPointer(t.texattrib, 2, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(t.texattrib);
+		gl.vertexAttribPointer(this.shader.texattrib, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.shader.texattrib);
 	}
 
 	setShader(id) {
-		if(!id in shaders)
+		if(!id in this.shaders)
 			throw "Unknown shader: " + id;
-		this.shader = shaders[id];
+		this.shader = this.shaders[id];
+		this.setupTiles();
+	}
 
-		if(!this.shader.program) {
-			this.shader.createProgram(gl);
+/**
+ *  If layout is ready and shader is assigned, creates or update tiles to keep track of what is missing.
+ */
+	setupTiles() {
+		if(!this.shader || !this.layout || this.layout.status != 'ready')
+			return;
 
-			//send uniforms here!
+		let ntiles = this.layout.ntiles;
+
+		if(typeof(this.tiles) != 'array' || this.tiles.length != ntiles) {
+			this.tiles = new Array(ntiles);
+			for(let i = 0; i < ntiles; i++)
+				this.tiles[i] = { tex:new Array(this.shader.samplers.length), missing:this.shader.samplers.length };
+			return;
+		}
+
+		for(let tile of this.ntiles) {
+			tile.missing = this.shader.samplers.length;;
+			for(let sampler of this.shader.samplers) {
+				if(tile.tex[sampler.id])
+					tile.missing--;
+			}
 		}
 	}
 
-	prepareWebGL(gl) {
+	prepareWebGL() {
 		//interpolate uniforms from controls!
 		//update uniforms
+
+		let gl = this.gl;
+
+		if(!this.shader.program) {
+			this.shader.createProgram(gl);
+			//send uniforms here!
+		}
 
 		gl.useProgram(this.shader.program);
 
@@ -179,14 +255,6 @@ class Layer {
 		this.tbuffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0,  0, 1,  1, 1,  1, 0]), gl.STATIC_DRAW);
-
-		this.coordattrib = gl.getAttribLocation(this.program, "a_position");
-		gl.vertexAttribPointer(t.coordattrib, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(this.coordattrib);
-
-		this.texattrib = gl.getAttribLocation(this.program, "a_texcoord");
-		gl.vertexAttribPointer(t.texattrib, 2, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(t.texattrib);
 	}
 
 /**
@@ -194,10 +262,82 @@ class Layer {
 *  @param {viewport} is the viewport for the rendering, note: for lens might be different! Where we change it? here layer should know!
 */
 	prefetch(transform, viewport) {
-		if(this.layout.status != 'ready' || !this.visible)
+		if(this.status != 'ready' || !this.visible)
 			return;
+
+		let needed = this.layout.neededBox(transform, this.prefetchBorder);
+		let minlevel = needed.level;
+
+		
+
+//TODO is this optimization (no change => no prefetch?) really needed?
+/*		let box = needed.box[minlevel];
+		if(this.previouslevel == minlevel && box[0] == t.previousbox[0] && box[1] == this.previousbox[1] &&
+		box[2] == this.previousbox[2] && box[3] == this.previousbox[3])
+			return;
+
+		this.previouslevel = minlevel;
+		this.previousbox = box; */
+
+		this.queued = [];
+
+		//look for needed nodes and prefetched nodes (on the pos destination
+		for(let level = this.layout.nlevels-1; level >= minlevel; level--) {
+			let box = needed.box[level];
+			let tmp = [];
+			for(let y = box[1]; y < box[3]; y++) {
+				for(let x = box[0]; x < box[2]; x++) {
+					let index = this.layout.index(level, x, y);
+					if(this.tiles[index].missing != 0 && !this.requested[index])
+						tmp.push({level:level, x:x, y:y, index:index});
+				}
+			}
+			let cx = (box[0] + box[2]-1)/2;
+			let cy = (box[1] + box[3]-1)/2;
+			//sort tiles by distance to the center TODO: check it's correct!
+			tmp.sort(function(a, b) { return Math.abs(a.x - cx) + Math.abs(a.y - cy) - Math.abs(b.x - cx) - Math.abs(b.y - cy); });
+			this.queued = this.queued.concat(tmp);
+		}
+		this.preload();
 	}
+
+/**
+ * Checks load tiles from the queue. TODO this needs to be global! Not per layer.
+ *
+ */
+	preload() {
+		while(Object.keys(this.requested).length < this.maxRequested && this.queued.length > 0) {
+			var tile = this.queued.shift();
+			this.loadTile(tile);
+		}
+	}
+
+	loadTile(tile) {
+		if(this.requested[tile.index])
+			throw"AAARRGGHHH double request!";
+
+		this.requested[tile.index] = true;
+
+		for(let sampler of this.shader.samplers) {
+			let path = this.layout.getTileURL(this.rasters[sampler.id].url, tile.level, tile.x, tile.y);
+			let raster = this.rasters[sampler.id];
+			raster.loadImage(path, this.gl, (tex) => {
+
+				if(this.layout.type == "image") {
+					this.layout.width = raster.width;
+					this.layout.height = raster.height;
+				}
+				let indextile = this.tiles[tile.index];
+				indextile.tex[sampler.id] = tex;
+				indextile.missing--;
+				if(indextile.missing <= 0)
+					this.emit('update');
+			});
+		}
+	}
+
 }
+
 
 Layer.prototype.types = {}
 

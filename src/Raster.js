@@ -30,6 +30,58 @@ class Raster {
 
 		Object.assign(this, options);
 	}
+
+
+	loadImage(url, gl, callback) {
+		(async () => {
+			var response = await fetch(url);
+			if(!response.ok) {
+				console.log();
+				callback("Failed loading " + url + ": " + response.statusText);
+				return;
+			}
+
+			let blob = await response.blob();
+
+			if(typeof createImageBitmap != 'undefined') {
+				var isFirefox = typeof InstallTrigger !== 'undefined';
+				//firefox does not support options for this call, BUT the image is automatically flipped.
+				if(isFirefox) {
+					createImageBitmap(blob).then((img) => this.loadTexture(img, callback));
+				} else {
+					createImageBitmap(blob, { imageOrientation: 'flipY' }).then((img) => this.loadTexture(gl, img, callback));
+				}
+
+			} else { //fallback for IOS
+				var urlCreator = window.URL || window.webkitURL;
+				var img = document.createElement('img');
+				img.onerror = function(e) { console.log("Texture loading error!"); };
+				img.src = urlCreator.createObjectURL(blob);
+
+				img.onload = function() {
+					urlCreator.revokeObjectURL(img.src);
+
+
+					this.loadTexture(gl, img, callback);
+				}
+			}
+		})().catch(e => { callback(null); });
+	}
+
+	loadTexture(gl, img, callback) {
+		this.width = img.width;  //this will be useful for layout image.
+		this.height = img.height;
+
+		var tex = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, tex);
+		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); //_MIPMAP_LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+		callback(tex);
+	}
+
 }
 
 export { Raster }

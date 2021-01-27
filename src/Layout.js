@@ -3,8 +3,9 @@
 class Layout {
 	constructor(url, type) {
 		Object.assign(this, {
-			width:0,
-			height: 0,
+			type: type,
+			width:1,
+			height: 1,
 			tilesize: 256,
 			overlap: 0, 
 			nlevels: 1,        //level 0 is the top, single tile level.
@@ -13,35 +14,40 @@ class Layout {
 			qbox: [],          //array of bounding box in tiles, one for mipmap 
 			bbox: [],          //array of bounding box in pixels (w, h)
 
-			ready: [],          //callbacks when the layout is ready.
+			signals: { ready: [] },          //callbacks when the layout is ready.
 			status: null
 		});
 
 		if(typeof(url) == 'string') {
-
-			callback = () => {
-				this.ntiles = initBoxes();
+			this.url = url;
+			let callback = () => {
+				this.ntiles = this.initBoxes();
 				this.status = 'ready';
 				this.emit('ready');
 			}
 
-			switch(this.layout) {
+			switch(this.type) {
 				case 'image':    this.initImage(callback); break;
 				case 'google':   this.initGoogle(callback); break;
 				case 'deepzoom': this.initDeepzoom(callback); break;
 			}
 			return;
 		}
+
 		if(typeof(url) == 'object')
 			Object.assign(this, url);
 	}
 
-	emit: function(event) {
-		for(let r of this[event])
+	addEvent(event, callback) {
+		this.signals[event].push(callback);
+	}
+
+	emit(event) {
+		for(let r of this.signals[event])
 			r(this);
 	}
 
-	index: function(level, x, y) {
+	index(level, x, y) {
 		var startindex = 0;
 		for(var i = this.nlevels-1; i > level; i--) {
 			startindex += this.qbox[i][2]*this.qbox[i][3];
@@ -53,11 +59,17 @@ class Layout {
  * returns number of tiles.
 */
 
-	initBoxes(): {
+	initBoxes() {
 		this.qbox = []; //by level (0 is the bottom)
 		this.bbox = [];
 		var w = this.width;
 		var h = this.height;
+
+		if(this.type == 'image') {
+			this.qbox[0] = [0, 0, 1, 1];
+			this.bbox[0] = [0, 0, w, h];
+			return 1;
+		}
 
 		var count = 0;
 		for(var level = this.nlevels - 1; level >= 0; level--) {
@@ -77,28 +89,32 @@ class Layout {
 		return count;
 	}
 
-	tileCoords(level, x. y) {
-		var coords  = new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]);
+	tileCoords(level, x, y) {
+		let w = this.width;
+		let h = this.height;
+
 		var tcoords = new Float32Array([0, 0,     0, 1,     1, 1,     1, 0]);
 
+		if(this.type == "image") {
+			return { 
+				coords: new Float32Array([0, 0, 0,  0, h, 0,  w, h, 0,  w, 0, 0]),
+				tcoords: tcoords 
+			};
+		}
 
-		if(t.layout == "image") {
-			return { coords: coords, tcoords: tcoords }
+		var coords  = new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]);
 
-
-		var sx = 2.0/t.canvas.width;
-		var sy = 2.0/t.canvas.height;
 
 		var side =  this.tilesize*(1<<(level)); //tile size in imagespace
 		var tx = side;
 		var ty = side;
 
 		if(this.layout != "google") {  //google does not clip border tiles
-			if(side*(x+1) > t.width) {
-				tx = (t.width  - side*x);
+			if(side*(x+1) > this.width) {
+				tx = (this.width  - side*x);
 			}
-			if(side*(y+1) > t.height) {
-				ty = (t.height - side*y);
+			if(side*(y+1) > this.height) {
+				ty = (this.height - side*y);
 			}
 		}
 
@@ -119,43 +135,47 @@ class Layout {
 	}
 
 
-	getTileURL(url, level, x, y) {}
+/**
+ * Given a viewport and a transform computes the tiles needed for each level.
+ * @param {array} viewport array with left, bottom, width, height
+ * @param {border} border is radius (in tiles units) of prefetch
+ * @returns {object} with level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.
+ */
+	neededBox(viewport, transform, border) {
+		if(this.layout == "image")
+			return { level:0, box: [[0, 0, 1, 1]] };
 
-	loadImage(url, level, x, y, callback) {
+		var minlevel = Math.max(0, Math.min(Math.floor(Math.log2(transform.z) + this.mipmapbias), this.nlevels-1));
 
-		let path = this.getTileURL(url, level, x, y);
-		(async () => {
-			var response = await fetch(path);
-			if(!response.ok) {
-				console.log();
-				callback("Failed loading " + path + ": " + response.statusText);
-				return;
-			}
 
-			let blob = await response.blob();
+		var pyramid = [];
+		for(var level = this.nlevels-1; level >= minlevel; level--) {
+			var bbox = this.getIBox(viewport, transform); //thats the reverse.
+			var side = this.tilesize*Math.pow(2, level);
 
-			if(typeof createImageBitmap != 'undefined') {
-				var isFirefox = typeof InstallTrigger !== 'undefined';
-				//firefox does not support options for this call, BUT the image is automatically flipped.
-				if(isFirefox) {
-					createImageBitmap(blob).then(callback);
-				} else {
-					createImageBitmap(blob, { imageOrientation: 'flipY' }).then(callback);
-				}
+			//quantized bbox
+			var qbox = [
+				Math.floor((bbox[0])/side),
+				Math.floor((bbox[1])/side),
+				Math.floor((bbox[2]-1)/side) + 1,
+				Math.floor((bbox[3]-1)/side) + 1];
 
-			} else { //fallback for IOS
-				var urlCreator = window.URL || window.webkitURL;
-				var img = document.createElement('img');
-				img.onerror = function(e) { console.log("Texture loading error!"); };
-				img.src = urlCreator.createObjectURL(blob);
-
-				img.onload = function() {
-					urlCreator.revokeObjectURL(img.src);
-					callback(img);
-				}
-			}
-		})().catch(e => { callback(e); });
+			//clamp!
+			qbox[0] = Math.max(qbox[0]-border, this.qbox[level][0]);
+			qbox[1] = Math.max(qbox[1]-border, this.qbox[level][1]);
+			qbox[2] = Math.min(qbox[2]+border, this.qbox[level][2]);
+			qbox[3] = Math.min(qbox[3]+border, this.qbox[level][3]);
+			pyramid[level] = qbox;
+		}
+		return { level:minlevel, pyramid: pyramid };
 	}
+
+
+
+	getTileURL(url, level, x, y) {
+		throw Error("Layout not defined or ready.");
+	}
+
 
 
 	initImage() {
@@ -167,9 +187,7 @@ class Layout {
 	initImage(callback) {
 		this.nlevels = 1;
 		this.tilesize = 0;
-		this.qbox = [[0, 0, 1, 1]];
-		this.bbox = [[0, 0, this.width, this.height]];
-
+		this.getTileURL = (url, x, y, level) => { return url; }
 		callback();
 	}
 
@@ -187,9 +205,9 @@ class Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.getTileURL = (x, y, level) => {
+		this.getTileURL = (url, x, y, level) => {
 			var ilevel = parseInt(this.nlevels - 1 - level);
-			return this.url + "/" + ilevel + "/" + y + "/" + x + '.' + this.suffix;
+			return url + "/" + ilevel + "/" + y + "/" + x + '.' + this.suffix;
 		};
 		callback();
 	}
@@ -222,9 +240,10 @@ class Layout {
 
 			this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '_files/';
 
-			this.getTileURL = (x, y, level) => {
+			this.getTileURL = (url, x, y, level) => {
+				url = url.substr(0, url.lastIndexOf(".")) + '_files/';
 				let ilevel = parseInt(this.nlevels - 1 - level);
-				return this.url + ilevel + '/' + x + '_' + y + '.' + this.suffix;
+				return url + ilevel + '/' + x + '_' + y + '.' + this.suffix;
 			}; 
 
 			callback();
@@ -249,15 +268,16 @@ class Layout {
 			let tmp = response.split('"');
 			this.tilesize = parseInt(tmp[11]);
 
-			let max = Math.max(t.width, t.height)/t.tilesize;
+			let max = Math.max(this.width, this.height)/this.tilesize;
 			this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
 			this.url = this.url.substr(0, this.url.lastIndexOf("/"));
 
-			t.getTileURL = (x, y, level) => {
+			this.getTileURL = (url, x, y, level) => {
 				let ilevel = parseInt(this.nlevels - 1 - level);
 				let index = this.index(level, x, y)>>>0;
 				let group = index >> 8;
+				url = url.substr(0, url.lastIndexOf("/"));
 				return this.url + "/TileGroup" + group + "/" + ilevel + "-" + x + "-" + y + "." + this.suffix;
 			};
 

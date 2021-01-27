@@ -1,68 +1,53 @@
 import { Camera } from './Camera.js'
 
 class Canvas {
-	constructor(canvas, overlay, options) {
-		let initial = 
+	constructor(gl, options) {
 		Object.assign(this, { 
 			preserveDrawingBuffer: false, 
 			viewport: [0, 0, 0, 0], 
-			gl: null,
-			layers: {}
+			gl: gl,
+			layers: {},
+
+			signals: {'update':[]}
 		});
 
 		if(options) {
 			Object.assign(this, options);
 			for(let id in this.layers)
-				this.layers[i] = new Layer(id, this.layers[i]);
+				this.addLayer(id, new Layer(id, this.layers[id]));
 		}
 
 		this.camera = new Camera(this.camera);
-
-		this.initElement(canvas);
-		
 	}
 
-	resize(width, height) {
-		this.canvas.width = width;
-		this.canvas.height = height;
-
-		this.prefetch();
-		this.redraw();
+	addEvent(event, callback) {
+		this.signals[event].push(callback);
 	}
 
-	initElement(canvas) {
-		if(!canvas)
-			throw "Missing element parameter"
+	emit(event) {
+		for(let r of this.signals[event])
+			r(this);
+	}
 
-		if(typeof(canvas) == 'string') {
-			canvas = document.querySelector(canvas);
-			if(!canvas)
-				throw "Could not find dom element.";
-		}
-
-		if(!canvas.tagName)
-			throw "Element is not a DOM element"
-
-		if(canvas.tagName != "CANVAS")
-			throw "Element is not a canvas element";
-
-
-		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
-		this.gl = this.gl || 
-			canvas.getContext("webgl2", glopt) || 
-			canvas.getContext("webgl", glopt) || 
-			canvas.getContext("experimental-webgl", glopt) ;
-
-		if (!this.gl)
-			throw "Could not create a WebGL context";
-
-		this.canvas = canvas;
+	addLayer(id, layer) {
+		layer.addEvent('update', () => { console.log('update!'); this.emit('update'); });
+		layer.gl = this.gl;
+		this.layers[id] = layer;
 	}
 
 	setPosition(dt, x, y, z, a) {
 	}
 
 	draw(time) {
+
+		let gl = this.gl;
+		console.log(this.viewport);
+		gl.viewport(this.viewport[0], this.viewport[1], this.viewport[2], this.viewport[3]);
+
+		var b = [0, 1, 0, 1];
+		gl.clearColor(b[0], b[1], b[2], b[3], b[4]);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
 		let pos = this.camera.getCurrentTransform(time);
 
 		//todo we could actually prefetch toward the future a little bit
@@ -72,8 +57,8 @@ class Canvas {
 		let ordered = Object.values(this.layers).sort( (a, b) => a.zindex - b.zindex);
 
 		for(let layer of ordered)
-			if(ordered.visible)
-				ordered.draw(pos)
+			if(layer.visible)
+				layer.draw(pos, this.gl)
 
 //TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
 		return pos.t == this.camera.target.t;

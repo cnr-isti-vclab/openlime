@@ -9,26 +9,29 @@
  */
 
 class Shader {
-	constructor(id, options) {
-		this.id = id;
+	constructor(options) {
 		Object.assign(this, {
+			version: 100,   //check for webglversion.
 			samplers: [],
 			uniforms: {},
 			name: "",
 			body: "",
 			program: null   //webgl program
 		});
+
+		Object.assign(this, options);
 	}
 
 	createProgram(gl) {
 
 		let vert = gl.createShader(gl.VERTEX_SHADER);
-		gl.shaderSource(vertShader, this.vertShaderSrc(100));
+		gl.shaderSource(vert, this.vertShaderSrc(100));
 
-		let compiled = gl.compileShader(vert);
+		gl.compileShader(vert);
+		let compiled = gl.getShaderParameter(vert, gl.COMPILE_STATUS);
 		if(!compiled) {
 			console.log(gl.getShaderInfoLog(vert));
-			throw "Failed vertex shader compilation: see console log and ask for support.";
+			throw Error("Failed vertex shader compilation: see console log and ask for support.");
 		}
 
 		let frag = gl.createShader(gl.FRAGMENT_SHADER);
@@ -37,82 +40,61 @@ class Shader {
 
 		let program = gl.createProgram();
 
+		gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		compiled = gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		if(!compiled) {
-			console.log(gl.getShaderInfoLog(t.fragShader));
-			throw "Failed fragment shader compilation: see console log and ask for support.";
+			console.log(this.fragShaderSrc())
+			console.log(gl.getShaderInfoLog(frag));
+			throw Error("Failed fragment shader compilation: see console log and ask for support.");
 		}
 
 		gl.attachShader(program, vert);
 		gl.attachShader(program, frag);
 		gl.linkProgram(program);
 
+		if ( !gl.getProgramParameter( program, gl.LINK_STATUS) ) {
+			var info = gl.getProgramInfoLog(program);
+			throw new Error('Could not compile WebGL program. \n\n' + info);
+		}
+
+
+		this.coordattrib = gl.getAttribLocation(program, "a_position");
+		gl.vertexAttribPointer(this.coordattrib, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.coordattrib);
+
+		this.texattrib = gl.getAttribLocation(program, "a_texcoord");
+		gl.vertexAttribPointer(this.texattrib, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.texattrib);
+
+		this.matrixlocation = gl.getUniformLocation(program, "u_matrix");
+
 		this.program = program;
 	}
 
-	vertShaderSrc(version) {
-		if(!version) version = 100;
+	vertShaderSrc() {
 		return `
-#version ${version}
+#version 100
+
 precision highp float; 
 precision highp int; 
 
 uniform mat4 u_matrix;
 attribute vec4 a_position;
-attribute vec2 a_texCoord;
+attribute vec2 a_texcoord;
 
-varying vec2 v_texCoord;
+varying vec2 v_texcoord;
 
 void main() {
 	gl_Position = u_matrix * a_position;
-	v_texCoord = a_texCoord;
+	v_texcoord = a_texcoord;
 }`;
 	}
 
 	fragShaderSrc() {
-		let str = this.header();
-		str += this.attributes();
-		str += `
-vec4 ${name}() {
-${this.body}
-}
-`;
-		str += this.main();
-		return str;
+		return this.body;
 	}
 
 
-	header() {
-		let str = `
-
-#ifdef GL_ES
-precision highp float;
-precision highp int;
-#endif
-
-varying vec2 v_texcoord;
-
-`;
-		str += uniformsHeader();
-		return str;
-	}
-
-
-	uniformsHeader() {
-		return "";
-	}
-
-
-	main() {
-		let str = `
-void main() {
-	vec4 color = ${this.id}();
-	color.a *= opacity;
-	fragColor = color;
-}
-`;
-		return str;
-	}
 
 }
 
