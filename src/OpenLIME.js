@@ -6,6 +6,9 @@ import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 
+import { Controller } from './Controller.js'
+import { PanZoomController } from './PanZoomController.js'
+
 /**
  * Manages an OpenLIME viewer functionality on a canvas
  * how do I write more substantial documentation.
@@ -23,7 +26,8 @@ class OpenLIME {
 
 		Object.assign(this, { 
 			background: [0, 0, 0, 1],
-			canvas: {}
+			canvas: {},
+			camera: new Camera()
 		});
 
 
@@ -43,9 +47,12 @@ class OpenLIME {
 		this.initCanvasElement(this.canvasElement);
 
 
-		this.canvas = new Canvas(this.gl, this.canvas);
+		this.canvas = new Canvas(this.gl, this.camera, this.canvas);
 		this.canvas.addEvent('update', () => { this.redraw(); });
 
+		this.camera.addEvent('update', () => { this.redraw(); });
+
+		this.controller = new PanZoomController(this.containerElement, this.camera);
 
 		var resizeobserver = new ResizeObserver( entries => {
 			for (let entry of entries) {
@@ -53,8 +60,26 @@ class OpenLIME {
 			}
 		});
 		resizeobserver.observe(this.canvasElement);
+
+/*
 //TODO here is not exactly clear which assumption we make on canvas and container div size.
-//		resizeobserver.observe(this.containerElement); 
+//		resizeobserver.observe(this.containerElement);
+		this.containerElement.addEventListener('mousemove', (e) => {
+
+//			let camera = this.canvas.camera;
+//			let x = e.clientX - this.canvas.camera.viewport[2]/2;
+//			let y = e.clientY - this.canvas.camera.viewport[3]/2;
+//			let z = this.canvas.camera.target.z;
+//			camera.setPosition(0, x/z, y/z, z, 0,); 
+
+//			console.log(camera.mapToScene(e.clientX, e.clientY, camera.target));
+//			this.canvas.camera.target.x = 1;
+//			this.canvas.camera.target.t = performance.now();
+			this.redraw();
+//			this.canvas.camera.target.x += 1;
+		}); */
+
+
 	}
 
 
@@ -84,7 +109,7 @@ class OpenLIME {
 		if (!this.gl)
 			throw "Could not create a WebGL context";
 
-
+		
 	}
 
 	/**
@@ -95,7 +120,7 @@ class OpenLIME {
 		this.canvasElement.width = width;
 		this.canvasElement.height = height;
 
-		this.canvas.viewport = [0, 0, width, height];
+		this.camera.setViewport([0, 0, width, height]);
 		this.canvas.prefetch();
 		this.redraw();
 	}
@@ -114,13 +139,17 @@ class OpenLIME {
 	* @param {time} time as in performance.now()
 	*/
 	draw(time) {
-		console.log('drawing');
 		if(!time) time = performance.now();
 		this.animaterequest = null;
 
 		let done = this.canvas.draw(time);
 		if(!done)
 			this.redraw();
+	}
+
+	fit(box, dt, size) {
+		this.camera.fit(box, dt, size);
+		this.redraw();
 	}
 }
 

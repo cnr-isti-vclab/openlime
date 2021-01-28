@@ -13,5 +13,9 @@ lime.canvas.addLayer('icon', layer);
 //lime.canvas.addLayer('lime', layer1);
 
 lime.draw();
+lime.canvas.camera.fit([100, 100, 500, 500]);
+
+setTimeout(() => { lime.fit([-150, -276, 150, 277], 100); }, 1000);
+//setTimeout(() => { lime.fit([0, 0, 200, 200], 2000); }, 2000);
 
 

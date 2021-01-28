@@ -1,5 +1,8 @@
 
-
+/**
+ * @param {string|Object} url URL of the image or the tiled config file, 
+ * @param {string} type select one among: <image, {@link https://www.microimages.com/documentation/TechGuides/78googleMapsStruc.pdf google}, {@link https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN deepzoom}, {@link http://www.zoomify.com/ZIFFileFormatSpecification.htm zoomify}, {@link https://iipimage.sourceforge.io/ iip}, {@link https://iiif.io/api/image/3.0/ iiif}>
+ */
 class Layout {
 	constructor(url, type) {
 		Object.assign(this, {
@@ -47,6 +50,14 @@ class Layout {
 			r(this);
 	}
 
+	boundingBox() {
+		return [-width/2, -height/2, width/2, height/2];
+	}
+
+/**
+ *  Each tile is assigned an unique number.
+ */
+
 	index(level, x, y) {
 		var startindex = 0;
 		for(var i = this.nlevels-1; i > level; i--) {
@@ -56,7 +67,8 @@ class Layout {
 	}
 
 /*
- * returns number of tiles.
+ * Compute all the bounding boxes (this.bbox and this.qbox).
+ * @return number of tiles in the dataset
 */
 
 	initBoxes() {
@@ -89,25 +101,29 @@ class Layout {
 		return count;
 	}
 
+
+/** Return the coordinates of the tile (in [0, 0, w h] image coordinate system) and the texture coords associated. 
+ *
+ */
 	tileCoords(level, x, y) {
 		let w = this.width;
 		let h = this.height;
-
 		var tcoords = new Float32Array([0, 0,     0, 1,     1, 1,     1, 0]);
 
 		if(this.type == "image") {
 			return { 
-				coords: new Float32Array([0, 0, 0,  0, h, 0,  w, h, 0,  w, 0, 0]),
+				coords: new Float32Array([-w/2, -h/2, 0,  -w/2, h/2, 0,  w/2, h/2, 0,  w/2, -h/2, 0]),
+//				coords: new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]),
 				tcoords: tcoords 
 			};
 		}
 
-		var coords  = new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]);
+		let coords = new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]);
 
 
-		var side =  this.tilesize*(1<<(level)); //tile size in imagespace
-		var tx = side;
-		var ty = side;
+		let side =  this.tilesize*(1<<(level)); //tile size in imagespace
+		let tx = side;
+		let ty = side;
 
 		if(this.layout != "google") {  //google does not clip border tiles
 			if(side*(x+1) > this.width) {
@@ -123,14 +139,19 @@ class Layout {
 
 		var over = this.overlap;
 		if(over) {
-			var dtx = over / (tx/(1<<level) + (x==0?0:over) + (x==lx?0:over));
-			var dty = over / (ty/(1<<level) + (y==0?0:over) + (y==ly?0:over));
+			let dtx = over / (tx/(1<<level) + (x==0?0:over) + (x==lx?0:over));
+			let dty = over / (ty/(1<<level) + (y==0?0:over) + (y==ly?0:over));
 
 			tcoords[0] = tcoords[2] = (x==0? 0: dtx);
 			tcoords[1] = tcoords[7] = (y==0? 0: dty);
 			tcoords[4] = tcoords[6] = (x==lx? 1: 1 - dtx);
 			tcoords[3] = tcoords[5] = (y==ly? 1: 1 - dty);
 		}
+		for(let i = 0; i < coords.length; i+= 3) {
+			coords[i]   = coords[i]  *tx + size*x - this.width/2;
+			coords[i+1] = coords[i+1]*ty + size*y + this.height/2;
+		}
+
 		return { coords: coords, tcoords: tcoords }
 	}
 
@@ -182,7 +203,7 @@ class Layout {
 	}
 
 /*
- * witdh and height
+ * Witdh and height can be recovered once the image is downloaded.
 */
 	initImage(callback) {
 		this.nlevels = 1;

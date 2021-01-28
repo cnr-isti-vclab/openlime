@@ -1,3 +1,8 @@
+
+import { Transform } from './Transform.js'
+import { Raster } from './Raster.js'
+import { Shader } from './Shader.js'
+
 /**
  * @param {string} id unique id for layer.
  * @param {object} options
@@ -14,9 +19,6 @@
  *  * *prefetchBorder*: border tiles prefetch (default 1)
  *  * *maxRequest*: max number of simultaneous requests (should be GLOBAL not per layer!) default 4
  */
-import { Transform } from './Transform.js'
-import { Raster } from './Raster.js'
-import { Shader } from './Shader.js'
 
 class Layer {
 	constructor(options) {
@@ -110,9 +112,13 @@ class Layer {
 		this.emit('update');
 	}
 
+	boundingBox() {
+		return layuout.boundingBox();
 
-	draw(transform) {
-		console.log('Layer draw');
+	}
+
+	draw(transform, viewport) {
+
 		//how linear or srgb should be specified here.
 //		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
 		if(this.status != 'ready')
@@ -132,16 +138,24 @@ class Layer {
 
 
 //		compute transform matric and draw quads.
+		//TODO use  Transform.toMatrix and combine layer transform.
 
-		let dx = transform.x;
-		let dy = transform.y;
+		let w = this.layout.width;
+		let h = this.layout.height;
+
+		let z = transform.z;
+		let zx = 2*z/(viewport[2] - viewport[0]);
+		let zy = 2*z/(viewport[3] - viewport[1]);
+
+		let dx = (transform.x)*zx;
+		let dy = -(transform.y)*zy;
 		let dz = this.zindex;
-		let z = 0.005; //transform.z;
+
 		let matrix = [
-			z, 0, 0, 0, 
-			0, z, 0, 0,
-			0, 0, z, 0,
-			dx, dy, 0, 1];
+			 zx,  0,  0,  0, 
+			 0,  zy,  0,  0,
+			 0,  0,  1,  0,
+			dx, dy, dz,  1];
 
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
@@ -155,8 +169,8 @@ class Layer {
 	drawTile(transform, level, x, y) {
 		var index = this.layout.index(level, x, y);
 		let tile = this.tiles[index];
-//		if(tile.missing != 0) 
-//			throw "Attempt to draw tile still missing textures"
+		if(tile.missing != 0) 
+			throw "Attempt to draw tile still missing textures"
 
 		//setup matrix
 
@@ -166,11 +180,9 @@ class Layer {
 		//update coords and texture buffers
 		this.updateTileBuffers(c.coords, c.tcoords);
 
-		console.log("Updated coords: ", c.coords);
-
 		//bind textures
 		let gl = this.gl;
-		for(var i = 0; i < this.shader.samplers; i++) {
+		for(var i = 0; i < this.shader.samplers.length; i++) {
 			let id = this.shader.samplers[i].id;
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);

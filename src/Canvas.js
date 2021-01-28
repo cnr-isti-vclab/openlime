@@ -1,11 +1,17 @@
 import { Camera } from './Camera.js'
 
+/**
+ * @param {WebGL} gl is the WebGL context
+ * @param {Object} options
+ * * *layers*: Object specifies layers (see. {@link Layer})
+ */
+
 class Canvas {
-	constructor(gl, options) {
+	constructor(gl, camera, options) {
 		Object.assign(this, { 
 			preserveDrawingBuffer: false, 
-			viewport: [0, 0, 0, 0], 
 			gl: gl,
+			camera: camera,
 			layers: {},
 
 			signals: {'update':[]}
@@ -16,8 +22,6 @@ class Canvas {
 			for(let id in this.layers)
 				this.addLayer(id, new Layer(id, this.layers[id]));
 		}
-
-		this.camera = new Camera(this.camera);
 	}
 
 	addEvent(event, callback) {
@@ -35,21 +39,17 @@ class Canvas {
 		this.layers[id] = layer;
 	}
 
-	setPosition(dt, x, y, z, a) {
-	}
 
 	draw(time) {
-
 		let gl = this.gl;
-		console.log(this.viewport);
-		gl.viewport(this.viewport[0], this.viewport[1], this.viewport[2], this.viewport[3]);
+		let view = this.camera.viewport;
+		gl.viewport(view[0], view[1], view[2], view[3]);
 
 		var b = [0, 1, 0, 1];
 		gl.clearColor(b[0], b[1], b[2], b[3], b[4]);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 
 		let pos = this.camera.getCurrentTransform(time);
-
 		//todo we could actually prefetch toward the future a little bit
 		this.prefetch(pos);
 
@@ -58,7 +58,7 @@ class Canvas {
 
 		for(let layer of ordered)
 			if(layer.visible)
-				layer.draw(pos, this.gl)
+				layer.draw(pos, view)
 
 //TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
 		return pos.t == this.camera.target.t;
@@ -70,7 +70,7 @@ class Canvas {
  */
 	prefetch(transform) {
 		for(let id in this.layers)
-			this.layers[id].prefetch(transform, this.viewport);
+			this.layers[id].prefetch(transform, this.camera.viewport);
 	}
 }
 
