@@ -6,6 +6,7 @@ class PanZoomController extends Controller {
 	constructor(element, camera, options) {
 		super(element, options);
 		this.camera = camera;
+		this.zoomAmount = 1.2;
 		this.panning = false;
 		this.startPosition = null;
 		this.startMouse = null;
@@ -41,15 +42,18 @@ class PanZoomController extends Controller {
 
 
 		this.camera.setPosition(this.delay, ex, ey, z, a);
-
-		if(this.debug1) console.log('Move ', x, y); 
 	}
 
-	zoomDelta(x, y, d, e) {  if(this.debug) console.log('Delta ', x, y, d); }
+	wheelDelta(x, y, delta, e) { 
+		console.log(x, y);
+		let pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
+		let zoom = Math.pow(this.zoomAmount, delta);
+		this.camera.zoom(this.delay, zoom, pos.x, pos.y, );
+	}
 
-	zoomStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
+	pinchStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
 
-	zoomMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
+	pinchMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
 
 }
 

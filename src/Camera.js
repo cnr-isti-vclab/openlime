@@ -58,7 +58,7 @@ class Camera {
 		x -= transform.x;
 		y -= transform.y;
 		//TODO add rotation!
-		return [x, y];
+		return {x:x, y:y};
 	}
 
 
@@ -74,10 +74,35 @@ class Camera {
  * @param {number} dx move the camera by dx pixels (positive means the image moves right).
  */
 	pan(dt, dx, dy) {
-		if(!dt) dt = 0;
-		this.setPosition(dt, this.x - dx/this.x, this.y - dy/this.z, this.z, this.a);
+		let now = performance.now();
+		let m = this.getCurrentTransform(now);
+		m.dx += dx;
+		m.dy += dy;
 	}
 
+/* zoom in or out at a specific point in canvas coords!
+ *
+ */
+	zoom(dt, dz, x, y) {
+		if(!x) x = 0;
+		if(!y) y = 0;
+
+		let now = performance.now();
+		let m = this.getCurrentTransform(now);
+
+
+		//x, an y should be the center of the zoom.
+
+		console.log("diff:", m.x, x, dz, m.z);
+		m.x += (m.x+x)*(1 - dz);
+		m.y += (m.y+y)*(1 - dz);
+
+//		m.x += x*(m.z - m.z*dz);
+//		m.y += y*(m.z - m.z*dz);
+//		m.x = (m.x - ox + ox*(dz);
+//		m.y = (m.x - oy + oy*(dz);
+		this.setPosition(dt, m.x, m.y, m.z*dz, m.a);
+	}
 
 	getCurrentTransform(time) {
 		if(time < this.source.t)
@@ -106,14 +131,6 @@ class Camera {
 		let z = Math.min(w/bw, h/bh);
 
 		this.setPosition(dt, (box[0] + box[2])/2, (box[1] + box[3])/2, z, 0);
-	}
-
-/**
- * Combines the projection to the viewport with the transform
- * @param {Object} transform a {@link Transform} class.
- */
-	projectionMatrix(transform) {
-		
 	}
 
 }

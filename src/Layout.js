@@ -113,7 +113,6 @@ class Layout {
 		if(this.type == "image") {
 			return { 
 				coords: new Float32Array([-w/2, -h/2, 0,  -w/2, h/2, 0,  w/2, h/2, 0,  w/2, -h/2, 0]),
-//				coords: new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]),
 				tcoords: tcoords 
 			};
 		}

@@ -8,7 +8,7 @@ import { Layout } from './Layout.js'
  * @param {options} options Same as {@link Layer}, but url and layout are required.
  */
 
-class ImageLayer extends Layer {
+class LayerImage extends Layer {
 	constructor(options) {
 		super(options);
 
@@ -28,17 +28,19 @@ class ImageLayer extends Layer {
 		let shader = new Shader({
 			'label': 'Rgb',
 			'samplers': [{ id:0, attribute:'kd', type:'vec3' }],
-			'body': `
-#version 100
+			'body': `#version 300 es
 
 precision highp float; 
 precision highp int; 
 
-varying vec2 v_texcoord;
 uniform sampler2D kd;
 
+in vec2 v_texcoord;
+out vec4 color;
+
+
 void main() {
-	gl_FragColor = texture2D(kd, v_texcoord);
+	color = texture(kd, v_texcoord);
 }
 `
 		});
@@ -48,6 +50,6 @@ void main() {
 	}
 }
 
-Layer.prototype.types['image'] = (options) => { return new ImageLayer(options); }
+Layer.prototype.types['image'] = (options) => { return new LayerImage(options); }
 
-export { ImageLayer }
+export { LayerImage }

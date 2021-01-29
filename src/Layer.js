@@ -2,6 +2,7 @@
 import { Transform } from './Transform.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
+import { Layout } from './Layout.js'
 
 /**
  * @param {string} id unique id for layer.
@@ -63,7 +64,7 @@ class Layer {
 
 		//create members from options.
 		this.rasters = this.rasters.map((raster) => new Raster(raster));
-
+		this.transform = new Transform(this.transform);
 
 		//layout needs to becommon among all rasters.
 		if(typeof(this.layout) != 'object' && this.rasters.length) 
@@ -132,41 +133,30 @@ class Layer {
 
 		this.prepareWebGL();
 
+
 //		find which quads to draw and in case request for them
+		///this is true also for all rasters that are actually layers.
 		if(!(0 in this.requested) && this.tiles[0].missing != 0)
 			this.loadTile({index: 0, level: 0, x: 0, y: 0});
 
 
 //		compute transform matric and draw quads.
-		//TODO use  Transform.toMatrix and combine layer transform.
 
-		let w = this.layout.width;
-		let h = this.layout.height;
+		//TODO check, it might be the reverse composition
+		transform = transform.compose(this.transform);
 
-		let z = transform.z;
-		let zx = 2*z/(viewport[2] - viewport[0]);
-		let zy = 2*z/(viewport[3] - viewport[1]);
-
-		let dx = (transform.x)*zx;
-		let dy = -(transform.y)*zy;
-		let dz = this.zindex;
-
-		let matrix = [
-			 zx,  0,  0,  0, 
-			 0,  zy,  0,  0,
-			 0,  0,  1,  0,
-			dx, dy, dz,  1];
-
+		let matrix = transform.projectionMatrix(viewport);
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
 
+		//just a test: drawing 1 tile.
 		if(this.tiles[0].missing == 0)
-			this.drawTile(transform, 0, 0, 0);
+			this.drawTile(0, 0, 0);
 
 //		gl.uniform1f(t.opacitylocation, t.opacity);
 	}
 
-	drawTile(transform, level, x, y) {
+	drawTile(level, x, y) {
 		var index = this.layout.index(level, x, y);
 		let tile = this.tiles[index];
 		if(tile.missing != 0) 
@@ -246,7 +236,7 @@ class Layer {
 
 		let gl = this.gl;
 
-		if(!this.shader.program) {
+		if(this.shader.needsUpdate) {
 			this.shader.createProgram(gl);
 			//send uniforms here!
 		}

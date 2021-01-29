@@ -16,7 +16,8 @@ class Shader {
 			uniforms: {},
 			name: "",
 			body: "",
-			program: null   //webgl program
+			program: null,      //webgl program
+			needsUpdate: true
 		});
 
 		Object.assign(this, options);
@@ -37,6 +38,9 @@ class Shader {
 		let frag = gl.createShader(gl.FRAGMENT_SHADER);
 		gl.shaderSource(frag, this.fragShaderSrc());
 		gl.compileShader(frag);
+
+		if(this.program)
+			gl.deleteProgram(this.program);
 
 		let program = gl.createProgram();
 
@@ -69,20 +73,20 @@ class Shader {
 		this.matrixlocation = gl.getUniformLocation(program, "u_matrix");
 
 		this.program = program;
+		this.needsUpdate = false;
 	}
 
 	vertShaderSrc() {
-		return `
-#version 100
+		return `#version 300 es
 
 precision highp float; 
 precision highp int; 
 
 uniform mat4 u_matrix;
-attribute vec4 a_position;
-attribute vec2 a_texcoord;
+in vec4 a_position;
+in vec2 a_texcoord;
 
-varying vec2 v_texcoord;
+out vec2 v_texcoord;
 
 void main() {
 	gl_Position = u_matrix * a_position;
@@ -93,9 +97,6 @@ void main() {
 	fragShaderSrc() {
 		return this.body;
 	}
-
-
-
 }
 
 

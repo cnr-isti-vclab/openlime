@@ -11,16 +11,14 @@
 
 class Transform {
 	constructor(x, y, z, a, t) {
-		if(x === null) {
-			let initial = { x: 0.0, y: 0.0, z: 1.0, a: 0.0, t: 0.0 };
-			Object.assing(this, initial());
-			return;
-		}
-		this.x = x ? x : 0.0;
-		this.y = y ? y : 0.0;
-		this.z = z ? z : 1.0;
-		this.a = a ? a : 0.0;
-		this.t = t ? t : 0.0;
+		Object.assign(this, { x:0, y:0, z:1, a:0, t:0 });
+
+		if(!t) t = performance.now();
+
+		if(typeof(x) == 'object')
+			Object.assign(this, x);
+		else if(typeof(x) != 'undefined') 
+			Object.assign(this, { x:x, y:y, z:z, a:a, t:t });
 	}
 
 	copy() {
@@ -29,6 +27,13 @@ class Transform {
 		return transform;
 	}
 
+	apply(x, y) {
+		//TODO! ROTATE
+		return { 
+			x: x*this.z + this.x,
+			y: y*this.z + this.y
+		}
+	}
 	interpolate(source, target, time) {
 		if(time < source.t) return source;
 		if(time > target.t) return target;
@@ -47,6 +52,49 @@ class Transform {
 		this.t = time;
 	}
 
+
+	
+	rotate(x, y, angle) {
+		var angle = Math.PI*(angle/180);
+		var x =  Math.cos(angle)*x + Math.sin(angle)*y;
+		var y = -Math.sin(angle)*x + Math.cos(angle)*y;
+		return {x:x, y:y};
+	}
+
+	compose(transform) {
+		let a = this.copy();
+		let b = transform;
+		a.z *= b.z;
+		a.a += b.a;
+		var r = this.rotate(a.x, a.y, b.a);
+		a.x = r.x*b.z + b.x;
+		a.y = r.y*b.z + b.y; 
+		return a;
+	}
+
+/**
+ *  Combines the transform with the viewport to the viewport with the transform
+ * @param {Object} transform a {@link Transform} class.
+ */
+	projectionMatrix(viewport) {
+		let z = this.z;
+		let zx = 2*z/(viewport[2] - viewport[0]);
+		let zy = 2*z/(viewport[3] - viewport[1]);
+
+		let dx = (this.x)*zx;
+		let dy = -(this.y)*zy;
+
+		let matrix = [
+			 zx,  0,  0,  0, 
+			 0,  zy,  0,  0,
+			 0,  0,  1,  0,
+			dx, dy, 0,  1];
+		return matrix;
+	}
+
+/**
+ * TODO (if needed)
+ */ 
 	toMatrix() {
 		let z = this.z;
 		return [
@@ -56,6 +104,7 @@ class Transform {
 			z*x, z*y, 0,   1,
 		];
 	}
+
 }
 
 function matrixMul(a, b) {

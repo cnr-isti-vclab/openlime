@@ -9,7 +9,7 @@ class Controller {
 		Object.assign(this, {
 			element:element,
 			debug: true,
-			delay: 100
+			delay: 0
 		});
 
 		Object.assign(this, options);
@@ -23,11 +23,11 @@ class Controller {
 	
 	mouseMove(x, y, e) { if(this.debug) console.log('Move ', x, y); }
 
-	zoomDelta(x, y, d, e) {  if(this.debug) console.log('Delta ', x, y, d); }
+	wheelDelta(x, y, d, e) {  if(this.debug) console.log('Delta ', x, y, d); }
 
-	zoomStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
+	pinchStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
 
-	zoomMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
+	pinchMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
 
 
 	eventToPosition(e, touch) {
@@ -46,7 +46,7 @@ class Controller {
 	initEvents() {
 
 /* //TODO when the canvas occupy only part of the document we would like to prevent any mouseover/etc 
-  when the user is panning !! Example demo code here.
+  when the user is panning !! Example demo code here, to be testes.
 
 function preventGlobalMouseEvents () {
   document.body.style['pointer-events'] = 'none';
@@ -103,7 +103,7 @@ function captureMouseEvents (e) {
 			return false;
 		});
 
-		element.addEventListener('touchstart', function (e) {
+		element.addEventListener('touchstart', (e) => {
 			e.preventDefault();
 	
 			let pos0 = this.eventToPosition(e, 0);
@@ -112,26 +112,35 @@ function captureMouseEvents (e) {
 
 			} else if (e.targetTouches.length == 2) {
 				let pos1 = this.eventToPosition(e, 1);
-				this.zoomStart(pos0, pos1, e);
+				this.pinchStart(pos0, pos1, e);
 			}
 		}, false);
 
-		element.addEventListener('touchend', function (e) {
+		element.addEventListener('touchend', (e) => {
 			let pos = this.eventToPosition(e);
 			this.mouseUp(pos.x, pos.y, e);
 			e.preventDefault();
 		}, false);
 
-		element.addEventListener('touchmove', function (evt) {
+		element.addEventListener('touchmove', (e) => {
 			let pos0 = this.eventToPosition(e, 0);
 			if (e.targetTouches.length == 1) {
 				this.mouseMove(pos0.x, pos0.y, e);
 			} else if (e.targetTouches.length == 2) {
 				let pos1 = this.eventToPosition(e, 1);
-				this.zoomMove(pos0, pos1, e);
+				this.pinchMove(pos0, pos1, e);
 			}
 			e.preventDefault();
 		}, false);
+
+		element.addEventListener('wheel', (e) => {
+			//TODO support for delta X?
+			let pos = this.eventToPosition(e);
+
+			let delta = e.deltaY > 0? 1 : -1;
+			this.wheelDelta(pos.x, pos.y, delta, e);
+			e.preventDefault();
+		});
 
 	}
 }
