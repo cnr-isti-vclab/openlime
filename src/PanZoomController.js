@@ -45,15 +45,14 @@ class PanZoomController extends Controller {
 	}
 
 	wheelDelta(x, y, delta, e) { 
-		console.log(x, y);
 		let pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
 		let zoom = Math.pow(this.zoomAmount, delta);
 		this.camera.zoom(this.delay, zoom, pos.x, pos.y, );
 	}
 
-	pinchStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
+	pinchStart(pos1, pos2, e) {if(this.debug) console.log('TODO! Start ', pos1, pos2); }
 
-	pinchMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
+	pinchMove(pos1, pos2, e) {if(this.debug) console.log('TODO! Move ', pos1, pos2); }
 
 }
 

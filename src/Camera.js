@@ -81,7 +81,7 @@ class Camera {
 	}
 
 /* zoom in or out at a specific point in canvas coords!
- *
+ * TODO: this is not quite right!
  */
 	zoom(dt, dz, x, y) {
 		if(!x) x = 0;
@@ -93,14 +93,10 @@ class Camera {
 
 		//x, an y should be the center of the zoom.
 
-		console.log("diff:", m.x, x, dz, m.z);
+
 		m.x += (m.x+x)*(1 - dz);
 		m.y += (m.y+y)*(1 - dz);
 
-//		m.x += x*(m.z - m.z*dz);
-//		m.y += y*(m.z - m.z*dz);
-//		m.x = (m.x - ox + ox*(dz);
-//		m.y = (m.x - oy + oy*(dz);
 		this.setPosition(dt, m.x, m.y, m.z*dz, m.a);
 	}
 

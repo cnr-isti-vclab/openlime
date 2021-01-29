@@ -6,41 +6,77 @@ import { LayerCombiner } from './LayerCombiner.js'
 
 let lime = new OpenLIME('#openlime');
 
-//let raster = new Raster('assets/svbrdf/normalMap.dzi', { layout: 'deepzoom', 'ready': runDeepzoomTest, type: 'rgb', attribute:'normals' } );
+imageTest();
 
-let layer = new Layer({ 
-	type:'image',
+
+
+/* COMBINER TEST */
+function combinerTest() {
+
+	let layer0 = new Layer({ 
+		type:'image',
+		url: 'assets/svbrdf/vis/ksMap.jpg',
+		layout: 'image',
+		zindex:0,
+		transform: {x:0, y:0, z:1, a:0 },
+		visible:true
+	});
+
+	let layer1 = new Layer({ 
+		type:'image',
+		url: 'assets/svbrdf/vis/kdMap.jpg',
+		layout: 'image',
+		zindex:0,
+		transform: {x:0, y:0, z:1, a:0 },
+		visible:false
+	});
+
+	let combiner = new LayerCombiner({
+		layers: [layer0, layer1 ]
+	});
+	lime.canvas.addLayer('kdmap', layer0);
+	lime.canvas.addLayer('ksmap', layer1);
+	lime.canvas.addLayer('combiner', combiner);
+}
+
+
+
+/* IMAGE TEST */
+function imageTest() {
+	let layer0 = new Layer({ 
+		type:'image',
 	url: 'assets/svbrdf/vis/ksMap.jpg',
-	layout: 'image',
-	zindex:0,
-	transform: {x:0, y:0, z:1, a:0 },
-	visible:false
-});
+		layout: 'image',
+		zindex:0,
+		transform: {x:0, y:0, z:1, a:0 },
+		visible:true
+	});
 
-let layer1 = new Layer({ 
-	type:'image',
-	url: 'assets/svbrdf/vis/kdMap.jpg',
-	layout: 'image',
-	zindex:0,
-	transform: {x:0, y:0, z:1, a:0 },
-	visible:false
-});
+	lime.canvas.addLayer('kdmap', layer0);
+}
 
-let combiner = new LayerCombiner({
-	layers: [layer, layer1 ]
-});
 
-//let layer1 = new Layer({ type:'image', url: 'prova/', layout: 'image', zindex:1 });
-lime.canvas.addLayer('icon', layer);
-lime.canvas.addLayer('lime', layer1);
-lime.canvas.addLayer('combiner', combiner);
+/* BRDF TEST */
+function brdfTest() {
+	let brdf = new Layer({ 
+		type:'brdf',
+		channels: {
+			'kd':      'assets/svbrdf/vis/kdMap.jpg',
+			'ks':      'assets/svbrdf/vis/ksMap.jpg',
+			'normals': 'assets/svbrdf/normalMap_rotated.jpg',
+			'gloss':   'assets/svbrdf/vis/glossMap.jpg'
+		},
+		layout: 'image',
+	}); 
 
+	lime.canvas.addLayer('brdf', brdf);
+}
 
 
 lime.draw();
-lime.canvas.camera.fit([100, 100, 500, 500]);
+lime.canvas.camera.fit([-1000, -1000, +100, +1000]);
 
 setTimeout(() => { lime.fit([-150, -276, 150, 277], 100); }, 1000);
-//setTimeout(() => { lime.fit([0, 0, 200, 200], 2000); }, 2000);
+
 
 

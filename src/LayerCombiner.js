@@ -54,6 +54,7 @@ class LayerCombiner extends Layer {
 
 
 //TODO optimize: render to texture ONLY if some parameters change!
+//provider di textures... max memory and reference counting.
 		let gl = this.gl;
 		for(let i = 0; i < this.layers.length; i++) { 
 //			gl.activeTexture(gl.TEXTURE0 + i);

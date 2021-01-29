@@ -20,14 +20,12 @@ class ShaderCombiner extends Shader {
 			'second': 'color = c2;',
 			'mean': 'color = (c1 + c2)/2.0;',
 			'diff': 'color vec4(c2.rgb - c1.rgb, 1);'
-		}
+		};
 
 		this.body = this.template(this.modes[this.mode]);
-
 	}
 
 	setMode(mode) {
-
 		if(!(mode in this.modes))
 			throw Error("Unknown mode: " + mode);
 		this.body = this.template(this.modes[mode]);
