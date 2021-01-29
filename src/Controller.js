@@ -4,6 +4,9 @@
  * * *delay* inertia of the movement in ms.
  */
 
+ //https://github.com/cnr-isti-vclab/relight/blob/master/js/relight-interface.js
+//import * as Hammer from 'hammerjs';
+
 class Controller {
 	constructor(element, options) {
 		Object.assign(this, {
@@ -77,10 +80,13 @@ function captureMouseEvents (e) {
 }
 */
 		let element = this.element;
+
 		element.addEventListener('contextmenu', (e) => { 
 			e.preventDefault(); 
 			return false; 
 		});
+
+		//const hammerMng = new Hammer(theLawn);
 
 		element.addEventListener('mouseup', (e) => {
 			let pos = this.eventToPosition(e);

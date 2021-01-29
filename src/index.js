@@ -11,8 +11,6 @@ let lime = new OpenLIME('#openlime');
 //combinerTest();
 imageTest('deepzoom');
 
-
-
 /* COMBINER TEST */
 function combinerTest() {
 
