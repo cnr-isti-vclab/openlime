@@ -9,17 +9,17 @@ class ShaderCombiner extends Shader {
 	constructor(options) {
 		super(options);
 
-		this.mode = 'second', //Lighten Darken Contrast Inversion HSV components LCh components
+		this.mode = 'diff', //Lighten Darken Contrast Inversion HSV components LCh components
 		this.samplers = [
-			{ id:0, attribute:'source1', type:'vec3' },
-			{ id:1, attribute:'source2', type:'vec3' }
+			{ id:0, name:'source1', type:'vec3' },
+			{ id:1, name:'source2', type:'vec3' }
 		];
 
 		this.modes = {
 			'first': 'color = c1;',
 			'second': 'color = c2;',
 			'mean': 'color = (c1 + c2)/2.0;',
-			'diff': 'color vec4(c2.rgb - c1.rgb, 1);'
+			'diff': 'color = vec4(c2.rgb - c1.rgb, c1.a);'
 		};
 
 		this.body = this.template(this.modes[this.mode]);
@@ -39,6 +39,7 @@ precision highp float;
 precision highp int; 
 
 in vec2 v_texcoord;
+
 uniform sampler2D source1;
 uniform sampler2D source2;
 

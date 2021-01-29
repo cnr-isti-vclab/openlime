@@ -49,6 +49,9 @@ class Canvas {
 		gl.clearColor(b[0], b[1], b[2], b[3], b[4]);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+		gl.enable(gl.BLEND);
+
 		let pos = this.camera.getCurrentTransform(time);
 		//todo we could actually prefetch toward the future a little bit
 		this.prefetch(pos);

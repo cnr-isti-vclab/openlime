@@ -174,6 +174,7 @@ class Layer {
 		let gl = this.gl;
 		for(var i = 0; i < this.shader.samplers.length; i++) {
 			let id = this.shader.samplers[i].id;
+			gl.uniform1i(this.shader.samplers[i].location, i);
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}

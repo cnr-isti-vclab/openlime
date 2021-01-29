@@ -6,6 +6,9 @@ import { LayerCombiner } from './LayerCombiner.js'
 
 let lime = new OpenLIME('#openlime');
 
+
+
+combinerTest();
 imageTest();
 
 
@@ -15,7 +18,7 @@ function combinerTest() {
 
 	let layer0 = new Layer({ 
 		type:'image',
-		url: 'assets/svbrdf/vis/ksMap.jpg',
+		url: 'assets/svbrdf/vis/kdMap.jpg',
 		layout: 'image',
 		zindex:0,
 		transform: {x:0, y:0, z:1, a:0 },
@@ -24,7 +27,7 @@ function combinerTest() {
 
 	let layer1 = new Layer({ 
 		type:'image',
-		url: 'assets/svbrdf/vis/kdMap.jpg',
+		url: 'assets/svbrdf/vis/ksMap.jpg',
 		layout: 'image',
 		zindex:0,
 		transform: {x:0, y:0, z:1, a:0 },
@@ -48,7 +51,7 @@ function imageTest() {
 	url: 'assets/svbrdf/vis/ksMap.jpg',
 		layout: 'image',
 		zindex:0,
-		transform: {x:0, y:0, z:1, a:0 },
+		transform: {x:300, y:0, z:1, a:0 },
 		visible:true
 	});
 

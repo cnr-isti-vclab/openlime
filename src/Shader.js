@@ -61,6 +61,9 @@ class Shader {
 			throw new Error('Could not compile WebGL program. \n\n' + info);
 		}
 
+		//sampler units;
+		for(let sampler of this.samplers)
+			sampler.location = gl.getUniformLocation(program, sampler.name);
 
 		this.coordattrib = gl.getAttribLocation(program, "a_position");
 		gl.vertexAttribPointer(this.coordattrib, 3, gl.FLOAT, false, 0, 0);

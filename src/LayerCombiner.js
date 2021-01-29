@@ -22,11 +22,13 @@ class LayerCombiner extends Layer {
 
 		let shader = new ShaderCombiner({
 			'label': 'Combiner',
-			'samplers': [{ id:0, attribute:'source1', type:'vec3' }, { id:1, attribute:'source2', type:'vec3' }],
+			'samplers': [{ id:0, name:'source1', type:'vec3' }, { id:1, name:'source2', type:'vec3' }],
 		});
 
 		this.shaders = {'standard': shader };
 		this.setShader('standard');
+
+//todo if layers check for importjson
 
 		this.textures = [];
 		this.framebuffers = [];
@@ -51,29 +53,32 @@ class LayerCombiner extends Layer {
 			this.createFramebuffers();
 		}
 
+		let gl = this.gl;
+		gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+		var b = [0, 0, 0, 0];
+		gl.clearColor(b[0], b[1], b[2], b[3], b[4]);
 
 
 //TODO optimize: render to texture ONLY if some parameters change!
 //provider di textures... max memory and reference counting.
-		let gl = this.gl;
+
 		for(let i = 0; i < this.layers.length; i++) { 
-//			gl.activeTexture(gl.TEXTURE0 + i);
-//			gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
-
 			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
-			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.textures[i], 0);
-
+			gl.clear(gl.COLOR_BUFFER_BIT);
 			this.layers[i].draw(transform, [0, 0, w, h]);
+			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		}
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
 
 		this.prepareWebGL();
 
-		for(let i = 0; i < this.layers.length; i++) { 
+		for(let i = 0; i < this.layers.length; i++) {
+			gl.uniform1i(this.shader.samplers[i].location, i);
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
 		}
+
 
 		let c = this.layout.tileCoords(0, 0, 0);
 		this.updateTileBuffers(new Float32Array([-1, -1, 0,  -1, 1, 0,  1, 1, 0,  1, -1, 0]), c.tcoords);
@@ -83,10 +88,9 @@ class LayerCombiner extends Layer {
 	createFramebuffers() {
 		let gl = this.gl;
 		for(let i = 0; i < this.layers.length; i++) {
-			let layer = this.layers[i];
+			//TODO for thing like lens, we might want to create SMALLER textures for some layers.
 			const texture = gl.createTexture();
 
-			gl.activeTexture(gl.TEXTURE0 + 0);
 			gl.bindTexture(gl.TEXTURE_2D, texture);
 
 			const level = 0;
@@ -101,9 +105,12 @@ class LayerCombiner extends Layer {
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-			this.textures[i] = texture;
-
 			const framebuffer = gl.createFramebuffer();
+			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+			this.textures[i] = texture;
 			this.framebuffers[i] = framebuffer;
 		}
 	}

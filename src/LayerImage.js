@@ -27,7 +27,7 @@ class LayerImage extends Layer {
 
 		let shader = new Shader({
 			'label': 'Rgb',
-			'samplers': [{ id:0, attribute:'kd', type:'vec3' }],
+			'samplers': [{ id:0, name:'kd', type:'vec3' }],
 			'body': `#version 300 es
 
 precision highp float; 
