@@ -118,54 +118,56 @@ class Layer {
 
 	}
 
+/**
+ *  render the 
+ */
 	draw(transform, viewport) {
 
+		//exception for layout image where we still do not know the image size\
 		//how linear or srgb should be specified here.
 //		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
-		if(this.status != 'ready')
+		if(this.status != 'ready') {
+			if(this.layout.type == 'image' && !this.requested[0])
+				this.loadTile({index:0, level:0, x:0, y:0});
 			return;
+		}
 
 		if(!this.shader)
 			throw "Shader not specified!";
 
-		if(!this.tiles || !this.tiles[0])
+		if(!this.tiles)
 			return;
 
 		this.prepareWebGL();
 
 
 //		find which quads to draw and in case request for them
-		///this is true also for all rasters that are actually layers.
-		if(!(0 in this.requested) && this.tiles[0].missing != 0)
-			this.loadTile({index: 0, level: 0, x: 0, y: 0});
-
-
-//		compute transform matric and draw quads.
-
-		//TODO check, it might be the reverse composition
 		transform = transform.compose(this.transform);
+		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
+
+
+		let torender = this.toRender(needed);
 
 		let matrix = transform.projectionMatrix(viewport);
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
-
-		//just a test: drawing 1 tile.
-		if(this.tiles[0].missing == 0)
-			this.drawTile(0, 0, 0);
+		for(let index in torender) {
+			let tile = torender[index];
+			if(tile.complete)
+				this.drawTile(torender[index]);
+		}
 
 //		gl.uniform1f(t.opacitylocation, t.opacity);
 	}
 
-	drawTile(level, x, y) {
-		var index = this.layout.index(level, x, y);
-		let tile = this.tiles[index];
-		if(tile.missing != 0) 
+	drawTile(tile) {
+
+		let tiledata = this.tiles[tile.index];
+		if(tiledata.missing != 0) 
 			throw "Attempt to draw tile still missing textures"
 
-		//setup matrix
-
-		//setup coords and tex (depends on layout/overlay boundaries).
-		let c = this.layout.tileCoords(level, x, y);
+		//TODO might want to change the function to oaccept tile as argument
+		let c = this.layout.tileCoords(tile.level, tile.x, tile.y);
 
 		//update coords and texture buffers
 		this.updateTileBuffers(c.coords, c.tcoords);
@@ -176,11 +178,52 @@ class Layer {
 			let id = this.shader.samplers[i].id;
 			gl.uniform1i(this.shader.samplers[i].location, i);
 			gl.activeTexture(gl.TEXTURE0 + i);
-			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+			gl.bindTexture(gl.TEXTURE_2D, tiledata.tex[id]);
 		}
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
 	}
 
+/* given the full pyramid of needed tiles for a certain bounding box, 
+ *  starts from the preferred levels and goes up in the hierarchy if a tile is missing.
+ *  complete is true if all of the 'brothers' in the hierarchy are loaded,
+ *  drawing incomplete tiles enhance the resolution early at the cost of some overdrawing and problems with opacity.
+ */
+
+	toRender(needed) {
+
+		var torender = {}; //array of minlevel, actual level, x, y (referred to minlevel)
+		var brothers = {};
+
+		let minlevel = needed.level;
+		var box = needed.pyramid[minlevel];
+
+		for(var y = box[1]; y < box[3]; y++) {
+			for(var x = box[0]; x < box[2]; x++) {
+				var level = minlevel;
+				while(level < this.layout.nlevels) {
+					var d = level -minlevel;
+					var index = this.layout.index(level, x>>d, y>>d);
+					if(this.tiles[index].missing == 0) {
+						torender[index] = {index:index, level:level, x:x>>d, y:y>>d, complete:true};
+						break;
+					} else {
+						var sx = (x>>(d+1))<<1;
+						var sy = (y>>(d+1))<<1;
+						brothers[this.layout.index(level, sx, sy)] = 1;
+						brothers[this.layout.index(level, sx+1, sy)] = 1;
+						brothers[this.layout.index(level, sx+1, sy+1)] = 1;
+						brothers[this.layout.index(level, sx, sy+1)] = 1;
+					}
+					level++;
+				}
+			}
+		}
+		for(let index in brothers) {
+			if(index in torender)
+				torender[index].complete = false;
+		}
+		return torender;
+	}
 
 
 	updateTileBuffers(coords, tcoords) {
@@ -268,7 +311,7 @@ class Layer {
 		if(this.status != 'ready' || !this.visible)
 			return;
 
-		let needed = this.layout.neededBox(transform, this.prefetchBorder);
+		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 		let minlevel = needed.level;
 
 		
@@ -286,7 +329,7 @@ class Layer {
 
 		//look for needed nodes and prefetched nodes (on the pos destination
 		for(let level = this.layout.nlevels-1; level >= minlevel; level--) {
-			let box = needed.box[level];
+			let box = needed.pyramid[level];
 			let tmp = [];
 			for(let y = box[1]; y < box[3]; y++) {
 				for(let x = box[0]; x < box[2]; x++) {
@@ -295,8 +338,8 @@ class Layer {
 						tmp.push({level:level, x:x, y:y, index:index});
 				}
 			}
-			let cx = (box[0] + box[2]-1)/2;
-			let cy = (box[1] + box[3]-1)/2;
+			let cx = (box[0] + box[2])/2;
+			let cy = (box[1] + box[3])/2;
 			//sort tiles by distance to the center TODO: check it's correct!
 			tmp.sort(function(a, b) { return Math.abs(a.x - cx) + Math.abs(a.y - cy) - Math.abs(b.x - cx) - Math.abs(b.y - cy); });
 			this.queued = this.queued.concat(tmp);
@@ -309,7 +352,7 @@ class Layer {
  *
  */
 	preload() {
-		while(Object.keys(this.requested).length < this.maxRequested && this.queued.length > 0) {
+		while(Object.keys(this.requested).length < this.maxRequest && this.queued.length > 0) {
 			var tile = this.queued.shift();
 			this.loadTile(tile);
 		}
@@ -322,19 +365,20 @@ class Layer {
 		this.requested[tile.index] = true;
 
 		for(let sampler of this.shader.samplers) {
-			let path = this.layout.getTileURL(this.rasters[sampler.id].url, tile.level, tile.x, tile.y);
+			let path = this.layout.getTileURL(this.rasters[sampler.id].url, tile.x, tile.y, tile.level );
 			let raster = this.rasters[sampler.id];
 			raster.loadImage(path, this.gl, (tex) => {
 
-				if(this.layout.type == "image") {
-					this.layout.width = raster.width;
-					this.layout.height = raster.height;
+				if(this.layout.type == "image") { //TODO create an ad hoc function for layout image.
+					this.layout.initImage(raster.width, raster.height);
 				}
 				let indextile = this.tiles[tile.index];
 				indextile.tex[sampler.id] = tex;
 				indextile.missing--;
-				if(indextile.missing <= 0)
+				if(indextile.missing <= 0) {
 					this.emit('update');
+					delete this.requested[tile.index];
+				}
 			});
 		}
 	}

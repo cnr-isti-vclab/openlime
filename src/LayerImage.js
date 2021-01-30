@@ -21,8 +21,10 @@ class LayerImage extends Layer {
 		if(!this.layout)
 			this.layout = 'image';
 
-		this.setLayout(new Layout(this.url, this.layout));
 		this.rasters.push(new Raster({ url: this.url, type: 'vec3', attribute: 'kd', colorspace: 'sRGB' }));
+
+		let size = {width:this.width, height:this.height};
+		this.setLayout(new Layout(this.url, this.layout, size));
 
 
 		let shader = new Shader({

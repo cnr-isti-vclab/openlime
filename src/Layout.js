@@ -4,11 +4,11 @@
  * @param {string} type select one among: <image, {@link https://www.microimages.com/documentation/TechGuides/78googleMapsStruc.pdf google}, {@link https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN deepzoom}, {@link http://www.zoomify.com/ZIFFileFormatSpecification.htm zoomify}, {@link https://iipimage.sourceforge.io/ iip}, {@link https://iiif.io/api/image/3.0/ iiif}>
  */
 class Layout {
-	constructor(url, type) {
+	constructor(url, type, options) {
 		Object.assign(this, {
 			type: type,
-			width:1,
-			height: 1,
+			width: null,
+			height: null,
 			tilesize: 256,
 			overlap: 0, 
 			nlevels: 1,        //level 0 is the top, single tile level.
@@ -20,6 +20,8 @@ class Layout {
 			signals: { ready: [] },          //callbacks when the layout is ready.
 			status: null
 		});
+		if(options)
+			Object.assign(this, options);
 
 		if(typeof(url) == 'string') {
 			this.url = url;
@@ -30,9 +32,10 @@ class Layout {
 			}
 
 			switch(this.type) {
-				case 'image':    this.initImage(callback); break;
+				case 'image':    this.initImage(this.width, this.height); break;
 				case 'google':   this.initGoogle(callback); break;
 				case 'deepzoom': this.initDeepzoom(callback); break;
+				case 'zoomify': this.initZoomify(callback); break;
 			}
 			return;
 		}
@@ -48,6 +51,10 @@ class Layout {
 	emit(event) {
 		for(let r of this.signals[event])
 			r(this);
+	}
+
+	isReady() {
+		return this.status == 'ready' && this.width && this.height;
 	}
 
 	boundingBox() {
@@ -108,7 +115,8 @@ class Layout {
 	tileCoords(level, x, y) {
 		let w = this.width;
 		let h = this.height;
-		var tcoords = new Float32Array([0, 0,     0, 1,     1, 1,     1, 0]);
+		//careful: here y is inverted due to textures not being flipped on load (Firefox fault!).
+		var tcoords = new Float32Array([0, 1,     0, 0,     1, 0,     1, 1]);
 
 		if(this.type == "image") {
 			return { 
@@ -124,13 +132,15 @@ class Layout {
 		let tx = side;
 		let ty = side;
 
-		if(this.layout != "google") {  //google does not clip border tiles
-			if(side*(x+1) > this.width) {
-				tx = (this.width  - side*x);
-			}
-			if(side*(y+1) > this.height) {
-				ty = (this.height - side*y);
-			}
+		if(side*(x+1) > this.width) {
+			tx = (this.width  - side*x);
+			if(this.type == 'google')
+				tcoords[4] = tcoords[6] = tx/side;
+		}
+		if(side*(y+1) > this.height) {
+			ty = (this.height - side*y);
+			if(this.type == 'google')
+				tcoords[1] = tcoords[7] = ty/side;
 		}
 
 		var lx  = this.qbox[level][2]-1; //last tile x pos, if so no overlap.
@@ -146,9 +156,15 @@ class Layout {
 			tcoords[4] = tcoords[6] = (x==lx? 1: 1 - dtx);
 			tcoords[3] = tcoords[5] = (y==ly? 1: 1 - dty);
 		}
+		if(this.type == 'google') {
+			//flip Y in coords
+			let tmp = tcoords[1];
+			tcoords[1] = tcoords[7] = tcoords[3];
+			tcoords[3] = tcoords[5] = tmp;
+		}
 		for(let i = 0; i < coords.length; i+= 3) {
-			coords[i]   = coords[i]  *tx + size*x - this.width/2;
-			coords[i+1] = coords[i+1]*ty + size*y + this.height/2;
+			coords[i]   =  coords[i]  *tx + side*x - this.width/2;
+			coords[i+1] = -coords[i+1]*ty - side*y + this.height/2;
 		}
 
 		return { coords: coords, tcoords: tcoords }
@@ -161,20 +177,21 @@ class Layout {
  * @param {border} border is radius (in tiles units) of prefetch
  * @returns {object} with level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.
  */
-	neededBox(viewport, transform, border) {
-		if(this.layout == "image")
-			return { level:0, box: [[0, 0, 1, 1]] };
+	neededBox(viewport, transform, border, bias) {
+		if(this.type == "image")
+			return { level:0, pyramid: [[0, 0, 1, 1]] };
 
-		var minlevel = Math.max(0, Math.min(Math.floor(Math.log2(transform.z) + this.mipmapbias), this.nlevels-1));
+		//here we are computing with inverse levels; level 0 is the bottom!
+		let minlevel = Math.max(0, Math.min(Math.floor(-Math.log2(transform.z) + bias), this.nlevels-1));
 
+		let bbox = transform.getInverseBox(viewport);
 
-		var pyramid = [];
-		for(var level = this.nlevels-1; level >= minlevel; level--) {
-			var bbox = this.getIBox(viewport, transform); //thats the reverse.
-			var side = this.tilesize*Math.pow(2, level);
+		let pyramid = [];
+		for(let level = this.nlevels-1; level >= minlevel; level--) {
+			let side = this.tilesize*Math.pow(2, level);
 
 			//quantized bbox
-			var qbox = [
+			let qbox = [
 				Math.floor((bbox[0])/side),
 				Math.floor((bbox[1])/side),
 				Math.floor((bbox[2]-1)/side) + 1,
@@ -190,25 +207,28 @@ class Layout {
 		return { level:minlevel, pyramid: pyramid };
 	}
 
-
-
 	getTileURL(url, level, x, y) {
 		throw Error("Layout not defined or ready.");
 	}
 
 
 
-	initImage() {
-	}
-
 /*
  * Witdh and height can be recovered once the image is downloaded.
 */
-	initImage(callback) {
+	initImage(width, height) {
+		this.getTileURL = (url, x, y, level) => { return url; }
 		this.nlevels = 1;
 		this.tilesize = 0;
-		this.getTileURL = (url, x, y, level) => { return url; }
-		callback();
+
+		if(width && height) {
+			this.width = width;
+			this.height = height;
+			this.ntiles = this.initBoxes();
+
+			this.status = 'ready';
+			this.emit('ready');
+		}
 	}
 
 /**
@@ -275,7 +295,7 @@ class Layout {
 /**
  * Expects the url to point to ImageProperties.xml file.
  */
-	initZoomify() {
+	initZoomify(callback) {
 		this.overlap = 0;
 		(async () => {
 			var response = await fetch(this.url);
@@ -284,9 +304,13 @@ class Layout {
 				return;
 			}
 			let text = await response.text();
-
-			let tmp = response.split('"');
-			this.tilesize = parseInt(tmp[11]);
+			let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
+			let doc = xml.documentElement;
+			this.tilesize = parseInt(doc.getAttribute('TILESIZE'));
+			this.width = parseInt(doc.getAttribute('WIDTH'));
+			this.height = parseInt(doc.getAttribute('HEIGHT'));
+			if(!this.tilesize || !this.height || !this.width)
+				throw "Missing parameter files for zoomify!";
 
 			let max = Math.max(this.width, this.height)/this.tilesize;
 			this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;

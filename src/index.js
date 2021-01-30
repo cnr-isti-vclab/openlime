@@ -8,8 +8,8 @@ let lime = new OpenLIME('#openlime');
 
 
 
-combinerTest();
-imageTest();
+//combinerTest();
+imageTest('google');
 
 
 
@@ -45,17 +45,34 @@ function combinerTest() {
 
 
 /* IMAGE TEST */
-function imageTest() {
-	let layer0 = new Layer({ 
-		type:'image',
-	url: 'assets/svbrdf/vis/ksMap.jpg',
-		layout: 'image',
-		zindex:0,
-		transform: {x:300, y:0, z:1, a:0 },
-		visible:true
-	});
+function imageTest(layout) {
+	if(!layout)
+		layout = 'image';
 
-	lime.canvas.addLayer('kdmap', layer0);
+	let options = { 'layout': layout, 'type':'image' };
+	console.log(options);
+	switch(layout) {
+		case 'image':
+			options.url = 'assets/svbrdf/vis/glossMap.jpg';
+			break;
+
+		case 'deepzoom': 
+			options.url = 'assets/svbrdf/vis/ksMap.dzi';
+			break;
+
+		case 'google':
+			options.width = 300;
+			options.height = 553;
+			options.url = 'assets/svbrdf/vis/kdMap';
+			break;
+
+		case 'zoomify':
+			options.url = 'assets/svbrdf/vis/glossMap/ImageProperties.xml';
+			break;
+	}
+	console.log(options);
+	let layer0 = new Layer(options);
+	lime.canvas.addLayer('kdmap', layer0); 
 }
 
 
@@ -77,9 +94,10 @@ function brdfTest() {
 
 
 lime.draw();
-lime.canvas.camera.fit([-1000, -1000, +100, +1000]);
+lime.canvas.camera.fit([-500, -500, +500, +500]);
+lime.canvas.camera.fit([-500, -500, +500, +500], 1000);
 
-setTimeout(() => { lime.fit([-150, -276, 150, 277], 100); }, 1000);
+setTimeout(() => { lime.fit([-150, -276, 150, 277], 200); }, 1000);
 
 
 

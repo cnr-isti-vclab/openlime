@@ -61,6 +61,8 @@ class OpenLIME {
 		});
 		resizeobserver.observe(this.canvasElement);
 
+		this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
+
 /*
 //TODO here is not exactly clear which assumption we make on canvas and container div size.
 //		resizeobserver.observe(this.containerElement);
@@ -108,8 +110,6 @@ class OpenLIME {
 
 		if (!this.gl)
 			throw "Could not create a WebGL context";
-
-		
 	}
 
 	/**
@@ -120,7 +120,7 @@ class OpenLIME {
 		this.canvasElement.width = width;
 		this.canvasElement.height = height;
 
-		this.camera.setViewport([0, 0, width, height]);
+		this.camera.setViewport({x:0, y:0, dx:width, dy:height, w:width, h:height});
 		this.canvas.prefetch();
 		this.redraw();
 	}

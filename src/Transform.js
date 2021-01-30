@@ -29,11 +29,57 @@ class Transform {
 
 	apply(x, y) {
 		//TODO! ROTATE
+		let r = this.rotate(x, y, this.a);
 		return { 
-			x: x*this.z + this.x,
-			y: y*this.z + this.y
+			x: r.x*this.z + this.x,
+			y: r.y*this.z + this.y
 		}
 	}
+
+	inverse() {
+		let r = this.rotate(this.x, this.y, -this.a);
+		return new Transform(r.x, r.y, 1/this.z, -this.a, this.t);
+	}
+
+	rotate(x, y, angle) {
+		var angle = Math.PI*(angle/180);
+		var x =  Math.cos(angle)*x + Math.sin(angle)*y;
+		var y = -Math.sin(angle)*x + Math.cos(angle)*y;
+		return {x:x, y:y};
+	}
+
+	compose(transform) {
+		let a = this.copy();
+		let b = transform;
+		a.z *= b.z;
+		a.a += b.a;
+		var r = this.rotate(a.x, a.y, b.a);
+		a.x = r.x*b.z + b.x;
+		a.y = r.y*b.z + b.y; 
+		return a;
+	}
+
+/*  get the bounding box (in image coordinate sppace) of the vieport. 
+ */
+	getInverseBox(viewport) {
+		let inverse = this.inverse();
+		let corners = [
+			{x:viewport.x,               y:viewport.y},
+			{x:viewport.x + viewport.dx, y:viewport.y},
+			{x:viewport.x,               y:viewport.y + viewport.dy},
+			{x:viewport.x + viewport.dx, y:viewport.y + viewport.dy}
+		];
+		let box = [ 1e20, 1e20, -1e20, -1e20];
+		for(let corner of corners) {
+			let p = inverse.apply(corner.x -viewport.w/2, corner.y - viewport.h/2);
+			box[0] = Math.min(p.x, box[0]);
+			box[1] = Math.min(p.y, box[1]);
+			box[2] = Math.max(p.x, box[2]);
+			box[3] = Math.max(p.y, box[3]);
+		}
+		return box;
+	}
+
 	interpolate(source, target, time) {
 		if(time < source.t) return source;
 		if(time > target.t) return target;
@@ -53,24 +99,7 @@ class Transform {
 	}
 
 
-	
-	rotate(x, y, angle) {
-		var angle = Math.PI*(angle/180);
-		var x =  Math.cos(angle)*x + Math.sin(angle)*y;
-		var y = -Math.sin(angle)*x + Math.cos(angle)*y;
-		return {x:x, y:y};
-	}
 
-	compose(transform) {
-		let a = this.copy();
-		let b = transform;
-		a.z *= b.z;
-		a.a += b.a;
-		var r = this.rotate(a.x, a.y, b.a);
-		a.x = r.x*b.z + b.x;
-		a.y = r.y*b.z + b.y; 
-		return a;
-	}
 
 /**
  *  Combines the transform with the viewport to the viewport with the transform
@@ -78,8 +107,8 @@ class Transform {
  */
 	projectionMatrix(viewport) {
 		let z = this.z;
-		let zx = 2*z/(viewport[2] - viewport[0]);
-		let zy = 2*z/(viewport[3] - viewport[1]);
+		let zx = 2*z/viewport.w;
+		let zy = 2*z/viewport.h;
 
 		let dx = (this.x)*zx;
 		let dy = -(this.y)*zy;

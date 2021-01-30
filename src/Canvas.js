@@ -43,7 +43,7 @@ class Canvas {
 	draw(time) {
 		let gl = this.gl;
 		let view = this.camera.viewport;
-		gl.viewport(view[0], view[1], view[2], view[3]);
+		gl.viewport(view.x, view.y, view.dx, view.dy);
 
 		var b = [0, 1, 0, 1];
 		gl.clearColor(b[0], b[1], b[2], b[3], b[4]);
@@ -59,6 +59,7 @@ class Canvas {
 		//draw layers using zindex.
 		let ordered = Object.values(this.layers).sort( (a, b) => a.zindex - b.zindex);
 
+		//NOTICE: camera(pos) must be relative to the WHOLE canvas
 		for(let layer of ordered)
 			if(layer.visible)
 				layer.draw(pos, view)
@@ -72,6 +73,8 @@ class Canvas {
  * @param {object} transform is the camera position (layer will combine with local transform).
  */
 	prefetch(transform) {
+		if(!transform)
+			transform = this.camera.getCurrentTransform(performance.now());
 		for(let id in this.layers)
 			this.layers[id].prefetch(transform, this.camera.viewport);
 	}

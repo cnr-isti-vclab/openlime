@@ -1,6 +1,7 @@
 import { Transform } from './Transform.js'
 
 /**
+ *  NOTICE TODO: the camera has the transform relative to the whole canvas NOT the viewport.
  * @param {object} options
  * * *bounded*: limit translation of the camera to the boundary of the scene.
  * * *maxZoom*: maximum zoom, 1:maxZoom is screen pixel to image pixel ratio.
@@ -10,7 +11,7 @@ class Camera {
 
 	constructor(options) {
 		Object.assign(this, {
-			viewport: [0, 0, 1, 1],
+			viewport: null,
 			bounded: true,
 			maxZoom: 4,
 			minZoom: 'full',
@@ -42,7 +43,7 @@ class Camera {
  */
 	setViewport(view) {
 		this.viewport = view;
-		//TODO!
+		//TODO! update camera to keep the center in place and zoomm to approximate the content before.
 	}
 
 /**
@@ -51,8 +52,8 @@ class Camera {
  */
 	mapToScene(x, y, transform) {
 		//compute coords relative to the center of the viewport.
-		x -= (this.viewport[2] + this.viewport[0])/2;
-		y -= (this.viewport[3] + this.viewport[1])/2;
+		x -= this.viewport.w/2;
+		y -= this.viewport.h/2;
 		x /= transform.z;
 		y /= transform.z;
 		x -= transform.x;
@@ -120,8 +121,11 @@ class Camera {
 		if(!dt) dt = 0;
 
 		//find if we align the topbottom borders or the leftright border.
-		let w = this.viewport[2] - this.viewport[0];
-		let h = this.viewport[3] - this.viewport[1];
+		let w = this.viewport.dx;
+		let h = this.viewport.dy;
+
+		//center of the viewport.
+
 		let bw = box[2] - box[0];
 		let bh = box[3] - box[1];
 		let z = Math.min(w/bw, h/bh);

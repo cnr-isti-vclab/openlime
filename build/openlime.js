@@ -16,16 +16,14 @@
 
 	class Transform {
 		constructor(x, y, z, a, t) {
-			if(x === null) {
-				let initial = { x: 0.0, y: 0.0, z: 1.0, a: 0.0, t: 0.0 };
-				Object.assing(this, initial());
-				return;
-			}
-			this.x = x ? x : 0.0;
-			this.y = y ? y : 0.0;
-			this.z = z ? z : 1.0;
-			this.a = a ? a : 0.0;
-			this.t = t ? t : 0.0;
+			Object.assign(this, { x:0, y:0, z:1, a:0, t:0 });
+
+			if(!t) t = performance.now();
+
+			if(typeof(x) == 'object')
+				Object.assign(this, x);
+			else if(typeof(x) != 'undefined') 
+				Object.assign(this, { x:x, y:y, z:z, a:a, t:t });
 		}
 
 		copy() {
@@ -34,6 +32,13 @@
 			return transform;
 		}
 
+		apply(x, y) {
+			//TODO! ROTATE
+			return { 
+				x: x*this.z + this.x,
+				y: y*this.z + this.y
+			}
+		}
 		interpolate(source, target, time) {
 			if(time < source.t) return source;
 			if(time > target.t) return target;
@@ -52,6 +57,49 @@
 			this.t = time;
 		}
 
+
+		
+		rotate(x, y, angle) {
+			var angle = Math.PI*(angle/180);
+			var x =  Math.cos(angle)*x + Math.sin(angle)*y;
+			var y = -Math.sin(angle)*x + Math.cos(angle)*y;
+			return {x:x, y:y};
+		}
+
+		compose(transform) {
+			let a = this.copy();
+			let b = transform;
+			a.z *= b.z;
+			a.a += b.a;
+			var r = this.rotate(a.x, a.y, b.a);
+			a.x = r.x*b.z + b.x;
+			a.y = r.y*b.z + b.y; 
+			return a;
+		}
+
+	/**
+	 *  Combines the transform with the viewport to the viewport with the transform
+	 * @param {Object} transform a {@link Transform} class.
+	 */
+		projectionMatrix(viewport) {
+			let z = this.z;
+			let zx = 2*z/(viewport[2] - viewport[0]);
+			let zy = 2*z/(viewport[3] - viewport[1]);
+
+			let dx = (this.x)*zx;
+			let dy = -(this.y)*zy;
+
+			let matrix = [
+				 zx,  0,  0,  0, 
+				 0,  zy,  0,  0,
+				 0,  0,  1,  0,
+				dx, dy, 0,  1];
+			return matrix;
+		}
+
+	/**
+	 * TODO (if needed)
+	 */ 
 		toMatrix() {
 			let z = this.z;
 			return [
@@ -61,6 +109,7 @@
 				z*x, z*y, 0,   1,
 			];
 		}
+
 	}
 
 	/**
@@ -121,7 +170,7 @@
 			x -= transform.x;
 			y -= transform.y;
 			//TODO add rotation!
-			return [x, y];
+			return {x:x, y:y};
 		}
 
 
@@ -137,10 +186,35 @@
 	 * @param {number} dx move the camera by dx pixels (positive means the image moves right).
 	 */
 		pan(dt, dx, dy) {
-			if(!dt) dt = 0;
-			this.setPosition(dt, this.x - dx/this.x, this.y - dy/this.z, this.z, this.a);
+			let now = performance.now();
+			let m = this.getCurrentTransform(now);
+			m.dx += dx;
+			m.dy += dy;
 		}
 
+	/* zoom in or out at a specific point in canvas coords!
+	 *
+	 */
+		zoom(dt, dz, x, y) {
+			if(!x) x = 0;
+			if(!y) y = 0;
+
+			let now = performance.now();
+			let m = this.getCurrentTransform(now);
+
+
+			//x, an y should be the center of the zoom.
+
+			console.log("diff:", m.x, x, dz, m.z);
+			m.x += (m.x+x)*(1 - dz);
+			m.y += (m.y+y)*(1 - dz);
+
+	//		m.x += x*(m.z - m.z*dz);
+	//		m.y += y*(m.z - m.z*dz);
+	//		m.x = (m.x - ox + ox*(dz);
+	//		m.y = (m.x - oy + oy*(dz);
+			this.setPosition(dt, m.x, m.y, m.z*dz, m.a);
+		}
 
 		getCurrentTransform(time) {
 			if(time < this.source.t)
@@ -169,14 +243,6 @@
 			let z = Math.min(w/bw, h/bh);
 
 			this.setPosition(dt, (box[0] + box[2])/2, (box[1] + box[3])/2, z, 0);
-		}
-
-	/**
-	 * Combines the projection to the viewport with the transform
-	 * @param {Object} transform a {@link Transform} class.
-	 */
-		projectionMatrix(transform) {
-			
 		}
 
 	}
@@ -358,7 +424,8 @@
 				uniforms: {},
 				name: "",
 				body: "",
-				program: null   //webgl program
+				program: null,      //webgl program
+				needsUpdate: true
 			});
 
 			Object.assign(this, options);
@@ -379,6 +446,9 @@
 			let frag = gl.createShader(gl.FRAGMENT_SHADER);
 			gl.shaderSource(frag, this.fragShaderSrc());
 			gl.compileShader(frag);
+
+			if(this.program)
+				gl.deleteProgram(this.program);
 
 			let program = gl.createProgram();
 
@@ -411,20 +481,20 @@
 			this.matrixlocation = gl.getUniformLocation(program, "u_matrix");
 
 			this.program = program;
+			this.needsUpdate = false;
 		}
 
 		vertShaderSrc() {
-			return `
-#version 100
+			return `#version 300 es
 
 precision highp float; 
 precision highp int; 
 
 uniform mat4 u_matrix;
-attribute vec4 a_position;
-attribute vec2 a_texcoord;
+in vec4 a_position;
+in vec2 a_texcoord;
 
-varying vec2 v_texcoord;
+out vec2 v_texcoord;
 
 void main() {
 	gl_Position = u_matrix * a_position;
@@ -435,365 +505,13 @@ void main() {
 		fragShaderSrc() {
 			return this.body;
 		}
-
-
-
 	}
-
-	/**
-	 * @param {string} id unique id for layer.
-	 * @param {object} options
-	 *  * *label*:
-	 *  * *transform*: relative coordinate [transformation](#transform) from layer to canvas
-	 *  * *visible*: where to render or not
-	 *  * *zindex*: stack ordering of the layer higher on top
-	 *  * *opacity*: from 0.0 to 1.0 (0.0 is fully transparent)
-	 *  * *rasters*: [rasters](#raster) used for rendering.
-	 *  * *controls*: shader parameters that can be modified (eg. light direction)
-	 *  * *shader*: [shader](#shader) used for rendering
-	 *  * *layout*: all the rasters in the layer MUST have the same layout.
-	 *  * *mipmapBias*: default 0.5, when to switch between different levels of the mipmap
-	 *  * *prefetchBorder*: border tiles prefetch (default 1)
-	 *  * *maxRequest*: max number of simultaneous requests (should be GLOBAL not per layer!) default 4
-	 */
-
-	class Layer$1 {
-		constructor(options) {
-
-			Object.assign(this, {
-				transform: new Transform(),
-				visible: true,
-				zindex: 0,
-				opacity: 1.0,
-
-				rasters: [],
-				controls: {},
-				shaders: {},
-				layout: 'image',
-				shader: null, //current shader.
-				gl: null,
-
-				prefetchBorder: 1,
-				mipmapBias: 0.5,
-				maxRequest: 4,
-
-				signals: { update: [] },  //update callbacks for a redraw
-
-		//internal stuff, should not be passed as options.
-				tiles: [],      //keep references to each texture (and status) indexed by level, x and y.
-								//each tile is tex: [.. one for raster ..], missing: 3 missing tex before tile is ready.
-								//only raster used by the shader will be loade.
-				queued: [],     //queue of tiles to be loaded.
-				requested: {},  //tiles requested.
-			});
-
-			Object.assign(this, options);
-
-			//create from derived class if type specified
-			if(this.type) {
-				if(this.type in this.types) {
-					options.type = null; //avoid infinite recursion!
-					return this.types[this.type](options);
-				}
-				throw "Layer type: " + this.type + " has not been loaded";
-			}
-
-			//create members from options.
-			this.rasters = this.rasters.map((raster) => new Raster(raster));
-
-
-			//layout needs to becommon among all rasters.
-			if(typeof(this.layout) != 'object' && this.rasters.length) 
-				this.setLayout(new Layout(this.rasters[0], this.layout));
-
-			if(this.shader)
-				this.shader = new Shader(this.shader);
-		}
-
-		addEvent(event, callback) {
-			this.signals[event].push(callback);
-		}
-
-		emit(event) {
-			for(let r of this.signals[event])
-				r(this);
-		}
-
-		setLayout(layout) {
-			let callback = () => { 
-				this.status = 'ready';
-				this.setupTiles(); //setup expect status to be ready!
-				this.emit('update');
-			};
-			if(layout.status == 'ready') //layout already initialized.
-				callback();
-			else
-				layout.addEvent('ready', callback);
-			this.layout = layout;
-		}
-
-
-	/**
-	 * @param {bool} visible
-	 */
-		setVisible(visible) {
-			this.visible = visible;
-			this.emit('update');
-		}
-
-	/**
-	 * @param {int} zindex
-	 */
-		setZindex(zindex) {
-			this.zindex = zindex;
-			this.emit('update');
-		}
-
-		boundingBox() {
-			return layuout.boundingBox();
-
-		}
-
-		draw(transform, viewport) {
-
-			//how linear or srgb should be specified here.
-	//		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
-			if(this.status != 'ready')
-				return;
-
-			if(!this.shader)
-				throw "Shader not specified!";
-
-			if(!this.tiles || !this.tiles[0])
-				return;
-
-			this.prepareWebGL();
-
-	//		find which quads to draw and in case request for them
-			if(!(0 in this.requested) && this.tiles[0].missing != 0)
-				this.loadTile({index: 0, level: 0, x: 0, y: 0});
-
-
-	//		compute transform matric and draw quads.
-			//TODO use  Transform.toMatrix and combine layer transform.
-
-			let w = this.layout.width;
-			let h = this.layout.height;
-
-			let z = transform.z;
-			let zx = 2*z/(viewport[2] - viewport[0]);
-			let zy = 2*z/(viewport[3] - viewport[1]);
-
-			let dx = (transform.x)*zx;
-			let dy = -(transform.y)*zy;
-			let dz = this.zindex;
-
-			let matrix = [
-				 zx,  0,  0,  0, 
-				 0,  zy,  0,  0,
-				 0,  0,  1,  0,
-				dx, dy, dz,  1];
-
-			this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
-
-
-			if(this.tiles[0].missing == 0)
-				this.drawTile(transform, 0, 0, 0);
-
-	//		gl.uniform1f(t.opacitylocation, t.opacity);
-		}
-
-		drawTile(transform, level, x, y) {
-			var index = this.layout.index(level, x, y);
-			let tile = this.tiles[index];
-			if(tile.missing != 0) 
-				throw "Attempt to draw tile still missing textures"
-
-			//setup matrix
-
-			//setup coords and tex (depends on layout/overlay boundaries).
-			let c = this.layout.tileCoords(level, x, y);
-
-			//update coords and texture buffers
-			this.updateTileBuffers(c.coords, c.tcoords);
-
-			//bind textures
-			let gl = this.gl;
-			for(var i = 0; i < this.shader.samplers.length; i++) {
-				let id = this.shader.samplers[i].id;
-				gl.activeTexture(gl.TEXTURE0 + i);
-				gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
-			}
-			gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
-		}
-
-
-
-		updateTileBuffers(coords, tcoords) {
-			let gl = this.gl;
-			//TODO to reduce the number of calls (probably not needed) we can join buffers, and just make one call per draw! (except the bufferData, which is per node)
-			gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
-			gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
-
-			gl.vertexAttribPointer(this.shader.coordattrib, 3, gl.FLOAT, false, 0, 0);
-			gl.enableVertexAttribArray(this.shader.coordattrib);
-
-			gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
-			gl.bufferData(gl.ARRAY_BUFFER, tcoords, gl.STATIC_DRAW);
-
-			gl.vertexAttribPointer(this.shader.texattrib, 2, gl.FLOAT, false, 0, 0);
-			gl.enableVertexAttribArray(this.shader.texattrib);
-		}
-
-		setShader(id) {
-			if(!id in this.shaders)
-				throw "Unknown shader: " + id;
-			this.shader = this.shaders[id];
-			this.setupTiles();
-		}
-
-	/**
-	 *  If layout is ready and shader is assigned, creates or update tiles to keep track of what is missing.
-	 */
-		setupTiles() {
-			if(!this.shader || !this.layout || this.layout.status != 'ready')
-				return;
-
-			let ntiles = this.layout.ntiles;
-
-			if(typeof(this.tiles) != 'array' || this.tiles.length != ntiles) {
-				this.tiles = new Array(ntiles);
-				for(let i = 0; i < ntiles; i++)
-					this.tiles[i] = { tex:new Array(this.shader.samplers.length), missing:this.shader.samplers.length };
-				return;
-			}
-
-			for(let tile of this.ntiles) {
-				tile.missing = this.shader.samplers.length;			for(let sampler of this.shader.samplers) {
-					if(tile.tex[sampler.id])
-						tile.missing--;
-				}
-			}
-		}
-
-		prepareWebGL() {
-			//interpolate uniforms from controls!
-			//update uniforms
-
-			let gl = this.gl;
-
-			if(!this.shader.program) {
-				this.shader.createProgram(gl);
-				//send uniforms here!
-			}
-
-			gl.useProgram(this.shader.program);
-
-			if(this.ibuffer) //this part might go into another function.
-				return;
-
-			this.ibuffer = gl.createBuffer();
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuffer);
-			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([3,2,1,3,1,0]), gl.STATIC_DRAW);
-
-			this.vbuffer = gl.createBuffer();
-			gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]), gl.STATIC_DRAW);
-
-			this.tbuffer = gl.createBuffer();
-			gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0,  0, 1,  1, 1,  1, 0]), gl.STATIC_DRAW);
-		}
-
-	/**
-	*  @param {object] transform is the canvas coordinate transformation
-	*  @param {viewport} is the viewport for the rendering, note: for lens might be different! Where we change it? here layer should know!
-	*/
-		prefetch(transform, viewport) {
-			if(this.status != 'ready' || !this.visible)
-				return;
-
-			let needed = this.layout.neededBox(transform, this.prefetchBorder);
-			let minlevel = needed.level;
-
-			
-
-	//TODO is this optimization (no change => no prefetch?) really needed?
-	/*		let box = needed.box[minlevel];
-			if(this.previouslevel == minlevel && box[0] == t.previousbox[0] && box[1] == this.previousbox[1] &&
-			box[2] == this.previousbox[2] && box[3] == this.previousbox[3])
-				return;
-
-			this.previouslevel = minlevel;
-			this.previousbox = box; */
-
-			this.queued = [];
-
-			//look for needed nodes and prefetched nodes (on the pos destination
-			for(let level = this.layout.nlevels-1; level >= minlevel; level--) {
-				let box = needed.box[level];
-				let tmp = [];
-				for(let y = box[1]; y < box[3]; y++) {
-					for(let x = box[0]; x < box[2]; x++) {
-						let index = this.layout.index(level, x, y);
-						if(this.tiles[index].missing != 0 && !this.requested[index])
-							tmp.push({level:level, x:x, y:y, index:index});
-					}
-				}
-				let cx = (box[0] + box[2]-1)/2;
-				let cy = (box[1] + box[3]-1)/2;
-				//sort tiles by distance to the center TODO: check it's correct!
-				tmp.sort(function(a, b) { return Math.abs(a.x - cx) + Math.abs(a.y - cy) - Math.abs(b.x - cx) - Math.abs(b.y - cy); });
-				this.queued = this.queued.concat(tmp);
-			}
-			this.preload();
-		}
-
-	/**
-	 * Checks load tiles from the queue. TODO this needs to be global! Not per layer.
-	 *
-	 */
-		preload() {
-			while(Object.keys(this.requested).length < this.maxRequested && this.queued.length > 0) {
-				var tile = this.queued.shift();
-				this.loadTile(tile);
-			}
-		}
-
-		loadTile(tile) {
-			if(this.requested[tile.index])
-				throw "AAARRGGHHH double request!";
-
-			this.requested[tile.index] = true;
-
-			for(let sampler of this.shader.samplers) {
-				let path = this.layout.getTileURL(this.rasters[sampler.id].url, tile.level, tile.x, tile.y);
-				let raster = this.rasters[sampler.id];
-				raster.loadImage(path, this.gl, (tex) => {
-
-					if(this.layout.type == "image") {
-						this.layout.width = raster.width;
-						this.layout.height = raster.height;
-					}
-					let indextile = this.tiles[tile.index];
-					indextile.tex[sampler.id] = tex;
-					indextile.missing--;
-					if(indextile.missing <= 0)
-						this.emit('update');
-				});
-			}
-		}
-
-	}
-
-
-	Layer$1.prototype.types = {};
 
 	/**
 	 * @param {string|Object} url URL of the image or the tiled config file, 
 	 * @param {string} type select one among: <image, {@link https://www.microimages.com/documentation/TechGuides/78googleMapsStruc.pdf google}, {@link https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN deepzoom}, {@link http://www.zoomify.com/ZIFFileFormatSpecification.htm zoomify}, {@link https://iipimage.sourceforge.io/ iip}, {@link https://iiif.io/api/image/3.0/ iiif}>
 	 */
-	class Layout$1 {
+	class Layout {
 		constructor(url, type) {
 			Object.assign(this, {
 				type: type,
@@ -903,7 +621,6 @@ void main() {
 			if(this.type == "image") {
 				return { 
 					coords: new Float32Array([-w/2, -h/2, 0,  -w/2, h/2, 0,  w/2, h/2, 0,  w/2, -h/2, 0]),
-	//				coords: new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]),
 					tcoords: tcoords 
 				};
 			}
@@ -1099,6 +816,344 @@ void main() {
 	}
 
 	/**
+	 * @param {string} id unique id for layer.
+	 * @param {object} options
+	 *  * *label*:
+	 *  * *transform*: relative coordinate [transformation](#transform) from layer to canvas
+	 *  * *visible*: where to render or not
+	 *  * *zindex*: stack ordering of the layer higher on top
+	 *  * *opacity*: from 0.0 to 1.0 (0.0 is fully transparent)
+	 *  * *rasters*: [rasters](#raster) used for rendering.
+	 *  * *controls*: shader parameters that can be modified (eg. light direction)
+	 *  * *shader*: [shader](#shader) used for rendering
+	 *  * *layout*: all the rasters in the layer MUST have the same layout.
+	 *  * *mipmapBias*: default 0.5, when to switch between different levels of the mipmap
+	 *  * *prefetchBorder*: border tiles prefetch (default 1)
+	 *  * *maxRequest*: max number of simultaneous requests (should be GLOBAL not per layer!) default 4
+	 */
+
+	class Layer$1 {
+		constructor(options) {
+
+			Object.assign(this, {
+				transform: new Transform(),
+				visible: true,
+				zindex: 0,
+				opacity: 1.0,
+
+				rasters: [],
+				controls: {},
+				shaders: {},
+				layout: 'image',
+				shader: null, //current shader.
+				gl: null,
+
+				prefetchBorder: 1,
+				mipmapBias: 0.5,
+				maxRequest: 4,
+
+				signals: { update: [] },  //update callbacks for a redraw
+
+		//internal stuff, should not be passed as options.
+				tiles: [],      //keep references to each texture (and status) indexed by level, x and y.
+								//each tile is tex: [.. one for raster ..], missing: 3 missing tex before tile is ready.
+								//only raster used by the shader will be loade.
+				queued: [],     //queue of tiles to be loaded.
+				requested: {},  //tiles requested.
+			});
+
+			Object.assign(this, options);
+
+			//create from derived class if type specified
+			if(this.type) {
+				if(this.type in this.types) {
+					options.type = null; //avoid infinite recursion!
+					return this.types[this.type](options);
+				}
+				throw "Layer type: " + this.type + " has not been loaded";
+			}
+
+			//create members from options.
+			this.rasters = this.rasters.map((raster) => new Raster(raster));
+			this.transform = new Transform(this.transform);
+
+			//layout needs to becommon among all rasters.
+			if(typeof(this.layout) != 'object' && this.rasters.length) 
+				this.setLayout(new Layout(this.rasters[0], this.layout));
+
+			if(this.shader)
+				this.shader = new Shader(this.shader);
+		}
+
+		addEvent(event, callback) {
+			this.signals[event].push(callback);
+		}
+
+		emit(event) {
+			for(let r of this.signals[event])
+				r(this);
+		}
+
+		setLayout(layout) {
+			let callback = () => { 
+				this.status = 'ready';
+				this.setupTiles(); //setup expect status to be ready!
+				this.emit('update');
+			};
+			if(layout.status == 'ready') //layout already initialized.
+				callback();
+			else
+				layout.addEvent('ready', callback);
+			this.layout = layout;
+		}
+
+
+	/**
+	 * @param {bool} visible
+	 */
+		setVisible(visible) {
+			this.visible = visible;
+			this.emit('update');
+		}
+
+	/**
+	 * @param {int} zindex
+	 */
+		setZindex(zindex) {
+			this.zindex = zindex;
+			this.emit('update');
+		}
+
+		boundingBox() {
+			return layuout.boundingBox();
+
+		}
+
+		draw(transform, viewport) {
+
+			//how linear or srgb should be specified here.
+	//		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+			if(this.status != 'ready')
+				return;
+
+			if(!this.shader)
+				throw "Shader not specified!";
+
+			if(!this.tiles || !this.tiles[0])
+				return;
+
+			this.prepareWebGL();
+
+
+	//		find which quads to draw and in case request for them
+			///this is true also for all rasters that are actually layers.
+			if(!(0 in this.requested) && this.tiles[0].missing != 0)
+				this.loadTile({index: 0, level: 0, x: 0, y: 0});
+
+
+	//		compute transform matric and draw quads.
+
+			//TODO check, it might be the reverse composition
+			transform = transform.compose(this.transform);
+
+			let matrix = transform.projectionMatrix(viewport);
+			this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
+
+
+			//just a test: drawing 1 tile.
+			if(this.tiles[0].missing == 0)
+				this.drawTile(0, 0, 0);
+
+	//		gl.uniform1f(t.opacitylocation, t.opacity);
+		}
+
+		drawTile(level, x, y) {
+			var index = this.layout.index(level, x, y);
+			let tile = this.tiles[index];
+			if(tile.missing != 0) 
+				throw "Attempt to draw tile still missing textures"
+
+			//setup matrix
+
+			//setup coords and tex (depends on layout/overlay boundaries).
+			let c = this.layout.tileCoords(level, x, y);
+
+			//update coords and texture buffers
+			this.updateTileBuffers(c.coords, c.tcoords);
+
+			//bind textures
+			let gl = this.gl;
+			for(var i = 0; i < this.shader.samplers.length; i++) {
+				let id = this.shader.samplers[i].id;
+				gl.activeTexture(gl.TEXTURE0 + i);
+				gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+			}
+			gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
+		}
+
+
+
+		updateTileBuffers(coords, tcoords) {
+			let gl = this.gl;
+			//TODO to reduce the number of calls (probably not needed) we can join buffers, and just make one call per draw! (except the bufferData, which is per node)
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+
+			gl.vertexAttribPointer(this.shader.coordattrib, 3, gl.FLOAT, false, 0, 0);
+			gl.enableVertexAttribArray(this.shader.coordattrib);
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, tcoords, gl.STATIC_DRAW);
+
+			gl.vertexAttribPointer(this.shader.texattrib, 2, gl.FLOAT, false, 0, 0);
+			gl.enableVertexAttribArray(this.shader.texattrib);
+		}
+
+		setShader(id) {
+			if(!id in this.shaders)
+				throw "Unknown shader: " + id;
+			this.shader = this.shaders[id];
+			this.setupTiles();
+		}
+
+	/**
+	 *  If layout is ready and shader is assigned, creates or update tiles to keep track of what is missing.
+	 */
+		setupTiles() {
+			if(!this.shader || !this.layout || this.layout.status != 'ready')
+				return;
+
+			let ntiles = this.layout.ntiles;
+
+			if(typeof(this.tiles) != 'array' || this.tiles.length != ntiles) {
+				this.tiles = new Array(ntiles);
+				for(let i = 0; i < ntiles; i++)
+					this.tiles[i] = { tex:new Array(this.shader.samplers.length), missing:this.shader.samplers.length };
+				return;
+			}
+
+			for(let tile of this.ntiles) {
+				tile.missing = this.shader.samplers.length;			for(let sampler of this.shader.samplers) {
+					if(tile.tex[sampler.id])
+						tile.missing--;
+				}
+			}
+		}
+
+		prepareWebGL() {
+			//interpolate uniforms from controls!
+			//update uniforms
+
+			let gl = this.gl;
+
+			if(this.shader.needsUpdate) {
+				this.shader.createProgram(gl);
+				//send uniforms here!
+			}
+
+			gl.useProgram(this.shader.program);
+
+			if(this.ibuffer) //this part might go into another function.
+				return;
+
+			this.ibuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuffer);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([3,2,1,3,1,0]), gl.STATIC_DRAW);
+
+			this.vbuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]), gl.STATIC_DRAW);
+
+			this.tbuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0,  0, 1,  1, 1,  1, 0]), gl.STATIC_DRAW);
+		}
+
+	/**
+	*  @param {object] transform is the canvas coordinate transformation
+	*  @param {viewport} is the viewport for the rendering, note: for lens might be different! Where we change it? here layer should know!
+	*/
+		prefetch(transform, viewport) {
+			if(this.status != 'ready' || !this.visible)
+				return;
+
+			let needed = this.layout.neededBox(transform, this.prefetchBorder);
+			let minlevel = needed.level;
+
+			
+
+	//TODO is this optimization (no change => no prefetch?) really needed?
+	/*		let box = needed.box[minlevel];
+			if(this.previouslevel == minlevel && box[0] == t.previousbox[0] && box[1] == this.previousbox[1] &&
+			box[2] == this.previousbox[2] && box[3] == this.previousbox[3])
+				return;
+
+			this.previouslevel = minlevel;
+			this.previousbox = box; */
+
+			this.queued = [];
+
+			//look for needed nodes and prefetched nodes (on the pos destination
+			for(let level = this.layout.nlevels-1; level >= minlevel; level--) {
+				let box = needed.box[level];
+				let tmp = [];
+				for(let y = box[1]; y < box[3]; y++) {
+					for(let x = box[0]; x < box[2]; x++) {
+						let index = this.layout.index(level, x, y);
+						if(this.tiles[index].missing != 0 && !this.requested[index])
+							tmp.push({level:level, x:x, y:y, index:index});
+					}
+				}
+				let cx = (box[0] + box[2]-1)/2;
+				let cy = (box[1] + box[3]-1)/2;
+				//sort tiles by distance to the center TODO: check it's correct!
+				tmp.sort(function(a, b) { return Math.abs(a.x - cx) + Math.abs(a.y - cy) - Math.abs(b.x - cx) - Math.abs(b.y - cy); });
+				this.queued = this.queued.concat(tmp);
+			}
+			this.preload();
+		}
+
+	/**
+	 * Checks load tiles from the queue. TODO this needs to be global! Not per layer.
+	 *
+	 */
+		preload() {
+			while(Object.keys(this.requested).length < this.maxRequested && this.queued.length > 0) {
+				var tile = this.queued.shift();
+				this.loadTile(tile);
+			}
+		}
+
+		loadTile(tile) {
+			if(this.requested[tile.index])
+				throw "AAARRGGHHH double request!";
+
+			this.requested[tile.index] = true;
+
+			for(let sampler of this.shader.samplers) {
+				let path = this.layout.getTileURL(this.rasters[sampler.id].url, tile.level, tile.x, tile.y);
+				let raster = this.rasters[sampler.id];
+				raster.loadImage(path, this.gl, (tex) => {
+
+					if(this.layout.type == "image") {
+						this.layout.width = raster.width;
+						this.layout.height = raster.height;
+					}
+					let indextile = this.tiles[tile.index];
+					indextile.tex[sampler.id] = tex;
+					indextile.missing--;
+					if(indextile.missing <= 0)
+						this.emit('update');
+				});
+			}
+		}
+
+	}
+
+
+	Layer$1.prototype.types = {};
+
+	/**
 	 * @param {dom} element DOM element where mouse events will be listening.
 	 * @param {options} options 
 	 * * *delay* inertia of the movement in ms.
@@ -1109,7 +1164,7 @@ void main() {
 			Object.assign(this, {
 				element:element,
 				debug: true,
-				delay: 100
+				delay: 0
 			});
 
 			Object.assign(this, options);
@@ -1123,11 +1178,11 @@ void main() {
 		
 		mouseMove(x, y, e) { if(this.debug) console.log('Move ', x, y); }
 
-		zoomDelta(x, y, d, e) {  if(this.debug) console.log('Delta ', x, y, d); }
+		wheelDelta(x, y, d, e) {  if(this.debug) console.log('Delta ', x, y, d); }
 
-		zoomStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
+		pinchStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
 
-		zoomMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
+		pinchMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
 
 
 		eventToPosition(e, touch) {
@@ -1146,7 +1201,7 @@ void main() {
 		initEvents() {
 
 	/* //TODO when the canvas occupy only part of the document we would like to prevent any mouseover/etc 
-	  when the user is panning !! Example demo code here.
+	  when the user is panning !! Example demo code here, to be testes.
 
 	function preventGlobalMouseEvents () {
 	  document.body.style['pointer-events'] = 'none';
@@ -1203,7 +1258,7 @@ void main() {
 				return false;
 			});
 
-			element.addEventListener('touchstart', function (e) {
+			element.addEventListener('touchstart', (e) => {
 				e.preventDefault();
 		
 				let pos0 = this.eventToPosition(e, 0);
@@ -1212,26 +1267,35 @@ void main() {
 
 				} else if (e.targetTouches.length == 2) {
 					let pos1 = this.eventToPosition(e, 1);
-					this.zoomStart(pos0, pos1, e);
+					this.pinchStart(pos0, pos1, e);
 				}
 			}, false);
 
-			element.addEventListener('touchend', function (e) {
+			element.addEventListener('touchend', (e) => {
 				let pos = this.eventToPosition(e);
 				this.mouseUp(pos.x, pos.y, e);
 				e.preventDefault();
 			}, false);
 
-			element.addEventListener('touchmove', function (evt) {
+			element.addEventListener('touchmove', (e) => {
 				let pos0 = this.eventToPosition(e, 0);
 				if (e.targetTouches.length == 1) {
 					this.mouseMove(pos0.x, pos0.y, e);
 				} else if (e.targetTouches.length == 2) {
 					let pos1 = this.eventToPosition(e, 1);
-					this.zoomMove(pos0, pos1, e);
+					this.pinchMove(pos0, pos1, e);
 				}
 				e.preventDefault();
 			}, false);
+
+			element.addEventListener('wheel', (e) => {
+				//TODO support for delta X?
+				let pos = this.eventToPosition(e);
+
+				let delta = e.deltaY > 0? 1 : -1;
+				this.wheelDelta(pos.x, pos.y, delta, e);
+				e.preventDefault();
+			});
 
 		}
 	}
@@ -1241,6 +1305,7 @@ void main() {
 		constructor(element, camera, options) {
 			super(element, options);
 			this.camera = camera;
+			this.zoomAmount = 1.2;
 			this.panning = false;
 			this.startPosition = null;
 			this.startMouse = null;
@@ -1276,15 +1341,18 @@ void main() {
 
 
 			this.camera.setPosition(this.delay, ex, ey, z, a);
-
-			if(this.debug1) console.log('Move ', x, y); 
 		}
 
-		zoomDelta(x, y, d, e) {  if(this.debug) console.log('Delta ', x, y, d); }
+		wheelDelta(x, y, delta, e) { 
+			console.log(x, y);
+			let pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
+			let zoom = Math.pow(this.zoomAmount, delta);
+			this.camera.zoom(this.delay, zoom, pos.x, pos.y, );
+		}
 
-		zoomStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
+		pinchStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
 
-		zoomMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
+		pinchMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
 
 	}
 
@@ -1435,7 +1503,7 @@ void main() {
 	exports.Camera = Camera;
 	exports.Canvas = Canvas;
 	exports.Layer = Layer$1;
-	exports.Layout = Layout$1;
+	exports.Layout = Layout;
 	exports.OpenLIME = OpenLIME;
 	exports.Raster = Raster;
 	exports.Shader = Shader;

@@ -43,8 +43,8 @@ class LayerCombiner extends Layer {
 		if(!this.shader)
 			throw "Shader not specified!";
 
-		let w = viewport[2] - viewport[0];
-		let h = viewport[3] - viewport[1];
+		let w = viewport.dx;
+		let h = viewport.dy;
 
 		if(!this.framebuffers.length || this.layout.width != w || this.layout.height != h) {
 			this.deleteFramebuffers();
@@ -54,7 +54,7 @@ class LayerCombiner extends Layer {
 		}
 
 		let gl = this.gl;
-		gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+		gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
 
 		var b = [0, 0, 0, 0];
 		gl.clearColor(b[0], b[1], b[2], b[3], b[4]);
@@ -80,8 +80,10 @@ class LayerCombiner extends Layer {
 		}
 
 
-		let c = this.layout.tileCoords(0, 0, 0);
-		this.updateTileBuffers(new Float32Array([-1, -1, 0,  -1, 1, 0,  1, 1, 0,  1, -1, 0]), c.tcoords);
+
+		this.updateTileBuffers(
+			new Float32Array([-1, -1, 0,  -1, 1, 0,  1, 1, 0,  1, -1, 0]), 
+			new Float32Array([ 0,  0,      0, 1,     1, 1,     1,  0]));
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
 	}
 

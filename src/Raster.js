@@ -47,9 +47,9 @@ class Raster {
 				var isFirefox = typeof InstallTrigger !== 'undefined';
 				//firefox does not support options for this call, BUT the image is automatically flipped.
 				if(isFirefox) {
-					createImageBitmap(blob).then((img) => this.loadTexture(img, callback));
+					createImageBitmap(blob).then((img) => this.loadTexture(gl, img, callback));
 				} else {
-					createImageBitmap(blob, { imageOrientation: 'flipY' }).then((img) => this.loadTexture(gl, img, callback));
+					createImageBitmap(blob, { imageOrientation1: 'flipY' }).then((img) => this.loadTexture(gl, img, callback));
 				}
 
 			} else { //fallback for IOS
