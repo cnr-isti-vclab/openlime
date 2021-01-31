@@ -57,7 +57,7 @@ class LayerCombiner extends Layer {
 		gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
 
 		var b = [0, 0, 0, 0];
-		gl.clearColor(b[0], b[1], b[2], b[3], b[4]);
+		gl.clearColor(b[0], b[1], b[2], b[3]);
 
 
 //TODO optimize: render to texture ONLY if some parameters change!
@@ -66,7 +66,7 @@ class LayerCombiner extends Layer {
 		for(let i = 0; i < this.layers.length; i++) { 
 			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
 			gl.clear(gl.COLOR_BUFFER_BIT);
-			this.layers[i].draw(transform, [0, 0, w, h]);
+			this.layers[i].draw(transform, {x:0, y:0, dx:w, dy:h, w:w, h:h});
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		}
 

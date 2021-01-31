@@ -8,8 +8,8 @@ let lime = new OpenLIME('#openlime');
 
 
 
-//combinerTest();
-imageTest('google');
+combinerTest();
+//imageTest('image');
 
 
 
@@ -21,8 +21,8 @@ function combinerTest() {
 		url: 'assets/svbrdf/vis/kdMap.jpg',
 		layout: 'image',
 		zindex:0,
-		transform: {x:0, y:0, z:1, a:0 },
-		visible:true
+		transform: {x:100, y:0, z:1, a:0 },
+		visible:false
 	});
 
 	let layer1 = new Layer({ 

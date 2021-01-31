@@ -9,7 +9,7 @@ class ShaderCombiner extends Shader {
 	constructor(options) {
 		super(options);
 
-		this.mode = 'diff', //Lighten Darken Contrast Inversion HSV components LCh components
+		this.mode = 'mean', //Lighten Darken Contrast Inversion HSV components LCh components
 		this.samplers = [
 			{ id:0, name:'source1', type:'vec3' },
 			{ id:1, name:'source2', type:'vec3' }

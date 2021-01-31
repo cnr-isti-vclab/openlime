@@ -37,6 +37,7 @@ class Canvas {
 		layer.addEvent('update', () => { console.log('update!'); this.emit('update'); });
 		layer.gl = this.gl;
 		this.layers[id] = layer;
+		this.prefetch();
 	}
 
 
@@ -75,8 +76,11 @@ class Canvas {
 	prefetch(transform) {
 		if(!transform)
 			transform = this.camera.getCurrentTransform(performance.now());
-		for(let id in this.layers)
-			this.layers[id].prefetch(transform, this.camera.viewport);
+		for(let id in this.layers) {
+			let layer = this.layers[id];
+			if(layer.visible)
+				layer.prefetch(transform, this.camera.viewport);
+		}
 	}
 }
 

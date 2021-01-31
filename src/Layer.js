@@ -31,6 +31,7 @@ class Layer {
 			opacity: 1.0,
 
 			rasters: [],
+			layers: [],
 			controls: {},
 			shaders: {},
 			layout: 'image',
@@ -126,25 +127,18 @@ class Layer {
 		//exception for layout image where we still do not know the image size\
 		//how linear or srgb should be specified here.
 //		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
-		if(this.status != 'ready') {
-			if(this.layout.type == 'image' && !this.requested[0])
-				this.loadTile({index:0, level:0, x:0, y:0});
-			return;
-		}
 
 		if(!this.shader)
 			throw "Shader not specified!";
 
-		if(!this.tiles)
+		if(!this.status == 'ready' || this.tiles.length == 0)
 			return;
 
 		this.prepareWebGL();
 
-
 //		find which quads to draw and in case request for them
 		transform = transform.compose(this.transform);
 		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
-
 
 		let torender = this.toRender(needed);
 
@@ -308,8 +302,20 @@ class Layer {
 *  @param {viewport} is the viewport for the rendering, note: for lens might be different! Where we change it? here layer should know!
 */
 	prefetch(transform, viewport) {
-		if(this.status != 'ready' || !this.visible)
+
+		if(this.layers.length != 0) { //combine layers
+			for(let layer of this.layers)
+				layer.prefetch(transform, viewport);
+		}
+
+		if(this.rasters.length == 0)
 			return;
+
+		if(this.status != 'ready') {
+			if(this.layout.type == 'image' && !this.requested[0])
+				this.loadTile({index:0, level:0, x:0, y:0});
+			return;
+		}
 
 		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 		let minlevel = needed.level;
