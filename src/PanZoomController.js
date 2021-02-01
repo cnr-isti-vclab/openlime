@@ -13,8 +13,8 @@ class PanZoomController extends Controller {
 	}
 
 	mouseDown(x, y, e) {
-		if(!(e.buttons & 0x1)) 
-			return;
+		// if(!(e.buttons & 0x1)) 
+		// 	return;
 		this.panning = true; 
 		this.startMouse = { x: x, y: y };
 

@@ -4,13 +4,13 @@
  * * *delay* inertia of the movement in ms.
  */
 
- //https://github.com/cnr-isti-vclab/relight/blob/master/js/relight-interface.js
-//import * as Hammer from 'hammerjs';
+//https://github.com/cnr-isti-vclab/relight/blob/master/js/relight-interface.js
+import * as Hammer from 'hammerjs';
 
 class Controller {
 	constructor(element, options) {
 		Object.assign(this, {
-			element:element,
+			element: element,
 			debug: true,
 			delay: 0
 		});
@@ -20,18 +20,26 @@ class Controller {
 		this.initEvents();
 	}
 
-	mouseDown(x, y, e) {  if(this.debug) console.log('Down ', x, y);}
+	panStart(x, y, e) { if (this.debug) console.log('Pan Start ', x, y); }
 
-	mouseUp(x, y, e) {  if(this.debug) console.log('Up ', x, y); }
-	
-	mouseMove(x, y, e) { if(this.debug) console.log('Move ', x, y); }
+	panMove(x, y, e) { if (this.debug) console.log('Pan Move ', x, y); }
 
-	wheelDelta(x, y, d, e) {  if(this.debug) console.log('Delta ', x, y, d); }
+	panEnd(x, y, e) { if (this.debug) console.log('Pan End ', x, y); }
 
-	pinchStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
+	pinchStart(x, y, scale, e) { if (this.debug) console.log('Pinch Start ', x, y, scale); }
 
-	pinchMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
+	pinchMove(x, y, scale, e) { if (this.debug) console.log('Pinch Move ', x, y, scale); }
 
+	pinchEnd(x, y, scale, e) { if (this.debug) console.log('Pinch End ', x, y, scale); }
+
+	wheelDelta(x, y, d, e) { if (this.debug) console.log('Wheel ', x, y, d); }
+
+	hammerEventToPosition(e) {
+		let rect = this.element.getBoundingClientRect();
+		let x = e.center.x - rect.left;
+		let y = e.center.y - rect.top;
+		return { x: x, y: y }
+	}
 
 	eventToPosition(e, touch) {
 		let rect = e.currentTarget.getBoundingClientRect();
@@ -48,105 +56,160 @@ class Controller {
 
 	initEvents() {
 
-/* //TODO when the canvas occupy only part of the document we would like to prevent any mouseover/etc 
-  when the user is panning !! Example demo code here, to be testes.
-
-function preventGlobalMouseEvents () {
-  document.body.style['pointer-events'] = 'none';
-}
-
-function restoreGlobalMouseEvents () {
-  document.body.style['pointer-events'] = 'auto';
-}
-
-function mousemoveListener (e) {
-  e.stopPropagation ();
-  // do whatever is needed while the user is moving the cursor around
-}
-
-function mouseupListener (e) {
-  restoreGlobalMouseEvents ();
-  document.removeEventListener ('mouseup',   mouseupListener,   {capture: true});
-  document.removeEventListener ('mousemove', mousemoveListener, {capture: true});
-  e.stopPropagation ();
-}
-
-function captureMouseEvents (e) {
-  preventGlobalMouseEvents ();
-  document.addEventListener ('mouseup',   mouseupListener,   {capture: true});
-  document.addEventListener ('mousemove', mousemoveListener, {capture: true});
-  e.preventDefault ();
-  e.stopPropagation ();
-}
-*/
+		/* //TODO when the canvas occupy only part of the document we would like to prevent any mouseover/etc 
+		  when the user is panning !! Example demo code here, to be testes.
+		
+		function preventGlobalMouseEvents () {
+		  document.body.style['pointer-events'] = 'none';
+		}
+		
+		function restoreGlobalMouseEvents () {
+		  document.body.style['pointer-events'] = 'auto';
+		}
+		
+		function mousemoveListener (e) {
+		  e.stopPropagation ();
+		  // do whatever is needed while the user is moving the cursor around
+		}
+		
+		function mouseupListener (e) {
+		  restoreGlobalMouseEvents ();
+		  document.removeEventListener ('mouseup',   mouseupListener,   {capture: true});
+		  document.removeEventListener ('mousemove', mousemoveListener, {capture: true});
+		  e.stopPropagation ();
+		}
+		
+		function captureMouseEvents (e) {
+		  preventGlobalMouseEvents ();
+		  document.addEventListener ('mouseup',   mouseupListener,   {capture: true});
+		  document.addEventListener ('mousemove', mousemoveListener, {capture: true});
+		  e.preventDefault ();
+		  e.stopPropagation ();
+		}
+		*/
 		let element = this.element;
 
-		element.addEventListener('contextmenu', (e) => { 
-			e.preventDefault(); 
-			return false; 
-		});
-
-		//const hammerMng = new Hammer(theLawn);
-
-		element.addEventListener('mouseup', (e) => {
-			let pos = this.eventToPosition(e);
-			this.mouseUp(pos.x, pos.y, e);
-			e.preventDefault(); 
+		element.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
 			return false;
 		});
 
-		element.addEventListener('mousedown', (e) => {
-			let pos = this.eventToPosition(e);
+		const mc = new Hammer(element);
+		mc.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0 });
+		mc.get('pinch').set({ enable: true });
+
+		mc.on('panstart', (e) => {
+			const pos = this.hammerEventToPosition(e);
 			this.mouseDown(pos.x, pos.y, e);
-			e.preventDefault(); 
-			return false;
-		}, { capture: true });
-
-		element.addEventListener('mousemove', (e) => {
-			let pos = this.eventToPosition(e);
-			this.mouseMove(pos.x, pos.y, e);
-			e.preventDefault(); 
+			e.preventDefault();
 			return false;
 		});
 
-		element.addEventListener('touchstart', (e) => {
+		mc.on('panmove', (e) => {
+			const pos = this.hammerEventToPosition(e);
+			this.mouseMove(pos.x, pos.y, e);
 			e.preventDefault();
-	
-			let pos0 = this.eventToPosition(e, 0);
-			if (e.targetTouches.length == 1) {
-				this.mouseDown(pos0.x, pos0.y, e);
+			return false;
+		});
 
-			} else if (e.targetTouches.length == 2) {
-				let pos1 = this.eventToPosition(e, 1);
-				this.pinchStart(pos0, pos1, e);
-			}
-		}, false);
-
-		element.addEventListener('touchend', (e) => {
-			let pos = this.eventToPosition(e);
+		mc.on('panend pancancel', (e) => {
+			const pos = this.hammerEventToPosition(e);
 			this.mouseUp(pos.x, pos.y, e);
 			e.preventDefault();
-		}, false);
+			return false;
+		});
 
-		element.addEventListener('touchmove', (e) => {
-			let pos0 = this.eventToPosition(e, 0);
-			if (e.targetTouches.length == 1) {
-				this.mouseMove(pos0.x, pos0.y, e);
-			} else if (e.targetTouches.length == 2) {
-				let pos1 = this.eventToPosition(e, 1);
-				this.pinchMove(pos0, pos1, e);
-			}
+		mc.on('pinchstart', (e) => {
+			const pos = this.hammerEventToPosition(e);
+			const scale = e.scale;
+			this.pinchStart(pos.x, pos.y, scale, e);
 			e.preventDefault();
-		}, false);
+			return false;
+		});
+
+		mc.on('pinchmove', (e) => {
+			const pos = this.hammerEventToPosition(e);
+			const scale = e.scale;
+			this.pinchMove(pos.x, pos.y, scale, e);
+			e.preventDefault();
+			return false;
+		});
+
+		mc.on('pinchend pinchcancel', (e) => {
+			const pos = this.hammerEventToPosition(e);
+			const scale = e.scale;
+			this.pinchEnd(pos.x, pos.y, scale, e);
+			e.preventDefault();
+			return false;
+		});
 
 		element.addEventListener('wheel', (e) => {
 			//TODO support for delta X?
-			let pos = this.eventToPosition(e);
-
-			let delta = e.deltaY > 0? 1 : -1;
+			const pos = this.eventToPosition(e);
+			let delta = e.deltaY > 0 ? 1 : -1;
 			this.wheelDelta(pos.x, pos.y, delta, e);
 			e.preventDefault();
 		});
+
+		// element.addEventListener('mouseup', (e) => {
+		// 	const pos = this.eventToPosition(e);
+		// 	this.mouseUp(pos.x, pos.y, e);
+		// 	e.preventDefault(); 
+		// 	return false;
+		// });
+
+		// element.addEventListener('mousedown', (e) => {
+		// 	const pos = this.eventToPosition(e);
+		// 	this.mouseDown(pos.x, pos.y, e);
+		// 	e.preventDefault(); 
+		// 	return false;
+		// }, { capture: true });
+
+		// element.addEventListener('mousemove', (e) => {
+		// 	const pos = this.eventToPosition(e);
+		// 	this.mouseMove(pos.x, pos.y, e);
+		// 	e.preventDefault(); 
+		// 	return false;
+		// });
+
+		// element.addEventListener('touchstart', (e) => {
+		// 	e.preventDefault();
+
+		// 	const pos0 = this.eventToPosition(e, 0);
+		// 	if (e.targetTouches.length == 1) {
+		// 		this.mouseDown(pos0.x, pos0.y, e);
+
+		// 	} else if (e.targetTouches.length == 2) {
+		// 		const pos1 = this.eventToPosition(e, 1);
+		// 		this.pinchStart(pos0, pos1, e);
+		// 	}
+		// }, false);
+
+		// element.addEventListener('touchend', (e) => {
+		// 	const pos = this.eventToPosition(e);
+		// 	this.mouseUp(pos.x, pos.y, e);
+		// 	e.preventDefault();
+		// }, false);
+
+		// element.addEventListener('touchmove', (e) => {
+		// 	const pos0 = this.eventToPosition(e, 0);
+		// 	if (e.targetTouches.length == 1) {
+		// 		this.mouseMove(pos0.x, pos0.y, e);
+		// 	} else if (e.targetTouches.length == 2) {
+		// 		const pos1 = this.eventToPosition(e, 1);
+		// 		this.pinchMove(pos0, pos1, e);
+		// 	}
+		// 	e.preventDefault();
+		// }, false);
+
+		// element.addEventListener('wheel', (e) => {
+		// 	//TODO support for delta X?
+		// 	const pos = this.eventToPosition(e);
+
+		// 	let delta = e.deltaY > 0? 1 : -1;
+		// 	this.wheelDelta(pos.x, pos.y, delta, e);
+		// 	e.preventDefault();
+		// });
 
 	}
 }
