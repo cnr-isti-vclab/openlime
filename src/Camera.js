@@ -117,6 +117,8 @@ class Camera {
  * @param {number} dt animation duration in millisecond 
  * @param {string} size how to fit the image: <contain | cover> default is contain (and cover is not implemented
  */
+
+//TODO should fit keeping the same angle!
 	fit(box, dt, size) {
 		if(!dt) dt = 0;
 

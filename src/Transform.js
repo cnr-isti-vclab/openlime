@@ -10,15 +10,13 @@
  */
 
 class Transform {
-	constructor(x, y, z, a, t) {
+	constructor(options) {
 		Object.assign(this, { x:0, y:0, z:1, a:0, t:0 });
 
-		if(!t) t = performance.now();
-
-		if(typeof(x) == 'object')
-			Object.assign(this, x);
-		else if(typeof(x) != 'undefined') 
-			Object.assign(this, { x:x, y:y, z:z, a:a, t:t });
+		if(!this.t) this.t = performance.now();
+		
+		if(typeof(options) == 'object')
+			Object.assign(this, options);
 	}
 
 	copy() {
@@ -38,14 +36,14 @@ class Transform {
 
 	inverse() {
 		let r = this.rotate(this.x, this.y, -this.a);
-		return new Transform(r.x, r.y, 1/this.z, -this.a, this.t);
+		return new Transform({x:r.x, y:r.y, z:1/this.z, a:-this.a, t:this.t});
 	}
 
 	rotate(x, y, angle) {
-		var angle = Math.PI*(angle/180);
-		var x =  Math.cos(angle)*x + Math.sin(angle)*y;
-		var y = -Math.sin(angle)*x + Math.cos(angle)*y;
-		return {x:x, y:y};
+		angle = Math.PI*(angle/180);
+		let ex =  Math.cos(angle)*x + Math.sin(angle)*y;
+		let ey = -Math.sin(angle)*x + Math.cos(angle)*y;
+		return {x:ex, y:ey};
 	}
 
 	compose(transform) {
@@ -113,9 +111,12 @@ class Transform {
 		let dx = (this.x)*zx;
 		let dy = -(this.y)*zy;
 
+//		let r = this.rotate(this.x, this.y, this.a);
+
+		let a = Math.PI *this.a/180;
 		let matrix = [
-			 zx,  0,  0,  0, 
-			 0,  zy,  0,  0,
+			 Math.cos(a)*zx, Math.sin(a)*zy,  0,  0, 
+			-Math.sin(a)*zx, Math.cos(a)*zy,  0,  0,
 			 0,  0,  1,  0,
 			dx, dy, 0,  1];
 		return matrix;

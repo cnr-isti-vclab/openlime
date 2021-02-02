@@ -8,8 +8,8 @@ let lime = new OpenLIME('#openlime');
 
 
 
-combinerTest();
-//imageTest('image');
+//combinerTest();
+imageTest('deepzoom');
 
 
 
@@ -49,7 +49,7 @@ function imageTest(layout) {
 	if(!layout)
 		layout = 'image';
 
-	let options = { 'layout': layout, 'type':'image' };
+	let options = { layout: layout, type:'image', transform: { x: -100, a:45 } };
 	console.log(options);
 	switch(layout) {
 		case 'image':

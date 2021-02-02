@@ -137,7 +137,8 @@ class Layer {
 		this.prepareWebGL();
 
 //		find which quads to draw and in case request for them
-		transform = transform.compose(this.transform);
+//		transform = transform.compose(this.transform);
+		transform = this.transform.compose(transform);
 		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 
 		let torender = this.toRender(needed);
