@@ -34,6 +34,10 @@ class Controller {
 
 	wheelDelta(x, y, d, e) { if (this.debug) console.log('Wheel ', x, y, d); }
 
+	singleTap(x, y, e) { if (this.debug) console.log('Single Tap ', x, y); }
+
+	doubleTap(x, y, e) { if (this.debug) console.log('Double Tap ', x, y); }
+
 	hammerEventToPosition(e) {
 		let rect = this.element.getBoundingClientRect();
 		let x = e.center.x - rect.left;
@@ -94,31 +98,50 @@ class Controller {
 			return false;
 		});
 
-		const mc = new Hammer(element);
-		mc.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0 });
-		mc.get('pinch').set({ enable: true });
+		const mc = new Hammer.Manager(element);
 
+		mc.add( new Hammer.Tap({ event: 'doubletap', taps: 2 }) );
+		mc.add( new Hammer.Tap({ event: 'singletap', taps: 1 }) );
+		mc.get('doubletap').recognizeWith('singletap');
+		mc.get('singletap').requireFailure('doubletap');
+	
+		mc.on('singletap', (e) => {
+			const pos = this.hammerEventToPosition(e);
+			this.singleTap(pos.x, pos.y, e);
+			e.preventDefault();
+			return false;
+		});
+				
+		mc.on('doubletap', (e) => {
+			const pos = this.hammerEventToPosition(e);
+			this.doubleTap(pos.x, pos.y, e);
+			e.preventDefault();
+			return false;
+		});
+
+		mc.add( new Hammer.Pan({ pointers:1, direction: Hammer.DIRECTION_ALL, threshold: 0 }) );
 		mc.on('panstart', (e) => {
 			const pos = this.hammerEventToPosition(e);
-			this.mouseDown(pos.x, pos.y, e);
+			this.panStart(pos.x, pos.y, e);
 			e.preventDefault();
 			return false;
 		});
 
 		mc.on('panmove', (e) => {
 			const pos = this.hammerEventToPosition(e);
-			this.mouseMove(pos.x, pos.y, e);
+			this.panMove(pos.x, pos.y, e);
 			e.preventDefault();
 			return false;
 		});
 
 		mc.on('panend pancancel', (e) => {
 			const pos = this.hammerEventToPosition(e);
-			this.mouseUp(pos.x, pos.y, e);
+			this.panEnd(pos.x, pos.y, e);
 			e.preventDefault();
 			return false;
 		});
 
+		mc.add( new Hammer.Pinch() );
 		mc.on('pinchstart', (e) => {
 			const pos = this.hammerEventToPosition(e);
 			const scale = e.scale;
