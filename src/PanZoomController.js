@@ -52,8 +52,8 @@ class PanZoomController extends Controller {
 			return;
 		const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
 		const deltaScale = scale - this.prevScale;
-		const dz = Math.pow(2.0, deltaScale);
-		this.camera.zoom(this.delay, dz, pos.x, pos.y,);
+		const dz = Math.pow(2.0, deltaScale); // why not using scale?
+		this.camera.zoom(this.delay, dz, pos.x, pos.y);
 		this.prevScale = scale;
 	}
 
@@ -64,13 +64,13 @@ class PanZoomController extends Controller {
 	wheelDelta(x, y, delta, e) {
 		const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
 		const dz = Math.pow(this.zoomAmount, delta);
-		this.camera.zoom(this.delay, dz, pos.x, pos.y,);
+		this.camera.zoom(this.delay, dz, pos.x, pos.y);
 	}
 
 	doubleTap(x, y, e) {
 		const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
 		const dz = this.zoomAmount;
-		this.camera.zoom(this.delay, dz, pos.x, pos.y,);
+		this.camera.zoom(this.delay, dz, pos.x, pos.y);
 	}
 
 }

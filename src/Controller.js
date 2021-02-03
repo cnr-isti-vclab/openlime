@@ -4,8 +4,9 @@
  * * *delay* inertia of the movement in ms.
  */
 
-//https://github.com/cnr-isti-vclab/relight/blob/master/js/relight-interface.js
 import * as Hammer from 'hammerjs';
+
+// Hammer Touch Emulator 
 import TouchEmulator from 'hammer-touchemulator';
 
 class Controller {
@@ -60,39 +61,10 @@ class Controller {
 	}
 
 	initEvents() {
+
+		// Hammer Touch Emulator 
 		TouchEmulator();
 
-		/* //TODO when the canvas occupy only part of the document we would like to prevent any mouseover/etc 
-		  when the user is panning !! Example demo code here, to be testes.
-		
-		function preventGlobalMouseEvents () {
-		  document.body.style['pointer-events'] = 'none';
-		}
-		
-		function restoreGlobalMouseEvents () {
-		  document.body.style['pointer-events'] = 'auto';
-		}
-		
-		function mousemoveListener (e) {
-		  e.stopPropagation ();
-		  // do whatever is needed while the user is moving the cursor around
-		}
-		
-		function mouseupListener (e) {
-		  restoreGlobalMouseEvents ();
-		  document.removeEventListener ('mouseup',   mouseupListener,   {capture: true});
-		  document.removeEventListener ('mousemove', mousemoveListener, {capture: true});
-		  e.stopPropagation ();
-		}
-		
-		function captureMouseEvents (e) {
-		  preventGlobalMouseEvents ();
-		  document.addEventListener ('mouseup',   mouseupListener,   {capture: true});
-		  document.addEventListener ('mousemove', mousemoveListener, {capture: true});
-		  e.preventDefault ();
-		  e.stopPropagation ();
-		}
-		*/
 		let element = this.element;
 
 		element.addEventListener('contextmenu', (e) => {
@@ -178,77 +150,6 @@ class Controller {
 			this.wheelDelta(pos.x, pos.y, delta, e);
 			e.preventDefault();
 		});
-
-		// function log(ev) {
-		// 	console.log(ev);
-		// }
-
-		// document.body.addEventListener('touchstart', log, false);
-		// document.body.addEventListener('touchmove', log, false);
-		// document.body.addEventListener('touchend', log, false);
-
-
-
-		// // element.addEventListener('mouseup', (e) => {
-		// 	const pos = this.eventToPosition(e);
-		// 	this.mouseUp(pos.x, pos.y, e);
-		// 	e.preventDefault(); 
-		// 	return false;
-		// });
-
-		// element.addEventListener('mousedown', (e) => {
-		// 	const pos = this.eventToPosition(e);
-		// 	this.mouseDown(pos.x, pos.y, e);
-		// 	e.preventDefault(); 
-		// 	return false;
-		// }, { capture: true });
-
-		// element.addEventListener('mousemove', (e) => {
-		// 	const pos = this.eventToPosition(e);
-		// 	this.mouseMove(pos.x, pos.y, e);
-		// 	e.preventDefault(); 
-		// 	return false;
-		// });
-
-		// element.addEventListener('touchstart', (e) => {
-		// 	e.preventDefault();
-
-		// 	const pos0 = this.eventToPosition(e, 0);
-		// 	if (e.targetTouches.length == 1) {
-		// 		this.mouseDown(pos0.x, pos0.y, e);
-
-		// 	} else if (e.targetTouches.length == 2) {
-		// 		const pos1 = this.eventToPosition(e, 1);
-		// 		this.pinchStart(pos0, pos1, e);
-		// 	}
-		// }, false);
-
-		// element.addEventListener('touchend', (e) => {
-		// 	const pos = this.eventToPosition(e);
-		// 	this.mouseUp(pos.x, pos.y, e);
-		// 	e.preventDefault();
-		// }, false);
-
-		// element.addEventListener('touchmove', (e) => {
-		// 	const pos0 = this.eventToPosition(e, 0);
-		// 	if (e.targetTouches.length == 1) {
-		// 		this.mouseMove(pos0.x, pos0.y, e);
-		// 	} else if (e.targetTouches.length == 2) {
-		// 		const pos1 = this.eventToPosition(e, 1);
-		// 		this.pinchMove(pos0, pos1, e);
-		// 	}
-		// 	e.preventDefault();
-		// }, false);
-
-		// element.addEventListener('wheel', (e) => {
-		// 	//TODO support for delta X?
-		// 	const pos = this.eventToPosition(e);
-
-		// 	let delta = e.deltaY > 0? 1 : -1;
-		// 	this.wheelDelta(pos.x, pos.y, delta, e);
-		// 	e.preventDefault();
-		// });
-
 	}
 }
 
