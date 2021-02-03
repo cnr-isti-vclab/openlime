@@ -61,6 +61,9 @@ class Shader {
 			throw new Error('Could not compile WebGL program. \n\n' + info);
 		}
 
+		gl.useProgram(program);
+		this.updateUniforms(gl, program);
+
 		//sampler units;
 		for(let sampler of this.samplers)
 			sampler.location = gl.getUniformLocation(program, sampler.name);
@@ -77,6 +80,23 @@ class Shader {
 
 		this.program = program;
 		this.needsUpdate = false;
+	}
+
+	updateUniforms(gl, program) {
+		for(const [name, uniform] of Object.entries(this.uniforms)) {
+			if(!uniform.location)
+				uniform.location = gl.getUniformLocation(program, name);
+
+			if(!uniform.location) {
+				console.log(`DEBUG: uniform ${name} not used in program`);
+				continue; 
+			}
+			switch(uniform.type) {
+			case 'vec3': gl.uniform3fv(uniform.location, uniform.value); break;
+			case 'float': gl.uniform1fv(uniform.location, uniform.value); break;
+			throw Error('Unknown uniform type: ' + u.type);
+			}
+		} 
 	}
 
 	vertShaderSrc() {

@@ -3,14 +3,25 @@ import { Raster } from './Raster.js'
 import { Layer } from './Layer.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerCombiner } from './LayerCombiner.js'
+import { LayerRTI } from './LayerRTI.js'
 
 let lime = new OpenLIME('#openlime');
 
 
 
 //combinerTest();
-imageTest('deepzoom');
+//imageTest('deepzoom');
+rtiTest('image');
 
+
+function rtiTest() {
+	let layer0 = new Layer({ 
+		layout: 'image', 
+		type:'rti',
+		url: 'assets/rti/ptm/info.json'
+	});
+	lime.canvas.addLayer('kdmap', layer0); 
+}
 
 
 /* COMBINER TEST */

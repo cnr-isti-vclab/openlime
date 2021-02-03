@@ -128,11 +128,11 @@ class Layer {
 		//how linear or srgb should be specified here.
 //		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
 
-		if(!this.shader)
-			throw "Shader not specified!";
-
 		if(!this.status == 'ready' || this.tiles.length == 0)
 			return;
+
+		if(!this.shader)
+			throw "Shader not specified!";
 
 		this.prepareWebGL();
 
@@ -270,17 +270,16 @@ class Layer {
 	}
 
 	prepareWebGL() {
-		//interpolate uniforms from controls!
-		//update uniforms
 
 		let gl = this.gl;
 
-		if(this.shader.needsUpdate) {
+		if(this.shader.needsUpdate)
 			this.shader.createProgram(gl);
-			//send uniforms here!
-		}
 
 		gl.useProgram(this.shader.program);
+
+		//interpolate uniforms from controls!
+		//update uniforms
 
 		if(this.ibuffer) //this part might go into another function.
 			return;
@@ -376,7 +375,7 @@ class Layer {
 			let raster = this.rasters[sampler.id];
 			raster.loadImage(path, this.gl, (tex) => {
 
-				if(this.layout.type == "image") { //TODO create an ad hoc function for layout image.
+				if(this.layout.type == "image" && !this.tiles.length) { //TODO create an ad hoc function for layout image.
 					this.layout.initImage(raster.width, raster.height);
 				}
 				let indextile = this.tiles[tile.index];
