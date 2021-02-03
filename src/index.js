@@ -11,16 +11,17 @@ let lime = new OpenLIME('#openlime');
 
 //combinerTest();
 //imageTest('deepzoom');
-rtiTest('image');
+rtiTest('hsh');
 
 
-function rtiTest() {
+function rtiTest(dataset) {
 	let layer0 = new Layer({ 
 		layout: 'image', 
 		type:'rti',
-		url: 'assets/rti/ptm/info.json'
+		url: 'assets/rti/' + dataset + '/info.json'
 	});
 	lime.canvas.addLayer('kdmap', layer0); 
+	setTimeout(() => { layer0.shader.setUniform('light', [0.4, 0.4, Math.sqrt(0.68)]); lime.canvas.emit('update'); }, 2000);
 }
 
 

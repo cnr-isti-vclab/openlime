@@ -277,6 +277,8 @@ class Layer {
 			this.shader.createProgram(gl);
 
 		gl.useProgram(this.shader.program);
+		this.shader.updateUniforms(gl, this.shader.program);
+
 
 		//interpolate uniforms from controls!
 		//update uniforms

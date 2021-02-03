@@ -40,6 +40,12 @@ class ShaderRTI extends Shader {
 		this.needsUpdate = true;
 	}
 
+	setUniform(name, value) {
+		super.setUniform(name, value);
+		if(name == 'light')
+			this.lightWeights();
+	}
+
 	init(relight) {
 		Object.assign(this, relight);
 		if(this.colorspace == 'mycc')
@@ -75,17 +81,23 @@ class ShaderRTI extends Shader {
 			this.loadBasis(this.basis);
 
 		this.uniforms = {
-			light: { type: 'vec3', size: 3,              value: [0.0, 0.0, 1] },
-			bias:  { type: 'vec3', size: this.nplanes/3, value: this.bias },
-			scale: { type: 'vec3', size: this.nplanes/3, value: this.scale },
-			base:  { type: 'float', size: this.nplanes }
+			light: { type: 'vec3', needsUpdate: true, size: 3,              value: [0.0, 0.0, 1] },
+			bias:  { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.bias },
+			scale: { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.scale },
+			base:  { type: 'float', needsUpdate: true, size: this.nplanes }
 		}
 
+		this.lightWeights();
+
+		this.body = this.template();
+	}
+
+	lightWeights() {
 		switch(this.type) {
 			case 'ptm': this.uniforms.base.value = PTM.lightWeights(this.uniforms.light.value); break;
+			case 'hsh': this.uniforms.base.value = HSH.lightWeights(this.uniforms.light.value); break;
 		}
-		console.log(this.uniforms.bias.value, this.uniforms.base.value);
-		this.body = this.template();
+		this.uniforms.base.needsUpdate = true;
 	}
 
 	baseLightOffset(p, l, k) {
@@ -180,6 +192,39 @@ class PTM {
 	*/
 	static lightWeights(v) {
 		return new Float32Array([1.0, v[0], v[1], v[0]*v[0], v[0]*v[1], v[1]*v[1]]);
+	}
+}
+
+
+/* HSH utility functions 
+ */
+class HSH {
+	/* @param {Array} v expects light direction as [x, y, z]
+	*/
+	static lightWeights(v) {
+		let PI = 3.1415;
+		let phi = Math.atan2(v[1], v[0]);
+		if (phi < 0)
+			phi = 2 * PI + phi;
+		let theta = Math.min(Math.acos(v[2]), PI / 2 - 0.5);
+
+		let cosP = Math.cos(phi);
+		let cosT = Math.cos(theta);
+		let cosT2 = cosT * cosT;
+
+		return new Float32Array([
+			1.0 / Math.sqrt(2 * PI),
+
+			Math.sqrt(6 / PI) * (cosP * Math.sqrt(cosT-cosT2)),
+			Math.sqrt(3 / (2 * PI)) * (-1 + 2*cosT),
+			Math.sqrt(6 / PI) * (Math.sqrt(cosT - cosT2) * Math.sin(phi)),
+
+			Math.sqrt(30 / PI) * (Math.cos(2 * phi) * (-cosT + cosT2)),
+			Math.sqrt(30 / PI) * (cosP*(-1 + 2 * cosT) * Math.sqrt(cosT - cosT2)),
+			Math.sqrt(5  / (2 * PI)) * (1 - 6 * cosT + 6 * cosT2),
+			Math.sqrt(30 / PI) * ((-1 + 2 * cosT) * Math.sqrt(cosT - cosT2) * Math.sin(phi)),
+			Math.sqrt(30 / PI) * ((-cosT + cosT2) * Math.sin(2*phi))
+		]);
 	}
 }
 
