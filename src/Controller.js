@@ -6,6 +6,7 @@
 
 //https://github.com/cnr-isti-vclab/relight/blob/master/js/relight-interface.js
 import * as Hammer from 'hammerjs';
+import TouchEmulator from 'hammer-touchemulator';
 
 class Controller {
 	constructor(element, options) {
@@ -49,16 +50,17 @@ class Controller {
 		let rect = e.currentTarget.getBoundingClientRect();
 		let cx = e.clientX;
 		let cy = e.clientY;
-		if(typeof(touch) != 'undefined') {
+		if (typeof (touch) != 'undefined') {
 			cx = e.targetTouches[touch].clientX;
 			cy = e.targetTouches[touch].clientY;
 		}
 		let x = cx - rect.left;
 		let y = cy - rect.top;
-		return { x:x, y:y }
+		return { x: x, y: y }
 	}
 
 	initEvents() {
+		TouchEmulator();
 
 		/* //TODO when the canvas occupy only part of the document we would like to prevent any mouseover/etc 
 		  when the user is panning !! Example demo code here, to be testes.
@@ -98,20 +100,23 @@ class Controller {
 			return false;
 		});
 
-		const mc = new Hammer.Manager(element);
+		const mc = new Hammer.Manager(element, {
+			inputClass: Hammer.SUPPORT_POINTER_EVENTS ? Hammer.PointerEventInput : Hammer.TouchInput
+		});
+		//const mc = new Hammer.Manager(element);
 
-		mc.add( new Hammer.Tap({ event: 'doubletap', taps: 2 }) );
-		mc.add( new Hammer.Tap({ event: 'singletap', taps: 1 }) );
+		mc.add(new Hammer.Tap({ event: 'doubletap', taps: 2 }));
+		mc.add(new Hammer.Tap({ event: 'singletap', taps: 1 }));
 		mc.get('doubletap').recognizeWith('singletap');
 		mc.get('singletap').requireFailure('doubletap');
-	
+
 		mc.on('singletap', (e) => {
 			const pos = this.hammerEventToPosition(e);
 			this.singleTap(pos.x, pos.y, e);
 			e.preventDefault();
 			return false;
 		});
-				
+
 		mc.on('doubletap', (e) => {
 			const pos = this.hammerEventToPosition(e);
 			this.doubleTap(pos.x, pos.y, e);
@@ -119,7 +124,7 @@ class Controller {
 			return false;
 		});
 
-		mc.add( new Hammer.Pan({ pointers:1, direction: Hammer.DIRECTION_ALL, threshold: 0 }) );
+		mc.add(new Hammer.Pan({ pointers: 1, direction: Hammer.DIRECTION_ALL, threshold: 0 }));
 		mc.on('panstart', (e) => {
 			const pos = this.hammerEventToPosition(e);
 			this.panStart(pos.x, pos.y, e);
@@ -141,7 +146,7 @@ class Controller {
 			return false;
 		});
 
-		mc.add( new Hammer.Pinch() );
+		mc.add(new Hammer.Pinch());
 		mc.on('pinchstart', (e) => {
 			const pos = this.hammerEventToPosition(e);
 			const scale = e.scale;
@@ -174,7 +179,17 @@ class Controller {
 			e.preventDefault();
 		});
 
-		// element.addEventListener('mouseup', (e) => {
+		// function log(ev) {
+		// 	console.log(ev);
+		// }
+
+		// document.body.addEventListener('touchstart', log, false);
+		// document.body.addEventListener('touchmove', log, false);
+		// document.body.addEventListener('touchend', log, false);
+
+
+
+		// // element.addEventListener('mouseup', (e) => {
 		// 	const pos = this.eventToPosition(e);
 		// 	this.mouseUp(pos.x, pos.y, e);
 		// 	e.preventDefault(); 
