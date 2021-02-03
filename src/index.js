@@ -3,13 +3,26 @@ import { Raster } from './Raster.js'
 import { Layer } from './Layer.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerCombiner } from './LayerCombiner.js'
+import { LayerRTI } from './LayerRTI.js'
 
 let lime = new OpenLIME('#openlime');
 
 
 
 //combinerTest();
-imageTest('deepzoom');
+//imageTest('deepzoom');
+rtiTest('hsh');
+
+function rtiTest(dataset) {
+	let layer0 = new Layer({ 
+		layout: 'image', 
+		type:'rti',
+		url: 'assets/rti/' + dataset + '/info.json'
+	});
+	lime.canvas.addLayer('kdmap', layer0); 
+	setTimeout(() => { layer0.shader.setUniform('light', [0.4, 0.4, Math.sqrt(0.68)]); lime.canvas.emit('update'); }, 2000);
+}
+
 
 /* COMBINER TEST */
 function combinerTest() {

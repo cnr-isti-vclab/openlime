@@ -23,6 +23,12 @@ class Shader {
 		Object.assign(this, options);
 	}
 
+	setUniform(name, value) {
+		let u = this.uniforms[name];
+		u.value = value;
+		u.needsUpdate = true;
+	}
+
 	createProgram(gl) {
 
 		let vert = gl.createShader(gl.VERTEX_SHADER);
@@ -77,6 +83,26 @@ class Shader {
 
 		this.program = program;
 		this.needsUpdate = false;
+	}
+
+	updateUniforms(gl, program) {
+		for(const [name, uniform] of Object.entries(this.uniforms)) {
+			if(!uniform.location)
+				uniform.location = gl.getUniformLocation(program, name);
+
+			if(!uniform.location)  //uniform not used in program
+				continue; 
+
+			if(uniform.needsUpdate) {
+				console.log('');
+				switch(uniform.type) {
+				case 'vec3': gl.uniform3fv(uniform.location, uniform.value); break;
+					case 'float': gl.uniform1fv(uniform.location, uniform.value); break;
+				throw Error('Unknown uniform type: ' + u.type);
+				}
+				uniform.needsUpdate = false;
+			}
+		} 
 	}
 
 	vertShaderSrc() {
