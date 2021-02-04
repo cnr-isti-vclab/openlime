@@ -11,7 +11,6 @@ import { PanZoomController } from './PanZoomController.js'
 
 
 import * as Hammer from 'hammerjs';
-import TouchEmulator from 'hammer-touchemulator';
 
 
 /**
@@ -137,6 +136,8 @@ class OpenLIME {
 	}
 
 	processEvent(event, e, x, y, scale) {
+		//if events are captured
+
 		//first check layers from top to bottom
 		let ordered = Object.values(this.canvas.layers).sort( (a, b) => b.zindex - a.zindex);
 		ordered.push(this);
@@ -165,9 +166,6 @@ class OpenLIME {
 
 	initEvents() {
 
-		// Hammer Touch Emulator 
-		TouchEmulator();
-
 		let element = this.canvasElement;
 
 		element.addEventListener('contextmenu', (e) => {
@@ -175,9 +173,7 @@ class OpenLIME {
 			return false;
 		});
 
-		const mc = new Hammer.Manager(element, {
-			inputClass: Hammer.SUPPORT_POINTER_EVENTS ? Hammer.PointerEventInput : Hammer.TouchInput
-		}); 
+		const mc = new Hammer.Manager(element); 
 
 		mc.add(new Hammer.Tap({ event: 'doubletap', taps: 2 }));
 		mc.add(new Hammer.Tap({ event: 'singletap', taps: 1 }));

@@ -84,7 +84,22 @@ class Camera {
 /* zoom in or out at a specific point in canvas coords!
  * TODO: this is not quite right!
  */
-	zoom(dt, dz, x, y) {
+	zoom(dt, z, x, y) {
+		if(!x) x = 0;
+		if(!y) y = 0;
+
+		let now = performance.now();
+		let m = this.getCurrentTransform(now);
+
+
+		//x, an y should be the center of the zoom.
+		m.x += (m.x+x)*(1 - dz);
+		m.y += (m.y+y)*(1 - dz);
+
+		this.setPosition(dt, m.x, m.y, m.z*dz, m.a);
+	}
+
+	deltaZoom(dt, dz, x, y) {
 		if(!x) x = 0;
 		if(!y) y = 0;
 
@@ -100,6 +115,7 @@ class Camera {
 
 		this.setPosition(dt, m.x, m.y, m.z*dz, m.a);
 	}
+
 
 	getCurrentTransform(time) {
 		if(time < this.source.t)

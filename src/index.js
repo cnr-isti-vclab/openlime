@@ -8,8 +8,6 @@ import { LayerBRDF } from './LayerBRDF.js'
 
 let lime = new OpenLIME('#openlime');
 
-
-
 //combinerTest();
 //imageTest('deepzoom');
 //rtiTest('hsh');
@@ -50,6 +48,7 @@ function combinerTest() {
 	let combiner = new LayerCombiner({
 		layers: [layer0, layer1]
 	});
+
 	lime.canvas.addLayer('kdmap', layer0);
 	lime.canvas.addLayer('ksmap', layer1);
 	lime.canvas.addLayer('combiner', combiner);

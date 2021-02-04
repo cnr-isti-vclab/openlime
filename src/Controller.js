@@ -13,8 +13,14 @@ class Controller {
 		});
 
 		Object.assign(this, options);
+	}
 
+	captureEvents() {
+		this.capture = true; //il mouse oppure quel touch
+	}
 
+	releaseEvents() {
+		this.capture = false;
 	}
 
 /* Implement these functions to interacts with mouse/touch/resize events. */

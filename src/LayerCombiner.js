@@ -20,13 +20,13 @@ class LayerCombiner extends Layer {
 		this.setLayout(new Layout(this.url, this.layout));
 
 
-		let shader = new ShaderCombiner({
+/*		let shader = new ShaderCombiner({
 			'label': 'Combiner',
 			'samplers': [{ id:0, name:'source1', type:'vec3' }, { id:1, name:'source2', type:'vec3' }],
 		});
 
 		this.shaders = {'standard': shader };
-		this.setShader('standard');
+		this.setShader('standard'); */
 
 //todo if layers check for importjson
 
@@ -54,8 +54,6 @@ class LayerCombiner extends Layer {
 		}
 
 		let gl = this.gl;
-		gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
-
 		var b = [0, 0, 0, 0];
 		gl.clearColor(b[0], b[1], b[2], b[3]);
 

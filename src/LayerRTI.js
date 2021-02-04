@@ -31,7 +31,7 @@ class LayerRTI extends Layer {
 			case 'image':    return path + 'plane_' + plane + '.jpg'; break;
 			case 'google':   return path + 'plane_' + plane;          break;
 			case 'deepzoom': return path + 'plane_' + plane + '.dzi'; break;
-			case 'zoomify':    return path + 'plane_' + plane + '/ImageProperties.xml'; break;
+			case 'zoomify':  return path + 'plane_' + plane + '/ImageProperties.xml'; break;
 			case 'iip':  throw Error("Unimplemented");
 			case 'iiif': throw Error("Unimplemented");
 			default:     throw Error("Unknown layout: " + layout);

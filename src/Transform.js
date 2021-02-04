@@ -98,7 +98,6 @@ class Transform {
 
 
 
-
 /**
  *  Combines the transform with the viewport to the viewport with the transform
  * @param {Object} transform a {@link Transform} class.
