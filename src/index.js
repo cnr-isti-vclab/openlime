@@ -109,7 +109,7 @@ lime.draw();
 lime.canvas.camera.fit([-500, -500, +500, +500]);
 lime.canvas.camera.fit([-500, -500, +500, +500], 1000);
 
-setTimeout(() => { lime.fit([-150, -276, 150, 277], 200); }, 1000);
+setTimeout(() => { lime.camera.fit([-150, -276, 150, 277], 200); }, 1000);
 
 
 
