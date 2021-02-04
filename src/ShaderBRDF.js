@@ -10,14 +10,13 @@ class ShaderBRDF extends Shader {
 		this.modes = ['ward', 'diffuse', 'specular', 'normals'];
 		this.innerCode = '';
 		this.alphaLimits = [0.01, 0.5];
-		this.inputColorSpace = 0; // 0 Linear, 1 sRGB
-
+		
 		this.uniforms = {
-			uLightInfo:       { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
-			uAlphaLimits:     { type: 'vec2', needsUpdate: true, size: 2, value: this.alphaLimits },
-			uInputColorSpace: { type: 'int',  needsUpdate: true, size: 1, value: this.inputColorSpace },
+			uLightInfo:          { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
+			uAlphaLimits:        { type: 'vec2', needsUpdate: true, size: 2, value: this.alphaLimits },
+			uInputColorSpaceKd:  { type: 'int', needsUpdate: true, size: 1, value: this.colorspaces['kd'] },
+			uInputColorSpaceKs:  { type: 'int', needsUpdate: true, size: 1, value: this.colorspaces['ks'] },
 		}
-
 		this.setMode('ward');
 		this.body = this.template();
 	}
@@ -74,7 +73,8 @@ uniform sampler2D uTexGloss;
 
 uniform vec4 uLightInfo; // [x,y,z,w] (if .w==0 => Directional, if w==1 => Spot)
 uniform vec2 uAlphaLimits;
-uniform int uInputColorSpace; // 0: Linear; 1: sRGB
+uniform int uInputColorSpaceKd; // 0: Linear; 1: sRGB
+uniform int uInputColorSpaceKs; // 0: Linear; 1: sRGB
 
 out vec4 color;
 
@@ -137,8 +137,10 @@ void main() {
 
 	vec3 kd = texture(uTexKd, v_texcoord).xyz;
 	vec3 ks = texture(uTexKs, v_texcoord).xyz;
-	if(uInputColorSpace == 1) {
+	if(uInputColorSpaceKd == 1) {
 		kd = sRGB2Linear(kd);
+	}
+	if(uInputColorSpaceKs == 1) {
 		ks = sRGB2Linear(ks);
 	}
 	kd /= PI;

@@ -100,6 +100,10 @@ function brdfTest() {
 			'normals': 'assets/svbrdf/normalMap.jpg',
 			'gloss': 'assets/svbrdf/vis/glossMap.jpg'
 		},
+		colorspaces: {
+			'kd': 'linear',
+			'ks': 'linear'
+		},
 		layout: 'image',
 	});
 
