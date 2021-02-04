@@ -7,6 +7,8 @@ import { Shader } from './Shader.js'
 class ShaderBRDF extends Shader {
 	constructor(options) {
 		super(options);
+		this.modes = ['ward', 'diffuse', 'specular', 'normals'];
+		this.innerCode = '';
 		this.alphaLimits = [0.01, 0.5];
 		this.inputColorSpace = 0; // 0 Linear, 1 sRGB
 
@@ -16,13 +18,41 @@ class ShaderBRDF extends Shader {
 			uInputColorSpace: { type: 'int',  needsUpdate: true, size: 1, value: this.inputColorSpace },
 		}
 
+		this.setMode('ward');
 		this.body = this.template();
-		console.log("Fragment Shader" + this.body);
 	}
 
 	setLight(light) {
-		console.log("ShaderBRDF: setLight " + light);
+		// Light with 4 components (Spot: 4th==1, Dir: 4th==0)
 		this.setUniform('uLightInfo', light);
+	}
+
+	setMode(mode) {
+		switch(mode) {
+			case 'ward':
+				this.innerCode = 
+				`vec3 linearColor = (kd + ks * spec) * NdotL;
+				linearColor += kd * 0.02; // HACK! adding just a bit of ambient`
+			break;
+			case 'diffuse':
+				this.innerCode = 
+				`vec3 linearColor = kd;`
+			break;
+			case 'specular':
+				this.innerCode = 
+				`vec3 linearColor = clamp((ks * spec) * NdotL, 0.0, 1.0);`
+			break;
+			case 'normals':
+				this.innerCode = 
+				`vec3 linearColor = (N+vec3(1.))/2.;
+				applyGamma = false;`
+			break;
+			default:
+				console.log("ShaderBRDF: Unknown mode: " + mode);
+				throw Error("ShaderBRDF: Unknown mode: " + mode);
+			break;
+		}
+		
 	}
 
 	template() {
@@ -47,7 +77,6 @@ uniform vec2 uAlphaLimits;
 uniform int uInputColorSpace; // 0: Linear; 1: sRGB
 
 out vec4 color;
-
 
 vec3 getNormal(const in vec2 texCoord) {
 	vec3 n = texture(uTexNormals, texCoord).xyz;
@@ -121,13 +150,14 @@ void main() {
 	float alpha = pow(1.0 - gloss * (maxGloss - minGloss) - minGloss, ISO_WARD_EXPONENT);
 	
 	vec3 e = vec3(0.0,0.0,1.0);
-    vec3 T = normalize(cross(N,e));
-    vec3 B = normalize(cross(N,T));
+	vec3 T = normalize(cross(N,e));
+	vec3 B = normalize(cross(N,T));
 	float spec = ward(V, L, N, T, B, alpha);
-	vec3 linearColor = (kd + ks * spec) * NdotL;
-	linearColor += kd * 0.02; // HACK! adding just a bit of ambient
 	
 	bool applyGamma = true;
+
+	${this.innerCode}
+	
 	vec3 finalColor = applyGamma ? pow(linearColor * 1.0, vec3(1.0/2.2)) : linearColor;
 	color = vec4(finalColor, 1.0);
 }

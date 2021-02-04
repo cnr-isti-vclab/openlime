@@ -7,7 +7,7 @@
 import * as Hammer from 'hammerjs';
 
 // Hammer Touch Emulator 
-import TouchEmulator from 'hammer-touchemulator';
+//import TouchEmulator from 'hammer-touchemulator';
 
 class Controller {
 	constructor(element, options) {
@@ -63,7 +63,7 @@ class Controller {
 	initEvents() {
 
 		// Hammer Touch Emulator 
-		TouchEmulator();
+		//TouchEmulator();
 
 		let element = this.element;
 
@@ -72,10 +72,10 @@ class Controller {
 			return false;
 		});
 
-		const mc = new Hammer.Manager(element, {
-			inputClass: Hammer.SUPPORT_POINTER_EVENTS ? Hammer.PointerEventInput : Hammer.TouchInput
-		});
-		//const mc = new Hammer.Manager(element);
+		// const mc = new Hammer.Manager(element, {
+		// 	inputClass: Hammer.SUPPORT_POINTER_EVENTS ? Hammer.PointerEventInput : Hammer.TouchInput
+		// });
+		const mc = new Hammer.Manager(element);
 
 		mc.add(new Hammer.Tap({ event: 'doubletap', taps: 2 }));
 		mc.add(new Hammer.Tap({ event: 'singletap', taps: 1 }));
