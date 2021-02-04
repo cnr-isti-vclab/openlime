@@ -32,6 +32,7 @@ class Layer {
 
 			rasters: [],
 			layers: [],
+			controllers: [],
 			controls: {},
 			shaders: {},
 			layout: 'image',

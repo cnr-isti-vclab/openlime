@@ -9,6 +9,11 @@ import { Shader } from './Shader.js'
 import { Controller } from './Controller.js'
 import { PanZoomController } from './PanZoomController.js'
 
+
+import * as Hammer from 'hammerjs';
+import TouchEmulator from 'hammer-touchemulator';
+
+
 /**
  * Manages an OpenLIME viewer functionality on a canvas
  * how do I write more substantial documentation.
@@ -27,6 +32,7 @@ class OpenLIME {
 		Object.assign(this, { 
 			background: [0, 0, 0, 1],
 			canvas: {},
+			controllers: [],
 			camera: new Camera()
 		});
 
@@ -52,36 +58,19 @@ class OpenLIME {
 
 		this.camera.addEvent('update', () => { this.redraw(); });
 
-		this.controller = new PanZoomController(this.containerElement, this.camera);
+		this.controllers.push(new PanZoomController(this.camera));
 
 		var resizeobserver = new ResizeObserver( entries => {
 			for (let entry of entries) {
 				this.resize(entry.contentRect.width, entry.contentRect.height);
+				this.processEvent('resize', {}, entry.contentRect.width, entry.contentRect.height);
 			}
 		});
 		resizeobserver.observe(this.canvasElement);
 
 		this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
 
-/*
-//TODO here is not exactly clear which assumption we make on canvas and container div size.
-//		resizeobserver.observe(this.containerElement);
-		this.containerElement.addEventListener('mousemove', (e) => {
-
-//			let camera = this.canvas.camera;
-//			let x = e.clientX - this.canvas.camera.viewport[2]/2;
-//			let y = e.clientY - this.canvas.camera.viewport[3]/2;
-//			let z = this.canvas.camera.target.z;
-//			camera.setPosition(0, x/z, y/z, z, 0,); 
-
-//			console.log(camera.mapToScene(e.clientX, e.clientY, camera.target));
-//			this.canvas.camera.target.x = 1;
-//			this.canvas.camera.target.t = performance.now();
-			this.redraw();
-//			this.canvas.camera.target.x += 1;
-		}); */
-
-
+		this.initEvents();
 	}
 
 
@@ -147,9 +136,78 @@ class OpenLIME {
 			this.redraw();
 	}
 
-	fit(box, dt, size) {
-		this.camera.fit(box, dt, size);
-		this.redraw();
+	processEvent(event, e, x, y, scale) {
+		//first check layers from top to bottom
+		let ordered = Object.values(this.canvas.layers).sort( (a, b) => b.zindex - a.zindex);
+		ordered.push(this);
+		for(let layer of ordered) {
+			for(let controller of layer.controllers) {
+				if(controller.active && controller[event] && controller[event](e, x, y, scale))
+					return;
+			}
+		}
+	}
+
+	hammerEventToPosition(e) {
+		let rect = this.canvasElement.getBoundingClientRect();
+		let x = e.center.x - rect.left;
+		let y = e.center.y - rect.top;
+		return { x: x, y: y }
+	}
+
+	eventToPosition(e, touch) {
+		let rect = e.currentTarget.getBoundingClientRect();
+		let x = e.clientX - rect.left;
+		let y = e.clientY - rect.top;
+		return { x: x, y: y }
+	}
+
+
+	initEvents() {
+
+		// Hammer Touch Emulator 
+		TouchEmulator();
+
+		let element = this.canvasElement;
+
+		element.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			return false;
+		});
+
+		const mc = new Hammer.Manager(element, {
+			inputClass: Hammer.SUPPORT_POINTER_EVENTS ? Hammer.PointerEventInput : Hammer.TouchInput
+		}); 
+
+		mc.add(new Hammer.Tap({ event: 'doubletap', taps: 2 }));
+		mc.add(new Hammer.Tap({ event: 'singletap', taps: 1 }));
+		mc.get('doubletap').recognizeWith('singletap');
+		mc.get('singletap').requireFailure('doubletap');
+		mc.add(new Hammer.Pan({ pointers: 1, direction: Hammer.DIRECTION_ALL, threshold: 0 }));
+		mc.add(new Hammer.Pinch());
+
+		let events = {
+			'singletap':'singleTap', 'doubletap':'doubleTap', 
+			'panstart':'panStart', 'panmove':'panMove', 'panend pancancel': 'panEnd',
+			'pinchstart': 'pinchStart', 'pinchmove':'pinchMove', 'pinchend pinchcancel': 'pinchEnd'
+		};
+		for(let [event, callback] of Object.entries(events)) {
+			mc.on(event, (e) => {
+				const pos = this.hammerEventToPosition(e);
+				const scale = e.scale;
+				this.processEvent(callback, e, pos.x, pos.y, scale);
+				e.preventDefault();
+				return false;
+			});
+		}
+
+		element.addEventListener('wheel', (e) => {
+			//TODO support for delta X?
+			const pos = this.eventToPosition(e);
+			let delta = e.deltaY > 0 ? 1 : -1;
+			this.processEvent('wheelDelta', e, pos.x, pos.y, delta);
+			e.preventDefault();
+		});
 	}
 }
 
