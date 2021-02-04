@@ -40,10 +40,20 @@ class ShaderRTI extends Shader {
 		this.needsUpdate = true;
 	}
 
-	setUniform(name, value) {
-		super.setUniform(name, value);
-		if(name == 'light')
-			this.lightWeights();
+	setLight(light) {
+		let x = light[0];
+		let y = light[1];
+
+		//map the square to the circle.
+		let r = Math.sqrt(x*x + y*y);
+		if(r > 1) {
+			x /= r;
+			y /= r;
+		}
+		let z = Math.sqrt(Math.max(0, 1 - x*x - y*y));
+		light = [x, y, z];
+		this.lightWeights(light);
+		this.setUniform('light', light);
 	}
 
 	init(relight) {
@@ -87,15 +97,15 @@ class ShaderRTI extends Shader {
 			base:  { type: 'float', needsUpdate: true, size: this.nplanes }
 		}
 
-		this.lightWeights();
+		this.lightWeights([0, 0, 1]);
 
 		this.body = this.template();
 	}
 
-	lightWeights() {
+	lightWeights(light) {
 		switch(this.type) {
-			case 'ptm': this.uniforms.base.value = PTM.lightWeights(this.uniforms.light.value); break;
-			case 'hsh': this.uniforms.base.value = HSH.lightWeights(this.uniforms.light.value); break;
+			case 'ptm': this.uniforms.base.value = PTM.lightWeights(light); break;
+			case 'hsh': this.uniforms.base.value = HSH.lightWeights(light); break;
 		}
 		this.uniforms.base.needsUpdate = true;
 	}

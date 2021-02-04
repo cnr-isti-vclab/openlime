@@ -34,7 +34,7 @@ class Canvas {
 	}
 
 	addLayer(id, layer) {
-		layer.addEvent('update', () => { console.log('update!'); this.emit('update'); });
+		layer.addEvent('update', () => { this.emit('update'); });
 		layer.gl = this.gl;
 		this.layers[id] = layer;
 		this.prefetch();

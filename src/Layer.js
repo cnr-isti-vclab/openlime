@@ -98,6 +98,14 @@ class Layer {
 	}
 
 
+	setShader(id) {
+		if(!id in this.shaders)
+			throw "Unknown shader: " + id;
+		this.shader = this.shaders[id];
+		this.setupTiles();
+		this.shader.setEvent('update', ()=>{ this.emit('update'); });
+	}
+
 /**
  * @param {bool} visible
  */
@@ -234,12 +242,7 @@ class Layer {
 		gl.enableVertexAttribArray(this.shader.texattrib);
 	}
 
-	setShader(id) {
-		if(!id in this.shaders)
-			throw "Unknown shader: " + id;
-		this.shader = this.shaders[id];
-		this.setupTiles();
-	}
+
 
 /**
  *  If layout is ready and shader is assigned, creates or update tiles to keep track of what is missing.

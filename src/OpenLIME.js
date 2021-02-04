@@ -153,6 +153,7 @@ class OpenLIME {
 		let rect = this.canvasElement.getBoundingClientRect();
 		let x = e.center.x - rect.left;
 		let y = e.center.y - rect.top;
+		e.rect = rect;
 		return { x: x, y: y }
 	}
 
@@ -160,6 +161,7 @@ class OpenLIME {
 		let rect = e.currentTarget.getBoundingClientRect();
 		let x = e.clientX - rect.left;
 		let y = e.clientY - rect.top;
+		e.rect = rect;
 		return { x: x, y: y }
 	}
 

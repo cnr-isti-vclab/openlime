@@ -51,9 +51,6 @@ class PanZoomController extends Controller {
 		if (!this.zooming)
 			return;
 		const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
-//		const deltaScale = scale - this.prevScale;
-//		const dz = Math.pow(2.0, deltaScale); // why not using scale?
-
 		const absoluteZoom = camera.target.z * this.prevScale/scale;
 		this.camera.zoom(this.delay, absoluteZoom, pos.x, pos.y);
 		this.prevScale = scale;

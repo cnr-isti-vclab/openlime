@@ -93,10 +93,10 @@ class Camera {
 
 
 		//x, an y should be the center of the zoom.
-		m.x += (m.x+x)*(1 - dz);
-		m.y += (m.y+y)*(1 - dz);
+		m.x += (m.x+x)*(m.z - z)/m.z;
+		m.y += (m.y+y)*(m.z - z)/m.z;
 
-		this.setPosition(dt, m.x, m.y, m.z*dz, m.a);
+		this.setPosition(dt, m.x, m.y, z, m.a);
 	}
 
 	deltaZoom(dt, dz, x, y) {

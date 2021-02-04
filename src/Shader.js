@@ -17,16 +17,27 @@ class Shader {
 			name: "",
 			body: "",
 			program: null,      //webgl program
-			needsUpdate: true
+			needsUpdate: true,
+			signals: { 'update':[] }
 		});
 
 		Object.assign(this, options);
 	}
 
+	setEvent(event, callback) {
+		this.signals[event] = [callback];
+	}
+
+	emit(event) {
+		for(let r of this.signals[event])
+			r(this);
+	}
+
 	setUniform(name, value) {
 		let u = this.uniforms[name];
 		u.value = value;
-		u.needsUpdate = true;
+//		u.needsUpdate = true; 
+		this.emit('update');
 	}
 
 	createProgram(gl) {
@@ -94,13 +105,12 @@ class Shader {
 				continue; 
 
 			if(uniform.needsUpdate) {
-				console.log('');
 				switch(uniform.type) {
-					case 'vec4': gl.uniform4fv(uniform.location, uniform.value); break;
-					case 'vec3': gl.uniform3fv(uniform.location, uniform.value); break;
-					case 'vec2': gl.uniform2fv(uniform.location, uniform.value); break;
+					case 'vec4':  gl.uniform4fv(uniform.location, uniform.value); break;
+					case 'vec3':  gl.uniform3fv(uniform.location, uniform.value); break;
+					case 'vec2':  gl.uniform2fv(uniform.location, uniform.value); break;
 					case 'float': gl.uniform1fv(uniform.location, uniform.value); break;
-					case 'int': gl.uniform1i(uniform.location, uniform.value); break;
+					case 'int':   gl.uniform1i(uniform.location, uniform.value); break;
 				throw Error('Unknown uniform type: ' + u.type);
 				}
 				uniform.needsUpdate = false;

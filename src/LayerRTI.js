@@ -2,6 +2,7 @@ import { Layer }  from './Layer.js'
 import { Raster } from './Raster.js'
 import { ShaderRTI } from './ShaderRTI.js'
 import { Layout } from './Layout.js'
+import { Controller2D } from './Controller2D.js'
 
 /**
  * Extends {@link Layer}.
@@ -50,6 +51,9 @@ class LayerRTI extends Layer {
 			let shader = new ShaderRTI({'relight': json});
 			this.shaders['rti'] = shader;
 			this.setShader('rti');
+
+			let controller = new Controller2D((x, y)=>shader.setLight([x, y]));
+			this.controllers.push(controller);
 
 			for(let p = 0; p < shader.njpegs; p++)
 				this.rasters.push(new Raster({ url: this.planeUrl(this.url, p), type: 'vec3', attribute: 'coeff', colorspace: 'linear' }));

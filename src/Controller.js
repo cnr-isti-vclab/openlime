@@ -16,7 +16,7 @@ class Controller {
 	}
 
 	captureEvents() {
-		this.capture = true; //il mouse oppure quel touch
+		this.capture = true; //TODO should actually specify WHAT it is capturing: which touch etc.
 	}
 
 	releaseEvents() {
