@@ -4,6 +4,7 @@ import { Layer } from './Layer.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerCombiner } from './LayerCombiner.js'
 import { LayerRTI } from './LayerRTI.js'
+import { LayerBRDF } from './LayerBRDF.js'
 
 let lime = new OpenLIME('#openlime');
 
@@ -11,7 +12,8 @@ let lime = new OpenLIME('#openlime');
 
 //combinerTest();
 //imageTest('deepzoom');
-rtiTest('hsh');
+//rtiTest('hsh');
+brdfTest();
 
 function rtiTest(dataset) {
 	let layer0 = new Layer({ 
@@ -95,7 +97,7 @@ function brdfTest() {
 		channels: {
 			'kd': 'assets/svbrdf/vis/kdMap.jpg',
 			'ks': 'assets/svbrdf/vis/ksMap.jpg',
-			'normals': 'assets/svbrdf/normalMap_rotated.jpg',
+			'normals': 'assets/svbrdf/normalMap.jpg',
 			'gloss': 'assets/svbrdf/vis/glossMap.jpg'
 		},
 		layout: 'image',

@@ -96,8 +96,11 @@ class Shader {
 			if(uniform.needsUpdate) {
 				console.log('');
 				switch(uniform.type) {
-				case 'vec3': gl.uniform3fv(uniform.location, uniform.value); break;
+					case 'vec4': gl.uniform4fv(uniform.location, uniform.value); break;
+					case 'vec3': gl.uniform3fv(uniform.location, uniform.value); break;
+					case 'vec2': gl.uniform2fv(uniform.location, uniform.value); break;
 					case 'float': gl.uniform1fv(uniform.location, uniform.value); break;
+					case 'int': gl.uniform1i(uniform.location, uniform.value); break;
 				throw Error('Unknown uniform type: ' + u.type);
 				}
 				uniform.needsUpdate = false;

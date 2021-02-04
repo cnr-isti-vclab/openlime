@@ -4,7 +4,6 @@
  * * *delay* inertia of the movement in ms.
  */
 
-
 class Controller {
 	constructor(options) {
 		Object.assign(this, {
