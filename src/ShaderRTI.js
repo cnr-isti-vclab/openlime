@@ -11,6 +11,7 @@ class ShaderRTI extends Shader {
 
 		Object.assign(this, {
 			modes: ['light', 'normals', 'diffuse', 'specular'],
+			mode: 'normal',
 			type:        ['ptm', 'hsh',  'rbf', 'bln'],
 			colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
 
@@ -30,13 +31,20 @@ class ShaderRTI extends Shader {
 		});
 		if(this.relight)
 			this.init(this.relight);
-//		this.body = this.template(this.mode, this.basis, this.colorspace);
+
+		this.setMode('light');
 	}
 
 	setMode(mode) {
-		if(!(mode in this.modes))
+		if(!(this.modes.includes(mode)))
 			throw Error("Unknown mode: " + mode);
-		this.body = this.template(this.modes[mode]);
+		this.mode = mode;
+		if(mode != 'light') {
+			this.lightWeights([ 0.612,  0.354, 0.707], 'base');
+			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
+			this.lightWeights([     0, -0.707, 0.707], 'base2');
+		}
+		this.body = this.template();
 		this.needsUpdate = true;
 	}
 
@@ -52,7 +60,8 @@ class ShaderRTI extends Shader {
 		}
 		let z = Math.sqrt(Math.max(0, 1 - x*x - y*y));
 		light = [x, y, z];
-		this.lightWeights(light);
+		if(this.mode == 'light')
+			this.lightWeights(light, 'base');
 		this.setUniform('light', light);
 	}
 
@@ -80,8 +89,10 @@ class ShaderRTI extends Shader {
 		if(this.type == "rbf")
 			this.ndimensions = this.lights.length/3;
 
-		if(this.type == "bilinear") 
+		if(this.type == "bilinear") {
 			this.ndimensions = this.resolution*this.resolution;
+			this.type = "bln";
+		}
 
 		this.scale = this.material.scale;
 		this.bias = this.material.bias;
@@ -94,24 +105,32 @@ class ShaderRTI extends Shader {
 			light: { type: 'vec3', needsUpdate: true, size: 3,              value: [0.0, 0.0, 1] },
 			bias:  { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.bias },
 			scale: { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.scale },
-			base:  { type: 'float', needsUpdate: true, size: this.nplanes }
+			base:  { type: 'vec3', needsUpdate: true, size: this.nplanes },
+			base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
+			base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
 		}
 
-		this.lightWeights([0, 0, 1]);
+		this.lightWeights([0, 0, 1], 'base');
 
 		this.body = this.template();
 	}
 
-	lightWeights(light) {
+	lightWeights(light, basename) {
 		switch(this.type) {
-			case 'ptm': this.uniforms.base.value = PTM.lightWeights(light); break;
-			case 'hsh': this.uniforms.base.value = HSH.lightWeights(light); break;
+			case 'ptm': this.uniforms[basename].value = PTM.lightWeights(light); break;
+			case 'hsh': this.uniforms[basename].value = HSH.lightWeights(light); break;
+			case 'rbf': this.uniforms[basename].value = RBF.lightWeights(light, this); break;
+			case 'bln': this.uniforms[basename].value = BLN.lightWeights(light, this); break;
 		}
-		this.uniforms.base.needsUpdate = true;
+		this.uniforms[basename].needsUpdate = true;
 	}
 
 	baseLightOffset(p, l, k) {
 		return (p*this.ndimensions + l)*3 + k;
+	}
+
+	basePixelOffset(p, x, y, k) {
+		return (p*this.resolution*this.resolution + (x + y*this.resolution))*3 + k;
 	}
 
 	loadBasis(data) {
@@ -119,37 +138,46 @@ class ShaderRTI extends Shader {
 		this.basis = new Float32Array(data.length);
 
 		let basis = new Float32Array(tmp.length);
-		for(var plane = 0; plane < this.nplanes+1; plane++) {
-			for(var c = 0; c < this.ndimensions; c++) {
-				for(var k = 0; k < 3; k++) {
-					var o = this.baseLightOffset(plane, c, k);
-					if(p == 0)
+		for(let plane = 0; plane < this.nplanes+1; plane++) {
+			for(let c = 0; c < this.ndimensions; c++) {
+				for(let k = 0; k < 3; k++) {
+					let o = this.baseLightOffset(plane, c, k);
+					if(plane == 0)
 						this.basis[o] = tmp[o]/255;
 					else
-						this.basis[o] = ((tmp[o] - 127)/this.material.range[p-1]);
+						this.basis[o] = ((tmp[o] - 127)/this.material.range[plane-1]);
 				}
 			}
 		}
 	}
 
-	template(operation) {
 
-		let basetype = (this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
+
+	template() {
+
+		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
 
 		let str = `#version 300 es
 
 precision highp float; 
 precision highp int; 
 
+#define np1 ${this.nplanes + 1}
+
 in vec2 v_texcoord;
 out vec4 color;
 
-uniform vec3 light;
-//const int np1 = ${this.nplanes + 1};
-//const int nj = ${this.njpegs};
+const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
+	-8.1650e-01, 4.7140e-01,  4.7140e-01,
+	-1.6222e-08, -9.4281e-01, 4.7140e-01);
 
-#define np1 ${this.nplanes + 1}
-#define nj ${this.njpegs}
+uniform vec3 light;
+uniform vec3 bias[np1];
+uniform vec3 scale[np1];
+
+uniform ${basetype} base[np1];
+uniform ${basetype} base1[np1];
+uniform ${basetype} base2[np1];
 `;
 
 		for(let n = 0; n < this.njpegs; n++) 
@@ -157,43 +185,105 @@ uniform vec3 light;
 `uniform sampler2D plane${n};
 `;
 
-
 		if(this.colorspace == 'mycc')
 			str +=
 `
+
 const int ny0 = ${this.yccplanes[0]};
 const int ny1 = ${this.yccplanes[1]};
 `
 
-		str +=
-`
-uniform ${basetype} base[np1];
-uniform vec3 bias[np1];
-uniform vec3 scale[np1];
-uniform float opacity;
-`;
 
-	//hsh or ptm
+		switch(this.colorspace) {
+			case 'rgb':  str +=  RGB.render(this.njpegs); break;
+			case 'mrgb': str += MRGB.render(this.njpegs); break;
+		}
+
 		str += `
-void main(void) {
-	color = vec4(0, 0, 0, 1);`;
 
-		for(let j = 0; j < this.njpegs; j++) {
+void main(void) {
+
+`;
+		if(this.mode == 'light') {
+			str += `
+	color = render(base);
+`;
+		} else {
+			str += `
+	vec3 normal;
+	normal.x = dot(render(base).xyz, vec3(1));
+	normal.y = dot(render(base1).xyz, vec3(1));
+	normal.z = dot(render(base2).xyz, vec3(1));
+`; 
+			switch(this.mode) {
+			case 'normals':  str += `
+	normal = (normalize(T * normal) + 1.0)/2.0;
+	color = vec4(normal, 1);
+`;
+			break;
+			case 'diffuse': str += `
+	normal = normalize(T * normal);
+	color = vec4(vec3(dot(light, normal)), 1);
+`;
+			}
+		}
+		str += `
+}`;
+		return str;
+	}
+}
+
+
+class RGB {
+	static render(njpegs) {
+		let str = `
+vec4 render(vec3 base[np1]) {
+	vec4 rgb = vec4(0, 0, 0, 1);`;
+
+		for(let j = 0; j < njpegs; j++) {
 			str += `
 	{
 		vec4 c = texture(plane${j}, v_texcoord);
-		color.x += base[${j}]*(c.x - bias[${j}].x)*scale[${j}].x;
-		color.y += base[${j}]*(c.y - bias[${j}].y)*scale[${j}].y;
-		color.z += base[${j}]*(c.z - bias[${j}].z)*scale[${j}].z;
+		rgb.x += base[${j}].x*(c.x - bias[${j}].x)*scale[${j}].x;
+		rgb.y += base[${j}].y*(c.y - bias[${j}].y)*scale[${j}].y;
+		rgb.z += base[${j}].z*(c.z - bias[${j}].z)*scale[${j}].z;
 	}
 `;
 		}
 		str += `
+	return rgb;
 }
 `;
 		return str;
 	}
 }
+
+class MRGB {
+	static render(njpegs) {
+
+		let str = `
+vec4 render(vec3 base[np1]) {
+	vec3 rgb = base[0];
+	vec4 c;
+`;
+		for(let j = 0; j < njpegs; j++) {
+			str +=
+`	c = texture(plane${j}, v_texcoord);
+	rgb += base[${j}*3+1]*(c.x - bias[${j}].x)*scale[${j}].x;
+	rgb += base[${j}*3+2]*(c.y - bias[${j}].y)*scale[${j}].y;
+	rgb += base[${j}*3+3]*(c.z - bias[${j}].z)*scale[${j}].z;
+
+`;
+		}
+		str += `
+	return vec4(rgb, 1);
+}
+`;
+		return str;
+	}
+}
+
+
 
 /* PTM utility functions 
  */
@@ -201,7 +291,11 @@ class PTM {
 	/* @param {Array} v expects light direction as [x, y, z]
 	*/
 	static lightWeights(v) {
-		return new Float32Array([1.0, v[0], v[1], v[0]*v[0], v[0]*v[1], v[1]*v[1]]);
+		let b = [1.0, v[0], v[1], v[0]*v[0], v[0]*v[1], v[1]*v[1]];
+		let base = new Float32Array(18);
+		for(let i = 0; i < 18; i++)
+			base[3*i] = base[3*i+1] = base[3*i+2] = b[i];
+		return base;
 	}
 }
 
@@ -222,7 +316,7 @@ class HSH {
 		let cosT = Math.cos(theta);
 		let cosT2 = cosT * cosT;
 
-		return new Float32Array([
+		let b = [
 			1.0 / Math.sqrt(2 * PI),
 
 			Math.sqrt(6 / PI) * (cosP * Math.sqrt(cosT-cosT2)),
@@ -234,9 +328,123 @@ class HSH {
 			Math.sqrt(5  / (2 * PI)) * (1 - 6 * cosT + 6 * cosT2),
 			Math.sqrt(30 / PI) * ((-1 + 2 * cosT) * Math.sqrt(cosT - cosT2) * Math.sin(phi)),
 			Math.sqrt(30 / PI) * ((-cosT + cosT2) * Math.sin(2*phi))
-		]);
+		];
+		let base = new Float32Array(27);
+		for(let i = 0; i < 27; i++)
+			base[3*i] = base[3*i+1] = base[3*i+2] = b[i];
+		return base;
+	}
+}
+
+class RBF {
+	/* @param {Array} v expects light direction as [x, y, z]
+	*/
+	static lightWeights(lpos, layer) {
+
+		let weights = RBF.rbf(lpos, layer);
+
+		let np = layer.nplanes;
+		let lweights = new Float32Array((np + 1) * 3);
+
+		for(let p = 0; p < np+1; p++) {
+			for(let k = 0; k < 3; k++) {
+				for(let l = 0; l < weights.length; l++) {
+					let o = layer.baseLightOffset(p, weights[l][0], k);
+					lweights[3*p + k] += weights[l][1]*layer.basis[o];
+				}
+			}
+		}
+		return lweights;
+	}
+
+	static rbf(lpos, layer) {
+		let radius = 1/(layer.sigma*layer.sigma);
+		let weights = new Array(layer.ndimensions);
+
+		//compute rbf weights
+		let totw = 0.0;
+		for(let i = 0; i < weights.length; i++) {
+			let dx = layer.lights[i*3+0] - lpos[0];
+			let dy = layer.lights[i*3+1] - lpos[1];
+			let dz = layer.lights[i*3+2] - lpos[2];
+
+			let d2 = dx*dx + dy*dy + dz*dz;
+			let w = Math.exp(-radius * d2);
+
+			weights[i] = [i, w];
+			totw += w;
+		}
+		for(let i = 0; i < weights.length; i++)
+			weights[i][1] /= totw;
+
+
+		//pick only most significant and renormalize
+		let count = 0;
+		totw = 0.0;
+		for(let i = 0; i < weights.length; i++) {
+			if(weights[i][1] > 0.001) {
+				weights[count++] =  weights[i];
+				totw += weights[i][1];
+			}
+		}
+
+		weights = weights.slice(0, count); 
+		for(let i = 0; i < weights.length; i++)
+			weights[i][1] /= totw;
+
+		return weights;
+	}
+}
+
+class BLN {
+	static lightWeights(lpos, layer) {
+		let np = layer.nplanes;
+		let s = Math.abs(lpos[0]) + Math.abs(lpos[1]) + Math.abs(lpos[2]);
+
+		//rotate 45 deg.
+		let x = (lpos[0] + lpos[1])/s;
+		let y = (lpos[1] - lpos[0])/s;
+		x = (x + 1.0)/2.0;
+		y = (y + 1.0)/2.0;
+		x = x*(layer.resolution - 1.0);
+		y = y*(layer.resolution - 1.0);
+
+		let sx = Math.min(layer.resolution-2, Math.max(0, Math.floor(x)));
+		let sy = Math.min(layer.resolution-2, Math.max(0, Math.floor(y)));
+		let dx = x - sx;
+		let dy = y - sy;
+
+		//bilinear interpolation coefficients.
+		let s00 = (1 - dx)*(1 - dy);
+		let s10 =      dx *(1 - dy);
+		let s01 = (1 - dx)* dy;
+		let s11 =      dx * dy;
+
+		let lweights = new Float32Array((np + 1) * 3);
+
+		//TODO optimize away basePixel
+
+		for(let p = 0; p < np+1; p++) {
+			for(let k = 0; k < 3; k++) {
+				let o00 = layer.basePixelOffset(p, sx, sy, k);
+				let o10 = layer.basePixelOffset(p, sx+1, sy, k);
+				let o01 = layer.basePixelOffset(p, sx, sy+1, k);
+				let o11 = layer.basePixelOffset(p, sx+1, sy+1, k);
+
+				lweights[3*p + k] = 
+					s00*layer.basis[o00] + 
+					s10*layer.basis[o10] +
+					s01*layer.basis[o01] +
+					s11*layer.basis[o11];
+
+			}
+		}
+		return lweights;
 	}
 }
 
 
+
+
 export { ShaderRTI }
+

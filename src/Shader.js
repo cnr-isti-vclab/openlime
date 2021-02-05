@@ -36,7 +36,7 @@ class Shader {
 	setUniform(name, value) {
 		let u = this.uniforms[name];
 		u.value = value;
-//		u.needsUpdate = true; 
+		u.needsUpdate = true; 
 		this.emit('update');
 	}
 

@@ -1,7 +1,7 @@
 import { Controller } from './Controller.js'
 import { Camera } from './Camera.js'
 
-class PanZoomController extends Controller {
+class ControllerPanZoom extends Controller {
 
 	constructor(camera, options) {
 		super(options);
@@ -74,4 +74,4 @@ class PanZoomController extends Controller {
 
 }
 
-export { PanZoomController }
+export { ControllerPanZoom }

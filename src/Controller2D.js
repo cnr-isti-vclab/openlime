@@ -7,13 +7,14 @@ import { Controller } from './Controller.js'
 class Controller2D extends Controller {
 
 	constructor(callback, options) {
+
 		super(options);
-		Object.assign(this, {
-			hover: false,    //mouseover is enough if true, otherwise needs a button down.
-			panning:false,
-			box: [-0.99, -0.99, 0.99, 0.99] //event mapped to this box.
-		});
+
 		this.callback = callback;
+		if(!options.box)
+			this.box = [-0.99, -0.99, 0.99, 0.99];
+
+		this.panning = false;
 	}
 
 	update(x, y, rect) {
@@ -25,25 +26,23 @@ class Controller2D extends Controller {
 	}
 
 	panStart(e, x, y) {
-		this.panning = true;
 		this.update(x, y, e.rect);
+		this.panning = true;
 		return true;
 	}
 
 	panMove(e, x, y) {
-		if(this.panning || this.hover) {
-			this.update(x, y, e.rect);
-			return true;
-		}
-		return false;
+		if(!this.panning)
+			return false;
+		this.update(x, y, e.rect);
+		return true;
 	}
 
 	panEnd(e, x, y) {
-		if(this.panning) {
-			this.panning = false;
-			return true;
-		}
-		return false;
+		if(!this.panning)
+			return false;
+		this.panning = false;
+		return true;
 	}
 
 	singleTap(e, x, y) {

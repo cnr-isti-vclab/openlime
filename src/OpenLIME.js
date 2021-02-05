@@ -7,7 +7,7 @@ import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 
 import { Controller } from './Controller.js'
-import { PanZoomController } from './PanZoomController.js'
+import { ControllerPanZoom } from './ControllerPanZoom.js'
 
 
 import * as Hammer from 'hammerjs';
@@ -57,7 +57,7 @@ class OpenLIME {
 
 		this.camera.addEvent('update', () => { this.redraw(); });
 
-		this.controllers.push(new PanZoomController(this.camera));
+		this.controllers.push(new ControllerPanZoom(this.camera));
 
 		var resizeobserver = new ResizeObserver( entries => {
 			for (let entry of entries) {
@@ -127,6 +127,7 @@ class OpenLIME {
 	* @param {time} time as in performance.now()
 	*/
 	draw(time) {
+		console.log('draw');
 		if(!time) time = performance.now();
 		this.animaterequest = null;
 

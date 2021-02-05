@@ -10,7 +10,7 @@ let lime = new OpenLIME('#openlime');
 
 //combinerTest();
 //imageTest('deepzoom');
-rtiTest('hsh');
+rtiTest('bln');
 //brdfTest();
 
 function rtiTest(dataset) {
