@@ -145,7 +145,6 @@ class Layer {
 //		find which quads to draw and in case request for them
 		transform = this.transform.compose(transform);
 		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
-
 		let torender = this.toRender(needed);
 
 		let matrix = transform.projectionMatrix(viewport);
@@ -161,7 +160,6 @@ class Layer {
 	}
 
 	drawTile(tile) {
-
 		let tiledata = this.tiles[tile.index];
 		if(tiledata.missing != 0) 
 			throw "Attempt to draw tile still missing textures"

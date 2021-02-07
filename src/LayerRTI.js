@@ -52,8 +52,8 @@ class LayerRTI extends Layer {
 			this.shaders['rti'] = shader;
 			this.setShader('rti');
 
-			let controller = new Controller2D((x, y)=>shader.setLight([x, y]), { hover: true });
-			this.controllers.push(controller);
+//			let controller = new Controller2D((x, y)=>shader.setLight([x, y]), { hover: true });
+//			this.controllers.push(controller);
 
 			for(let p = 0; p < shader.njpegs; p++)
 				this.rasters.push(new Raster({ url: this.planeUrl(this.url, p), type: 'vec3', attribute: 'coeff', colorspace: 'linear' }));

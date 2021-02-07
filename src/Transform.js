@@ -36,7 +36,7 @@ class Transform {
 
 	inverse() {
 		let r = this.rotate(this.x, this.y, -this.a);
-		return new Transform({x:r.x, y:r.y, z:1/this.z, a:-this.a, t:this.t});
+		return new Transform({x:-r.x, y:-r.y, z:1/this.z, a:-this.a, t:this.t});
 	}
 
 	rotate(x, y, angle) {

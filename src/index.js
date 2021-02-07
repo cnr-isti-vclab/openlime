@@ -10,8 +10,21 @@ let lime = new OpenLIME('#openlime');
 
 //combinerTest();
 //imageTest('deepzoom');
-rtiTest('bln');
+//rtiTest('bln');
 //brdfTest();
+tomeTest();
+
+
+function tomeTest(dataset) {
+	let layer0 = new Layer({ 
+		layout: 'deepzoom', 
+		type:'rti',
+		url: 'assets/rti/tome/info.json'
+	});
+	lime.canvas.addLayer('tome', layer0); 
+	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)]); lime.canvas.emit('update'); }, 2000);
+}
+
 
 function rtiTest(dataset) {
 	let layer0 = new Layer({ 
@@ -20,7 +33,7 @@ function rtiTest(dataset) {
 		url: 'assets/rti/' + dataset + '/info.json'
 	});
 	lime.canvas.addLayer('kdmap', layer0); 
-	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)]); lime.canvas.emit('update'); }, 2000);
+//	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)]); lime.canvas.emit('update'); }, 2000);
 }
 
 
@@ -114,7 +127,7 @@ lime.draw();
 lime.canvas.camera.fit([-500, -500, +500, +500]);
 lime.canvas.camera.fit([-500, -500, +500, +500], 1000);
 
-setTimeout(() => { lime.camera.fit([-150, -276, 150, 277], 200); }, 1000);
+//setTimeout(() => { lime.camera.fit([-150, -276, 150, 277], 200); }, 1000);
 
 
 

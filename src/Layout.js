@@ -184,7 +184,13 @@ class Layout {
 		//here we are computing with inverse levels; level 0 is the bottom!
 		let minlevel = Math.max(0, Math.min(Math.floor(-Math.log2(transform.z) + bias), this.nlevels-1));
 
+		//
 		let bbox = transform.getInverseBox(viewport);
+		//find box in image coordinates where (0, 0) is in the upper left corner.
+		bbox[0] += this.width/2;
+		bbox[2] += this.width/2;
+		bbox[1] += this.height/2;
+		bbox[3] += this.height/2;
 
 		let pyramid = [];
 		for(let level = this.nlevels-1; level >= minlevel; level--) {
