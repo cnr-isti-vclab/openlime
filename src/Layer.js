@@ -43,7 +43,7 @@ class Layer {
 			mipmapBias: 0.5,
 			maxRequest: 4,
 
-			signals: { update: [] },  //update callbacks for a redraw
+			signals: { update: [], ready: [] },  //update callbacks for a redraw, ready once layout is known.
 
 	//internal stuff, should not be passed as options.
 			tiles: [],      //keep references to each texture (and status) indexed by level, x and y.
@@ -90,6 +90,7 @@ class Layer {
 			this.status = 'ready';
 			this.setupTiles(); //setup expect status to be ready!
 			this.emit('update');
+			this.emit('ready');
 		};
 		if(layout.status == 'ready') //layout already initialized.
 			callback();
@@ -158,6 +159,7 @@ class Layer {
 		}
 
 //		gl.uniform1f(t.opacitylocation, t.opacity);
+		return true;
 	}
 
 	drawTile(tile) {
@@ -355,19 +357,7 @@ class Layer {
 			this.queue = this.queue.concat(tmp);
 		}
 		Cache.setCandidates(this);
-//		this.preload();
 	}
-
-/**
- * Checks load tiles from the queue. TODO this needs to be global! Not per layer.
- *
- */
-/*	preload() {
-		while(Object.keys(this.requested).length < this.maxRequest && this.queued.length > 0) {
-			var tile = this.queued.shift();
-			this.loadTile(tile);
-		}
-	} */
 
 	loadTile(tile, callback) {
 		if(this.requested[tile.index])

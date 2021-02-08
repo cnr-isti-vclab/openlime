@@ -53,6 +53,7 @@ class Canvas {
 		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 		gl.enable(gl.BLEND);
 
+		//TODO: getCurren shoudl redurn {position, done}
 		let pos = this.camera.getCurrentTransform(time);
 		//todo we could actually prefetch toward the future a little bit
 		this.prefetch(pos);
@@ -61,12 +62,13 @@ class Canvas {
 		let ordered = Object.values(this.layers).sort( (a, b) => a.zindex - b.zindex);
 
 		//NOTICE: camera(pos) must be relative to the WHOLE canvas
+		let done = true;
 		for(let layer of ordered)
 			if(layer.visible)
-				layer.draw(pos, view)
+				done = done && layer.draw(pos, view);
 
 //TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
-		return pos.t == this.camera.target.t;
+		return done && pos.t == this.camera.target.t;
 	}
 
 /**

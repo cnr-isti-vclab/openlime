@@ -29,6 +29,7 @@ class ShaderRTI extends Shader {
 			basis: null,       //PCA basis for rbf and bln
 			lweights: null    //light direction dependent coefficients to be used with coefficient planes
 		});
+
 		if(this.relight)
 			this.init(this.relight);
 
@@ -49,6 +50,9 @@ class ShaderRTI extends Shader {
 	}
 
 	setLight(light) {
+		if(!this.uniforms.light) 
+			throw "Shader not initialized, wait on layer ready event for setLight."
+
 		let x = light[0];
 		let y = light[1];
 
@@ -60,6 +64,7 @@ class ShaderRTI extends Shader {
 		}
 		let z = Math.sqrt(Math.max(0, 1 - x*x - y*y));
 		light = [x, y, z];
+
 		if(this.mode == 'light')
 			this.lightWeights(light, 'base');
 		this.setUniform('light', light);
@@ -101,6 +106,7 @@ class ShaderRTI extends Shader {
 		if(['mrgb', 'mycc'].includes(this.colorspace))
 			this.loadBasis(this.basis);
 
+
 		this.uniforms = {
 			light: { type: 'vec3', needsUpdate: true, size: 3,              value: [0.0, 0.0, 1] },
 			bias:  { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.bias },
@@ -115,14 +121,15 @@ class ShaderRTI extends Shader {
 		this.body = this.template();
 	}
 
-	lightWeights(light, basename) {
+	lightWeights(light, basename, time) {
+		let value;
 		switch(this.type) {
-			case 'ptm': this.uniforms[basename].value = PTM.lightWeights(light); break;
-			case 'hsh': this.uniforms[basename].value = HSH.lightWeights(light); break;
-			case 'rbf': this.uniforms[basename].value = RBF.lightWeights(light, this); break;
-			case 'bln': this.uniforms[basename].value = BLN.lightWeights(light, this); break;
+			case 'ptm': value = PTM.lightWeights(light); break;
+			case 'hsh': value = HSH.lightWeights(light); break;
+			case 'rbf': value = RBF.lightWeights(light, this); break;
+			case 'bln': value = BLN.lightWeights(light, this); break;
 		}
-		this.uniforms[basename].needsUpdate = true;
+		this.setUniform(basename, value, time);
 	}
 
 	baseLightOffset(p, l, k) {

@@ -127,7 +127,6 @@ class OpenLIME {
 	* @param {time} time as in performance.now()
 	*/
 	draw(time) {
-		console.log('draw');
 		if(!time) time = performance.now();
 		this.animaterequest = null;
 

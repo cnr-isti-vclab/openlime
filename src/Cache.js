@@ -88,10 +88,10 @@ class _Cache {
 	}
 /*
  */
-	dropTile(tile) {
-		for(let i = 0; i < tile.tex; i++) {
+	dropTile(layer, tile) {
+		for(let i = 0; i < tile.tex.length; i++) {
 			if(tile.tex[i]) {
-				this.gl.deleteTexture(tile.tex[i]);
+				layer.gl.deleteTexture(tile.tex[i]);
 				tile.tex[i] = null;
 				tile.missing++;
 			}

@@ -3,7 +3,8 @@
  *  @param {object} options
  * *label*: used for menu
  * *samplers*: array of rasters {id:, type: } color, normals, etc.
- * *uniforms*:
+ * *uniforms*: type = <vec4|vec3|vec2|float|int>, needsUpdate controls when updated in gl, size is unused, value is and array or a float, 
+ *             we also want to support interpolation: source (value is the target), start, end are the timing (same as camera interpolation)
  * *body*: code actually performing the rendering, needs to return a vec4
  * *name*: name of the body function
  */
@@ -36,9 +37,10 @@ class Shader {
 	setUniform(name, value) {
 		let u = this.uniforms[name];
 		u.value = value;
-		u.needsUpdate = true; 
+		u.needsUpdate = true;
 		this.emit('update');
 	}
+
 
 	createProgram(gl) {
 
@@ -97,6 +99,7 @@ class Shader {
 	}
 
 	updateUniforms(gl, program) {
+		let now = performance.now();
 		for(const [name, uniform] of Object.entries(this.uniforms)) {
 			if(!uniform.location)
 				uniform.location = gl.getUniformLocation(program, name);
@@ -105,17 +108,17 @@ class Shader {
 				continue; 
 
 			if(uniform.needsUpdate) {
+				let value = uniform.value;
 				switch(uniform.type) {
-					case 'vec4':  gl.uniform4fv(uniform.location, uniform.value); break;
-					case 'vec3':  gl.uniform3fv(uniform.location, uniform.value); break;
-					case 'vec2':  gl.uniform2fv(uniform.location, uniform.value); break;
-					case 'float': gl.uniform1fv(uniform.location, uniform.value); break;
-					case 'int':   gl.uniform1i(uniform.location, uniform.value); break;
-				throw Error('Unknown uniform type: ' + u.type);
+					case 'vec4':  gl.uniform4fv(uniform.location, value); break;
+					case 'vec3':  gl.uniform3fv(uniform.location, value); break;
+					case 'vec2':  gl.uniform2fv(uniform.location, value); break;
+					case 'float': gl.uniform1fv(uniform.location, value); break;
+					case 'int':   gl.uniform1i (uniform.location, value); break;
+					default: throw Error('Unknown uniform type: ' + u.type);
 				}
-				uniform.needsUpdate = false;
 			}
-		} 
+		}
 	}
 
 	vertShaderSrc() {
