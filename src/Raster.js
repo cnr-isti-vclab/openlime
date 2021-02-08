@@ -85,7 +85,6 @@ class Raster {
 		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
 		callback(tex, img.width*img.height*3);
 	}
-
 }
 
 export { Raster }

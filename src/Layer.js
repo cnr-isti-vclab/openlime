@@ -153,7 +153,7 @@ class Layer {
 
 		for(let index in torender) {
 			let tile = torender[index];
-			if(tile.complete)
+//			if(tile.complete)
 				this.drawTile(torender[index]);
 		}
 
@@ -299,6 +299,13 @@ class Layer {
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0,  0, 1,  1, 1,  1, 0]), gl.STATIC_DRAW);
 	}
 
+	sameNeeded(a, b) {
+		return a.level == b.level &&
+		a.pyramid[a.level][0] == b.pyramid[a.level][0] &&
+		a.pyramid[a.level][1] == b.pyramid[a.level][1] &&
+		a.pyramid[a.level][2] == b.pyramid[a.level][2] &&
+		a.pyramid[a.level][3] == b.pyramid[a.level][3];
+	}
 /**
 *  @param {object] transform is the canvas coordinate transformation
 *  @param {viewport} is the viewport for the rendering, note: for lens might be different! Where we change it? here layer should know!
@@ -313,35 +320,22 @@ class Layer {
 		if(this.rasters.length == 0)
 			return;
 
-		if(this.status != 'ready') {
+		if(this.status != 'ready') 
 			return;
-/*			if(this.layout.type == 'image' && !this.requested[0])
-				Object.assign(this.tiles[0], {
-					time: performance.now(),
-					priority: 0
-				});
-				Cache.setCandidates(this, [this.tiles[0]]); */
-			return;
-		}
 
 		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
-		let minlevel = needed.level;
+		if(this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
+				return;
+		this.previouslyNeeded = needed;
 
-		
 
-//TODO is this optimization (no change => no prefetch?) really needed?
-/*		let box = needed.box[minlevel];
-		if(this.previouslevel == minlevel && box[0] == t.previousbox[0] && box[1] == this.previousbox[1] &&
-		box[2] == this.previousbox[2] && box[3] == this.previousbox[3])
-			return;
 
-		this.previouslevel = minlevel;
-		this.previousbox = box; */
 
 		this.queue = [];
 		let now = performance.now();
 		//look for needed nodes and prefetched nodes (on the pos destination
-		for(let level = 0; level <= minlevel; level++) {
+
+		for(let level = 0; level <= needed.level; level++) {
 			let box = needed.pyramid[level];
 			let tmp = [];
 			for(let y = box[1]; y < box[3]; y++) {
@@ -349,7 +343,7 @@ class Layer {
 					let index = this.layout.index(level, x, y);
 					let tile = this.tiles[index];
 					tile.time = now;
-					tile.priority = minlevel - level;
+					tile.priority = needed.level - level;
 					if(tile.missing != 0 && !this.requested[index])
 						tmp.push(tile);
 				}
@@ -395,7 +389,7 @@ class Layer {
 				if(tile.missing <= 0) {
 					this.emit('update');
 					delete this.requested[tile.index];
-					if(callback) callback();
+					if(callback) callback(size);
 				}
 			});
 		}

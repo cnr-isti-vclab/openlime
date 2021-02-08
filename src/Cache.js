@@ -6,7 +6,7 @@
 class _Cache {
 	constructor(options) {
 		Object.assign(this, {
-			capacity: 256*(1<<20),  //256 MB total capacity available
+			capacity: 10*(1<<20),  //256 MB total capacity available
 			size: 0,                //amount of GPU ram used
 
 			maxRequest: 4,          //max number of concurrent HTTP requests
@@ -30,7 +30,7 @@ class _Cache {
 /* Look for best tile to load and schedule load from the web.
  */
 	update() {
-		if(this.requested > this.maxRequested)
+		if(this.requested > this.maxRequest)
 			return;
 
 		let best = this.findBestCandidate();
@@ -41,8 +41,8 @@ class _Cache {
 				console.log("BIG problem in the cache");
 				break;
 			}
-			if(worst.time < best.time)
-				dropTile(worst.layer, worst.tile)
+			if(worst.tile.time < best.tile.time)
+				this.dropTile(worst.layer, worst.tile)
 			else
 				return; 
 		}
@@ -50,36 +50,34 @@ class _Cache {
 	}
 
 	findBestCandidate() {
+		let best = null;
 		let candidates = [];
 		for(let layer of this.layers) {
-			if(layer.queue.length)
-				candidates.push({layer:layer, tile:layer.queue.shift()});
+			if(!layer.queue.length)
+				continue;
+			let tile = layer.queue.shift();
+			if(!best ||
+				tile.time > best.tile.time ||
+				(tile.time == best.tile.time && tile.priority > best.tile.priority))
+				best = { layer, tile }
 		}
-		if(!candidates.length) return null;
-		return candidates.reduce((a, b) => { 
-			if(a.tile.time == b.tile.time) 
-				return a.tile.priority > b.tile.priority ? a : b;
-			return a.tile.time > b.tile.time ? a : b;
-		});
+		return best;
 	}
 
 	findWorstTile() {
-		let candidates = [];
+		let worst = null;
 		for(let layer of this.layers) {
-			let worst = this.layers.tiles.reduce((a, b) => {
-				if(a.time == b.time) 
-					return a.priority < b.priority ? a : b;
-				return a.time < b.time ? a : b;
-			});
-			candidates.push({layer:layer, tile:worst});
+			for(let tile of layer.tiles) {
+				//TODO might be some are present when switching shaders.
+				if(tile.missing != 0) continue;
+				if(!worst || 
+				   tile.time < worst.tile.time || 
+				   (tile.time == worst.tile.time && tile.priority < worst.tile.priority)) {
+					worst = {layer, tile};
+				}
+			}
 		}
-		if(!candidates.length) return null;
-
-		return candidates.reduce((a, b) => { 
-			if(a.tile.time == b.tile.time) 
-				return a.tile.priority < b.tile.priority ? a : b;
-			return a.tile.time < b.tile.time ? a : b;
-		});
+		return worst;
 	}
 
 /* 
@@ -91,7 +89,15 @@ class _Cache {
 /*
  */
 	dropTile(tile) {
-		console.log("Dropping tile: ", tile);
+		for(let i = 0; i < tile.tex; i++) {
+			if(tile.tex[i]) {
+				this.gl.deleteTexture(tile.tex[i]);
+				tile.tex[i] = null;
+				tile.missing++;
+			}
+		}
+		this.size -= tile.size;
+		tile.size = 0;
 	}
 /* Flush all memory
  */

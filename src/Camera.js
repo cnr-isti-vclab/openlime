@@ -113,7 +113,7 @@ class Camera {
 		m.x += (m.x+x)*(1 - dz);
 		m.y += (m.y+y)*(1 - dz);
 
-		this.setPosition(dt, m.x, m.y, m.z*dz, m.a);
+		this.setPosition(dt, m.x, m.y, this.target.z*dz, m.a);
 	}
 
 
