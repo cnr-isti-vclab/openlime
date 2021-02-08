@@ -33,6 +33,7 @@ class Layer {
 
 			rasters: [],
 			layers: [],
+			controls: {},
 			controllers: [],
 			shaders: {},
 			layout: 'image',
@@ -126,7 +127,55 @@ class Layer {
 
 	boundingBox() {
 		return layuout.boundingBox();
+	}
 
+
+	setControl(name, value, dt) {
+		let now = performance.now();
+		let control = this.controls[name];
+		this.interpolateControl(control, now);
+
+		control.source.value = [...control.current.value];
+		control.source.t = now;
+
+		control.target.value = [...value];
+		control.target.t = now + dt;
+
+		this.emit('update');
+	}
+
+	interpolateControls() {
+		let now = performance.now();
+		let done = true;
+		for(let control of Object.values(this.controls))
+			done = this.interpolateControl(control, now) && done;
+		return done;
+	}
+
+	interpolateControl(control, time) {
+		let source = control.source;
+		let target = control.target;
+		let current = control.current;
+
+		current.t = time;
+		if(time < source.t) {
+			current.value = [...source.value];
+			return false;
+		}
+
+		if(time > target.t - 0.0001) {
+			current.value = [...target.value];
+			return true;
+		}
+
+		let t = (target.t - source.t);
+		let tt = (time - source.t)/t;
+		let st = (target.t - time)/t;
+
+		current.value = [];
+		for(let i  = 0; i < source.value.length; i++)
+			current.value[i] = (st*source.value[i] + tt*target.value[i]);
+		return false;
 	}
 
 /**
@@ -142,6 +191,7 @@ class Layer {
 		if(!this.shader)
 			throw "Shader not specified!";
 
+		let done = this.interpolateControls();
 		this.prepareWebGL();
 
 //		find which quads to draw and in case request for them
@@ -159,7 +209,7 @@ class Layer {
 		}
 
 //		gl.uniform1f(t.opacitylocation, t.opacity);
-		return true;
+		return done;
 	}
 
 	drawTile(tile) {

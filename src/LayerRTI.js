@@ -25,7 +25,8 @@ class LayerRTI extends Layer {
 		this.shaders['rti'] = new ShaderRTI();
 		this.setShader('rti');
 
-		this.sourceLight = this.targetLight = {x:0, y:0, z:1, t:performance.now()};
+		let now = performance.now();
+		this.controls['light'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };
 
 		if(this.url)
 			this.init(this.url);
@@ -44,34 +45,15 @@ class LayerRTI extends Layer {
 		}
 	}
 
+/*
+ * Alias for setControl
+ * @param {Array} light light direction as an array [x, y]
+ * @param {number} dt delay
+ */
 	setLight(light, dt) {
-		let now = performance.now();
-		this.sourceLight = this.interpolateLight(this.sourceLight, this.targetLight, now);
-		this.targetLight = light;
-		this.targetLight.t = now + dt;;
-		this.emit('update');
+		this.setControl('light', light, dt);
 	}
 
-	interpolateLight(source, target, time) {
-		if(time < source.t) return source;
-		if(time > target.t) return target;
-
-		let t = (target.t - source.t);
-		if(t < 0.0001) {
-			Object.assign(this, target);
-			return;
-		}
-
-		let tt = (time - source.t)/t;
-		let st = (target.t - time)/t;
-
-		let light = {};
-		for(let i of ['x', 'y', 'z'])
-			light[i] = (st*source[i] + tt*target[i]);
-		light.t = time;
-		return light;
-	}
-	
 	init(url) {
 		(async () => {
 			var response = await fetch(this.url);
@@ -82,9 +64,6 @@ class LayerRTI extends Layer {
 			let json = await response.json();
 			this.shader.init(json);
 
-//			let controller = new Controller2D((x, y)=>shader.setLight([x, y]), { hover: true });
-//			this.controllers.push(controller);
-
 			for(let p = 0; p < this.shader.njpegs; p++)
 				this.rasters.push(new Raster({ url: this.planeUrl(this.url, p), type: 'vec3', attribute: 'coeff', colorspace: 'linear' }));
 
@@ -94,19 +73,16 @@ class LayerRTI extends Layer {
 
 		})().catch(e => { console.log(e); this.status = e; });
 	}
-	draw(transform, viewport) {
-		if(this.status != 'ready')
-			return;
 
-		//TODO parameter interpolation should be generalized! (brdf and rti have light, for example)
-		let now = performance.now();
-		let light = this.interpolateLight(this.sourceLight, this.targetLight, now);
-		let done = this.targetLight.t <= now;
-		if(!done)
-			this.shader.setLight([light.x, light.y, light.z]);
-
-		super.draw(transform, viewport);
-		return done;
+/*
+ *  Internal function: light control maps to light direction in the shader.
+ */
+	interpolateControls() {
+		let done = super.interpolateControls();
+		if(!done) {
+			let light = this.controls['light'].current.value;
+			this.shader.setLight(light);
+		}
 	}
 }
 
