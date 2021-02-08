@@ -7,12 +7,12 @@ class Layout {
 	constructor(url, type, options) {
 		Object.assign(this, {
 			type: type,
-			width: null,
-			height: null,
+			width: 1,
+			height: 1,
 			tilesize: 256,
 			overlap: 0, 
 			nlevels: 1,        //level 0 is the top, single tile level.
-			ntiles: 1,         //tot number of tiles
+			tiles: [],
 			suffix: 'jpg',
 			qbox: [],          //array of bounding box in tiles, one for mipmap 
 			bbox: [],          //array of bounding box in pixels (w, h)
@@ -26,7 +26,7 @@ class Layout {
 		if(typeof(url) == 'string') {
 			this.url = url;
 			let callback = () => {
-				this.ntiles = this.initBoxes();
+				this.initBoxes();
 				this.status = 'ready';
 				this.emit('ready');
 			}
@@ -66,10 +66,9 @@ class Layout {
  */
 
 	index(level, x, y) {
-		var startindex = 0;
-		for(var i = this.nlevels-1; i > level; i--) {
+		let startindex = 0;
+		for(let i = 0; i < level; i++)
 			startindex += this.qbox[i][2]*this.qbox[i][3];
-		}
 		return startindex + y*this.qbox[level][2] + x;
 	}
 
@@ -87,27 +86,32 @@ class Layout {
 		if(this.type == 'image') {
 			this.qbox[0] = [0, 0, 1, 1];
 			this.bbox[0] = [0, 0, w, h];
+			this.tiles.push({index:0, level:0, x:0, y:0});
 			return 1;
 		}
 
-		var count = 0;
-		for(var level = this.nlevels - 1; level >= 0; level--) {
-			var ilevel = this.nlevels -1 - level;
-			this.qbox[ilevel] = [0, 0, 0, 0];
-			this.bbox[ilevel] = [0, 0, w, h];
-			for(var y = 0; y*this.tilesize < h; y++) {
-				this.qbox[ilevel][3] = y+1;
-				for(var x = 0; x*this.tilesize < w; x ++) {
-					count++;
-					this.qbox[ilevel][2] = x+1;
+		let tiles = [];
+		var index = 0;
+		for(let level = this.nlevels - 1; level >= 0; level--) {
+			this.qbox[level] = [0, 0, 0, 0];
+			this.bbox[level] = [0, 0, w, h];
+			for(let y = 0; y*this.tilesize < h; y++) {
+				this.qbox[level][3] = y+1;
+				for(let x = 0; x*this.tilesize < w; x ++) {
+					this.qbox[level][2] = x+1;
+					tiles.push({level:level, x:x, y:y});
 				}
 			}
 			w >>>= 1;
 			h >>>= 1;
 		}
-		return count;
+		this.tiles = [];
+		for(let tile of tiles) {
+			let index = this.index(tile.level, tile.x, tile.y);
+			tile.index = index;
+			this.tiles[index] = tile;
+		}
 	}
-
 
 /** Return the coordinates of the tile (in [0, 0, w h] image coordinate system) and the texture coords associated. 
  *
@@ -127,8 +131,8 @@ class Layout {
 
 		let coords = new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]);
 
-
-		let side =  this.tilesize*(1<<(level)); //tile size in imagespace
+		let ilevel = this.nlevels - 1 - level;
+		let side =  this.tilesize*(1<<(ilevel)); //tile size in imagespace
 		let tx = side;
 		let ty = side;
 
@@ -148,20 +152,20 @@ class Layout {
 
 		var over = this.overlap;
 		if(over) {
-			let dtx = over / (tx/(1<<level) + (x==0?0:over) + (x==lx?0:over));
-			let dty = over / (ty/(1<<level) + (y==0?0:over) + (y==ly?0:over));
+			let dtx = over / (tx/(1<<ilevel) + (x==0?0:over) + (x==lx?0:over));
+			let dty = over / (ty/(1<<ilevel) + (y==0?0:over) + (y==ly?0:over));
 
 			tcoords[0] = tcoords[2] = (x==0? 0: dtx);
-			tcoords[1] = tcoords[7] = (y==0? 0: dty);
+			tcoords[3] = tcoords[5] = (y==0? 0: dty);
 			tcoords[4] = tcoords[6] = (x==lx? 1: 1 - dtx);
-			tcoords[3] = tcoords[5] = (y==ly? 1: 1 - dty);
-		}
-		if(this.type == 'google') {
-			//flip Y in coords
-			let tmp = tcoords[1];
-			tcoords[1] = tcoords[7] = tcoords[3];
-			tcoords[3] = tcoords[5] = tmp;
-		}
+			tcoords[1] = tcoords[7] = (y==ly? 1: 1 - dty);
+		} 
+		//flip Y coordinates 
+		//TODO cleanup this mess!
+		let tmp = tcoords[1];
+		tcoords[1] = tcoords[7] = tcoords[3];
+		tcoords[3] = tcoords[5] = tmp;
+
 		for(let i = 0; i < coords.length; i+= 3) {
 			coords[i]   =  coords[i]  *tx + side*x - this.width/2;
 			coords[i+1] = -coords[i+1]*ty - side*y + this.height/2;
@@ -182,8 +186,8 @@ class Layout {
 			return { level:0, pyramid: [[0, 0, 1, 1]] };
 
 		//here we are computing with inverse levels; level 0 is the bottom!
-		let minlevel = Math.max(0, Math.min(Math.floor(-Math.log2(transform.z) + bias), this.nlevels-1));
-
+		let iminlevel = Math.max(0, Math.min(Math.floor(-Math.log2(transform.z) + bias), this.nlevels-1));
+		let minlevel = this.nlevels-1-iminlevel;
 		//
 		let bbox = transform.getInverseBox(viewport);
 		//find box in image coordinates where (0, 0) is in the upper left corner.
@@ -193,8 +197,9 @@ class Layout {
 		bbox[3] += this.height/2;
 
 		let pyramid = [];
-		for(let level = this.nlevels-1; level >= minlevel; level--) {
-			let side = this.tilesize*Math.pow(2, level);
+		for(let level = 0; level <= minlevel; level++) {
+			let ilevel = this.nlevels -1 -level;
+			let side = this.tilesize*Math.pow(2, ilevel);
 
 			//quantized bbox
 			let qbox = [
@@ -210,7 +215,7 @@ class Layout {
 			qbox[3] = Math.min(qbox[3]+border, this.qbox[level][3]);
 			pyramid[level] = qbox;
 		}
-		return { level:minlevel, pyramid: pyramid };
+		return { level: minlevel, pyramid: pyramid };
 	}
 
 	getTileURL(url, level, x, y) {
@@ -230,7 +235,7 @@ class Layout {
 		if(width && height) {
 			this.width = width;
 			this.height = height;
-			this.ntiles = this.initBoxes();
+			this.initBoxes();
 
 			this.status = 'ready';
 			this.emit('ready');
@@ -252,8 +257,7 @@ class Layout {
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
 		this.getTileURL = (url, x, y, level) => {
-			var ilevel = parseInt(this.nlevels - 1 - level);
-			return url + "/" + ilevel + "/" + y + "/" + x + '.' + this.suffix;
+			return url + "/" + level + "/" + y + "/" + x + '.' + this.suffix;
 		};
 		callback();
 	}
@@ -288,8 +292,7 @@ class Layout {
 
 			this.getTileURL = (url, x, y, level) => {
 				url = url.substr(0, url.lastIndexOf(".")) + '_files/';
-				let ilevel = parseInt(this.nlevels - 1 - level);
-				return url + ilevel + '/' + x + '_' + y + '.' + this.suffix;
+				return url + level + '/' + x + '_' + y + '.' + this.suffix;
 			}; 
 
 			callback();
@@ -324,11 +327,10 @@ class Layout {
 			this.url = this.url.substr(0, this.url.lastIndexOf("/"));
 
 			this.getTileURL = (url, x, y, level) => {
-				let ilevel = parseInt(this.nlevels - 1 - level);
 				let index = this.index(level, x, y)>>>0;
 				let group = index >> 8;
 				url = url.substr(0, url.lastIndexOf("/"));
-				return this.url + "/TileGroup" + group + "/" + ilevel + "-" + x + "-" + y + "." + this.suffix;
+				return this.url + "/TileGroup" + group + "/" + level + "-" + x + "-" + y + "." + this.suffix;
 			};
 
 			callback();

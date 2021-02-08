@@ -67,6 +67,9 @@ class Raster {
 			}
 		})().catch(e => { callback(null); });
 	}
+/*
+ * @param {function} callback as function(tex, sizeinBytes)
+ */
 
 	loadTexture(gl, img, callback) {
 		this.width = img.width;  //this will be useful for layout image.
@@ -79,7 +82,8 @@ class Raster {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
-		callback(tex);
+		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
+		callback(tex, img.width*img.height*3);
 	}
 
 }

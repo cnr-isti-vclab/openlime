@@ -3,6 +3,7 @@ import { Transform } from './Transform.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 import { Layout } from './Layout.js'
+import { Cache } from './Cache.js'
 
 /**
  * @param {string} id unique id for layer.
@@ -48,7 +49,7 @@ class Layer {
 			tiles: [],      //keep references to each texture (and status) indexed by level, x and y.
 							//each tile is tex: [.. one for raster ..], missing: 3 missing tex before tile is ready.
 							//only raster used by the shader will be loade.
-			queued: [],     //queue of tiles to be loaded.
+			queue: [],     //queue of tiles to be loaded.
 			requested: {},  //tiles requested.
 		});
 
@@ -198,8 +199,8 @@ class Layer {
 		for(var y = box[1]; y < box[3]; y++) {
 			for(var x = box[0]; x < box[2]; x++) {
 				var level = minlevel;
-				while(level < this.layout.nlevels) {
-					var d = level -minlevel;
+				while(level >= 0) {
+					var d = minlevel - level;
 					var index = this.layout.index(level, x>>d, y>>d);
 					if(this.tiles[index].missing == 0) {
 						torender[index] = {index:index, level:level, x:x>>d, y:y>>d, complete:true};
@@ -212,7 +213,7 @@ class Layer {
 						brothers[this.layout.index(level, sx+1, sy+1)] = 1;
 						brothers[this.layout.index(level, sx, sy+1)] = 1;
 					}
-					level++;
+					level--;
 				}
 			}
 		}
@@ -249,16 +250,17 @@ class Layer {
 		if(!this.shader || !this.layout || this.layout.status != 'ready')
 			return;
 
-		let ntiles = this.layout.ntiles;
-
-		if(typeof(this.tiles) != 'array' || this.tiles.length != ntiles) {
-			this.tiles = new Array(ntiles);
-			for(let i = 0; i < ntiles; i++)
-				this.tiles[i] = { tex:new Array(this.shader.samplers.length), missing:this.shader.samplers.length };
+		if(!this.tiles.length) {
+			this.tiles = JSON.parse(JSON.stringify(this.layout.tiles));
+			for(let tile of this.tiles) {
+				tile.tex = new Array(this.shader.samplers.length);
+				tile.missing = this.shader.samplers.length;
+				tile.size = 0;
+			}
 			return;
 		}
 
-		for(let tile of this.ntiles) {
+		for(let tile of this.tiles) {
 			tile.missing = this.shader.samplers.length;;
 			for(let sampler of this.shader.samplers) {
 				if(tile.tex[sampler.id])
@@ -312,8 +314,13 @@ class Layer {
 			return;
 
 		if(this.status != 'ready') {
-			if(this.layout.type == 'image' && !this.requested[0])
-				this.loadTile({index:0, level:0, x:0, y:0});
+			return;
+/*			if(this.layout.type == 'image' && !this.requested[0])
+				Object.assign(this.tiles[0], {
+					time: performance.now(),
+					priority: 0
+				});
+				Cache.setCandidates(this, [this.tiles[0]]); */
 			return;
 		}
 
@@ -331,40 +338,44 @@ class Layer {
 		this.previouslevel = minlevel;
 		this.previousbox = box; */
 
-		this.queued = [];
-
+		this.queue = [];
+		let now = performance.now();
 		//look for needed nodes and prefetched nodes (on the pos destination
-		for(let level = this.layout.nlevels-1; level >= minlevel; level--) {
+		for(let level = 0; level <= minlevel; level++) {
 			let box = needed.pyramid[level];
 			let tmp = [];
 			for(let y = box[1]; y < box[3]; y++) {
 				for(let x = box[0]; x < box[2]; x++) {
 					let index = this.layout.index(level, x, y);
-					if(this.tiles[index].missing != 0 && !this.requested[index])
-						tmp.push({level:level, x:x, y:y, index:index});
+					let tile = this.tiles[index];
+					tile.time = now;
+					tile.priority = minlevel - level;
+					if(tile.missing != 0 && !this.requested[index])
+						tmp.push(tile);
 				}
 			}
 			let cx = (box[0] + box[2])/2;
 			let cy = (box[1] + box[3])/2;
 			//sort tiles by distance to the center TODO: check it's correct!
 			tmp.sort(function(a, b) { return Math.abs(a.x - cx) + Math.abs(a.y - cy) - Math.abs(b.x - cx) - Math.abs(b.y - cy); });
-			this.queued = this.queued.concat(tmp);
+			this.queue = this.queue.concat(tmp);
 		}
-		this.preload();
+		Cache.setCandidates(this);
+//		this.preload();
 	}
 
 /**
  * Checks load tiles from the queue. TODO this needs to be global! Not per layer.
  *
  */
-	preload() {
+/*	preload() {
 		while(Object.keys(this.requested).length < this.maxRequest && this.queued.length > 0) {
 			var tile = this.queued.shift();
 			this.loadTile(tile);
 		}
-	}
+	} */
 
-	loadTile(tile) {
+	loadTile(tile, callback) {
 		if(this.requested[tile.index])
 			throw"AAARRGGHHH double request!";
 
@@ -373,17 +384,18 @@ class Layer {
 		for(let sampler of this.shader.samplers) {
 			let path = this.layout.getTileURL(this.rasters[sampler.id].url, tile.x, tile.y, tile.level );
 			let raster = this.rasters[sampler.id];
-			raster.loadImage(path, this.gl, (tex) => {
+			raster.loadImage(path, this.gl, (tex, size) => {
 
-				if(this.layout.type == "image" && !this.tiles.length) { //TODO create an ad hoc function for layout image.
+				if(this.layout.type == "image")
 					this.layout.initImage(raster.width, raster.height);
-				}
-				let indextile = this.tiles[tile.index];
-				indextile.tex[sampler.id] = tex;
-				indextile.missing--;
-				if(indextile.missing <= 0) {
+
+				tile.size += size;
+				tile.tex[sampler.id] = tex;
+				tile.missing--;
+				if(tile.missing <= 0) {
 					this.emit('update');
 					delete this.requested[tile.index];
+					if(callback) callback();
 				}
 			});
 		}

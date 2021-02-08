@@ -23,7 +23,7 @@ class LayerImage extends Layer {
 
 		this.rasters.push(new Raster({ url: this.url, type: 'vec3', attribute: 'kd', colorspace: 'sRGB' }));
 
-		let size = {width:this.width, height:this.height};
+		let size = {width:this.width || 1, height:this.height || 1};
 		this.setLayout(new Layout(this.url, this.layout, size));
 
 

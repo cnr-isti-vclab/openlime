@@ -9,10 +9,10 @@ import { LayerBRDF } from './LayerBRDF.js'
 let lime = new OpenLIME('#openlime');
 
 //combinerTest();
-//imageTest('deepzoom');
+imageTest('image');
 //rtiTest('bln');
 //brdfTest();
-tomeTest();
+//tomeTest();
 
 
 function tomeTest(dataset) {
