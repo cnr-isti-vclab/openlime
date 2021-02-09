@@ -20,29 +20,37 @@ class ControllerLens extends Controller {
     }
     
     update(x, y, rect) {
+        // Transform canvas p to image coords
+        let now = performance.now();
+        const t = this.camera.getCurrentTransform(now);
+        const v = this.camera.viewport; 
+        const p = {x:(x - v.w/2) / t.z - t.x , // Put +w/2
+                   y:(y - v.h/2) / t.z - t.y};
         
+        return p;
+
     }
 
 	panStart(e, x, y) {
-        y = e.rect.height - y;
-        if (!this.lens.isInside(x, y)) {
+        const p = this.update(x, y, e.rect);
+        
+        if (!this.lens.isInside(p)) {
             return false;
         }
-        this.startPos = [x, y];
+        this.startPos = p;
 		this.panning = true;
 		return true;
 	}
 
 	panMove(e, x, y) {
-        y = e.rect.height - y;
+        const p = this.update(x, y, e.rect);
         let result = false;
         if(this.panning) {
-            let dx = x - this.startPos[0];
-            let dy = y - this.startPos[1];
-            this.lens.center[0] += dx;
-            this.lens.center[1] += dy;
-            this.startPos = [x, y];
-            this.callback(this.lens.toVector());
+            let dx = p.x - this.startPos.x;
+            let dy = p.y - this.startPos.y;
+            this.lens.x += dx;
+            this.lens.y += dy;
+            this.startPos = {x: p.x, y: p.y };
             
             result = true;
         }
@@ -50,7 +58,6 @@ class ControllerLens extends Controller {
 	}
 
 	panEnd(e, x, y) {
-        y = e.rect.height - y;
 		if(!this.panning)
 			return false;
 		this.panning = false;
@@ -58,15 +65,14 @@ class ControllerLens extends Controller {
 	}
 
     wheelDelta(e, x, y, delta) {
-        y = e.rect.height - y;
-        if (!this.lens.isInside(x, y)) {
+        const p = this.update(x, y, e.rect);
+        if (!this.lens.isInside(p)) {
             return false;
         }
         console.log("ControllerLens wheel " + delta.toFixed(2));
         let factor = delta > 0 ? 1.1 : 1/1.1;
         this.lens.radius *= factor;
-        
-        this.callback(this.lens.toVector());
+
         return true;
     }
     

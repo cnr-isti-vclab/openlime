@@ -1,31 +1,20 @@
 class Lens {
-    constructor(options) {
-        if(options)
-            Object.assign(this, options);
-            
-        if (!this.center) {
-            this.center = [0, 0];
-        }
-        if (!this.radius) {
-            this.radius = 100;
-        }
-        if (!this.border) {
-            this.border = 10;
-        }
+    constructor(x = 0, y = 0, r = 100, border = 10) {
+            this.x = x;
+            this.y = y;
+            this.radius = r;
+            this.border = border;
     }
 
-    isInside(x, y) {
-        const dx = x - this.center[0];
-        const dy = y - this.center[1];
+    isInside(p) {
+        const dx = p.x - this.x;
+        const dy = p.y - this.y;
         const d2 = dx*dx + dy*dy;
-
-        const res = d2 < this.radius * this.radius;
-        console.log("Is inside " + x + ", " + y + " vs " + this.center[0] + ", " + this.center[1] + ", r " + this.radius + " ? = " + res);
-        return res;
+        return d2 < this.radius * this.radius;
     }
 
     toVector() {
-        return [this.center[0], this.center[1], this.radius, this.border];
+        return [this.x, this.y, this.radius, this.border];
     }
 }
 

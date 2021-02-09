@@ -19,7 +19,6 @@ class ShaderLens extends Shader {
 		];
         
         const wh = [this.camera.viewport.w,this.camera.viewport.h];
-        console.log("WH " + wh);
 
         this.uniforms = {
             u_lens: { type: 'vec4', needsUpdate: true, size: 4, value: this.lens.toVector() },
@@ -28,13 +27,19 @@ class ShaderLens extends Shader {
         this.body = this.template();
         this.label = "ShaderLens";
         this.needsUpdate = true;
-       // this.setLensVector([400,300,100,10]);
-
-        console.log("ShaderLens sampler name " + this.samplers[0].name);
     }
 
-    setLensVector(lensVec) {
-		this.setUniform('u_lens', lensVec);
+    updateLensUniform() {
+        const now = performance.now();
+        const t = this.camera.getCurrentTransform(now);
+        const v = this.camera.viewport;        
+        const c = {x:this.lens.x * t.z + t.x * t.z + v.w/2, 
+                   y:this.lens.y * t.z + t.y * t.z + v.h/2} 
+        const r = this.lens.radius * t.z; 
+        const b = this.lens.border;
+        const vp_h = this.camera.viewport.h;
+
+        this.setUniform('u_lens', [c.x, vp_h - c.y, r, b]);
 	}
 
     template() {
@@ -56,12 +61,17 @@ class ShaderLens extends Shader {
             float dy = v_texcoord.y * u_width_height.y - u_lens.y;
             float centerDist2 = dx*dx+dy*dy;
 
-            if (centerDist2 > lensR2) discard;
-            if (centerDist2 > innerBorderR2) {
-                color = vec4(1,0,0,1);
+            color = texture(source0, v_texcoord);
+
+            if (centerDist2 > lensR2){
+                color.x = 0.5;
+                discard;
+            } else if (centerDist2 > innerBorderR2) {
+                color.x = 1.0;
             } else {
-                color = texture(source0, v_texcoord);
+                color.z = 1.0;
             }
+    
         }
         `
     }
@@ -79,7 +89,7 @@ out vec2 v_texcoord;
 
 void main() {
 	gl_Position = a_position;
-	v_texcoord = a_texcoord;
+    v_texcoord = a_texcoord;
 }`;
 	}
 }

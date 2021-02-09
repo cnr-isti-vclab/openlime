@@ -101,7 +101,7 @@ function lensTest() {
 		visible: false
 	});
 
-	let theLens = new Lens({center:[400,500], radius:100, border:10});
+	let theLens = new Lens(0, 0, 150, 10);
 	let layerLens = new LayerLens({
 		layers: [layer0],
 		lens: theLens,
