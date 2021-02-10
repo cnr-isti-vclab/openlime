@@ -19,7 +19,7 @@ class ControllerLens extends Controller {
 		this.panning = false;
     }
     
-    update(x, y, rect) {
+    toScene(x, y) {
         // Transform canvas p to image coords
         let now = performance.now();
         const t = this.camera.getCurrentTransform(now);
@@ -32,7 +32,7 @@ class ControllerLens extends Controller {
     }
 
 	panStart(e, x, y) {
-        const p = this.update(x, y, e.rect);
+        const p = this.toScene(x, y);
         
         if (!this.lens.isInside(p)) {
             return false;
@@ -43,7 +43,7 @@ class ControllerLens extends Controller {
 	}
 
 	panMove(e, x, y) {
-        const p = this.update(x, y, e.rect);
+        const p = this.toScene(x, y);
         let result = false;
         if(this.panning) {
             let dx = p.x - this.startPos.x;
@@ -65,7 +65,7 @@ class ControllerLens extends Controller {
 	}
 
     wheelDelta(e, x, y, delta) {
-        const p = this.update(x, y, e.rect);
+        const p = this.toScene(x, y);
         if (!this.lens.isInside(p)) {
             return false;
         }

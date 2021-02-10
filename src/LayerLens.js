@@ -34,10 +34,6 @@ class LayerLens extends LayerCombiner {
         this.controllers.push(controller);
     }
 
-    draw(transform, vieport) {
-        this.shader.updateLensUniform();
-        super.draw(transform, vieport);
-    }
 }
 
 export {LayerLens}

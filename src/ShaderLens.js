@@ -21,7 +21,7 @@ class ShaderLens extends Shader {
         const wh = [this.camera.viewport.w,this.camera.viewport.h];
 
         this.uniforms = {
-            u_lens: { type: 'vec4', needsUpdate: true, size: 4, value: this.lens.toVector() },
+            u_lens: { type: 'vec4', needsUpdate: true, size: 4 },
             u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: wh}
         };
         this.body = this.template();
@@ -29,17 +29,17 @@ class ShaderLens extends Shader {
         this.needsUpdate = true;
     }
 
-    updateLensUniform() {
+    updateUniforms(gl, program) {
         const now = performance.now();
         const t = this.camera.getCurrentTransform(now);
         const v = this.camera.viewport;        
-        const c = {x:this.lens.x * t.z + t.x * t.z + v.w/2, 
-                   y:this.lens.y * t.z + t.y * t.z + v.h/2} 
-        const r = this.lens.radius * t.z; 
-        const b = this.lens.border;
-        const vp_h = this.camera.viewport.h;
+        const vl = this.lens.toViewport(t, v);
+        this.setUniform('u_lens', vl);
 
-        this.setUniform('u_lens', [c.x, vp_h - c.y, r, b]);
+        const wh = [v.w, v.h];
+        this.setUniform('u_width_height', wh);
+
+        super.updateUniforms(gl, program);
 	}
 
     template() {
