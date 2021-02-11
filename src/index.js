@@ -6,6 +6,7 @@ import { LayerCombiner } from './LayerCombiner.js'
 import { LayerRTI } from './LayerRTI.js'
 import { LayerBRDF } from './LayerBRDF.js'
 import { Controller2D } from './Controller2D.js'
+import { UIBasic } from './UIBasic.js'
 
 let lime = new OpenLIME('#openlime');
 
@@ -13,24 +14,28 @@ let lime = new OpenLIME('#openlime');
 //imageTest('image');
 //rtiTest('bln');
 //brdfTest();
-tomeTest();
+//tomeTest();
+
+testUIBasic();
 
 
-function tomeTest(dataset) {
+function testUIBasic() {
+	tomeTest();
+	let ui = new UIBasic(lime);
+}
+
+
+function tomeTest() {
 	let layer0 = new Layer({ 
 		layout: 'deepzoom', 
 		type:'rti',
 		url: 'assets/rti/tome/info.json'
 	});
 	lime.canvas.addLayer('tome', layer0); 
-	layer0.addEvent('ready', () => { 
-		layer0.setLight([0.4, 0.4], 2000); 
-		setTimeout(() => { 
-			layer0.setLight([-1, 0], 2000); 
-		}, 2000); 
-	});
-	let controller = new Controller2D((x, y)=>layer0.setControl('light', [x, y], 100));
-	layer0.controllers.push(controller);
+	layer0.setLight([0.4, 0.4], 2000);
+	setTimeout(() => { 
+		layer0.setLight([-1, 0], 2000); 
+	}, 2000); 
 }
 
 

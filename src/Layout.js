@@ -58,7 +58,7 @@ class Layout {
 	}
 
 	boundingBox() {
-		return [-width/2, -height/2, width/2, height/2];
+		return [-this.width/2, -this.height/2, this.width/2, this.height/2];
 	}
 
 /**

@@ -46,7 +46,7 @@ class OpenLIME {
 		this.canvasElement = div.querySelector('canvas');
 		if(!this.canvasElement) {
 			this.canvasElement = document.createElement('canvas');
-			div.appendChild(this.canvasElement);
+			div.prepend(this.canvasElement);
 		}
 
 		this.initCanvasElement(this.canvasElement);

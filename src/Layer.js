@@ -90,8 +90,8 @@ class Layer {
 		let callback = () => { 
 			this.status = 'ready';
 			this.setupTiles(); //setup expect status to be ready!
-			this.emit('update');
 			this.emit('ready');
+			this.emit('update');
 		};
 		if(layout.status == 'ready') //layout already initialized.
 			callback();
@@ -126,7 +126,7 @@ class Layer {
 	}
 
 	boundingBox() {
-		return layuout.boundingBox();
+		return this.layout.boundingBox();
 	}
 
 

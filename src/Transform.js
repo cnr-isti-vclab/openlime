@@ -57,6 +57,19 @@ class Transform {
 		return a;
 	}
 
+	/* transform the box (for example -w/2, -h/2 , w/2, h/2 in scene coords) */
+	transformBox(lbox) {
+		let box = [ 1e20, 1e20, -1e20, -1e20];
+		for(let i = 0; i < 4; i++) {
+			let p = this.apply(lbox[0 + (i&0x1)<<1], lbox[1 + (i&0x2)]);
+			box[0] = Math.min(p.x, box[0]);
+			box[1] = Math.min(p.y, box[1]);
+			box[2] = Math.max(p.x, box[2]);
+			box[3] = Math.max(p.y, box[3]);
+		}
+		return box;
+	}
+
 /*  get the bounding box (in image coordinate sppace) of the vieport. 
  */
 	getInverseBox(viewport) {

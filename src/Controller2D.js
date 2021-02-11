@@ -7,8 +7,6 @@ import { Controller } from './Controller.js'
 class Controller2D extends Controller {
 
 	constructor(callback, options) {
-
-
 		super(options);
 
 		this.callback = callback;
