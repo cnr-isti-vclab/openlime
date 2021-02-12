@@ -15,13 +15,13 @@ class ShaderLens extends Shader {
         }
         
         this.samplers = [
-			{ id:0, name:'source0', type:'vec3' },
+			{ id:0, name:'source0', type:'vec4' },
 		];
         
         const wh = [this.camera.viewport.w,this.camera.viewport.h];
 
         this.uniforms = {
-            u_lens: { type: 'vec4', needsUpdate: true, size: 4 },
+            u_lens: { type: 'vec4', needsUpdate: true, size: 4, value: [0,0,100,10] },
             u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: wh}
         };
         this.body = this.template();
@@ -29,19 +29,14 @@ class ShaderLens extends Shader {
         this.needsUpdate = true;
     }
 
-    updateUniforms(gl, program) {
-        const now = performance.now();
-        const t = this.camera.getCurrentTransform(now);
-        const v = this.camera.viewport;        
-        const vl = this.lens.toViewport(t, v);
+    setLensUniforms(transform, windowViewport) {
+        const vl = this.lens.toViewportCoords(transform, windowViewport);
         this.setUniform('u_lens', vl);
 
-        const wh = [v.w, v.h];
+        const wh = [windowViewport.w, windowViewport.h];
         this.setUniform('u_width_height', wh);
-
-        super.updateUniforms(gl, program);
-	}
-
+    }
+    
     template() {
         return `#version 300 es
 
@@ -61,17 +56,13 @@ class ShaderLens extends Shader {
             float dy = v_texcoord.y * u_width_height.y - u_lens.y;
             float centerDist2 = dx*dx+dy*dy;
 
-            color = texture(source0, v_texcoord);
-
+            const float k = 0.8;
+            color = vec4(k,k,k,1.0);
             if (centerDist2 > lensR2){
-                color.x = 0.5;
                 discard;
-            } else if (centerDist2 > innerBorderR2) {
-                color.x = 1.0;
-            } else {
-                color.z = 1.0;
+            } else if (centerDist2 < innerBorderR2) {
+                color = texture(source0, v_texcoord);
             }
-    
         }
         `
     }

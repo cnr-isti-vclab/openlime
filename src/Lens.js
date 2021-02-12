@@ -13,12 +13,12 @@ class Lens {
         return d2 < this.radius * this.radius;
     }
 
-    toViewport(transform, viewport) {
+    toViewportCoords(transform, viewport) {
         const c = 
-        [this.x * transform.z + transform.x * transform.z + viewport.w/2, 
-         this.y * transform.z + transform.y * transform.z + viewport.h/2];
-
-        return [c[0], viewport.h - c[1], this.radius * transform.z, this.border];
+        [this.x * transform.z + transform.x * transform.z - viewport.x + viewport.w/2, 
+         viewport.h - this.y * transform.z - transform.y * transform.z - viewport.y - viewport.h/2];
+    
+         return [c[0],  c[1], this.radius * transform.z, this.border];
     }
 
 }

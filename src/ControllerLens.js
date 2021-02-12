@@ -33,8 +33,9 @@ class ControllerLens extends Controller {
 
 	panStart(e, x, y) {
         const p = this.toScene(x, y);
-        
+        console.log("X,Y " + x.toFixed(2) + ", " + y.toFixed(2) + " -> " + p.x.toFixed(2) + ", " + p.y.toFixed(2) + " inside " + this.lens.isInside(p));
         if (!this.lens.isInside(p)) {
+   
             return false;
         }
         this.startPos = p;
