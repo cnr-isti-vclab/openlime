@@ -7,6 +7,8 @@ import { LayerRTI } from './LayerRTI.js'
 import { LayerBRDF } from './LayerBRDF.js'
 import { Controller2D } from './Controller2D.js'
 import { UIBasic } from './UIBasic.js'
+import { LayerLens } from './LayerLens.js'
+import { Lens } from './Lens.js'
 
 let lime = new OpenLIME('#openlime');
 
@@ -18,7 +20,7 @@ let lime = new OpenLIME('#openlime');
 //testUIBasic();
 
 //testUISvg();
-
+lensTest();
 
 function testUIBasic() {
 	tomeTest();
@@ -86,6 +88,30 @@ function combinerTest() {
 	lime.canvas.addLayer('ksmap', layer1);
 	lime.canvas.addLayer('combiner', combiner);
 }
+
+/* COMBINER TEST */
+function lensTest() {
+
+	let layer0 = new Layer({
+		type: 'image',
+		url: 'assets/svbrdf/vis/kdMap.jpg',
+		layout: 'image',
+		zindex: 0,
+		transform: { x: 0, y: 0, z: 1, a: 0 },
+		visible: false
+	});
+
+	let theLens = new Lens(0, 0, 150, 10);
+	let layerLens = new LayerLens({
+		layers: [layer0],
+		lens: theLens,
+		camera: lime.camera,
+	});
+
+	lime.canvas.addLayer('kdmap', layer0);
+	lime.canvas.addLayer('lens', layerLens);
+}
+
 
 
 

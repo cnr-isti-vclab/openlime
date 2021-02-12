@@ -117,11 +117,17 @@ class Transform {
  */
 	projectionMatrix(viewport) {
 		let z = this.z;
-		let zx = 2*z/viewport.w;
-		let zy = 2*z/viewport.h;
 
-		let dx = (this.x)*zx;
-		let dy = -(this.y)*zy;
+		// In coords with 0 in lower left corner map x0 to -1, and x0+v.w to 1
+		// In coords with 0 at screen center and x0 at 0, map -v.w/2 -> -1, v.w/2 -> 1 
+		// With x0 != 0: x0 -> x0-v.w/2 -> -1, and x0+dx -> x0+v.dx-v.w/2 -> 1
+		// Where dx is viewport width, while w is window width
+
+		let zx = 2*z/viewport.dx;
+		let zy = 2*z/viewport.dy;
+
+		let dx = zx * this.x + (2/viewport.dx)*(viewport.w/2-viewport.x)-1;
+		let dy = -zy * this.y + (2/viewport.dy)*(viewport.h/2-viewport.y)-1;
 
 //		let r = this.rotate(this.x, this.y, this.a);
 
