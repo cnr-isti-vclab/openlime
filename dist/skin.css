@@ -1,0 +1,53 @@
+rect[style] {
+	fill:rgb(255, 255, 255, 0) !important;
+	stroke:none !important;
+}
+
+.openlime-toolbar {
+	position:absolute;
+	left:0px;
+	top:0px;
+	padding:5px;
+	background-color:rgb(0, 0, 0, 0.0);
+	width:300px;
+}
+
+
+.openlime-toolbar svg:not(:root) {
+	width:100%;
+	height: auto;
+	display: block;
+}
+
+.openlime-toolbar .openlime-button:hover {
+	cursor:pointer;
+	opacity:50%;
+
+}
+
+
+.openlime-light path[style] {
+	fill:#80808011 !important; 
+}
+.openlime-light-active .openlime-light path[style] {
+	fill:#ffcc00 !important; 
+}
+
+
+
+g.openlime-compact {
+	visibility:hidden !important;
+}
+
+g.openlime-expand {
+	visibility:visible !important;
+}
+
+.openlime-fullscreen-active g.openlime-compact {
+	visibility:visible !important;
+}
+
+.openlime-fullscreen-active g.openlime-expand {
+	visibility:hidden !important;
+}
+
