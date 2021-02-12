@@ -2,10 +2,13 @@ import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
 import { Transform } from './Transform.js'
 import { Layer } from './Layer.js'
+import { LayerRTI } from './LayerRTI.js'
+
 import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 
+import { UIBasic } from './UIBasic.js'
 import { Controller } from './Controller.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 
@@ -209,5 +212,5 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, Layer, Raster, Shader, Layout }
+export { OpenLIME, Canvas, Camera, Transform, Layer, LayerRTI, Raster, Shader, Layout, UIBasic }
 

@@ -15,11 +15,18 @@ let lime = new OpenLIME('#openlime');
 //rtiTest('bln');
 //brdfTest();
 //tomeTest();
+//testUIBasic();
 
-testUIBasic();
+//testUISvg();
 
 
 function testUIBasic() {
+	tomeTest();
+	let ui = new UIBasic(lime, { skin: null });
+}
+
+
+function testUISvg() {
 	tomeTest();
 	let ui = new UIBasic(lime);
 }

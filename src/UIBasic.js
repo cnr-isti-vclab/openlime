@@ -23,8 +23,8 @@ class UIBasic {
 		Object.assign(this, {
 			lime: lime,
 			camera: this.camera,
-			skin: null, //'skin.min.svg',
-			style: null, //'skin.css',
+			skin: 'skin.svg',
+			style: 'skin.css',
 			actions: {
 				home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fit(this.viewport, 250); } },
 				zoomin:     { title: 'Zoom in',    task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
@@ -44,41 +44,9 @@ class UIBasic {
 				layer.controllers.push(controller);
 			}
 		}
-
-
 		this.init();
 	}
-	//we need the concept of active layer! so we an turn on and off light.
-	toggleLightController() {
-		let div = this.lime.containerElement;
-		let active = div.classList.toggle('openlime-light-active');
 
-		for(let layer of Object.values(this.lime.canvas.layers)) {
-			if(layer.controls.light) {
-				layer.controllers[0].active = active;
-			}
-		}
-	}
-
-	toggleFullscreen() {
-		let canvas = this.lime.canvasElement;
-		let div = this.lime.containerElement;
-		let active = div.classList.toggle('openlime-fullscreen-active');
-
-		if(!active) {
-			var request = document.exitFullscreen || document.webkitExitFullscreen ||
-				document.mozCancelFullScreen || document.msExitFullscreen;
-			request.call(document);
-
-			this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
-		} else {
-			var request = div.requestFullscreen || div.webkitRequestFullscreen ||
-				div.mozRequestFullScreen || div.msRequestFullscreen;
-			request.call(div);
-		}
-		this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
-
-	}
 
 
 	init() {
@@ -111,14 +79,6 @@ class UIBasic {
 			this.viewport = box;
 	}
 
-	setupActions() {
-		for(let [name, action] of Object.entries(this.actions)) {
-			let element = this.lime.containerElement.querySelector('.openlime-' + name);
-			if(!element)
-				continue;
-			element.addEventListener('click', action.task);
-		}
-	}
 	async loadSkin() {
 		var response = await fetch(this.skin);
 		if(!response.ok) {
@@ -127,16 +87,93 @@ class UIBasic {
 		}
 
 		let text = await response.text();
-		this.containerElement.innerHTML += text;
+		let parser = new DOMParser();
+		let skin= parser.parseFromString(text, "image/svg+xml").documentElement;
 
-/*			for(let i in t.actions) {
-				let action = t.actions[i];
-				html+= '		<div class="relight-' + i + '" title="' + action.title + '"></div>\n';
-			} */
+
+		let toolbar = document.createElement('div');
+		toolbar.classList.add('openlime-toolbar');
+		this.lime.containerElement.appendChild(toolbar);
+
+
+		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
+		if(0) {
+			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			toolbar.appendChild(svg);
+
+			let padding = 10;
+			let x = padding;
+			let h = 0;
+			for(let [name, action] of Object.entries(this.actions)) {
+				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
+				if(!element) continue;
+				svg.appendChild(element);
+				let box = element.getBBox();
+				h = Math.max(h, box.height);
+				element.transform.baseVal.getItem(0).setTranslate(-box.x + x,-box.y);
+				x += box.width + padding;
+			}
+			svg.viewBox.baseVal.x = 0;
+			svg.viewBox.baseVal.y = 0;
+			svg.viewBox.baseVal.width = x;
+			svg.viewBox.baseVal.height = h;
+		}
+
+		//toolbar build from the skin directly
+		if(1) {
+			toolbar.appendChild(skin);
+
+			let w = skin.getAttribute('width');
+			let h = skin.getAttribute('height');
+			let viewbox = skin.getAttribute('viewBox');
+			if(!viewbox)
+				skin.setAttribute('viewBox', `0 0 ${w} ${h}`);
+		}
 	}
-/* home.getBBox() //x and y width and height. 
-	home.transform.baseVal.getItem(0).matrix.e, f = (x, y) //scale and translate
-*/
+
+
+
+	setupActions() {
+		for(let [name, action] of Object.entries(this.actions)) {
+			let element = this.lime.containerElement.querySelector('.openlime-' + name);
+			if(!element)
+				continue;
+			element.addEventListener('click', action.task);
+		}
+	}
+
+	//we need the concept of active layer! so we an turn on and off light.
+	toggleLightController() {
+		let div = this.lime.containerElement;
+		let active = div.classList.toggle('openlime-light-active');
+
+		for(let layer of Object.values(this.lime.canvas.layers)) {
+			if(layer.controls.light) {
+				layer.controllers[0].active = active;
+			}
+		}
+	}
+
+	toggleFullscreen() {
+		let canvas = this.lime.canvasElement;
+		let div = this.lime.containerElement;
+		let active = div.classList.toggle('openlime-fullscreen-active');
+
+		if(!active) {
+			var request = document.exitFullscreen || document.webkitExitFullscreen ||
+				document.mozCancelFullScreen || document.msExitFullscreen;
+			request.call(document);
+
+			this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
+		} else {
+			var request = div.requestFullscreen || div.webkitRequestFullscreen ||
+				div.mozRequestFullScreen || div.msRequestFullscreen;
+			request.call(div);
+		}
+		this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
+
+	}
+
 }
 
 export { UIBasic }
