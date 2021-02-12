@@ -113,10 +113,7 @@ class UIBasic {
 				element.transform.baseVal.getItem(0).setTranslate(-box.x + x,-box.y);
 				x += box.width + padding;
 			}
-			svg.viewBox.baseVal.x = 0;
-			svg.viewBox.baseVal.y = 0;
-			svg.viewBox.baseVal.width = x;
-			svg.viewBox.baseVal.height = h;
+			Object.assign(svg.viewBox.baseVal, {x: 0, y: 0, width: x, height: h });
 		}
 
 		//toolbar build from the skin directly

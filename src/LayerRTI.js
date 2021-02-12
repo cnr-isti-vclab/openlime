@@ -83,6 +83,7 @@ class LayerRTI extends Layer {
 			let light = this.controls['light'].current.value;
 			this.shader.setLight(light);
 		}
+		return done;
 	}
 }
 
