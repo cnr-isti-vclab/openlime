@@ -70,6 +70,8 @@ class LayerRTI extends Layer {
 			let size = {width:this.width, height:this.height};
 			this.setLayout(new Layout(this.planeUrl(this.url, 0), this.layout, size));
 
+			let controller = new Controller2D((x, y)=>this.setControl('light', [x, y], 100), { active:false, control:'light' });
+			this.controllers.push(controller);
 
 		})().catch(e => { console.log(e); this.status = e; });
 	}

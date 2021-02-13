@@ -27,6 +27,7 @@ class UIBasic {
 			style: 'skin.css',
 			actions: {
 				home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fit(this.viewport, 250); } },
+				layers:     { title: 'Layers',     task: (event) => { this.selectLayers(event); } },
 				zoomin:     { title: 'Zoom in',    task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout:    { title: 'Zoom out',   task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
 				light:      { title: 'Light',      task: (event) => { this.toggleLightController(); } },
@@ -38,12 +39,6 @@ class UIBasic {
 		if(options)
 			Object.assign(this, options);
 
-		for(let layer of Object.values(lime.canvas.layers)) {
-			if(layer.controls.light) {
-				let controller = new Controller2D((x, y)=>layer.setControl('light', [x, y], 100), { active:false });
-				layer.controllers.push(controller);
-			}
-		}
 		this.init();
 	}
 
@@ -56,6 +51,11 @@ class UIBasic {
 				await this.loadSkin();
 
 			this.setupActions();
+
+			for(let l of Object.values(this.lime.canvas.layers)) {
+				this.setLayer(l);
+				break;
+			}
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
@@ -97,7 +97,7 @@ class UIBasic {
 
 
 		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
-		if(0) {
+		if(1) {
 			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 			toolbar.appendChild(svg);
 
@@ -110,14 +110,17 @@ class UIBasic {
 				svg.appendChild(element);
 				let box = element.getBBox();
 				h = Math.max(h, box.height);
-				element.transform.baseVal.getItem(0).setTranslate(-box.x + x,-box.y);
+				let tlist = element.transform.baseVal;
+				if(tlist.numberOfItems == 0)
+					tlist.appendItem(svg.createSVGTransform());
+				tlist.getItem(0).setTranslate(-box.x + x,-box.y);
 				x += box.width + padding;
 			}
 			Object.assign(svg.viewBox.baseVal, {x: 0, y: 0, width: x, height: h });
 		}
 
 		//toolbar build from the skin directly
-		if(1) {
+		if(0) {
 			toolbar.appendChild(skin);
 
 			let w = skin.getAttribute('width');
@@ -137,18 +140,25 @@ class UIBasic {
 				continue;
 			element.addEventListener('click', action.task);
 		}
+		let items = document.querySelectorAll('.openlime-layers-button');
+		for(let item of items) {
+			let id = item.getAttribute('data-layer');
+			if(!id) continue;
+			item.addEventListener('click', ()=> {
+				this.setLayer(this.lime.layers[id]);
+			});
+		}
 	}
 
 	//we need the concept of active layer! so we an turn on and off light.
 	toggleLightController() {
 		let div = this.lime.containerElement;
 		let active = div.classList.toggle('openlime-light-active');
+		this.lightActive = active;
 
-		for(let layer of Object.values(this.lime.canvas.layers)) {
-			if(layer.controls.light) {
-				layer.controllers[0].active = active;
-			}
-		}
+		for(let c of this.activeLayer.controllers)
+			if(c.control == 'light')
+				c.active = active;
 	}
 
 	toggleFullscreen() {
@@ -168,9 +178,47 @@ class UIBasic {
 			request.call(div);
 		}
 		this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
-
 	}
 
+/* Layer management */
+
+	selectLayers(event) {
+		if(!this.layerMenu) {
+			let ul = document.createElement('ul');
+			ul.classList.add('openlime-layers-menu');
+			for(let [name, layer] of Object.entries(this.lime.canvas.layers)) {
+				let li = document.createElement('li');
+				li.innerHTML = layer.label || name;
+				li.addEventListener('click', ()=> {
+					this.setLayer(layer);
+					this.closeLayersMenu();
+				});
+				ul.appendChild(li);
+			}
+			this.lime.containerElement.appendChild(ul);
+			this.layerMenu = ul;
+		}
+		this.layerMenu.style.left = event.offsetX + 'px';
+		this.layerMenu.style.top = event.offsetY + 'px';
+		this.layerMenu.style.display = 'block';
+	}
+
+	setLayer(layer_on) {
+		this.activeLayer = layer_on;
+
+		for(let layer of Object.values(this.lime.canvas.layers)) {
+			layer.setVisible(layer == layer_on);
+			for(let c of layer.controllers) {
+				if(c.control == 'light')
+					c.active = this.lightActive && layer == layer_on;
+			}
+		}
+		this.lime.redraw();
+	}
+
+	closeLayersMenu() {
+		this.layerMenu.style.display = 'none';
+	}
 }
 
 export { UIBasic }

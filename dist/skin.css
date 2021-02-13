@@ -57,3 +57,20 @@ g.openlime-expand {
 	visibility:hidden !important;
 }
 
+.openlime-layers-menu {
+	position:absolute;
+	cursor:pointer;
+	transition-duration: 0.5s;
+
+	background-color: #f1f1f1;
+	list-style: none;
+	padding:0px;
+	z-index: 1;
+}
+.openlime-layers-menu li {
+	display:block;
+	padding: 12px 16px;
+}
+
+.openlime-layers-menu li:hover { background-color: #ddd; }
+

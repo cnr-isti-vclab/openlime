@@ -47,13 +47,23 @@ html, body {
 let lime = new OpenLIME.OpenLIME('#openlime');
 
 
-let layer = new OpenLIME.Layer({ 
+let layer1 = new OpenLIME.Layer({ 
+	layout: 'deepzoom', 
+	type:'rti',
+	url: 'assets/rti/tome/info.json',
+	label: 'Layer <span style="color:red">label</span>'
+});
+
+lime.canvas.addLayer('tome1', layer1); 
+
+
+let layer2 = new OpenLIME.Layer({ 
 	layout: 'deepzoom', 
 	type:'rti',
 	url: 'assets/rti/tome/info.json'
 });
 
-lime.canvas.addLayer('tome', layer); 
+lime.canvas.addLayer('tome2', layer2); 
 
 let ui = new OpenLIME.UIBasic(lime);
 </script>

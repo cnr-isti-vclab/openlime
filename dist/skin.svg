@@ -9,7 +9,7 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="423.40018"
+   width="509.83185"
    height="83"
    id="svg2"
    version="1.1"
@@ -25,8 +25,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4142136"
-     inkscape:cx="84.292542"
-     inkscape:cy="-166.0864"
+     inkscape:cx="164.90125"
+     inkscape:cy="66.095149"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -363,6 +363,39 @@
            id="path855-2-6"
            inkscape:connector-curvature="0"
            sodipodi:nodetypes="cc" />
+      </g>
+    </g>
+    <g
+       id="g968"
+       class="openlime-button openlime-layers">
+      <rect
+         ry="12"
+         rx="12"
+         y="301.14792"
+         x="509.45792"
+         height="71"
+         width="71"
+         id="rect2993-75"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#666666;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <g
+         transform="translate(2.4579113,0.3089987)"
+         id="g961">
+        <path
+           style="fill:#666666;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           d="m 542.5,308.83892 25,12.5 -25,12.5 -25,-12.5 z"
+           id="path939"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="ccccc" />
+        <path
+           style="fill:#666666;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           d="m 527.50001,331.33892 -10,5 25,12.5 25,-12.5 -10,-5 -15,7.5 -15,-7.5"
+           id="path941"
+           inkscape:connector-curvature="0" />
+        <path
+           style="fill:#666666;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           d="m 527.5,346.33892 -10,5 25,12.5 25,-12.5 -10,-5 -15,7.5 -15,-7.5"
+           id="path941-2"
+           inkscape:connector-curvature="0" />
       </g>
     </g>
   </g>

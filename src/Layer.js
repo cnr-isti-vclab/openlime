@@ -114,6 +114,7 @@ class Layer {
  */
 	setVisible(visible) {
 		this.visible = visible;
+		this.previouslyNeeded = null;
 		this.emit('update');
 	}
 
@@ -363,7 +364,6 @@ class Layer {
 *  @param {viewport} is the viewport for the rendering, note: for lens might be different! Where we change it? here layer should know!
 */
 	prefetch(transform, viewport) {
-
 		if(this.layers.length != 0) { //combine layers
 			for(let layer of this.layers)
 				layer.prefetch(transform, viewport);
@@ -375,6 +375,7 @@ class Layer {
 		if(this.status != 'ready') 
 			return;
 
+		console.log("Prefetch: ", this.visible);
 		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 		if(this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
 				return;
