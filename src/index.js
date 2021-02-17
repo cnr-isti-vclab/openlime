@@ -101,11 +101,13 @@ function lensTest() {
 		visible: false
 	});
 
-	let theLens = new Lens(0, 0, 150, 10);
 	let layerLens = new LayerLens({
 		layers: [layer0],
-		lens: theLens,
 		camera: lime.camera,
+		x:0, 
+		y:0,
+		radius:150,
+		border:10
 	});
 
 	lime.canvas.addLayer('kdmap', layer0);
