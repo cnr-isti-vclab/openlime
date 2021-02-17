@@ -5,36 +5,31 @@ class ShaderLens extends Shader {
     constructor(options) {
         super(options);
 
-        if (!this.lens) {
-            console.log("ShaderLens: Lens option required");
-            throw "ShaderLens: Lens option required";
-        }
-        if (!this.camera) {
-            console.log("ShaderLens: camera option required");
-            throw "ShaderLens: camera option required";
-        }
+        // if (!this.lens) {
+        //     console.log("ShaderLens: Lens option required");
+        //     throw "ShaderLens: Lens option required";
+        // }
+        // if (!this.camera) {
+        //     console.log("ShaderLens: camera option required");
+        //     throw "ShaderLens: camera option required";
+        // }
         
         this.samplers = [
 			{ id:0, name:'source0', type:'vec4' },
 		];
         
-        const wh = [this.camera.viewport.w,this.camera.viewport.h];
-
         this.uniforms = {
             u_lens: { type: 'vec4', needsUpdate: true, size: 4, value: [0,0,100,10] },
-            u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: wh}
+            u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1,1]}
         };
         this.body = this.template();
         this.label = "ShaderLens";
         this.needsUpdate = true;
     }
 
-    setLensUniforms(transform, windowViewport) {
-        const vl = this.lens.toViewportCoords(transform, windowViewport);
-        this.setUniform('u_lens', vl);
-
-        const wh = [windowViewport.w, windowViewport.h];
-        this.setUniform('u_width_height', wh);
+    setLensUniforms(lensViewportCoords, windowWH) {
+        this.setUniform('u_lens', lensViewportCoords);
+        this.setUniform('u_width_height', windowWH);
     }
     
     template() {
@@ -45,7 +40,7 @@ class ShaderLens extends Shader {
 
         uniform sampler2D source0;
         uniform vec4 u_lens;
-        uniform vec2 u_width_height;
+        uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
         in vec2 v_texcoord;
         out vec4 color;
 

@@ -153,6 +153,28 @@ class Transform {
 		];
 	}
 
+    /**
+	 * Transform p from scene (0 at image center) to [0,wh] 
+	 * @param {*} viewport viewport(x,y,dx,dy,w,h)
+	 * @param {*} p point in scene: 0,0 at image center
+	 */ 
+	sceneToViewportCoords(viewport, p) {
+        return [(p[0] + this.x) * this.z - viewport.x + viewport.w/2, 
+                (p[1] - this.y) * this.z + viewport.y + viewport.h/2 ];
+    }
+
+	/**
+     * Transform p from  [0,wh] to scene (0 at image center)
+	 * 
+	 * @param {*} viewport viewport(x,y,dx,dy,w,h)
+	 * @param {*} p point in range [0..w-1,0..h-1]
+	 */
+    viewportToSceneCoords(viewport, p) {
+        return [(p[0] + viewport.x - viewport.w/2) / this.z - this.x,
+                (p[1] - viewport.y - viewport.h/2) / this.z + this.y];
+
+    }
+
 }
 
 function matrixMul(a, b) {
