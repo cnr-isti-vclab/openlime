@@ -36,6 +36,10 @@ function testSVGAnnotations() {
 	let layer1 = new AnnotationLayer({ 
 		viewBox: "0 0 300 553",
 		svgURL: 'assets/svbrdf/vis/annotations.svg',
+		style:` 
+			.openlime-annotation { pointer-events:all; opacity: 0.7; }
+			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+		`,
 		annotations: { aura: {}, sun: {} },
 		transform: { x: 50, y: -100, z: 1.2, a: 10 },
 	});
