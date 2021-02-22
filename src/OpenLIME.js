@@ -34,7 +34,6 @@ class OpenLIME {
 		Object.assign(this, { 
 			background: [0, 0, 0, 1],
 			canvas: {},
-			overlay: {},
 			controllers: [],
 			camera: new Camera()
 		});
@@ -60,7 +59,7 @@ class OpenLIME {
 		this.containerElement.appendChild(this.overlayElement);
 
 
-		this.canvas = new Canvas(this.gl, this.camera, this.canvas);
+		this.canvas = new Canvas(this.gl, this.overlayElement, this.camera, this.canvas);
 		this.canvas.addEvent('update', () => { this.redraw(); });
 
 		this.camera.addEvent('update', () => { this.redraw(); });
@@ -108,6 +107,12 @@ class OpenLIME {
 			throw "Could not create a WebGL context";
 	}
 
+	/* Convenience function, it actually passes to Canvas
+	*/
+	addLayer(id, layer) {
+		canvas.addLayer(id, layer);
+	}
+
 	/**
 	* Resize the canvas (and the overlay) and triggers a redraw.
 	*/
@@ -142,8 +147,6 @@ class OpenLIME {
 		let transform = this.camera.getCurrentTransform(time);
 
 		let done = this.canvas.draw(time);
-		for(let [name, layer] of Object.values(this.overlay))
-			done &= layer.draw(transform, viewport);
 		if(!done)
 			this.redraw();
 	}

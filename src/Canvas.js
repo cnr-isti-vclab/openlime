@@ -7,13 +7,13 @@ import { Camera } from './Camera.js'
  */
 
 class Canvas {
-	constructor(gl, camera, options) {
+	constructor(gl, overlay, camera, options) {
 		Object.assign(this, { 
 			preserveDrawingBuffer: false, 
 			gl: gl,
+			overlayElement: overlay,
 			camera: camera,
 			layers: {},
-
 			signals: {'update':[]}
 		});
 
@@ -36,6 +36,7 @@ class Canvas {
 	addLayer(id, layer) {
 		layer.addEvent('update', () => { this.emit('update'); });
 		layer.gl = this.gl;
+		layer.overlayElement = this.overlayElement;
 		this.layers[id] = layer;
 		this.prefetch();
 	}
@@ -58,16 +59,16 @@ class Canvas {
 		//todo we could actually prefetch toward the future a little bit
 		this.prefetch(pos);
 
-		//draw layers using zindex.
+		//pos layers using zindex.
 		let ordered = Object.values(this.layers).sort( (a, b) => a.zindex - b.zindex);
 
 		//NOTICE: camera(pos) must be relative to the WHOLE canvas
 		let done = true;
 		for(let layer of ordered)
 			if(layer.visible)
-				done = done && layer.draw(pos, view);
+				done = layer.draw(pos, view) && done;
 
-//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
+		//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
 		return done && pos.t == this.camera.target.t;
 	}
 

@@ -9,7 +9,7 @@
 	 * @param {number} x position
 	 * @param {number} y position
 	 * @param {number} z scale
-	 * @param {number} a rotation
+	 * @param {number} a rotation in degrees
 	 * @param {number} t time
 	 *
 	 */
@@ -342,13 +342,13 @@
 	 */
 
 	class Canvas {
-		constructor(gl, camera, options) {
+		constructor(gl, overlay, camera, options) {
 			Object.assign(this, { 
 				preserveDrawingBuffer: false, 
 				gl: gl,
+				overlayElement: overlay,
 				camera: camera,
 				layers: {},
-
 				signals: {'update':[]}
 			});
 
@@ -371,6 +371,7 @@
 		addLayer(id, layer) {
 			layer.addEvent('update', () => { this.emit('update'); });
 			layer.gl = this.gl;
+			layer.overlayElement = this.overlayElement;
 			this.layers[id] = layer;
 			this.prefetch();
 		}
@@ -393,7 +394,7 @@
 			//todo we could actually prefetch toward the future a little bit
 			this.prefetch(pos);
 
-			//draw layers using zindex.
+			//pos layers using zindex.
 			let ordered = Object.values(this.layers).sort( (a, b) => a.zindex - b.zindex);
 
 			//NOTICE: camera(pos) must be relative to the WHOLE canvas
@@ -402,7 +403,7 @@
 				if(layer.visible)
 					done = done && layer.draw(pos, view);
 
-	//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
+			//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
 			return done && pos.t == this.camera.target.t;
 		}
 
@@ -2199,7 +2200,7 @@ vec4 render(vec3 base[np1]) {
 				lime: lime,
 				camera: this.camera,
 				skin: 'skin.svg',
-				style: 'skin.css',
+				skinCSS: 'skin.css',
 				actions: {
 					home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fit(this.viewport, 250); } },
 					layers:     { title: 'Layers',     task: (event) => { this.selectLayers(event); } },
@@ -2224,6 +2225,8 @@ vec4 render(vec3 base[np1]) {
 
 				if(this.skin)
 					await this.loadSkin();
+				if(this.skinCSS)
+					await this.loadSkinCSS();
 
 				this.setupActions();
 
@@ -2292,6 +2295,14 @@ vec4 render(vec3 base[np1]) {
 				}
 				Object.assign(svg.viewBox.baseVal, {x: 0, y: 0, width: x, height: h });
 			}
+		}
+
+		loadSkinCSS() {
+			let link = document.createElement('link'); 
+			link.rel = 'stylesheet';  
+			link.type = 'text/css'; 
+			link.href = this.skinCSS;  
+			document.getElementsByTagName('HEAD')[0].appendChild(link);  
 		}
 
 
@@ -2475,7 +2486,6 @@ vec4 render(vec3 base[np1]) {
 			Object.assign(this, { 
 				background: [0, 0, 0, 1],
 				canvas: {},
-				overlay: {},
 				controllers: [],
 				camera: new Camera()
 			});
@@ -2501,7 +2511,7 @@ vec4 render(vec3 base[np1]) {
 			this.containerElement.appendChild(this.overlayElement);
 
 
-			this.canvas = new Canvas(this.gl, this.camera, this.canvas);
+			this.canvas = new Canvas(this.gl, this.overlayElement, this.camera, this.canvas);
 			this.canvas.addEvent('update', () => { this.redraw(); });
 
 			this.camera.addEvent('update', () => { this.redraw(); });
@@ -2549,6 +2559,12 @@ vec4 render(vec3 base[np1]) {
 				throw "Could not create a WebGL context";
 		}
 
+		/* Convenience function, it actually passes to Canvas
+		*/
+		addLayer(id, layer) {
+			canvas.addLayer(id, layer);
+		}
+
 		/**
 		* Resize the canvas (and the overlay) and triggers a redraw.
 		*/
@@ -2583,8 +2599,6 @@ vec4 render(vec3 base[np1]) {
 			let transform = this.camera.getCurrentTransform(time);
 
 			let done = this.canvas.draw(time);
-			for(let [name, layer] of Object.values(this.overlay))
-				done &= layer.draw(transform, viewport);
 			if(!done)
 				this.redraw();
 		}

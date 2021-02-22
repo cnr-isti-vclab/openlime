@@ -24,11 +24,12 @@ class UIBasic {
 			lime: lime,
 			camera: this.camera,
 			skin: 'skin.svg',
-			style: 'skin.css',
+			skinCSS: 'skin.css',
 			actions: {
 				home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fit(this.viewport, 250); } },
 				layers:     { title: 'Layers',     task: (event) => { this.selectLayers(event); } },
-				zoomin:     { title: 'Zoom in',    task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
+				zoomin:     { title: 'Zoom in',    task: (event) => { 
+	if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout:    { title: 'Zoom out',   task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
 				light:      { title: 'Light',      task: (event) => { this.toggleLightController(); } },
 				fullscreen: { title: 'Fullscreen', task: (event) => { this.toggleFullscreen(); } }
@@ -49,11 +50,13 @@ class UIBasic {
 
 			if(this.skin)
 				await this.loadSkin();
+			if(this.skinCSS)
+				await this.loadSkinCSS();
 
 			this.setupActions();
 
 			for(let l of Object.values(this.lime.canvas.layers)) {
-				this.setLayer(l);
+//				this.setLayer(l);
 				break;
 			}
 
@@ -129,6 +132,14 @@ class UIBasic {
 			if(!viewbox)
 				skin.setAttribute('viewBox', `0 0 ${w} ${h}`);
 		}
+	}
+
+	loadSkinCSS() {
+		let link = document.createElement('link'); 
+		link.rel = 'stylesheet';  
+		link.type = 'text/css'; 
+		link.href = this.skinCSS;  
+		document.getElementsByTagName('HEAD')[0].appendChild(link);  
 	}
 
 

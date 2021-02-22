@@ -30,14 +30,19 @@ function testSVGAnnotations() {
 		url: 'assets/svbrdf/vis/kdMap.jpg',
 		layout: 'image',
 		zindex: 0,
-		transform: { x: 100, y: 0, z: 1, a: 0 },
-		visible: false
+		transform: { x: 50, y: -100, z: 1.2, a: 10 },
 	});
 
-	let layer1 = new AnnotationLayer({
+	let layer1 = new AnnotationLayer({ 
+		viewBox: "0 0 300 553",
+		svgURL: 'assets/svbrdf/vis/annotations.svg',
+		annotations: { aura: {}, sun: {} },
+		transform: { x: 50, y: -100, z: 1.2, a: 10 },
 	});
+
 	lime.canvas.addLayer('img', layer0);
 	lime.canvas.addLayer('anno', layer1);
+	let ui = new UIBasic(lime);
 }
 
 function testUIBasic() {
@@ -162,7 +167,6 @@ function imageTest(layout) {
 			options.url = 'assets/svbrdf/vis/glossMap/ImageProperties.xml';
 			break;
 	}
-	console.log(options);
 	let layer0 = new Layer(options);
 	lime.canvas.addLayer('kdmap', layer0);
 }

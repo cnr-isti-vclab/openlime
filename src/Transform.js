@@ -4,7 +4,7 @@
  * @param {number} x position
  * @param {number} y position
  * @param {number} z scale
- * @param {number} a rotation
+ * @param {number} a rotation in degrees
  * @param {number} t time
  *
  */
