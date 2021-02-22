@@ -1,13 +1,13 @@
 import { OpenLIME } from './OpenLIME.js'
 import { Raster } from './Raster.js'
 import { Layer } from './Layer.js'
-import { LayerImage } from './LayerImage.js'
-import { LayerCombiner } from './LayerCombiner.js'
-import { LayerRTI } from './LayerRTI.js'
-import { LayerBRDF } from './LayerBRDF.js'
+import { ImageLayer } from './ImageLayer.js'
+import { CombinerLayer } from './CombinerLayer.js'
+import { RTILayer } from './RTILayer.js'
+import { BRDFLayer } from './BRDFLayer.js'
 import { Controller2D } from './Controller2D.js'
 import { UIBasic } from './UIBasic.js'
-import { LayerLens } from './LayerLens.js'
+import { LensLayer } from './LensLayer.js'
 import { Lens } from './Lens.js'
 
 let lime = new OpenLIME('#openlime');
@@ -80,7 +80,7 @@ function combinerTest() {
 		visible: false
 	});
 
-	let combiner = new LayerCombiner({
+	let combiner = new CombinerLayer({
 		layers: [layer0, layer1]
 	});
 

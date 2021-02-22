@@ -375,7 +375,6 @@ class Layer {
 		if(this.status != 'ready') 
 			return;
 
-		console.log("Prefetch: ", this.visible);
 		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 		if(this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
 				return;

@@ -2,7 +2,7 @@ import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
 import { Transform } from './Transform.js'
 import { Layer } from './Layer.js'
-import { LayerRTI } from './LayerRTI.js'
+import { RTILayer } from './LayerRTI.js'
 
 import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
@@ -34,6 +34,7 @@ class OpenLIME {
 		Object.assign(this, { 
 			background: [0, 0, 0, 1],
 			canvas: {},
+			overlay: {},
 			controllers: [],
 			camera: new Camera()
 		});
@@ -53,6 +54,10 @@ class OpenLIME {
 		}
 
 		this.initCanvasElement(this.canvasElement);
+
+		this.overlayElement = document.createElement('div');
+		this.overlayElement.classList.add('openlime-overlay');
+		this.containerElement.appendChild(this.overlayElement);
 
 
 		this.canvas = new Canvas(this.gl, this.camera, this.canvas);
@@ -133,7 +138,12 @@ class OpenLIME {
 		if(!time) time = performance.now();
 		this.animaterequest = null;
 
+		let viewport = this.camera.viewport;
+		let transform = this.camera.getCurrentTransform(time);
+
 		let done = this.canvas.draw(time);
+		for(let [name, layer] of Object.values(overlay))
+			done &= layer.draw(transform, viewport);
 		if(!done)
 			this.redraw();
 	}
