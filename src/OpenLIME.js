@@ -2,7 +2,7 @@ import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
 import { Transform } from './Transform.js'
 import { Layer } from './Layer.js'
-import { RTILayer } from './LayerRTI.js'
+import { RTILayer } from './RTILayer.js'
 
 import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
@@ -142,7 +142,7 @@ class OpenLIME {
 		let transform = this.camera.getCurrentTransform(time);
 
 		let done = this.canvas.draw(time);
-		for(let [name, layer] of Object.values(overlay))
+		for(let [name, layer] of Object.values(this.overlay))
 			done &= layer.draw(transform, viewport);
 		if(!done)
 			this.redraw();
@@ -222,5 +222,5 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, Layer, LayerRTI, Raster, Shader, Layout, UIBasic }
+export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic }
 

@@ -1,6 +1,6 @@
 import { Layer }  from './Layer.js'
 import { Raster } from './Raster.js'
-import { ShaderRTI } from './ShaderRTI.js'
+import { RTIShader } from './RTIShader.js'
 import { Layout } from './Layout.js'
 import { Controller2D } from './Controller2D.js'
 
@@ -22,7 +22,7 @@ class RTILayer extends Layer {
 		if(!this.layout)
 			this.layout = 'image';
 
-		this.shaders['rti'] = new ShaderRTI();
+		this.shaders['rti'] = new RTIShader();
 		this.setShader('rti');
 
 		let now = performance.now();
@@ -89,6 +89,6 @@ class RTILayer extends Layer {
 	}
 }
 
-Layer.prototype.types['rti'] = (options) => { return new LayerRTI(options); }
+Layer.prototype.types['rti'] = (options) => { return new RTILayer(options); }
 
 export { RTILayer }

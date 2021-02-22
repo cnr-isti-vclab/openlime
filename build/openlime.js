@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.OpenLIME = {}));
-}(this, (function (exports) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('hammerjs')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'hammerjs'], factory) :
+	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.OpenLIME = {}, global.Hammer));
+}(this, (function (exports, Hammer) { 'use strict';
 
 	/**
 	 * 
@@ -15,15 +15,13 @@
 	 */
 
 	class Transform {
-		constructor(x, y, z, a, t) {
+		constructor(options) {
 			Object.assign(this, { x:0, y:0, z:1, a:0, t:0 });
 
-			if(!t) t = performance.now();
-
-			if(typeof(x) == 'object')
-				Object.assign(this, x);
-			else if(typeof(x) != 'undefined') 
-				Object.assign(this, { x:x, y:y, z:z, a:a, t:t });
+			if(!this.t) this.t = performance.now();
+			
+			if(typeof(options) == 'object')
+				Object.assign(this, options);
 		}
 
 		copy() {
@@ -34,11 +32,70 @@
 
 		apply(x, y) {
 			//TODO! ROTATE
+			let r = this.rotate(x, y, this.a);
 			return { 
-				x: x*this.z + this.x,
-				y: y*this.z + this.y
+				x: r.x*this.z + this.x,
+				y: r.y*this.z + this.y
 			}
 		}
+
+		inverse() {
+			let r = this.rotate(this.x, this.y, -this.a);
+			return new Transform({x:-r.x, y:-r.y, z:1/this.z, a:-this.a, t:this.t});
+		}
+
+		rotate(x, y, angle) {
+			angle = Math.PI*(angle/180);
+			let ex =  Math.cos(angle)*x + Math.sin(angle)*y;
+			let ey = -Math.sin(angle)*x + Math.cos(angle)*y;
+			return {x:ex, y:ey};
+		}
+
+		compose(transform) {
+			let a = this.copy();
+			let b = transform;
+			a.z *= b.z;
+			a.a += b.a;
+			var r = this.rotate(a.x, a.y, b.a);
+			a.x = r.x*b.z + b.x;
+			a.y = r.y*b.z + b.y; 
+			return a;
+		}
+
+		/* transform the box (for example -w/2, -h/2 , w/2, h/2 in scene coords) */
+		transformBox(lbox) {
+			let box = [ 1e20, 1e20, -1e20, -1e20];
+			for(let i = 0; i < 4; i++) {
+				let p = this.apply(lbox[0 + (i&0x1)<<1], lbox[1 + (i&0x2)]);
+				box[0] = Math.min(p.x, box[0]);
+				box[1] = Math.min(p.y, box[1]);
+				box[2] = Math.max(p.x, box[2]);
+				box[3] = Math.max(p.y, box[3]);
+			}
+			return box;
+		}
+
+	/*  get the bounding box (in image coordinate sppace) of the vieport. 
+	 */
+		getInverseBox(viewport) {
+			let inverse = this.inverse();
+			let corners = [
+				{x:viewport.x,               y:viewport.y},
+				{x:viewport.x + viewport.dx, y:viewport.y},
+				{x:viewport.x,               y:viewport.y + viewport.dy},
+				{x:viewport.x + viewport.dx, y:viewport.y + viewport.dy}
+			];
+			let box = [ 1e20, 1e20, -1e20, -1e20];
+			for(let corner of corners) {
+				let p = inverse.apply(corner.x -viewport.w/2, corner.y - viewport.h/2);
+				box[0] = Math.min(p.x, box[0]);
+				box[1] = Math.min(p.y, box[1]);
+				box[2] = Math.max(p.x, box[2]);
+				box[3] = Math.max(p.y, box[3]);
+			}
+			return box;
+		}
+
 		interpolate(source, target, time) {
 			if(time < source.t) return source;
 			if(time > target.t) return target;
@@ -58,24 +115,6 @@
 		}
 
 
-		
-		rotate(x, y, angle) {
-			var angle = Math.PI*(angle/180);
-			var x =  Math.cos(angle)*x + Math.sin(angle)*y;
-			var y = -Math.sin(angle)*x + Math.cos(angle)*y;
-			return {x:x, y:y};
-		}
-
-		compose(transform) {
-			let a = this.copy();
-			let b = transform;
-			a.z *= b.z;
-			a.a += b.a;
-			var r = this.rotate(a.x, a.y, b.a);
-			a.x = r.x*b.z + b.x;
-			a.y = r.y*b.z + b.y; 
-			return a;
-		}
 
 	/**
 	 *  Combines the transform with the viewport to the viewport with the transform
@@ -83,15 +122,24 @@
 	 */
 		projectionMatrix(viewport) {
 			let z = this.z;
-			let zx = 2*z/(viewport[2] - viewport[0]);
-			let zy = 2*z/(viewport[3] - viewport[1]);
 
-			let dx = (this.x)*zx;
-			let dy = -(this.y)*zy;
+			// In coords with 0 in lower left corner map x0 to -1, and x0+v.w to 1
+			// In coords with 0 at screen center and x0 at 0, map -v.w/2 -> -1, v.w/2 -> 1 
+			// With x0 != 0: x0 -> x0-v.w/2 -> -1, and x0+dx -> x0+v.dx-v.w/2 -> 1
+			// Where dx is viewport width, while w is window width
 
+			let zx = 2*z/viewport.dx;
+			let zy = 2*z/viewport.dy;
+
+			let dx = zx * this.x + (2/viewport.dx)*(viewport.w/2-viewport.x)-1;
+			let dy = -zy * this.y + (2/viewport.dy)*(viewport.h/2-viewport.y)-1;
+
+	//		let r = this.rotate(this.x, this.y, this.a);
+
+			let a = Math.PI *this.a/180;
 			let matrix = [
-				 zx,  0,  0,  0, 
-				 0,  zy,  0,  0,
+				 Math.cos(a)*zx, Math.sin(a)*zy,  0,  0, 
+				-Math.sin(a)*zx, Math.cos(a)*zy,  0,  0,
 				 0,  0,  1,  0,
 				dx, dy, 0,  1];
 			return matrix;
@@ -110,9 +158,32 @@
 			];
 		}
 
+	    /**
+		 * Transform p from scene (0 at image center) to [0,wh] 
+		 * @param {*} viewport viewport(x,y,dx,dy,w,h)
+		 * @param {*} p point in scene: 0,0 at image center
+		 */ 
+		sceneToViewportCoords(viewport, p) {
+	        return [(p[0] + this.x) * this.z - viewport.x + viewport.w/2, 
+	                (p[1] - this.y) * this.z + viewport.y + viewport.h/2 ];
+	    }
+
+		/**
+	     * Transform p from  [0,wh] to scene (0 at image center)
+		 * 
+		 * @param {*} viewport viewport(x,y,dx,dy,w,h)
+		 * @param {*} p point in range [0..w-1,0..h-1]
+		 */
+	    viewportToSceneCoords(viewport, p) {
+	        return [(p[0] + viewport.x - viewport.w/2) / this.z - this.x,
+	                (p[1] - viewport.y - viewport.h/2) / this.z + this.y];
+
+	    }
+
 	}
 
 	/**
+	 *  NOTICE TODO: the camera has the transform relative to the whole canvas NOT the viewport.
 	 * @param {object} options
 	 * * *bounded*: limit translation of the camera to the boundary of the scene.
 	 * * *maxZoom*: maximum zoom, 1:maxZoom is screen pixel to image pixel ratio.
@@ -122,7 +193,7 @@
 
 		constructor(options) {
 			Object.assign(this, {
-				viewport: [0, 0, 1, 1],
+				viewport: null,
 				bounded: true,
 				maxZoom: 4,
 				minZoom: 'full',
@@ -154,7 +225,7 @@
 	 */
 		setViewport(view) {
 			this.viewport = view;
-			//TODO!
+			//TODO! update camera to keep the center in place and zoomm to approximate the content before.
 		}
 
 	/**
@@ -163,8 +234,8 @@
 	 */
 		mapToScene(x, y, transform) {
 			//compute coords relative to the center of the viewport.
-			x -= (this.viewport[2] + this.viewport[0])/2;
-			y -= (this.viewport[3] + this.viewport[1])/2;
+			x -= this.viewport.w/2;
+			y -= this.viewport.h/2;
 			x /= transform.z;
 			y /= transform.z;
 			x -= transform.x;
@@ -193,9 +264,24 @@
 		}
 
 	/* zoom in or out at a specific point in canvas coords!
-	 *
+	 * TODO: this is not quite right!
 	 */
-		zoom(dt, dz, x, y) {
+		zoom(dt, z, x, y) {
+			if(!x) x = 0;
+			if(!y) y = 0;
+
+			let now = performance.now();
+			let m = this.getCurrentTransform(now);
+
+
+			//x, an y should be the center of the zoom.
+			m.x += (m.x+x)*(m.z - z)/m.z;
+			m.y += (m.y+y)*(m.z - z)/m.z;
+
+			this.setPosition(dt, m.x, m.y, z, m.a);
+		}
+
+		deltaZoom(dt, dz, x, y) {
 			if(!x) x = 0;
 			if(!y) y = 0;
 
@@ -205,16 +291,13 @@
 
 			//x, an y should be the center of the zoom.
 
-			console.log("diff:", m.x, x, dz, m.z);
+
 			m.x += (m.x+x)*(1 - dz);
 			m.y += (m.y+y)*(1 - dz);
 
-	//		m.x += x*(m.z - m.z*dz);
-	//		m.y += y*(m.z - m.z*dz);
-	//		m.x = (m.x - ox + ox*(dz);
-	//		m.y = (m.x - oy + oy*(dz);
-			this.setPosition(dt, m.x, m.y, m.z*dz, m.a);
+			this.setPosition(dt, m.x, m.y, this.target.z*dz, m.a);
 		}
+
 
 		getCurrentTransform(time) {
 			if(time < this.source.t)
@@ -232,12 +315,17 @@
 	 * @param {number} dt animation duration in millisecond 
 	 * @param {string} size how to fit the image: <contain | cover> default is contain (and cover is not implemented
 	 */
+
+	//TODO should fit keeping the same angle!
 		fit(box, dt, size) {
 			if(!dt) dt = 0;
 
 			//find if we align the topbottom borders or the leftright border.
-			let w = this.viewport[2] - this.viewport[0];
-			let h = this.viewport[3] - this.viewport[1];
+			let w = this.viewport.dx;
+			let h = this.viewport.dy;
+
+			//center of the viewport.
+
 			let bw = box[2] - box[0];
 			let bh = box[3] - box[1];
 			let z = Math.min(w/bw, h/bh);
@@ -281,21 +369,26 @@
 		}
 
 		addLayer(id, layer) {
-			layer.addEvent('update', () => { console.log('update!'); this.emit('update'); });
+			layer.addEvent('update', () => { this.emit('update'); });
 			layer.gl = this.gl;
 			this.layers[id] = layer;
+			this.prefetch();
 		}
 
 
 		draw(time) {
 			let gl = this.gl;
 			let view = this.camera.viewport;
-			gl.viewport(view[0], view[1], view[2], view[3]);
+			gl.viewport(view.x, view.y, view.dx, view.dy);
 
 			var b = [0, 1, 0, 1];
 			gl.clearColor(b[0], b[1], b[2], b[3], b[4]);
 			gl.clear(gl.COLOR_BUFFER_BIT);
 
+			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+			gl.enable(gl.BLEND);
+
+			//TODO: getCurren shoudl redurn {position, done}
 			let pos = this.camera.getCurrentTransform(time);
 			//todo we could actually prefetch toward the future a little bit
 			this.prefetch(pos);
@@ -303,12 +396,14 @@
 			//draw layers using zindex.
 			let ordered = Object.values(this.layers).sort( (a, b) => a.zindex - b.zindex);
 
+			//NOTICE: camera(pos) must be relative to the WHOLE canvas
+			let done = true;
 			for(let layer of ordered)
 				if(layer.visible)
-					layer.draw(pos, view);
+					done = done && layer.draw(pos, view);
 
 	//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
-			return pos.t == this.camera.target.t;
+			return done && pos.t == this.camera.target.t;
 		}
 
 	/**
@@ -316,8 +411,13 @@
 	 * @param {object} transform is the camera position (layer will combine with local transform).
 	 */
 		prefetch(transform) {
-			for(let id in this.layers)
-				this.layers[id].prefetch(transform, this.camera.viewport);
+			if(!transform)
+				transform = this.camera.getCurrentTransform(performance.now());
+			for(let id in this.layers) {
+				let layer = this.layers[id];
+				if(layer.visible)
+					layer.prefetch(transform, this.camera.viewport);
+			}
 		}
 	}
 
@@ -370,9 +470,9 @@
 					var isFirefox = typeof InstallTrigger !== 'undefined';
 					//firefox does not support options for this call, BUT the image is automatically flipped.
 					if(isFirefox) {
-						createImageBitmap(blob).then((img) => this.loadTexture(img, callback));
+						createImageBitmap(blob).then((img) => this.loadTexture(gl, img, callback));
 					} else {
-						createImageBitmap(blob, { imageOrientation: 'flipY' }).then((img) => this.loadTexture(gl, img, callback));
+						createImageBitmap(blob, { imageOrientation1: 'flipY' }).then((img) => this.loadTexture(gl, img, callback));
 					}
 
 				} else { //fallback for IOS
@@ -390,6 +490,9 @@
 				}
 			})().catch(e => { callback(null); });
 		}
+	/*
+	 * @param {function} callback as function(tex, sizeinBytes)
+	 */
 
 		loadTexture(gl, img, callback) {
 			this.width = img.width;  //this will be useful for layout image.
@@ -402,16 +505,17 @@
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
-			callback(tex);
+			//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
+			callback(tex, img.width*img.height*3);
 		}
-
 	}
 
 	/**
 	 *  @param {object} options
 	 * *label*: used for menu
 	 * *samplers*: array of rasters {id:, type: } color, normals, etc.
-	 * *uniforms*:
+	 * *uniforms*: type = <vec4|vec3|vec2|float|int>, needsUpdate controls when updated in gl, size is unused, value is and array or a float, 
+	 *             we also want to support interpolation: source (value is the target), start, end are the timing (same as camera interpolation)
 	 * *body*: code actually performing the rendering, needs to return a vec4
 	 * *name*: name of the body function
 	 */
@@ -425,11 +529,29 @@
 				name: "",
 				body: "",
 				program: null,      //webgl program
-				needsUpdate: true
+				needsUpdate: true,
+				signals: { 'update':[] }
 			});
 
 			Object.assign(this, options);
 		}
+
+		setEvent(event, callback) {
+			this.signals[event] = [callback];
+		}
+
+		emit(event) {
+			for(let r of this.signals[event])
+				r(this);
+		}
+
+		setUniform(name, value) {
+			let u = this.uniforms[name];
+			u.value = value;
+			u.needsUpdate = true;
+			this.emit('update');
+		}
+
 
 		createProgram(gl) {
 
@@ -469,6 +591,9 @@
 				throw new Error('Could not compile WebGL program. \n\n' + info);
 			}
 
+			//sampler units;
+			for(let sampler of this.samplers)
+				sampler.location = gl.getUniformLocation(program, sampler.name);
 
 			this.coordattrib = gl.getAttribLocation(program, "a_position");
 			gl.vertexAttribPointer(this.coordattrib, 3, gl.FLOAT, false, 0, 0);
@@ -482,6 +607,29 @@
 
 			this.program = program;
 			this.needsUpdate = false;
+		}
+
+		updateUniforms(gl, program) {
+			let now = performance.now();
+			for(const [name, uniform] of Object.entries(this.uniforms)) {
+				if(!uniform.location)
+					uniform.location = gl.getUniformLocation(program, name);
+
+				if(!uniform.location)  //uniform not used in program
+					continue; 
+
+				if(uniform.needsUpdate) {
+					let value = uniform.value;
+					switch(uniform.type) {
+						case 'vec4':  gl.uniform4fv(uniform.location, value); break;
+						case 'vec3':  gl.uniform3fv(uniform.location, value); break;
+						case 'vec2':  gl.uniform2fv(uniform.location, value); break;
+						case 'float': gl.uniform1fv(uniform.location, value); break;
+						case 'int':   gl.uniform1i (uniform.location, value); break;
+						default: throw Error('Unknown uniform type: ' + u.type);
+					}
+				}
+			}
 		}
 
 		vertShaderSrc() {
@@ -512,15 +660,15 @@ void main() {
 	 * @param {string} type select one among: <image, {@link https://www.microimages.com/documentation/TechGuides/78googleMapsStruc.pdf google}, {@link https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN deepzoom}, {@link http://www.zoomify.com/ZIFFileFormatSpecification.htm zoomify}, {@link https://iipimage.sourceforge.io/ iip}, {@link https://iiif.io/api/image/3.0/ iiif}>
 	 */
 	class Layout {
-		constructor(url, type) {
+		constructor(url, type, options) {
 			Object.assign(this, {
 				type: type,
-				width:1,
+				width: 1,
 				height: 1,
 				tilesize: 256,
 				overlap: 0, 
 				nlevels: 1,        //level 0 is the top, single tile level.
-				ntiles: 1,         //tot number of tiles
+				tiles: [],
 				suffix: 'jpg',
 				qbox: [],          //array of bounding box in tiles, one for mipmap 
 				bbox: [],          //array of bounding box in pixels (w, h)
@@ -528,19 +676,22 @@ void main() {
 				signals: { ready: [] },          //callbacks when the layout is ready.
 				status: null
 			});
+			if(options)
+				Object.assign(this, options);
 
 			if(typeof(url) == 'string') {
 				this.url = url;
 				let callback = () => {
-					this.ntiles = this.initBoxes();
+					this.initBoxes();
 					this.status = 'ready';
 					this.emit('ready');
 				};
 
 				switch(this.type) {
-					case 'image':    this.initImage(callback); break;
+					case 'image':    this.initImage(this.width, this.height); break;
 					case 'google':   this.initGoogle(callback); break;
 					case 'deepzoom': this.initDeepzoom(callback); break;
+					case 'zoomify': this.initZoomify(callback); break;
 				}
 				return;
 			}
@@ -558,8 +709,12 @@ void main() {
 				r(this);
 		}
 
+		isReady() {
+			return this.status == 'ready' && this.width && this.height;
+		}
+
 		boundingBox() {
-			return [-width/2, -height/2, width/2, height/2];
+			return [-this.width/2, -this.height/2, this.width/2, this.height/2];
 		}
 
 	/**
@@ -567,10 +722,9 @@ void main() {
 	 */
 
 		index(level, x, y) {
-			var startindex = 0;
-			for(var i = this.nlevels-1; i > level; i--) {
+			let startindex = 0;
+			for(let i = 0; i < level; i++)
 				startindex += this.qbox[i][2]*this.qbox[i][3];
-			}
 			return startindex + y*this.qbox[level][2] + x;
 		}
 
@@ -588,27 +742,31 @@ void main() {
 			if(this.type == 'image') {
 				this.qbox[0] = [0, 0, 1, 1];
 				this.bbox[0] = [0, 0, w, h];
+				this.tiles.push({index:0, level:0, x:0, y:0});
 				return 1;
 			}
 
-			var count = 0;
-			for(var level = this.nlevels - 1; level >= 0; level--) {
-				var ilevel = this.nlevels -1 - level;
-				this.qbox[ilevel] = [0, 0, 0, 0];
-				this.bbox[ilevel] = [0, 0, w, h];
-				for(var y = 0; y*this.tilesize < h; y++) {
-					this.qbox[ilevel][3] = y+1;
-					for(var x = 0; x*this.tilesize < w; x ++) {
-						count++;
-						this.qbox[ilevel][2] = x+1;
+			let tiles = [];
+			for(let level = this.nlevels - 1; level >= 0; level--) {
+				this.qbox[level] = [0, 0, 0, 0];
+				this.bbox[level] = [0, 0, w, h];
+				for(let y = 0; y*this.tilesize < h; y++) {
+					this.qbox[level][3] = y+1;
+					for(let x = 0; x*this.tilesize < w; x ++) {
+						this.qbox[level][2] = x+1;
+						tiles.push({level:level, x:x, y:y});
 					}
 				}
 				w >>>= 1;
 				h >>>= 1;
 			}
-			return count;
+			this.tiles = [];
+			for(let tile of tiles) {
+				let index = this.index(tile.level, tile.x, tile.y);
+				tile.index = index;
+				this.tiles[index] = tile;
+			}
 		}
-
 
 	/** Return the coordinates of the tile (in [0, 0, w h] image coordinate system) and the texture coords associated. 
 	 *
@@ -616,7 +774,8 @@ void main() {
 		tileCoords(level, x, y) {
 			let w = this.width;
 			let h = this.height;
-			var tcoords = new Float32Array([0, 0,     0, 1,     1, 1,     1, 0]);
+			//careful: here y is inverted due to textures not being flipped on load (Firefox fault!).
+			var tcoords = new Float32Array([0, 1,     0, 0,     1, 0,     1, 1]);
 
 			if(this.type == "image") {
 				return { 
@@ -627,18 +786,20 @@ void main() {
 
 			let coords = new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]);
 
-
-			let side =  this.tilesize*(1<<(level)); //tile size in imagespace
+			let ilevel = this.nlevels - 1 - level;
+			let side =  this.tilesize*(1<<(ilevel)); //tile size in imagespace
 			let tx = side;
 			let ty = side;
 
-			if(this.layout != "google") {  //google does not clip border tiles
-				if(side*(x+1) > this.width) {
-					tx = (this.width  - side*x);
-				}
-				if(side*(y+1) > this.height) {
-					ty = (this.height - side*y);
-				}
+			if(side*(x+1) > this.width) {
+				tx = (this.width  - side*x);
+				if(this.type == 'google')
+					tcoords[4] = tcoords[6] = tx/side;
+			}
+			if(side*(y+1) > this.height) {
+				ty = (this.height - side*y);
+				if(this.type == 'google')
+					tcoords[1] = tcoords[7] = ty/side;
 			}
 
 			var lx  = this.qbox[level][2]-1; //last tile x pos, if so no overlap.
@@ -646,17 +807,23 @@ void main() {
 
 			var over = this.overlap;
 			if(over) {
-				let dtx = over / (tx/(1<<level) + (x==0?0:over) + (x==lx?0:over));
-				let dty = over / (ty/(1<<level) + (y==0?0:over) + (y==ly?0:over));
+				let dtx = over / (tx/(1<<ilevel) + (x==0?0:over) + (x==lx?0:over));
+				let dty = over / (ty/(1<<ilevel) + (y==0?0:over) + (y==ly?0:over));
 
 				tcoords[0] = tcoords[2] = (x==0? 0: dtx);
-				tcoords[1] = tcoords[7] = (y==0? 0: dty);
+				tcoords[3] = tcoords[5] = (y==0? 0: dty);
 				tcoords[4] = tcoords[6] = (x==lx? 1: 1 - dtx);
-				tcoords[3] = tcoords[5] = (y==ly? 1: 1 - dty);
-			}
+				tcoords[1] = tcoords[7] = (y==ly? 1: 1 - dty);
+			} 
+			//flip Y coordinates 
+			//TODO cleanup this mess!
+			let tmp = tcoords[1];
+			tcoords[1] = tcoords[7] = tcoords[3];
+			tcoords[3] = tcoords[5] = tmp;
+
 			for(let i = 0; i < coords.length; i+= 3) {
-				coords[i]   = coords[i]  *tx + size*x - this.width/2;
-				coords[i+1] = coords[i+1]*ty + size*y + this.height/2;
+				coords[i]   =  coords[i]  *tx + side*x - this.width/2;
+				coords[i+1] = -coords[i+1]*ty - side*y + this.height/2;
 			}
 
 			return { coords: coords, tcoords: tcoords }
@@ -669,20 +836,28 @@ void main() {
 	 * @param {border} border is radius (in tiles units) of prefetch
 	 * @returns {object} with level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.
 	 */
-		neededBox(viewport, transform, border) {
-			if(this.layout == "image")
-				return { level:0, box: [[0, 0, 1, 1]] };
+		neededBox(viewport, transform, border, bias) {
+			if(this.type == "image")
+				return { level:0, pyramid: [[0, 0, 1, 1]] };
 
-			var minlevel = Math.max(0, Math.min(Math.floor(Math.log2(transform.z) + this.mipmapbias), this.nlevels-1));
+			//here we are computing with inverse levels; level 0 is the bottom!
+			let iminlevel = Math.max(0, Math.min(Math.floor(-Math.log2(transform.z) + bias), this.nlevels-1));
+			let minlevel = this.nlevels-1-iminlevel;
+			//
+			let bbox = transform.getInverseBox(viewport);
+			//find box in image coordinates where (0, 0) is in the upper left corner.
+			bbox[0] += this.width/2;
+			bbox[2] += this.width/2;
+			bbox[1] += this.height/2;
+			bbox[3] += this.height/2;
 
-
-			var pyramid = [];
-			for(var level = this.nlevels-1; level >= minlevel; level--) {
-				var bbox = this.getIBox(viewport, transform); //thats the reverse.
-				var side = this.tilesize*Math.pow(2, level);
+			let pyramid = [];
+			for(let level = 0; level <= minlevel; level++) {
+				let ilevel = this.nlevels -1 -level;
+				let side = this.tilesize*Math.pow(2, ilevel);
 
 				//quantized bbox
-				var qbox = [
+				let qbox = [
 					Math.floor((bbox[0])/side),
 					Math.floor((bbox[1])/side),
 					Math.floor((bbox[2]-1)/side) + 1,
@@ -695,10 +870,8 @@ void main() {
 				qbox[3] = Math.min(qbox[3]+border, this.qbox[level][3]);
 				pyramid[level] = qbox;
 			}
-			return { level:minlevel, pyramid: pyramid };
+			return { level: minlevel, pyramid: pyramid };
 		}
-
-
 
 		getTileURL(url, level, x, y) {
 			throw Error("Layout not defined or ready.");
@@ -706,17 +879,22 @@ void main() {
 
 
 
-		initImage() {
-		}
-
 	/*
 	 * Witdh and height can be recovered once the image is downloaded.
 	*/
-		initImage(callback) {
+		initImage(width, height) {
+			this.getTileURL = (url, x, y, level) => { return url; };
 			this.nlevels = 1;
 			this.tilesize = 0;
-			this.getTileURL = (url, x, y, level) => { return url; };
-			callback();
+
+			if(width && height) {
+				this.width = width;
+				this.height = height;
+				this.initBoxes();
+
+				this.status = 'ready';
+				this.emit('ready');
+			}
 		}
 
 	/**
@@ -734,8 +912,7 @@ void main() {
 			this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
 			this.getTileURL = (url, x, y, level) => {
-				var ilevel = parseInt(this.nlevels - 1 - level);
-				return url + "/" + ilevel + "/" + y + "/" + x + '.' + this.suffix;
+				return url + "/" + level + "/" + y + "/" + x + '.' + this.suffix;
 			};
 			callback();
 		}
@@ -770,8 +947,7 @@ void main() {
 
 				this.getTileURL = (url, x, y, level) => {
 					url = url.substr(0, url.lastIndexOf(".")) + '_files/';
-					let ilevel = parseInt(this.nlevels - 1 - level);
-					return url + ilevel + '/' + x + '_' + y + '.' + this.suffix;
+					return url + level + '/' + x + '_' + y + '.' + this.suffix;
 				}; 
 
 				callback();
@@ -783,7 +959,7 @@ void main() {
 	/**
 	 * Expects the url to point to ImageProperties.xml file.
 	 */
-		initZoomify() {
+		initZoomify(callback) {
 			this.overlap = 0;
 			(async () => {
 				var response = await fetch(this.url);
@@ -792,9 +968,13 @@ void main() {
 					return;
 				}
 				let text = await response.text();
-
-				let tmp = response.split('"');
-				this.tilesize = parseInt(tmp[11]);
+				let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
+				let doc = xml.documentElement;
+				this.tilesize = parseInt(doc.getAttribute('TILESIZE'));
+				this.width = parseInt(doc.getAttribute('WIDTH'));
+				this.height = parseInt(doc.getAttribute('HEIGHT'));
+				if(!this.tilesize || !this.height || !this.width)
+					throw "Missing parameter files for zoomify!";
 
 				let max = Math.max(this.width, this.height)/this.tilesize;
 				this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
@@ -802,11 +982,10 @@ void main() {
 				this.url = this.url.substr(0, this.url.lastIndexOf("/"));
 
 				this.getTileURL = (url, x, y, level) => {
-					let ilevel = parseInt(this.nlevels - 1 - level);
 					let index = this.index(level, x, y)>>>0;
 					let group = index >> 8;
 					url = url.substr(0, url.lastIndexOf("/"));
-					return this.url + "/TileGroup" + group + "/" + ilevel + "-" + x + "-" + y + "." + this.suffix;
+					return this.url + "/TileGroup" + group + "/" + level + "-" + x + "-" + y + "." + this.suffix;
 				};
 
 				callback();
@@ -814,6 +993,122 @@ void main() {
 			})().catch(e => { console.log(e); this.status = e; });
 		}
 	}
+
+	/* Cache holds the images and the tile textures.
+	 *  Each tile has a priority 0 and above means it is visible, 
+	 * negative depends on how far from the border and how more zoomed you need to go.
+	*/
+
+	class _Cache {
+		constructor(options) {
+			Object.assign(this, {
+				capacity: 10*(1<<20),  //256 MB total capacity available
+				size: 0,                //amount of GPU ram used
+
+				maxRequest: 4,          //max number of concurrent HTTP requests
+				requested: 0,
+				maxPrefetch: 8*(1<<20), //max amount of prefetched tiles.
+				prefetched: 0           //amount of currently prefetched GPU ram.
+			});
+
+			Object.assign(this, options);
+			this.layers = [];   //map on layer.
+		}
+
+	/*  Queue is an ordered array of tiles needed by a layer.
+	 */
+		setCandidates(layer) {
+			if(!this.layers.includes(layer))
+				this.layers.push(layer);
+			setTimeout(() => { this.update(); }, 0); //ensure all the queues are set before updating.
+		}
+
+	/* Look for best tile to load and schedule load from the web.
+	 */
+		update() {
+			if(this.requested > this.maxRequest)
+				return;
+
+			let best = this.findBestCandidate();
+			if(!best) return;
+			while(this.size > this.capacity) { //we need to make room.
+				let worst = this.findWorstTile();
+				if(!worst) {
+					console.log("BIG problem in the cache");
+					break;
+				}
+				if(worst.tile.time < best.tile.time)
+					this.dropTile(worst.layer, worst.tile);
+				else
+					return; 
+			}
+			this.loadTile(best.layer, best.tile);
+		}
+
+		findBestCandidate() {
+			let best = null;
+			for(let layer of this.layers) {
+				if(!layer.queue.length)
+					continue;
+				let tile = layer.queue.shift();
+				if(!best ||
+					tile.time > best.tile.time ||
+					(tile.time == best.tile.time && tile.priority > best.tile.priority))
+					best = { layer, tile };
+			}
+			return best;
+		}
+
+		findWorstTile() {
+			let worst = null;
+			for(let layer of this.layers) {
+				for(let tile of layer.tiles) {
+					//TODO might be some are present when switching shaders.
+					if(tile.missing != 0) continue;
+					if(!worst || 
+					   tile.time < worst.tile.time || 
+					   (tile.time == worst.tile.time && tile.priority < worst.tile.priority)) {
+						worst = {layer, tile};
+					}
+				}
+			}
+			return worst;
+		}
+
+	/* 
+	 */
+		loadTile(layer, tile) {
+			this.requested++;
+			layer.loadTile(tile, (size) => { this.size += size; this.requested--; this.update(); } );
+		}
+	/*
+	 */
+		dropTile(layer, tile) {
+			for(let i = 0; i < tile.tex.length; i++) {
+				if(tile.tex[i]) {
+					layer.gl.deleteTexture(tile.tex[i]);
+					tile.tex[i] = null;
+					tile.missing++;
+				}
+			}
+			this.size -= tile.size;
+			tile.size = 0;
+		}
+	/* Flush all memory
+	 */
+		flush() {
+		}
+
+	/* Flush all tiles for a layer.
+	 */
+		flush(layer) {
+		}
+
+	/* 
+	 */
+	}
+
+	let Cache = new _Cache;
 
 	/**
 	 * @param {string} id unique id for layer.
@@ -842,7 +1137,9 @@ void main() {
 				opacity: 1.0,
 
 				rasters: [],
+				layers: [],
 				controls: {},
+				controllers: [],
 				shaders: {},
 				layout: 'image',
 				shader: null, //current shader.
@@ -852,13 +1149,13 @@ void main() {
 				mipmapBias: 0.5,
 				maxRequest: 4,
 
-				signals: { update: [] },  //update callbacks for a redraw
+				signals: { update: [], ready: [] },  //update callbacks for a redraw, ready once layout is known.
 
 		//internal stuff, should not be passed as options.
 				tiles: [],      //keep references to each texture (and status) indexed by level, x and y.
 								//each tile is tex: [.. one for raster ..], missing: 3 missing tex before tile is ready.
 								//only raster used by the shader will be loade.
-				queued: [],     //queue of tiles to be loaded.
+				queue: [],     //queue of tiles to be loaded.
 				requested: {},  //tiles requested.
 			});
 
@@ -898,6 +1195,7 @@ void main() {
 			let callback = () => { 
 				this.status = 'ready';
 				this.setupTiles(); //setup expect status to be ready!
+				this.emit('ready');
 				this.emit('update');
 			};
 			if(layout.status == 'ready') //layout already initialized.
@@ -908,11 +1206,20 @@ void main() {
 		}
 
 
+		setShader(id) {
+			if(!id in this.shaders)
+				throw "Unknown shader: " + id;
+			this.shader = this.shaders[id];
+			this.setupTiles();
+			this.shader.setEvent('update', ()=>{ this.emit('update'); });
+		}
+
 	/**
 	 * @param {bool} visible
 	 */
 		setVisible(visible) {
 			this.visible = visible;
+			this.previouslyNeeded = null;
 			this.emit('update');
 		}
 
@@ -925,58 +1232,99 @@ void main() {
 		}
 
 		boundingBox() {
-			return layuout.boundingBox();
-
+			return this.layout.boundingBox();
 		}
 
-		draw(transform, viewport) {
 
+		setControl(name, value, dt) {
+			let now = performance.now();
+			let control = this.controls[name];
+			this.interpolateControl(control, now);
+
+			control.source.value = [...control.current.value];
+			control.source.t = now;
+
+			control.target.value = [...value];
+			control.target.t = now + dt;
+
+			this.emit('update');
+		}
+
+		interpolateControls() {
+			let now = performance.now();
+			let done = true;
+			for(let control of Object.values(this.controls))
+				done = this.interpolateControl(control, now) && done;
+			return done;
+		}
+
+		interpolateControl(control, time) {
+			let source = control.source;
+			let target = control.target;
+			let current = control.current;
+
+			current.t = time;
+			if(time < source.t) {
+				current.value = [...source.value];
+				return false;
+			}
+
+			if(time > target.t - 0.0001) {
+				current.value = [...target.value];
+				return true;
+			}
+
+			let t = (target.t - source.t);
+			let tt = (time - source.t)/t;
+			let st = (target.t - time)/t;
+
+			current.value = [];
+			for(let i  = 0; i < source.value.length; i++)
+				current.value[i] = (st*source.value[i] + tt*target.value[i]);
+			return false;
+		}
+
+	/**
+	 *  render the 
+	 */
+		draw(transform, viewport) {
+			//exception for layout image where we still do not know the image size
 			//how linear or srgb should be specified here.
 	//		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
-			if(this.status != 'ready')
+			if(!this.status == 'ready' || this.tiles.length == 0)
 				return;
 
 			if(!this.shader)
 				throw "Shader not specified!";
 
-			if(!this.tiles || !this.tiles[0])
-				return;
-
+			let done = this.interpolateControls();
 			this.prepareWebGL();
 
-
 	//		find which quads to draw and in case request for them
-			///this is true also for all rasters that are actually layers.
-			if(!(0 in this.requested) && this.tiles[0].missing != 0)
-				this.loadTile({index: 0, level: 0, x: 0, y: 0});
-
-
-	//		compute transform matric and draw quads.
-
-			//TODO check, it might be the reverse composition
-			transform = transform.compose(this.transform);
+			transform = this.transform.compose(transform);
+			let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
+			let torender = this.toRender(needed);
 
 			let matrix = transform.projectionMatrix(viewport);
 			this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
-
-			//just a test: drawing 1 tile.
-			if(this.tiles[0].missing == 0)
-				this.drawTile(0, 0, 0);
+			for(let index in torender) {
+				let tile = torender[index];
+	//			if(tile.complete)
+					this.drawTile(torender[index]);
+			}
 
 	//		gl.uniform1f(t.opacitylocation, t.opacity);
+			return done;
 		}
 
-		drawTile(level, x, y) {
-			var index = this.layout.index(level, x, y);
-			let tile = this.tiles[index];
-			if(tile.missing != 0) 
+		drawTile(tile) {
+			let tiledata = this.tiles[tile.index];
+			if(tiledata.missing != 0) 
 				throw "Attempt to draw tile still missing textures"
 
-			//setup matrix
-
-			//setup coords and tex (depends on layout/overlay boundaries).
-			let c = this.layout.tileCoords(level, x, y);
+			//TODO might want to change the function to oaccept tile as argument
+			let c = this.layout.tileCoords(tile.level, tile.x, tile.y);
 
 			//update coords and texture buffers
 			this.updateTileBuffers(c.coords, c.tcoords);
@@ -985,12 +1333,54 @@ void main() {
 			let gl = this.gl;
 			for(var i = 0; i < this.shader.samplers.length; i++) {
 				let id = this.shader.samplers[i].id;
+				gl.uniform1i(this.shader.samplers[i].location, i);
 				gl.activeTexture(gl.TEXTURE0 + i);
-				gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+				gl.bindTexture(gl.TEXTURE_2D, tiledata.tex[id]);
 			}
 			gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
 		}
 
+	/* given the full pyramid of needed tiles for a certain bounding box, 
+	 *  starts from the preferred levels and goes up in the hierarchy if a tile is missing.
+	 *  complete is true if all of the 'brothers' in the hierarchy are loaded,
+	 *  drawing incomplete tiles enhance the resolution early at the cost of some overdrawing and problems with opacity.
+	 */
+
+		toRender(needed) {
+
+			var torender = {}; //array of minlevel, actual level, x, y (referred to minlevel)
+			var brothers = {};
+
+			let minlevel = needed.level;
+			var box = needed.pyramid[minlevel];
+
+			for(var y = box[1]; y < box[3]; y++) {
+				for(var x = box[0]; x < box[2]; x++) {
+					var level = minlevel;
+					while(level >= 0) {
+						var d = minlevel - level;
+						var index = this.layout.index(level, x>>d, y>>d);
+						if(this.tiles[index].missing == 0) {
+							torender[index] = {index:index, level:level, x:x>>d, y:y>>d, complete:true};
+							break;
+						} else {
+							var sx = (x>>(d+1))<<1;
+							var sy = (y>>(d+1))<<1;
+							brothers[this.layout.index(level, sx, sy)] = 1;
+							brothers[this.layout.index(level, sx+1, sy)] = 1;
+							brothers[this.layout.index(level, sx+1, sy+1)] = 1;
+							brothers[this.layout.index(level, sx, sy+1)] = 1;
+						}
+						level--;
+					}
+				}
+			}
+			for(let index in brothers) {
+				if(index in torender)
+					torender[index].complete = false;
+			}
+			return torender;
+		}
 
 
 		updateTileBuffers(coords, tcoords) {
@@ -1009,12 +1399,7 @@ void main() {
 			gl.enableVertexAttribArray(this.shader.texattrib);
 		}
 
-		setShader(id) {
-			if(!id in this.shaders)
-				throw "Unknown shader: " + id;
-			this.shader = this.shaders[id];
-			this.setupTiles();
-		}
+
 
 	/**
 	 *  If layout is ready and shader is assigned, creates or update tiles to keep track of what is missing.
@@ -1023,16 +1408,17 @@ void main() {
 			if(!this.shader || !this.layout || this.layout.status != 'ready')
 				return;
 
-			let ntiles = this.layout.ntiles;
-
-			if(typeof(this.tiles) != 'array' || this.tiles.length != ntiles) {
-				this.tiles = new Array(ntiles);
-				for(let i = 0; i < ntiles; i++)
-					this.tiles[i] = { tex:new Array(this.shader.samplers.length), missing:this.shader.samplers.length };
+			if(!this.tiles.length) {
+				this.tiles = JSON.parse(JSON.stringify(this.layout.tiles));
+				for(let tile of this.tiles) {
+					tile.tex = new Array(this.shader.samplers.length);
+					tile.missing = this.shader.samplers.length;
+					tile.size = 0;
+				}
 				return;
 			}
 
-			for(let tile of this.ntiles) {
+			for(let tile of this.tiles) {
 				tile.missing = this.shader.samplers.length;			for(let sampler of this.shader.samplers) {
 					if(tile.tex[sampler.id])
 						tile.missing--;
@@ -1041,17 +1427,18 @@ void main() {
 		}
 
 		prepareWebGL() {
-			//interpolate uniforms from controls!
-			//update uniforms
 
 			let gl = this.gl;
 
-			if(this.shader.needsUpdate) {
+			if(this.shader.needsUpdate)
 				this.shader.createProgram(gl);
-				//send uniforms here!
-			}
 
 			gl.useProgram(this.shader.program);
+			this.shader.updateUniforms(gl, this.shader.program);
+
+
+			//interpolate uniforms from controls!
+			//update uniforms
 
 			if(this.ibuffer) //this part might go into another function.
 				return;
@@ -1069,81 +1456,85 @@ void main() {
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0,  0, 1,  1, 1,  1, 0]), gl.STATIC_DRAW);
 		}
 
+		sameNeeded(a, b) {
+			return a.level == b.level &&
+			a.pyramid[a.level][0] == b.pyramid[a.level][0] &&
+			a.pyramid[a.level][1] == b.pyramid[a.level][1] &&
+			a.pyramid[a.level][2] == b.pyramid[a.level][2] &&
+			a.pyramid[a.level][3] == b.pyramid[a.level][3];
+		}
 	/**
 	*  @param {object] transform is the canvas coordinate transformation
 	*  @param {viewport} is the viewport for the rendering, note: for lens might be different! Where we change it? here layer should know!
 	*/
 		prefetch(transform, viewport) {
-			if(this.status != 'ready' || !this.visible)
+			if(this.layers.length != 0) { //combine layers
+				for(let layer of this.layers)
+					layer.prefetch(transform, viewport);
+			}
+
+			if(this.rasters.length == 0)
 				return;
 
-			let needed = this.layout.neededBox(transform, this.prefetchBorder);
-			let minlevel = needed.level;
-
-			
-
-	//TODO is this optimization (no change => no prefetch?) really needed?
-	/*		let box = needed.box[minlevel];
-			if(this.previouslevel == minlevel && box[0] == t.previousbox[0] && box[1] == this.previousbox[1] &&
-			box[2] == this.previousbox[2] && box[3] == this.previousbox[3])
+			if(this.status != 'ready') 
 				return;
 
-			this.previouslevel = minlevel;
-			this.previousbox = box; */
+			let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
+			if(this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
+					return;
+			this.previouslyNeeded = needed;
 
-			this.queued = [];
 
+
+
+			this.queue = [];
+			let now = performance.now();
 			//look for needed nodes and prefetched nodes (on the pos destination
-			for(let level = this.layout.nlevels-1; level >= minlevel; level--) {
-				let box = needed.box[level];
+
+			for(let level = 0; level <= needed.level; level++) {
+				let box = needed.pyramid[level];
 				let tmp = [];
 				for(let y = box[1]; y < box[3]; y++) {
 					for(let x = box[0]; x < box[2]; x++) {
 						let index = this.layout.index(level, x, y);
-						if(this.tiles[index].missing != 0 && !this.requested[index])
-							tmp.push({level:level, x:x, y:y, index:index});
+						let tile = this.tiles[index];
+						tile.time = now;
+						tile.priority = needed.level - level;
+						if(tile.missing != 0 && !this.requested[index])
+							tmp.push(tile);
 					}
 				}
-				let cx = (box[0] + box[2]-1)/2;
-				let cy = (box[1] + box[3]-1)/2;
+				let cx = (box[0] + box[2])/2;
+				let cy = (box[1] + box[3])/2;
 				//sort tiles by distance to the center TODO: check it's correct!
 				tmp.sort(function(a, b) { return Math.abs(a.x - cx) + Math.abs(a.y - cy) - Math.abs(b.x - cx) - Math.abs(b.y - cy); });
-				this.queued = this.queued.concat(tmp);
+				this.queue = this.queue.concat(tmp);
 			}
-			this.preload();
+			Cache.setCandidates(this);
 		}
 
-	/**
-	 * Checks load tiles from the queue. TODO this needs to be global! Not per layer.
-	 *
-	 */
-		preload() {
-			while(Object.keys(this.requested).length < this.maxRequested && this.queued.length > 0) {
-				var tile = this.queued.shift();
-				this.loadTile(tile);
-			}
-		}
-
-		loadTile(tile) {
+		loadTile(tile, callback) {
 			if(this.requested[tile.index])
 				throw "AAARRGGHHH double request!";
 
 			this.requested[tile.index] = true;
 
 			for(let sampler of this.shader.samplers) {
-				let path = this.layout.getTileURL(this.rasters[sampler.id].url, tile.level, tile.x, tile.y);
+				let path = this.layout.getTileURL(this.rasters[sampler.id].url, tile.x, tile.y, tile.level );
 				let raster = this.rasters[sampler.id];
-				raster.loadImage(path, this.gl, (tex) => {
+				raster.loadImage(path, this.gl, (tex, size) => {
 
-					if(this.layout.type == "image") {
-						this.layout.width = raster.width;
-						this.layout.height = raster.height;
-					}
-					let indextile = this.tiles[tile.index];
-					indextile.tex[sampler.id] = tex;
-					indextile.missing--;
-					if(indextile.missing <= 0)
+					if(this.layout.type == "image")
+						this.layout.initImage(raster.width, raster.height);
+
+					tile.size += size;
+					tile.tex[sampler.id] = tex;
+					tile.missing--;
+					if(tile.missing <= 0) {
 						this.emit('update');
+						delete this.requested[tile.index];
+						if(callback) callback(size);
+					}
 				});
 			}
 		}
@@ -1154,167 +1545,860 @@ void main() {
 	Layer$1.prototype.types = {};
 
 	/**
+	 *  @param {object} options
+	 * *compose*: compose operation: add, subtract, multiply, etc.
+	 */
+
+	class RTIShader extends Shader {
+		constructor(options) {
+			super(options);
+
+			Object.assign(this, {
+				modes: ['light', 'normals', 'diffuse', 'specular'],
+				mode: 'normal',
+				type:        ['ptm', 'hsh',  'rbf', 'bln'],
+				colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
+
+				nplanes: null,     //number of coefficient planes
+				yccplanes: null,     //number of luminance planes for mycc color space
+				njpegs: null,      //number of textures needed (ceil(nplanes/3))
+				material: null,    //material parameters
+				lights: null,      //light directions (needed for rbf interpolation)
+				sigma: null,       //rbf interpolation parameter
+				ndimensions: null, //PCA dimension space (for rbf and bln)
+
+				scale: null,      //factor and bias are used to dequantize coefficient planes.
+				bias: null,
+
+				basis: null,       //PCA basis for rbf and bln
+				lweights: null    //light direction dependent coefficients to be used with coefficient planes
+			});
+
+			if(this.relight)
+				this.init(this.relight);
+
+			this.setMode('light');
+		}
+
+		setMode(mode) {
+			if(!(this.modes.includes(mode)))
+				throw Error("Unknown mode: " + mode);
+			this.mode = mode;
+			if(mode != 'light') {
+				this.lightWeights([ 0.612,  0.354, 0.707], 'base');
+				this.lightWeights([-0.612,  0.354, 0.707], 'base1');
+				this.lightWeights([     0, -0.707, 0.707], 'base2');
+			}
+			this.body = this.template();
+			this.needsUpdate = true;
+		}
+
+		setLight(light) {
+			if(!this.uniforms.light) 
+				throw "Shader not initialized, wait on layer ready event for setLight."
+
+			let x = light[0];
+			let y = light[1];
+
+			//map the square to the circle.
+			let r = Math.sqrt(x*x + y*y);
+			if(r > 1) {
+				x /= r;
+				y /= r;
+			}
+			let z = Math.sqrt(Math.max(0, 1 - x*x - y*y));
+			light = [x, y, z];
+
+			if(this.mode == 'light')
+				this.lightWeights(light, 'base');
+			this.setUniform('light', light);
+		}
+
+		init(relight) {
+			Object.assign(this, relight);
+			if(this.colorspace == 'mycc')
+				this.nplanes = this.yccplanes[0] + this.yccplanes[1] + this.yccplanes[2];
+			else 
+				this.yccplanes = [0, 0, 0];
+
+
+			this.planes = [];
+			this.njpegs = 0;
+			while(this.njpegs*3 < this.nplanes)
+				this.njpegs++;
+
+			for(let i = 0; i < this.njpegs; i++)
+				this.samplers.push({ id:i, name:'plane'+i, type:'vec3' });
+
+			this.material = this.materials[0];
+
+			if(this.lights)
+				this.lights + new Float32Array(this.lights);
+
+			if(this.type == "rbf")
+				this.ndimensions = this.lights.length/3;
+
+			if(this.type == "bilinear") {
+				this.ndimensions = this.resolution*this.resolution;
+				this.type = "bln";
+			}
+
+			this.scale = this.material.scale;
+			this.bias = this.material.bias;
+
+
+			if(['mrgb', 'mycc'].includes(this.colorspace))
+				this.loadBasis(this.basis);
+
+
+			this.uniforms = {
+				light: { type: 'vec3', needsUpdate: true, size: 3,              value: [0.0, 0.0, 1] },
+				bias:  { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.bias },
+				scale: { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.scale },
+				base:  { type: 'vec3', needsUpdate: true, size: this.nplanes },
+				base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
+				base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
+			};
+
+			this.lightWeights([0, 0, 1], 'base');
+
+			this.body = this.template();
+		}
+
+		lightWeights(light, basename, time) {
+			let value;
+			switch(this.type) {
+				case 'ptm': value = PTM.lightWeights(light); break;
+				case 'hsh': value = HSH.lightWeights(light); break;
+				case 'rbf': value = RBF.lightWeights(light, this); break;
+				case 'bln': value = BLN.lightWeights(light, this); break;
+			}
+			this.setUniform(basename, value, time);
+		}
+
+		baseLightOffset(p, l, k) {
+			return (p*this.ndimensions + l)*3 + k;
+		}
+
+		basePixelOffset(p, x, y, k) {
+			return (p*this.resolution*this.resolution + (x + y*this.resolution))*3 + k;
+		}
+
+		loadBasis(data) {
+			let tmp = new Uint8Array(data);
+			this.basis = new Float32Array(data.length);
+			for(let plane = 0; plane < this.nplanes+1; plane++) {
+				for(let c = 0; c < this.ndimensions; c++) {
+					for(let k = 0; k < 3; k++) {
+						let o = this.baseLightOffset(plane, c, k);
+						if(plane == 0)
+							this.basis[o] = tmp[o]/255;
+						else
+							this.basis[o] = ((tmp[o] - 127)/this.material.range[plane-1]);
+					}
+				}
+			}
+		}
+
+
+
+		template() {
+
+			let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
+
+			let str = `#version 300 es
+
+precision highp float; 
+precision highp int; 
+
+#define np1 ${this.nplanes + 1}
+
+in vec2 v_texcoord;
+out vec4 color;
+
+const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
+	-8.1650e-01, 4.7140e-01,  4.7140e-01,
+	-1.6222e-08, -9.4281e-01, 4.7140e-01);
+
+uniform vec3 light;
+uniform vec3 bias[np1];
+uniform vec3 scale[np1];
+
+uniform ${basetype} base[np1];
+uniform ${basetype} base1[np1];
+uniform ${basetype} base2[np1];
+`;
+
+			for(let n = 0; n < this.njpegs; n++) 
+				str += 
+`uniform sampler2D plane${n};
+`	;
+
+			if(this.colorspace == 'mycc')
+				str +=
+`
+
+const int ny0 = ${this.yccplanes[0]};
+const int ny1 = ${this.yccplanes[1]};
+`;
+
+
+			switch(this.colorspace) {
+				case 'rgb':  str +=  RGB.render(this.njpegs); break;
+				case 'mrgb': str += MRGB.render(this.njpegs); break;
+			}
+
+			str += `
+
+void main(void) {
+
+`;
+			if(this.mode == 'light') {
+				str += `
+	color = render(base);
+`;
+			} else {
+				str += `
+	vec3 normal;
+	normal.x = dot(render(base).xyz, vec3(1));
+	normal.y = dot(render(base1).xyz, vec3(1));
+	normal.z = dot(render(base2).xyz, vec3(1));
+`; 
+				switch(this.mode) {
+				case 'normals':  str += `
+	normal = (normalize(T * normal) + 1.0)/2.0;
+	color = vec4(normal, 1);
+`;
+				break;
+				case 'diffuse': str += `
+	normal = normalize(T * normal);
+	color = vec4(vec3(dot(light, normal)), 1);
+`;
+				}
+			}
+			str += `
+}`;
+			return str;
+		}
+	}
+
+
+	class RGB {
+		static render(njpegs) {
+			let str = `
+vec4 render(vec3 base[np1]) {
+	vec4 rgb = vec4(0, 0, 0, 1);`;
+
+			for(let j = 0; j < njpegs; j++) {
+				str += `
+	{
+		vec4 c = texture(plane${j}, v_texcoord);
+		rgb.x += base[${j}].x*(c.x - bias[${j}].x)*scale[${j}].x;
+		rgb.y += base[${j}].y*(c.y - bias[${j}].y)*scale[${j}].y;
+		rgb.z += base[${j}].z*(c.z - bias[${j}].z)*scale[${j}].z;
+	}
+`;
+			}
+			str += `
+	return rgb;
+}
+`;
+			return str;
+		}
+	}
+
+	class MRGB {
+		static render(njpegs) {
+
+			let str = `
+vec4 render(vec3 base[np1]) {
+	vec3 rgb = base[0];
+	vec4 c;
+`;
+			for(let j = 0; j < njpegs; j++) {
+				str +=
+`	c = texture(plane${j}, v_texcoord);
+	rgb += base[${j}*3+1]*(c.x - bias[${j}].x)*scale[${j}].x;
+	rgb += base[${j}*3+2]*(c.y - bias[${j}].y)*scale[${j}].y;
+	rgb += base[${j}*3+3]*(c.z - bias[${j}].z)*scale[${j}].z;
+
+`	;
+			}
+			str += `
+	return vec4(rgb, 1);
+}
+`;
+			return str;
+		}
+	}
+
+
+
+	/* PTM utility functions 
+	 */
+	class PTM {
+		/* @param {Array} v expects light direction as [x, y, z]
+		*/
+		static lightWeights(v) {
+			let b = [1.0, v[0], v[1], v[0]*v[0], v[0]*v[1], v[1]*v[1]];
+			let base = new Float32Array(18);
+			for(let i = 0; i < 18; i++)
+				base[3*i] = base[3*i+1] = base[3*i+2] = b[i];
+			return base;
+		}
+	}
+
+
+	/* HSH utility functions 
+	 */
+	class HSH {
+		/* @param {Array} v expects light direction as [x, y, z]
+		*/
+		static lightWeights(v) {
+			let PI = 3.1415;
+			let phi = Math.atan2(v[1], v[0]);
+			if (phi < 0)
+				phi = 2 * PI + phi;
+			let theta = Math.min(Math.acos(v[2]), PI / 2 - 0.5);
+
+			let cosP = Math.cos(phi);
+			let cosT = Math.cos(theta);
+			let cosT2 = cosT * cosT;
+
+			let b = [
+				1.0 / Math.sqrt(2 * PI),
+
+				Math.sqrt(6 / PI) * (cosP * Math.sqrt(cosT-cosT2)),
+				Math.sqrt(3 / (2 * PI)) * (-1 + 2*cosT),
+				Math.sqrt(6 / PI) * (Math.sqrt(cosT - cosT2) * Math.sin(phi)),
+
+				Math.sqrt(30 / PI) * (Math.cos(2 * phi) * (-cosT + cosT2)),
+				Math.sqrt(30 / PI) * (cosP*(-1 + 2 * cosT) * Math.sqrt(cosT - cosT2)),
+				Math.sqrt(5  / (2 * PI)) * (1 - 6 * cosT + 6 * cosT2),
+				Math.sqrt(30 / PI) * ((-1 + 2 * cosT) * Math.sqrt(cosT - cosT2) * Math.sin(phi)),
+				Math.sqrt(30 / PI) * ((-cosT + cosT2) * Math.sin(2*phi))
+			];
+			let base = new Float32Array(27);
+			for(let i = 0; i < 27; i++)
+				base[3*i] = base[3*i+1] = base[3*i+2] = b[i];
+			return base;
+		}
+	}
+
+	class RBF {
+		/* @param {Array} v expects light direction as [x, y, z]
+		*/
+		static lightWeights(lpos, layer) {
+
+			let weights = RBF.rbf(lpos, layer);
+
+			let np = layer.nplanes;
+			let lweights = new Float32Array((np + 1) * 3);
+
+			for(let p = 0; p < np+1; p++) {
+				for(let k = 0; k < 3; k++) {
+					for(let l = 0; l < weights.length; l++) {
+						let o = layer.baseLightOffset(p, weights[l][0], k);
+						lweights[3*p + k] += weights[l][1]*layer.basis[o];
+					}
+				}
+			}
+			return lweights;
+		}
+
+		static rbf(lpos, layer) {
+			let radius = 1/(layer.sigma*layer.sigma);
+			let weights = new Array(layer.ndimensions);
+
+			//compute rbf weights
+			let totw = 0.0;
+			for(let i = 0; i < weights.length; i++) {
+				let dx = layer.lights[i*3+0] - lpos[0];
+				let dy = layer.lights[i*3+1] - lpos[1];
+				let dz = layer.lights[i*3+2] - lpos[2];
+
+				let d2 = dx*dx + dy*dy + dz*dz;
+				let w = Math.exp(-radius * d2);
+
+				weights[i] = [i, w];
+				totw += w;
+			}
+			for(let i = 0; i < weights.length; i++)
+				weights[i][1] /= totw;
+
+
+			//pick only most significant and renormalize
+			let count = 0;
+			totw = 0.0;
+			for(let i = 0; i < weights.length; i++) {
+				if(weights[i][1] > 0.001) {
+					weights[count++] =  weights[i];
+					totw += weights[i][1];
+				}
+			}
+
+			weights = weights.slice(0, count); 
+			for(let i = 0; i < weights.length; i++)
+				weights[i][1] /= totw;
+
+			return weights;
+		}
+	}
+
+	class BLN {
+		static lightWeights(lpos, layer) {
+			let np = layer.nplanes;
+			let s = Math.abs(lpos[0]) + Math.abs(lpos[1]) + Math.abs(lpos[2]);
+
+			//rotate 45 deg.
+			let x = (lpos[0] + lpos[1])/s;
+			let y = (lpos[1] - lpos[0])/s;
+			x = (x + 1.0)/2.0;
+			y = (y + 1.0)/2.0;
+			x = x*(layer.resolution - 1.0);
+			y = y*(layer.resolution - 1.0);
+
+			let sx = Math.min(layer.resolution-2, Math.max(0, Math.floor(x)));
+			let sy = Math.min(layer.resolution-2, Math.max(0, Math.floor(y)));
+			let dx = x - sx;
+			let dy = y - sy;
+
+			//bilinear interpolation coefficients.
+			let s00 = (1 - dx)*(1 - dy);
+			let s10 =      dx *(1 - dy);
+			let s01 = (1 - dx)* dy;
+			let s11 =      dx * dy;
+
+			let lweights = new Float32Array((np + 1) * 3);
+
+			//TODO optimize away basePixel
+
+			for(let p = 0; p < np+1; p++) {
+				for(let k = 0; k < 3; k++) {
+					let o00 = layer.basePixelOffset(p, sx, sy, k);
+					let o10 = layer.basePixelOffset(p, sx+1, sy, k);
+					let o01 = layer.basePixelOffset(p, sx, sy+1, k);
+					let o11 = layer.basePixelOffset(p, sx+1, sy+1, k);
+
+					lweights[3*p + k] = 
+						s00*layer.basis[o00] + 
+						s10*layer.basis[o10] +
+						s01*layer.basis[o01] +
+						s11*layer.basis[o11];
+
+				}
+			}
+			return lweights;
+		}
+	}
+
+	/**
 	 * @param {dom} element DOM element where mouse events will be listening.
 	 * @param {options} options 
 	 * * *delay* inertia of the movement in ms.
 	 */
 
 	class Controller {
-		constructor(element, options) {
+		constructor(options) {
 			Object.assign(this, {
-				element:element,
-				debug: true,
-				delay: 0
+				active: true,
+				debug: false,
+				delay: 100
 			});
 
 			Object.assign(this, options);
-
-			this.initEvents();
 		}
 
-		mouseDown(x, y, e) {  if(this.debug) console.log('Down ', x, y);}
-
-		mouseUp(x, y, e) {  if(this.debug) console.log('Up ', x, y); }
-		
-		mouseMove(x, y, e) { if(this.debug) console.log('Move ', x, y); }
-
-		wheelDelta(x, y, d, e) {  if(this.debug) console.log('Delta ', x, y, d); }
-
-		pinchStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
-
-		pinchMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
-
-
-		eventToPosition(e, touch) {
-			let rect = e.currentTarget.getBoundingClientRect();
-			let cx = e.clientX;
-			let cy = e.clientY;
-			if(typeof(touch) != 'undefined') {
-				cx = e.targetTouches[touch].clientX;
-				cy = e.targetTouches[touch].clientY;
-			}
-			let x = cx - rect.left;
-			let y = cy - rect.top;
-			return { x:x, y:y }
+		captureEvents() {
+			this.capture = true; //TODO should actually specify WHAT it is capturing: which touch etc.
 		}
 
-		initEvents() {
+		releaseEvents() {
+			this.capture = false;
+		}
 
-	/* //TODO when the canvas occupy only part of the document we would like to prevent any mouseover/etc 
-	  when the user is panning !! Example demo code here, to be testes.
+	/* Implement these functions to interacts with mouse/touch/resize events. */
 
-	function preventGlobalMouseEvents () {
-	  document.body.style['pointer-events'] = 'none';
-	}
+	/*
+		panStart(e, x, y) { if (this.debug) console.log('Pan Start ', x, y); return false; }
 
-	function restoreGlobalMouseEvents () {
-	  document.body.style['pointer-events'] = 'auto';
-	}
+		panMove(e, x, y) { if (this.debug) console.log('Pan Move ', x, y); return false; }
 
-	function mousemoveListener (e) {
-	  e.stopPropagation ();
-	  // do whatever is needed while the user is moving the cursor around
-	}
+		panEnd(e, x, y) { if (this.debug) console.log('Pan End ', x, y); return false; }
 
-	function mouseupListener (e) {
-	  restoreGlobalMouseEvents ();
-	  document.removeEventListener ('mouseup',   mouseupListener,   {capture: true});
-	  document.removeEventListener ('mousemove', mousemoveListener, {capture: true});
-	  e.stopPropagation ();
-	}
+		pinchStart(e, x, y, scale) { if (this.debug) console.log('Pinch Start ', x, y, scale); return false; }
 
-	function captureMouseEvents (e) {
-	  preventGlobalMouseEvents ();
-	  document.addEventListener ('mouseup',   mouseupListener,   {capture: true});
-	  document.addEventListener ('mousemove', mousemoveListener, {capture: true});
-	  e.preventDefault ();
-	  e.stopPropagation ();
-	}
+		pinchMove(e, x, y, scale) { if (this.debug) console.log('Pinch Move ', x, y, scale); return false; }
+
+		pinchEnd(e, x, y, scale) { if (this.debug) console.log('Pinch End ', x, y, scale); return false; }
+
+		wheelDelta(e, x, y, d) { if (this.debug) console.log('Wheel ', x, y, d); return false; }
+
+		singleTap(e, x, y) { if (this.debug) console.log('Single Tap ', x, y); return false; }
+
+		doubleTap(e, x, y) { if (this.debug) console.log('Double Tap ', x, y); return false; }
+
+		resize(e, width, height) { if(this.debug) console.log('Rezize ', width, height); return false; }
 	*/
-			let element = this.element;
-			element.addEventListener('contextmenu', (e) => { 
-				e.preventDefault(); 
-				return false; 
-			});
 
-			element.addEventListener('mouseup', (e) => {
-				let pos = this.eventToPosition(e);
-				this.mouseUp(pos.x, pos.y, e);
-				e.preventDefault(); 
+	}
+
+	/*
+	 * Controller that turn the position of the mouse on the screen to a [0,1]x[0,1] parameter
+	 */
+
+	class Controller2D extends Controller {
+
+		constructor(callback, options) {
+			super(options);
+
+			this.callback = callback;
+			if(!options || !options.box)
+				this.box = [-0.99, -0.99, 0.99, 0.99];
+
+			this.panning = false;
+		}
+
+		update(x, y, rect) {
+			x = Math.max(0, Math.min(1, x/rect.width));
+			y = Math.max(0, Math.min(1, 1 - y/rect.height));
+			x = this.box[0] + x*(this.box[2] - this.box[0]);
+			y = this.box[1] + y*(this.box[3] - this.box[1]);
+			this.callback(x, y);
+		}
+
+		panStart(e, x, y) {
+			this.update(x, y, e.rect);
+			this.panning = true;
+			return true;
+		}
+
+		panMove(e, x, y) {
+			if(!this.panning)
 				return false;
-			});
+			this.update(x, y, e.rect);
+			return true;
+		}
 
-			element.addEventListener('mousedown', (e) => {
-				let pos = this.eventToPosition(e);
-				this.mouseDown(pos.x, pos.y, e);
-				e.preventDefault(); 
+		panEnd(e, x, y) {
+			if(!this.panning)
 				return false;
-			}, { capture: true });
+			this.panning = false;
+			return true;
+		}
 
-			element.addEventListener('mousemove', (e) => {
-				let pos = this.eventToPosition(e);
-				this.mouseMove(pos.x, pos.y, e);
-				e.preventDefault(); 
-				return false;
-			});
+		singleTap(e, x, y) {
+			this.update(x, y, e.rect);
+			return true;
+		}
 
-			element.addEventListener('touchstart', (e) => {
-				e.preventDefault();
-		
-				let pos0 = this.eventToPosition(e, 0);
-				if (e.targetTouches.length == 1) {
-					this.mouseDown(pos0.x, pos0.y, e);
+	}
 
-				} else if (e.targetTouches.length == 2) {
-					let pos1 = this.eventToPosition(e, 1);
-					this.pinchStart(pos0, pos1, e);
+	/**
+	 * Extends {@link Layer}.
+	 * @param {options} options Same as {@link Layer}, but url and layout are required.
+	 */
+
+	class RTILayer extends Layer$1 {
+		constructor(options) {
+			super(options);
+
+			if(Object.keys(this.rasters).length != 0)
+				throw "Rasters options should be empty!";
+
+			if(!this.url)
+				throw "Url option is required";
+
+			if(!this.layout)
+				this.layout = 'image';
+
+			this.shaders['rti'] = new RTIShader();
+			this.setShader('rti');
+
+			let now = performance.now();
+			this.controls['light'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };
+
+			if(this.url)
+				this.init(this.url);
+		}
+
+		planeUrl(url, plane) {
+			let path = this.url.split('/').slice(0, -1).join('/') + '/';
+			switch(this.layout) {
+				case 'image':    return path + 'plane_' + plane + '.jpg';			case 'google':   return path + 'plane_' + plane;			case 'deepzoom': return path + 'plane_' + plane + '.dzi';			case 'zoomify':  return path + 'plane_' + plane + '/ImageProperties.xml';			case 'iip':  throw Error("Unimplemented");
+				case 'iiif': throw Error("Unimplemented");
+				default:     throw Error("Unknown layout: " + layout);
+			}
+		}
+
+	/*
+	 * Alias for setControl
+	 * @param {Array} light light direction as an array [x, y]
+	 * @param {number} dt delay
+	 */
+		setLight(light, dt) {
+			this.setControl('light', light, dt);
+		}
+
+		init(url) {
+			(async () => {
+				var response = await fetch(this.url);
+				if(!response.ok) {
+					this.status = "Failed loading " + this.url + ": " + response.statusText;
+					return;
 				}
-			}, false);
+				let json = await response.json();
+				this.shader.init(json);
 
-			element.addEventListener('touchend', (e) => {
-				let pos = this.eventToPosition(e);
-				this.mouseUp(pos.x, pos.y, e);
-				e.preventDefault();
-			}, false);
+				for(let p = 0; p < this.shader.njpegs; p++)
+					this.rasters.push(new Raster({ url: this.planeUrl(this.url, p), type: 'vec3', attribute: 'coeff', colorspace: 'linear' }));
 
-			element.addEventListener('touchmove', (e) => {
-				let pos0 = this.eventToPosition(e, 0);
-				if (e.targetTouches.length == 1) {
-					this.mouseMove(pos0.x, pos0.y, e);
-				} else if (e.targetTouches.length == 2) {
-					let pos1 = this.eventToPosition(e, 1);
-					this.pinchMove(pos0, pos1, e);
-				}
-				e.preventDefault();
-			}, false);
+				let size = {width:this.width, height:this.height};
+				this.setLayout(new Layout(this.planeUrl(this.url, 0), this.layout, size));
 
-			element.addEventListener('wheel', (e) => {
-				//TODO support for delta X?
-				let pos = this.eventToPosition(e);
+				let controller = new Controller2D((x, y)=>this.setControl('light', [x, y], 100), { active:false, control:'light' });
+				this.controllers.push(controller);
 
-				let delta = e.deltaY > 0? 1 : -1;
-				this.wheelDelta(pos.x, pos.y, delta, e);
-				e.preventDefault();
-			});
+			})().catch(e => { console.log(e); this.status = e; });
+		}
 
+	/*
+	 *  Internal function: light control maps to light direction in the shader.
+	 */
+		interpolateControls() {
+			let done = super.interpolateControls();
+			if(!done) {
+				let light = this.controls['light'].current.value;
+				this.shader.setLight(light);
+			}
+			return done;
 		}
 	}
 
-	class PanZoomController extends Controller {
+	Layer$1.prototype.types['rti'] = (options) => { return new RTILayer(options); };
 
-		constructor(element, camera, options) {
-			super(element, options);
+	/* Basic viewer for a single layer.
+	 *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
+	 *  and custom.
+	 * actions supported are:
+	 *  home: reset the camera
+	 *  zoomin, zoomout
+	 *  fullscreen
+	 *  rotate (45/90 deg rotation option.
+	 *  light: turn on light changing.
+	 *  switch layer(s)
+	 *  lens.
+	 */
+
+	class UIBasic {
+		constructor(lime, options) {
+			//we need to know the size of the scene but the layers are not ready.
+			lime.canvas.addEvent('update', ()=> { this.updateLayers(); });
+			let camera = lime.camera;
+			Object.assign(this, {
+				lime: lime,
+				camera: this.camera,
+				skin: 'skin.svg',
+				style: 'skin.css',
+				actions: {
+					home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fit(this.viewport, 250); } },
+					layers:     { title: 'Layers',     task: (event) => { this.selectLayers(event); } },
+					zoomin:     { title: 'Zoom in',    task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
+					zoomout:    { title: 'Zoom out',   task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
+					light:      { title: 'Light',      task: (event) => { this.toggleLightController(); } },
+					fullscreen: { title: 'Fullscreen', task: (event) => { this.toggleFullscreen(); } }
+				},
+				viewport: [0, 0, 0, 0] //in scene coordinates
+			});
+
+			if(options)
+				Object.assign(this, options);
+
+			this.init();
+		}
+
+
+
+		init() {
+			(async () => {
+
+				if(this.skin)
+					await this.loadSkin();
+
+				this.setupActions();
+
+				for(let l of Object.values(this.lime.canvas.layers)) {
+					this.setLayer(l);
+					break;
+				}
+
+			})().catch(e => { console.log(e); throw Error("Something failed") });
+		}
+
+		updateLayers() {
+			this.ready = true;
+			let box = [1e20, 1e20, -1e20, -1e20];
+			for(let layer of Object.values(this.lime.canvas.layers)) {
+				if(layer.status != 'ready') {
+					this.ready = false;
+					continue;
+				}
+
+				let lbox = layer.transform.transformBox(layer.boundingBox());
+				box[0] = Math.min(lbox[0], box[0]);
+				box[1] = Math.min(lbox[1], box[1]);
+				box[2] = Math.max(lbox[2], box[2]);
+				box[3] = Math.max(lbox[3], box[3]);
+			}
+			if(box[2] > box[0])
+				this.viewport = box;
+		}
+
+		async loadSkin() {
+			var response = await fetch(this.skin);
+			if(!response.ok) {
+				throw Error("Failed loading " + url + ": " + response.statusText);
+			}
+
+			let text = await response.text();
+			let parser = new DOMParser();
+			let skin= parser.parseFromString(text, "image/svg+xml").documentElement;
+
+
+			let toolbar = document.createElement('div');
+			toolbar.classList.add('openlime-toolbar');
+			this.lime.containerElement.appendChild(toolbar);
+
+
+			//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
+			{
+				let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				toolbar.appendChild(svg);
+
+				let padding = 10;
+				let x = padding;
+				let h = 0;
+				for(let [name, action] of Object.entries(this.actions)) {
+					let element = skin.querySelector('.openlime-' + name).cloneNode(true);
+					if(!element) continue;
+					svg.appendChild(element);
+					let box = element.getBBox();
+					h = Math.max(h, box.height);
+					let tlist = element.transform.baseVal;
+					if(tlist.numberOfItems == 0)
+						tlist.appendItem(svg.createSVGTransform());
+					tlist.getItem(0).setTranslate(-box.x + x,-box.y);
+					x += box.width + padding;
+				}
+				Object.assign(svg.viewBox.baseVal, {x: 0, y: 0, width: x, height: h });
+			}
+		}
+
+
+
+		setupActions() {
+			for(let [name, action] of Object.entries(this.actions)) {
+				let element = this.lime.containerElement.querySelector('.openlime-' + name);
+				if(!element)
+					continue;
+				element.addEventListener('click', action.task);
+			}
+			let items = document.querySelectorAll('.openlime-layers-button');
+			for(let item of items) {
+				let id = item.getAttribute('data-layer');
+				if(!id) continue;
+				item.addEventListener('click', ()=> {
+					this.setLayer(this.lime.layers[id]);
+				});
+			}
+		}
+
+		//we need the concept of active layer! so we an turn on and off light.
+		toggleLightController() {
+			let div = this.lime.containerElement;
+			let active = div.classList.toggle('openlime-light-active');
+			this.lightActive = active;
+
+			for(let c of this.activeLayer.controllers)
+				if(c.control == 'light')
+					c.active = active;
+		}
+
+		toggleFullscreen() {
+			let canvas = this.lime.canvasElement;
+			let div = this.lime.containerElement;
+			let active = div.classList.toggle('openlime-fullscreen-active');
+
+			if(!active) {
+				var request = document.exitFullscreen || document.webkitExitFullscreen ||
+					document.mozCancelFullScreen || document.msExitFullscreen;
+				request.call(document);
+
+				this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
+			} else {
+				var request = div.requestFullscreen || div.webkitRequestFullscreen ||
+					div.mozRequestFullScreen || div.msRequestFullscreen;
+				request.call(div);
+			}
+			this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
+		}
+
+	/* Layer management */
+
+		selectLayers(event) {
+			if(!this.layerMenu) {
+				let ul = document.createElement('ul');
+				ul.classList.add('openlime-layers-menu');
+				for(let [name, layer] of Object.entries(this.lime.canvas.layers)) {
+					let li = document.createElement('li');
+					li.innerHTML = layer.label || name;
+					li.addEventListener('click', ()=> {
+						this.setLayer(layer);
+						this.closeLayersMenu();
+					});
+					ul.appendChild(li);
+				}
+				this.lime.containerElement.appendChild(ul);
+				this.layerMenu = ul;
+			}
+			this.layerMenu.style.left = event.offsetX + 'px';
+			this.layerMenu.style.top = event.offsetY + 'px';
+			this.layerMenu.style.display = 'block';
+		}
+
+		setLayer(layer_on) {
+			this.activeLayer = layer_on;
+
+			for(let layer of Object.values(this.lime.canvas.layers)) {
+				layer.setVisible(layer == layer_on);
+				for(let c of layer.controllers) {
+					if(c.control == 'light')
+						c.active = this.lightActive && layer == layer_on;
+				}
+			}
+			this.lime.redraw();
+		}
+
+		closeLayersMenu() {
+			this.layerMenu.style.display = 'none';
+		}
+	}
+
+	class ControllerPanZoom extends Controller {
+
+		constructor(camera, options) {
+			super(options);
 			this.camera = camera;
 			this.zoomAmount = 1.2;
 			this.panning = false;
+			this.zooming = false;
 			this.startPosition = null;
 			this.startMouse = null;
+			this.prevScale = 1.0;
 		}
 
-		mouseDown(x, y, e) {
-			if(!(e.buttons & 0x1)) 
-				return;
-			this.panning = true; 
+		panStart(e, x, y) {
+			this.panning = true;
 			this.startMouse = { x: x, y: y };
 
 			let now = performance.now();
@@ -1322,37 +2406,54 @@ void main() {
 			this.camera.target = this.startPosition.copy(); //stop animation.
 		}
 
-		mouseUp(x, y, e) { 
-			this.panning = false;
-		}
-
-		mouseMove(x, y, e) { 
-			if(!this.panning)
+		panMove(e, x, y) {
+			if (!this.panning)
 				return;
 
 			let dx = x - this.startMouse.x;
 			let dy = y - this.startMouse.y;
 
-
 			let z = this.startPosition.z;
-			let ex = this.startPosition.x + dx/z;
-			let ey = this.startPosition.y + dy/z;
+			let ex = this.startPosition.x + dx / z;
+			let ey = this.startPosition.y + dy / z;
 			let a = this.startPosition.a;
-
 
 			this.camera.setPosition(this.delay, ex, ey, z, a);
 		}
 
-		wheelDelta(x, y, delta, e) { 
-			console.log(x, y);
-			let pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
-			let zoom = Math.pow(this.zoomAmount, delta);
-			this.camera.zoom(this.delay, zoom, pos.x, pos.y, );
+		panEnd(e, x, y) {
+			this.panning = false;
 		}
 
-		pinchStart(pos1, pos2, e) {if(this.debug) console.log('ZStart ', pos1, pos2); }
+		pinchStart(e, x, y, scale) {
+			this.zooming = true;
+			this.prevScale = scale;
+		}
 
-		pinchMove(pos1, pos2, e) {if(this.debug) console.log('ZMove ', pos1, pos2); }
+		pinchMove(e, x, y, scale) {
+			if (!this.zooming)
+				return;
+			const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
+			const absoluteZoom = camera.target.z * this.prevScale/scale;
+			this.camera.zoom(this.delay, absoluteZoom, pos.x, pos.y);
+			this.prevScale = scale;
+		}
+
+		pinchEnd(e, x, y, scale) {
+			this.zooming = false;
+		}
+
+		wheelDelta(e, x, y, delta) {
+			const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
+			const dz = Math.pow(this.zoomAmount, delta);
+			this.camera.deltaZoom(this.delay, dz, pos.x, pos.y);
+		}
+
+		doubleTap(e, x, y) {
+			const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
+			const dz = this.zoomAmount;
+			this.camera.deltaZoom(this.delay, dz, pos.x, pos.y);
+		}
 
 	}
 
@@ -1374,6 +2475,8 @@ void main() {
 			Object.assign(this, { 
 				background: [0, 0, 0, 1],
 				canvas: {},
+				overlay: {},
+				controllers: [],
 				camera: new Camera()
 			});
 
@@ -1388,10 +2491,14 @@ void main() {
 			this.canvasElement = div.querySelector('canvas');
 			if(!this.canvasElement) {
 				this.canvasElement = document.createElement('canvas');
-				div.appendChild(this.canvasElement);
+				div.prepend(this.canvasElement);
 			}
 
 			this.initCanvasElement(this.canvasElement);
+
+			this.overlayElement = document.createElement('div');
+			this.overlayElement.classList.add('openlime-overlay');
+			this.containerElement.appendChild(this.overlayElement);
 
 
 			this.canvas = new Canvas(this.gl, this.camera, this.canvas);
@@ -1399,34 +2506,19 @@ void main() {
 
 			this.camera.addEvent('update', () => { this.redraw(); });
 
-			this.controller = new PanZoomController(this.containerElement, this.camera);
+			this.controllers.push(new ControllerPanZoom(this.camera));
 
 			var resizeobserver = new ResizeObserver( entries => {
 				for (let entry of entries) {
 					this.resize(entry.contentRect.width, entry.contentRect.height);
+					this.processEvent('resize', {}, entry.contentRect.width, entry.contentRect.height);
 				}
 			});
 			resizeobserver.observe(this.canvasElement);
 
-	/*
-	//TODO here is not exactly clear which assumption we make on canvas and container div size.
-	//		resizeobserver.observe(this.containerElement);
-			this.containerElement.addEventListener('mousemove', (e) => {
+			this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
 
-	//			let camera = this.canvas.camera;
-	//			let x = e.clientX - this.canvas.camera.viewport[2]/2;
-	//			let y = e.clientY - this.canvas.camera.viewport[3]/2;
-	//			let z = this.canvas.camera.target.z;
-	//			camera.setPosition(0, x/z, y/z, z, 0,); 
-
-	//			console.log(camera.mapToScene(e.clientX, e.clientY, camera.target));
-	//			this.canvas.camera.target.x = 1;
-	//			this.canvas.camera.target.t = performance.now();
-				this.redraw();
-	//			this.canvas.camera.target.x += 1;
-			}); */
-
-
+			this.initEvents();
 		}
 
 
@@ -1455,8 +2547,6 @@ void main() {
 
 			if (!this.gl)
 				throw "Could not create a WebGL context";
-
-			
 		}
 
 		/**
@@ -1467,7 +2557,7 @@ void main() {
 			this.canvasElement.width = width;
 			this.canvasElement.height = height;
 
-			this.camera.setViewport([0, 0, width, height]);
+			this.camera.setViewport({x:0, y:0, dx:width, dy:height, w:width, h:height});
 			this.canvas.prefetch();
 			this.redraw();
 		}
@@ -1489,14 +2579,87 @@ void main() {
 			if(!time) time = performance.now();
 			this.animaterequest = null;
 
+			let viewport = this.camera.viewport;
+			let transform = this.camera.getCurrentTransform(time);
+
 			let done = this.canvas.draw(time);
+			for(let [name, layer] of Object.values(this.overlay))
+				done &= layer.draw(transform, viewport);
 			if(!done)
 				this.redraw();
 		}
 
-		fit(box, dt, size) {
-			this.camera.fit(box, dt, size);
-			this.redraw();
+		processEvent(event, e, x, y, scale) {
+			//if events are captured
+
+			//first check layers from top to bottom
+			let ordered = Object.values(this.canvas.layers).sort( (a, b) => b.zindex - a.zindex);
+			ordered.push(this);
+			for(let layer of ordered) {
+				for(let controller of layer.controllers) {
+					if(controller.active && controller[event] && controller[event](e, x, y, scale))
+						return;
+				}
+			}
+		}
+
+		hammerEventToPosition(e) {
+			let rect = this.canvasElement.getBoundingClientRect();
+			let x = e.center.x - rect.left;
+			let y = e.center.y - rect.top;
+			e.rect = rect;
+			return { x: x, y: y }
+		}
+
+		eventToPosition(e, touch) {
+			let rect = e.currentTarget.getBoundingClientRect();
+			let x = e.clientX - rect.left;
+			let y = e.clientY - rect.top;
+			e.rect = rect;
+			return { x: x, y: y }
+		}
+
+
+		initEvents() {
+
+			let element = this.canvasElement;
+
+			element.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+				return false;
+			});
+
+			const mc = new Hammer.Manager(element); 
+
+			mc.add(new Hammer.Tap({ event: 'doubletap', taps: 2 }));
+			mc.add(new Hammer.Tap({ event: 'singletap', taps: 1 }));
+			mc.get('doubletap').recognizeWith('singletap');
+			mc.get('singletap').requireFailure('doubletap');
+			mc.add(new Hammer.Pan({ pointers: 1, direction: Hammer.DIRECTION_ALL, threshold: 0 }));
+			mc.add(new Hammer.Pinch());
+
+			let events = {
+				'singletap':'singleTap', 'doubletap':'doubleTap', 
+				'panstart':'panStart', 'panmove':'panMove', 'panend pancancel': 'panEnd',
+				'pinchstart': 'pinchStart', 'pinchmove':'pinchMove', 'pinchend pinchcancel': 'pinchEnd'
+			};
+			for(let [event, callback] of Object.entries(events)) {
+				mc.on(event, (e) => {
+					const pos = this.hammerEventToPosition(e);
+					const scale = e.scale;
+					this.processEvent(callback, e, pos.x, pos.y, scale);
+					e.preventDefault();
+					return false;
+				});
+			}
+
+			element.addEventListener('wheel', (e) => {
+				//TODO support for delta X?
+				const pos = this.eventToPosition(e);
+				let delta = e.deltaY > 0 ? 1 : -1;
+				this.processEvent('wheelDelta', e, pos.x, pos.y, delta);
+				e.preventDefault();
+			});
 		}
 	}
 
@@ -1505,9 +2668,11 @@ void main() {
 	exports.Layer = Layer$1;
 	exports.Layout = Layout;
 	exports.OpenLIME = OpenLIME;
+	exports.RTILayer = RTILayer;
 	exports.Raster = Raster;
 	exports.Shader = Shader;
 	exports.Transform = Transform;
+	exports.UIBasic = UIBasic;
 
 	Object.defineProperty(exports, '__esModule', { value: true });
 
