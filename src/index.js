@@ -9,6 +9,7 @@ import { Controller2D } from './Controller2D.js'
 import { UIBasic } from './UIBasic.js'
 import { LensLayer } from './LensLayer.js'
 import { Lens } from './Lens.js'
+import { AnnotationLayer } from './AnnotationLayer.js'
 
 let lime = new OpenLIME('#openlime');
 
@@ -20,7 +21,24 @@ let lime = new OpenLIME('#openlime');
 //testUIBasic();
 
 //testUISvg();
-lensTest();
+//lensTest();
+testSVGAnnotations();
+
+function testSVGAnnotations() {
+	let layer0 = new Layer({
+		type: 'image',
+		url: 'assets/svbrdf/vis/kdMap.jpg',
+		layout: 'image',
+		zindex: 0,
+		transform: { x: 100, y: 0, z: 1, a: 0 },
+		visible: false
+	});
+
+	let layer1 = new AnnotationLayer({
+	});
+	lime.canvas.addLayer('img', layer0);
+	lime.canvas.addLayer('anno', layer1);
+}
 
 function testUIBasic() {
 	tomeTest();

@@ -7,7 +7,7 @@ import {Layout}         from './Layout.js'
 /**
  * options must contain one layer and lens = {x:, y:, r:, border: }
  */
-class LensLayer extends LayerCombiner {
+class LensLayer extends CombinerLayer {
 	constructor(options) {
         super(options);
         

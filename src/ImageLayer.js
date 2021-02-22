@@ -52,6 +52,6 @@ void main() {
 	}
 }
 
-Layer.prototype.types['image'] = (options) => { return new LayerImage(options); }
+Layer.prototype.types['image'] = (options) => { return new ImageLayer(options); }
 
 export { ImageLayer }
