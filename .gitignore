@@ -1,0 +1,9 @@
+node_modules
+*_files
+dist/assets/svbrdf/vis/ksMap_file
+dist/assets/svbrdf/vis/kdMap
+dist/assets/svbrdf/vis/glossMap
+dist/assets/rti/512
+dist/assets/rti/test
+docs
+package-lock.json

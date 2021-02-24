@@ -25,10 +25,6 @@ class PointerManager {
         this.ppmm = PointerManager.getPPMM(this.diagonal);
 
         this.target.style.touchAction = "none";
-        this.target.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            return false;
-        });
         this.target.addEventListener('pointerdown', (e) => this.handleEvent(e), false);
         document.addEventListener('pointermove', (e) => this.handleEvent(e), false);
         document.addEventListener('pointerup', (e) => this.handleEvent(e), false);

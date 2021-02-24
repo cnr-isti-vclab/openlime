@@ -12,9 +12,7 @@ import { UIBasic } from './UIBasic.js'
 import { Controller } from './Controller.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 
-
-import * as Hammer from 'hammerjs';
-
+import { PointerManager } from './PointerManager.js'
 
 /**
  * Manages an OpenLIME viewer functionality on a canvas
@@ -153,7 +151,7 @@ class OpenLIME {
 
 	processEvent(event, e, x, y, scale) {
 		//if events are captured
-
+		console.log(event);
 		//first check layers from top to bottom
 		let ordered = Object.values(this.canvas.layers).sort( (a, b) => b.zindex - a.zindex);
 		ordered.push(this);
@@ -165,16 +163,9 @@ class OpenLIME {
 		}
 	}
 
-	hammerEventToPosition(e) {
-		let rect = this.canvasElement.getBoundingClientRect();
-		let x = e.center.x - rect.left;
-		let y = e.center.y - rect.top;
-		e.rect = rect;
-		return { x: x, y: y }
-	}
-
 	eventToPosition(e, touch) {
-		let rect = e.currentTarget.getBoundingClientRect();
+		let rect = this.containerElement.getBoundingClientRect();
+		//let rect = e.currentTarget.getBoundingClientRect();
 		let x = e.clientX - rect.left;
 		let y = e.clientY - rect.top;
 		e.rect = rect;
@@ -186,43 +177,49 @@ class OpenLIME {
 
 		let element = this.canvasElement;
 
-		element.addEventListener('contextmenu', (e) => {
-			e.preventDefault();
-			return false;
-		});
+		const pointerManager = new PointerManager(element, {inertial: false});
+		pointerManager.register('pan', 
+			(e) => { 
+				const pos = this.eventToPosition(e);
+				this.processEvent('panStart', e, pos.x, pos.y); 
+				return true;
+			},
+			(e) => {
+				const pos = this.eventToPosition(e);
+				this.processEvent('panMove', e, pos.x, pos.y); 
+			},
+			(e) => {
+				const pos = this.eventToPosition(e);
+				this.processEvent('panEnd', e, pos.x, pos.y); 
+			},
+			false); //no inertia
+				
 
-		const mc = new Hammer.Manager(element); 
+		pointerManager.on('fingerHover', PointerManager.ANYPOINTER, (e) => {
+			const pos = this.eventToPosition(e);
+			this.processEvent('hover', e, pos.x, pos.y);
+		 });
 
-		mc.add(new Hammer.Tap({ event: 'doubletap', taps: 2 }));
-		mc.add(new Hammer.Tap({ event: 'singletap', taps: 1 }));
-		mc.get('doubletap').recognizeWith('singletap');
-		mc.get('singletap').requireFailure('doubletap');
-		mc.add(new Hammer.Pan({ pointers: 1, direction: Hammer.DIRECTION_ALL, threshold: 0 }));
-		mc.add(new Hammer.Pinch());
+		 
+		 pointerManager.on('fingerSingleTap', PointerManager.ANYPOINTER, (e) => {
+			const pos = this.eventToPosition(e);
+			this.processEvent('singleTap', e, pos.x, pos.y);
+		 });
 
-		let events = {
-			'singletap':'singleTap', 'doubletap':'doubleTap', 
-			'panstart':'panStart', 'panmove':'panMove', 'panend pancancel': 'panEnd',
-			'pinchstart': 'pinchStart', 'pinchmove':'pinchMove', 'pinchend pinchcancel': 'pinchEnd'
-		};
-		for(let [event, callback] of Object.entries(events)) {
-			mc.on(event, (e) => {
-				const pos = this.hammerEventToPosition(e);
-				const scale = e.scale;
-				this.processEvent(callback, e, pos.x, pos.y, scale);
-				e.preventDefault();
-				return false;
-			});
-		}
-
-		element.addEventListener('wheel', (e) => {
+		 element.addEventListener('wheel', (e) => {
 			//TODO support for delta X?
 			const pos = this.eventToPosition(e);
 			let delta = e.deltaY > 0 ? 1 : -1;
 			this.processEvent('wheelDelta', e, pos.x, pos.y, delta);
 			e.preventDefault();
 		});
-	}
+
+		element.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
+
+    }
 }
 
 export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic }

@@ -30,7 +30,7 @@ function testSVGAnnotations() {
 		url: 'assets/svbrdf/vis/kdMap.jpg',
 		layout: 'image',
 		zindex: 0,
-		transform: { x: 50, y: -100, z: 1.2, a: 10 },
+		transform: { x: -500, y: 0, z: 1.2, a: 10 },
 	});
 
 	let layer1 = new AnnotationLayer({ 
@@ -41,8 +41,8 @@ function testSVGAnnotations() {
 			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
 		`,
 		annotations: { aura: {}, sun: {} },
-		transform: { x: 50, y: -100, z: 1.2, a: 10 },
-	});
+		transform: { x: -500, y: 0, z: 1.2, a: 10 },
+	}); 
 
 	lime.canvas.addLayer('img', layer0);
 	lime.canvas.addLayer('anno', layer1);
@@ -198,8 +198,6 @@ function brdfTest() {
 
 
 lime.draw();
-lime.canvas.camera.fit([-500, -500, +500, +500]);
-lime.canvas.camera.fit([-500, -500, +500, +500], 1000);
 
 //setTimeout(() => { lime.camera.fit([-150, -276, 150, 277], 200); }, 1000);
 

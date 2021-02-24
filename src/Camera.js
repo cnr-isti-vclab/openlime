@@ -148,7 +148,7 @@ class Camera {
 		let bh = box[3] - box[1];
 		let z = Math.min(w/bw, h/bh);
 
-		this.setPosition(dt, (box[0] + box[2])/2, (box[1] + box[3])/2, z, 0);
+		this.setPosition(dt, -(box[0] + box[2])/2, -(box[1] + box[3])/2, z, 0);
 	}
 
 }

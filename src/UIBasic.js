@@ -28,8 +28,7 @@ class UIBasic {
 			actions: {
 				home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fit(this.viewport, 250); } },
 				layers:     { title: 'Layers',     task: (event) => { this.selectLayers(event); } },
-				zoomin:     { title: 'Zoom in',    task: (event) => { 
-	if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
+				zoomin:     { title: 'Zoom in',    task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout:    { title: 'Zoom out',   task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
 				light:      { title: 'Light',      task: (event) => { this.toggleLightController(); } },
 				fullscreen: { title: 'Fullscreen', task: (event) => { this.toggleFullscreen(); } }
@@ -78,6 +77,7 @@ class UIBasic {
 			box[2] = Math.max(lbox[2], box[2]);
 			box[3] = Math.max(lbox[3], box[3]);
 		}
+		
 		if(box[2] > box[0])
 			this.viewport = box;
 	}

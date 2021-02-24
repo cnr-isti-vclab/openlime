@@ -46,9 +46,15 @@ class AnnotationLayer extends Layer {
 				root.append(style);
 			}
 			root.appendChild(this.svgElement);
-
+			this.status = 'ready';
 			this.emit('update');
 		})().catch(e => { console.log(e); this.status = e; });
+	}
+
+	boundingBox() {
+		return [-this.viewBox[2]/2, -this.viewBox[3]/2, this.viewBox[2]/2, this.viewBox[3]/2];
+		//return  this.transform.transformBox(box);
+		
 	}
 
 	draw(transform, viewport) {
