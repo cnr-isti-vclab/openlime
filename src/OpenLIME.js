@@ -195,13 +195,13 @@ class OpenLIME {
 			false); //no inertia
 				
 
-		pointerManager.on('fingerHover', PointerManager.ANYPOINTER, (e) => {
+		pointerManager.on('fingerHover', (e) => {
 			const pos = this.eventToPosition(e);
 			this.processEvent('hover', e, pos.x, pos.y);
 		 });
 
 		 
-		 pointerManager.on('fingerSingleTap', PointerManager.ANYPOINTER, (e) => {
+		 pointerManager.on('fingerSingleTap', (e) => {
 			const pos = this.eventToPosition(e);
 			this.processEvent('singleTap', e, pos.x, pos.y);
 		 });

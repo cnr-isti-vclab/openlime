@@ -5,7 +5,6 @@
  * @param {div} target is the DOM element from which the events are generated
  * @param {object} options is a JSON describing the options
  *  * **diagonal**: default *27*, the screen diagonal in inch
- *  * **inertial**: default *true*, it enables the inertial engine
  */
 class PointerManager {
     constructor(target, options) {
@@ -13,8 +12,7 @@ class PointerManager {
         this.target = target;
 
         Object.assign(this, {
-            diagonal: 27, // Standard monitor 27"
-            inertial: true // Enable the inertial engine (default true)
+            diagonal: 27 // Standard monitor 27"
         });
 
         if (options)
@@ -29,6 +27,7 @@ class PointerManager {
         document.addEventListener('pointermove', (e) => this.handleEvent(e), false);
         document.addEventListener('pointerup', (e) => this.handleEvent(e), false);
         document.addEventListener('pointercancel', (e) => this.handleEvent(e), false);
+        this.target.addEventListener('wheel', (e) => this.handleEvent(e), false);
     }
 
     ///////////////////////////////////////////////////////////
@@ -51,28 +50,36 @@ class PointerManager {
     /// Class interface
 
     // register pointer handlers.
-    on(eventTypes, idx, callback) {
-        if (idx == PointerManager.ANYPOINTER) {
-            this.broadcastOn(eventTypes, callback);
-        } else {
-            PointerManager.splitStr(eventTypes).forEach(eventType => {
+    on(eventTypes, obj, idx = PointerManager.ANYPOINTER) {
+        eventTypes = PointerManager.splitStr(eventTypes);
+
+        if (typeof (obj) == 'function') {
+            let tmp = { priority: -1000 };
+            for (let e of eventTypes) tmp[e] = obj;
+        }
+
+        eventTypes.forEach(eventType => {
+            if (idx == PointerManager.ANYPOINTER) {
+                this.broadcastOn(eventType, obj);
+            } else {
                 const p = this.currentPointers[idx];
-                if (!p || p.idx != idx) {
+                if (!p) {
                     throw new Error("Bad Index");
                 }
-                p.on(eventType, callback);
-            });
-        }
+                p.on(eventType, obj);
+            }
+        });
     }
 
+
     // unregister pointer handlers
-    off(eventTypes, idx, callback) {
+    off(eventTypes, callback, idx = PointerManager.ANYPOINTER) {
         if (idx == PointerManager.ANYPOINTER) {
             this.broadcastOff(eventTypes, callback);
         } else {
             PointerManager.splitStr(eventTypes).forEach(eventType => {
                 const p = this.currentPointers[idx];
-                if (!p || p.idx != idx) {
+                if (!p) {
                     throw new Error("Bad Index");
                 }
                 p.off(eventType, callback);
@@ -80,55 +87,41 @@ class PointerManager {
         }
     }
 
-    updateInertia(t) {
-        this.currentPointers.forEach(cp => {
-            if (cp) cp.updateInertia(t);
+    onEvent(handler) {
+        const cb_properties = ['fingerHover', 'fingerSingleTap', 'fingerDoubleTap', 'fingerHold', 'mouseWheel'];
+        const cb_events = [];
+        if (!handler.hasOwnProperty('priority'))
+            throw new Error("Event handler has not priority property");
+
+        if (!cb_properties.some((e) => typeof (handler[e]) == 'function'))
+            throw new Error("Event handler properties are wrong or missing");
+
+        for (let property in handler)
+            if (cb_properties.indexOf(property) >= 0) {
+                this.on(property, handler);
+            }
+    }
+
+    onPan(handler) {
+        const cb_properties = ['panStart', 'panMove', 'panEnd'];
+        if (!handler.hasOwnProperty('priority'))
+            throw new Error("Event handler has not priority property");
+
+        if (cb_properties.every((e) => typeof (handler[e]) == 'function'))
+            throw new Error("Pan handler is missing one of this functions: panStart, panMove or panEnd");
+
+        this.on('fingerMovingStart', (e) => {
+            if (handler.panStart(e)) {
+                this.on('fingerMoving', (e) => {
+                    handler.panMove(e);
+                }, e.idx);
+                this.on('fingerMovingEnd', e.idx, (e) => {
+                    handler.panEnd(e);
+                }, e.idx);
+            }
         });
     }
 
-    register(gestureType, capture, move, end, inertia = false) {
-        if (gestureType == 'pan') {
-            this.on('fingerMovingStart', PointerManager.ANYPOINTER, (e) => {
-                if (capture(e)) {
-                    if (inertia) {
-                        this.on('fingerMoving fingerInertialMoving', e.idx, (e) => {
-                            move(e);
-                        });
-                        this.on('fingerInertialMovingEnd', e.idx, (e) => {
-                            end(e);
-                        });
-                    } else {
-                        this.on('fingerMoving', e.idx, (e) => {
-                            move(e);
-                        });
-                        this.on('fingerMovingEnd', e.idx, (e) => {
-                            end(e);
-                        });
-                    }
-                }
-            });
-        }
-        if (gestureType == 'pinch') {
-            this.on('fingerDown', PointerManager.ANYPOINTER, (e) => {
-                // Cerca altre dita, cerca se uno "matcha", cancella timeout e cambia stato 
-                // match = stato DETECT / distanza spazio-tempo corretta  (cercare nell'history)
-                if (capture(e, e2)) {
-                    this.on('fingerMoving', e.idx, (e) => {
-                        move(e);
-                    });
-                    this.on('fingerMoving', e2.idx, (e) => {
-                        move(e);
-                    });
-                    this.on('fingerMovingEnd', e.idx, (e) => {
-                        end(e);
-                    });
-                    this.on('fingerMovingEnd', e2.idx, (e) => {
-                        end(e);
-                    });
-                }
-            });
-        }
-    }
 
     ///////////////////////////////////////////////////////////
     /// Implementation stuff
@@ -155,30 +148,23 @@ class PointerManager {
     }
 
     // register broadcast handlers
-    broadcastOn(eventTypes, callback) {
-        if (callback === undefined) {
-            return;
-        }
-        PointerManager.splitStr(eventTypes).forEach(eventType => {
-            if (this.eventObservers.has(eventType)) {
-                const handlers = this.eventObservers.get(eventType);
-                handlers.push(callback);
-            } else {
-                const handlers = new Array(callback);
-                this.eventObservers.set(eventType, handlers);
-            }
-        });
+    broadcastOn(eventType, obj) {
+        const handlers = this.eventObservers.get(eventType);
+        if (handlers)
+            handlers.push(obj);
+        else
+            this.eventObservers.set(eventType, [obj]);
     }
 
     // unregister broadcast handlers
-    broadcastOff(eventTypes, callback) {
+    broadcastOff(eventTypes, obj) {
         PointerManager.splitStr(eventTypes).forEach(eventType => {
             if (this.eventObservers.has(eventType)) {
-                if (!callback) {
+                if (!obj) {
                     this.eventObservers.delete(eventType);
                 } else {
                     const handlers = this.eventObservers.get(eventType);
-                    const index = handlers.indexOf(callback);
+                    const index = handlers.indexOf(obj);
                     if (index > -1) {
                         handlers.splice(index, 1);
                     }
@@ -192,12 +178,10 @@ class PointerManager {
 
     // emit broadcast events
     broadcast(e) {
-        if (this.eventObservers.has(e.type)) {
-            const handlers = this.eventObservers.get(e.type);
-            handlers.forEach(cb => {
-                cb(e);
-            });
-        }
+        if (!this.eventObservers.has(e.type)) return;
+        this.eventObservers.get(e.type)
+            .sort((a, b) => a.priority - b.priority)
+            .every(obj => !obj[e.type](e));  // the first obj returning true breaks the every loop
     }
 
     addCurrPointer(cp) {
@@ -213,6 +197,7 @@ class PointerManager {
         } else {
             this.currentPointers[result] = cp;
         }
+
         return result;
     }
 
@@ -238,7 +223,7 @@ class PointerManager {
             }
         }
         if (!handled) {
-            const cp = new SinglePointerHandler(this, te.pointerId, { ppmm: this.ppmm, inertial: this.inertial });
+            const cp = new SinglePointerHandler(this, te.pointerId, { ppmm: this.ppmm });
             handled = cp.handleEvent(te);
         }
     }
@@ -255,9 +240,6 @@ class SinglePointerHandler {
 
         Object.assign(this, {
             ppmm: 3, // 27in screen 1920x1080 = 3 ppmm
-            inertial: true, // Enable the inertial engine
-            inertialDumping: 0.9, // The coefficient of friction
-            inertialEndSpeed: 100 // Initial speed value to activate the inertial engine (100 px/s)
         });
         if (options)
             Object.assign(this, options);
@@ -266,10 +248,6 @@ class SinglePointerHandler {
         this.isActive = false;
         this.startTap = 0;
         this.threshold = 15; // 15mm
-
-        this.inertialTimer = null;
-        this.lastFingerMovingEvent = null;
-        this.inertialEvent = null;
 
         this.eventObservers = new Map();
         this.isDown = false;
@@ -287,8 +265,6 @@ class SinglePointerHandler {
             SINGLE_TAP: 8,
             DOUBLE_TAP_DETECT: 9,
             DOUBLE_TAP: 10,
-            INERTIAL_MOVING: 11,
-            INERTIAL_MOVING_END: 12
         };
         this.status = this.stateEnum.IDLE;
         this.timeout = null;
@@ -314,11 +290,11 @@ class SinglePointerHandler {
     ///////////////////////////////////////////////////////////
     /// Class interface
 
-    on(eventType, callback) {
-        this.eventObservers.set(eventType, callback);
+    on(eventType, obj) {
+        this.eventObservers.set(eventType, obj);
     }
 
-    off(eventType, callback) {
+    off(eventType) {
         if (this.eventObservers.has(eventType)) {
             this.eventObservers.delete(eventType);
         }
@@ -356,10 +332,12 @@ class SinglePointerHandler {
 
     // emit+broadcast
     emit(e) {
+        let captured = false;
         if (this.eventObservers.has(e.type)) {
-            this.eventObservers.get(e.type)(e);
+            captured |= this.eventObservers.get(e.type)[e.type](e);
         }
-        this.parent.broadcast(e);
+        if (!captured)
+            this.parent.broadcast(e);
     }
 
     // output Event, speed is computed only on pointermove
@@ -394,6 +372,11 @@ class SinglePointerHandler {
             distance = this.distanceMM(e.clientX, e.clientY, this.oldDownPos.clientX, this.oldDownPos.clientY)
         }
 
+        if (e.type == "wheel") {
+            console.log("WHEEL");
+            console.log(e);
+        }
+
         switch (this.status) {
             case this.stateEnum.HOVER:
             case this.stateEnum.IDLE:
@@ -403,7 +386,6 @@ class SinglePointerHandler {
                 } else if (e.type == 'pointerdown') {
                     this.status = this.stateEnum.DETECT;
                     this.timeout = setTimeout(() => {
-                        console.log("HOLD");
                         this.status = this.stateEnum.IDLE;
                         this.emit(this.createOutputEvent(e, 'fingerHold'));
                     }, this.holdTimeoutThreshold);
@@ -418,7 +400,6 @@ class SinglePointerHandler {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.MOVING;
                     const outEvent = this.createOutputEvent(e, 'fingerMovingStart');
-                    this.lastFingerMovingEvent = Object.assign({}, outEvent);
                     this.emit(outEvent);
                 } else if (e.type == 'pointerup') {
                     clearTimeout(this.timeout);
@@ -455,23 +436,16 @@ class SinglePointerHandler {
                 if (e.type == 'pointermove' && distance > this.movingThreshold) {
                     this.status = this.stateEnum.MOVING;
                     this.emit(this.createOutputEvent(e, 'fingerMovingStart'));
-                    this.lastFingerMovingEvent = Object.assign({}, outEvent);
                 }
                 break;
             case this.stateEnum.MOVING:
                 if (e.type == 'pointermove') {
                     // Remain MOVING
                     const outEvent = this.createOutputEvent(e, 'fingerMoving');
-                    this.lastFingerMovingEvent = Object.assign({}, outEvent);
                     this.emit(outEvent);
                 } else if (e.type == 'pointerup' || e.type == 'pointercancel') {
                     this.status = this.stateEnum.IDLE;
                     this.emit(this.createOutputEvent(e, 'fingerMovingEnd'));
-                    // Inertial engine
-                    if (this.inertial) {
-                        this.status = this.stateEnum.INERTIAL_MOVING;
-                        this.inertialEvent = this.lastFingerMovingEvent;
-                    }
                 }
                 break;
             default:
@@ -483,30 +457,30 @@ class SinglePointerHandler {
         this.addToHistory(e);
     }
 
-    updateInertia(t) {
-        if (!this.inertialEvent)
-            return true;
-        let event = Object.assign({}, this.inertialEvent);
-        let dt = (t - event.timestamp) / 1000;
-        let K = 12;
-        event.speedX = Math.exp(-dt * K) * this.inertialEvent.speedX;
-        event.speedY = Math.exp(-dt * K) * this.inertialEvent.speedY;
-        event.clientX = this.inertialEvent.clientX + this.inertialEvent.speedX / K * (1 - Math.exp(-dt * K));
-        event.clientY = this.inertialEvent.clientY + this.inertialEvent.speedY / K * (1 - Math.exp(-dt * K));
-        event.timestamp = t;
-        const speed2 = event.speedX ** 2 + event.speedY ** 2;
-        if (speed2 < this.inertialEndSpeed ** 2) {
-            event.type = 'fingerInertialMovingEnd';
-            this.status = this.stateEnum.IDLE;
-            this.emit(event);
-            this.inertialEvent = null;
-            return true;
-        } else {
-            event.type = 'fingerInertialMoving';
-            this.emit(event);
-            return false;
-        }
-    }
+    // updateInertia(t) {
+    //     if (!this.inertialEvent)
+    //         return true;
+    //     let event = Object.assign({}, this.inertialEvent);
+    //     let dt = (t - event.timestamp) / 1000;
+    //     let K = 12;
+    //     event.speedX = Math.exp(-dt * K) * this.inertialEvent.speedX;
+    //     event.speedY = Math.exp(-dt * K) * this.inertialEvent.speedY;
+    //     event.clientX = this.inertialEvent.clientX + this.inertialEvent.speedX / K * (1 - Math.exp(-dt * K));
+    //     event.clientY = this.inertialEvent.clientY + this.inertialEvent.speedY / K * (1 - Math.exp(-dt * K));
+    //     event.timestamp = t;
+    //     const speed2 = event.speedX ** 2 + event.speedY ** 2;
+    //     if (speed2 < this.inertialEndSpeed ** 2) {
+    //         event.type = 'fingerInertialMovingEnd';
+    //         this.status = this.stateEnum.IDLE;
+    //         this.emit(event);
+    //         this.inertialEvent = null;
+    //         return true;
+    //     } else {
+    //         event.type = 'fingerInertialMoving';
+    //         this.emit(event);
+    //         return false;
+    //     }
+    // }
 
     handleEvent(e) {
         let result = false;

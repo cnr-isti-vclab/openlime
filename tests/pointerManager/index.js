@@ -44,7 +44,7 @@ function capturePan(e) {
     infoDiv.innerHTML = `Received ${e.type}  From: ${e.pointerId}  Idx = ${e.idx}`;
     hoverDiv.innerHTML = '';
     drawEvent();
-    inertialTimer = setInterval(()=>{
+    inertialTimer = setInterval(() => {
         pointerManager.updateInertia(performance.now());
     }, 15);
     return true;
@@ -70,15 +70,33 @@ function panEnd(e) {
 }
 
 const pointerManager = new PointerManager(targetsDiv);
-pointerManager.register('pan', capturePan, panMove, panEnd, true);
+// pointerManager.register('pan', capturePan, panMove, panEnd, true);
 
-
-
-pointerManager.on('fingerHover fingerSingleTap fingerDoubleTap fingerHold', PointerManager.ANYPOINTER, (e) => {
-    infoDiv.innerHTML = "";
-    if (e.type == 'fingerHover') {
+const handlers = {
+    priority: 0,
+    fingerHover: (e) => {
+        infoDiv.innerHTML = "";
         hoverDiv.innerHTML = "Received " + e.type + "  From: " + e.pointerId + "  Idx = " + e.idx;
-    } else {
+    },
+    fingerSingleTap: (e) => {
+        const key = e.pointerType + e.idx;
+        if (pointers.has(key)) {
+            pointers.delete(key);
+            drawEvent();
+        }
+        infoDiv.innerHTML = "Received " + e.type + "  From: " + e.pointerId + "  Idx = " + e.idx;
+        hoverDiv.innerHTML = '';
+    },
+    fingerDoubleTap: (e) => {
+        const key = e.pointerType + e.idx;
+        if (pointers.has(key)) {
+            pointers.delete(key);
+            drawEvent();
+        }
+        infoDiv.innerHTML = "Received " + e.type + "  From: " + e.pointerId + "  Idx = " + e.idx;
+        hoverDiv.innerHTML = '';
+    },
+    fingerHold: (e) => {
         const key = e.pointerType + e.idx;
         if (pointers.has(key)) {
             pointers.delete(key);
@@ -87,5 +105,22 @@ pointerManager.on('fingerHover fingerSingleTap fingerDoubleTap fingerHold', Poin
         infoDiv.innerHTML = "Received " + e.type + "  From: " + e.pointerId + "  Idx = " + e.idx;
         hoverDiv.innerHTML = '';
     }
-});
+};
+
+pointerManager.onEvent(handlers);
+
+// pointerManager.on('fingerHover fingerSingleTap fingerDoubleTap fingerHold', (e) => {
+//     infoDiv.innerHTML = "";
+//     if (e.type == 'fingerHover') {
+//         hoverDiv.innerHTML = "Received " + e.type + "  From: " + e.pointerId + "  Idx = " + e.idx;
+//     } else {
+//         const key = e.pointerType + e.idx;
+//         if (pointers.has(key)) {
+//             pointers.delete(key);
+//             drawEvent();
+//         }
+//         infoDiv.innerHTML = "Received " + e.type + "  From: " + e.pointerId + "  Idx = " + e.idx;
+//         hoverDiv.innerHTML = '';
+//     }
+// });
 
