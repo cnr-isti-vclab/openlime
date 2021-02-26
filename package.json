@@ -1,6 +1,6 @@
 {
   "name": "openlime",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Layered Image Explorer",
   "author": "",
   "license": "GPL-3.0",
@@ -20,16 +20,13 @@
   },
   "keywords": [],
   "devDependencies": {
-    "hammer-touchemulator": "0.0.2",
     "html-webpack-plugin": "^4.5.0",
     "rollup-plugin-terser": "^7.0.2",
     "webpack": "^4.44.2",
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0"
   },
-  "dependencies": {
-    "hammerjs": "^2.0.8"
-  },
+  "dependencies": {},
   "files": [
     "build/openlime.js",
     "LICENSE",
