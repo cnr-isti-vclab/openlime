@@ -54,8 +54,8 @@ class PointerManager {
         eventTypes = PointerManager.splitStr(eventTypes);
 
         if (typeof (obj) == 'function') {
-            let tmp = { priority: -1000 };
-            for (let e of eventTypes) tmp[e] = obj;
+            obj = Object.fromEntries(eventTypes.map(e => [e,  obj]));
+            obj.priority = -1000;
         }
 
         eventTypes.forEach(eventType => {
@@ -69,6 +69,7 @@ class PointerManager {
                 p.on(eventType, obj);
             }
         });
+        return obj;
     }
 
 
@@ -89,16 +90,15 @@ class PointerManager {
 
     onEvent(handler) {
         const cb_properties = ['fingerHover', 'fingerSingleTap', 'fingerDoubleTap', 'fingerHold', 'mouseWheel'];
-        const cb_events = [];
         if (!handler.hasOwnProperty('priority'))
             throw new Error("Event handler has not priority property");
 
         if (!cb_properties.some((e) => typeof (handler[e]) == 'function'))
             throw new Error("Event handler properties are wrong or missing");
 
-        for (let property in handler)
-            if (cb_properties.indexOf(property) >= 0) {
-                this.on(property, handler);
+        for (let e of cb_properties)
+            if (typeof (handler[e]) == 'function') {
+                this.on(e, handler);
             }
     }
 
@@ -107,7 +107,7 @@ class PointerManager {
         if (!handler.hasOwnProperty('priority'))
             throw new Error("Event handler has not priority property");
 
-        if (cb_properties.every((e) => typeof (handler[e]) == 'function'))
+        if (!cb_properties.every((e) => typeof (handler[e]) == 'function'))
             throw new Error("Pan handler is missing one of this functions: panStart, panMove or panEnd");
 
         this.on('fingerMovingStart', (e) => {
@@ -115,7 +115,7 @@ class PointerManager {
                 this.on('fingerMoving', (e) => {
                     handler.panMove(e);
                 }, e.idx);
-                this.on('fingerMovingEnd', e.idx, (e) => {
+                this.on('fingerMovingEnd', (e) => {
                     handler.panEnd(e);
                 }, e.idx);
             }
@@ -125,27 +125,6 @@ class PointerManager {
 
     ///////////////////////////////////////////////////////////
     /// Implementation stuff
-
-    createTimestampedEvent(e) {
-        const result = {
-            pointerId: e.pointerId,
-            clientX: e.clientX,
-            clientY: e.clientY,
-            width: e.width,
-            height: e.height,
-            pressure: e.pressure,
-            tangentialPressure: e.tangentialPressure,
-            tiltX: e.tiltX,
-            tiltY: e.tiltY,
-            twist: e.twist,
-            pointerType: e.pointerType,
-            isPrimary: e.isPrimary,
-            type: e.type,
-            buttons: e.buttons,
-            timestamp: performance.now()
-        };
-        return result;
-    }
 
     // register broadcast handlers
     broadcastOn(eventType, obj) {
@@ -178,10 +157,10 @@ class PointerManager {
 
     // emit broadcast events
     broadcast(e) {
-        if (!this.eventObservers.has(e.type)) return;
-        this.eventObservers.get(e.type)
+        if (!this.eventObservers.has(e.fingerType)) return;
+        this.eventObservers.get(e.fingerType)
             .sort((a, b) => a.priority - b.priority)
-            .every(obj => !obj[e.type](e));  // the first obj returning true breaks the every loop
+            .every(obj => !obj[e.fingerType](e));  // the first obj returning true breaks the every loop
     }
 
     addCurrPointer(cp) {
@@ -212,19 +191,20 @@ class PointerManager {
         e.preventDefault();
         if (e.type == 'pointerdown') this.target.setPointerCapture(e.pointerId);
         if (e.type == 'pointercancel') console.log(e);
-        const te = this.createTimestampedEvent(e);
+        e.timestamp = performance.now();
+
         let handled = false;
         for (let i = 0; i < this.currentPointers.length && !handled; i++) {
             const cp = this.currentPointers[i];
             if (cp) {
-                handled = cp.handleEvent(te);
+                handled = cp.handleEvent(e);
                 if (cp.isDone())
                     this.removeCurrPointer(i);
             }
         }
         if (!handled) {
-            const cp = new SinglePointerHandler(this, te.pointerId, { ppmm: this.ppmm });
-            handled = cp.handleEvent(te);
+            const cp = new SinglePointerHandler(this, e.pointerId, { ppmm: this.ppmm });
+            handled = cp.handleEvent(e);
         }
     }
 
@@ -333,8 +313,8 @@ class SinglePointerHandler {
     // emit+broadcast
     emit(e) {
         let captured = false;
-        if (this.eventObservers.has(e.type)) {
-            captured |= this.eventObservers.get(e.type)[e.type](e);
+        if (this.eventObservers.has(e.fingerType)) {
+            captured |= this.eventObservers.get(e.fingerType)[e.fingerType](e);
         }
         if (!captured)
             this.parent.broadcast(e);
@@ -342,14 +322,13 @@ class SinglePointerHandler {
 
     // output Event, speed is computed only on pointermove
     createOutputEvent(e, type) {
-        const result = Object.assign({}, e);
-        result.idx = this.idx;
+        const result = e;
+        result.fingerType = type;
         result.speedX = 0;
         result.speedY = 0;
-        result.type = type;
-        result.timestamp = performance.now();
+        result.timestamp = performance.now();  //TODO: timestamp is already in the event, but which one we want on singleTap (delayed a bit)?
         const prevP = this.prevPointerEvent();
-        if (prevP && (e.type = 'pointermove')) {
+        if (prevP && (e.type == 'pointermove')) {
             const dt = result.timestamp - prevP.timestamp;
             if (dt > 0) {
                 result.speedX = (result.clientX - prevP.clientX) / dt * 1000.0;  // px/s
@@ -375,6 +354,8 @@ class SinglePointerHandler {
         if (e.type == "wheel") {
             console.log("WHEEL");
             console.log(e);
+            this.emit(this.createOutputEvent(e, 'mouseWheel'));
+            return;
         }
 
         switch (this.status) {

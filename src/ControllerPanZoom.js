@@ -5,6 +5,7 @@ class ControllerPanZoom extends Controller {
 
 	constructor(camera, options) {
 		super(options);
+
 		this.camera = camera;
 		this.zoomAmount = 1.2;
 		this.panning = false;
@@ -14,21 +15,22 @@ class ControllerPanZoom extends Controller {
 		this.prevScale = 1.0;
 	}
 
-	panStart(e, x, y) {
+	panStart(e) {
 		this.panning = true;
-		this.startMouse = { x: x, y: y };
+		this.startMouse = { x: e.offsetX, y: e.offsetY };
 
 		let now = performance.now();
 		this.startPosition = this.camera.getCurrentTransform(now);
 		this.camera.target = this.startPosition.copy(); //stop animation.
+		return true;
 	}
 
-	panMove(e, x, y) {
+	panMove(e) {
 		if (!this.panning)
 			return;
 
-		let dx = x - this.startMouse.x;
-		let dy = y - this.startMouse.y;
+		let dx = e.offsetX - this.startMouse.x;
+		let dy = e.offsetY - this.startMouse.y;
 
 		let z = this.startPosition.z;
 		let ex = this.startPosition.x + dx / z;
@@ -38,7 +40,7 @@ class ControllerPanZoom extends Controller {
 		this.camera.setPosition(this.delay, ex, ey, z, a);
 	}
 
-	panEnd(e, x, y) {
+	panEnd(e) {
 		this.panning = false;
 	}
 
@@ -60,13 +62,15 @@ class ControllerPanZoom extends Controller {
 		this.zooming = false;
 	}
 
-	wheelDelta(e, x, y, delta) {
-		const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
+	mouseWheel(e) {
+		let delta = e.deltaY > 0 ? 1 : -1;
+		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
 		const dz = Math.pow(this.zoomAmount, delta);
+		console.log(e, e.deltaY, dz);
 		this.camera.deltaZoom(this.delay, dz, pos.x, pos.y);
 	}
 
-	doubleTap(e, x, y) {
+	fingerDoubleTap(e, x, y) {
 		const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
 		const dz = this.zoomAmount;
 		this.camera.deltaZoom(this.delay, dz, pos.x, pos.y);

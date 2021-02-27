@@ -36,8 +36,7 @@ class UIBasic {
 			viewport: [0, 0, 0, 0] //in scene coordinates
 		});
 
-		if(options)
-			Object.assign(this, options);
+		Object.assign(this, options);
 
 		this.init();
 	}

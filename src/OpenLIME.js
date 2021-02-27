@@ -59,10 +59,39 @@ class OpenLIME {
 
 		this.canvas = new Canvas(this.gl, this.overlayElement, this.camera, this.canvas);
 		this.canvas.addEvent('update', () => { this.redraw(); });
-
 		this.camera.addEvent('update', () => { this.redraw(); });
 
-		this.controllers.push(new ControllerPanZoom(this.camera));
+		this.pointerManager = new PointerManager(this.canvasElement);
+		let panzoom = new ControllerPanZoom(this.camera);
+		this.controllers.push(panzoom);
+
+		this.pointerManager.onPan(panzoom);
+		this.pointerManager.onEvent(panzoom);
+
+		/*pointerManager.on('fingerHover', (e) => {
+			const pos = this.eventToPosition(e);
+			this.processEvent('hover', e, pos.x, pos.y);
+		 });
+
+		 
+		 pointerManager.on('fingerSingleTap', (e) => {
+			const pos = this.eventToPosition(e);
+			this.processEvent('singleTap', e, pos.x, pos.y);
+		 });
+
+		 element.addEventListener('wheel', (e) => {
+			//TODO support for delta X?
+			const pos = this.eventToPosition(e);
+			let delta = e.deltaY > 0 ? 1 : -1;
+			this.processEvent('wheelDelta', e, pos.x, pos.y, delta);
+			e.preventDefault();
+		}); */
+
+		this.canvasElement.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
+		
 
 		var resizeobserver = new ResizeObserver( entries => {
 			for (let entry of entries) {
@@ -177,8 +206,8 @@ class OpenLIME {
 
 		let element = this.canvasElement;
 
-		const pointerManager = new PointerManager(element, {inertial: false});
-		pointerManager.register('pan', 
+/*
+		pointerManager.onPan(this.controllers 
 			(e) => { 
 				const pos = this.eventToPosition(e);
 				this.processEvent('panStart', e, pos.x, pos.y); 
@@ -193,31 +222,9 @@ class OpenLIME {
 				this.processEvent('panEnd', e, pos.x, pos.y); 
 			},
 			false); //no inertia
-				
+		*/
 
-		pointerManager.on('fingerHover', (e) => {
-			const pos = this.eventToPosition(e);
-			this.processEvent('hover', e, pos.x, pos.y);
-		 });
-
-		 
-		 pointerManager.on('fingerSingleTap', (e) => {
-			const pos = this.eventToPosition(e);
-			this.processEvent('singleTap', e, pos.x, pos.y);
-		 });
-
-		 element.addEventListener('wheel', (e) => {
-			//TODO support for delta X?
-			const pos = this.eventToPosition(e);
-			let delta = e.deltaY > 0 ? 1 : -1;
-			this.processEvent('wheelDelta', e, pos.x, pos.y, delta);
-			e.preventDefault();
-		});
-
-		element.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            return false;
-        });
+		
 
     }
 }

@@ -10,7 +10,7 @@ class Controller2D extends Controller {
 		super(options);
 
 		this.callback = callback;
-		if(!options || !options.box)
+		if(!this.box)
 			this.box = [-0.99, -0.99, 0.99, 0.99];
 
 		this.panning = false;
