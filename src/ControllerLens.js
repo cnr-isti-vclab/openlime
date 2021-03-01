@@ -16,7 +16,7 @@ class ControllerLens extends Controller {
         if (!this.wheelEvent) {
             throw "ControllerLens wheelEvent callback option required";
         }
-        if(!options.box)
+        if(!this.box)
             this.box = [-0.99, -0.99, 0.99, 0.99];
 
 		this.panning = false;

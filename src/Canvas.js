@@ -7,21 +7,23 @@ import { Camera } from './Camera.js'
  */
 
 class Canvas {
-	constructor(gl, overlay, camera, options) {
+	constructor(canvas, overlay, camera, options) {
 		Object.assign(this, { 
+			canvasElement: null,
 			preserveDrawingBuffer: false, 
-			gl: gl,
+			gl: null,
 			overlayElement: overlay,
 			camera: camera,
 			layers: {},
 			signals: {'update':[]}
 		});
+		Object.assign(this, options);
 
-		if(options) {
-			Object.assign(this, options);
-			for(let id in this.layers)
-				this.addLayer(id, new Layer(id, this.layers[id]));
-		}
+		this.init(canvas);
+			
+		for(let id in this.layers)
+			this.addLayer(id, new Layer(id, this.layers[id]));
+
 	}
 
 	addEvent(event, callback) {
@@ -31,6 +33,64 @@ class Canvas {
 	emit(event) {
 		for(let r of this.signals[event])
 			r(this);
+	}
+
+	//TODO move gl context to canvas!
+	init(canvas) {
+		if(!canvas)
+			throw "Missing element parameter"
+
+		if(typeof(canvas) == 'string') {
+			canvas = document.querySelector(canvas);
+			if(!canvas)
+				throw "Could not find dom element.";
+		}
+
+		if(!canvas.tagName)
+			throw "Element is not a DOM element"
+
+		if(canvas.tagName != "CANVAS")
+			throw "Element is not a canvas element";
+
+		this.canvasElement = canvas;
+
+		/* test context loss */
+		/* canvas = WebGLDebugUtils.makeLostContextSimulatingCanvas(canvas);
+		canvas.loseContextInNCalls(1000); */
+
+
+		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
+		this.gl = this.gl || 
+			canvas.getContext("webgl2", glopt) || 
+			canvas.getContext("webgl", glopt) || 
+			canvas.getContext("experimental-webgl", glopt) ;
+
+		if (!this.gl)
+			throw "Could not create a WebGL context";
+
+		canvas.addEventListener("webglcontextlost", (event) => { event.preventDefault(); }, false);
+		canvas.addEventListener("webglcontextrestored", ()  => { this.restoreWebGL(); }, false);
+
+		/* DEBUG OpenGL calls */
+		/*function logGLCall(functionName, args) {   
+			console.log("gl." + functionName + "(" + 
+			WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");   
+		} 
+		this.gl = WebGLDebugUtils.makeDebugContext(this.gl, undefined, logGLCall);  */
+
+
+	}
+
+
+	restoreWebGL() {
+		this.init(canvas);
+		for(let layer of Object.values(this.layers)) {
+			layer.gl = this.gl;
+			layer.clear();
+			if(layer.shader)
+				layer.shader.restoreWebGL(this.gl);
+		}
+		this.emit('update');
 	}
 
 	addLayer(id, layer) {

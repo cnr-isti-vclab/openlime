@@ -178,7 +178,15 @@ class Layer {
 			current.value[i] = (st*source.value[i] + tt*target.value[i]);
 		return false;
 	}
-
+	
+	clear() {
+		this.ibuffer = this.vbuffer = null;
+		this.tiles = [];
+		this.setupTiles();
+		this.queue = [];
+		this.previouslyNeeded = false;
+		this.prefetch();
+	}
 /**
  *  render the 
  */

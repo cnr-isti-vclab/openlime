@@ -50,14 +50,12 @@ class OpenLIME {
 			div.prepend(this.canvasElement);
 		}
 
-		this.initCanvasElement(this.canvasElement);
-
 		this.overlayElement = document.createElement('div');
 		this.overlayElement.classList.add('openlime-overlay');
 		this.containerElement.appendChild(this.overlayElement);
 
 
-		this.canvas = new Canvas(this.gl, this.overlayElement, this.camera, this.canvas);
+		this.canvas = new Canvas(this.canvasElement, this.overlayElement, this.camera, this.canvas);
 		this.canvas.addEvent('update', () => { this.redraw(); });
 		this.camera.addEvent('update', () => { this.redraw(); });
 
@@ -93,6 +91,8 @@ class OpenLIME {
         });
 		
 
+
+
 		var resizeobserver = new ResizeObserver( entries => {
 			for (let entry of entries) {
 				this.resize(entry.contentRect.width, entry.contentRect.height);
@@ -107,32 +107,8 @@ class OpenLIME {
 	}
 
 
-	initCanvasElement(canvas) {
-		if(!canvas)
-			throw "Missing element parameter"
 
-		if(typeof(canvas) == 'string') {
-			canvas = document.querySelector(canvas);
-			if(!canvas)
-				throw "Could not find dom element.";
-		}
-
-		if(!canvas.tagName)
-			throw "Element is not a DOM element"
-
-		if(canvas.tagName != "CANVAS")
-			throw "Element is not a canvas element";
-
-
-		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
-		this.gl = this.gl || 
-			canvas.getContext("webgl2", glopt) || 
-			canvas.getContext("webgl", glopt) || 
-			canvas.getContext("experimental-webgl", glopt) ;
-
-		if (!this.gl)
-			throw "Could not create a WebGL context";
-	}
+	
 
 	/* Convenience function, it actually passes to Canvas
 	*/

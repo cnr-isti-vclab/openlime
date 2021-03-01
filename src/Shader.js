@@ -34,13 +34,18 @@ class Shader {
 			r(this);
 	}
 
+	restoreWebGL(gl) {
+		this.createProgram(gl);
+		for(let uniform of Object.values(this.uniforms))
+			uniform.needsUpdate = true;
+	}
+
 	setUniform(name, value) {
 		let u = this.uniforms[name];
 		u.value = value;
 		u.needsUpdate = true;
 		this.emit('update');
 	}
-
 
 	createProgram(gl) {
 
