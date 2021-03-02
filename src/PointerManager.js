@@ -24,9 +24,9 @@ class PointerManager {
 
         this.target.style.touchAction = "none";
         this.target.addEventListener('pointerdown', (e) => this.handleEvent(e), false);
-        document.addEventListener('pointermove', (e) => this.handleEvent(e), false);
-        document.addEventListener('pointerup', (e) => this.handleEvent(e), false);
-        document.addEventListener('pointercancel', (e) => this.handleEvent(e), false);
+        this.target.addEventListener('pointermove', (e) => this.handleEvent(e), false);
+        this.target.addEventListener('pointerup', (e) => this.handleEvent(e), false);
+        this.target.addEventListener('pointercancel', (e) => this.handleEvent(e), false);
         this.target.addEventListener('wheel', (e) => this.handleEvent(e), false);
     }
 
@@ -54,7 +54,7 @@ class PointerManager {
         eventTypes = PointerManager.splitStr(eventTypes);
 
         if (typeof (obj) == 'function') {
-            obj = Object.fromEntries(eventTypes.map(e => [e,  obj]));
+            obj = Object.fromEntries(eventTypes.map(e => [e, obj]));
             obj.priority = -1000;
         }
 
@@ -71,7 +71,6 @@ class PointerManager {
         });
         return obj;
     }
-
 
     // unregister pointer handlers
     off(eventTypes, callback, idx = PointerManager.ANYPOINTER) {
@@ -111,18 +110,77 @@ class PointerManager {
             throw new Error("Pan handler is missing one of this functions: panStart, panMove or panEnd");
 
         this.on('fingerMovingStart', (e) => {
-            if (handler.panStart(e)) {
-                this.on('fingerMoving', (e) => {
-                    handler.panMove(e);
-                }, e.idx);
-                this.on('fingerMovingEnd', (e) => {
-                    handler.panEnd(e);
-                }, e.idx);
-            }
+            handler.panStart(e);
+            if (!e.defaultPrevented) return;
+             this.on('fingerMoving', (e1) => {
+                handler.panMove(e1);
+            }, e.idx);
+            this.on('fingerMovingEnd', (e2) => {
+                handler.panEnd(e2);
+            }, e.idx);
         });
     }
 
+    onPinch(handler) {
+        const cb_properties = ['pinchStart', 'pinchMove', 'pinchEnd'];
+        if (!handler.hasOwnProperty('priority'))
+            throw new Error("Event handler has not priority property");
 
+        if (!cb_properties.every((e) => typeof (handler[e]) == 'function'))
+            throw new Error("Pinch handler is missing one of this functions: pinchStart, pinchMove or pinchEnd");
+
+        this.on('fingerDown', (e1) => {
+            const filtered = this.currentPointers.filter(cp => cp && cp.idx != e1.idx && cp.status == cp.stateEnum.MOVING);
+            if (filtered.length == 0) return;
+            const fingerDownEvents = [];
+            for (let cp of filtered) {
+                const evts = cp.eventHistory.toArray();
+                let down = null;
+                for (let e of evts)
+                    if (e.fingerType == 'fingerDown')
+                        down = e;
+                if (down)
+                    fingerDownEvents.push(down);
+            }
+            fingerDownEvents.sort((a, b) => a.timeStamp - b.timeStamp);
+            for (let e2 of fingerDownEvents) {
+                if (e1.timeStamp - e2.timeStamp > 200) break;
+                handler.pinchStart(e1, e2);
+                if (!e1.defaultPrevented) break;
+                const cp1 = this.currentPointers[e1.idx];
+                const cp2 = this.currentPointers[e2.idx];
+                clearTimeout(cp1.timeout);
+                clearTimeout(cp2.timeout);
+                // cp1.status = cp1.stateEnum.MOVING;
+                // cp2.status = cp2.stateEnum.MOVING;
+                this.on('fingerMovingStart', (e) => {
+                   e.preventDefault();
+                }, e1.idx);
+                this.on('fingerMovingStart', (e) => {
+                    e.preventDefault();
+                }, e2.idx);
+                this.on('fingerMoving', (e) => {
+                    if (e2)
+                        handler.pinchMove(e1 = e, e2);
+                }, e1.idx);
+                this.on('fingerMoving', (e) => {
+                    if (e1)
+                        handler.pinchMove(e1, e2 = e);
+                }, e2.idx);
+                this.on('fingerMovingEnd', (e) => {
+                    if (e2)
+                        handler.pinchEnd(e, e2);
+                    e1 = null;
+                }, e1.idx);
+                this.on('fingerMovingEnd', (e) => {
+                    if (e1)
+                        handler.pinchEnd(e1, e);
+                    e2 = null;
+                }, e2.idx);
+                break;
+            }
+        });
+    }
     ///////////////////////////////////////////////////////////
     /// Implementation stuff
 
@@ -160,7 +218,10 @@ class PointerManager {
         if (!this.eventObservers.has(e.fingerType)) return;
         this.eventObservers.get(e.fingerType)
             .sort((a, b) => a.priority - b.priority)
-            .every(obj => !obj[e.fingerType](e));  // the first obj returning true breaks the every loop
+            .every(obj => {
+                obj[e.fingerType](e);
+                return !e.defaultPrevented;
+            });  // the first obj returning a defaultPrevented event breaks the every loop
     }
 
     addCurrPointer(cp) {
@@ -188,10 +249,8 @@ class PointerManager {
     }
 
     handleEvent(e) {
-        e.preventDefault();
         if (e.type == 'pointerdown') this.target.setPointerCapture(e.pointerId);
         if (e.type == 'pointercancel') console.log(e);
-        e.timestamp = performance.now();
 
         let handled = false;
         for (let i = 0; i < this.currentPointers.length && !handled; i++) {
@@ -206,10 +265,10 @@ class PointerManager {
             const cp = new SinglePointerHandler(this, e.pointerId, { ppmm: this.ppmm });
             handled = cp.handleEvent(e);
         }
+        e.preventDefault();
     }
 
 }
-
 
 
 class SinglePointerHandler {
@@ -252,7 +311,7 @@ class SinglePointerHandler {
         this.tapTimeoutThreshold = 300;
         this.upDuration = 400;
         this.oldDownPos = { clientX: 0, clientY: 0 };
-        this.movingThreshold = 5; // 5mm
+        this.movingThreshold = 1; // 1mm
         this.idx = this.parent.addCurrPointer(this);
     }
 
@@ -292,11 +351,11 @@ class SinglePointerHandler {
     }
 
     handlePointerDown(e) {
-        this.startTap = e.timestamp;
+        this.startTap = e.timeStamp;
     }
 
     handlePointerUp(e) {
-        const tapDuration = e.timestamp - this.startTap;
+        const tapDuration = e.timeStamp - this.startTap;
     }
 
     isLikelySamePointer(e) {
@@ -312,12 +371,11 @@ class SinglePointerHandler {
 
     // emit+broadcast
     emit(e) {
-        let captured = false;
         if (this.eventObservers.has(e.fingerType)) {
-            captured |= this.eventObservers.get(e.fingerType)[e.fingerType](e);
+            this.eventObservers.get(e.fingerType)[e.fingerType](e);
+            if (e.defaultPrevented) return;
         }
-        if (!captured)
-            this.parent.broadcast(e);
+        this.parent.broadcast(e);
     }
 
     // output Event, speed is computed only on pointermove
@@ -326,10 +384,10 @@ class SinglePointerHandler {
         result.fingerType = type;
         result.speedX = 0;
         result.speedY = 0;
-        result.timestamp = performance.now();  //TODO: timestamp is already in the event, but which one we want on singleTap (delayed a bit)?
+        result.idx = this.idx;
         const prevP = this.prevPointerEvent();
         if (prevP && (e.type == 'pointermove')) {
-            const dt = result.timestamp - prevP.timestamp;
+            const dt = result.timeStamp - prevP.timeStamp;
             if (dt > 0) {
                 result.speedX = (result.clientX - prevP.clientX) / dt * 1000.0;  // px/s
                 result.speedY = (result.clientY - prevP.clientY) / dt * 1000.0;  // px/s
@@ -352,8 +410,6 @@ class SinglePointerHandler {
         }
 
         if (e.type == "wheel") {
-            console.log("WHEEL");
-            console.log(e);
             this.emit(this.createOutputEvent(e, 'mouseWheel'));
             return;
         }
@@ -366,9 +422,14 @@ class SinglePointerHandler {
                     this.status = this.stateEnum.HOVER;
                 } else if (e.type == 'pointerdown') {
                     this.status = this.stateEnum.DETECT;
+                    this.emit(this.createOutputEvent(e, 'fingerDown'));
+                    if (e.defaultPrevented) { // An observer captured the fingerDown event
+                        this.status = this.stateEnum.MOVING;
+                        break;
+                    }
                     this.timeout = setTimeout(() => {
-                        this.status = this.stateEnum.IDLE;
                         this.emit(this.createOutputEvent(e, 'fingerHold'));
+                        if(e.defaultPrevented) this.status = this.stateEnum.IDLE;
                     }, this.holdTimeoutThreshold);
                 }
                 break;
@@ -380,8 +441,7 @@ class SinglePointerHandler {
                 } else if (e.type == 'pointermove' && distance > this.movingThreshold) {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.MOVING;
-                    const outEvent = this.createOutputEvent(e, 'fingerMovingStart');
-                    this.emit(outEvent);
+                    this.emit(this.createOutputEvent(e, 'fingerMovingStart'));
                 } else if (e.type == 'pointerup') {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.TAPS_DETECT;
@@ -396,13 +456,12 @@ class SinglePointerHandler {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.DOUBLE_TAP_DETECT;
                     this.timeout = setTimeout(() => {
-                        this.status = this.stateEnum.IDLE;
                         this.emit(this.createOutputEvent(e, 'fingerHold'));
+                        if(e.defaultPrevented) this.status = this.stateEnum.IDLE;
                     }, this.tapTimeoutThreshold);
                 } else if (e.type == 'pointermove' && distance > this.movingThreshold) {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.IDLE;
-                    this.emit(this.createOutputEvent(e, 'fingerSingleTap'));
                     this.emit(this.createOutputEvent(e, 'fingerHover'));
                 }
                 break;
@@ -422,46 +481,20 @@ class SinglePointerHandler {
             case this.stateEnum.MOVING:
                 if (e.type == 'pointermove') {
                     // Remain MOVING
-                    const outEvent = this.createOutputEvent(e, 'fingerMoving');
-                    this.emit(outEvent);
+                    this.emit(this.createOutputEvent(e, 'fingerMoving'));
                 } else if (e.type == 'pointerup' || e.type == 'pointercancel') {
                     this.status = this.stateEnum.IDLE;
                     this.emit(this.createOutputEvent(e, 'fingerMovingEnd'));
                 }
                 break;
             default:
-                // console.log("ERROR " + this.status);
-                // console.log(e);
+                console.log("ERROR " + this.status);
+                console.log(e);
                 break;
         }
 
         this.addToHistory(e);
     }
-
-    // updateInertia(t) {
-    //     if (!this.inertialEvent)
-    //         return true;
-    //     let event = Object.assign({}, this.inertialEvent);
-    //     let dt = (t - event.timestamp) / 1000;
-    //     let K = 12;
-    //     event.speedX = Math.exp(-dt * K) * this.inertialEvent.speedX;
-    //     event.speedY = Math.exp(-dt * K) * this.inertialEvent.speedY;
-    //     event.clientX = this.inertialEvent.clientX + this.inertialEvent.speedX / K * (1 - Math.exp(-dt * K));
-    //     event.clientY = this.inertialEvent.clientY + this.inertialEvent.speedY / K * (1 - Math.exp(-dt * K));
-    //     event.timestamp = t;
-    //     const speed2 = event.speedX ** 2 + event.speedY ** 2;
-    //     if (speed2 < this.inertialEndSpeed ** 2) {
-    //         event.type = 'fingerInertialMovingEnd';
-    //         this.status = this.stateEnum.IDLE;
-    //         this.emit(event);
-    //         this.inertialEvent = null;
-    //         return true;
-    //     } else {
-    //         event.type = 'fingerInertialMoving';
-    //         this.emit(event);
-    //         return false;
-    //     }
-    // }
 
     handleEvent(e) {
         let result = false;
@@ -574,7 +607,7 @@ class CircularBuffer {
             return this.buffer.slice(this.first + start, this.capacity).concat(this.buffer.slice(0, this.first + end + 1 - this.capacity));
     }
 
-    toarray() {
+    toArray() {
         if (this.size == 0) return [];
         return this.get(0, this.size - 1);
     }
