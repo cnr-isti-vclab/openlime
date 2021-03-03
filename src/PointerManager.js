@@ -12,7 +12,8 @@ class PointerManager {
         this.target = target;
 
         Object.assign(this, {
-            diagonal: 27 // Standard monitor 27"
+            diagonal: 27,                // Standard monitor 27"
+            pinchMaxInterval: 200        // in ms, fingerDown event max distance in time to trigger a pinch.
         });
 
         if (options)
@@ -43,7 +44,7 @@ class PointerManager {
 
     static getPPMM(diagonal) {
         // sqrt(w^2 + h^2) / diagonal / 1in
-        return Math.round(Math.sqrt(screen.width * screen.width + screen.height * screen.height) / diagonal / 25.4);
+        return Math.round(Math.sqrt(screen.width **2  + screen.height **2) / diagonal / 25.4);
     }
 
     ///////////////////////////////////////////////////////////
@@ -130,53 +131,48 @@ class PointerManager {
             throw new Error("Pinch handler is missing one of this functions: pinchStart, pinchMove or pinchEnd");
 
         this.on('fingerDown', (e1) => {
-            const filtered = this.currentPointers.filter(cp => cp && cp.idx != e1.idx && cp.status == cp.stateEnum.MOVING);
+            //find other pointers not in moving status
+            const filtered = this.currentPointers.filter(cp => cp && cp.idx != e1.idx && cp.status == cp.stateEnum.DETECT);
             if (filtered.length == 0) return;
+
+            //for each pointer search for the last fingerDown event.
             const fingerDownEvents = [];
             for (let cp of filtered) {
-                const evts = cp.eventHistory.toArray();
                 let down = null;
-                for (let e of evts)
+                for (let e of cp.eventHistory.toArray())
                     if (e.fingerType == 'fingerDown')
                         down = e;
                 if (down)
                     fingerDownEvents.push(down);
             }
-            fingerDownEvents.sort((a, b) => a.timeStamp - b.timeStamp);
+            //we start from the closest one
+            //TODO maybe we should sort by distance instead.
+            fingerDownEvents.sort((a, b) => b.timeStamp - a.timeStamp);
             for (let e2 of fingerDownEvents) {
-                if (e1.timeStamp - e2.timeStamp > 200) break;
+                if (e1.timeStamp - e2.timeStamp > 200) break; 
+
                 handler.pinchStart(e1, e2);
                 if (!e1.defaultPrevented) break;
-                const cp1 = this.currentPointers[e1.idx];
-                const cp2 = this.currentPointers[e2.idx];
-                clearTimeout(cp1.timeout);
-                clearTimeout(cp2.timeout);
-                // cp1.status = cp1.stateEnum.MOVING;
-                // cp2.status = cp2.stateEnum.MOVING;
-                this.on('fingerMovingStart', (e) => {
-                   e.preventDefault();
-                }, e1.idx);
-                this.on('fingerMovingStart', (e) => {
-                    e.preventDefault();
-                }, e2.idx);
-                this.on('fingerMoving', (e) => {
-                    if (e2)
-                        handler.pinchMove(e1 = e, e2);
-                }, e1.idx);
-                this.on('fingerMoving', (e) => {
-                    if (e1)
-                        handler.pinchMove(e1, e2 = e);
-                }, e2.idx);
+
+                clearTimeout(this.currentPointers[e1.idx].timeout);
+                clearTimeout(this.currentPointers[e2.idx].timeout);
+
+                this.on('fingerMovingStart', (e) => e.preventDefault(), e1.idx); //we need to capture this event (pan conflict)
+                this.on('fingerMovingStart', (e) => e.preventDefault(), e2.idx);
+                this.on('fingerMoving',      (e) => e2 && handler.pinchMove(e1 = e, e2), e1.idx); //we need to assign e1 and e2, to keep last position.
+                this.on('fingerMoving',      (e) => e1 && handler.pinchMove(e1, e2 = e), e2.idx);
+
                 this.on('fingerMovingEnd', (e) => {
                     if (e2)
                         handler.pinchEnd(e, e2);
-                    e1 = null;
+                    e1 = e2 = null;
                 }, e1.idx);
                 this.on('fingerMovingEnd', (e) => {
                     if (e1)
                         handler.pinchEnd(e1, e);
-                    e2 = null;
+                    e1 = e2 = null;
                 }, e2.idx);
+
                 break;
             }
         });

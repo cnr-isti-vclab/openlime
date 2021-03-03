@@ -64,7 +64,14 @@ class OpenLIME {
 		this.controllers.push(panzoom);
 
 		this.pointerManager.onPan(panzoom);
-		this.pointerManager.onEvent(panzoom);
+		this.pointerManager.onPinch(panzoom);
+		this.pointerManager.on('fingerDoubleTap', panzoom);
+
+		this.containerElement.addEventListener('wheel', (e) => {
+			this.processEvent('mouseWheel', e);
+			e.preventDefault();
+		});
+
 
 		/*pointerManager.on('fingerHover', (e) => {
 			const pos = this.eventToPosition(e);
@@ -75,15 +82,8 @@ class OpenLIME {
 		 pointerManager.on('fingerSingleTap', (e) => {
 			const pos = this.eventToPosition(e);
 			this.processEvent('singleTap', e, pos.x, pos.y);
-		 });
+		 }); */
 
-		 element.addEventListener('wheel', (e) => {
-			//TODO support for delta X?
-			const pos = this.eventToPosition(e);
-			let delta = e.deltaY > 0 ? 1 : -1;
-			this.processEvent('wheelDelta', e, pos.x, pos.y, delta);
-			e.preventDefault();
-		}); */
 
 		this.canvasElement.addEventListener('contextmenu', (e) => {
             e.preventDefault();
@@ -102,8 +102,6 @@ class OpenLIME {
 		resizeobserver.observe(this.canvasElement);
 
 		this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
-
-		this.initEvents();
 	}
 
 
@@ -162,7 +160,9 @@ class OpenLIME {
 		ordered.push(this);
 		for(let layer of ordered) {
 			for(let controller of layer.controllers) {
-				if(controller.active && controller[event] && controller[event](e, x, y, scale))
+				if(controller.active && controller[event])
+					controller[event](e);
+				if(e.defaultPrevented)
 					return;
 			}
 		}
@@ -176,33 +176,6 @@ class OpenLIME {
 		e.rect = rect;
 		return { x: x, y: y }
 	}
-
-
-	initEvents() {
-
-		let element = this.canvasElement;
-
-/*
-		pointerManager.onPan(this.controllers 
-			(e) => { 
-				const pos = this.eventToPosition(e);
-				this.processEvent('panStart', e, pos.x, pos.y); 
-				return true;
-			},
-			(e) => {
-				const pos = this.eventToPosition(e);
-				this.processEvent('panMove', e, pos.x, pos.y); 
-			},
-			(e) => {
-				const pos = this.eventToPosition(e);
-				this.processEvent('panEnd', e, pos.x, pos.y); 
-			},
-			false); //no inertia
-		*/
-
-		
-
-    }
 }
 
 export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic }

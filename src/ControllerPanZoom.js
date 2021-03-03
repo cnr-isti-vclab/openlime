@@ -17,11 +17,13 @@ class ControllerPanZoom extends Controller {
 
 	panStart(e) {
 		this.panning = true;
+
 		this.startMouse = { x: e.offsetX, y: e.offsetY };
 
 		let now = performance.now();
 		this.startPosition = this.camera.getCurrentTransform(now);
 		this.camera.target = this.startPosition.copy(); //stop animation.
+		e.preventDefault();
 		return true;
 	}
 
@@ -44,16 +46,23 @@ class ControllerPanZoom extends Controller {
 		this.panning = false;
 	}
 
-	pinchStart(e, x, y, scale) {
-		this.zooming = true;
-		this.prevScale = scale;
+	distance(e1, e2) {
+		return Math.sqrt(Math.pow(e1.x - e2.x, 2) + Math.pow(e1.y - e2.y, 2));
 	}
 
-	pinchMove(e, x, y, scale) {
+	pinchStart(e1, e2) {
+		this.zooming = true;
+		this.prevScale = this.distance(e1, e2);
+		e1.preventDefault();
+		//e2.preventDefault();
+	}
+
+	pinchMove(e1, e2) {
 		if (!this.zooming)
 			return;
-		const pos = this.camera.mapToScene(x, y, this.camera.getCurrentTransform(performance.now()));
-		const absoluteZoom = camera.target.z * this.prevScale/scale;
+		const scale = this.distance(e1, e2);
+		const pos = this.camera.mapToScene((e1.x + e2.x)/2, (e1.y + e2.y)/2, this.camera.getCurrentTransform(performance.now()));
+		const absoluteZoom = this.camera.target.z * scale/this.prevScale;
 		this.camera.zoom(this.delay, absoluteZoom, pos.x, pos.y);
 		this.prevScale = scale;
 	}
@@ -68,6 +77,7 @@ class ControllerPanZoom extends Controller {
 		const dz = Math.pow(this.zoomAmount, delta);
 		console.log(e, e.deltaY, dz);
 		this.camera.deltaZoom(this.delay, dz, pos.x, pos.y);
+		e.preventDefault();
 	}
 
 	fingerDoubleTap(e, x, y) {
