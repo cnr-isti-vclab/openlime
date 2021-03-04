@@ -22,7 +22,7 @@ import { PointerManager } from './PointerManager.js'
  * @param {string} options is a url to a JSON describing the viewer content
  * @param {object} options is a JSON describing the viewer content
  *  * **animate**: default *true*, calls requestAnimation() and manages refresh.
- *  * test:
+ *  * **background**: css style for background (overwrites css if present)
  */
 
 class OpenLIME {
@@ -30,7 +30,7 @@ class OpenLIME {
 	constructor(div, options) {
 
 		Object.assign(this, { 
-			background: [0, 0, 0, 1],
+			background: null,
 			canvas: {},
 			controllers: [],
 			camera: new Camera()
@@ -42,6 +42,10 @@ class OpenLIME {
 
 		if(!div)
 			throw "Missing element parameter";
+
+		Object.assign(this, options);
+		if(this.background)
+			div.style.background = this.background;
 
 		this.containerElement = div;
 		this.canvasElement = div.querySelector('canvas');
@@ -77,9 +81,6 @@ class OpenLIME {
 		this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
 	}
 
-
-
-	
 
 	/* Convenience function, it actually passes to Canvas
 	*/

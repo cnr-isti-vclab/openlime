@@ -53,8 +53,13 @@ class AnnotationLayer extends Layer {
 
 	boundingBox() {
 		return [-this.viewBox[2]/2, -this.viewBox[3]/2, this.viewBox[2]/2, this.viewBox[3]/2];
-		//return  this.transform.transformBox(box);
-		
+	}
+
+	setVisible(visible) {
+		if(this.svgElement) {
+			this.svgElement.style.display = visible? 'block' : 'none';
+		}
+		super.setVisible(visible);
 	}
 
 	draw(transform, viewport) {

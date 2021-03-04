@@ -11,7 +11,7 @@ import { LensLayer } from './LensLayer.js'
 import { Lens } from './Lens.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
 
-let lime = new OpenLIME('#openlime');
+let lime = new OpenLIME('#openlime', { background: 'black' });
 lime.camera.target.a = 30;
 
 //combinerTest();

@@ -107,7 +107,7 @@ class Canvas {
 		let view = this.camera.viewport;
 		gl.viewport(view.x, view.y, view.dx, view.dy);
 
-		var b = [0, 1, 0, 1];
+		var b = [0, 0, 0, 0];
 		gl.clearColor(b[0], b[1], b[2], b[3], b[4]);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 
