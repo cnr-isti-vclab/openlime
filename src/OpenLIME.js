@@ -60,39 +60,12 @@ class OpenLIME {
 		this.camera.addEvent('update', () => { this.redraw(); });
 
 		this.pointerManager = new PointerManager(this.canvasElement);
-		let panzoom = new ControllerPanZoom(this.camera);
-		this.controllers.push(panzoom);
-
-		this.pointerManager.onPan(panzoom);
-		this.pointerManager.onPinch(panzoom);
-		this.pointerManager.on('fingerDoubleTap', panzoom);
-
-		this.containerElement.addEventListener('wheel', (e) => {
-			this.processEvent('mouseWheel', e);
-			e.preventDefault();
-		});
-
-
-		/*pointerManager.on('fingerHover', (e) => {
-			const pos = this.eventToPosition(e);
-			this.processEvent('hover', e, pos.x, pos.y);
-		 });
-
-		 
-		 pointerManager.on('fingerSingleTap', (e) => {
-			const pos = this.eventToPosition(e);
-			this.processEvent('singleTap', e, pos.x, pos.y);
-		 }); */
-
 
 		this.canvasElement.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             return false;
         });
 		
-
-
-
 		var resizeobserver = new ResizeObserver( entries => {
 			for (let entry of entries) {
 				this.resize(entry.contentRect.width, entry.contentRect.height);
@@ -153,8 +126,7 @@ class OpenLIME {
 	}
 
 	processEvent(event, e, x, y, scale) {
-		//if events are captured
-		console.log(event);
+
 		//first check layers from top to bottom
 		let ordered = Object.values(this.canvas.layers).sort( (a, b) => b.zindex - a.zindex);
 		ordered.push(this);
@@ -166,15 +138,6 @@ class OpenLIME {
 					return;
 			}
 		}
-	}
-
-	eventToPosition(e, touch) {
-		let rect = this.containerElement.getBoundingClientRect();
-		//let rect = e.currentTarget.getBoundingClientRect();
-		let x = e.clientX - rect.left;
-		let y = e.clientY - rect.top;
-		e.rect = rect;
-		return { x: x, y: y }
 	}
 }
 

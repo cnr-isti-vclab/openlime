@@ -16,37 +16,38 @@ class Controller2D extends Controller {
 		this.panning = false;
 	}
 
-	update(x, y, rect) {
-		x = Math.max(0, Math.min(1, x/rect.width));
-		y = Math.max(0, Math.min(1, 1 - y/rect.height));
+	update(e) {
+		let rect = e.target.getBoundingClientRect();
+		let x = Math.max(0, Math.min(1, e.offsetX/rect.width));
+		let y = Math.max(0, Math.min(1, 1 - e.offsetY/rect.height));
 		x = this.box[0] + x*(this.box[2] - this.box[0]);
 		y = this.box[1] + y*(this.box[3] - this.box[1]);
 		this.callback(x, y);
 	}
 
-	panStart(e, x, y) {
-		this.update(x, y, e.rect);
+	panStart(e) {
+		if(!this.active)
+			return;
+		this.update(e);
 		this.panning = true;
-		return true;
+		e.preventDefault();
 	}
 
-	panMove(e, x, y) {
+	panMove(e) {
 		if(!this.panning)
 			return false;
-		this.update(x, y, e.rect);
-		return true;
+		this.update(e);
 	}
 
-	panEnd(e, x, y) {
+	panEnd(e) {
 		if(!this.panning)
 			return false;
-		this.panning = false;
-		return true;
+		this.panning = false;		
 	}
 
-	singleTap(e, x, y) {
-		this.update(x, y, e.rect);
-		return true;
+	fingerSingleTap(e) {
+		this.update(e);
+		e.preventDefault();
 	}
 
 }

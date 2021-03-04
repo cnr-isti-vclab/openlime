@@ -19,6 +19,8 @@ class ControllerPanZoom extends Controller {
 	}
 
 	panStart(e) {
+		if(!this.active)
+			return;
 		this.panning = true;
 
 		this.startMouse = { x: e.offsetX, y: e.offsetY };

@@ -100,6 +100,10 @@ class PointerManager {
             if (typeof (handler[e]) == 'function') {
                 this.on(e, handler);
             }
+        if(handler.panStart)
+            this.onPan(handler);
+        if(handler.pinchStart)
+            this.onPinch(handler);
     }
 
     onPan(handler) {
@@ -110,7 +114,7 @@ class PointerManager {
         if (!cb_properties.every((e) => typeof (handler[e]) == 'function'))
             throw new Error("Pan handler is missing one of this functions: panStart, panMove or panEnd");
 
-        this.on('fingerMovingStart', (e) => {
+        handler.fingerMovingStart = (e) => {
             handler.panStart(e);
             if (!e.defaultPrevented) return;
              this.on('fingerMoving', (e1) => {
@@ -119,7 +123,8 @@ class PointerManager {
             this.on('fingerMovingEnd', (e2) => {
                 handler.panEnd(e2);
             }, e.idx);
-        });
+        }
+        this.on('fingerMovingStart', handler);
     }
 
     onPinch(handler) {
@@ -130,7 +135,7 @@ class PointerManager {
         if (!cb_properties.every((e) => typeof (handler[e]) == 'function'))
             throw new Error("Pinch handler is missing one of this functions: pinchStart, pinchMove or pinchEnd");
 
-        this.on('fingerDown', (e1) => {
+        handler.fingerDown = (e1) => {
             //find other pointers not in moving status
             const filtered = this.currentPointers.filter(cp => cp && cp.idx != e1.idx && cp.status == cp.stateEnum.DETECT);
             if (filtered.length == 0) return;
@@ -175,7 +180,8 @@ class PointerManager {
 
                 break;
             }
-        });
+        }
+        this.on('fingerDown', handler);
     }
     ///////////////////////////////////////////////////////////
     /// Implementation stuff
@@ -213,7 +219,7 @@ class PointerManager {
     broadcast(e) {
         if (!this.eventObservers.has(e.fingerType)) return;
         this.eventObservers.get(e.fingerType)
-            .sort((a, b) => a.priority - b.priority)
+            .sort((a, b) => b.priority - a.priority)
             .every(obj => {
                 obj[e.fingerType](e);
                 return !e.defaultPrevented;

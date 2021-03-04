@@ -1,6 +1,7 @@
 import { Canvas } from './Canvas.js'
 import { Layer } from './Layer.js'
 import { Controller2D } from './Controller2D.js'
+import { ControllerPanZoom } from './ControllerPanZoom.js'
 
 /* Basic viewer for a single layer.
  *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
@@ -38,6 +39,20 @@ class UIBasic {
 
 		Object.assign(this, options);
 
+		let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
+
+		//this.lime.pointerManager.onPan(panzoom);
+		//this.lime.pointerManager.onPinch(panzoom);
+		this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+
+		for(let layer of Object.values(this.lime.canvas.layers)) {
+			if(layer.controls.light) {
+				let controller = new Controller2D((x, y)=>layer.setControl('light', [x, y], 100), { active:false, control:'light' });
+				controller.priority = 0;
+				this.lime.pointerManager.onEvent(controller);
+				layer.controllers.push(controller);
+			}
+		}
 		this.init();
 	}
 
@@ -54,7 +69,7 @@ class UIBasic {
 			this.setupActions();
 
 			for(let l of Object.values(this.lime.canvas.layers)) {
-//				this.setLayer(l);
+				this.setLayer(l);
 				break;
 			}
 
