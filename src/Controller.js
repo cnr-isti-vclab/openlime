@@ -9,7 +9,8 @@ class Controller {
 		Object.assign(this, {
 			active: true,
 			debug: false,
-			delay: 100,
+			panDelay: 100,
+			zoomDelay: 200,
 			priority: 0
 		});
 

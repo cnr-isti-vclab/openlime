@@ -54,12 +54,12 @@ class Camera {
 		//compute coords relative to the center of the viewport.
 		x -= this.viewport.w/2;
 		y -= this.viewport.h/2;
-		x /= transform.z;
-		y /= transform.z;
 		x -= transform.x;
 		y -= transform.y;
-		//TODO add rotation!
-		return {x:x, y:y};
+		x /= transform.z;
+		y /= transform.z;
+		let r = transform.rotate(x, y, -transform.a);
+		return {x:r.x, y:r.y};
 	}
 
 
@@ -106,25 +106,31 @@ class Camera {
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
 
+		//rapid firing wheel event need to compound.
+		//but the x, y in input are relative to the current transform.
+		dz *= this.target.z/m.z;
 
-		//x, an y should be the center of the zoom.
+		//transform is x*z + dx = X , there x is positrion in scene, X on screen
+		//we want x*z*dz + dx1 = X (stay put, we need to find dx1.
+		let r = m.rotate(x, y, m.a);
+		m.x += r.x*m.z*(1 - dz);
+		m.y += r.y*m.z*(1 - dz);
 
-
-		m.x += (m.x+x)*(1 - dz);
-		m.y += (m.y+y)*(1 - dz);
-
-		this.setPosition(dt, m.x, m.y, this.target.z*dz, m.a);
+		
+		this.setPosition(dt, m.x, m.y, m.z*dz, m.a);
 	}
 
 
 	getCurrentTransform(time) {
-		if(time < this.source.t)
-			return this.source.copy();
-		if(time >= this.target.t)
-			return this.target.copy();
-
 		let pos = new Transform();
-		pos.interpolate(this.source, this.target, time);
+		if(time < this.source.t)
+			Object.assign(pos, this.source);
+		if(time >= this.target.t)
+			Object.assign(pos, this.target);
+		else 
+			pos.interpolate(this.source, this.target, time);
+
+		pos.t = time;
 		return pos;
 	}
 

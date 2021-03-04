@@ -36,7 +36,7 @@ class OpenLIME {
 			camera: new Camera()
 		});
 
-
+		
 		if(typeof(div) == 'string')
 			div = document.querySelector(div);
 

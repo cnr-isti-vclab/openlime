@@ -63,7 +63,8 @@ class AnnotationLayer extends Layer {
 
 		let t =  this.transform.compose(transform);
 		this.svgElement.setAttribute('viewBox', `${-viewport.w/2} ${-viewport.h/2} ${viewport.w} ${viewport.h}`);
-		this.svgGroup.setAttribute("transform", `translate(${t.x*t.z} ${t.y*t.z}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${ -this.viewBox[2]/2.0} ${-this.viewBox[3]/2.0})`); 
+		this.svgGroup.setAttribute("transform", 
+			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${ -this.viewBox[2]/2.0} ${-this.viewBox[3]/2.0})`); 
 
 
 		return true;

@@ -46,6 +46,7 @@ class Transform {
 		return {x:ex, y:ey};
 	}
 
+	// first get applied this (a) then  transform (b).
 	compose(transform) {
 		let a = this.copy();
 		let b = transform;
@@ -92,21 +93,19 @@ class Transform {
 	}
 
 	interpolate(source, target, time) {
-		if(time < source.t) return source;
-		if(time > target.t) return target;
-
 		let t = (target.t - source.t);
-		if(t < 0.0001) {
-			Object.assign(this, target);
-			return;
-		}
+
+		this.t = time;
+		if(time < source.t) 
+			return Object.assign(this, source);
+		if(time > target.t || t < 0.0001) 
+			return Object.assign(this, target);		
 
 		let tt = (time - source.t)/t;
 		let st = (target.t - time)/t;
-
+		
 		for(let i of ['x', 'y', 'z', 'a'])
 			this[i] = (st*source[i] + tt*target[i]);
-		this.t = time;
 	}
 
 
@@ -122,19 +121,18 @@ class Transform {
 		// In coords with 0 at screen center and x0 at 0, map -v.w/2 -> -1, v.w/2 -> 1 
 		// With x0 != 0: x0 -> x0-v.w/2 -> -1, and x0+dx -> x0+v.dx-v.w/2 -> 1
 		// Where dx is viewport width, while w is window width
+		//0, 0 <-> viewport.x + viewport.dx/2 (if x, y =
+		
+		let zx = 2/viewport.dx;
+		let zy = 2/viewport.dy;
 
-		let zx = 2*z/viewport.dx;
-		let zy = 2*z/viewport.dy;
-
-		let dx = zx * this.x + (2/viewport.dx)*(viewport.w/2-viewport.x)-1;
+		let dx =  zx * this.x + (2/viewport.dx)*(viewport.w/2-viewport.x)-1;
 		let dy = -zy * this.y + (2/viewport.dy)*(viewport.h/2-viewport.y)-1;
-
-//		let r = this.rotate(this.x, this.y, this.a);
 
 		let a = Math.PI *this.a/180;
 		let matrix = [
-			 Math.cos(a)*zx, Math.sin(a)*zy,  0,  0, 
-			-Math.sin(a)*zx, Math.cos(a)*zy,  0,  0,
+			 Math.cos(a)*zx*z, Math.sin(a)*zy*z,  0,  0, 
+			-Math.sin(a)*zx*z, Math.cos(a)*zy*z,  0,  0,
 			 0,  0,  1,  0,
 			dx, dy, 0,  1];
 		return matrix;

@@ -12,6 +12,7 @@ import { Lens } from './Lens.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
 
 let lime = new OpenLIME('#openlime');
+lime.camera.target.a = 30;
 
 //combinerTest();
 //imageTest('image');
@@ -30,7 +31,7 @@ function testSVGAnnotations() {
 		url: 'assets/svbrdf/vis/kdMap.jpg',
 		layout: 'image',
 		zindex: 0,
-		transform: { x: -500, y: 0, z: 1.2, a: 10 },
+		transform: { x: 0, y: 0, z: 1.2, a: 0 },
 	});
 
 	let layer1 = new AnnotationLayer({ 
@@ -41,7 +42,7 @@ function testSVGAnnotations() {
 			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
 		`,
 		annotations: { aura: {}, sun: {} },
-		transform: { x: -500, y: 0, z: 1.2, a: 10 },
+		transform: { x: 0, y: 0, z: 1.2, a: 0 },
 	}); 
 
 	lime.canvas.addLayer('img', layer0);
