@@ -48,9 +48,9 @@ function testSVGAnnotations() {
 	lime.canvas.addLayer('img', layer0);
 	lime.canvas.addLayer('anno', layer1);
 	let ui = new UIBasic(lime);
-	const { home, fullscreen } = ui.actions;
-	ui.actions = { home, fullscreen };
-	ui.actions.zoomin = { title: "Zoom in" }; //actions can be modified just after ui creation (not later!)
+	const { home, fullscreen, rotate } = ui.actions;
+	ui.actions = { home, fullscreen, rotate };
+	ui.actions.zoomin = { title: "Zoom in", task: (event) => { lime.camera.deltaZoom(1000, 2, 0, 0); } }; //actions can be modified just after ui creation (not later!)
 }
 
 function testUIBasic() {

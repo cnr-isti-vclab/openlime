@@ -99,6 +99,15 @@ class Camera {
 		this.setPosition(dt, m.x, m.y, z, m.a);
 	}
 
+	rotate(dt, a) {
+
+		let now = performance.now();
+		let m = this.getCurrentTransform(now);
+
+		m.a += a;
+		this.setPosition(dt, m.x, m.y, m.z, m.a);
+	}
+
 	deltaZoom(dt, dz, x, y) {
 		if(!x) x = 0;
 		if(!y) y = 0;
