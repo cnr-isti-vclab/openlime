@@ -23,14 +23,13 @@ lime.camera.target.a = 30;
 
 //testUISvg();
 //lensTest();
-//testSVGAnnotations();
+testSVGAnnotations();
 
 function testSVGAnnotations() {
 	let layer0 = new Layer({
 		type: 'image',
-		//url: 'assets/svbrdf/vis/kdMap.jpg',
-		url: 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=PIA03883.pyr.tif/info.json',
-		layout: 'iiif',
+		url: 'assets/svbrdf/vis/kdMap.jpg',
+		layout: 'image',
 		zindex: 0,
 		transform: { x: 0, y: 0, z: 1.2, a: 0 },
 	});
@@ -49,6 +48,9 @@ function testSVGAnnotations() {
 	lime.canvas.addLayer('img', layer0);
 	lime.canvas.addLayer('anno', layer1);
 	let ui = new UIBasic(lime);
+	const { home, fullscreen } = ui.actions;
+	ui.actions = { home, fullscreen };
+	ui.actions.zoomin = { title: "Zoom in" }; //actions can be modified just after ui creation (not later!)
 }
 
 function testUIBasic() {

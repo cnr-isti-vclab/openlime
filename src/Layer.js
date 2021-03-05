@@ -340,10 +340,6 @@ class Layer {
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);
 
-
-		//interpolate uniforms from controls!
-		//update uniforms
-
 		if(this.ibuffer) //this part might go into another function.
 			return;
 
@@ -387,9 +383,6 @@ class Layer {
 		if(this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
 				return;
 		this.previouslyNeeded = needed;
-
-
-
 
 		this.queue = [];
 		let now = performance.now();

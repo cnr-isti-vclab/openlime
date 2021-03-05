@@ -27,39 +27,52 @@ class UIBasic {
 			skin: 'skin.svg',
 			skinCSS: 'skin.css',
 			actions: {
-				home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fit(this.viewport, 250); } },
-				layers:     { title: 'Layers',     task: (event) => { this.selectLayers(event); } },
-				zoomin:     { title: 'Zoom in',    task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
-				zoomout:    { title: 'Zoom out',   task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
-				light:      { title: 'Light',      task: (event) => { this.toggleLightController(); } },
-				fullscreen: { title: 'Fullscreen', task: (event) => { this.toggleFullscreen(); } }
+				home:       { title: 'Home' },
+				layers:     { title: 'Layers' },
+				zoomin:     { title: 'Zoom in' },
+				zoomout:    { title: 'Zoom out' },
+				light:      { title: 'Light' },
+				fullscreen: { title: 'Fullscreen' }
 			},
 			viewport: [0, 0, 0, 0] //in scene coordinates
 		});
 
 		Object.assign(this, options);
 
-		let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
+		let tasks = {
+			home:       (event) => { if(this.ready) camera.fit(this.viewport, 250); },
+			layers:     (event) => { this.selectLayers(event); },
+			zoomin:     (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); },
+			zoomout:    (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); },
+			light:      (event) => { this.toggleLightController(); },
+			fullscreen: (event) => { this.toggleFullscreen(); },
+		};
+		for(let [key, value] of Object.entries(tasks))
+			if(this.actions[key])
+				this.actions[key].task = value;
 
-		//this.lime.pointerManager.onPan(panzoom);
-		//this.lime.pointerManager.onPinch(panzoom);
-		this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 
-		for(let layer of Object.values(this.lime.canvas.layers)) {
-			if(layer.controls.light) {
-				let controller = new Controller2D((x, y)=>layer.setControl('light', [x, y], 100), { active:false, control:'light' });
-				controller.priority = 0;
-				this.lime.pointerManager.onEvent(controller);
-				layer.controllers.push(controller);
-			}
-		}
-		this.init();
+		if(queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
+		else setTimeout(() => { this.init(); }, 0);
 	}
 
 
 
-	init() {
+	init() {		
 		(async () => {
+
+			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
+			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+	
+			for(let layer of Object.values(this.lime.canvas.layers)) {
+				if(layer.controls.light) {
+					let controller = new Controller2D((x, y)=>layer.setControl('light', [x, y], 100), { active:false, control:'light' });
+					controller.priority = 0;
+					this.lime.pointerManager.onEvent(controller);
+					layer.controllers.push(controller);
+				}
+			}
+	
 
 			if(this.skin)
 				await this.loadSkin();
