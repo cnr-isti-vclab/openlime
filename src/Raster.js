@@ -16,6 +16,7 @@
  * * *type*: vec3 (default value) for standard images, vec4 when including alpha, vec2, float other purpouses.
  * * *attribute*: <coeff|kd|ks|gloss|normals|dem> meaning of the image.
  * * *colorSpace*: <linear|srgb> colorspace used for rendering.
+ * * *cors*: use cross orgini fetch (default: true), if false will use slower image.src method.
  */
 
 class Raster {
@@ -25,7 +26,7 @@ class Raster {
 		Object.assign(this, { 
 			type: 'vec3', 
 			colorSpace: 'linear',
-			attribute: 'kd'
+			attribute: 'kd',
 		 });
 
 		Object.assign(this, options);
@@ -53,8 +54,8 @@ class Raster {
 				}
 
 			} else { //fallback for IOS
-				var urlCreator = window.URL || window.webkitURL;
-				var img = document.createElement('img');
+				let urlCreator = window.URL || window.webkitURL;
+				let img = document.createElement('img');
 				img.onerror = function(e) { console.log("Texture loading error!"); };
 				img.src = urlCreator.createObjectURL(blob);
 

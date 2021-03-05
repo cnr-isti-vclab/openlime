@@ -7,8 +7,8 @@ class Layout {
 	constructor(url, type, options) {
 		Object.assign(this, {
 			type: type,
-			width: 1,
-			height: 1,
+			width: 0,
+			height: 0,
 			tilesize: 256,
 			overlap: 0, 
 			nlevels: 1,        //level 0 is the top, single tile level.
@@ -25,19 +25,20 @@ class Layout {
 
 		if(typeof(url) == 'string') {
 			this.url = url;
-			let callback = () => {
+
+			(async () => {
+				switch(this.type) {
+					case 'image':    await this.initImage(); break;
+					case 'google':   await this.initGoogle(); break;
+					case 'deepzoom': await this.initDeepzoom(); break;
+					case 'zoomify':  await this.initZoomify(); break;
+					case 'iiif':     await this.initIIIF(); break;
+				}
 				this.initBoxes();
 				this.status = 'ready';
 				this.emit('ready');
-			}
-
-			switch(this.type) {
-				case 'image':    this.initImage(this.width, this.height); break;
-				case 'google':   this.initGoogle(callback); break;
-				case 'deepzoom': this.initDeepzoom(callback); break;
-				case 'zoomify': this.initZoomify(callback); break;
-			}
-			return;
+				
+			})().catch(e => { console.log(e); this.status = e; });
 		}
 
 		if(typeof(url) == 'object')
@@ -227,19 +228,10 @@ class Layout {
 /*
  * Witdh and height can be recovered once the image is downloaded.
 */
-	initImage(width, height) {
+	initImage() {
 		this.getTileURL = (url, x, y, level) => { return url; }
 		this.nlevels = 1;
 		this.tilesize = 0;
-
-		if(width && height) {
-			this.width = width;
-			this.height = height;
-			this.initBoxes();
-
-			this.status = 'ready';
-			this.emit('ready');
-		}
 	}
 
 /**
@@ -259,83 +251,112 @@ class Layout {
 		this.getTileURL = (url, x, y, level) => {
 			return url + "/" + level + "/" + y + "/" + x + '.' + this.suffix;
 		};
-		callback();
 	}
 
 
 /**
  * Expects the url to point to .dzi config file
  */
-	initDeepzoom(callback) {
-		(async () => {
-			var response = await fetch(this.url);
-			if(!response.ok) {
-				this.status = "Failed loading " + this.url + ": " + response.statusText;
-				return;
-			}
-			let text = await response.text();
-			let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
+	async initDeepzoom() {		
+		var response = await fetch(this.url);
+		if(!response.ok) {
+			this.status = "Failed loading " + this.url + ": " + response.statusText;
+			return;
+		}
+		let text = await response.text();
+		let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
 
-			let doc = xml.documentElement;
-			this.suffix = doc.getAttribute('Format');
-			this.tilesize = doc.getAttribute('TileSize');
-			this.overlap = doc.getAttribute('Overlap');
+		let doc = xml.documentElement;
+		this.suffix = doc.getAttribute('Format');
+		this.tilesize = doc.getAttribute('TileSize');
+		this.overlap = doc.getAttribute('Overlap');
 
-			let size = doc.querySelector('Size');
-			this.width = size.getAttribute('Width');
-			this.height = size.getAttribute('Height');
+		let size = doc.querySelector('Size');
+		this.width = size.getAttribute('Width');
+		this.height = size.getAttribute('Height');
 
-			let max = Math.max(this.width, this.height)/this.tilesize;
-			this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
+		let max = Math.max(this.width, this.height)/this.tilesize;
+		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-			this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '_files/';
+		this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '_files/';
 
-			this.getTileURL = (url, x, y, level) => {
-				url = url.substr(0, url.lastIndexOf(".")) + '_files/';
-				return url + level + '/' + x + '_' + y + '.' + this.suffix;
-			}; 
-
-			callback();
-
-		})().catch(e => { console.log(e); this.status = e; });
+		this.getTileURL = (url, x, y, level) => {
+			url = url.substr(0, url.lastIndexOf(".")) + '_files/';
+			return url + level + '/' + x + '_' + y + '.' + this.suffix;
+		}; 
 	}
 
 
 /**
  * Expects the url to point to ImageProperties.xml file.
  */
-	initZoomify(callback) {
+	async initZoomify() {
 		this.overlap = 0;
-		(async () => {
-			var response = await fetch(this.url);
-			if(!response.ok) {
-				this.status = "Failed loading " + this.url + ": " + response.statusText;
-				return;
-			}
-			let text = await response.text();
-			let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
-			let doc = xml.documentElement;
-			this.tilesize = parseInt(doc.getAttribute('TILESIZE'));
-			this.width = parseInt(doc.getAttribute('WIDTH'));
-			this.height = parseInt(doc.getAttribute('HEIGHT'));
-			if(!this.tilesize || !this.height || !this.width)
-				throw "Missing parameter files for zoomify!";
+		var response = await fetch(this.url);
+		if(!response.ok) {
+			this.status = "Failed loading " + this.url + ": " + response.statusText;
+			return;
+		}
+		let text = await response.text();
+		let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
+		let doc = xml.documentElement;
+		this.tilesize = parseInt(doc.getAttribute('TILESIZE'));
+		this.width = parseInt(doc.getAttribute('WIDTH'));
+		this.height = parseInt(doc.getAttribute('HEIGHT'));
+		if(!this.tilesize || !this.height || !this.width)
+			throw "Missing parameter files for zoomify!";
 
-			let max = Math.max(this.width, this.height)/this.tilesize;
-			this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
+		let max = Math.max(this.width, this.height)/this.tilesize;
+		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-			this.url = this.url.substr(0, this.url.lastIndexOf("/"));
+		this.url = this.url.substr(0, this.url.lastIndexOf("/"));
 
-			this.getTileURL = (url, x, y, level) => {
-				let index = this.index(level, x, y)>>>0;
-				let group = index >> 8;
-				url = url.substr(0, url.lastIndexOf("/"));
-				return this.url + "/TileGroup" + group + "/" + level + "-" + x + "-" + y + "." + this.suffix;
-			};
+		this.getTileURL = (url, x, y, level) => {
+			let index = this.index(level, x, y)>>>0;
+			let group = index >> 8;
+			url = url.substr(0, url.lastIndexOf("/"));
+			return this.url + "/TileGroup" + group + "/" + level + "-" + x + "-" + y + "." + this.suffix;
+		};
+	}
 
-			callback();
+	async initIIIF() {
+		this.overlap = 0;
 
-		})().catch(e => { console.log(e); this.status = e; });
+		var response = await fetch(this.url);
+		if(!response.ok) {
+			this.status = "Failed loading " + this.url + ": " + response.statusText;
+			return;
+		}
+		let info = await response.json();
+		this.width = info.width;
+		this.height = info.height;
+		this.nlevels = info.tiles[0].scaleFactors.length;
+		this.tilesize = info.tiles[0].width;
+
+		this.url = this.url.substr(0, this.url.lastIndexOf("/"));
+
+		this.getTileURL = (url, x, y, level) => {
+			let tw = this.tilesize;
+			let ilevel = parseInt(this.nlevels - 1 - level);
+			let s = Math.pow(2, level);
+
+			//region parameters
+			let xr = x * tw * s;
+			let yr = y * tw * s;
+			let wr = Math.min(tw * s, this.width - xr)
+			let hr = Math.min(tw * s, this.height - yr);
+
+			// pixel size parameters /ws,hs/
+			let ws = tw
+			if (xr + tw*s > this.width)
+				ws = (this.width - xr + s - 1) / s  
+			let hs = tw
+			if (yr + tw*s > this.height)
+				hs = (this.height - yr + s - 1) / s
+
+			url = url.substr(0, url.lastIndexOf("/"));
+			return `${url}/${xr},${yr},${wr},${hr}/${ws},${hs}/0/default.jpg`;
+		};
 	}
 }
 

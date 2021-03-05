@@ -7,6 +7,8 @@ import { Controller2D } from './Controller2D.js'
 /**
  * Extends {@link Layer}.
  * @param {options} options Same as {@link Layer}, but url and layout are required.
+ * **url**: points to a relight format .json
+ * **plane**: url for the first coefficient (plane_0), needed for IIIF and IIP (without /info.json)
  */
 
 class RTILayer extends Layer {
@@ -39,7 +41,7 @@ class RTILayer extends Layer {
 			case 'google':   return path + 'plane_' + plane;          break;
 			case 'deepzoom': return path + 'plane_' + plane + '.dzi'; break;
 			case 'zoomify':  return path + 'plane_' + plane + '/ImageProperties.xml'; break;
-			case 'iip':  throw Error("Unimplemented");
+			//case 'iip':      return this.plane.throw Error("Unimplemented");
 			case 'iiif': throw Error("Unimplemented");
 			default:     throw Error("Unknown layout: " + layout);
 		}

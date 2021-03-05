@@ -428,9 +428,11 @@ class Layer {
 			let raster = this.rasters[sampler.id];
 			raster.loadImage(path, this.gl, (tex, size) => {
 
-				if(this.layout.type == "image")
-					this.layout.initImage(raster.width, raster.height);
-
+				if(this.layout.type == "image") {
+					this.layout.width = raster.width;
+					this.layout.height = raster.height;
+					this.layout.initBoxes();
+				}
 				tile.size += size;
 				tile.tex[sampler.id] = tex;
 				tile.missing--;

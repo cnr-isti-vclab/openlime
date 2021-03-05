@@ -15,7 +15,7 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 lime.camera.target.a = 30;
 
 //combinerTest();
-//imageTest('image');
+//imageTest('deepzoom');
 //rtiTest('bln');
 //brdfTest();
 //tomeTest();
@@ -23,13 +23,14 @@ lime.camera.target.a = 30;
 
 //testUISvg();
 //lensTest();
-testSVGAnnotations();
+//testSVGAnnotations();
 
 function testSVGAnnotations() {
 	let layer0 = new Layer({
 		type: 'image',
-		url: 'assets/svbrdf/vis/kdMap.jpg',
-		layout: 'image',
+		//url: 'assets/svbrdf/vis/kdMap.jpg',
+		url: 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=PIA03883.pyr.tif/info.json',
+		layout: 'iiif',
 		zindex: 0,
 		transform: { x: 0, y: 0, z: 1.2, a: 0 },
 	});
@@ -170,6 +171,10 @@ function imageTest(layout) {
 
 		case 'zoomify':
 			options.url = 'assets/svbrdf/vis/glossMap/ImageProperties.xml';
+			break;
+
+		case 'iiif':
+			options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=PIA03883.pyr.tif/info.json';
 			break;
 	}
 	let layer0 = new Layer(options);
