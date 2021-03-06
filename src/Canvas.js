@@ -68,8 +68,9 @@ class Canvas {
 		if (!this.gl)
 			throw "Could not create a WebGL context";
 
-		canvas.addEventListener("webglcontextlost", (event) => { event.preventDefault(); }, false);
+		canvas.addEventListener("webglcontextlost", (event) => { console.log("contextlost"); event.preventDefault(); }, false);
 		canvas.addEventListener("webglcontextrestored", ()  => { this.restoreWebGL(); }, false);
+		document.addEventListener("visibilitychange", (event) => { if(this.gl.isContextLost()) this.restoreWebGL(); });
 
 		/* DEBUG OpenGL calls */
 		/*function logGLCall(functionName, args) {   
