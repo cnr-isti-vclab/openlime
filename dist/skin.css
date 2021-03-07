@@ -14,18 +14,21 @@
 
 
 .openlime-toolbar {
-	position:absolute;
-	left:0px;
-	top:0px;
+	position:absolute; 
+	bottom:0px;
+	right:0px;
 	padding:5px;
 	background-color:rgb(0, 0, 0, 0.0);
-	width:300px;
+	/*width:400px; */
+	/*height:48px; */
+	/*height:5vh; */
+/*	width:fit-content; */
 }
 
 
 .openlime-toolbar svg:not(:root) {
-	width:100%;
-	height: auto;
+	width:auto;
+	height: 5vh;
 	display: block;
 }
 

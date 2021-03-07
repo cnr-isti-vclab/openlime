@@ -25,7 +25,7 @@ class UIBasic {
 			lime: lime,
 			camera: this.camera,
 			skin: 'skin.svg',
-			skinCSS: 'skin.css',
+			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
 				home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fit(this.viewport, 250); } },
 				layers:     { title: 'Layers',     task: (event) => { this.selectLayers(event); } },
@@ -64,8 +64,10 @@ class UIBasic {
 
 			if(this.skin)
 				await this.loadSkin();
+			/* TODO: this is probably not needed
 			if(this.skinCSS)
 				await this.loadSkinCSS();
+			*/
 
 			this.setupActions();
 
@@ -134,7 +136,9 @@ class UIBasic {
 				tlist.getItem(0).setTranslate(-box.x + x,-box.y);
 				x += box.width + padding;
 			}
-			Object.assign(svg.viewBox.baseVal, {x: 0, y: 0, width: x, height: h });
+
+			svg.setAttribute('viewBox', `0 0 ${x} ${h}`);
+			svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 		}
 
 		//toolbar build from the skin directly
@@ -148,14 +152,14 @@ class UIBasic {
 				skin.setAttribute('viewBox', `0 0 ${w} ${h}`);
 		}
 	}
-
+	/* This is probably not needed at all 
 	loadSkinCSS() {
-		let link = document.createElement('link'); 
+		let link = document.createElement('link');
 		link.rel = 'stylesheet';  
 		link.type = 'text/css'; 
 		link.href = this.skinCSS;  
 		document.getElementsByTagName('HEAD')[0].appendChild(link);  
-	}
+	} */
 
 
 

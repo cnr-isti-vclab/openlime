@@ -88,6 +88,9 @@ function rtiTest(dataset) {
 
 	
 	let ui = new UIBasic(lime);
+	const { home, fullscreen, rotate } = ui.actions;
+	ui.actions = { home, fullscreen, rotate };
+	
 //	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)], ); lime.canvas.emit('update'); }, 2000);
 }
 
