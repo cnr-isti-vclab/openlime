@@ -62,10 +62,15 @@ class Camera {
 		return {x:r.x, y:r.y};
 	}
 
-
 	setPosition(dt, x, y, z, a) {
 		let now = performance.now();
 		this.source = this.getCurrentTransform(now);
+		//the angle needs to be interpolated in the shortest direction.
+		//target it is kept between 0 and +360, source is kept relative.
+		a = Transform.normalizeAngle(a);
+		this.source.a = Transform.normalizeAngle(this.source.a);
+		if(a - this.source.a > 180) this.source.a += 360;
+		if(this.source.a - a > 180) this.source.a -= 360;
 		Object.assign(this.target, { x: x, y:y, z:z, a:a, t:now + dt });
 		this.emit('update');
 	}
