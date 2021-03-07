@@ -2,7 +2,7 @@ import { Layer }  from './Layer.js'
 import { Raster } from './Raster.js'
 import { RTIShader } from './RTIShader.js'
 import { Layout } from './Layout.js'
-import { Controller2D } from './Controller2D.js'
+import { Transform } from './Transform.js'
 
 /**
  * Extends {@link Layer}.
@@ -29,7 +29,7 @@ class RTILayer extends Layer {
 
 		let now = performance.now();
 		this.controls['light'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };
-
+		this.worldRotation = 0; //if the canvas or the layer rotate, light direction neeeds to be rotated too.
 		if(this.url)
 			this.init(this.url);
 	}
@@ -72,9 +72,6 @@ class RTILayer extends Layer {
 			let size = {width:this.width, height:this.height};
 			this.setLayout(new Layout(this.planeUrl(this.url, 0), this.layout, size));
 
-			//let controller = new Controller2D((x, y)=>this.setControl('light', [x, y], 100), { active:false, control:'light' });
-			//this.controllers.push(controller);
-
 		})().catch(e => { console.log(e); this.status = e; });
 	}
 
@@ -85,9 +82,15 @@ class RTILayer extends Layer {
 		let done = super.interpolateControls();
 		if(!done) {
 			let light = this.controls['light'].current.value;
-			this.shader.setLight(light);
+			//this.shader.setLight(light);
+			let rotated = Transform.rotate(light[0], light[1], this.worldRotation*Math.PI);
+			this.shader.setLight([rotated.x, rotated.y]);
 		}
 		return done;
+	}
+	draw(transform, viewport) {
+		this.worldRotation = transform.a + this.transform.a;
+		super.draw(transform, viewport);
 	}
 }
 

@@ -54,7 +54,7 @@ class UIBasic {
 	
 			for(let layer of Object.values(this.lime.canvas.layers)) {
 				if(layer.controls.light) {
-					let controller = new Controller2D((x, y)=>layer.setControl('light', [x, y], 100), { active:false, control:'light' });
+					let controller = new Controller2D((x, y)=>layer.setLight( [x, y], 0), { active:false, control:'light' });
 					controller.priority = 0;
 					this.lime.pointerManager.onEvent(controller);
 					layer.controllers.push(controller);

@@ -1,4 +1,3 @@
-
 /**
  * 
  * @param {number} x position
@@ -27,7 +26,7 @@ class Transform {
 
 	apply(x, y) {
 		//TODO! ROTATE
-		let r = this.rotate(x, y, this.a);
+		let r = Transform.rotate(x, y, this.a);
 		return { 
 			x: r.x*this.z + this.x,
 			y: r.y*this.z + this.y
@@ -39,7 +38,7 @@ class Transform {
 		return new Transform({x:-r.x, y:-r.y, z:1/this.z, a:-this.a, t:this.t});
 	}
 
-	rotate(x, y, angle) {
+	static rotate(x, y, angle) {
 		angle = Math.PI*(angle/180);
 		let ex =  Math.cos(angle)*x + Math.sin(angle)*y;
 		let ey = -Math.sin(angle)*x + Math.cos(angle)*y;
@@ -52,7 +51,7 @@ class Transform {
 		let b = transform;
 		a.z *= b.z;
 		a.a += b.a;
-		var r = this.rotate(a.x, a.y, b.a);
+		var r = Transform.rotate(a.x, a.y, b.a);
 		a.x = r.x*b.z + b.x;
 		a.y = r.y*b.z + b.y; 
 		return a;

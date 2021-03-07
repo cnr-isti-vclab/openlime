@@ -165,8 +165,9 @@ class Layer {
 		}
 
 		if(time > target.t - 0.0001) {
+			let done = current.value.every((e, i) => e === target.value[i]);
 			current.value = [...target.value];
-			return true;
+			return done;
 		}
 
 		let t = (target.t - source.t);

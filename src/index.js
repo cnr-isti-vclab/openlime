@@ -12,18 +12,17 @@ import { Lens } from './Lens.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
 
 let lime = new OpenLIME('#openlime', { background: 'black' });
-lime.camera.target.a = 30;
 
 //combinerTest();
 //imageTest('deepzoom');
-//rtiTest('bln');
+rtiTest('ycc');
 //brdfTest();
 //tomeTest();
 //testUIBasic();
 
 //testUISvg();
 //lensTest();
-testSVGAnnotations();
+//testSVGAnnotations();
 
 function testSVGAnnotations() {
 	let layer0 = new Layer({
@@ -85,7 +84,10 @@ function rtiTest(dataset) {
 		type:'rti',
 		url: 'assets/rti/' + dataset + '/info.json'
 	});
-	lime.canvas.addLayer('kdmap', layer0); 
+	lime.canvas.addLayer('tome', layer0); 
+
+	
+	let ui = new UIBasic(lime);
 //	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)], ); lime.canvas.emit('update'); }, 2000);
 }
 
