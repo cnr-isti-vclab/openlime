@@ -58,7 +58,7 @@ class Camera {
 		y -= transform.y;
 		x /= transform.z;
 		y /= transform.z;
-		let r = transform.rotate(x, y, -transform.a);
+		let r = Transform.rotate(x, y, -transform.a);
 		return {x:r.x, y:r.y};
 	}
 
@@ -104,8 +104,7 @@ class Camera {
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
 
-		m.a += a;
-		this.setPosition(dt, m.x, m.y, m.z, m.a);
+		this.setPosition(dt, m.x, m.y, m.z, this.target.a + a);
 	}
 
 	deltaZoom(dt, dz, x, y) {
@@ -121,7 +120,7 @@ class Camera {
 
 		//transform is x*z + dx = X , there x is positrion in scene, X on screen
 		//we want x*z*dz + dx1 = X (stay put, we need to find dx1.
-		let r = m.rotate(x, y, m.a);
+		let r = Transform.rotate(x, y, m.a);
 		m.x += r.x*m.z*(1 - dz);
 		m.y += r.y*m.z*(1 - dz);
 
