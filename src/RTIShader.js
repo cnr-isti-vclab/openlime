@@ -204,6 +204,7 @@ const int ny1 = ${this.yccplanes[1]};
 		switch(this.colorspace) {
 			case 'rgb':  str +=  RGB.render(this.njpegs); break;
 			case 'mrgb': str += MRGB.render(this.njpegs); break;
+			case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0]); break;
 		}
 
 		str += `
@@ -272,14 +273,16 @@ class MRGB {
 vec4 render(vec3 base[np1]) {
 	vec3 rgb = base[0];
 	vec4 c;
+	vec3 r;
 `;
 		for(let j = 0; j < njpegs; j++) {
 			str +=
 `	c = texture(plane${j}, v_texcoord);
-	rgb += base[${j}*3+1]*(c.x - bias[${j}].x)*scale[${j}].x;
-	rgb += base[${j}*3+2]*(c.y - bias[${j}].y)*scale[${j}].y;
-	rgb += base[${j}*3+3]*(c.z - bias[${j}].z)*scale[${j}].z;
+	r = (c.xyz - bias[${j}])* scale[${j}];
 
+	rgb += base[${j}*3+1]*r.x;
+	rgb += base[${j}*3+2]*r.y;
+	rgb += base[${j}*3+3]*r.z;
 `;
 		}
 		str += `
@@ -289,6 +292,54 @@ vec4 render(vec3 base[np1]) {
 		return str;
 	}
 }
+
+class MYCC {
+
+	static render(njpegs, ny1) {
+		let str = `
+vec3 toRgb(vec3 ycc) {
+ 	vec3 rgb;
+	rgb.g = ycc.r + ycc.b/2.0;
+	rgb.b = ycc.r - ycc.b/2.0 - ycc.g/2.0;
+	rgb.r = rgb.b + ycc.g;
+	return rgb;
+}
+
+vec4 render(vec3 base[np1]) {
+	vec3 rgb = base[0];
+	vec4 c;
+	vec3 r;
+`;
+		for(let j = 0; j < njpegs; j++) {
+			str += `
+
+	c = texture(plane${j}, v_texcoord);
+
+	r = (c.xyz - bias[${j}])* scale[${j}];
+`;
+
+			if(j < ny1) {
+				str += `
+	rgb.x += base[${j}*3+1].x*r.x;
+	rgb.y += base[${j}*3+2].y*r.y;
+	rgb.z += base[${j}*3+3].z*r.z;
+`;
+			} else {
+				str += `
+	rgb.x += base[${j}*3+1].x*r.x;
+	rgb.x += base[${j}*3+2].x*r.y;
+	rgb.x += base[${j}*3+3].x*r.z;
+`;
+			}
+		}
+		str += `	
+	return vec4(toRgb(rgb), 1);
+}
+`;
+		return str;
+	}
+}
+
 
 
 
@@ -449,8 +500,6 @@ class BLN {
 		return lweights;
 	}
 }
-
-
 
 
 export { RTIShader }
