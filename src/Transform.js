@@ -162,8 +162,8 @@ class Transform {
 	 * @param {*} p point in scene: 0,0 at image center
 	 */ 
 	sceneToViewportCoords(viewport, p) {
-        return [(p[0] + this.x) * this.z - viewport.x + viewport.w/2, 
-                (p[1] - this.y) * this.z + viewport.y + viewport.h/2 ];
+        return [p[0] * this.z  + this.x - viewport.x + viewport.w/2, 
+                p[1] * this.z  - this.y + viewport.y + viewport.h/2 ];
     }
 
 	/**
@@ -173,8 +173,8 @@ class Transform {
 	 * @param {*} p point in range [0..w-1,0..h-1]
 	 */
     viewportToSceneCoords(viewport, p) {
-        return [(p[0] + viewport.x - viewport.w/2) / this.z - this.x,
-                (p[1] - viewport.y - viewport.h/2) / this.z + this.y];
+        return [(p[0] + viewport.x - viewport.w/2 - this.x) / this.z,
+                (p[1] - viewport.y - viewport.h/2 + this.y) / this.z];
 
     }
 
