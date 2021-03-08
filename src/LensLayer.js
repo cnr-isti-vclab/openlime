@@ -14,7 +14,11 @@ class LensLayer extends CombinerLayer {
         if (!this.camera) {
             throw "LayerLens option camera required";
         }
-        
+        if (!this.pointerManager) {
+            console.log("LayerLens option pointerManager required");
+            throw "LayerLens option pointerManager required";
+        }
+       
         let shader = new ShaderLens({
             'samplers': [ { id:0, name: 'source0'} ]
         });
@@ -25,12 +29,13 @@ class LensLayer extends CombinerLayer {
                                              updatePosition: (x, y)=>this.updatePosition(x, y),
                                              wheelEvent : (delta)=>this.wheelEvent(delta),
                                              hover: true});
+                                             
+        this.pointerManager.onEvent(controller); //register wheel, doubleclick, pan and pinch
 
         this.controllers.push(controller);
         this.startPos = [0, 0];
 
 		let now = performance.now();
-        // this.controls['center'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };
         this.controls['center'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
         this.controls['radius'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
         this.setLens(0,0,150,10);
