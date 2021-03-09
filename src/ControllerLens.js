@@ -6,76 +6,129 @@ class ControllerLens extends Controller {
 
 		super(options);
 
-        if (!this.handleEvent) {
-            throw "ControllerLens handleEvent callback option required";
+        if (!this.lensLayer) {
+            console.log("ControllerLens lensLayer option required");
+            throw "ControllerLens lensLayer option required";
         }
-        
-        if (!this.updatePosition) {
-            throw "ControllerLens updatePosition callback option required";
+ 
+        if (!this.camera) {
+            console.log("ControllerLens camera option required");
+            throw "ControllerLens camera option required";
         }
-        if (!this.wheelEvent) {
-            throw "ControllerLens wheelEvent callback option required";
-        }
-        if(!this.box)
-            this.box = [-0.99, -0.99, 0.99, 0.99];
 
-		this.panning = false;
-    }
-
-
-	getPosition(e) {
-        let x = e.offsetX;
-        let y = e.offsetY;
-        let rect = e.target.getBoundingClientRect();
-		x = Math.max(0, Math.min(1, x/rect.width));
-		y = Math.max(0, Math.min(1, 1 - y/rect.height));
-		x = this.box[0] + x*(this.box[2] - this.box[0]);
-		y = this.box[1] + y*(this.box[3] - this.box[1]);
-		return {x:x, y:y};
+        this.panning = false;
+        this.zooming = false;
+        this.initialDistance = 0;
     }
 
 	panStart(e) {
-        const p = this.getPosition(e);
+        if (!this.active)
+            return;
+
+        const p = this.getScenePosition(e);
         this.panning = false;
 
-        if (this.handleEvent(p.x, p.y)) {
+        if (this.isInsideLens(p)) {
             this.panning = true;
             e.preventDefault();
            
         }
-        return this.panning;
 	}
 
 	panMove(e) {
-        let result = false;
         if(this.panning) {
-            const p = this.getPosition(e);
-            this.updatePosition(p.x, p.y);
-            result = true;
+            const p = this.getScenePosition(e);
+            const dx = p[0]-this.startPos[0];
+            const dy = p[1]-this.startPos[1];
+            const c = this.lensLayer.getTargetCenter();
+    
+            this.lensLayer.setCenter(c[0] + dx, c[1] + dy);
+            this.startPos = p;
         }
-        return result;
 	}
 
 	panEnd(e) {
 		if(!this.panning)
-			return false;
+			return;
 		this.panning = false;
-		return true;
 	}
 
+	pinchStart(e1, e2) {
+        if (!this.active)
+            return;
+
+        const p0 = this.getScenePosition(e1);
+        const p1 = this.getScenePosition(e2);
+        const pc = [(p0[0]+ p1[0]) * 0.5, (p0[1] + p1[1]) * 0.5];
+
+        if (this.isInsideLens(pc)) {
+            this.zooming = true;
+            this.initialDistance = this.distance(e1, e2);
+            this.initialRadius = this.lensLayer.getRadius();
+
+            e1.preventDefault();
+        } 
+	}
+
+	pinchMove(e1, e2) {
+		if (!this.zooming)
+            return;
+        const d = this.distance(e1, e2);
+		const scale = d / (this.initialDistance + 0.00001);
+        const newRadius = scale * this.initialRadius;
+        this.lensLayer.setRadius(newRadius);
+	}
+
+	pinchEnd(e, x, y, scale) {
+		this.zooming = false;
+    }
+    
     mouseWheel(e) {
-        const p = this.getPosition(e);
+        const p = this.getScenePosition(e);
         let result = false;
-        if (this.handleEvent(p.x, p.y)) {
-            let delta = e.deltaY > 0 ? 1 : -1;
-		    this.wheelEvent(delta);
+        if (this.isInsideLens(p)) {
+            const delta = e.deltaY > 0 ? 1 : -1;
+            const factor = delta > 0 ? 1.2 : 1/1.2;
+            const r = this.lensLayer.getRadius();
+            this.lensLayer.setRadius(r*factor);
+
             result = true;
             e.preventDefault();
         } 
         
         return result;
     }
-    
+
+	getScenePosition(e) {
+        let x = e.offsetX;
+        let y = e.offsetY;
+        let rect = e.target.getBoundingClientRect();
+		x = Math.max(0, Math.min(1, x/rect.width));
+		y = Math.max(0, Math.min(1, 1 - y/rect.height));
+	    const p0wh = [x*this.camera.viewport.w, y*this.camera.viewport.h];
+        
+        // Transform canvas p to scene coords
+        let now = performance.now();
+        const t = this.camera.getCurrentTransform(now);
+        const p = t.viewportToSceneCoords(this.camera.viewport, p0wh);
+        
+        return p;
+    }
+
+	distance(e1, e2) {
+		return Math.sqrt(Math.pow(e1.x - e2.x, 2) + Math.pow(e1.y - e2.y, 2));
+	}
+
+    isInsideLens(p) {
+        const c = this.lensLayer.getCurrentCenter();
+        const dx = p[0] - c[0];
+        const dy = p[1] - c[1];
+        const d2 = dx*dx + dy*dy;
+        const r = this.lensLayer.getRadius();
+        const res = d2 < r * r;
+        if (res) { this.startPos = p;}
+        return res;
+    }
 }
 
 export { ControllerLens }

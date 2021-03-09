@@ -7,6 +7,7 @@ import { RTILayer } from './RTILayer.js'
 import { BRDFLayer } from './BRDFLayer.js'
 import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
+import {ControllerLens} from './ControllerLens.js'
 import { UIBasic } from './UIBasic.js'
 import { LensLayer } from './LensLayer.js'
 import { Lens } from './Lens.js'
@@ -141,19 +142,24 @@ function lensTest() {
 	let lensLayer = new LensLayer({
 		layers: [layer0],
 		camera: lime.camera,
-		pointerManager: lime.pointerManager,
 		x:0, 
 		y:0,
 		radius:150,
 		border:10
 	});
 
-	lime.canvas.addLayer('kdmap', layer0);
-	lime.canvas.addLayer('lens', lensLayer);
+	let controllerLens = new ControllerLens({lensLayer: lensLayer,
+											camera: lime.camera,
+											hover: true,
+											priority: 0});
+	lime.pointerManager.onEvent(controllerLens); 
+	lensLayer.controllers.push(controllerLens);
 
 	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
 	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 
+	lime.canvas.addLayer('kdmap', layer0);
+	lime.canvas.addLayer('lens', lensLayer);
 }
 
 
