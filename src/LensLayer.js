@@ -1,7 +1,6 @@
 import {CombinerLayer}  from './CombinerLayer.js'
 import {Lens}           from './Lens.js'
 import {ShaderLens}     from './ShaderLens.js'
-import {ControllerLens} from './ControllerLens.js'
 import {Layout}         from './Layout.js'
 
 /**
@@ -11,28 +10,12 @@ class LensLayer extends CombinerLayer {
 	constructor(options) {
         super(options);
         
-        if (!this.camera) {
-            throw "LayerLens option camera required";
-        }
-        if (!this.pointerManager) {
-            console.log("LayerLens option pointerManager required");
-            throw "LayerLens option pointerManager required";
-        }
-       
         let shader = new ShaderLens({
             'samplers': [ { id:0, name: 'source0'} ]
         });
         this.shaders['lens'] = shader;
 		this.setShader('lens');
 
-        let controller = new ControllerLens({handleEvent: (x,y)=>this.handleEvent(x,y),
-                                             updatePosition: (x, y)=>this.updatePosition(x, y),
-                                             wheelEvent : (delta)=>this.wheelEvent(delta),
-                                             hover: true});
-                                             
-        this.pointerManager.onEvent(controller); //register wheel, doubleclick, pan and pinch
-
-        this.controllers.push(controller);
         this.startPos = [0, 0];
 
 		let now = performance.now();
@@ -70,45 +53,6 @@ class LensLayer extends CombinerLayer {
         return this.controls['center'].target.value;
     }
 
-    toScene(x, y) {
-        // Transform canvas p to scene coords
-        let now = performance.now();
-        const t = this.camera.getCurrentTransform(now);
-        const p0wh = [(x*0.5+0.5)*this.camera.viewport.w, (y*0.5+0.5)*this.camera.viewport.h];
-        const p = t.viewportToSceneCoords(this.camera.viewport, p0wh);
-        return p;
-    }
-
-    handleEvent(x, y) {
-        // isInsideLens ?
-        const p = this.toScene(x, y);
-        const c = this.getCurrentCenter();
-        const dx = p[0] - c[0];
-        const dy = p[1] - c[1];
-        const d2 = dx*dx + dy*dy;
-        const r = this.getRadius();
-        const res = d2 < r * r;
-        if (res) { this.startPos = p;}
-        return res;
-    }
-
-    updatePosition(x, y) {
-        const p = this.toScene(x, y);
-        const c = this.getTargetCenter();
-        const dx = p[0]-this.startPos[0];
-        const dy = p[1]-this.startPos[1];
-
-        this.setCenter(c[0] + dx, c[1] + dy);
-        this.startPos = p;
-    }
-
-    wheelEvent(delta) {
-        const r = this.getRadius();
-        console.log("wheel r " + r.toFixed(2) + ", delta " + delta.toFixed(2));
-        const factor = delta > 0 ? 1.2 : 1/1.2;
-        this.setRadius(r*factor);
-    }
-
 	draw(transform, viewport) {
 
         let done = this.interpolateControls();
@@ -127,7 +71,6 @@ class LensLayer extends CombinerLayer {
 
         // Draw on a restricted viewport around the lens
         let lensViewport = this.getLensViewport(transform, viewport);
-        this.camera.viewport = lensViewport;
         gl.viewport(lensViewport.x, lensViewport.y, lensViewport.dx, lensViewport.dy);
 
         // Keep the framwbuffer to the window size in order to avoid changing at each scale event
@@ -179,7 +122,6 @@ class LensLayer extends CombinerLayer {
         gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
 
         // Restore old viewport
-        this.camera.viewport = oldViewport;
         gl.viewport(viewport.x, viewport.x, viewport.dx, viewport.dy);
         
         return done;
