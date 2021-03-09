@@ -1,5 +1,16 @@
 import { Layer } from './Layer.js'
 
+/**
+ * SVG or OpenGL polygons/lines/points annotation layer
+ * @param {object} options
+ * * *svgURL*: url for the svg containing the annotations
+ * * *svgXML*: svg string containing the annotatiosn
+ * * *geometry*: TODO: should contain the areas/lines/points for OpenGL rendering
+ * * *style*: css style for the annotation elements (shadow dom allows css to apply only to this layer)
+ * * *annotations*: collection of annotations info: each annotations is id: { label, svg (optional), data (custom data) (TODO)
+ */
+
+
 class AnnotationLayer extends Layer {
 	constructor(options) {
 		options = Object.assign({

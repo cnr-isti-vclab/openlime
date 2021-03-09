@@ -16,7 +16,7 @@ import { Cache } from './Cache.js'
  *  * *rasters*: [rasters](#raster) used for rendering.
  *  * *controls*: shader parameters that can be modified (eg. light direction)
  *  * *shader*: [shader](#shader) used for rendering
- *  * *layout*: all the rasters in the layer MUST have the same layout.
+ *  * *layout*: one of image, deepzoom, google, iiif, or zoomify
  *  * *mipmapBias*: default 0.5, when to switch between different levels of the mipmap
  *  * *prefetchBorder*: border tiles prefetch (default 1)
  *  * *maxRequest*: max number of simultaneous requests (should be GLOBAL not per layer!) default 4

@@ -1,9 +1,16 @@
 import { Camera } from './Camera.js'
 
 /**
- * @param {WebGL} gl is the WebGL context
+ * @param {Element|String} canvas dom element or query selector for a <canvas> element.
+ * @param {Element} overlay DIV containing annotations, TODO: at the moment it is just passed to the layers (might need refactoring)
+ * @param {Camera} camera (see {@link Camera})
  * @param {Object} options
  * * *layers*: Object specifies layers (see. {@link Layer})
+ * * *preserveDrawingBuffer* needed for screenshots (otherwise is just a performance penalty)
+ * 
+ * **Signals:**
+ * Emits *"update"* event when a layer updates or is added or removed.
+ * 
  */
 
 class Canvas {
@@ -68,9 +75,9 @@ class Canvas {
 		if (!this.gl)
 			throw "Could not create a WebGL context";
 
-		canvas.addEventListener("webglcontextlost", (event) => { console.log("contextlost"); event.preventDefault(); }, false);
+		canvas.addEventListener("webglcontextlost", (event) => { console.log("Context lost."); event.preventDefault(); }, false);
 		canvas.addEventListener("webglcontextrestored", ()  => { this.restoreWebGL(); }, false);
-		document.addEventListener("visibilitychange", (event) => { if(this.gl.isContextLost()) this.restoreWebGL(); });
+		document.addEventListener("visibilitychange", (event) => { if(this.gl.isContextLost()) { this.restoreWebGL(); }});
 
 		/* DEBUG OpenGL calls */
 		/*function logGLCall(functionName, args) {   
@@ -84,7 +91,12 @@ class Canvas {
 
 
 	restoreWebGL() {
-		this.init(canvas);
+		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
+		this.gl = this.gl || 
+			canvas.getContext("webgl2", glopt) || 
+			canvas.getContext("webgl", glopt) || 
+			canvas.getContext("experimental-webgl", glopt) ;
+
 		for(let layer of Object.values(this.layers)) {
 			layer.gl = this.gl;
 			layer.clear();

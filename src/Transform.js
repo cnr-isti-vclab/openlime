@@ -34,7 +34,7 @@ class Transform {
 	}
 
 	inverse() {
-		let r = this.rotate(this.x, this.y, -this.a);
+		let r = Transform.rotate(this.x, this.y, -this.a);
 		return new Transform({x:-r.x, y:-r.y, z:1/this.z, a:-this.a, t:this.t});
 	}
 
@@ -43,7 +43,7 @@ class Transform {
 		while(a < 0) a += 360;
 		return a;
 	}
-	
+
 	static rotate(x, y, angle) {
 		angle = Math.PI*(angle/180);
 		let ex =  Math.cos(angle)*x + Math.sin(angle)*y;

@@ -6,7 +6,7 @@ import { Layout } from './Layout.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
 
 /**
- * Extends {@link Layer}.
+ * Combines other layers (using a framebuffer) using a shader. Lens is an example. Extends {@link Layer}.
  * @param {options} options Same as {@link Layer}, but url and layout are required.
  */
 class CombinerLayer extends Layer {

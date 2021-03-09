@@ -1,7 +1,25 @@
 /**
- * @param {dom} element DOM element where mouse events will be listening.
+ * Virtual nase class for controllers: classes that handle mouse and touch events and links to pan, zoom, etc.
+ * Callbacks supporte are:
+ * * *panStart(event)* calling event.preventDefault() will capture the panning gestire
+ * * *panMove(event)*
+ * * *panEnd(event)*
+ * * *pinchStart(event)* calling event.preventDefault() will capture the pinch gestire
+ * * *pinchMove(event)*
+ * * *pinchEnd(event)*
+ * * *wheelDelta(event)*
+ * * *singleTap(event)*
+ * * *wheelDelta(event)*
+ * * *doubleTap(event)*
+ * * *resize(event)*
+ * 
+ * In general event.preventDefault() will capture the event and wont be propagated to other controllers.
+
+ * 
  * @param {options} options 
- * * *delay* inertia of the movement in ms.
+ * * *panDelay* inertia of the movement in ms for panning movements (default 100)
+ * * *zoomDelay* a zoom event is smoothed over this delay in ms (default 200)
+ * * *priority* higher priority controllers are invoked in advance.
  */
 
 class Controller {
@@ -26,28 +44,6 @@ class Controller {
 	}
 
 /* Implement these functions to interacts with mouse/touch/resize events. */
-
-/*
-	panStart(e, x, y) { if (this.debug) console.log('Pan Start ', x, y); return false; }
-
-	panMove(e, x, y) { if (this.debug) console.log('Pan Move ', x, y); return false; }
-
-	panEnd(e, x, y) { if (this.debug) console.log('Pan End ', x, y); return false; }
-
-	pinchStart(e, x, y, scale) { if (this.debug) console.log('Pinch Start ', x, y, scale); return false; }
-
-	pinchMove(e, x, y, scale) { if (this.debug) console.log('Pinch Move ', x, y, scale); return false; }
-
-	pinchEnd(e, x, y, scale) { if (this.debug) console.log('Pinch End ', x, y, scale); return false; }
-
-	wheelDelta(e, x, y, d) { if (this.debug) console.log('Wheel ', x, y, d); return false; }
-
-	singleTap(e, x, y) { if (this.debug) console.log('Single Tap ', x, y); return false; }
-
-	doubleTap(e, x, y) { if (this.debug) console.log('Double Tap ', x, y); return false; }
-
-	resize(e, width, height) { if(this.debug) console.log('Rezize ', width, height); return false; }
-*/
 
 }
 

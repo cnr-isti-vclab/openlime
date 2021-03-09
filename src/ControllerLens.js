@@ -1,21 +1,23 @@
 import {Controller} from './Controller.js'
 import {Lens} from './Lens.js'
 
+
 class ControllerLens extends Controller {
-	constructor(options) {
+	constructor(lensLayer, camera) {
 
 		super(options);
 
-        if (!this.lensLayer) {
+        if (!lensLayer) {
             console.log("ControllerLens lensLayer option required");
             throw "ControllerLens lensLayer option required";
         }
  
-        if (!this.camera) {
+        if (!camera) {
             console.log("ControllerLens camera option required");
             throw "ControllerLens camera option required";
         }
-
+        this.lensLayer = lensLayer;
+        this.camera = camera;
         this.panning = false;
         this.zooming = false;
         this.initialDistance = 0;

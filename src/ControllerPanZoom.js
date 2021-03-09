@@ -19,7 +19,7 @@ class ControllerPanZoom extends Controller {
 	}
 
 	panStart(e) {
-		if(!this.active)
+		if(!this.active || this.panning)
 			return;
 		this.panning = true;
 

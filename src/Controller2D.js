@@ -2,6 +2,7 @@ import { Controller } from './Controller.js'
 
 /*
  * Controller that turn the position of the mouse on the screen to a [0,1]x[0,1] parameter
+ * @param {Function} callback 
  */
 
 class Controller2D extends Controller {

@@ -23,8 +23,9 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //testUIBasic();
 
 //testUISvg();
-lensTest();
+//lensTest();
 //testSVGAnnotations();
+testSVGAnnotations();
 
 function testSVGAnnotations() {
 	let layer0 = new Layer({

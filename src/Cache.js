@@ -1,6 +1,13 @@
 /* Cache holds the images and the tile textures.
  *  Each tile has a priority 0 and above means it is visible, 
- * negative depends on how far from the border and how more zoomed you need to go.
+ *  negative depends on how far from the border and how more zoomed you need to go
+ * 
+ * * *capacity*: in bytes, max amount of GPU RAM used.
+ * *size*: current size (read only!)
+ * *maxRequest*: max number of concurrent HTTP requests
+ * *requested*: current number of HTTP requests (read only!)
+ * *maxPrefetch*: max number of tile prefetched (each tile might require multiple httprequests)
+ * *prefetched*: current number of tiles requested (read only!)
 */
 
 class _Cache {

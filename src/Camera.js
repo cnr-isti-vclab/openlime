@@ -5,6 +5,10 @@ import { Transform } from './Transform.js'
  * @param {object} options
  * * *bounded*: limit translation of the camera to the boundary of the scene.
  * * *maxZoom*: maximum zoom, 1:maxZoom is screen pixel to image pixel ratio.
+ * * *minZoom*: minimum zoom,
+ * 
+ * Signals:
+ * Emits 'update' event when target is changed.
  */
 
 class Camera {

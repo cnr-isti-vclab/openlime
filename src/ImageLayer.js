@@ -4,7 +4,7 @@ import { Shader } from './Shader.js'
 import { Layout } from './Layout.js'
 
 /**
- * Extends {@link Layer}.
+ * Display a simple image. Extends {@link Layer}.
  * @param {options} options Same as {@link Layer}, but url and layout are required.
  */
 

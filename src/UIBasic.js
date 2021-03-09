@@ -33,6 +33,7 @@ class UIBasic {
 				zoomout:    { title: 'Zoom out',   task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
 				rotate:     { title: 'Rotate',     task: (event) => { camera.rotate(250, -45); } },
 				light:      { title: 'Light',      task: (event) => { this.toggleLightController(); } },
+				ruler:      { title: 'Ruler',      task: (event) => { this.startRuler(); } },
 				fullscreen: { title: 'Fullscreen', task: (event) => { this.toggleFullscreen(); } },
 			},
 			viewport: [0, 0, 0, 0] //in scene coordinates
@@ -141,7 +142,7 @@ class UIBasic {
 			svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 		}
 
-		//toolbar build from the skin directly
+		//TODO: not needed, probably. Toolbar build from the skin directly
 		if(0) {
 			toolbar.appendChild(skin);
 
@@ -210,6 +211,12 @@ class UIBasic {
 		this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
 	}
 
+	startRuler() {
+	}
+
+	endRuler() {
+	}
+
 /* Layer management */
 
 	selectLayers(event) {
@@ -217,7 +224,7 @@ class UIBasic {
 			let ul = document.createElement('ul');
 			ul.classList.add('openlime-layers-menu');
 			for(let [name, layer] of Object.entries(this.lime.canvas.layers)) {
-				let li = document.createElement('li');
+				let li = document.createElement('li');https://edu.meet.garr.it/openlime
 				li.innerHTML = layer.label || name;
 				li.addEventListener('click', ()=> {
 					this.setLayer(layer);
