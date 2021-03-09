@@ -127,7 +127,16 @@ class Layer {
 	}
 
 	boundingBox() {
-		return this.layout.boundingBox();
+		// Apply layer transform to layout bbox
+		const bbox = this.layout.boundingBox();
+		let tbbox = bbox;
+		if (this.transform != null) {
+			const pLow = this.transform.apply(bbox[0], bbox[1]);
+			const pHigh = this.transform.apply(bbox[2], bbox[3]);
+
+			tbbox = [pLow.x, pLow.y, pHigh.x, pHigh.y];
+		}
+		return tbbox;
 	}
 
 

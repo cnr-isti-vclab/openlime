@@ -82,7 +82,6 @@ class Canvas {
 
 	}
 
-
 	restoreWebGL() {
 		this.init(canvas);
 		for(let layer of Object.values(this.layers)) {
@@ -96,12 +95,26 @@ class Canvas {
 
 	addLayer(id, layer) {
 		layer.addEvent('update', () => { this.emit('update'); });
+		layer.layout.addEvent('updateSize', () => { this.updateSize(); });
 		layer.gl = this.gl;
 		layer.overlayElement = this.overlayElement;
 		this.layers[id] = layer;
 		this.prefetch();
 	}
 
+	updateSize() {
+		let sceneBBox = [10000,10000,-10000,-10000];
+		for(let layer of Object.values(this.layers)) {
+			const bbox = layer.boundingBox();
+			if (bbox != null) {
+				sceneBBox[0] = Math.min(sceneBBox[0], bbox[0]);
+				sceneBBox[1] = Math.min(sceneBBox[1], bbox[1]);
+				sceneBBox[2] = Math.max(sceneBBox[2], bbox[2]);
+				sceneBBox[3] = Math.max(sceneBBox[3], bbox[3]);
+			}
+		}
+		console.log("Update Scene BBox " + sceneBBox);
+	}
 
 	draw(time) {
 		let gl = this.gl;

@@ -117,6 +117,12 @@ class CombinerLayer extends Layer {
 	//TODO release textures and framebuffers
 	deleteFramebuffers() {
 	}
+
+	boundingBox() {
+		// No BBOX DEFINED for Combiner Layer (should be the image bbox, here is the screen)
+		// When modifying this func remember have impact on camera bounds
+		return null;
+	}
 }
 
 Layer.prototype.types['combiner'] = (options) => { return new ImageCombiner(options); }
