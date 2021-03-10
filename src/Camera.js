@@ -14,7 +14,8 @@ class Camera {
 			viewport: null,
 			bounded: true,
 			maxZoom: 4,
-			minZoom: 'full',
+			minZoom: 1,
+			boundingBox: [],
 
 			signals: {'update':[]}
 		});
@@ -63,6 +64,24 @@ class Camera {
 	}
 
 	setPosition(dt, x, y, z, a) {
+		if (this.bounded) {
+			const sw = this.viewport.dx;
+			const sh = this.viewport.dy;
+
+			const bw = (this.boundingBox[2] - this.boundingBox[0]);
+			const bh = (this.boundingBox[3] - this.boundingBox[1]);
+
+			// Screen space offset between image boundary and screen boundary
+			// Do not let transform offet go beyond this limit.
+			// if (scaled-image-size < screen) it remains fully contained
+			// else the scaled-image boundary closest to the screen cannot enter the screen.
+			const dx = Math.abs(bw*z-sw)/2;
+			x = Math.min(Math.max(-dx, x), dx);
+
+			const dy = Math.abs(bh*z-sh)/2;
+			y = Math.min(Math.max(-dy, y), dy);
+		}
+
 		let now = performance.now();
 		this.source = this.getCurrentTransform(now);
 		//the angle needs to be interpolated in the shortest direction.
@@ -74,6 +93,7 @@ class Camera {
 		Object.assign(this.target, { x: x, y:y, z:z, a:a, t:now + dt });
 		this.emit('update');
 	}
+	
 
 /*
  * Pan the camera 
@@ -96,6 +116,9 @@ class Camera {
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
 
+		if (this.bounded) {
+			z = Math.min(Math.max(z, this.minZoom), this.maxZoom);
+		}
 
 		//x, an y should be the center of the zoom.
 		m.x += (m.x+x)*(m.z - z)/m.z;
@@ -119,9 +142,15 @@ class Camera {
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
 
+
 		//rapid firing wheel event need to compound.
 		//but the x, y in input are relative to the current transform.
 		dz *= this.target.z/m.z;
+
+		if (this.bounded) {
+			if (m.z*dz < this.minZoom) dz = this.minZoom / m.z;
+			if (m.z*dz > this.maxZoom) dz = this.maxZoom / m.z;
+		}
 
 		//transform is x*z + dx = X , there x is positrion in scene, X on screen
 		//we want x*z*dz + dx1 = X (stay put, we need to find dx1.
@@ -170,6 +199,17 @@ class Camera {
 		this.setPosition(dt, -(box[0] + box[2])/2, -(box[1] + box[3])/2, z, 0);
 	}
 
+	updateBounds(boundingBox) {
+		this.boundingBox = boundingBox;
+		const w = this.viewport.dx;
+		const h = this.viewport.dy;
+
+		const bw = boundingBox[2] - boundingBox[0];
+		const bh = boundingBox[3] - boundingBox[1];
+
+		const minScreenFraction = 0.75;
+		this.minZoom = Math.min(w/bw, h/bh) * minScreenFraction;
+	}
 }
 
 export { Camera }

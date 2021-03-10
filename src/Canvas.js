@@ -114,6 +114,7 @@ class Canvas {
 			}
 		}
 		console.log("Update Scene BBox " + sceneBBox);
+		this.camera.updateBounds(sceneBBox);
 	}
 
 	draw(time) {
