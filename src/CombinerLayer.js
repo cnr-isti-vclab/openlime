@@ -119,8 +119,8 @@ class CombinerLayer extends Layer {
 	}
 
 	boundingBox() {
-		// No BBOX DEFINED for Combiner Layer (should be the image bbox, here is the screen)
-		// When modifying this func remember have impact on camera bounds
+		// The box is the combination of its layer bboxes
+		const bbox = Layer.computeLayersBBox(this.layers);
 		return null;
 	}
 }

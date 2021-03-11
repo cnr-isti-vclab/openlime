@@ -36,6 +36,8 @@ class ControllerLens extends Controller {
 	}
 
 	panMove(e) {
+        // Discard events due to cursor outside window
+        if (Math.abs(e.offsetX) > 64000 || Math.abs(e.offsetY) > 64000) return;
         if(this.panning) {
             const p = this.getScenePosition(e);
             const dx = p[0]-this.startPos[0];

@@ -1,4 +1,5 @@
 import { Camera } from './Camera.js'
+import { Layer  } from './Layer.js'
 
 /**
  * @param {WebGL} gl is the WebGL context
@@ -95,7 +96,7 @@ class Canvas {
 
 	addLayer(id, layer) {
 		layer.addEvent('update', () => { this.emit('update'); });
-		layer.layout.addEvent('updateSize', () => { this.updateSize(); });
+		layer.addEvent('updateSize', () => { this.updateSize(); });
 		layer.gl = this.gl;
 		layer.overlayElement = this.overlayElement;
 		this.layers[id] = layer;
@@ -103,16 +104,7 @@ class Canvas {
 	}
 
 	updateSize() {
-		let sceneBBox = [10000,10000,-10000,-10000];
-		for(let layer of Object.values(this.layers)) {
-			const bbox = layer.boundingBox();
-			if (bbox != null) {
-				sceneBBox[0] = Math.min(sceneBBox[0], bbox[0]);
-				sceneBBox[1] = Math.min(sceneBBox[1], bbox[1]);
-				sceneBBox[2] = Math.max(sceneBBox[2], bbox[2]);
-				sceneBBox[3] = Math.max(sceneBBox[3], bbox[3]);
-			}
-		}
+		let sceneBBox = Layer.computeLayersBBox(this.layers);
 		console.log("Update Scene BBox " + sceneBBox);
 		this.camera.updateBounds(sceneBBox);
 	}

@@ -64,6 +64,9 @@ class Camera {
 	}
 
 	setPosition(dt, x, y, z, a) {
+		// Discard events due to cursor outside window
+		if (Math.abs(x) > 64000 || Math.abs(y) > 64000) return;
+
 		if (this.bounded) {
 			const sw = this.viewport.dx;
 			const sh = this.viewport.dy;

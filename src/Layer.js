@@ -44,7 +44,7 @@ class Layer {
 			mipmapBias: 0.5,
 			maxRequest: 4,
 
-			signals: { update: [], ready: [] },  //update callbacks for a redraw, ready once layout is known.
+			signals: { update: [], ready: [], updateSize: [] },  //update callbacks for a redraw, ready once layout is known.
 
 	//internal stuff, should not be passed as options.
 			tiles: [],      //keep references to each texture (and status) indexed by level, x and y.
@@ -98,6 +98,9 @@ class Layer {
 		else
 			layout.addEvent('ready', callback);
 		this.layout = layout;
+
+		// Set signal to acknowledge change of bbox when it is known. Let this signal go up to canvas
+		this.layout.addEvent('updateSize', () => { this.emit('updateSize'); });
 	}
 
 
@@ -124,6 +127,23 @@ class Layer {
 	setZindex(zindex) {
 		this.zindex = zindex;
 		this.emit('update');
+	}
+
+	static computeLayersBBox(layers) {
+		let layersBbox = [10000,10000,-10000,-10000];
+		let validBbox = false;
+		for(let layer of Object.values(layers)) {
+			const bbox = layer.boundingBox();
+			if (bbox != null) {
+				layersBbox[0] = Math.min(layersBbox[0], bbox[0]);
+				layersBbox[1] = Math.min(layersBbox[1], bbox[1]);
+				layersBbox[2] = Math.max(layersBbox[2], bbox[2]);
+				layersBbox[3] = Math.max(layersBbox[3], bbox[3]);
+				validBbox = true;
+			}
+		}
+		
+		return validBbox ? layersBbox : null;
 	}
 
 	boundingBox() {
