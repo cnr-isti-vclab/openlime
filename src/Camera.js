@@ -202,7 +202,7 @@ class Camera {
 		this.setPosition(dt, -(box[0] + box[2])/2, -(box[1] + box[3])/2, z, 0);
 	}
 
-	updateBounds(boundingBox) {
+	updateBounds(boundingBox, minScale) {
 		this.boundingBox = boundingBox;
 		const w = this.viewport.dx;
 		const h = this.viewport.dy;
@@ -211,7 +211,9 @@ class Camera {
 		const bh = boundingBox[3] - boundingBox[1];
 
 		const minScreenFraction = 0.75;
+		const maxFixedZoom = 4;
 		this.minZoom = Math.min(w/bw, h/bh) * minScreenFraction;
+		this.maxZoom = minScale > 0 ? maxFixedZoom / minScale : maxFixedZoom;
 	}
 }
 

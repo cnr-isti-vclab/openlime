@@ -103,6 +103,10 @@ class Layer {
 		this.layout.addEvent('updateSize', () => { this.emit('updateSize'); });
 	}
 
+	setTransform(tx) {
+		this.transform = tx;
+		this.emit('updateSize'); 
+	}
 
 	setShader(id) {
 		if(!id in this.shaders)
@@ -129,36 +133,79 @@ class Layer {
 		this.emit('update');
 	}
 
-	static computeLayersBBox(layers) {
+	static computeLayersMinScale(layers, discardHidden) {
+		if (layers == undefined || layers == null) {
+			console.log("ASKING SCALE INFO ON NO LAYERS");
+			return 1;
+		}
+		let layersScale = 1;
+		for(let layer of Object.values(layers)) {
+			if (!discardHidden || layer.visible) {
+				let s = layer.scale();
+				layersScale = Math.min(layersScale, s);
+			}
+		}
+		return layersScale;
+	}
+
+	scale() {
+		// FIXME: this do not consider children layers
+		return this.transform.z;
+	}
+
+	boundingBox() {
+		// FIXME: this do not consider children layers
+		
+		// Take layer bbox
+		const bbox = this.layout.boundingBox();
+		let result = bbox;
+		
+		// Apply layer transform to bbox
+		if (this.transform != null && this.transform != undefined) {
+			result = Layer.transformBBox(bbox, this.transform);
+		}
+		
+		return result;
+	}
+
+	static computeLayersBBox(layers, discardHidden) {
+		if (layers == undefined || layers == null) {
+			console.log("ASKING BBOX INFO ON NO LAYERS");
+			return null;
+		}
 		let layersBbox = [10000,10000,-10000,-10000];
 		let validBbox = false;
 		for(let layer of Object.values(layers)) {
-			const bbox = layer.boundingBox();
-			if (bbox != null) {
-				layersBbox[0] = Math.min(layersBbox[0], bbox[0]);
-				layersBbox[1] = Math.min(layersBbox[1], bbox[1]);
-				layersBbox[2] = Math.max(layersBbox[2], bbox[2]);
-				layersBbox[3] = Math.max(layersBbox[3], bbox[3]);
-				validBbox = true;
+			if (!discardHidden || layer.visible) {
+				const bbox = layer.boundingBox();
+				if (bbox != null) {
+					layersBbox = Layer.mergeBoxes(layersBbox, bbox);
+					validBbox = true;
+				}
 			}
 		}
+		//console.log("computeLayersBBox(" + discardHidden + ") = " + layersBbox);
 		
 		return validBbox ? layersBbox : null;
 	}
 
-	boundingBox() {
-		// Apply layer transform to layout bbox
-		const bbox = this.layout.boundingBox();
-		let tbbox = bbox;
-		if (this.transform != null) {
-			const pLow = this.transform.apply(bbox[0], bbox[1]);
-			const pHigh = this.transform.apply(bbox[2], bbox[3]);
-
-			tbbox = [pLow.x, pLow.y, pHigh.x, pHigh.y];
-		}
-		return tbbox;
+	static mergeBoxes(b0,b1) {
+		if (b0 == null) return b1;
+		else if (b1 == null) return b0;
+		else return [Math.min(b0[0], b1[0]), Math.min(b0[1], b1[1]), 
+				     Math.max(b0[2], b1[2]), Math.max(b0[3], b1[3])];
 	}
 
+	static transformBBox(bbox, t) {
+		let result = null;
+
+		if (bbox != null) {
+			const pLow = t.apply(bbox[0], bbox[1]);
+			const pHigh = t.apply(bbox[2], bbox[3]);
+			result =  [pLow.x, pLow.y, pHigh.x, pHigh.y];
+		}
+		return result;
+	}
 
 	setControl(name, value, dt) {
 		let now = performance.now();

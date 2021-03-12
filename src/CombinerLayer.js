@@ -119,9 +119,24 @@ class CombinerLayer extends Layer {
 	}
 
 	boundingBox() {
-		// The box is the combination of its layer bboxes
-		const bbox = Layer.computeLayersBBox(this.layers);
-		return null;
+		// Combiner ask the combination of all its children boxes
+		// keeping the hidden, because they could be hidden, but revealed by the combiner
+		const discardHidden = false;
+		let result = Layer.computeLayersBBox(this.layers, discardHidden);
+		if (this.transform != null && this.transform != undefined) {
+			result = Layer.transformBBox(result, this.transform);
+		}
+		return result;
+	}
+	
+	scale() {
+		// Combiner ask the scale of all its children
+		// keeping the hidden, because they could be hidden, but revealed by the combiner
+		const discardHidden = false;
+		console.log("Combiner compute scale, visible " + this.visible);
+		let scale = Layer.computeLayersMinScale(this.layers, discardHidden);
+		scale *= this.transform.z;
+		return scale;
 	}
 }
 
