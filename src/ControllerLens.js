@@ -36,6 +36,8 @@ class ControllerLens extends Controller {
 	}
 
 	panMove(e) {
+        // Discard events due to cursor outside window
+        if (Math.abs(e.offsetX) > 64000 || Math.abs(e.offsetY) > 64000) return;
         if(this.panning) {
             const p = this.getScenePosition(e);
             const dx = p[0]-this.startPos[0];
@@ -103,14 +105,11 @@ class ControllerLens extends Controller {
         let x = e.offsetX;
         let y = e.offsetY;
         let rect = e.target.getBoundingClientRect();
-		x = Math.max(0, Math.min(1, x/rect.width));
-		y = Math.max(0, Math.min(1, 1 - y/rect.height));
-	    const p0wh = [x*this.camera.viewport.w, y*this.camera.viewport.h];
-        
+
         // Transform canvas p to scene coords
         let now = performance.now();
         const t = this.camera.getCurrentTransform(now);
-        const p = t.viewportToSceneCoords(this.camera.viewport, p0wh);
+        const p = t.viewportToSceneCoords(this.camera.viewport, [x, rect.height- y]);
         
         return p;
     }

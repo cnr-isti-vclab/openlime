@@ -17,7 +17,7 @@ class Layout {
 			qbox: [],          //array of bounding box in tiles, one for mipmap 
 			bbox: [],          //array of bounding box in pixels (w, h)
 
-			signals: { ready: [] },          //callbacks when the layout is ready.
+			signals: { ready: [], updateSize: [] },          //callbacks when the layout is ready.
 			status: null
 		});
 		if(options)
@@ -88,6 +88,8 @@ class Layout {
 			this.qbox[0] = [0, 0, 1, 1];
 			this.bbox[0] = [0, 0, w, h];
 			this.tiles.push({index:0, level:0, x:0, y:0});
+			// Acknowledge bbox change (useful for knowing scene extension (at canvas level))
+			this.emit('updateSize');
 			return 1;
 		}
 
@@ -112,6 +114,9 @@ class Layout {
 			tile.index = index;
 			this.tiles[index] = tile;
 		}
+
+		// Acknowledge bbox (useful for knowing scene extension (at canvas level))
+		this.emit('updateSize');
 	}
 
 /** Return the coordinates of the tile (in [0, 0, w h] image coordinate system) and the texture coords associated. 

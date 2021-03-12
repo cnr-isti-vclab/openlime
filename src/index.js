@@ -135,7 +135,7 @@ function lensTest() {
 		url: 'assets/svbrdf/vis/kdMap.jpg',
 		layout: 'image',
 		zindex: 0,
-		transform: { x: 0, y: 0, z: 1, a: 0 },
+		transform: { x: 0, y: 0, z: 0.5, a: 0 },
 		visible: false
 	});
 
