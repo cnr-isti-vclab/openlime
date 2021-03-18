@@ -19,15 +19,15 @@ import { ControllerPanZoom } from './ControllerPanZoom.js'
 class UIBasic {
 	constructor(lime, options) {
 		//we need to know the size of the scene but the layers are not ready.
-		lime.canvas.addEvent('update', ()=> { this.updateLayers(); });
+		lime.canvas.addEvent('update', ()=> { this.updateLayers(); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
 		let camera = lime.camera;
 		Object.assign(this, {
 			lime: lime,
-			camera: this.camera,
+			camera: lime.camera,
 			skin: 'skin.svg',
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
-				home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fit(this.viewport, 250); } },
+				home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fitCameraBox(250); } },
 				layers:     { title: 'Layers',     task: (event) => { this.selectLayers(event); } },
 				zoomin:     { title: 'Zoom in',    task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout:    { title: 'Zoom out',   task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
@@ -81,22 +81,22 @@ class UIBasic {
 
 	updateLayers() {
 		this.ready = true;
-		let box = [1e20, 1e20, -1e20, -1e20];
-		for(let layer of Object.values(this.lime.canvas.layers)) {
-			if(layer.status != 'ready') {
-				this.ready = false;
-				continue;
-			}
+		// let box = [1e20, 1e20, -1e20, -1e20];
+		// for(let layer of Object.values(this.lime.canvas.layers)) {
+		// 	if(layer.status != 'ready') {
+		// 		this.ready = false;
+		// 		continue;
+		// 	}
 
-			let lbox = layer.transform.transformBox(layer.boundingBox());
-			box[0] = Math.min(lbox[0], box[0]);
-			box[1] = Math.min(lbox[1], box[1]);
-			box[2] = Math.max(lbox[2], box[2]);
-			box[3] = Math.max(lbox[3], box[3]);
-		}
+		// 	let lbox = layer.transform.transformBox(layer.boundingBox());
+		// 	box[0] = Math.min(lbox[0], box[0]);
+		// 	box[1] = Math.min(lbox[1], box[1]);
+		// 	box[2] = Math.max(lbox[2], box[2]);
+		// 	box[3] = Math.max(lbox[3], box[3]);
+		// }
 		
-		if(box[2] > box[0])
-			this.viewport = box;
+		// if(box[2] > box[0])
+		// 	this.viewport = box;
 	}
 
 	async loadSkin() {

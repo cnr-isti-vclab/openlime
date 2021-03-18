@@ -155,6 +155,12 @@ function lensTest() {
 	lime.pointerManager.onEvent(controllerLens); 
 	lensLayer.controllers.push(controllerLens);
 
+
+	
+	// let ui = new UIBasic(lime);
+	// const { home, fullscreen, rotate } = ui.actions;
+	// ui.actions = { home, fullscreen, rotate };
+
 	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
 	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 

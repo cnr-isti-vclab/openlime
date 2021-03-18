@@ -124,7 +124,7 @@ class CombinerLayer extends Layer {
 		const discardHidden = false;
 		let result = Layer.computeLayersBBox(this.layers, discardHidden);
 		if (this.transform != null && this.transform != undefined) {
-			result = Layer.transformBBox(result, this.transform);
+			result = this.transform.transformBox(result);
 		}
 		return result;
 	}
