@@ -8,6 +8,8 @@
  *
  */
 
+import { BoundingBox } from "./BoundingBox";
+
 class Transform {
 	constructor(options) {
 		Object.assign(this, { x:0, y:0, z:1, a:0, t:0 });
@@ -65,13 +67,11 @@ class Transform {
 
 	/* transform the box (for example -w/2, -h/2 , w/2, h/2 in scene coords) */
 	transformBox(lbox) {
-		let box = [ 1e20, 1e20, -1e20, -1e20];
+		let box = new BoundingBox();
 		for(let i = 0; i < 4; i++) {
-			let p = this.apply(lbox[0 + (i&0x1)<<1], lbox[1 + (i&0x2)]);
-			box[0] = Math.min(p.x, box[0]);
-			box[1] = Math.min(p.y, box[1]);
-			box[2] = Math.max(p.x, box[2]);
-			box[3] = Math.max(p.y, box[3]);
+			let c = lbox.corner(i);
+			let p = this.apply(c[0], c[1]);
+			box.mergePoint(p);
 		}
 		return box;
 	}
@@ -86,13 +86,10 @@ class Transform {
 			{x:viewport.x,               y:viewport.y + viewport.dy},
 			{x:viewport.x + viewport.dx, y:viewport.y + viewport.dy}
 		];
-		let box = [ 1e20, 1e20, -1e20, -1e20];
+		let box = new BoundingBox();
 		for(let corner of corners) {
 			let p = inverse.apply(corner.x -viewport.w/2, corner.y - viewport.h/2);
-			box[0] = Math.min(p.x, box[0]);
-			box[1] = Math.min(p.y, box[1]);
-			box[2] = Math.max(p.x, box[2]);
-			box[3] = Math.max(p.y, box[3]);
+			box.merge(p);
 		}
 		return box;
 	}

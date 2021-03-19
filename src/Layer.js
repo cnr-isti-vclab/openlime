@@ -4,6 +4,7 @@ import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 import { Layout } from './Layout.js'
 import { Cache } from './Cache.js'
+import { BoundingBox } from './BoundingBox.js'
 
 /**
  * @param {string} id unique id for layer.
@@ -155,14 +156,12 @@ class Layer {
 
 	boundingBox() {
 		// FIXME: this do not consider children layers
-		
-		// Take layer bbox
-		const bbox = this.layout.boundingBox();
-		let result = bbox;
+		// Take layout bbox
+		let result = this.layout.boundingBox();
 		
 		// Apply layer transform to bbox
 		if (this.transform != null && this.transform != undefined) {
-			result = Layer.transformBBox(bbox, this.transform);
+			result = this.transform.transformBox(result);
 		}
 		
 		return result;
@@ -171,40 +170,17 @@ class Layer {
 	static computeLayersBBox(layers, discardHidden) {
 		if (layers == undefined || layers == null) {
 			console.log("ASKING BBOX INFO ON NO LAYERS");
-			return null;
+			let emptyBox = new BoundingBox(); 
+			return emptyBox;
 		}
-		let layersBbox = [10000,10000,-10000,-10000];
-		let validBbox = false;
+		let layersBbox = new BoundingBox();
 		for(let layer of Object.values(layers)) {
 			if (!discardHidden || layer.visible) {
 				const bbox = layer.boundingBox();
-				if (bbox != null) {
-					layersBbox = Layer.mergeBoxes(layersBbox, bbox);
-					validBbox = true;
-				}
+				layersBbox.mergeBox(bbox);
 			}
 		}
-		//console.log("computeLayersBBox(" + discardHidden + ") = " + layersBbox);
-		
-		return validBbox ? layersBbox : null;
-	}
-
-	static mergeBoxes(b0,b1) {
-		if (b0 == null) return b1;
-		else if (b1 == null) return b0;
-		else return [Math.min(b0[0], b1[0]), Math.min(b0[1], b1[1]), 
-				     Math.max(b0[2], b1[2]), Math.max(b0[3], b1[3])];
-	}
-
-	static transformBBox(bbox, t) {
-		let result = null;
-
-		if (bbox != null) {
-			const pLow = t.apply(bbox[0], bbox[1]);
-			const pHigh = t.apply(bbox[2], bbox[3]);
-			result =  [pLow.x, pLow.y, pHigh.x, pHigh.y];
-		}
-		return result;
+		return layersBbox;
 	}
 
 	setControl(name, value, dt) {

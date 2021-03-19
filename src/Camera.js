@@ -1,4 +1,5 @@
 import { Transform } from './Transform.js'
+import { BoundingBox } from './BoundingBox.js'
 
 /**
  *  NOTICE TODO: the camera has the transform relative to the whole canvas NOT the viewport.
@@ -15,7 +16,7 @@ class Camera {
 			bounded: true,
 			maxZoom: 4,
 			minZoom: 1,
-			boundingBox: [],
+			boundingBox: new BoundingBox,
 
 			signals: {'update':[]}
 		});
@@ -71,17 +72,20 @@ class Camera {
 			const sw = this.viewport.dx;
 			const sh = this.viewport.dy;
 
-			const bw = (this.boundingBox[2] - this.boundingBox[0]);
-			const bh = (this.boundingBox[3] - this.boundingBox[1]);
+			//
+			let xform = new Transform({x:x, y:y, z:z, a:a,t:0});
+			let tbox = xform.transformBox(this.boundingBox);
+			const bw = tbox.width();
+			const bh = tbox.height();
 
 			// Screen space offset between image boundary and screen boundary
 			// Do not let transform offet go beyond this limit.
 			// if (scaled-image-size < screen) it remains fully contained
 			// else the scaled-image boundary closest to the screen cannot enter the screen.
-			const dx = Math.abs(bw*z-sw)/2;
+			const dx = Math.abs(bw-sw)/2;
 			x = Math.min(Math.max(-dx, x), dx);
 
-			const dy = Math.abs(bh*z-sh)/2;
+			const dy = Math.abs(bh-sh)/2;
 			y = Math.min(Math.max(-dy, y), dy);
 		}
 
@@ -187,6 +191,7 @@ class Camera {
 
 //TODO should fit keeping the same angle!
 	fit(box, dt, size) {
+		if (box.isEmpty()) return;
 		if(!dt) dt = 0;
 
 		//find if we align the topbottom borders or the leftright border.
@@ -194,22 +199,29 @@ class Camera {
 		let h = this.viewport.dy;
 
 		//center of the viewport.
+		console.log("FIT BOX");
+		box.print();
 
-		let bw = box[2] - box[0];
-		let bh = box[3] - box[1];
+		let bw = box.width();
+		let bh = box.height();
+		let c = box.center();
 		let z = Math.min(w/bw, h/bh);
 
-		this.setPosition(dt, -(box[0] + box[2])/2, -(box[1] + box[3])/2, z, 0);
+		this.setPosition(dt, -c[0], -c[1], z, 0);
 	}
 
-	updateBounds(boundingBox, minScale) {
-		this.boundingBox = boundingBox;
+	fitCameraBox(dt) {
+		this.fit(this.boundingBox, dt);
+	}
+
+	updateBounds(box, minScale) {
+		this.boundingBox = box;
 		const w = this.viewport.dx;
 		const h = this.viewport.dy;
 
-		const bw = boundingBox[2] - boundingBox[0];
-		const bh = boundingBox[3] - boundingBox[1];
-
+		let bw = this.boundingBox.width();
+		let bh = this.boundingBox.height();
+	
 		const minScreenFraction = 0.75;
 		const maxFixedZoom = 4;
 		this.minZoom = Math.min(w/bw, h/bh) * minScreenFraction;
