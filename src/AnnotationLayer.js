@@ -1,3 +1,4 @@
+import { BoundingBox } from './BoundingBox.js';
 import { Layer } from './Layer.js'
 
 /**
@@ -45,9 +46,10 @@ class AnnotationLayer extends Layer {
 			this.svgElement.classList.add('openlime-svgoverlay');
 			this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 			this.svgElement.append(this.svgGroup);
-			this.svgElement.setAttribute('viewBox', this.viewBox);
-			this.viewBox = this.viewBox.split(' ');
-
+			this.svgElement.setAttribute('viewBox', this.viewBox); // box is currently a string of numbers
+			// this.viewBox = this.viewBox.split(' ');
+			this.viewBox = new BoundingBox(); // convert to bbox object
+			this.viewBox.fromArray(options.box.split(' '));
 
 			let root = this.overlayElement.attachShadow( { mode: "open" });
 

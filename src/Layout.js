@@ -1,3 +1,4 @@
+import { BoundingBox } from "./BoundingBox";
 
 /**
  * @param {string|Object} url URL of the image or the tiled config file, 
@@ -17,7 +18,7 @@ class Layout {
 			qbox: [],          //array of bounding box in tiles, one for mipmap 
 			bbox: [],          //array of bounding box in pixels (w, h)
 
-			signals: { ready: [] },          //callbacks when the layout is ready.
+			signals: { ready: [], updateSize: [] },          //callbacks when the layout is ready.
 			status: null
 		});
 		if(options)
@@ -59,7 +60,7 @@ class Layout {
 	}
 
 	boundingBox() {
-		return [-this.width/2, -this.height/2, this.width/2, this.height/2];
+		return new BoundingBox({xLow:-this.width/2, yLow: -this.height/2, xHigh: this.width/2, yHigh: this.height/2});
 	}
 
 /**
@@ -69,8 +70,8 @@ class Layout {
 	index(level, x, y) {
 		let startindex = 0;
 		for(let i = 0; i < level; i++)
-			startindex += this.qbox[i][2]*this.qbox[i][3];
-		return startindex + y*this.qbox[level][2] + x;
+			startindex += this.qbox[i].xHigh*this.qbox[i].yHigh;
+		return startindex + y*this.qbox[level].xHigh + x;
 	}
 
 /*
@@ -85,21 +86,23 @@ class Layout {
 		var h = this.height;
 
 		if(this.type == 'image') {
-			this.qbox[0] = [0, 0, 1, 1];
-			this.bbox[0] = [0, 0, w, h];
+			this.qbox[0] = new BoundingBox({xLow:0, yLow: 0, xHigh: 1, yHigh: 1});
+			this.bbox[0] = new BoundingBox({xLow:0, yLow: 0, xHigh: w, yHigh: h}); 
 			this.tiles.push({index:0, level:0, x:0, y:0});
+			// Acknowledge bbox change (useful for knowing scene extension (at canvas level))
+			this.emit('updateSize');
 			return 1;
 		}
 
 		let tiles = [];
 		var index = 0;
 		for(let level = this.nlevels - 1; level >= 0; level--) {
-			this.qbox[level] = [0, 0, 0, 0];
-			this.bbox[level] = [0, 0, w, h];
+			this.qbox[level] = new BoundingBox({xLow:0, yLow: 0, xHigh: 0, yHigh: 0});
+			this.bbox[level] = new BoundingBox({xLow:0, yLow: 0, xHigh: w, yHigh: h}); 
 			for(let y = 0; y*this.tilesize < h; y++) {
-				this.qbox[level][3] = y+1;
+				this.qbox[level].yHigh = y+1;
 				for(let x = 0; x*this.tilesize < w; x ++) {
-					this.qbox[level][2] = x+1;
+					this.qbox[level].xHigh = x+1;
 					tiles.push({level:level, x:x, y:y});
 				}
 			}
@@ -112,6 +115,9 @@ class Layout {
 			tile.index = index;
 			this.tiles[index] = tile;
 		}
+
+		// Acknowledge bbox (useful for knowing scene extension (at canvas level))
+		this.emit('updateSize');
 	}
 
 /** Return the coordinates of the tile (in [0, 0, w h] image coordinate system) and the texture coords associated. 
@@ -148,8 +154,8 @@ class Layout {
 				tcoords[1] = tcoords[7] = ty/side;
 		}
 
-		var lx  = this.qbox[level][2]-1; //last tile x pos, if so no overlap.
-		var ly  = this.qbox[level][3]-1;
+		var lx  = this.qbox[level].xHigh-1; //last tile x pos, if so no overlap.
+		var ly  = this.qbox[level].yHigh-1;
 
 		var over = this.overlap;
 		if(over) {
@@ -192,28 +198,31 @@ class Layout {
 		//
 		let bbox = transform.getInverseBox(viewport);
 		//find box in image coordinates where (0, 0) is in the upper left corner.
-		bbox[0] += this.width/2;
-		bbox[2] += this.width/2;
-		bbox[1] += this.height/2;
-		bbox[3] += this.height/2;
+		bbox.shift(width/2, height/2);
+		// bbox[0] += this.width/2;
+		// bbox[2] += this.width/2;
+		// bbox[1] += this.height/2;
+		// bbox[3] += this.height/2;
 
 		let pyramid = [];
 		for(let level = 0; level <= minlevel; level++) {
 			let ilevel = this.nlevels -1 -level;
 			let side = this.tilesize*Math.pow(2, ilevel);
 
-			//quantized bbox
-			let qbox = [
-				Math.floor((bbox[0])/side),
-				Math.floor((bbox[1])/side),
-				Math.floor((bbox[2]-1)/side) + 1,
-				Math.floor((bbox[3]-1)/side) + 1];
+			// //quantized bbox
+			// let qbox = new BoundingBox({
+			// 	xLow: Math.floor(bbox.xLow/side),
+			// 	yLow: Math.floor(bbox.yLow/side),
+			// 	xHigh: Math.floor((bbox.xHigh-1)/side) + 1,
+			// 	yHigh: Math.floor((bbox.yHigh-1)/side) + 1});
+			let qbox = new BoundingBox(bbox);
+			qbox.quantize(side);
 
 			//clamp!
-			qbox[0] = Math.max(qbox[0]-border, this.qbox[level][0]);
-			qbox[1] = Math.max(qbox[1]-border, this.qbox[level][1]);
-			qbox[2] = Math.min(qbox[2]+border, this.qbox[level][2]);
-			qbox[3] = Math.min(qbox[3]+border, this.qbox[level][3]);
+			qbox.xLow = Math.max(qbox.xLow-border, this.qbox[level].xLow);
+			qbox.yLow = Math.max(qbox.yLow-border, this.qbox[level].yLow);
+			qbox.xHigh = Math.min(qbox.xHigh+border, this.qbox[level].xHigh);
+			qbox.yHigh = Math.min(qbox.yHigh+border, this.qbox[level].yHigh);
 			pyramid[level] = qbox;
 		}
 		return { level: minlevel, pyramid: pyramid };

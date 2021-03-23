@@ -1,4 +1,5 @@
 import { Camera } from './Camera.js'
+import { Layer  } from './Layer.js'
 
 /**
  * @param {Element|String} canvas dom element or query selector for a <canvas> element.
@@ -89,7 +90,6 @@ class Canvas {
 
 	}
 
-
 	restoreWebGL() {
 		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
 		this.gl = this.gl || 
@@ -108,12 +108,21 @@ class Canvas {
 
 	addLayer(id, layer) {
 		layer.addEvent('update', () => { this.emit('update'); });
+		layer.addEvent('updateSize', () => { this.updateSize(); });
 		layer.gl = this.gl;
 		layer.overlayElement = this.overlayElement;
 		this.layers[id] = layer;
 		this.prefetch();
 	}
 
+	updateSize() {
+		const discardHidden = true;
+		let sceneBBox = Layer.computeLayersBBox(this.layers, discardHidden);
+		let minScale =  Layer.computeLayersMinScale(this.layers, discardHidden);
+		console.log("Update Scene BBox " + sceneBBox.xLow.toFixed(2) + " " + sceneBBox.xHigh.toFixed(2) + " minScale " + minScale.toFixed(2));
+		
+		if (sceneBBox != null) this.camera.updateBounds(sceneBBox, minScale);
+	}
 
 	draw(time) {
 		let gl = this.gl;

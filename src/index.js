@@ -136,7 +136,7 @@ function lensTest() {
 		url: 'assets/svbrdf/vis/kdMap.jpg',
 		layout: 'image',
 		zindex: 0,
-		transform: { x: 0, y: 0, z: 1, a: 0 },
+		transform: { x: 0, y: 0, z: 0.5, a: 0 },
 		visible: false
 	});
 
@@ -155,6 +155,12 @@ function lensTest() {
 											priority: 0});
 	lime.pointerManager.onEvent(controllerLens); 
 	lensLayer.controllers.push(controllerLens);
+
+
+	
+	// let ui = new UIBasic(lime);
+	// const { home, fullscreen, rotate } = ui.actions;
+	// ui.actions = { home, fullscreen, rotate };
 
 	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
 	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch

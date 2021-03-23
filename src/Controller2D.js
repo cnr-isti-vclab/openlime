@@ -1,3 +1,4 @@
+import { BoundingBox } from './BoundingBox.js';
 import { Controller } from './Controller.js'
 
 /*
@@ -11,8 +12,9 @@ class Controller2D extends Controller {
 		super(options);
 
 		this.callback = callback;
-		if(!this.box)
-			this.box = [-0.99, -0.99, 0.99, 0.99];
+		if(!this.box) {
+			this.box = new BoundingBox({xLow:-0.99, yLow: -0.99, xHigh: 0.99, yHigh: 0.99});
+		}
 
 		this.panning = false;
 	}
@@ -21,8 +23,8 @@ class Controller2D extends Controller {
 		let rect = e.target.getBoundingClientRect();
 		let x = Math.max(0, Math.min(1, e.offsetX/rect.width));
 		let y = Math.max(0, Math.min(1, 1 - e.offsetY/rect.height));
-		x = this.box[0] + x*(this.box[2] - this.box[0]);
-		y = this.box[1] + y*(this.box[3] - this.box[1]);
+		x = this.box.xLow + x*this.box.width();
+		y = this.box.yLow + y*this.box.height();
 		this.callback(x, y);
 	}
 

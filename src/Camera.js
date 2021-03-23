@@ -1,4 +1,5 @@
 import { Transform } from './Transform.js'
+import { BoundingBox } from './BoundingBox.js'
 
 /**
  *  NOTICE TODO: the camera has the transform relative to the whole canvas NOT the viewport.
@@ -18,7 +19,8 @@ class Camera {
 			viewport: null,
 			bounded: true,
 			maxZoom: 4,
-			minZoom: 'full',
+			minZoom: 1,
+			boundingBox: new BoundingBox,
 
 			signals: {'update':[]}
 		});
@@ -67,6 +69,30 @@ class Camera {
 	}
 
 	setPosition(dt, x, y, z, a) {
+		// Discard events due to cursor outside window
+		if (Math.abs(x) > 64000 || Math.abs(y) > 64000) return;
+
+		if (this.bounded) {
+			const sw = this.viewport.dx;
+			const sh = this.viewport.dy;
+
+			//
+			let xform = new Transform({x:x, y:y, z:z, a:a,t:0});
+			let tbox = xform.transformBox(this.boundingBox);
+			const bw = tbox.width();
+			const bh = tbox.height();
+
+			// Screen space offset between image boundary and screen boundary
+			// Do not let transform offet go beyond this limit.
+			// if (scaled-image-size < screen) it remains fully contained
+			// else the scaled-image boundary closest to the screen cannot enter the screen.
+			const dx = Math.abs(bw-sw)/2;
+			x = Math.min(Math.max(-dx, x), dx);
+
+			const dy = Math.abs(bh-sh)/2;
+			y = Math.min(Math.max(-dy, y), dy);
+		}
+
 		let now = performance.now();
 		this.source = this.getCurrentTransform(now);
 		//the angle needs to be interpolated in the shortest direction.
@@ -78,6 +104,7 @@ class Camera {
 		Object.assign(this.target, { x: x, y:y, z:z, a:a, t:now + dt });
 		this.emit('update');
 	}
+	
 
 /*
  * Pan the camera 
@@ -100,6 +127,9 @@ class Camera {
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
 
+		if (this.bounded) {
+			z = Math.min(Math.max(z, this.minZoom), this.maxZoom);
+		}
 
 		//x, an y should be the center of the zoom.
 		m.x += (m.x+x)*(m.z - z)/m.z;
@@ -123,9 +153,15 @@ class Camera {
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
 
+
 		//rapid firing wheel event need to compound.
 		//but the x, y in input are relative to the current transform.
 		dz *= this.target.z/m.z;
+
+		if (this.bounded) {
+			if (m.z*dz < this.minZoom) dz = this.minZoom / m.z;
+			if (m.z*dz > this.maxZoom) dz = this.maxZoom / m.z;
+		}
 
 		//transform is x*z + dx = X , there x is positrion in scene, X on screen
 		//we want x*z*dz + dx1 = X (stay put, we need to find dx1.
@@ -159,6 +195,7 @@ class Camera {
 
 //TODO should fit keeping the same angle!
 	fit(box, dt, size) {
+		if (box.isEmpty()) return;
 		if(!dt) dt = 0;
 
 		//find if we align the topbottom borders or the leftright border.
@@ -166,14 +203,34 @@ class Camera {
 		let h = this.viewport.dy;
 
 		//center of the viewport.
+		console.log("FIT BOX");
+		box.print();
 
-		let bw = box[2] - box[0];
-		let bh = box[3] - box[1];
+		let bw = box.width();
+		let bh = box.height();
+		let c = box.center();
 		let z = Math.min(w/bw, h/bh);
 
-		this.setPosition(dt, -(box[0] + box[2])/2, -(box[1] + box[3])/2, z, 0);
+		this.setPosition(dt, -c[0], -c[1], z, 0);
 	}
 
+	fitCameraBox(dt) {
+		this.fit(this.boundingBox, dt);
+	}
+
+	updateBounds(box, minScale) {
+		this.boundingBox = box;
+		const w = this.viewport.dx;
+		const h = this.viewport.dy;
+
+		let bw = this.boundingBox.width();
+		let bh = this.boundingBox.height();
+	
+		const minScreenFraction = 0.75;
+		const maxFixedZoom = 4;
+		this.minZoom = Math.min(w/bw, h/bh) * minScreenFraction;
+		this.maxZoom = minScale > 0 ? maxFixedZoom / minScale : maxFixedZoom;
+	}
 }
 
 export { Camera }

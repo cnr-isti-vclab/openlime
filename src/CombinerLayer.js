@@ -117,6 +117,27 @@ class CombinerLayer extends Layer {
 	//TODO release textures and framebuffers
 	deleteFramebuffers() {
 	}
+
+	boundingBox() {
+		// Combiner ask the combination of all its children boxes
+		// keeping the hidden, because they could be hidden, but revealed by the combiner
+		const discardHidden = false;
+		let result = Layer.computeLayersBBox(this.layers, discardHidden);
+		if (this.transform != null && this.transform != undefined) {
+			result = this.transform.transformBox(result);
+		}
+		return result;
+	}
+	
+	scale() {
+		// Combiner ask the scale of all its children
+		// keeping the hidden, because they could be hidden, but revealed by the combiner
+		const discardHidden = false;
+		console.log("Combiner compute scale, visible " + this.visible);
+		let scale = Layer.computeLayersMinScale(this.layers, discardHidden);
+		scale *= this.transform.z;
+		return scale;
+	}
 }
 
 Layer.prototype.types['combiner'] = (options) => { return new ImageCombiner(options); }

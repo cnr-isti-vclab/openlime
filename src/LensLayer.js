@@ -75,7 +75,7 @@ class LensLayer extends CombinerLayer {
 
         // Keep the framwbuffer to the window size in order to avoid changing at each scale event
      	if(!this.framebuffers.length || this.layout.width != viewport.w || this.layout.height != viewport.h) {
-			this.deleteFramebuffers();
+            this.deleteFramebuffers();
 			this.layout.width = viewport.w;
 			this.layout.height = viewport.h;
 			this.createFramebuffers();
