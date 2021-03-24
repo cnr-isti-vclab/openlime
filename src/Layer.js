@@ -258,7 +258,7 @@ class Layer {
 
 //		find which quads to draw and in case request for them
 		transform = this.transform.compose(transform);
-		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
+		let needed = this.layout.neededBox(viewport, transform, 0, this.mipmapBias);
 		let torender = this.toRender(needed);
 
 		let matrix = transform.projectionMatrix(viewport);

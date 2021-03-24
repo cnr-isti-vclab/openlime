@@ -17,7 +17,7 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 
 //combinerTest();
 //imageTest('deepzoom');
-//rtiTest('ycc');
+rtiTest('bilinear');
 //brdfTest();
 //tomeTest();
 //testUIBasic();
@@ -25,7 +25,6 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //testUISvg();
 //lensTest();
 //testSVGAnnotations();
-testSVGAnnotations();
 
 function testSVGAnnotations() {
 	let layer0 = new Layer({
@@ -83,16 +82,16 @@ function tomeTest() {
 
 function rtiTest(dataset) {
 	let layer0 = new Layer({ 
-		layout: 'image', 
+		layout: 'deepzoom', 
 		type:'rti',
-		url: 'assets/rti/' + dataset + '/info.json'
+		url: 'assets/' + dataset + '/info.json'
 	});
-	lime.canvas.addLayer('tome', layer0); 
+	lime.canvas.addLayer('bilinear', layer0); 
 
 	
 	let ui = new UIBasic(lime);
-	const { home, fullscreen, rotate } = ui.actions;
-	ui.actions = { home, fullscreen, rotate };
+	//const { home, fullscreen, rotate } = ui.actions;
+	//ui.actions = { home, fullscreen, rotate };
 	
 //	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)], ); lime.canvas.emit('update'); }, 2000);
 }

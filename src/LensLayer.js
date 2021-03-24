@@ -66,9 +66,6 @@ class LensLayer extends CombinerLayer {
             
          let gl = this.gl;
 
-        // Store old viewport
-        let oldViewport = {x: viewport.x, y: viewport.y, dx: viewport.dx, dy: viewport.dy, w: viewport.w, h: viewport.h };
-
         // Draw on a restricted viewport around the lens
         let lensViewport = this.getLensViewport(transform, viewport);
         gl.viewport(lensViewport.x, lensViewport.y, lensViewport.dx, lensViewport.dy);

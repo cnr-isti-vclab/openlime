@@ -3,7 +3,7 @@ import {Lens} from './Lens.js'
 
 
 class ControllerLens extends Controller {
-	constructor(lensLayer, camera) {
+	constructor(lensLayer, camera, options) {
 
 		super(options);
 

@@ -158,6 +158,7 @@ class Layout {
 		var ly  = this.qbox[level].yHigh-1;
 
 		var over = this.overlap;
+		//console.log("before", tcoords)
 		if(over) {
 			let dtx = over / (tx/(1<<ilevel) + (x==0?0:over) + (x==lx?0:over));
 			let dty = over / (ty/(1<<ilevel) + (y==0?0:over) + (y==ly?0:over));
@@ -167,6 +168,7 @@ class Layout {
 			tcoords[4] = tcoords[6] = (x==lx? 1: 1 - dtx);
 			tcoords[1] = tcoords[7] = (y==ly? 1: 1 - dty);
 		} 
+		//console.log("after", tcoords)
 		//flip Y coordinates 
 		//TODO cleanup this mess!
 		let tmp = tcoords[1];
@@ -190,7 +192,7 @@ class Layout {
  */
 	neededBox(viewport, transform, border, bias) {
 		if(this.type == "image")
-			return { level:0, pyramid: [[0, 0, 1, 1]] };
+			return { level:0, pyramid: [new BoundingBox({ xLow:0, yLow:0, xHigh:1, yHigh:1 })] };
 
 		//here we are computing with inverse levels; level 0 is the bottom!
 		let iminlevel = Math.max(0, Math.min(Math.floor(-Math.log2(transform.z) + bias), this.nlevels-1));
@@ -235,6 +237,7 @@ class Layout {
 
 /**
  *  url points to the folder (without /)
+
  *  width and height must be defined
  */
 	initGoogle(callback) {
@@ -267,12 +270,12 @@ class Layout {
 
 		let doc = xml.documentElement;
 		this.suffix = doc.getAttribute('Format');
-		this.tilesize = doc.getAttribute('TileSize');
-		this.overlap = doc.getAttribute('Overlap');
+		this.tilesize = parseInt(doc.getAttribute('TileSize'));
+		this.overlap = parseInt(doc.getAttribute('Overlap'));
 
 		let size = doc.querySelector('Size');
-		this.width = size.getAttribute('Width');
-		this.height = size.getAttribute('Height');
+		this.width = parseInt(size.getAttribute('Width'));
+		this.height = parseInt(size.getAttribute('Height'));
 
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
@@ -352,6 +355,7 @@ class Layout {
 			let hs = tw
 			if (yr + tw*s > this.height)
 				hs = (this.height - yr + s - 1) / s
+
 
 			url = url.substr(0, url.lastIndexOf("/"));
 			return `${url}/${xr},${yr},${wr},${hr}/${ws},${hs}/0/default.jpg`;
