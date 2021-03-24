@@ -198,31 +198,21 @@ class Layout {
 		//
 		let bbox = transform.getInverseBox(viewport);
 		//find box in image coordinates where (0, 0) is in the upper left corner.
-		bbox.shift(width/2, height/2);
-		// bbox[0] += this.width/2;
-		// bbox[2] += this.width/2;
-		// bbox[1] += this.height/2;
-		// bbox[3] += this.height/2;
+		bbox.shift(this.width/2, this.height/2);
 
 		let pyramid = [];
 		for(let level = 0; level <= minlevel; level++) {
 			let ilevel = this.nlevels -1 -level;
 			let side = this.tilesize*Math.pow(2, ilevel);
 
-			// //quantized bbox
-			// let qbox = new BoundingBox({
-			// 	xLow: Math.floor(bbox.xLow/side),
-			// 	yLow: Math.floor(bbox.yLow/side),
-			// 	xHigh: Math.floor((bbox.xHigh-1)/side) + 1,
-			// 	yHigh: Math.floor((bbox.yHigh-1)/side) + 1});
 			let qbox = new BoundingBox(bbox);
 			qbox.quantize(side);
 
 			//clamp!
-			qbox.xLow = Math.max(qbox.xLow-border, this.qbox[level].xLow);
-			qbox.yLow = Math.max(qbox.yLow-border, this.qbox[level].yLow);
-			qbox.xHigh = Math.min(qbox.xHigh+border, this.qbox[level].xHigh);
-			qbox.yHigh = Math.min(qbox.yHigh+border, this.qbox[level].yHigh);
+			qbox.xLow  = Math.max(qbox.xLow  - border, this.qbox[level].xLow);
+			qbox.yLow  = Math.max(qbox.yLow  - border, this.qbox[level].yLow);
+			qbox.xHigh = Math.min(qbox.xHigh + border, this.qbox[level].xHigh);
+			qbox.yHigh = Math.min(qbox.yHigh + border, this.qbox[level].yHigh);
 			pyramid[level] = qbox;
 		}
 		return { level: minlevel, pyramid: pyramid };

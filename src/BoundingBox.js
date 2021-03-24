@@ -60,7 +60,7 @@ class BoundingBox {
         this.yHigh += dy;
     }
 
-    quantize(size) {
+    quantize(side) {
         this.xLow =  Math.floor(this.xLow/side);
         this.yLow =  Math.floor(this.yLow/side);
         this.xHigh = Math.floor((this.xHigh-1)/side) + 1;

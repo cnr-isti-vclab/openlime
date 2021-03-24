@@ -310,8 +310,8 @@ class Layer {
 		let minlevel = needed.level;
 		var box = needed.pyramid[minlevel];
 
-		for(var y = box[1]; y < box[3]; y++) {
-			for(var x = box[0]; x < box[2]; x++) {
+		for(var y = box.yLow; y < box.yHigh; y++) {
+			for(var x = box.xLow; x < box.xHigh; x++) {
 				var level = minlevel;
 				while(level >= 0) {
 					var d = minlevel - level;
@@ -444,8 +444,8 @@ class Layer {
 		for(let level = 0; level <= needed.level; level++) {
 			let box = needed.pyramid[level];
 			let tmp = [];
-			for(let y = box[1]; y < box[3]; y++) {
-				for(let x = box[0]; x < box[2]; x++) {
+			for(let y = box.yLow; y < box.yHigh; y++) {
+				for(let x = box.xLow; x < box.xHigh; x++) {
 					let index = this.layout.index(level, x, y);
 					let tile = this.tiles[index];
 					tile.time = now;
@@ -454,10 +454,9 @@ class Layer {
 						tmp.push(tile);
 				}
 			}
-			let cx = (box[0] + box[2])/2;
-			let cy = (box[1] + box[3])/2;
+			let c = box.center();
 			//sort tiles by distance to the center TODO: check it's correct!
-			tmp.sort(function(a, b) { return Math.abs(a.x - cx) + Math.abs(a.y - cy) - Math.abs(b.x - cx) - Math.abs(b.y - cy); });
+			tmp.sort(function(a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
 			this.queue = this.queue.concat(tmp);
 		}
 		Cache.setCandidates(this);

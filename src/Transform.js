@@ -89,7 +89,7 @@ class Transform {
 		let box = new BoundingBox();
 		for(let corner of corners) {
 			let p = inverse.apply(corner.x -viewport.w/2, corner.y - viewport.h/2);
-			box.merge(p);
+			box.mergePoint(p);
 		}
 		return box;
 	}
