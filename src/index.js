@@ -19,7 +19,7 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //imageTest('deepzoom');
 rtiTest('bilinear');
 //brdfTest();
-//tomeTest();
+tomeTest();
 //testUIBasic();
 
 //testUISvg();
@@ -82,7 +82,7 @@ function tomeTest() {
 
 function rtiTest(dataset) {
 	let layer0 = new Layer({ 
-		layout: 'deepzoom', 
+		layout: 'tarzoom', 
 		type:'rti',
 		url: 'assets/' + dataset + '/info.json'
 	});

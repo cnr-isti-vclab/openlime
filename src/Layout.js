@@ -32,6 +32,7 @@ class Layout {
 					case 'image':    await this.initImage(); break;
 					case 'google':   await this.initGoogle(); break;
 					case 'deepzoom': await this.initDeepzoom(); break;
+					case 'tarzoom':  await this.initTarzoom(); break;
 					case 'zoomify':  await this.initZoomify(); break;
 					case 'iiif':     await this.initIIIF(); break;
 				}
@@ -148,6 +149,7 @@ class Layout {
 			if(this.type == 'google')
 				tcoords[4] = tcoords[6] = tx/side;
 		}
+
 		if(side*(y+1) > this.height) {
 			ty = (this.height - side*y);
 			if(this.type == 'google')
@@ -158,7 +160,6 @@ class Layout {
 		var ly  = this.qbox[level].yHigh-1;
 
 		var over = this.overlap;
-		//console.log("before", tcoords)
 		if(over) {
 			let dtx = over / (tx/(1<<ilevel) + (x==0?0:over) + (x==lx?0:over));
 			let dty = over / (ty/(1<<ilevel) + (y==0?0:over) + (y==ly?0:over));
@@ -168,7 +169,6 @@ class Layout {
 			tcoords[4] = tcoords[6] = (x==lx? 1: 1 - dtx);
 			tcoords[1] = tcoords[7] = (y==ly? 1: 1 - dty);
 		} 
-		//console.log("after", tcoords)
 		//flip Y coordinates 
 		//TODO cleanup this mess!
 		let tmp = tcoords[1];
@@ -220,7 +220,7 @@ class Layout {
 		return { level: minlevel, pyramid: pyramid };
 	}
 
-	getTileURL(url, level, x, y) {
+	getTileURL(url, tile) {
 		throw Error("Layout not defined or ready.");
 	}
 
@@ -230,7 +230,7 @@ class Layout {
  * Witdh and height can be recovered once the image is downloaded.
 */
 	initImage() {
-		this.getTileURL = (url, x, y, level) => { return url; }
+		this.getTileURL = (url, tile) => { return url; }
 		this.nlevels = 1;
 		this.tilesize = 0;
 	}
@@ -250,8 +250,8 @@ class Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.getTileURL = (url, x, y, level) => {
-			return url + "/" + level + "/" + y + "/" + x + '.' + this.suffix;
+		this.getTileURL = (url, tile) => {
+			return url + "/" + tile.level + "/" + tile.y + "/" + tile.x + '.' + this.suffix;
 		};
 	}
 
@@ -282,11 +282,31 @@ class Layout {
 
 		this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '_files/';
 
-		this.getTileURL = (url, x, y, level) => {
+		this.getTileURL = (url, tile) => {
 			url = url.substr(0, url.lastIndexOf(".")) + '_files/';
-			return url + level + '/' + x + '_' + y + '.' + this.suffix;
+			return url + tile.level + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
 		}; 
 	}
+
+	async initTarzoom() {		
+		var response = await fetch(this.url);
+		if(!response.ok) {
+			this.status = "Failed loading " + this.url + ": " + response.statusText;
+			return;
+		}
+		let json = await response.json();
+		Object.assign(this, json); //suffix, tilesize, overlap, width, height, levels
+		//this.nlevels = this.levels.length;
+		this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '.tzb';
+
+		this.getTileURL = (url, tile) => {
+			tile.start = this.offsets[tile.index];
+			tile.end = this.offsets[tile.index+1];
+			url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
+			return url; // + level + '/' + x + '_' + y + '.' + this.suffix;
+		}; 
+	}
+
 
 
 /**
@@ -313,11 +333,11 @@ class Layout {
 
 		this.url = this.url.substr(0, this.url.lastIndexOf("/"));
 
-		this.getTileURL = (url, x, y, level) => {
-			let index = this.index(level, x, y)>>>0;
-			let group = index >> 8;
+		this.getTileURL = (url, tile) => {
+			//let index = this.index(level, x, y)>>>0;
+			let group = tile.index >> 8;
 			url = url.substr(0, url.lastIndexOf("/"));
-			return this.url + "/TileGroup" + group + "/" + level + "-" + x + "-" + y + "." + this.suffix;
+			return this.url + "/TileGroup" + group + "/" + tile.level + "-" + tile.x + "-" + tile.y + "." + this.suffix;
 		};
 	}
 
@@ -337,14 +357,14 @@ class Layout {
 
 		this.url = this.url.substr(0, this.url.lastIndexOf("/"));
 
-		this.getTileURL = (url, x, y, level) => {
+		this.getTileURL = (url, tile) => {
 			let tw = this.tilesize;
-			let ilevel = parseInt(this.nlevels - 1 - level);
-			let s = Math.pow(2, level);
+			let ilevel = parseInt(this.nlevels - 1 - tile.level);
+			let s = Math.pow(2, tile.level);
 
 			//region parameters
-			let xr = x * tw * s;
-			let yr = y * tw * s;
+			let xr = tile.x * tw * s;
+			let yr = tile.y * tw * s;
 			let wr = Math.min(tw * s, this.width - xr)
 			let hr = Math.min(tw * s, this.height - yr);
 
@@ -355,7 +375,6 @@ class Layout {
 			let hs = tw
 			if (yr + tw*s > this.height)
 				hs = (this.height - yr + s - 1) / s
-
 
 			url = url.substr(0, url.lastIndexOf("/"));
 			return `${url}/${xr},${yr},${wr},${hr}/${ws},${hs}/0/default.jpg`;

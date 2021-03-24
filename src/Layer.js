@@ -26,6 +26,40 @@ import { BoundingBox } from './BoundingBox.js'
 class Layer {
 	constructor(options) {
 
+			//create from derived class if type specified
+		if(options.type) {
+			let type = options.type;
+			delete options.type;
+			if(type in this.types) {
+				
+				return this.types[type](options);
+			}
+			throw "Layer type: " + type + "  module has not been loaded";
+		} 
+
+		this.init(options);
+
+		/*
+		//create members from options.
+		this.rasters = this.rasters.map((raster) => new Raster(raster));
+
+		//layout needs to be the same for all rasters
+		if(this.rasters.length) {
+			if(typeof(this.layout) != 'object')
+				this.layout = new Layout(this.rasters[0].url, this.layout)
+			this.setLayout(this.layout)
+
+			if(this.rasters.length)
+				for(let raster in this.rasters)
+					raster.layout = this.layout;
+		}
+
+		if(this.shader)
+			this.shader = new Shader(this.shader);
+		*/
+	}
+
+	init(options) {
 		Object.assign(this, {
 			transform: new Transform(),
 			visible: true,
@@ -57,25 +91,9 @@ class Layer {
 
 		Object.assign(this, options);
 
-		//create from derived class if type specified
-		if(this.type) {
-			if(this.type in this.types) {
-				options.type = null; //avoid infinite recursion!
-				return this.types[this.type](options);
-			}
-			throw "Layer type: " + this.type + " has not been loaded";
-		}
-
-		//create members from options.
-		this.rasters = this.rasters.map((raster) => new Raster(raster));
 		this.transform = new Transform(this.transform);
 
-		//layout needs to becommon among all rasters.
-		if(typeof(this.layout) != 'object' && this.rasters.length) 
-			this.setLayout(new Layout(this.rasters[0], this.layout));
-
-		if(this.shader)
-			this.shader = new Shader(this.shader);
+		
 	}
 
 	addEvent(event, callback) {
@@ -469,9 +487,11 @@ class Layer {
 		this.requested[tile.index] = true;
 
 		for(let sampler of this.shader.samplers) {
-			let path = this.layout.getTileURL(this.rasters[sampler.id].url, tile.x, tile.y, tile.level );
+			
 			let raster = this.rasters[sampler.id];
-			raster.loadImage(path, this.gl, (tex, size) => {
+			tile.url = raster.layout.getTileURL(raster.url, tile);
+
+			raster.loadImage(tile, this.gl, (tex, size) => {
 
 				if(this.layout.type == "image") {
 					this.layout.width = raster.width;

@@ -28,10 +28,10 @@ class BRDFLayer extends Layer {
 		if(!this.layout)
 			this.layout = 'image';
 
-		this.rasters.push(new Raster({ url: this.channels['kd'], type: 'vec3', attribute: 'kd', colorspace: this.colorspaces['kd'] }));
-		this.rasters.push(new Raster({ url: this.channels['ks'], type: 'vec3', attribute: 'ks', colorspace: this.colorspaces['ks'] }));
-		this.rasters.push(new Raster({ url: this.channels['normals'], type: 'vec3', attribute: 'normals', colorspace: 'linear' }));
-		this.rasters.push(new Raster({ url: this.channels['gloss'], type: 'float', attribute: 'gloss', colorspace: 'linear' }));
+		this.rasters.push(new Raster({ url: this.channels['kd'],      type: 'vec3',  attribute: 'kd',      colorspace: this.colorspaces['kd'] }));
+		this.rasters.push(new Raster({ url: this.channels['ks'],      type: 'vec3',  attribute: 'ks',      colorspace: this.colorspaces['ks'] }));
+		this.rasters.push(new Raster({ url: this.channels['normals'], type: 'vec3',  attribute: 'normals', colorspace: 'linear' }));
+		this.rasters.push(new Raster({ url: this.channels['gloss'],   type: 'float', attribute: 'gloss',   colorspace: 'linear' }));
 		
 		let size = {width:this.width, height:this.height};
 		this.setLayout(new Layout(this.channels['kd'], this.layout, size));

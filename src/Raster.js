@@ -33,9 +33,12 @@ class Raster {
 	}
 
 
-	loadImage(url, gl, callback) {
+	loadImage(tile, gl, callback) {
 		(async () => {
-			var response = await fetch(url);
+			let options = {};
+			if(tile.end)
+				options.headers = { range: `bytes=${tile.start}-${tile.end}` }
+			var response = await fetch(tile.url, options);
 			if(!response.ok) {
 				console.log();
 				callback("Failed loading " + url + ": " + response.statusText);

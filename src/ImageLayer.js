@@ -21,11 +21,15 @@ class ImageLayer extends Layer {
 		if(!this.layout)
 			this.layout = 'image';
 
-		this.rasters.push(new Raster({ url: this.url, type: 'vec3', attribute: 'kd', colorspace: 'sRGB' }));
+		
 
 		let size = {width:this.width || 0, height:this.height || 0 };
 		this.setLayout(new Layout(this.url, this.layout, size));
+		let raster = new Raster({ url: this.url, type: 'vec3', attribute: 'kd', colorspace: 'sRGB' });
+		raster.layout = this.layout;
 
+		this.rasters.push(raster);
+		
 
 		let shader = new Shader({
 			'label': 'Rgb',

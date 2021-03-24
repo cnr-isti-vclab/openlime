@@ -31,7 +31,7 @@ class RTILayer extends Layer {
 		this.controls['light'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };
 		this.worldRotation = 0; //if the canvas or the layer rotate, light direction neeeds to be rotated too.
 		if(this.url)
-			this.init(this.url);
+			this.loadJson(this.url);
 	}
 
 	planeUrl(url, plane) {
@@ -40,6 +40,7 @@ class RTILayer extends Layer {
 			case 'image':    return path + 'plane_' + plane + '.jpg'; break;
 			case 'google':   return path + 'plane_' + plane;          break;
 			case 'deepzoom': return path + 'plane_' + plane + '.dzi'; break;
+			case 'tarzoom':  return path + 'plane_' + plane + '.tzi'; break;
 			case 'zoomify':  return path + 'plane_' + plane + '/ImageProperties.xml'; break;
 			//case 'iip':      return this.plane.throw Error("Unimplemented");
 			case 'iiif': throw Error("Unimplemented");
@@ -56,7 +57,7 @@ class RTILayer extends Layer {
 		this.setControl('light', light, dt);
 	}
 
-	init(url) {
+	loadJson(url) {
 		(async () => {
 			var response = await fetch(this.url);
 			if(!response.ok) {
@@ -66,11 +67,19 @@ class RTILayer extends Layer {
 			let json = await response.json();
 			this.shader.init(json);
 
-			for(let p = 0; p < this.shader.njpegs; p++)
-				this.rasters.push(new Raster({ url: this.planeUrl(this.url, p), type: 'vec3', attribute: 'coeff', colorspace: 'linear' }));
-
 			let size = {width:this.width, height:this.height};
-			this.setLayout(new Layout(this.planeUrl(this.url, 0), this.layout, size));
+			for(let p = 0; p < this.shader.njpegs; p++) {
+				let url = this.planeUrl(this.url, p);
+				let raster = new Raster({ url: url, type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
+				if(p == 0 || this.layout == 'tarzoom')
+					raster.layout = new Layout(url, this.layout, size);
+				else
+					raster.layout = this.rasters[0].layout;
+				this.rasters.push(raster);
+			}
+
+			
+			this.setLayout(this.rasters[0].layout);
 
 		})().catch(e => { console.log(e); this.status = e; });
 	}
