@@ -19,7 +19,7 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //imageTest('deepzoom');
 rtiTest('bilinear');
 //brdfTest();
-tomeTest();
+//tomeTest();
 //testUIBasic();
 
 //testUISvg();
@@ -90,6 +90,7 @@ function rtiTest(dataset) {
 
 	
 	let ui = new UIBasic(lime);
+	//ui.actions.light.display = true;
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };
 	

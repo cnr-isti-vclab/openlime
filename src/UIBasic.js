@@ -19,7 +19,6 @@ import { ControllerPanZoom } from './ControllerPanZoom.js'
 class UIBasic {
 	constructor(lime, options) {
 		//we need to know the size of the scene but the layers are not ready.
-		lime.canvas.addEvent('update', ()=> { this.updateLayers(); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
 		let camera = lime.camera;
 		Object.assign(this, {
 			lime: lime,
@@ -27,14 +26,14 @@ class UIBasic {
 			skin: 'skin.svg',
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
-				home:       { title: 'Home',       task: (event) => { if(this.ready) camera.fitCameraBox(250); } },
-				layers:     { title: 'Layers',     task: (event) => { this.selectLayers(event); } },
-				zoomin:     { title: 'Zoom in',    task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
-				zoomout:    { title: 'Zoom out',   task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
-				rotate:     { title: 'Rotate',     task: (event) => { camera.rotate(250, -45); } },
-				light:      { title: 'Light',      task: (event) => { this.toggleLightController(); } },
-				ruler:      { title: 'Ruler',      task: (event) => { this.startRuler(); } },
-				fullscreen: { title: 'Fullscreen', task: (event) => { this.toggleFullscreen(); } },
+				home:       { title: 'Home',       display: true,  task: (event) => { if(this.ready) camera.fitCameraBox(250); } },
+				layers:     { title: 'Layers',     display: 'auto', task: (event) => { this.selectLayers(event); } },
+				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
+				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
+				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
+				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
+				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
+				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
 			},
 			viewport: [0, 0, 0, 0] //in scene coordinates
 		});
@@ -54,7 +53,11 @@ class UIBasic {
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 	
 			for(let layer of Object.values(this.lime.canvas.layers)) {
+				layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
+
 				if(layer.controls.light) {
+					if(this.actions.light.display === 'auto')
+						this.actions.light.display = true;
 					let controller = new Controller2D((x, y)=>layer.setLight( [x, y], 0), { active:false, control:'light' });
 					controller.priority = 0;
 					this.lime.pointerManager.onEvent(controller);
@@ -80,24 +83,8 @@ class UIBasic {
 		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
 
-	updateLayers() {
-		this.ready = true;
-		// let box = [1e20, 1e20, -1e20, -1e20];
-		// for(let layer of Object.values(this.lime.canvas.layers)) {
-		// 	if(layer.status != 'ready') {
-		// 		this.ready = false;
-		// 		continue;
-		// 	}
-
-		// 	let lbox = layer.transform.transformBox(layer.boundingBox());
-		// 	box[0] = Math.min(lbox[0], box[0]);
-		// 	box[1] = Math.min(lbox[1], box[1]);
-		// 	box[2] = Math.max(lbox[2], box[2]);
-		// 	box[3] = Math.max(lbox[3], box[3]);
-		// }
-		
-		// if(box[2] > box[0])
-		// 	this.viewport = box;
+	readyLayer(layer) {
+		this.lime.camera.fitCameraBox(0);
 	}
 
 	async loadSkin() {
@@ -118,7 +105,37 @@ class UIBasic {
 
 
 		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
-		if(1) {
+		if(0) {
+
+			let padding = 10;
+			let x = 0;
+			let h = 0;
+			for(let [name, action] of Object.entries(this.actions)) {
+
+				if(action.display !== true)
+					continue;
+
+				let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				
+				toolbar.appendChild(svg);
+		
+				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
+				if(!element) continue;
+				svg.appendChild(element);
+				let box = element.getBBox();
+
+				let tlist = element.transform.baseVal;
+				if(tlist.numberOfItems == 0)
+					tlist.appendItem(svg.createSVGTransform());
+				tlist.getItem(0).setTranslate(-box.x,-box.y);
+				
+				svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+				svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');	
+			}
+
+		}
+
+		if(1) {  //single svg toolbar
 			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 			toolbar.appendChild(svg);
 
@@ -126,6 +143,8 @@ class UIBasic {
 			let x = padding;
 			let h = 0;
 			for(let [name, action] of Object.entries(this.actions)) {
+				if(action.display !== true)
+					continue;
 				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
 				if(!element) continue;
 				svg.appendChild(element);
@@ -141,6 +160,8 @@ class UIBasic {
 			svg.setAttribute('viewBox', `0 0 ${x} ${h}`);
 			svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 		}
+
+
 
 		//TODO: not needed, probably. Toolbar build from the skin directly
 		if(0) {
@@ -224,7 +245,7 @@ class UIBasic {
 			let ul = document.createElement('ul');
 			ul.classList.add('openlime-layers-menu');
 			for(let [name, layer] of Object.entries(this.lime.canvas.layers)) {
-				let li = document.createElement('li');https://edu.meet.garr.it/openlime
+				let li = document.createElement('li');
 				li.innerHTML = layer.label || name;
 				li.addEventListener('click', ()=> {
 					this.setLayer(layer);

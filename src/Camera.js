@@ -18,7 +18,9 @@ class Camera {
 		Object.assign(this, {
 			viewport: null,
 			bounded: true,
-			maxZoom: 4,
+			minScreenFraction: 1,
+			maxFixedZoom: 2,
+			maxZoom: 2,
 			minZoom: 1,
 			boundingBox: new BoundingBox,
 
@@ -203,7 +205,6 @@ class Camera {
 		let h = this.viewport.dy;
 
 		//center of the viewport.
-		console.log("FIT BOX");
 		box.print();
 
 		let bw = box.width();
@@ -226,10 +227,8 @@ class Camera {
 		let bw = this.boundingBox.width();
 		let bh = this.boundingBox.height();
 	
-		const minScreenFraction = 0.75;
-		const maxFixedZoom = 4;
-		this.minZoom = Math.min(w/bw, h/bh) * minScreenFraction;
-		this.maxZoom = minScale > 0 ? maxFixedZoom / minScale : maxFixedZoom;
+		this.minZoom = Math.min(w/bw, h/bh) * this.minScreenFraction;
+		this.maxZoom = minScale > 0 ? this.maxFixedZoom / minScale : this.maxFixedZoom;
 	}
 }
 
