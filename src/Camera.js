@@ -50,8 +50,14 @@ class Camera {
  *  Set the viewport and updates the camera for an as close as possible.
  */
 	setViewport(view) {
-		this.viewport = view;
-		//TODO! update camera to keep the center in place and zoomm to approximate the content before.
+		if(this.viewport) {
+			let rz = Math.sqrt((view.w/this.viewport.w)*(view.h/this.viewport.h));
+			this.viewport = view;
+			const {x, y, z, a } = this.target;
+			this.setPosition(0, x, y, z*rz, a);
+		} else {
+			this.viewport = view;
+		}
 	}
 
 /**
