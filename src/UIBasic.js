@@ -27,13 +27,14 @@ class UIBasic {
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
 				home:       { title: 'Home',       display: true,  task: (event) => { if(this.ready) camera.fitCameraBox(250); } },
+				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
 				layers:     { title: 'Layers',     display: 'auto', task: (event) => { this.selectLayers(event); } },
 				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
 				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
 				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
 				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
-				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
+				
 			},
 			viewport: [0, 0, 0, 0] //in scene coordinates
 		});

@@ -17,7 +17,7 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 
 //combinerTest();
 //imageTest('deepzoom');
-rtiTest('bln');
+flipTest();
 //brdfTest();
 //tomeTest();
 //testUIBasic();
@@ -77,6 +77,39 @@ function tomeTest() {
 	setTimeout(() => { 
 		layer0.setLight([-1, 0], 2000); 
 	}, 2000); 
+}
+
+
+function flipTest() {
+	let layer0 = new Layer({ 
+		layout: 'image', 
+		type:'rti',
+		url: 'assets/rti/bln/info.json'
+	});
+	lime.canvas.addLayer('bln', layer0); 
+
+	let layer1 = new Layer({ 
+		layout: 'image', 
+		type:'rti',
+		url: 'assets/rti/ptm/info.json'
+	});
+	layer1.visible = false;
+	//layer0.transform.x = -1000;
+	lime.canvas.addLayer('ptm', layer1); 
+	
+	let ui = new UIBasic(lime);
+	ui.actions.flip = { title: 'Flip', display: true,  task: (event) => { 
+		layer0.setVisible(!layer0.visible);
+		layer1.setVisible(!layer1.visible);
+		lime.redraw();
+	}
+	};
+	lime.camera.maxFixedZoom = 2;
+	//ui.actions.light.display = true;
+	//const { home, fullscreen, rotate } = ui.actions;
+	//ui.actions = { home, fullscreen, rotate };
+	
+//	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)], ); lime.canvas.emit('update'); }, 2000);
 }
 
 
