@@ -24,13 +24,14 @@ class UIBasic {
 			lime: lime,
 			camera: lime.camera,
 			skin: 'skin.svg',
+			autoFit: true,
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
-				home:       { title: 'Home',       display: true,  task: (event) => { if(this.ready) camera.fitCameraBox(250); } },
+				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
 				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
 				layers:     { title: 'Layers',     display: 'auto', task: (event) => { this.selectLayers(event); } },
-				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
-				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
+				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
+				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
 				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
 				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
 				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
@@ -40,6 +41,9 @@ class UIBasic {
 		});
 
 		Object.assign(this, options);
+		if(this.autoFit)
+			this.lime.canvas.addEvent('updateSize', () => this.lime.camera.fitCameraBox(0));
+
 		
 		if(queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
@@ -55,13 +59,10 @@ class UIBasic {
 	
 			let lightLayers = [];
 			for(let layer of Object.values(this.lime.canvas.layers)) {
-				layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
+				//layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
 
-				if(layer.controls.light) {
+				if(layer.controls.light)
 					lightLayers.push(layer);
-					
-					
-				}
 			}
 			if(lightLayers.length) {
 				if(this.actions.light.display === 'auto')
@@ -78,6 +79,7 @@ class UIBasic {
 					layer.setLight([0.5, 0.5], 0);
 					layer.controllers.push(controller);
 				}
+
 			}
 	
 
@@ -95,11 +97,10 @@ class UIBasic {
 				break;
 			}
 
-		})().catch(e => { console.log(e); throw Error("Something failed") });
-	}
+			if(this.actions.light.active == true)
+				this.toggleLightController();
 
-	readyLayer(layer) {
-		this.lime.camera.fitCameraBox(0);
+		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
 
 	async loadSkin() {
@@ -120,7 +121,7 @@ class UIBasic {
 
 
 		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
-		if(0) {
+		if(1) {
 
 			let padding = 10;
 			let x = 0;
@@ -150,11 +151,9 @@ class UIBasic {
 
 		}
 
-		if(1) {  //single svg toolbar
+		if(0) {  //single svg toolbar
 			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-			toolbar.appendChild(svg);
-
-			let padding = 10;
+			toolbar.appendChild(svg);ui.toggleLightController();
 			let x = padding;
 			let h = 0;
 			for(let [name, action] of Object.entries(this.actions)) {
@@ -189,16 +188,6 @@ class UIBasic {
 				skin.setAttribute('viewBox', `0 0 ${w} ${h}`);
 		}
 	}
-	/* This is probably not needed at all 
-	loadSkinCSS() {
-		let link = document.createElement('link');
-		link.rel = 'stylesheet';  
-		link.type = 'text/css'; 
-		link.href = this.skinCSS;  
-		document.getElementsByTagName('HEAD')[0].appendChild(link);  
-	} */
-
-
 
 	setupActions() {
 		for(let [name, action] of Object.entries(this.actions)) {

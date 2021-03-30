@@ -104,7 +104,9 @@ function flipTest() {
 		lime.redraw();
 	}
 	};
+	ui.actions.light.active = true;
 	lime.camera.maxFixedZoom = 2;
+	
 	//ui.actions.light.display = true;
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };

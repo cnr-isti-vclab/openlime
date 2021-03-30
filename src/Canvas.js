@@ -23,7 +23,7 @@ class Canvas {
 			overlayElement: overlay,
 			camera: camera,
 			layers: {},
-			signals: {'update':[]}
+			signals: {'update':[], 'updateSize':[]}
 		});
 		Object.assign(this, options);
 
@@ -122,6 +122,7 @@ class Canvas {
 		console.log("Update Scene BBox " + sceneBBox.xLow.toFixed(2) + " " + sceneBBox.xHigh.toFixed(2) + " minScale " + minScale.toFixed(2));
 		
 		if (sceneBBox != null) this.camera.updateBounds(sceneBBox, minScale);
+		this.emit('updateSize');
 	}
 
 	draw(time) {
