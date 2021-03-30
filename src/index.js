@@ -17,7 +17,7 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 
 //combinerTest();
 //imageTest('deepzoom');
-rtiTest('bilinear');
+rtiTest('bln');
 //brdfTest();
 //tomeTest();
 //testUIBasic();
@@ -82,14 +82,16 @@ function tomeTest() {
 
 function rtiTest(dataset) {
 	let layer0 = new Layer({ 
-		layout: 'tarzoom', 
+		layout: 'image', 
 		type:'rti',
-		url: 'assets/' + dataset + '/info.json'
+		url: 'assets/rti/' + dataset + '/info.json'
 	});
-	lime.canvas.addLayer('bilinear', layer0); 
+	//layer0.transform.x = -1000;
+	lime.canvas.addLayer('hsh', layer0); 
 
 	
 	let ui = new UIBasic(lime);
+	lime.camera.maxFixedZoom = 1;
 	//ui.actions.light.display = true;
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };

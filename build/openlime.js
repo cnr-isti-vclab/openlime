@@ -808,6 +808,7 @@ void main() {
     	}
 
     	boundingBox() {
+    		if(!this.width) throw "Layout not initialized still";
     		return new BoundingBox({xLow:-this.width/2, yLow: -this.height/2, xHigh: this.width/2, yHigh: this.height/2});
     	}
 
@@ -1143,7 +1144,7 @@ void main() {
     class _Cache {
     	constructor(options) {
     		Object.assign(this, {
-    			capacity: 10*(1<<20),  //256 MB total capacity available
+    			capacity: 512*(1<<20),  //256 MB total capacity available
     			size: 0,                //amount of GPU ram used
 
     			maxRequest: 4,          //max number of concurrent HTTP requests
@@ -1438,7 +1439,7 @@ void main() {
     		}
     		let layersBbox = new BoundingBox();
     		for(let layer of Object.values(layers)) {
-    			if (!discardHidden || layer.visible) {
+    			if ((!discardHidden || layer.visible) && layer.layout.width) {
     				const bbox = layer.boundingBox();
     				layersBbox.mergeBox(bbox);
     			}
@@ -2293,7 +2294,7 @@ vec4 render(vec3 base[np1]) {
     		let phi = Math.atan2(v[1], v[0]);
     		if (phi < 0)
     			phi = 2 * PI + phi;
-    		let theta = Math.min(Math.acos(v[2]), PI / 2 - 0.5);
+    		let theta = Math.min(Math.acos(v[2]), PI / 2 - 0.1);
 
     		let cosP = Math.cos(phi);
     		let cosT = Math.cos(theta);
@@ -2551,7 +2552,7 @@ vec4 render(vec3 base[np1]) {
     		Object.assign(this, {
     			active: true,
     			debug: false,
-    			panDelay: 100,
+    			panDelay: 50,
     			zoomDelay: 200,
     			priority: 0
     		});
@@ -2760,15 +2761,29 @@ vec4 render(vec3 base[np1]) {
     			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
     			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
     	
+    			let lightLayers = [];
     			for(let layer of Object.values(this.lime.canvas.layers)) {
     				layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
 
     				if(layer.controls.light) {
-    					if(this.actions.light.display === 'auto')
-    						this.actions.light.display = true;
-    					let controller = new Controller2D((x, y)=>layer.setLight( [x, y], 0), { active:false, control:'light' });
-    					controller.priority = 0;
-    					this.lime.pointerManager.onEvent(controller);
+    					lightLayers.push(layer);
+    					
+    					
+    				}
+    			}
+    			if(lightLayers.length) {
+    				if(this.actions.light.display === 'auto')
+    					this.actions.light.display = true;
+
+    				let controller = new Controller2D((x, y)=> { 
+    					for(let layer of lightLayers)
+    						layer.setLight([x, y], 0); 
+    				}, { active:false, control:'light' });
+
+    				controller.priority = 0;
+    				this.lime.pointerManager.onEvent(controller);
+    				for(let layer of lightLayers) {
+    					layer.setLight([0.5, 0.5], 0);
     					layer.controllers.push(controller);
     				}
     			}
@@ -2784,7 +2799,7 @@ vec4 render(vec3 base[np1]) {
     			this.setupActions();
 
     			for(let l of Object.values(this.lime.canvas.layers)) {
-    				this.setLayer(l);
+    				//this.setLayer(l);
     				break;
     			}
 
@@ -2810,31 +2825,30 @@ vec4 render(vec3 base[np1]) {
     		toolbar.classList.add('openlime-toolbar');
     		this.lime.containerElement.appendChild(toolbar);
 
+    		{  //single svg toolbar
+    			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    			toolbar.appendChild(svg);
 
-    		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
-    		{
+    			let padding = 10;
+    			let x = padding;
+    			let h = 0;
     			for(let [name, action] of Object.entries(this.actions)) {
-
     				if(action.display !== true)
     					continue;
-
-    				let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    				
-    				toolbar.appendChild(svg);
-    		
     				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
     				if(!element) continue;
     				svg.appendChild(element);
     				let box = element.getBBox();
+    				h = Math.max(h, box.height);
     				let tlist = element.transform.baseVal;
     				if(tlist.numberOfItems == 0)
     					tlist.appendItem(svg.createSVGTransform());
-    				tlist.getItem(0).setTranslate(-box.x,-box.y);
-    				
-    				svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-    				svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');	
+    				tlist.getItem(0).setTranslate(-box.x + x,-box.y);
+    				x += box.width + padding;
     			}
 
+    			svg.setAttribute('viewBox', `0 0 ${x} ${h}`);
+    			svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     		}
     	}
     	/* This is probably not needed at all 
@@ -2871,9 +2885,11 @@ vec4 render(vec3 base[np1]) {
     		let active = div.classList.toggle('openlime-light-active');
     		this.lightActive = active;
 
-    		for(let c of this.activeLayer.controllers)
-    			if(c.control == 'light')
-    				c.active = active;
+    		//for(let c of this.activeLayer.controllers)
+    		for(let layer of Object.values(this.lime.canvas.layers))
+    			for(let c of layer.controllers)
+    				if(c.control == 'light')
+    					c.active = active;
     	}
 
     	toggleFullscreen() {

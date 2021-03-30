@@ -52,15 +52,29 @@ class UIBasic {
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 	
+			let lightLayers = [];
 			for(let layer of Object.values(this.lime.canvas.layers)) {
 				layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
 
 				if(layer.controls.light) {
-					if(this.actions.light.display === 'auto')
-						this.actions.light.display = true;
-					let controller = new Controller2D((x, y)=>layer.setLight( [x, y], 0), { active:false, control:'light' });
-					controller.priority = 0;
-					this.lime.pointerManager.onEvent(controller);
+					lightLayers.push(layer);
+					
+					
+				}
+			}
+			if(lightLayers.length) {
+				if(this.actions.light.display === 'auto')
+					this.actions.light.display = true;
+
+				let controller = new Controller2D((x, y)=> { 
+					for(let layer of lightLayers)
+						layer.setLight([x, y], 0); 
+				}, { active:false, control:'light' });
+
+				controller.priority = 0;
+				this.lime.pointerManager.onEvent(controller);
+				for(let layer of lightLayers) {
+					layer.setLight([0.5, 0.5], 0);
 					layer.controllers.push(controller);
 				}
 			}
@@ -76,7 +90,7 @@ class UIBasic {
 			this.setupActions();
 
 			for(let l of Object.values(this.lime.canvas.layers)) {
-				this.setLayer(l);
+				//this.setLayer(l);
 				break;
 			}
 
@@ -208,9 +222,11 @@ class UIBasic {
 		let active = div.classList.toggle('openlime-light-active');
 		this.lightActive = active;
 
-		for(let c of this.activeLayer.controllers)
-			if(c.control == 'light')
-				c.active = active;
+		//for(let c of this.activeLayer.controllers)
+		for(let layer of Object.values(this.lime.canvas.layers))
+			for(let c of layer.controllers)
+				if(c.control == 'light')
+					c.active = active;
 	}
 
 	toggleFullscreen() {

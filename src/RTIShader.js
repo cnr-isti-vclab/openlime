@@ -368,7 +368,7 @@ class HSH {
 		let phi = Math.atan2(v[1], v[0]);
 		if (phi < 0)
 			phi = 2 * PI + phi;
-		let theta = Math.min(Math.acos(v[2]), PI / 2 - 0.5);
+		let theta = Math.min(Math.acos(v[2]), PI / 2 - 0.1);
 
 		let cosP = Math.cos(phi);
 		let cosT = Math.cos(theta);

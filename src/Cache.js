@@ -13,7 +13,7 @@
 class _Cache {
 	constructor(options) {
 		Object.assign(this, {
-			capacity: 10*(1<<20),  //256 MB total capacity available
+			capacity: 512*(1<<20),  //256 MB total capacity available
 			size: 0,                //amount of GPU ram used
 
 			maxRequest: 4,          //max number of concurrent HTTP requests

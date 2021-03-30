@@ -193,7 +193,7 @@ class Layer {
 		}
 		let layersBbox = new BoundingBox();
 		for(let layer of Object.values(layers)) {
-			if (!discardHidden || layer.visible) {
+			if ((!discardHidden || layer.visible) && layer.layout.width) {
 				const bbox = layer.boundingBox();
 				layersBbox.mergeBox(bbox);
 			}
