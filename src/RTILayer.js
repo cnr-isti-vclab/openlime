@@ -35,7 +35,7 @@ class RTILayer extends Layer {
 	}
 
 	planeUrl(url, plane) {
-		let path = this.url.split('/').slice(0, -1).join('/') + '/';
+		let path = this.url.substring(0, this.url.lastIndexOf('/')+1);
 		switch(this.layout) {
 			case 'image':    return path + 'plane_' + plane + '.jpg'; break;
 			case 'google':   return path + 'plane_' + plane;          break;

@@ -322,8 +322,14 @@
      *  Set the viewport and updates the camera for an as close as possible.
      */
     	setViewport(view) {
-    		this.viewport = view;
-    		//TODO! update camera to keep the center in place and zoomm to approximate the content before.
+    		if(this.viewport) {
+    			let rz = Math.sqrt((view.w/this.viewport.w)*(view.h/this.viewport.h));
+    			this.viewport = view;
+    			const {x, y, z, a } = this.target;
+    			this.setPosition(0, x, y, z*rz, a);
+    		} else {
+    			this.viewport = view;
+    		}
     	}
 
     /**
@@ -1782,7 +1788,7 @@ void main() {
     			overlayElement: overlay,
     			camera: camera,
     			layers: {},
-    			signals: {'update':[]}
+    			signals: {'update':[], 'updateSize':[]}
     		});
     		Object.assign(this, options);
 
@@ -1881,6 +1887,7 @@ void main() {
     		console.log("Update Scene BBox " + sceneBBox.xLow.toFixed(2) + " " + sceneBBox.xHigh.toFixed(2) + " minScale " + minScale.toFixed(2));
     		
     		if (sceneBBox != null) this.camera.updateBounds(sceneBBox, minScale);
+    		this.emit('updateSize');
     	}
 
     	draw(time) {
@@ -2458,7 +2465,7 @@ vec4 render(vec3 base[np1]) {
     	}
 
     	planeUrl(url, plane) {
-    		let path = this.url.split('/').slice(0, -1).join('/') + '/';
+    		let path = this.url.substring(0, this.url.lastIndexOf('/')+1);
     		switch(this.layout) {
     			case 'image':    return path + 'plane_' + plane + '.jpg';			case 'google':   return path + 'plane_' + plane;			case 'deepzoom': return path + 'plane_' + plane + '.dzi';			case 'tarzoom':  return path + 'plane_' + plane + '.tzi';			case 'zoomify':  return path + 'plane_' + plane + '/ImageProperties.xml';			//case 'iip':      return this.plane.throw Error("Unimplemented");
     			case 'iiif': throw Error("Unimplemented");
@@ -2733,21 +2740,26 @@ vec4 render(vec3 base[np1]) {
     			lime: lime,
     			camera: lime.camera,
     			skin: 'skin.svg',
+    			autoFit: true,
     			//skinCSS: 'skin.css', // TODO: probably not useful
     			actions: {
-    				home:       { title: 'Home',       display: true,  task: (event) => { if(this.ready) camera.fitCameraBox(250); } },
+    				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
+    				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
     				layers:     { title: 'Layers',     display: 'auto', task: (event) => { this.selectLayers(event); } },
-    				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { if(this.ready) camera.deltaZoom(250, 1.25, 0, 0); } },
-    				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { if(this.ready) camera.deltaZoom(250, 1/1.25, 0, 0); } },
+    				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
+    				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
     				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
     				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
     				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
-    				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
+    				
     			},
     			viewport: [0, 0, 0, 0] //in scene coordinates
     		});
 
     		Object.assign(this, options);
+    		if(this.autoFit)
+    			this.lime.canvas.addEvent('updateSize', () => this.lime.camera.fitCameraBox(0));
+
     		
     		if(queueMicrotask) queueMicrotask(() => { this.init(); }); //allows modification of actions and layers before init.
     		else setTimeout(() => { this.init(); }, 0);
@@ -2763,13 +2775,10 @@ vec4 render(vec3 base[np1]) {
     	
     			let lightLayers = [];
     			for(let layer of Object.values(this.lime.canvas.layers)) {
-    				layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
+    				//layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
 
-    				if(layer.controls.light) {
+    				if(layer.controls.light)
     					lightLayers.push(layer);
-    					
-    					
-    				}
     			}
     			if(lightLayers.length) {
     				if(this.actions.light.display === 'auto')
@@ -2786,6 +2795,7 @@ vec4 render(vec3 base[np1]) {
     					layer.setLight([0.5, 0.5], 0);
     					layer.controllers.push(controller);
     				}
+
     			}
     	
 
@@ -2803,11 +2813,10 @@ vec4 render(vec3 base[np1]) {
     				break;
     			}
 
-    		})().catch(e => { console.log(e); throw Error("Something failed") });
-    	}
+    			if(this.actions.light.active == true)
+    				this.toggleLightController();
 
-    	readyLayer(layer) {
-    		this.lime.camera.fitCameraBox(0);
+    		})().catch(e => { console.log(e); throw Error("Something failed") });
     	}
 
     	async loadSkin() {
@@ -2825,42 +2834,34 @@ vec4 render(vec3 base[np1]) {
     		toolbar.classList.add('openlime-toolbar');
     		this.lime.containerElement.appendChild(toolbar);
 
-    		{  //single svg toolbar
-    			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    			toolbar.appendChild(svg);
 
-    			let padding = 10;
-    			let x = padding;
-    			let h = 0;
+    		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
+    		{
     			for(let [name, action] of Object.entries(this.actions)) {
+
     				if(action.display !== true)
     					continue;
+
+    				let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    				
+    				toolbar.appendChild(svg);
+    		
     				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
     				if(!element) continue;
     				svg.appendChild(element);
     				let box = element.getBBox();
-    				h = Math.max(h, box.height);
+
     				let tlist = element.transform.baseVal;
     				if(tlist.numberOfItems == 0)
     					tlist.appendItem(svg.createSVGTransform());
-    				tlist.getItem(0).setTranslate(-box.x + x,-box.y);
-    				x += box.width + padding;
+    				tlist.getItem(0).setTranslate(-box.x,-box.y);
+    				
+    				svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    				svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');	
     			}
 
-    			svg.setAttribute('viewBox', `0 0 ${x} ${h}`);
-    			svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     		}
     	}
-    	/* This is probably not needed at all 
-    	loadSkinCSS() {
-    		let link = document.createElement('link');
-    		link.rel = 'stylesheet';  
-    		link.type = 'text/css'; 
-    		link.href = this.skinCSS;  
-    		document.getElementsByTagName('HEAD')[0].appendChild(link);  
-    	} */
-
-
 
     	setupActions() {
     		for(let [name, action] of Object.entries(this.actions)) {
