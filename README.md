@@ -43,6 +43,19 @@ and generate the docs.
 npm run documentation
 ```
 
+Customization:
+
+skin.css
+
+skin.svg
+
+Run 
+```bash
+svgo -p skin.svg -o skin.min.svg
+```
+ to minimize svg.
+
+
 Documentation.js supports markdown syntax and JSDoc syntax.
 
 

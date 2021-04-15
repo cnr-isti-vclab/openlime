@@ -1947,7 +1947,7 @@ void main() {
     		Object.assign(this, {
     			modes: ['light', 'normals', 'diffuse', 'specular'],
     			mode: 'normal',
-    			type:        ['ptm', 'hsh',  'rbf', 'bln'],
+    			type:        ['ptm', 'hsh',  'sh', 'rbf', 'bln'],
     			colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
 
     			nplanes: null,     //number of coefficient planes
@@ -2061,6 +2061,7 @@ void main() {
     		switch(this.type) {
     			case 'ptm': value = PTM.lightWeights(light); break;
     			case 'hsh': value = HSH.lightWeights(light); break;
+    			case 'sh' : value = SH.lightWeights(light); break;
     			case 'rbf': value = RBF.lightWeights(light, this); break;
     			case 'bln': value = BLN.lightWeights(light, this); break;
     		}
@@ -2326,6 +2327,33 @@ vec4 render(vec3 base[np1]) {
     		return base;
     	}
     }
+
+    class SH {
+    	/* @param {Array} v expects light direction as [x, y, z]
+    	*/
+    	static lightWeights(v) {
+    		let PI = 3.1415;
+    		let A = 0.5*Math.sqrt(3.0/PI);
+    		let B = 0.5*Math.sqrt(15/PI);
+    		let b = [
+    			0.5/Math.sqrt(PI),
+    			A*v[0],
+    			A*v[2],
+    			A*v[1],
+    			B*v[0]*v[1],
+    			B*v[0]*v[2],
+    			0.5*Math.sqrt(5/PI)*(3*v[2]*v[2] - 1),
+    			B*v[1]*v[2],
+    			0.5*B*(v[1]*v[1] - v[0]*v[0])
+    		];
+
+    		let base = new Float32Array(27);
+    		for(let i = 0; i < 27; i++)
+    			base[3*i] = base[3*i+1] = base[3*i+2] = b[i];
+    		return base;
+    	}
+    }
+
 
     class RBF {
     	/* @param {Array} v expects light direction as [x, y, z]

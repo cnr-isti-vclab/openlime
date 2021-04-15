@@ -151,6 +151,7 @@ void main() {
 
 	float alpha = pow(1.0 - gloss * (maxGloss - minGloss) - minGloss, ISO_WARD_EXPONENT);
 	
+	
 	vec3 e = vec3(0.0,0.0,1.0);
 	vec3 T = normalize(cross(N,e));
 	vec3 B = normalize(cross(N,T));

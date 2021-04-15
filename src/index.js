@@ -13,12 +13,12 @@ import { LensLayer } from './LensLayer.js'
 import { Lens } from './Lens.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
 
-let lime = new OpenLIME('#openlime', { background: 'black' });
+let lime = new OpenLIME('#openlime', { background: 'red' });
 
 //combinerTest();
 //imageTest('deepzoom');
-flipTest();
-//brdfTest();
+//flipTest();
+brdfTest();
 //tomeTest();
 //testUIBasic();
 
@@ -105,7 +105,7 @@ function flipTest() {
 	}
 	};
 	ui.actions.light.active = true;
-	lime.camera.maxFixedZoom = 2;
+	lime.camera.maxFixedZoom = 1;
 	
 	//ui.actions.light.display = true;
 	//const { home, fullscreen, rotate } = ui.actions;
@@ -263,6 +263,8 @@ function brdfTest() {
 	});
 
 	lime.canvas.addLayer('brdf', brdf);
+	let ui = new UIBasic(lime);
+
 }
 
 
