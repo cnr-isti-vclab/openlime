@@ -7,7 +7,7 @@ import { Shader } from './Shader.js'
 
 class RTIShader extends Shader {
 	constructor(options) {
-		super(options);
+		super({});
 
 		Object.assign(this, {
 			modes: ['light', 'normals', 'diffuse', 'specular'],
@@ -29,6 +29,7 @@ class RTIShader extends Shader {
 			basis: null,       //PCA basis for rbf and bln
 			lweights: null    //light direction dependent coefficients to be used with coefficient planes
 		});
+		Object.assign(this, options);
 
 		if(this.relight)
 			this.init(this.relight);
@@ -93,6 +94,7 @@ class RTIShader extends Shader {
 
 		if(this.type == "rbf")
 			this.ndimensions = this.lights.length/3;
+
 
 		if(this.type == "bilinear") {
 			this.ndimensions = this.resolution*this.resolution;
@@ -425,34 +427,34 @@ class SH {
 class RBF {
 	/* @param {Array} v expects light direction as [x, y, z]
 	*/
-	static lightWeights(lpos, layer) {
+	static lightWeights(lpos, shader) {
 
-		let weights = RBF.rbf(lpos, layer);
+		let weights = RBF.rbf(lpos, shader);
 
-		let np = layer.nplanes;
+		let np = shader.nplanes;
 		let lweights = new Float32Array((np + 1) * 3);
 
 		for(let p = 0; p < np+1; p++) {
 			for(let k = 0; k < 3; k++) {
 				for(let l = 0; l < weights.length; l++) {
-					let o = layer.baseLightOffset(p, weights[l][0], k);
-					lweights[3*p + k] += weights[l][1]*layer.basis[o];
+					let o = shader.baseLightOffset(p, weights[l][0], k);
+					lweights[3*p + k] += weights[l][1]*shader.basis[o];
 				}
 			}
 		}
 		return lweights;
 	}
 
-	static rbf(lpos, layer) {
-		let radius = 1/(layer.sigma*layer.sigma);
-		let weights = new Array(layer.ndimensions);
+	static rbf(lpos, shader) {
+		let radius = 1/(shader.sigma*shader.sigma);
+		let weights = new Array(shader.ndimensions);
 
 		//compute rbf weights
 		let totw = 0.0;
 		for(let i = 0; i < weights.length; i++) {
-			let dx = layer.lights[i*3+0] - lpos[0];
-			let dy = layer.lights[i*3+1] - lpos[1];
-			let dz = layer.lights[i*3+2] - lpos[2];
+			let dx = shader.lights[i*3+0] - lpos[0];
+			let dy = shader.lights[i*3+1] - lpos[1];
+			let dz = shader.lights[i*3+2] - lpos[2];
 
 			let d2 = dx*dx + dy*dy + dz*dz;
 			let w = Math.exp(-radius * d2);
@@ -483,8 +485,8 @@ class RBF {
 }
 
 class BLN {
-	static lightWeights(lpos, layer) {
-		let np = layer.nplanes;
+	static lightWeights(lpos, shader) {
+		let np = shader.nplanes;
 		let s = Math.abs(lpos[0]) + Math.abs(lpos[1]) + Math.abs(lpos[2]);
 
 		//rotate 45 deg.
@@ -492,11 +494,11 @@ class BLN {
 		let y = (lpos[1] - lpos[0])/s;
 		x = (x + 1.0)/2.0;
 		y = (y + 1.0)/2.0;
-		x = x*(layer.resolution - 1.0);
-		y = y*(layer.resolution - 1.0);
+		x = x*(shader.resolution - 1.0);
+		y = y*(shader.resolution - 1.0);
 
-		let sx = Math.min(layer.resolution-2, Math.max(0, Math.floor(x)));
-		let sy = Math.min(layer.resolution-2, Math.max(0, Math.floor(y)));
+		let sx = Math.min(shader.resolution-2, Math.max(0, Math.floor(x)));
+		let sy = Math.min(shader.resolution-2, Math.max(0, Math.floor(y)));
 		let dx = x - sx;
 		let dy = y - sy;
 
@@ -512,16 +514,16 @@ class BLN {
 
 		for(let p = 0; p < np+1; p++) {
 			for(let k = 0; k < 3; k++) {
-				let o00 = layer.basePixelOffset(p, sx, sy, k);
-				let o10 = layer.basePixelOffset(p, sx+1, sy, k);
-				let o01 = layer.basePixelOffset(p, sx, sy+1, k);
-				let o11 = layer.basePixelOffset(p, sx+1, sy+1, k);
+				let o00 = shader.basePixelOffset(p, sx, sy, k);
+				let o10 = shader.basePixelOffset(p, sx+1, sy, k);
+				let o01 = shader.basePixelOffset(p, sx, sy+1, k);
+				let o11 = shader.basePixelOffset(p, sx+1, sy+1, k);
 
 				lweights[3*p + k] = 
-					s00*layer.basis[o00] + 
-					s10*layer.basis[o10] +
-					s01*layer.basis[o01] +
-					s11*layer.basis[o11];
+					s00*shader.basis[o00] + 
+					s10*shader.basis[o10] +
+					s01*shader.basis[o01] +
+					s11*shader.basis[o11];
 
 			}
 		}

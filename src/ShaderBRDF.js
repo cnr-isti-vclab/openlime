@@ -2,14 +2,17 @@ import { Shader } from './Shader.js'
 
 /**
  *  @param {object} options
+ *   mode: default is ward, can be [ward, diffuse, specular, normals]
  */
 
 class ShaderBRDF extends Shader {
 	constructor(options) {
-		super(options);
+		super({});
+
 		this.modes = ['ward', 'diffuse', 'specular', 'normals'];
-		this.innerCode = '';
+		this.mode = 'ward';
 		this.alphaLimits = [0.01, 0.5];
+		Object.assign(this, options);
 		
 		this.uniforms = {
 			uLightInfo:          { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
@@ -17,7 +20,9 @@ class ShaderBRDF extends Shader {
 			uInputColorSpaceKd:  { type: 'int', needsUpdate: true, size: 1, value: this.colorspaces['kd'] },
 			uInputColorSpaceKs:  { type: 'int', needsUpdate: true, size: 1, value: this.colorspaces['ks'] },
 		}
-		this.setMode('ward');
+
+		this.innerCode = '';
+		this.setMode(this.mode);
 		this.body = this.template();
 	}
 
@@ -27,6 +32,7 @@ class ShaderBRDF extends Shader {
 	}
 
 	setMode(mode) {
+		this.mode = mode;
 		switch(mode) {
 			case 'ward':
 				this.innerCode = 

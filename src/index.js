@@ -13,12 +13,13 @@ import { LensLayer } from './LensLayer.js'
 import { Lens } from './Lens.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
 
-let lime = new OpenLIME('#openlime', { background: 'red' });
+let lime = new OpenLIME('#openlime', { background: 'black' });
 
 //combinerTest();
 //imageTest('deepzoom');
 //flipTest();
-brdfTest();
+//brdfTest();
+rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 

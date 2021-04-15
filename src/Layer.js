@@ -135,6 +135,18 @@ class Layer {
 		this.shader.setEvent('update', ()=>{ this.emit('update'); });
 	}
 
+	getMode() {
+		
+	}
+
+	getModes() {
+		return this.shader.modes;
+	}
+
+	setMode(mode) {
+		this.shader.setMode(mode);
+	}
+
 /**
  * @param {bool} visible
  */
