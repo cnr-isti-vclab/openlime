@@ -83,7 +83,7 @@ class UIBasic {
 				if(layer.controls.light)					lightLayers.push(layer);
 				let modes = []
 				for(let m of layer.getModes()) {
-					modes.push( { button: m, onclick: ()=>{ layer.setMode(m); } } );
+					modes.push( { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } } );
 				}
 				this.menu.push({
 					button: layer.label || id, 
@@ -329,7 +329,7 @@ class UIBasic {
 		let layer = element.getAttribute('data-layer');
 		let mode = element.getAttribute('data-mode');
 		let active = (layer && this.lime.canvas.layers[layer].visible) &&
-			(!mode || this.lime.canvas.layers[layer].mode == mode);
+			(!mode || this.lime.canvas.layers[layer].getMode() == mode);
 		entry.element.classList.toggle('active', active);
 
 		if('list' in entry)

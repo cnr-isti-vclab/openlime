@@ -136,7 +136,7 @@ class Layer {
 	}
 
 	getMode() {
-		
+		return this.shader.mode;
 	}
 
 	getModes() {

@@ -36,8 +36,6 @@ class Shader {
 
 	restoreWebGL(gl) {
 		this.createProgram(gl);
-		for(let uniform of Object.values(this.uniforms))
-			uniform.needsUpdate = true;
 	}
 
 	setUniform(name, value) {
@@ -101,6 +99,11 @@ class Shader {
 
 		this.program = program;
 		this.needsUpdate = false;
+
+		for(let uniform of Object.values(this.uniforms)) {
+			uniform.location = null;
+			uniform.needsUpdate = true;
+		}
 	}
 
 	updateUniforms(gl, program) {
