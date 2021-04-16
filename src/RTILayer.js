@@ -99,7 +99,7 @@ class RTILayer extends Layer {
 	}
 	draw(transform, viewport) {
 		this.worldRotation = transform.a + this.transform.a;
-		super.draw(transform, viewport);
+		return super.draw(transform, viewport);
 	}
 }
 

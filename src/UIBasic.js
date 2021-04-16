@@ -14,6 +14,21 @@ import { ControllerPanZoom } from './ControllerPanZoom.js'
  *  light: turn on light changing.
  *  switch layer(s)
  *  lens.
+ * 
+ * How the menu works:
+ * Each entry eg: { title: 'Coin 16' }
+ * title: large title
+ * section: smaller title
+ * html: whatever html
+ * button: visually a button, attributes: group, layer, mode
+ * list: an array of entries.
+ * 
+ * Additional attributes:
+ * onclick: a function(event) {}
+ * group: a group of entries where at most one is active
+ * layer: a layer id: will be active if layer is visible
+ * mode: a layer visualization mode, active if it's the current mode.
+ * layer + mode: if both are specified, both must be current for an active.
  */
 
 class UIBasic {
@@ -29,13 +44,12 @@ class UIBasic {
 			actions: {
 				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
 				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
-				layers:     { title: 'Layers',     display: 'auto', task: (event) => { this.selectLayers(event); } },
+				layers:     { title: 'Layers',     display: 'auto', task: (event) => { this.toggleLayers(event); } },
 				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
 				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
 				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
 				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
-				
 			},
 			viewport: [0, 0, 0, 0] //in scene coordinates
 		});
@@ -54,16 +68,33 @@ class UIBasic {
 	init() {		
 		(async () => {
 
+			this.menu = [];
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 	
+			if(this.actions.layers.display == 'auto')
+				this.actions.layers.display = this.lime.canvas.layers.length == 1;
+
+			this.menu.push({ section: "Layers" });
 			let lightLayers = [];
-			for(let layer of Object.values(this.lime.canvas.layers)) {
+			for(let [id, layer] of Object.entries(this.lime.canvas.layers)) {
 				//layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
 
-				if(layer.controls.light)
-					lightLayers.push(layer);
+				if(layer.controls.light)					lightLayers.push(layer);
+				let modes = []
+				for(let m of layer.getModes()) {
+					modes.push( { button: m, onclick: ()=>{ layer.setMode(m); } } );
+				}
+				this.menu.push({
+					button: layer.label || id, 
+					onclick: ()=> { this.setLayer(layer); },
+					list: modes,
+					layer: id
+				});
 			}
+			this.createMenu();
+			this.updateMenu();
+
 			if(lightLayers.length) {
 				if(this.actions.light.display === 'auto')
 					this.actions.light.display = true;
@@ -246,30 +277,112 @@ class UIBasic {
 
 /* Layer management */
 
-	selectLayers(event) {
-		if(!this.layerMenu) {
-			let ul = document.createElement('ul');
-			ul.classList.add('openlime-layers-menu');
-			for(let [name, layer] of Object.entries(this.lime.canvas.layers)) {
-				let li = document.createElement('li');
-				li.innerHTML = layer.label || name;
-				li.addEventListener('click', ()=> {
-					this.setLayer(layer);
-					this.closeLayersMenu();
-				});
-				ul.appendChild(li);
-			}
-			this.lime.containerElement.appendChild(ul);
-			this.layerMenu = ul;
+	createEntry(entry) {
+		if(!('id' in entry))
+			entry.id = 'entry_' + (this.entry_count++);
+
+		let id = `id="${entry.id}"`;
+		
+		let html = '';
+		if('title' in entry) {
+			html += `<h2 ${id} class="openlime-title">${entry.title}</h2>`
+
+		} else if('section' in entry) {
+			html += `<h3 ${id} class="openlime-section">${entry.section}</h3>`
+
+		} else if('html' in entry) {
+			html += `${entry.html}`
+			
+		} else if('button' in entry) {
+			let group = 'group' in entry? `data-group="${entry.group}"`:'';
+			let layer = 'layer' in entry? `data-layer="${entry.layer}"`:'';
+			let mode  = 'mode'  in entry? `data-mode="${entry.mode}"`  :'';
+			html += `<a href="#" ${id} ${group} ${layer} ${mode} class="openlime-button">${entry.button}</a>`;
 		}
-		this.layerMenu.style.left = event.offsetX + 'px';
-		this.layerMenu.style.top = event.offsetY + 'px';
-		this.layerMenu.style.display = 'block';
+		
+		if('list' in entry) {
+			let ul = `<div class="openlime-list">`;
+			for(let li of entry.list)
+				ul += this.createEntry(li);
+			ul += '</div>';
+			html += ul;
+		}
+		return html;
+	}
+	addEntryCallbacks(entry) {
+		entry.element = this.layerMenu.querySelector('#' + entry.id);
+		if(entry.onclick)
+			entry.element.addEventListener('click', (e)=> { 
+				entry.onclick();
+				entry.element.classList.add('active');
+				this.updateMenu();
+			});
+
+		if('list' in entry) 
+			for(let e of entry.list)
+				this.addEntryCallbacks(e);
+	}
+
+	updateEntry(entry) {
+		let element = entry.element;
+		let group = element.getAttribute('data-group');
+		let layer = element.getAttribute('data-layer');
+		let mode = element.getAttribute('data-mode');
+		let active = (layer && this.lime.canvas.layers[layer].visible) &&
+			(!mode || this.lime.canvas.layers[layer].mode == mode);
+		entry.element.classList.toggle('active', active);
+
+		if('list' in entry)
+			for(let e of entry.list)
+				this.updateEntry(e);
+	}
+
+	updateMenu() {
+		for(let entry of this.menu)
+			this.updateEntry(entry);
+	}
+
+	createMenu() {
+		this.entry_count = 0;
+		let html = `<div class="openlime-layers-menu">`;
+		for(let entry of this.menu) {
+			html += this.createEntry(entry);
+		}
+		html += '</div>';
+
+
+		let template = document.createElement('template');
+		template.innerHTML = html.trim();
+		this.layerMenu = template.content.firstChild;
+		this.lime.containerElement.appendChild(this.layerMenu);
+
+		for(let entry of this.menu) {
+			this.addEntryCallbacks(entry);
+		}
+
+
+/*		for(let li of document.querySelectorAll('[data-layer]'))
+			li.addEventListener('click', (e) => {
+				this.setLayer(this.lime.canvas.layers[li.getAttribute('data-layer')]);
+			}); */
+	}
+
+	toggleLayers(event) {
+		this.layerMenu.classList.toggle('open');
 	}
 
 	setLayer(layer_on) {
+		if(typeof layer_on == 'string')
+			layer_on = this.lime.canvas.layers[layer_on];
+
 		this.activeLayer = layer_on;
 
+		/*for(let li of this.layerMenu.querySelectorAll('li')) {
+			li.classList.remove('active');
+			let id = li.getAttribute('data-layer');
+			if(this.lime.canvas.layers[id] == layer_on)
+				li.classList.add('active');
+		}*/
 		for(let layer of Object.values(this.lime.canvas.layers)) {
 			layer.setVisible(layer == layer_on);
 			for(let c of layer.controllers) {
@@ -278,6 +391,8 @@ class UIBasic {
 			}
 		}
 		this.lime.redraw();
+
+		this.updateMenu();
 	}
 
 	closeLayersMenu() {

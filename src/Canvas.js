@@ -152,7 +152,7 @@ class Canvas {
 				done = layer.draw(pos, view) && done;
 
 		//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
-		return done && pos.t == this.camera.target.t;
+		return done && pos.t >= this.camera.target.t;
 	}
 
 /**
