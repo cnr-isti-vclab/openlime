@@ -41,12 +41,18 @@ class RTIShader extends Shader {
 		if(!(this.modes.includes(mode)))
 			throw Error("Unknown mode: " + mode);
 		this.mode = mode;
-		if(mode != 'light') {
-			this.lightWeights([ 0.612,  0.354, 0.707], 'base');
-			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
-			this.lightWeights([     0, -0.707, 0.707], 'base2');
+
+		if(this.normals && mode != 'light') {
+			this.body = this.normalsTemplate();
+
+		} else {
+			if(mode != 'light') {
+				this.lightWeights([ 0.612,  0.354, 0.707], 'base');
+				this.lightWeights([-0.612,  0.354, 0.707], 'base1');
+				this.lightWeights([     0, -0.707, 0.707], 'base2');
+			}
+			this.body = this.template();
 		}
-		this.body = this.template();
 		this.needsUpdate = true;
 	}
 
@@ -86,6 +92,8 @@ class RTIShader extends Shader {
 
 		for(let i = 0; i < this.njpegs; i++)
 			this.samplers.push({ id:i, name:'plane'+i, type:'vec3' });
+		if(this.normals)
+			this.samplers.push({id:this.njpegs, name:'normals', type:'vec3' });
 
 		this.material = this.materials[0];
 
@@ -162,6 +170,45 @@ class RTIShader extends Shader {
 	}
 
 
+	normalsTemplate() {
+		let str = `#version 300 es
+
+precision highp float; 
+precision highp int; 
+in vec2 v_texcoord;
+out vec4 color;
+uniform vec3 light;
+uniform sampler2D normals;
+
+void main(void) {
+	vec3 normal = texture(normals, v_texcoord).zyx; 
+`;
+
+		switch(this.mode) {
+		case 'normals':  str += `
+color = vec4(normal.x, normal.y, normal.z, 1);
+`;
+			break;
+		case 'diffuse': str += `
+normal = normal*2.0 - 1.0;
+normal.z =  sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
+color = vec4(vec3(dot(light, normal)), 1);
+`;
+			break;
+		case 'specular': str += `
+float exp = 15.0;
+float ks = 0.7;
+normal = normal*2.0 - 1.0;
+float nDotH = dot(light, normal);
+nDotH = pow(nDotH, exp);
+nDotH *= ks;
+color = vec4(nDotH, nDotH, nDotH, 1);
+`;
+		}
+		str += `
+}`;
+		return str;
+	}
 
 	template() {
 

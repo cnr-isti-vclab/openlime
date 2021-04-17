@@ -120,7 +120,8 @@ function rtiTest(dataset) {
 	let layer0 = new Layer({ 
 		layout: 'image', 
 		type:'rti',
-		url: 'assets/rti/' + dataset + '/info.json'
+		url: 'assets/rti/hsh/info.json',
+		normals: true
 	});
 	layer0.transform.x = -200;
 	lime.canvas.addLayer('hsh', layer0); 

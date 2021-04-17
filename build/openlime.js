@@ -640,8 +640,6 @@
 
     	restoreWebGL(gl) {
     		this.createProgram(gl);
-    		for(let uniform of Object.values(this.uniforms))
-    			uniform.needsUpdate = true;
     	}
 
     	setUniform(name, value) {
@@ -705,6 +703,11 @@
 
     		this.program = program;
     		this.needsUpdate = false;
+
+    		for(let uniform of Object.values(this.uniforms)) {
+    			uniform.location = null;
+    			uniform.needsUpdate = true;
+    		}
     	}
 
     	updateUniforms(gl, program) {
@@ -1387,6 +1390,19 @@ void main() {
     		this.shader.setEvent('update', ()=>{ this.emit('update'); });
     	}
 
+    	getMode() {
+    		return this.shader.mode;
+    	}
+
+    	getModes() {
+    		return this.shader.modes;
+    	}
+
+    	setMode(mode) {
+    		this.shader.setMode(mode);
+    		this.emit('update');
+    	}
+
     /**
      * @param {bool} visible
      */
@@ -1917,7 +1933,7 @@ void main() {
     				done = layer.draw(pos, view) && done;
 
     		//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
-    		return done && pos.t == this.camera.target.t;
+    		return done && pos.t >= this.camera.target.t;
     	}
 
     /**
@@ -1942,7 +1958,7 @@ void main() {
 
     class RTIShader extends Shader {
     	constructor(options) {
-    		super(options);
+    		super({});
 
     		Object.assign(this, {
     			modes: ['light', 'normals', 'diffuse', 'specular'],
@@ -1964,6 +1980,7 @@ void main() {
     			basis: null,       //PCA basis for rbf and bln
     			lweights: null    //light direction dependent coefficients to be used with coefficient planes
     		});
+    		Object.assign(this, options);
 
     		if(this.relight)
     			this.init(this.relight);
@@ -1975,12 +1992,18 @@ void main() {
     		if(!(this.modes.includes(mode)))
     			throw Error("Unknown mode: " + mode);
     		this.mode = mode;
-    		if(mode != 'light') {
-    			this.lightWeights([ 0.612,  0.354, 0.707], 'base');
-    			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
-    			this.lightWeights([     0, -0.707, 0.707], 'base2');
+
+    		if(this.normals && mode != 'light') {
+    			this.body = this.normalsTemplate();
+
+    		} else {
+    			if(mode != 'light') {
+    				this.lightWeights([ 0.612,  0.354, 0.707], 'base');
+    				this.lightWeights([-0.612,  0.354, 0.707], 'base1');
+    				this.lightWeights([     0, -0.707, 0.707], 'base2');
+    			}
+    			this.body = this.template();
     		}
-    		this.body = this.template();
     		this.needsUpdate = true;
     	}
 
@@ -2020,6 +2043,8 @@ void main() {
 
     		for(let i = 0; i < this.njpegs; i++)
     			this.samplers.push({ id:i, name:'plane'+i, type:'vec3' });
+    		if(this.normals)
+    			this.samplers.push({id:this.njpegs, name:'normals', type:'vec3' });
 
     		this.material = this.materials[0];
 
@@ -2028,6 +2053,7 @@ void main() {
 
     		if(this.type == "rbf")
     			this.ndimensions = this.lights.length/3;
+
 
     		if(this.type == "bilinear") {
     			this.ndimensions = this.resolution*this.resolution;
@@ -2093,6 +2119,45 @@ void main() {
     	}
 
 
+    	normalsTemplate() {
+    		let str = `#version 300 es
+
+precision highp float; 
+precision highp int; 
+in vec2 v_texcoord;
+out vec4 color;
+uniform vec3 light;
+uniform sampler2D normals;
+
+void main(void) {
+	vec3 normal = texture(normals, v_texcoord).zyx; 
+`;
+
+    		switch(this.mode) {
+    		case 'normals':  str += `
+color = vec4(normal.x, normal.y, normal.z, 1);
+`;
+    			break;
+    		case 'diffuse': str += `
+normal = normal*2.0 - 1.0;
+normal.z =  sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
+color = vec4(vec3(dot(light, normal)), 1);
+`;
+    			break;
+    		case 'specular': str += `
+float exp = 15.0;
+float ks = 0.7;
+normal = normal*2.0 - 1.0;
+float nDotH = dot(light, normal);
+nDotH = pow(nDotH, exp);
+nDotH *= ks;
+color = vec4(nDotH, nDotH, nDotH, 1);
+`;
+    		}
+    		str += `
+}`;
+    		return str;
+    	}
 
     	template() {
 
@@ -2358,34 +2423,34 @@ vec4 render(vec3 base[np1]) {
     class RBF {
     	/* @param {Array} v expects light direction as [x, y, z]
     	*/
-    	static lightWeights(lpos, layer) {
+    	static lightWeights(lpos, shader) {
 
-    		let weights = RBF.rbf(lpos, layer);
+    		let weights = RBF.rbf(lpos, shader);
 
-    		let np = layer.nplanes;
+    		let np = shader.nplanes;
     		let lweights = new Float32Array((np + 1) * 3);
 
     		for(let p = 0; p < np+1; p++) {
     			for(let k = 0; k < 3; k++) {
     				for(let l = 0; l < weights.length; l++) {
-    					let o = layer.baseLightOffset(p, weights[l][0], k);
-    					lweights[3*p + k] += weights[l][1]*layer.basis[o];
+    					let o = shader.baseLightOffset(p, weights[l][0], k);
+    					lweights[3*p + k] += weights[l][1]*shader.basis[o];
     				}
     			}
     		}
     		return lweights;
     	}
 
-    	static rbf(lpos, layer) {
-    		let radius = 1/(layer.sigma*layer.sigma);
-    		let weights = new Array(layer.ndimensions);
+    	static rbf(lpos, shader) {
+    		let radius = 1/(shader.sigma*shader.sigma);
+    		let weights = new Array(shader.ndimensions);
 
     		//compute rbf weights
     		let totw = 0.0;
     		for(let i = 0; i < weights.length; i++) {
-    			let dx = layer.lights[i*3+0] - lpos[0];
-    			let dy = layer.lights[i*3+1] - lpos[1];
-    			let dz = layer.lights[i*3+2] - lpos[2];
+    			let dx = shader.lights[i*3+0] - lpos[0];
+    			let dy = shader.lights[i*3+1] - lpos[1];
+    			let dz = shader.lights[i*3+2] - lpos[2];
 
     			let d2 = dx*dx + dy*dy + dz*dz;
     			let w = Math.exp(-radius * d2);
@@ -2416,8 +2481,8 @@ vec4 render(vec3 base[np1]) {
     }
 
     class BLN {
-    	static lightWeights(lpos, layer) {
-    		let np = layer.nplanes;
+    	static lightWeights(lpos, shader) {
+    		let np = shader.nplanes;
     		let s = Math.abs(lpos[0]) + Math.abs(lpos[1]) + Math.abs(lpos[2]);
 
     		//rotate 45 deg.
@@ -2425,11 +2490,11 @@ vec4 render(vec3 base[np1]) {
     		let y = (lpos[1] - lpos[0])/s;
     		x = (x + 1.0)/2.0;
     		y = (y + 1.0)/2.0;
-    		x = x*(layer.resolution - 1.0);
-    		y = y*(layer.resolution - 1.0);
+    		x = x*(shader.resolution - 1.0);
+    		y = y*(shader.resolution - 1.0);
 
-    		let sx = Math.min(layer.resolution-2, Math.max(0, Math.floor(x)));
-    		let sy = Math.min(layer.resolution-2, Math.max(0, Math.floor(y)));
+    		let sx = Math.min(shader.resolution-2, Math.max(0, Math.floor(x)));
+    		let sy = Math.min(shader.resolution-2, Math.max(0, Math.floor(y)));
     		let dx = x - sx;
     		let dy = y - sy;
 
@@ -2445,16 +2510,16 @@ vec4 render(vec3 base[np1]) {
 
     		for(let p = 0; p < np+1; p++) {
     			for(let k = 0; k < 3; k++) {
-    				let o00 = layer.basePixelOffset(p, sx, sy, k);
-    				let o10 = layer.basePixelOffset(p, sx+1, sy, k);
-    				let o01 = layer.basePixelOffset(p, sx, sy+1, k);
-    				let o11 = layer.basePixelOffset(p, sx+1, sy+1, k);
+    				let o00 = shader.basePixelOffset(p, sx, sy, k);
+    				let o10 = shader.basePixelOffset(p, sx+1, sy, k);
+    				let o01 = shader.basePixelOffset(p, sx, sy+1, k);
+    				let o11 = shader.basePixelOffset(p, sx+1, sy+1, k);
 
     				lweights[3*p + k] = 
-    					s00*layer.basis[o00] + 
-    					s10*layer.basis[o10] +
-    					s01*layer.basis[o01] +
-    					s11*layer.basis[o11];
+    					s00*shader.basis[o00] + 
+    					s10*shader.basis[o10] +
+    					s01*shader.basis[o01] +
+    					s11*shader.basis[o11];
 
     			}
     		}
@@ -2482,7 +2547,7 @@ vec4 render(vec3 base[np1]) {
     		if(!this.layout)
     			this.layout = 'image';
 
-    		this.shaders['rti'] = new RTIShader();
+    		this.shaders['rti'] = new RTIShader({ normals: this.normals });
     		this.setShader('rti');
 
     		let now = performance.now();
@@ -2492,10 +2557,10 @@ vec4 render(vec3 base[np1]) {
     			this.loadJson(this.url);
     	}
 
-    	planeUrl(url, plane) {
+    	imageUrl(url, plane) {
     		let path = this.url.substring(0, this.url.lastIndexOf('/')+1);
     		switch(this.layout) {
-    			case 'image':    return path + 'plane_' + plane + '.jpg';			case 'google':   return path + 'plane_' + plane;			case 'deepzoom': return path + 'plane_' + plane + '.dzi';			case 'tarzoom':  return path + 'plane_' + plane + '.tzi';			case 'zoomify':  return path + 'plane_' + plane + '/ImageProperties.xml';			//case 'iip':      return this.plane.throw Error("Unimplemented");
+    			case 'image':    return path + plane + '.jpg';			case 'google':   return path + plane;			case 'deepzoom': return path + plane + '.dzi';			case 'tarzoom':  return path + plane + '.tzi';			case 'zoomify':  return path + plane + '/ImageProperties.xml';			//case 'iip':      return this.plane.throw Error("Unimplemented");
     			case 'iiif': throw Error("Unimplemented");
     			default:     throw Error("Unknown layout: " + layout);
     		}
@@ -2522,13 +2587,20 @@ vec4 render(vec3 base[np1]) {
 
     			let size = {width:this.width, height:this.height};
     			for(let p = 0; p < this.shader.njpegs; p++) {
-    				let url = this.planeUrl(this.url, p);
+    				let url = this.imageUrl(this.url, 'plane_' + p);
     				let raster = new Raster({ url: url, type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
     				if(p == 0 || this.layout == 'tarzoom')
     					raster.layout = new Layout(url, this.layout, size);
     				else
     					raster.layout = this.rasters[0].layout;
     				this.rasters.push(raster);
+    			}
+    			if(this.normals) {
+    				let url = this.imageUrl(this.url, 'normals');
+    				let raster = new Raster({ url: url, type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
+    				raster.layout = new Layout(url, this.layout, size);
+    				this.rasters.push(raster);
+    				
     			}
 
     			
@@ -2552,7 +2624,7 @@ vec4 render(vec3 base[np1]) {
     	}
     	draw(transform, viewport) {
     		this.worldRotation = transform.a + this.transform.a;
-    		super.draw(transform, viewport);
+    		return super.draw(transform, viewport);
     	}
     }
 
@@ -2758,6 +2830,21 @@ vec4 render(vec3 base[np1]) {
      *  light: turn on light changing.
      *  switch layer(s)
      *  lens.
+     * 
+     * How the menu works:
+     * Each entry eg: { title: 'Coin 16' }
+     * title: large title
+     * section: smaller title
+     * html: whatever html
+     * button: visually a button, attributes: group, layer, mode
+     * list: an array of entries.
+     * 
+     * Additional attributes:
+     * onclick: a function(event) {}
+     * group: a group of entries where at most one is active
+     * layer: a layer id: will be active if layer is visible
+     * mode: a layer visualization mode, active if it's the current mode.
+     * layer + mode: if both are specified, both must be current for an active.
      */
 
     class UIBasic {
@@ -2773,13 +2860,12 @@ vec4 render(vec3 base[np1]) {
     			actions: {
     				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
     				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
-    				layers:     { title: 'Layers',     display: 'auto', task: (event) => { this.selectLayers(event); } },
+    				layers:     { title: 'Layers',     display: 'auto', task: (event) => { this.toggleLayers(event); } },
     				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
     				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
     				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
     				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
     				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
-    				
     			},
     			viewport: [0, 0, 0, 0] //in scene coordinates
     		});
@@ -2788,7 +2874,21 @@ vec4 render(vec3 base[np1]) {
     		if(this.autoFit)
     			this.lime.canvas.addEvent('updateSize', () => this.lime.camera.fitCameraBox(0));
 
+    		this.menu = [];
     		
+    		this.menu.push({ section: "Layers" });
+    		for(let [id, layer] of Object.entries(this.lime.canvas.layers)) {
+    			let modes = [];
+    			for(let m of layer.getModes()) {
+    				modes.push( { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } } );
+    			}
+    			this.menu.push({
+    				button: layer.label || id, 
+    				onclick: ()=> { this.setLayer(layer); },
+    				list: modes,
+    				layer: id
+    			});
+    		}
     		if(queueMicrotask) queueMicrotask(() => { this.init(); }); //allows modification of actions and layers before init.
     		else setTimeout(() => { this.init(); }, 0);
     	}
@@ -2801,13 +2901,17 @@ vec4 render(vec3 base[np1]) {
     			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
     			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
     	
-    			let lightLayers = [];
-    			for(let layer of Object.values(this.lime.canvas.layers)) {
-    				//layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
+    			if(this.actions.layers.display == 'auto')
+    				this.actions.layers.display = this.lime.canvas.layers.length > 0;
 
-    				if(layer.controls.light)
-    					lightLayers.push(layer);
-    			}
+    				
+    			this.createMenu();
+    			this.updateMenu();
+    			
+    			let lightLayers = [];
+    			for(let [id, layer] of Object.entries(this.lime.canvas.layers)) 
+    					if(layer.controls.light)					lightLayers.push(layer);
+
     			if(lightLayers.length) {
     				if(this.actions.light.display === 'auto')
     					this.actions.light.display = true;
@@ -2948,30 +3052,112 @@ vec4 render(vec3 base[np1]) {
 
     /* Layer management */
 
-    	selectLayers(event) {
-    		if(!this.layerMenu) {
-    			let ul = document.createElement('ul');
-    			ul.classList.add('openlime-layers-menu');
-    			for(let [name, layer] of Object.entries(this.lime.canvas.layers)) {
-    				let li = document.createElement('li');
-    				li.innerHTML = layer.label || name;
-    				li.addEventListener('click', ()=> {
-    					this.setLayer(layer);
-    					this.closeLayersMenu();
-    				});
-    				ul.appendChild(li);
-    			}
-    			this.lime.containerElement.appendChild(ul);
-    			this.layerMenu = ul;
+    	createEntry(entry) {
+    		if(!('id' in entry))
+    			entry.id = 'entry_' + (this.entry_count++);
+
+    		let id = `id="${entry.id}"`;
+    		
+    		let html = '';
+    		if('title' in entry) {
+    			html += `<h2 ${id} class="openlime-title">${entry.title}</h2>`;
+
+    		} else if('section' in entry) {
+    			html += `<h3 ${id} class="openlime-section">${entry.section}</h3>`;
+
+    		} else if('html' in entry) {
+    			html += `${entry.html}`;
+    			
+    		} else if('button' in entry) {
+    			let group = 'group' in entry? `data-group="${entry.group}"`:'';
+    			let layer = 'layer' in entry? `data-layer="${entry.layer}"`:'';
+    			let mode  = 'mode'  in entry? `data-mode="${entry.mode}"`  :'';
+    			html += `<a href="#" ${id} ${group} ${layer} ${mode} class="openlime-button">${entry.button}</a>`;
     		}
-    		this.layerMenu.style.left = event.offsetX + 'px';
-    		this.layerMenu.style.top = event.offsetY + 'px';
-    		this.layerMenu.style.display = 'block';
+    		
+    		if('list' in entry) {
+    			let ul = `<div class="openlime-list">`;
+    			for(let li of entry.list)
+    				ul += this.createEntry(li);
+    			ul += '</div>';
+    			html += ul;
+    		}
+    		return html;
+    	}
+    	addEntryCallbacks(entry) {
+    		entry.element = this.layerMenu.querySelector('#' + entry.id);
+    		if(entry.onclick)
+    			entry.element.addEventListener('click', (e)=> { 
+    				entry.onclick();
+    				entry.element.classList.add('active');
+    				this.updateMenu();
+    			});
+
+    		if('list' in entry) 
+    			for(let e of entry.list)
+    				this.addEntryCallbacks(e);
+    	}
+
+    	updateEntry(entry) {
+    		let element = entry.element;
+    		let group = element.getAttribute('data-group');
+    		let layer = element.getAttribute('data-layer');
+    		let mode = element.getAttribute('data-mode');
+    		let active = (layer && this.lime.canvas.layers[layer].visible) &&
+    			(!mode || this.lime.canvas.layers[layer].getMode() == mode);
+    		entry.element.classList.toggle('active', active);
+
+    		if('list' in entry)
+    			for(let e of entry.list)
+    				this.updateEntry(e);
+    	}
+
+    	updateMenu() {
+    		for(let entry of this.menu)
+    			this.updateEntry(entry);
+    	}
+
+    	createMenu() {
+    		this.entry_count = 0;
+    		let html = `<div class="openlime-layers-menu">`;
+    		for(let entry of this.menu) {
+    			html += this.createEntry(entry);
+    		}
+    		html += '</div>';
+
+
+    		let template = document.createElement('template');
+    		template.innerHTML = html.trim();
+    		this.layerMenu = template.content.firstChild;
+    		this.lime.containerElement.appendChild(this.layerMenu);
+
+    		for(let entry of this.menu) {
+    			this.addEntryCallbacks(entry);
+    		}
+
+
+    /*		for(let li of document.querySelectorAll('[data-layer]'))
+    			li.addEventListener('click', (e) => {
+    				this.setLayer(this.lime.canvas.layers[li.getAttribute('data-layer')]);
+    			}); */
+    	}
+
+    	toggleLayers(event) {
+    		this.layerMenu.classList.toggle('open');
     	}
 
     	setLayer(layer_on) {
+    		if(typeof layer_on == 'string')
+    			layer_on = this.lime.canvas.layers[layer_on];
+
     		this.activeLayer = layer_on;
 
+    		/*for(let li of this.layerMenu.querySelectorAll('li')) {
+    			li.classList.remove('active');
+    			let id = li.getAttribute('data-layer');
+    			if(this.lime.canvas.layers[id] == layer_on)
+    				li.classList.add('active');
+    		}*/
     		for(let layer of Object.values(this.lime.canvas.layers)) {
     			layer.setVisible(layer == layer_on);
     			for(let c of layer.controllers) {
@@ -2980,6 +3166,8 @@ vec4 render(vec3 base[np1]) {
     			}
     		}
     		this.lime.redraw();
+
+    		this.updateMenu();
     	}
 
     	closeLayersMenu() {

@@ -58,7 +58,21 @@ class UIBasic {
 		if(this.autoFit)
 			this.lime.canvas.addEvent('updateSize', () => this.lime.camera.fitCameraBox(0));
 
+		this.menu = [];
 		
+		this.menu.push({ section: "Layers" });
+		for(let [id, layer] of Object.entries(this.lime.canvas.layers)) {
+			let modes = []
+			for(let m of layer.getModes()) {
+				modes.push( { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } } );
+			}
+			this.menu.push({
+				button: layer.label || id, 
+				onclick: ()=> { this.setLayer(layer); },
+				list: modes,
+				layer: id
+			});
+		}
 		if(queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
 	}
@@ -68,32 +82,19 @@ class UIBasic {
 	init() {		
 		(async () => {
 
-			this.menu = [];
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 	
 			if(this.actions.layers.display == 'auto')
-				this.actions.layers.display = this.lime.canvas.layers.length == 1;
+				this.actions.layers.display = this.lime.canvas.layers.length > 0;
 
-			this.menu.push({ section: "Layers" });
-			let lightLayers = [];
-			for(let [id, layer] of Object.entries(this.lime.canvas.layers)) {
-				//layer.addEvent('ready', ()=> { this.readyLayer(layer); }); //THIS SHOULD BE HANDLED DIRECTLY BY CAMERA who knows scene bbox
-
-				if(layer.controls.light)					lightLayers.push(layer);
-				let modes = []
-				for(let m of layer.getModes()) {
-					modes.push( { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } } );
-				}
-				this.menu.push({
-					button: layer.label || id, 
-					onclick: ()=> { this.setLayer(layer); },
-					list: modes,
-					layer: id
-				});
-			}
+				
 			this.createMenu();
 			this.updateMenu();
+			
+			let lightLayers = [];
+			for(let [id, layer] of Object.entries(this.lime.canvas.layers)) 
+					if(layer.controls.light)					lightLayers.push(layer);
 
 			if(lightLayers.length) {
 				if(this.actions.light.display === 'auto')

@@ -134,6 +134,7 @@ g.openlime-expand {
 	top:1px;
 }
 
+.openlime-layers-menu .openlime-button.active,
 .openlime-layers-menu .openlime-button:active,
 .openlime-layers-menu .openlime-button:focus {
 	background-color: rgb(80, 80, 80); 

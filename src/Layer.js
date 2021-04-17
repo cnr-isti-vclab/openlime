@@ -145,6 +145,7 @@ class Layer {
 
 	setMode(mode) {
 		this.shader.setMode(mode);
+		this.emit('update');
 	}
 
 /**
