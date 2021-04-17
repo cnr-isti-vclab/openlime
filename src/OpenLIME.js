@@ -3,6 +3,7 @@ import { Camera } from './Camera.js'
 import { Transform } from './Transform.js'
 import { Layer } from './Layer.js'
 import { RTILayer } from './RTILayer.js'
+import { BRDFLayer } from './BRDFLayer.js'
 
 import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'

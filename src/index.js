@@ -18,8 +18,8 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //combinerTest();
 //imageTest('deepzoom');
 //flipTest();
-//brdfTest();
-rtiTest('rbf');
+brdfTest();
+//rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 
