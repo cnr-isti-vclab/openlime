@@ -1,5 +1,16 @@
-# openlime
+# Openlime
 Web-based, advanced images viewer (RTI, multispectral, BRDF, etc. )
+
+## Ubuntu
+```bash
+sudo apt install npm
+```
+
+### Ubuntu 18.04
+You might have some problem using the old npm version shipped with Ubuntu18.04, and even upgrading it. This worked for me:
+```bash
+sudo npm install -g npm@latest-6
+```
 
 
 Install the package:
