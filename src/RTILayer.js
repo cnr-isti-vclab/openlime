@@ -83,9 +83,7 @@ class RTILayer extends Layer {
 				raster.layout = new Layout(url, this.layout, size);
 				this.rasters.push(raster);
 				
-			}
-
-			
+			}			
 			this.setLayout(this.rasters[0].layout);
 
 		})().catch(e => { console.log(e); this.status = e; });

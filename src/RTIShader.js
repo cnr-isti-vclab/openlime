@@ -43,16 +43,11 @@ class RTIShader extends Shader {
 		this.mode = mode;
 
 		if(this.normals && mode != 'light') {
-			this.body = this.normalsTemplate();
-
-		} else {
-			if(mode != 'light') {
-				this.lightWeights([ 0.612,  0.354, 0.707], 'base');
-				this.lightWeights([-0.612,  0.354, 0.707], 'base1');
-				this.lightWeights([     0, -0.707, 0.707], 'base2');
-			}
-			this.body = this.template();
+			this.lightWeights([ 0.612,  0.354, 0.707], 'base');
+			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
+			this.lightWeights([     0, -0.707, 0.707], 'base2');
 		}
+		this.body = this.template();
 		this.needsUpdate = true;
 	}
 
@@ -94,6 +89,9 @@ class RTIShader extends Shader {
 			this.samplers.push({ id:i, name:'plane'+i, type:'vec3' });
 		if(this.normals)
 			this.samplers.push({id:this.njpegs, name:'normals', type:'vec3' });
+
+		if(this.normals)
+			this.samplers.push({ id:this.njpegs, name:'normals', type:'vec3'});
 
 		this.material = this.materials[0];
 
@@ -169,47 +167,6 @@ class RTIShader extends Shader {
 		}
 	}
 
-
-	normalsTemplate() {
-		let str = `#version 300 es
-
-precision highp float; 
-precision highp int; 
-in vec2 v_texcoord;
-out vec4 color;
-uniform vec3 light;
-uniform sampler2D normals;
-
-void main(void) {
-	vec3 normal = texture(normals, v_texcoord).zyx; 
-`;
-
-		switch(this.mode) {
-		case 'normals':  str += `
-color = vec4(normal.x, normal.y, normal.z, 1);
-`;
-			break;
-		case 'diffuse': str += `
-normal = normal*2.0 - 1.0;
-normal.z =  sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
-color = vec4(vec3(dot(light, normal)), 1);
-`;
-			break;
-		case 'specular': str += `
-float exp = 15.0;
-float ks = 0.7;
-normal = normal*2.0 - 1.0;
-float nDotH = dot(light, normal);
-nDotH = pow(nDotH, exp);
-nDotH *= ks;
-color = vec4(nDotH, nDotH, nDotH, 1);
-`;
-		}
-		str += `
-}`;
-		return str;
-	}
-
 	template() {
 
 		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
@@ -238,8 +195,13 @@ uniform ${basetype} base2[np1];
 `;
 
 		for(let n = 0; n < this.njpegs; n++) 
-			str += 
-`uniform sampler2D plane${n};
+			str += `
+uniform sampler2D plane${n};
+`;
+
+		if(this.normals)
+			str += `
+uniform sampler2D normals;
 `;
 
 		if(this.colorspace == 'mycc')
@@ -266,23 +228,39 @@ void main(void) {
 			str += `
 	color = render(base);
 `;
-		} else {
-			str += `
+		} else  {
+			if(this.normals)
+				str += `
+	vec3 normal = (texture(normals, v_texcoord).zyx *2.0) - 1.0;
+	normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
+`;
+			else
+				str += `
 	vec3 normal;
-	normal.x = dot(render(base).xyz, vec3(1));
+	normal.x = dot(render(base ).xyz, vec3(1));
 	normal.y = dot(render(base1).xyz, vec3(1));
 	normal.z = dot(render(base2).xyz, vec3(1));
+	normal = normalize(T * normal);
 `; 
 			switch(this.mode) {
 			case 'normals':  str += `
-	normal = (normalize(T * normal) + 1.0)/2.0;
-	color = vec4(normal, 1);
+	normal = (normal + 1.0)/2.0;
+	color = vec4(0.0, normal.xy, 1);
 `;
 			break;
+
 			case 'diffuse': str += `
-	normal = normalize(T * normal);
 	color = vec4(vec3(dot(light, normal)), 1);
 `;
+			break;
+
+			case 'specular': 
+			default: str += `
+	float s = pow(dot(light, normal), 20.0);
+	//color = vec4(render(base).xyz*s, 1.0);
+	color = vec4(s, s, s, 1.0);
+`;
+			break;
 			}
 		}
 		str += `
