@@ -21,6 +21,7 @@ import { ControllerPanZoom } from './ControllerPanZoom.js'
  * section: smaller title
  * html: whatever html
  * button: visually a button, attributes: group, layer, mode
+ * slider: callback(percent)
  * list: an array of entries.
  * 
  * Additional attributes:
@@ -64,7 +65,10 @@ class UIBasic {
 		for(let [id, layer] of Object.entries(this.lime.canvas.layers)) {
 			let modes = []
 			for(let m of layer.getModes()) {
-				modes.push( { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } } );
+				let mode = { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } };
+				if(m == 'specular')
+					mode.list = [{slider: '', oninput:(e)=> { layer.shader.setSpecularExp(e.target.value); } }];
+				modes.push( mode);
 			}
 			this.menu.push({
 				button: layer.label || id, 
@@ -299,6 +303,8 @@ class UIBasic {
 			let layer = 'layer' in entry? `data-layer="${entry.layer}"`:'';
 			let mode  = 'mode'  in entry? `data-mode="${entry.mode}"`  :'';
 			html += `<a href="#" ${id} ${group} ${layer} ${mode} class="openlime-button">${entry.button}</a>`;
+		} else if('slider' in entry) {
+			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider" ${id}>`
 		}
 		
 		if('list' in entry) {
@@ -318,6 +324,9 @@ class UIBasic {
 				entry.element.classList.add('active');
 				this.updateMenu();
 			});
+		if(entry.oninput)
+			entry.element.addEventListener('input', entry.oninput);
+		
 
 		if('list' in entry) 
 			for(let e of entry.list)

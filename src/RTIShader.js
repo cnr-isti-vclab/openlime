@@ -42,7 +42,7 @@ class RTIShader extends Shader {
 			throw Error("Unknown mode: " + mode);
 		this.mode = mode;
 
-		if(this.normals && mode != 'light') {
+		if( mode != 'light') {
 			this.lightWeights([ 0.612,  0.354, 0.707], 'base');
 			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
 			this.lightWeights([     0, -0.707, 0.707], 'base2');
@@ -70,6 +70,9 @@ class RTIShader extends Shader {
 		if(this.mode == 'light')
 			this.lightWeights(light, 'base');
 		this.setUniform('light', light);
+	}
+	setSpecularExp(value) {
+		this.setUniform('specular_exp', value);
 	}
 
 	init(relight) {
@@ -117,6 +120,7 @@ class RTIShader extends Shader {
 
 		this.uniforms = {
 			light: { type: 'vec3', needsUpdate: true, size: 3,              value: [0.0, 0.0, 1] },
+			specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
 			bias:  { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.bias },
 			scale: { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.scale },
 			base:  { type: 'vec3', needsUpdate: true, size: this.nplanes },
@@ -186,6 +190,7 @@ const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
 	-1.6222e-08, -9.4281e-01, 4.7140e-01);
 
 uniform vec3 light;
+uniform float specular_exp;
 uniform vec3 bias[np1];
 uniform vec3 scale[np1];
 
@@ -256,7 +261,7 @@ void main(void) {
 
 			case 'specular': 
 			default: str += `
-	float s = pow(dot(light, normal), 20.0);
+	float s = pow(dot(light, normal), specular_exp);
 	//color = vec4(render(base).xyz*s, 1.0);
 	color = vec4(s, s, s, 1.0);
 `;
