@@ -34,6 +34,9 @@
 	position:absolute;
 	left:0px;
 	top:0px;
+	/* unset right and bottom, which were set by skin.css */
+	right:auto;
+	bottom:auto;
 	padding:5px;
 	background-color:rgb(255, 255, 255, 0.5);
 }
@@ -42,10 +45,13 @@
 	height:80px;
 	width:80px;
 	text-align:center;
-	line-height:80px;
 	background-color:rgba(127, 127, 127, 0.2);
 	margin:5px;
 	cursor:pointer;
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	user-select:none;
 }
 
 .openlime-toolbar > div:hover {
@@ -67,10 +73,10 @@
 	<div id="openlime">
 		<div class="openlime-toolbar">
 			<div class="openlime-home">HOME</div>
-			<div class="openlime-zoomin">ZOOMIN</div>
-			<div class="openlime-zoomout">ZOOMOUT</div>
+			<div class="openlime-zoomin">ZOOM IN</div>
+			<div class="openlime-zoomout">ZOOM OUT</div>
 			<div class="openlime-light">LIGHT</div>
-			<div class="openlime-fullscreen">FULLSCREEN</div>
+			<div class="openlime-fullscreen">FULL SCREEN</div>
 		</div>
 	</div>
 
