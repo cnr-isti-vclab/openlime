@@ -31,7 +31,8 @@ class Layout {
 				switch(this.type) {
 					case 'image':    await this.initImage(); break;
 					case 'google':   await this.initGoogle(); break;
-					case 'deepzoom': await this.initDeepzoom(); break;
+					case 'deepzoom1px': await this.initDeepzoom(true); break;
+					case 'deepzoom': await this.initDeepzoom(false); break;
 					case 'tarzoom':  await this.initTarzoom(); break;
 					case 'zoomify':  await this.initZoomify(); break;
 					case 'iiif':     await this.initIIIF(); break;
@@ -260,7 +261,7 @@ class Layout {
 /**
  * Expects the url to point to .dzi config file
  */
-	async initDeepzoom() {		
+	async initDeepzoom(onepixel) {		
 		var response = await fetch(this.url);
 		if(!response.ok) {
 			this.status = "Failed loading " + this.url + ": " + response.statusText;
@@ -282,10 +283,14 @@ class Layout {
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
 		this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '_files/';
+		this.skiplevels = 0;
+		if(onepixel)
+			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
 
 		this.getTileURL = (url, tile) => {
+			let level = tile.level + this.skiplevels;
 			url = url.substr(0, url.lastIndexOf(".")) + '_files/';
-			return url + tile.level + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
+			return url + level + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
 		}; 
 	}
 

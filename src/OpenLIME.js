@@ -64,7 +64,7 @@ class OpenLIME {
 		this.canvas.addEvent('update', () => { this.redraw(); });
 		this.camera.addEvent('update', () => { this.redraw(); });
 
-		this.pointerManager = new PointerManager(this.canvasElement);
+		this.pointerManager = new PointerManager(this.overlayElement);
 
 		this.canvasElement.addEventListener('contextmenu', (e) => {
             e.preventDefault();

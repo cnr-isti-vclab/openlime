@@ -89,7 +89,7 @@ class UIBasic {
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 	
-			if(this.actions.layers.display == 'auto')
+			if(this.actions.layers && this.actions.layers.display == 'auto')
 				this.actions.layers.display = this.lime.canvas.layers.length > 0;
 
 				
@@ -101,7 +101,7 @@ class UIBasic {
 					if(layer.controls.light)					lightLayers.push(layer);
 
 			if(lightLayers.length) {
-				if(this.actions.light.display === 'auto')
+				if(this.actions.light && this.actions.light.display === 'auto')
 					this.actions.light.display = true;
 
 				let controller = new Controller2D((x, y)=> { 
@@ -290,13 +290,13 @@ class UIBasic {
 		
 		let html = '';
 		if('title' in entry) {
-			html += `<h2 ${id} class="openlime-title">${entry.title}</h2>`
+			html += `<h2 ${id} class="openlime-title">${entry.title}</h2>`;
 
 		} else if('section' in entry) {
-			html += `<h3 ${id} class="openlime-section">${entry.section}</h3>`
+			html += `<h3 ${id} class="openlime-section">${entry.section}</h3>`;
 
 		} else if('html' in entry) {
-			html += `${entry.html}`
+			html += `<div ${id}>${entry.html}</div>`;
 			
 		} else if('button' in entry) {
 			let group = 'group' in entry? `data-group="${entry.group}"`:'';
@@ -304,7 +304,7 @@ class UIBasic {
 			let mode  = 'mode'  in entry? `data-mode="${entry.mode}"`  :'';
 			html += `<a href="#" ${id} ${group} ${layer} ${mode} class="openlime-button">${entry.button}</a>`;
 		} else if('slider' in entry) {
-			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider" ${id}>`
+			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider" ${id}>`;
 		}
 		
 		if('list' in entry) {

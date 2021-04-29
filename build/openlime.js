@@ -622,6 +622,7 @@
     			name: "",
     			body: "",
     			program: null,      //webgl program
+    			modes: [],
     			needsUpdate: true,
     			signals: { 'update':[] }
     		});
@@ -725,7 +726,7 @@
     					case 'vec4':  gl.uniform4fv(uniform.location, value); break;
     					case 'vec3':  gl.uniform3fv(uniform.location, value); break;
     					case 'vec2':  gl.uniform2fv(uniform.location, value); break;
-    					case 'float': gl.uniform1fv(uniform.location, value); break;
+    					case 'float': gl.uniform1f(uniform.location, value); break;
     					case 'int':   gl.uniform1i (uniform.location, value); break;
     					default: throw Error('Unknown uniform type: ' + u.type);
     				}
@@ -1040,7 +1041,7 @@ void main() {
 
     		this.getTileURL = (url, tile) => {
     			url = url.substr(0, url.lastIndexOf(".")) + '_files/';
-    			return url + tile.level + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
+    			return url + (tile.level + 8) + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
     		}; 
     	}
 
@@ -1993,17 +1994,12 @@ void main() {
     			throw Error("Unknown mode: " + mode);
     		this.mode = mode;
 
-    		if(this.normals && mode != 'light') {
-    			this.body = this.normalsTemplate();
-
-    		} else {
-    			if(mode != 'light') {
-    				this.lightWeights([ 0.612,  0.354, 0.707], 'base');
-    				this.lightWeights([-0.612,  0.354, 0.707], 'base1');
-    				this.lightWeights([     0, -0.707, 0.707], 'base2');
-    			}
-    			this.body = this.template();
+    		if( mode != 'light') {
+    			this.lightWeights([ 0.612,  0.354, 0.707], 'base');
+    			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
+    			this.lightWeights([     0, -0.707, 0.707], 'base2');
     		}
+    		this.body = this.template();
     		this.needsUpdate = true;
     	}
 
@@ -2027,6 +2023,9 @@ void main() {
     			this.lightWeights(light, 'base');
     		this.setUniform('light', light);
     	}
+    	setSpecularExp(value) {
+    		this.setUniform('specular_exp', value);
+    	}
 
     	init(relight) {
     		Object.assign(this, relight);
@@ -2045,6 +2044,9 @@ void main() {
     			this.samplers.push({ id:i, name:'plane'+i, type:'vec3' });
     		if(this.normals)
     			this.samplers.push({id:this.njpegs, name:'normals', type:'vec3' });
+
+    		if(this.normals)
+    			this.samplers.push({ id:this.njpegs, name:'normals', type:'vec3'});
 
     		this.material = this.materials[0];
 
@@ -2070,6 +2072,7 @@ void main() {
 
     		this.uniforms = {
     			light: { type: 'vec3', needsUpdate: true, size: 3,              value: [0.0, 0.0, 1] },
+    			specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
     			bias:  { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.bias },
     			scale: { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.scale },
     			base:  { type: 'vec3', needsUpdate: true, size: this.nplanes },
@@ -2118,47 +2121,6 @@ void main() {
     		}
     	}
 
-
-    	normalsTemplate() {
-    		let str = `#version 300 es
-
-precision highp float; 
-precision highp int; 
-in vec2 v_texcoord;
-out vec4 color;
-uniform vec3 light;
-uniform sampler2D normals;
-
-void main(void) {
-	vec3 normal = texture(normals, v_texcoord).zyx; 
-`;
-
-    		switch(this.mode) {
-    		case 'normals':  str += `
-color = vec4(normal.x, normal.y, normal.z, 1);
-`;
-    			break;
-    		case 'diffuse': str += `
-normal = normal*2.0 - 1.0;
-normal.z =  sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
-color = vec4(vec3(dot(light, normal)), 1);
-`;
-    			break;
-    		case 'specular': str += `
-float exp = 15.0;
-float ks = 0.7;
-normal = normal*2.0 - 1.0;
-float nDotH = dot(light, normal);
-nDotH = pow(nDotH, exp);
-nDotH *= ks;
-color = vec4(nDotH, nDotH, nDotH, 1);
-`;
-    		}
-    		str += `
-}`;
-    		return str;
-    	}
-
     	template() {
 
     		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
@@ -2178,6 +2140,7 @@ const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
 	-1.6222e-08, -9.4281e-01, 4.7140e-01);
 
 uniform vec3 light;
+uniform float specular_exp;
 uniform vec3 bias[np1];
 uniform vec3 scale[np1];
 
@@ -2187,9 +2150,14 @@ uniform ${basetype} base2[np1];
 `;
 
     		for(let n = 0; n < this.njpegs; n++) 
-    			str += 
-`uniform sampler2D plane${n};
-`    ;
+    			str += `
+uniform sampler2D plane${n};
+`;
+
+    		if(this.normals)
+    			str += `
+uniform sampler2D normals;
+`;
 
     		if(this.colorspace == 'mycc')
     			str +=
@@ -2215,23 +2183,39 @@ void main(void) {
     			str += `
 	color = render(base);
 `;
-    		} else {
-    			str += `
+    		} else  {
+    			if(this.normals)
+    				str += `
+	vec3 normal = (texture(normals, v_texcoord).zyx *2.0) - 1.0;
+	normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
+`;
+    			else
+    				str += `
 	vec3 normal;
-	normal.x = dot(render(base).xyz, vec3(1));
+	normal.x = dot(render(base ).xyz, vec3(1));
 	normal.y = dot(render(base1).xyz, vec3(1));
 	normal.z = dot(render(base2).xyz, vec3(1));
+	normal = normalize(T * normal);
 `; 
     			switch(this.mode) {
     			case 'normals':  str += `
-	normal = (normalize(T * normal) + 1.0)/2.0;
-	color = vec4(normal, 1);
+	normal = (normal + 1.0)/2.0;
+	color = vec4(0.0, normal.xy, 1);
 `;
     			break;
+
     			case 'diffuse': str += `
-	normal = normalize(T * normal);
 	color = vec4(vec3(dot(light, normal)), 1);
 `;
+    			break;
+
+    			case 'specular': 
+    			default: str += `
+	float s = pow(dot(light, normal), specular_exp);
+	//color = vec4(render(base).xyz*s, 1.0);
+	color = vec4(s, s, s, 1.0);
+`;
+    			break;
     			}
     		}
     		str += `
@@ -2601,9 +2585,7 @@ vec4 render(vec3 base[np1]) {
     				raster.layout = new Layout(url, this.layout, size);
     				this.rasters.push(raster);
     				
-    			}
-
-    			
+    			}			
     			this.setLayout(this.rasters[0].layout);
 
     		})().catch(e => { console.log(e); this.status = e; });
@@ -3079,6 +3061,7 @@ void main() {
      * section: smaller title
      * html: whatever html
      * button: visually a button, attributes: group, layer, mode
+     * slider: callback(percent)
      * list: an array of entries.
      * 
      * Additional attributes:
@@ -3122,7 +3105,10 @@ void main() {
     		for(let [id, layer] of Object.entries(this.lime.canvas.layers)) {
     			let modes = [];
     			for(let m of layer.getModes()) {
-    				modes.push( { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } } );
+    				let mode = { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } };
+    				if(m == 'specular')
+    					mode.list = [{slider: '', oninput:(e)=> { layer.shader.setSpecularExp(e.target.value); } }];
+    				modes.push( mode);
     			}
     			this.menu.push({
     				button: layer.label || id, 
@@ -3308,13 +3294,15 @@ void main() {
     			html += `<h3 ${id} class="openlime-section">${entry.section}</h3>`;
 
     		} else if('html' in entry) {
-    			html += `${entry.html}`;
+    			html += `<div ${id}>${entry.html}</div>`;
     			
     		} else if('button' in entry) {
     			let group = 'group' in entry? `data-group="${entry.group}"`:'';
     			let layer = 'layer' in entry? `data-layer="${entry.layer}"`:'';
     			let mode  = 'mode'  in entry? `data-mode="${entry.mode}"`  :'';
     			html += `<a href="#" ${id} ${group} ${layer} ${mode} class="openlime-button">${entry.button}</a>`;
+    		} else if('slider' in entry) {
+    			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider" ${id}>`;
     		}
     		
     		if('list' in entry) {
@@ -3334,6 +3322,9 @@ void main() {
     				entry.element.classList.add('active');
     				this.updateMenu();
     			});
+    		if(entry.oninput)
+    			entry.element.addEventListener('input', entry.oninput);
+    		
 
     		if('list' in entry) 
     			for(let e of entry.list)

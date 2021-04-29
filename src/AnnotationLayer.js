@@ -25,43 +25,70 @@ class AnnotationLayer extends Layer {
 		}, options);
 		super(options);
 
-		if(this.svgURL)
-			this.loadSVG(this.svgURL);
-	}
 
-	loadSVG(url) {
+		if(typeof(this.viewBox) == "string") {
+			this.viewBox = this.viewBox.split(' '); 
+		}
+		if (Array.isArray(this.viewBox)) {
+			let box = new BoundingBox(); 
+			box.fromArray(this.viewBox);
+			this.viewBox = box;
+		}
+
+
 		(async () => {
-			var response = await fetch(url);
-			if(!response.ok) {
-				this.status = "Failed loading " + this.url + ": " + response.statusText;
-				return;
+			if(typeof(this.annotations) == "string") { //assume it is an URL
+				await this.loadAnnotations(this.annotations);
 			}
+			if(this.svgURL)
+				await this.loadSVG(this.svgURL);
 			
-			let text = await response.text();
-			let parser = new DOMParser();
-			this.svgXML = parser.parseFromString(text, "image/svg+xml").documentElement;
+			this.createSVGElement();
 
-
-			this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-			this.svgElement.classList.add('openlime-svgoverlay');
-			this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-			this.svgElement.append(this.svgGroup);
-			this.svgElement.setAttribute('viewBox', this.viewBox); // box is currently a string of numbers
-			// this.viewBox = this.viewBox.split(' ');
-			this.viewBox = new BoundingBox(); // convert to bbox object
-			this.viewBox.fromArray(options.box.split(' '));
-
-			let root = this.overlayElement.attachShadow( { mode: "open" });
-
-			if(this.style) {
-				const style = document.createElement('style');
-				style.textContent = this.style;
-				root.append(style);
-			}
-			root.appendChild(this.svgElement);
 			this.status = 'ready';
 			this.emit('update');
-		})().catch(e => { console.log(e); this.status = e; });
+
+		})()/*.catch(e => { 
+			console.log(e); 
+			this.status = e; 
+		});*/
+	}
+	async loadAnnotations(url) {
+		var response = await fetch(url);
+		if(!response.ok) {
+			this.status = "Failed loading " + this.url + ": " + response.statusText;
+			return;
+		}
+		this.annotations = await response.json();
+	}
+
+	async loadSVG(url) {
+		var response = await fetch(url);
+		if(!response.ok) {
+			this.status = "Failed loading " + this.url + ": " + response.statusText;
+			return;
+		}
+		let text = await response.text();
+		let parser = new DOMParser();
+		this.svgXML = parser.parseFromString(text, "image/svg+xml").documentElement;
+		throw "if viewbox is set in svgURL should it overwrite options.viewbox or viceversa?"
+	}
+
+	createSVGElement() {
+		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		this.svgElement.classList.add('openlime-svgoverlay');
+		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+		this.svgElement.append(this.svgGroup);
+		this.svgElement.setAttribute('viewBox', this.viewBox.toString()); // box is currently a string of numbers
+
+		let root = this.overlayElement.attachShadow( { mode: "open" });
+
+		if(this.style) {
+			const style = document.createElement('style');
+			style.textContent = this.style;
+			root.append(style);
+		}
+		root.appendChild(this.svgElement);
 	}
 
 	boundingBox() {
@@ -81,30 +108,39 @@ class AnnotationLayer extends Layer {
 
 		let t =  this.transform.compose(transform);
 		this.svgElement.setAttribute('viewBox', `${-viewport.w/2} ${-viewport.h/2} ${viewport.w} ${viewport.h}`);
+		let c = this.viewBox.center();
 		this.svgGroup.setAttribute("transform", 
-			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${ -this.viewBox[2]/2.0} ${-this.viewBox[3]/2.0})`); 
-
+			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${-c[0]} ${-c[1]})`); 
 
 		return true;
 	}
 
 	prefetch(transform) {
 		if(!this.visible) return;
+		if(!this.svgElement)
+		return;
 
-		for(let [id, a] of Object.entries(this.annotations)) {
+		for(let a of this.annotations) {
+			if(!a.target || !a.target.selector || a.target.selector.type != 'SvgSelector')
+				continue;
+			let svg = a.target.selector.value;
+
 			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
 			if(!a.svgElement) {
-				if(a.svg) {
+				if(svg) {
 					let parser = new DOMParser();
-					a.svgElement = parser.parseFromString(a.svg, "image/svg+xml").documentElement;
+					a.svgElement = parser.parseFromString(svg, "image/svg+xml").documentElement;
+
 				} else if(this.svgXML) {
-					a.svgElement = this.svgXML.querySelector(`#${id}`);
+					a.svgElement = this.svgXML.querySelector(`#${a.id}`);
 					if(!a.svgElement)
 						throw Error(`Could not find element with id: ${id} in svg`);
 				}
 			}
-			if(a.svgElement)
-				this.svgGroup.appendChild(a.svgElement);
+			if(a.svgElement) {
+				for(let child of a.svgElement.children)
+					this.svgGroup.appendChild(child);
+			}
 		}
 	}
 	

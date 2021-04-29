@@ -27,6 +27,33 @@ rtiTest('rbf');
 //lensTest();
 //testSVGAnnotations();
 
+//testMedicalAnnotations();
+
+function testMedicalAnnotations() {
+	let layer0 = new Layer({
+		type: 'image',
+		url: 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi',
+		layout: 'deepzoom1px',
+		zindex: 0,
+	});
+
+	let layer1 = new AnnotationLayer({ 
+		viewBox: "0 0 47962 53040",
+		style:` 
+			.openlime-annotation { pointer-events:all; opacity: 0.7; }
+			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+			path { fill:none; stroke-width:1; stroke:red; vector-effect:non-scaling-stroke; }
+			path:hover { cursor:pointer; fill:rgba(255, 0, 0, 0.1); }
+		`,
+		annotations: 'assets/medical/PH1101-1.json'
+	}); 
+
+	lime.canvas.addLayer('img', layer0);
+	lime.canvas.addLayer('anno', layer1);
+	let ui = new UIBasic(lime);
+}
+
+	
 function testSVGAnnotations() {
 	let layer0 = new Layer({
 		type: 'image',
@@ -138,8 +165,9 @@ function rtiTest(dataset) {
 
 
 	let ui = new UIBasic(lime);
-	ui.actions.layers.display = true;
 	lime.camera.maxFixedZoom = 1;
+	ui.menu[0].section = "Prova";
+	ui.menu.push({ html: "<p>Prova</p>" });
 	//ui.actions.light.display = true;
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };
@@ -225,7 +253,7 @@ function lensTest() {
 /* IMAGE TEST */
 function imageTest(layout) {
 	if (!layout)
-		layout = 'image';
+		layout = 'deepzoom';
 
 //	let options = { layout: layout, type: 'image', transform: { x: -100, a: 45 } };
 	let options = { layout: layout, type: 'image'};
@@ -236,7 +264,7 @@ function imageTest(layout) {
 			break;
 
 		case 'deepzoom':
-			options.url = 'assets/svbrdf/vis/ksMap.dzi';
+			options.url = 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
 			break;
 
 		case 'google':
@@ -255,6 +283,7 @@ function imageTest(layout) {
 	}
 	let layer0 = new Layer(options);
 	lime.canvas.addLayer('kdmap', layer0);
+	let ui = new UIBasic(lime);
 }
 
 

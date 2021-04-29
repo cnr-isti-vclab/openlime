@@ -139,7 +139,9 @@ class Layer {
 	}
 
 	getModes() {
-		return this.shader.modes;
+		if(this.shader)
+			return this.shader.modes;
+		return [];
 	}
 
 	setMode(mode) {

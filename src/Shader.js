@@ -18,6 +18,7 @@ class Shader {
 			name: "",
 			body: "",
 			program: null,      //webgl program
+			modes: [],
 			needsUpdate: true,
 			signals: { 'update':[] }
 		});
