@@ -2,6 +2,7 @@ import { Canvas } from './Canvas.js'
 import { Layer } from './Layer.js'
 import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
+import { PointerManager } from './PointerManager.js'
 
 /* Basic viewer for a single layer.
  *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
@@ -43,6 +44,7 @@ class UIBasic {
 			autoFit: true,
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
+<<<<<<< HEAD
 				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
 				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
 				layers:     { title: 'Layers',     display: true, task: (event) => { this.toggleLayers(event); } },
@@ -51,6 +53,16 @@ class UIBasic {
 				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
 				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
 				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
+=======
+				home: { title: 'Home', display: true, task: (event) => { if (camera.boundingBox) camera.fitCameraBox(250); } },
+				fullscreen: { title: 'Fullscreen', display: true, task: (event) => { this.toggleFullscreen(); } },
+				layers: { title: 'Layers', display: 'auto', task: (event) => { this.toggleLayers(event); } },
+				zoomin: { title: 'Zoom in', display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
+				zoomout: { title: 'Zoom out', display: false, task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
+				rotate: { title: 'Rotate', display: false, task: (event) => { camera.rotate(250, -45); } },
+				light: { title: 'Light', display: 'auto', task: (event) => { this.toggleLightController(); } },
+				ruler: { title: 'Ruler', display: false, task: (event) => { this.startRuler(); } },
+>>>>>>> 7e18c3a (openlime/testing: fixed pinch zoom + small bugs)
 			},
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
@@ -58,70 +70,76 @@ class UIBasic {
 		});
 
 		Object.assign(this, options);
-		if(this.autoFit)
+		if (this.autoFit)
 			this.lime.canvas.addEvent('updateSize', () => this.lime.camera.fitCameraBox(0));
 
 		this.menu = [];
-		
+
 		this.menu.push({ section: "Layers" });
-		for(let [id, layer] of Object.entries(this.lime.canvas.layers)) {
+		for (let [id, layer] of Object.entries(this.lime.canvas.layers)) {
 			let modes = []
-			for(let m of layer.getModes()) {
-				let mode = { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } };
-				if(m == 'specular')
-					mode.list = [{slider: '', oninput:(e)=> { layer.shader.setSpecularExp(e.target.value); } }];
-				modes.push( mode);
+			for (let m of layer.getModes()) {
+				let mode = { button: m, mode: m, layer: id, onclick: () => { layer.setMode(m); } };
+				if (m == 'specular')
+					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
+				modes.push(mode);
 			}
 			this.menu.push({
-				button: layer.label || id, 
-				onclick: ()=> { this.setLayer(layer); },
+				button: layer.label || id,
+				onclick: () => { this.setLayer(layer); },
 				list: modes,
 				layer: id
 			});
 		}
-		if(queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
+		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
 	}
 
 
 
-	init() {		
+	init() {
 		(async () => {
 
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+<<<<<<< HEAD
 	
 			//if(this.actions.layers && this.actions.layers.display == 'auto')
 		//		this.actions.layers.display = this.lime.canvas.layers.length > 0;
+=======
 
-				
+			if (this.actions.layers && this.actions.layers.display == 'auto')
+				this.actions.layers.display = this.lime.canvas.layers.length > 0;
+>>>>>>> 7e18c3a (openlime/testing: fixed pinch zoom + small bugs)
+
+
 			this.createMenu();
 			this.updateMenu();
-			
-			let lightLayers = [];
-			for(let [id, layer] of Object.entries(this.lime.canvas.layers)) 
-					if(layer.controls.light)					lightLayers.push(layer);
 
-			if(lightLayers.length) {
-				if(this.actions.light && this.actions.light.display === 'auto')
+			let lightLayers = [];
+			for (let [id, layer] of Object.entries(this.lime.canvas.layers))
+				if (layer.controls.light) lightLayers.push(layer);
+
+			if (lightLayers.length) {
+				if (this.actions.light && this.actions.light.display === 'auto')
 					this.actions.light.display = true;
 
-				let controller = new Controller2D((x, y)=> { 
-					for(let layer of lightLayers)
-						layer.setLight([x, y], 0); 
-				}, { active:false, control:'light' });
+				let controller = new Controller2D((x, y) => {
+					for (let layer of lightLayers)
+						layer.setLight([x, y], 0);
+				}, { active: false, control: 'light' });
 
 				controller.priority = 0;
 				this.lime.pointerManager.onEvent(controller);
-				for(let layer of lightLayers) {
+				for (let layer of lightLayers) {
 					layer.setLight([0.5, 0.5], 0);
 					layer.controllers.push(controller);
 				}
 
 			}
-	
 
-			if(this.skin)
+
+			if (this.skin)
 				await this.loadSkin();
 			/* TODO: this is probably not needed
 			if(this.skinCSS)
@@ -131,12 +149,12 @@ class UIBasic {
 			this.setupActions();
 			this.setupScale();
 
-			for(let l of Object.values(this.lime.canvas.layers)) {
+			for (let l of Object.values(this.lime.canvas.layers)) {
 				//this.setLayer(l);
 				break;
 			}
 
-			if(this.actions.light.active == true)
+			if (this.actions.light.active == true)
 				this.toggleLightController();
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
@@ -144,14 +162,14 @@ class UIBasic {
 
 	async loadSkin() {
 		var response = await fetch(this.skin);
-		if(!response.ok) {
+		if (!response.ok) {
 			throw Error("Failed loading " + url + ": " + response.statusText);
 			return;
 		}
 
 		let text = await response.text();
 		let parser = new DOMParser();
-		let skin= parser.parseFromString(text, "image/svg+xml").documentElement;
+		let skin = parser.parseFromString(text, "image/svg+xml").documentElement;
 
 
 		let toolbar = document.createElement('div');
@@ -160,53 +178,53 @@ class UIBasic {
 
 
 		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
-		if(1) {
+		if (1) {
 
 			let padding = 10;
 			let x = 0;
 			let h = 0;
-			for(let [name, action] of Object.entries(this.actions)) {
+			for (let [name, action] of Object.entries(this.actions)) {
 
-				if(action.display !== true)
+				if (action.display !== true)
 					continue;
 
 				let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-				
+
 				toolbar.appendChild(svg);
-		
+
 				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
-				if(!element) continue;
+				if (!element) continue;
 				svg.appendChild(element);
 				let box = element.getBBox();
 
 				let tlist = element.transform.baseVal;
-				if(tlist.numberOfItems == 0)
+				if (tlist.numberOfItems == 0)
 					tlist.appendItem(svg.createSVGTransform());
-				tlist.getItem(0).setTranslate(-box.x,-box.y);
-				
+				tlist.getItem(0).setTranslate(-box.x, -box.y);
+
 				svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-				svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');	
+				svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 			}
 
 		}
 
-		if(0) {  //single svg toolbar
+		if (0) {  //single svg toolbar
 			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-			toolbar.appendChild(svg);ui.toggleLightController();
+			toolbar.appendChild(svg); ui.toggleLightController();
 			let x = padding;
 			let h = 0;
-			for(let [name, action] of Object.entries(this.actions)) {
-				if(action.display !== true)
+			for (let [name, action] of Object.entries(this.actions)) {
+				if (action.display !== true)
 					continue;
 				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
-				if(!element) continue;
+				if (!element) continue;
 				svg.appendChild(element);
 				let box = element.getBBox();
 				h = Math.max(h, box.height);
 				let tlist = element.transform.baseVal;
-				if(tlist.numberOfItems == 0)
+				if (tlist.numberOfItems == 0)
 					tlist.appendItem(svg.createSVGTransform());
-				tlist.getItem(0).setTranslate(-box.x + x,-box.y);
+				tlist.getItem(0).setTranslate(-box.x + x, -box.y);
 				x += box.width + padding;
 			}
 
@@ -217,29 +235,34 @@ class UIBasic {
 
 
 		//TODO: not needed, probably. Toolbar build from the skin directly
-		if(0) {
+		if (0) {
 			toolbar.appendChild(skin);
 
 			let w = skin.getAttribute('width');
 			let h = skin.getAttribute('height');
 			let viewbox = skin.getAttribute('viewBox');
-			if(!viewbox)
+			if (!viewbox)
 				skin.setAttribute('viewBox', `0 0 ${w} ${h}`);
 		}
 	}
 
 	setupActions() {
-		for(let [name, action] of Object.entries(this.actions)) {
+		for (let [name, action] of Object.entries(this.actions)) {
 			let element = this.lime.containerElement.querySelector('.openlime-' + name);
-			if(!element)
+			if (!element)
 				continue;
-			element.addEventListener('click', action.task);
+			// let pointerManager = new PointerManager(element);
+			// pointerManager.onEvent({ fingerSingleTap: action.task, priority: -2000 });
+			element.addEventListener('click', (e) => {
+				action.task(e);
+				e.preventDefault();
+			});
 		}
 		let items = document.querySelectorAll('.openlime-layers-button');
-		for(let item of items) {
+		for (let item of items) {
 			let id = item.getAttribute('data-layer');
-			if(!id) continue;
-			item.addEventListener('click', ()=> {
+			if (!id) continue;
+			item.addEventListener('click', () => {
 				this.setLayer(this.lime.layers[id]);
 			});
 		}
@@ -318,9 +341,9 @@ class UIBasic {
 		this.lightActive = active;
 
 		//for(let c of this.activeLayer.controllers)
-		for(let layer of Object.values(this.lime.canvas.layers))
-			for(let c of layer.controllers)
-				if(c.control == 'light')
+		for (let layer of Object.values(this.lime.canvas.layers))
+			for (let c of layer.controllers)
+				if (c.control == 'light')
 					c.active = active;
 	}
 
@@ -329,7 +352,7 @@ class UIBasic {
 		let div = this.lime.containerElement;
 		let active = div.classList.toggle('openlime-fullscreen-active');
 
-		if(!active) {
+		if (!active) {
 			var request = document.exitFullscreen || document.webkitExitFullscreen ||
 				document.mozCancelFullScreen || document.msExitFullscreen;
 			request.call(document);document.querySelector('.openlime-scale > line');
@@ -349,36 +372,36 @@ class UIBasic {
 	endRuler() {
 	}
 
-/* Layer management */
+	/* Layer management */
 
 	createEntry(entry) {
-		if(!('id' in entry))
+		if (!('id' in entry))
 			entry.id = 'entry_' + (this.entry_count++);
 
 		let id = `id="${entry.id}"`;
-		
+
 		let html = '';
-		if('title' in entry) {
+		if ('title' in entry) {
 			html += `<h2 ${id} class="openlime-title">${entry.title}</h2>`;
 
-		} else if('section' in entry) {
+		} else if ('section' in entry) {
 			html += `<h3 ${id} class="openlime-section">${entry.section}</h3>`;
 
-		} else if('html' in entry) {
+		} else if ('html' in entry) {
 			html += `<div ${id}>${entry.html}</div>`;
-			
-		} else if('button' in entry) {
-			let group = 'group' in entry? `data-group="${entry.group}"`:'';
-			let layer = 'layer' in entry? `data-layer="${entry.layer}"`:'';
-			let mode  = 'mode'  in entry? `data-mode="${entry.mode}"`  :'';
+
+		} else if ('button' in entry) {
+			let group = 'group' in entry ? `data-group="${entry.group}"` : '';
+			let layer = 'layer' in entry ? `data-layer="${entry.layer}"` : '';
+			let mode = 'mode' in entry ? `data-mode="${entry.mode}"` : '';
 			html += `<a href="#" ${id} ${group} ${layer} ${mode} class="openlime-button">${entry.button}</a>`;
-		} else if('slider' in entry) {
+		} else if ('slider' in entry) {
 			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider" ${id}>`;
 		}
-		
-		if('list' in entry) {
+
+		if ('list' in entry) {
 			let ul = `<div class="openlime-list">`;
-			for(let li of entry.list)
+			for (let li of entry.list)
 				ul += this.createEntry(li);
 			ul += '</div>';
 			html += ul;
@@ -387,18 +410,18 @@ class UIBasic {
 	}
 	addEntryCallbacks(entry) {
 		entry.element = this.layerMenu.querySelector('#' + entry.id);
-		if(entry.onclick)
-			entry.element.addEventListener('click', (e)=> { 
+		if (entry.onclick)
+			entry.element.addEventListener('click', (e) => {
 				entry.onclick();
 				entry.element.classList.add('active');
 				this.updateMenu();
 			});
-		if(entry.oninput)
+		if (entry.oninput)
 			entry.element.addEventListener('input', entry.oninput);
-		
 
-		if('list' in entry) 
-			for(let e of entry.list)
+
+		if ('list' in entry)
+			for (let e of entry.list)
 				this.addEntryCallbacks(e);
 	}
 
@@ -411,20 +434,20 @@ class UIBasic {
 			(!mode || this.lime.canvas.layers[layer].getMode() == mode);
 		entry.element.classList.toggle('active', active);
 
-		if('list' in entry)
-			for(let e of entry.list)
+		if ('list' in entry)
+			for (let e of entry.list)
 				this.updateEntry(e);
 	}
 
 	updateMenu() {
-		for(let entry of this.menu)
+		for (let entry of this.menu)
 			this.updateEntry(entry);
 	}
 
 	createMenu() {
 		this.entry_count = 0;
 		let html = `<div class="openlime-layers-menu">`;
-		for(let entry of this.menu) {
+		for (let entry of this.menu) {
 			html += this.createEntry(entry);
 		}
 		html += '</div>';
@@ -435,15 +458,15 @@ class UIBasic {
 		this.layerMenu = template.content.firstChild;
 		this.lime.containerElement.appendChild(this.layerMenu);
 
-		for(let entry of this.menu) {
+		for (let entry of this.menu) {
 			this.addEntryCallbacks(entry);
 		}
 
 
-/*		for(let li of document.querySelectorAll('[data-layer]'))
-			li.addEventListener('click', (e) => {
-				this.setLayer(this.lime.canvas.layers[li.getAttribute('data-layer')]);
-			}); */
+		/*		for(let li of document.querySelectorAll('[data-layer]'))
+					li.addEventListener('click', (e) => {
+						this.setLayer(this.lime.canvas.layers[li.getAttribute('data-layer')]);
+					}); */
 	}
 
 	toggleLayers(event) {
@@ -451,7 +474,7 @@ class UIBasic {
 	}
 
 	setLayer(layer_on) {
-		if(typeof layer_on == 'string')
+		if (typeof layer_on == 'string')
 			layer_on = this.lime.canvas.layers[layer_on];
 
 		this.activeLayer = layer_on;
@@ -462,10 +485,10 @@ class UIBasic {
 			if(this.lime.canvas.layers[id] == layer_on)
 				li.classList.add('active');
 		}*/
-		for(let layer of Object.values(this.lime.canvas.layers)) {
+		for (let layer of Object.values(this.lime.canvas.layers)) {
 			layer.setVisible(layer == layer_on);
-			for(let c of layer.controllers) {
-				if(c.control == 'light')
+			for (let c of layer.controllers) {
+				if (c.control == 'light')
 					c.active = this.lightActive && layer == layer_on;
 			}
 		}

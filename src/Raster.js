@@ -41,7 +41,7 @@ class Raster {
 			var response = await fetch(tile.url, options);
 			if(!response.ok) {
 				console.log();
-				callback("Failed loading " + url + ": " + response.statusText);
+				callback("Failed loading " + tile.url + ": " + response.statusText);
 				return;
 			}
 

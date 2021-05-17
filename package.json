@@ -21,16 +21,15 @@
   },
   "keywords": [],
   "devDependencies": {
+    "documentation": "^13.2.3",
     "html-webpack-plugin": "^4.5.0",
+    "nodemon": "^2.0.7",
+    "rollup": "^2.45.2",
     "rollup-plugin-terser": "^7.0.2",
     "webpack": "^4.44.2",
     "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.11.0",
-    "nodemon": "^2.0.7",
-    "documentation": "^13.2.3",
-    "rollup": "^2.45.2"
+    "webpack-dev-server": "^3.11.0"
   },
-  "dependencies": {},
   "files": [
     "build/openlime.js",
     "LICENSE",

@@ -4,6 +4,7 @@ import { Transform } from './Transform.js'
 import { Layer } from './Layer.js'
 import { RTILayer } from './RTILayer.js'
 import { BRDFLayer } from './BRDFLayer.js'
+import { ImageLayer } from './ImageLayer.js'
 
 import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
@@ -143,5 +144,5 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic }
+export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic}
 

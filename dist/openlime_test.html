@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>OpenLime Test</title>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="UTF-8" />
+
+	<!-- Fake favicon -->
+	<!--  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo="> -->
+	<link rel="stylesheet" href="skin.css" />
+
+	<style>
+		html,
+		body {
+			margin: 0px;
+			padding: 0px;
+			height: 100%;
+		}
+
+		#openlime {
+			position: relative;
+			height: 80%
+		}
+
+		#openlime>canvas {
+			width: 100%;
+			height: 100%;
+
+			/* this is important, it would cause firefox flickering! */
+			overflow: hidden;
+		}
+
+		.openlime-toolbar {
+			position: absolute;
+			left: 10px;
+			top: auto;
+			/* unset right and bottom, which were set by skin.css */
+			right: auto;
+			bottom: 20px;
+			padding: 5px;
+			background-color: rgba(62, 133, 146, 0.5);
+		}
+
+		.openlime-layers-menu {
+			height: 80%;
+		}
+
+		.courtesy {
+			position: absolute;
+			font-size: 10px;
+			bottom: 6px;
+		}
+		
+	</style>
+</head>
+
+<body>
+	<h1>OpenLime Test</h1>
+	<div id="openlime"></div>
+</body>
+
+<script src="openlime.js"></script>
+
+
+<script>
+	let lime = new OpenLIME.OpenLIME('#openlime');
+
+	let layer1 = new OpenLIME.Layer({
+		layout: 'deepzoom1px',
+		type: 'image',
+		url: 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi',
+		label: '<span style="color:red">CRS4 DPATH</span>'
+	});
+	lime.canvas.addLayer('dPath', layer1);
+
+	let ui = new OpenLIME.UIBasic(lime);
+	const { home, fullscreen, zoomin, zoomout, rotate, layers} = ui.actions;
+	zoomin.display=true;
+	zoomout.display=true;
+	rotate.display=true;
+	layers.display=true;
+	ui.menu.push({ html: "<span class=\"courtesy\">Data courtesy of CRS4 Digital Health</span>"});
+	// let panzoom = new OpenLIME.ControllerPanZoom(lime.camera, { priority: -1000 });
+	// lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+</script>
+
+
+
+</html>

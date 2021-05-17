@@ -61,9 +61,9 @@ class ControllerPanZoom extends Controller {
 		if (!this.zooming)
 			return;
 		const scale = this.distance(e1, e2);
-		const pos = this.camera.mapToScene((e1.x + e2.x)/2, (e1.y + e2.y)/2, this.camera.getCurrentTransform(performance.now()));
-		const absoluteZoom = this.camera.target.z * scale/this.initialDistance;
-		this.camera.zoom(this.zoomDelay, absoluteZoom, pos.x, pos.y);
+		const pos = this.camera.mapToScene((e1.offsetX + e2.offsetX)/2, (e1.offsetY + e2.offsetY)/2, this.camera.getCurrentTransform(performance.now()));
+		const dz = scale/this.initialDistance;
+		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
 		this.initialDistance = scale;
 	}
 
