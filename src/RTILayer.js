@@ -71,6 +71,7 @@ class RTILayer extends Layer {
 			for(let p = 0; p < this.shader.njpegs; p++) {
 				let url = this.imageUrl(this.url, 'plane_' + p);
 				let raster = new Raster({ url: url, type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
+				//Tarzoom need to load all the indexes for all of the rasters (others just reuse the first layout).
 				if(p == 0 || this.layout == 'tarzoom')
 					raster.layout = new Layout(url, this.layout, size);
 				else

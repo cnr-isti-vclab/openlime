@@ -105,7 +105,14 @@ class Layer {
 	}
 
 	setLayout(layout) {
-		let callback = () => { 
+		let callback = () => {
+						//this ckeck is needed for tarzom where all layout are loaded separately.
+			for(let r of this.rasters)
+				if(r.layout.status != "ready") {
+					r.layout.addEvent('ready', callback);
+					return;
+				}
+
 			this.status = 'ready';
 			this.setupTiles(); //setup expect status to be ready!
 			this.emit('ready');
@@ -463,6 +470,9 @@ class Layer {
 
 		if(this.status != 'ready') 
 			return;
+
+		if(typeof(this.layout) != 'object')
+			throw "AH!";
 
 		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 		if(this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
