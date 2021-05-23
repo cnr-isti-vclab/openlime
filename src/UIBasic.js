@@ -52,7 +52,9 @@ class UIBasic {
 				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
 				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
 			},
-			viewport: [0, 0, 0, 0] //in scene coordinates
+			viewport: [0, 0, 0, 0], //in scene coordinates
+			scale: null,
+			unit: null
 		});
 
 		Object.assign(this, options);
@@ -127,6 +129,7 @@ class UIBasic {
 			*/
 
 			this.setupActions();
+			this.setupScale();
 
 			for(let l of Object.values(this.lime.canvas.layers)) {
 				//this.setLayer(l);
@@ -241,6 +244,72 @@ class UIBasic {
 			});
 		}
 	}
+	//find best length for scale from min -> max
+	//zoom 2 means a pixel in image is now 2 pixel on screen, scale is
+	bestScaleLength(min, max, scale, zoom) {
+		scale /= zoom;
+		//closest power of 10:
+		let label10 = Math.pow(10, Math.floor(Math.log(max*scale)/Math.log(10)));
+		let length10 = label10/scale;
+		if(length10 > min) return { length: length10, label: parseInt(label10) };
+
+		let label20 = label10 * 2;
+		let length20 = length10 * 2;
+		if(length20 > min) return { length: length20, label: parseInt(label20) };
+
+		let label50 = label10 * 5;
+		let length50 = length10 * 5;
+
+		if(length50 > min) return { length: length50, label: parseInt(label50) };
+		return { length: 0, label: 0 }
+	}
+
+	updateScale(line, text) {
+		//let zoom = this.lime.camera.getCurrentTransform(performance.now()).z;
+		let zoom = this.lime.camera.target.z;
+		if(zoom == this.lastScaleZoom)
+			return;
+		this.lastScaleZoom = zoom;
+		let s = this.bestScaleLength(100, 200, this.scale, zoom);
+		//let line = document.querySelector('.openlime-scale > line');
+		let margin = 200 - 10 - s.length;
+		line.setAttribute('x1', margin/2);
+		line.setAttribute('x2', 200 - margin/2);
+		//let text = document.querySelector('.openlime-scale > text');
+		text.textContent = s.label + "mm";
+
+
+	}
+
+	//scale is length of a pixel in mm
+	setupScale() {
+		if(!this.scale) return;
+		this.scales = { 'mm': 1, 'cm':10, 'm':1000, 'km':1000000 };
+
+		
+		let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		svg.setAttribute('viewBox', `0 0 200 40`);
+		svg.classList.add('openlime-scale');
+		let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+		line.setAttribute('x1', 5);
+		line.setAttribute('y1', 26.5);
+		line.setAttribute('x2', 195);
+		line.setAttribute('y2', 26.5);
+		let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+		text.setAttribute('x', '50%');
+		text.setAttribute('y', '16px');
+		text.setAttribute('dominant-baseline', 'middle');
+		text.setAttribute('text-anchor', 'middle');
+		text.textContent = "10mm";
+		//var label = document.createTextNode("10mm");
+		//text.appendChild(label);
+
+
+		svg.appendChild(line);
+		svg.appendChild(text);
+		this.lime.containerElement.appendChild(svg);
+		this.lime.camera.addEvent('update', () => { this.updateScale(line, text); } );
+	}
 
 	//we need the concept of active layer! so we an turn on and off light.
 	toggleLightController() {
@@ -263,7 +332,7 @@ class UIBasic {
 		if(!active) {
 			var request = document.exitFullscreen || document.webkitExitFullscreen ||
 				document.mozCancelFullScreen || document.msExitFullscreen;
-			request.call(document);
+			request.call(document);document.querySelector('.openlime-scale > line');
 
 			this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
 		} else {

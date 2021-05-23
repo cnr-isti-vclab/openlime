@@ -119,7 +119,6 @@ class Canvas {
 		const discardHidden = true;
 		let sceneBBox = Layer.computeLayersBBox(this.layers, discardHidden);
 		let minScale =  Layer.computeLayersMinScale(this.layers, discardHidden);
-		console.log("Update Scene BBox " + sceneBBox.xLow.toFixed(2) + " " + sceneBBox.xHigh.toFixed(2) + " minScale " + minScale.toFixed(2));
 		
 		if (sceneBBox != null) this.camera.updateBounds(sceneBBox, minScale);
 		this.emit('updateSize');

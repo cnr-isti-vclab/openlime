@@ -168,6 +168,7 @@ function rtiTest(dataset) {
 	lime.camera.maxFixedZoom = 1;
 	ui.menu[0].section = "Prova";
 	ui.menu.push({ html: "<p>Prova</p>" });
+	ui.scale = 0.02;
 	//ui.actions.light.display = true;
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };

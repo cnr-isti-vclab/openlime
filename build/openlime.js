@@ -482,8 +482,6 @@
     		let w = this.viewport.dx;
     		let h = this.viewport.dy;
 
-    		//center of the viewport.
-    		box.print();
 
     		let bw = box.width();
     		let bh = box.height();
@@ -788,7 +786,8 @@ void main() {
     				switch(this.type) {
     					case 'image':    await this.initImage(); break;
     					case 'google':   await this.initGoogle(); break;
-    					case 'deepzoom': await this.initDeepzoom(); break;
+    					case 'deepzoom1px': await this.initDeepzoom(true); break;
+    					case 'deepzoom': await this.initDeepzoom(false); break;
     					case 'tarzoom':  await this.initTarzoom(); break;
     					case 'zoomify':  await this.initZoomify(); break;
     					case 'iiif':     await this.initIIIF(); break;
@@ -1016,7 +1015,7 @@ void main() {
     /**
      * Expects the url to point to .dzi config file
      */
-    	async initDeepzoom() {		
+    	async initDeepzoom(onepixel) {		
     		var response = await fetch(this.url);
     		if(!response.ok) {
     			this.status = "Failed loading " + this.url + ": " + response.statusText;
@@ -1038,10 +1037,14 @@ void main() {
     		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
     		this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '_files/';
+    		this.skiplevels = 0;
+    		if(onepixel)
+    			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
 
     		this.getTileURL = (url, tile) => {
+    			let level = tile.level + this.skiplevels;
     			url = url.substr(0, url.lastIndexOf(".")) + '_files/';
-    			return url + (tile.level + 8) + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
+    			return url + level + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
     		}; 
     	}
 
@@ -1362,7 +1365,14 @@ void main() {
     	}
 
     	setLayout(layout) {
-    		let callback = () => { 
+    		let callback = () => {
+    						//this ckeck is needed for tarzom where all layout are loaded separately.
+    			for(let r of this.rasters)
+    				if(r.layout.status != "ready") {
+    					r.layout.addEvent('ready', callback);
+    					return;
+    				}
+
     			this.status = 'ready';
     			this.setupTiles(); //setup expect status to be ready!
     			this.emit('ready');
@@ -1396,7 +1406,9 @@ void main() {
     	}
 
     	getModes() {
-    		return this.shader.modes;
+    		if(this.shader)
+    			return this.shader.modes;
+    		return [];
     	}
 
     	setMode(mode) {
@@ -1718,6 +1730,9 @@ void main() {
     		if(this.status != 'ready') 
     			return;
 
+    		if(typeof(this.layout) != 'object')
+    			throw "AH!";
+
     		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
     		if(this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
     				return;
@@ -1901,7 +1916,6 @@ void main() {
     		const discardHidden = true;
     		let sceneBBox = Layer.computeLayersBBox(this.layers, discardHidden);
     		let minScale =  Layer.computeLayersMinScale(this.layers, discardHidden);
-    		console.log("Update Scene BBox " + sceneBBox.xLow.toFixed(2) + " " + sceneBBox.xHigh.toFixed(2) + " minScale " + minScale.toFixed(2));
     		
     		if (sceneBBox != null) this.camera.updateBounds(sceneBBox, minScale);
     		this.emit('updateSize');
@@ -2573,6 +2587,7 @@ vec4 render(vec3 base[np1]) {
     			for(let p = 0; p < this.shader.njpegs; p++) {
     				let url = this.imageUrl(this.url, 'plane_' + p);
     				let raster = new Raster({ url: url, type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
+    				//Tarzoom need to load all the indexes for all of the rasters (others just reuse the first layout).
     				if(p == 0 || this.layout == 'tarzoom')
     					raster.layout = new Layout(url, this.layout, size);
     				else
@@ -3092,7 +3107,9 @@ void main() {
     				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
     				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
     			},
-    			viewport: [0, 0, 0, 0] //in scene coordinates
+    			viewport: [0, 0, 0, 0], //in scene coordinates
+    			scale: null,
+    			unit: null
     		});
 
     		Object.assign(this, options);
@@ -3129,7 +3146,7 @@ void main() {
     			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
     			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
     	
-    			if(this.actions.layers.display == 'auto')
+    			if(this.actions.layers && this.actions.layers.display == 'auto')
     				this.actions.layers.display = this.lime.canvas.layers.length > 0;
 
     				
@@ -3141,7 +3158,7 @@ void main() {
     					if(layer.controls.light)					lightLayers.push(layer);
 
     			if(lightLayers.length) {
-    				if(this.actions.light.display === 'auto')
+    				if(this.actions.light && this.actions.light.display === 'auto')
     					this.actions.light.display = true;
 
     				let controller = new Controller2D((x, y)=> { 
@@ -3167,6 +3184,7 @@ void main() {
     			*/
 
     			this.setupActions();
+    			this.setupScale();
 
     			for(let l of Object.values(this.lime.canvas.layers)) {
     				//this.setLayer(l);
@@ -3239,6 +3257,72 @@ void main() {
     			});
     		}
     	}
+    	//find best length for scale from min -> max
+    	//zoom 2 means a pixel in image is now 2 pixel on screen, scale is
+    	bestScaleLength(min, max, scale, zoom) {
+    		scale /= zoom;
+    		//closest power of 10:
+    		let label10 = Math.pow(10, Math.floor(Math.log(max*scale)/Math.log(10)));
+    		let length10 = label10/scale;
+    		if(length10 > min) return { length: length10, label: parseInt(label10) };
+
+    		let label20 = label10 * 2;
+    		let length20 = length10 * 2;
+    		if(length20 > min) return { length: length20, label: parseInt(label20) };
+
+    		let label50 = label10 * 5;
+    		let length50 = length10 * 5;
+
+    		if(length50 > min) return { length: length50, label: parseInt(label50) };
+    		return { length: 0, label: 0 }
+    	}
+
+    	updateScale(line, text) {
+    		//let zoom = this.lime.camera.getCurrentTransform(performance.now()).z;
+    		let zoom = this.lime.camera.target.z;
+    		if(zoom == this.lastScaleZoom)
+    			return;
+    		this.lastScaleZoom = zoom;
+    		let s = this.bestScaleLength(100, 200, this.scale, zoom);
+    		//let line = document.querySelector('.openlime-scale > line');
+    		let margin = 200 - 10 - s.length;
+    		line.setAttribute('x1', margin/2);
+    		line.setAttribute('x2', 200 - margin/2);
+    		//let text = document.querySelector('.openlime-scale > text');
+    		text.textContent = s.label + "mm";
+
+
+    	}
+
+    	//scale is length of a pixel in mm
+    	setupScale() {
+    		if(!this.scale) return;
+    		this.scales = { 'mm': 1, 'cm':10, 'm':1000, 'km':1000000 };
+
+    		
+    		let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    		svg.setAttribute('viewBox', `0 0 200 40`);
+    		svg.classList.add('openlime-scale');
+    		let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    		line.setAttribute('x1', 5);
+    		line.setAttribute('y1', 26.5);
+    		line.setAttribute('x2', 195);
+    		line.setAttribute('y2', 26.5);
+    		let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    		text.setAttribute('x', '50%');
+    		text.setAttribute('y', '16px');
+    		text.setAttribute('dominant-baseline', 'middle');
+    		text.setAttribute('text-anchor', 'middle');
+    		text.textContent = "10mm";
+    		//var label = document.createTextNode("10mm");
+    		//text.appendChild(label);
+
+
+    		svg.appendChild(line);
+    		svg.appendChild(text);
+    		this.lime.containerElement.appendChild(svg);
+    		this.lime.camera.addEvent('update', () => { this.updateScale(line, text); } );
+    	}
 
     	//we need the concept of active layer! so we an turn on and off light.
     	toggleLightController() {
@@ -3261,7 +3345,7 @@ void main() {
     		if(!active) {
     			var request = document.exitFullscreen || document.webkitExitFullscreen ||
     				document.mozCancelFullScreen || document.msExitFullscreen;
-    			request.call(document);
+    			request.call(document);document.querySelector('.openlime-scale > line');
 
     			this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
     		} else {
@@ -4075,7 +4159,7 @@ void main() {
     		this.canvas.addEvent('update', () => { this.redraw(); });
     		this.camera.addEvent('update', () => { this.redraw(); });
 
-    		this.pointerManager = new PointerManager(this.canvasElement);
+    		this.pointerManager = new PointerManager(this.overlayElement);
 
     		this.canvasElement.addEventListener('contextmenu', (e) => {
                 e.preventDefault();

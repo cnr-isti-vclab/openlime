@@ -210,8 +210,6 @@ class Camera {
 		let w = this.viewport.dx;
 		let h = this.viewport.dy;
 
-		//center of the viewport.
-		box.print();
 
 		let bw = box.width();
 		let bh = box.height();
