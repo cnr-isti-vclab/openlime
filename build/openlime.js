@@ -3264,16 +3264,17 @@ void main() {
     		//closest power of 10:
     		let label10 = Math.pow(10, Math.floor(Math.log(max*scale)/Math.log(10)));
     		let length10 = label10/scale;
-    		if(length10 > min) return { length: length10, label: parseInt(label10) };
+    		console.log(label10, length10);
+    		if(length10 > min) return { length: length10, label: label10 };
 
     		let label20 = label10 * 2;
     		let length20 = length10 * 2;
-    		if(length20 > min) return { length: length20, label: parseInt(label20) };
+    		if(length20 > min) return { length: length20, label: label20 };
 
     		let label50 = label10 * 5;
     		let length50 = length10 * 5;
 
-    		if(length50 > min) return { length: length50, label: parseInt(label50) };
+    		if(length50 > min) return { length: length50, label: label50 };
     		return { length: 0, label: 0 }
     	}
 
