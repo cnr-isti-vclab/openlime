@@ -16,7 +16,6 @@ class Shader {
 			samplers: [],
 			uniforms: {},
 			name: "",
-			body: "",
 			program: null,      //webgl program
 			modes: [],
 			needsUpdate: true,
@@ -49,7 +48,7 @@ class Shader {
 	createProgram(gl) {
 
 		let vert = gl.createShader(gl.VERTEX_SHADER);
-		gl.shaderSource(vert, this.vertShaderSrc(100));
+		gl.shaderSource(vert, this.vertShaderSrc(gl));
 
 		gl.compileShader(vert);
 		let compiled = gl.getShaderParameter(vert, gl.COMPILE_STATUS);
@@ -59,7 +58,7 @@ class Shader {
 		}
 
 		let frag = gl.createShader(gl.FRAGMENT_SHADER);
-		gl.shaderSource(frag, this.fragShaderSrc());
+		gl.shaderSource(frag, this.fragShaderSrc(gl));
 		gl.compileShader(frag);
 
 		if(this.program)
@@ -130,17 +129,18 @@ class Shader {
 		}
 	}
 
-	vertShaderSrc() {
-		return `#version 300 es
+	vertShaderSrc(gl) {
+		let gl2 = gl instanceof WebGL2RenderingContext;
+		return `${gl2? '#version 300 es':''}
 
 precision highp float; 
 precision highp int; 
 
 uniform mat4 u_matrix;
-in vec4 a_position;
-in vec2 a_texcoord;
+${gl2? 'in' : 'attribute'} vec4 a_position;
+${gl2? 'in' : 'attribute'} vec2 a_texcoord;
 
-out vec2 v_texcoord;
+${gl2? 'out' : 'varying'} vec2 v_texcoord;
 
 void main() {
 	gl_Position = u_matrix * a_position;
@@ -148,8 +148,8 @@ void main() {
 }`;
 	}
 
-	fragShaderSrc() {
-		return this.body;
+	fragShaderSrc(gl) {
+		throw 'Unimplemented!'
 	}
 }
 

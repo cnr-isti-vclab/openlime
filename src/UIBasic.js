@@ -45,7 +45,7 @@ class UIBasic {
 			actions: {
 				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
 				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
-				layers:     { title: 'Layers',     display: 'auto', task: (event) => { this.toggleLayers(event); } },
+				layers:     { title: 'Layers',     display: true, task: (event) => { this.toggleLayers(event); } },
 				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
 				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
@@ -91,8 +91,8 @@ class UIBasic {
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 	
-			if(this.actions.layers && this.actions.layers.display == 'auto')
-				this.actions.layers.display = this.lime.canvas.layers.length > 0;
+			//if(this.actions.layers && this.actions.layers.display == 'auto')
+		//		this.actions.layers.display = this.lime.canvas.layers.length > 0;
 
 				
 			this.createMenu();

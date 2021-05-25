@@ -23,7 +23,6 @@ class ShaderBRDF extends Shader {
 
 		this.innerCode = '';
 		this.setMode(this.mode);
-		this.body = this.template();
 	}
 
 	setLight(light) {
@@ -59,9 +58,10 @@ class ShaderBRDF extends Shader {
 		}
 		
 	}
-
-	template() {
-			return  `#version 300 es
+	fragShaderSrc(gl) {
+		let gl2 = gl instanceof WebGL2RenderingContext;
+		
+		return  `#version 300 es
 
 precision highp float; 
 precision highp int; 

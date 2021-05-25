@@ -22,7 +22,6 @@ class ShaderLens extends Shader {
             u_lens: { type: 'vec4', needsUpdate: true, size: 4, value: [0,0,100,10] },
             u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1,1]}
         };
-        this.body = this.template();
         this.label = "ShaderLens";
         this.needsUpdate = true;
     }
@@ -32,8 +31,10 @@ class ShaderLens extends Shader {
         this.setUniform('u_width_height', windowWH);
     }
     
-    template() {
-        return `#version 300 es
+	fragShaderSrc(gl) {
+        let gl2 = gl instanceof WebGL2RenderingContext;
+
+		return `${gl2? '#version 300 es':''}
 
         precision highp float; 
         precision highp int; 
@@ -41,8 +42,8 @@ class ShaderLens extends Shader {
         uniform sampler2D source0;
         uniform vec4 u_lens;
         uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
-        in vec2 v_texcoord;
-        out vec4 color;
+        ${gl2? 'in' : 'varying'} vec2 v_texcoord;
+        ${gl2? 'out' : ''} vec4 color;
 
         void main() {
             float lensR2 = u_lens.z * u_lens.z;
@@ -58,21 +59,23 @@ class ShaderLens extends Shader {
             } else if (centerDist2 < innerBorderR2) {
                 color = texture(source0, v_texcoord);
             }
+            ${gl2?'':'gl_FragColor = color;'}
+
         }
         `
     }
 
-    vertShaderSrc() {
-		return `#version 300 es
+    vertShaderSrc(gl) {
+        let gl2 = gl instanceof WebGL2RenderingContext;
+		return `${gl2? '#version 300 es':''}
 
 precision highp float; 
 precision highp int; 
 
-in vec4 a_position;
-in vec2 a_texcoord;
+${gl2? 'in' : 'attribute'} vec4 a_position;
+${gl2? 'in' : 'attribute'} vec2 a_texcoord;
 
-out vec2 v_texcoord;
-
+${gl2? 'out' : 'varying'} vec2 v_texcoord;
 void main() {
 	gl_Position = a_position;
     v_texcoord = a_texcoord;

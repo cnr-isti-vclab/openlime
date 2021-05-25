@@ -37,7 +37,7 @@ class Raster {
 		(async () => {
 			let options = {};
 			if(tile.end)
-				options.headers = { range: `bytes=${tile.start}-${tile.end}` }
+				options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity' }
 			var response = await fetch(tile.url, options);
 			if(!response.ok) {
 				console.log();

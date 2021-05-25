@@ -47,7 +47,6 @@ class RTIShader extends Shader {
 			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
 			this.lightWeights([     0, -0.707, 0.707], 'base2');
 		}
-		this.body = this.template();
 		this.needsUpdate = true;
 	}
 
@@ -129,8 +128,6 @@ class RTIShader extends Shader {
 		}
 
 		this.lightWeights([0, 0, 1], 'base');
-
-		this.body = this.template();
 	}
 
 	lightWeights(light, basename, time) {
@@ -171,19 +168,18 @@ class RTIShader extends Shader {
 		}
 	}
 
-	template() {
-
+	fragShaderSrc(gl) {
 		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
-
-		let str = `#version 300 es
+		let gl2 = gl instanceof WebGL2RenderingContext;
+		let str = `${gl2? '#version 300 es' : ''}
 
 precision highp float; 
 precision highp int; 
 
 #define np1 ${this.nplanes + 1}
 
-in vec2 v_texcoord;
-out vec4 color;
+${gl2? 'in' : 'varying'} vec2 v_texcoord;
+${gl2? 'out' : ''} vec4 color;
 
 const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
 	-8.1650e-01, 4.7140e-01,  4.7140e-01,
@@ -217,11 +213,10 @@ const int ny0 = ${this.yccplanes[0]};
 const int ny1 = ${this.yccplanes[1]};
 `
 
-
 		switch(this.colorspace) {
-			case 'rgb':  str +=  RGB.render(this.njpegs); break;
-			case 'mrgb': str += MRGB.render(this.njpegs); break;
-			case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0]); break;
+			case 'rgb':  str +=  RGB.render(this.njpegs, gl2); break;
+			case 'mrgb': str += MRGB.render(this.njpegs, gl2); break;
+			case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0], gl2); break;
 		}
 
 		str += `
@@ -236,7 +231,7 @@ void main(void) {
 		} else  {
 			if(this.normals)
 				str += `
-	vec3 normal = (texture(normals, v_texcoord).zyx *2.0) - 1.0;
+	vec3 normal = (texture${gl2?'':'2D'}(normals, v_texcoord).zyx *2.0) - 1.0;
 	normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
 `;
 			else
@@ -268,15 +263,18 @@ void main(void) {
 			break;
 			}
 		}
+
 		str += `
+	${gl2?'':'gl_FragColor = color;'}
 }`;
 		return str;
 	}
 }
 
 
+
 class RGB {
-	static render(njpegs) {
+	static render(njpegs, gl2) {
 		let str = `
 vec4 render(vec3 base[np1]) {
 	vec4 rgb = vec4(0, 0, 0, 1);`;
@@ -284,7 +282,7 @@ vec4 render(vec3 base[np1]) {
 		for(let j = 0; j < njpegs; j++) {
 			str += `
 	{
-		vec4 c = texture(plane${j}, v_texcoord);
+		vec4 c = texture${gl2?'':'2D'}(plane${j}, v_texcoord);
 		rgb.x += base[${j}].x*(c.x - bias[${j}].x)*scale[${j}].x;
 		rgb.y += base[${j}].y*(c.y - bias[${j}].y)*scale[${j}].y;
 		rgb.z += base[${j}].z*(c.z - bias[${j}].z)*scale[${j}].z;
@@ -300,8 +298,7 @@ vec4 render(vec3 base[np1]) {
 }
 
 class MRGB {
-	static render(njpegs) {
-
+	static render(njpegs, gl2) {
 		let str = `
 vec4 render(vec3 base[np1]) {
 	vec3 rgb = base[0];
@@ -310,7 +307,7 @@ vec4 render(vec3 base[np1]) {
 `;
 		for(let j = 0; j < njpegs; j++) {
 			str +=
-`	c = texture(plane${j}, v_texcoord);
+`	c = texture${gl2?'':'2D'}(plane${j}, v_texcoord);
 	r = (c.xyz - bias[${j}])* scale[${j}];
 
 	rgb += base[${j}*3+1]*r.x;
@@ -328,7 +325,7 @@ vec4 render(vec3 base[np1]) {
 
 class MYCC {
 
-	static render(njpegs, ny1) {
+	static render(njpegs, ny1, gl2) {
 		let str = `
 vec3 toRgb(vec3 ycc) {
  	vec3 rgb;
@@ -346,7 +343,7 @@ vec4 render(vec3 base[np1]) {
 		for(let j = 0; j < njpegs; j++) {
 			str += `
 
-	c = texture(plane${j}, v_texcoord);
+	c = texture${gl2?'':'2D'}(plane${j}, v_texcoord);
 
 	r = (c.xyz - bias[${j}])* scale[${j}];
 `;

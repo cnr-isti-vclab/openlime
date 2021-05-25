@@ -150,17 +150,17 @@ function rtiTest(dataset) {
 		url: 'assets/rti/hsh/info.json',
 		normals: true
 	});
-	layer0.transform.x = -200;
+	//layer0.transform.x = -200;
 	lime.canvas.addLayer('hsh', layer0); 
 
 
-	let layer1 = new Layer({ 
+	/*let layer1 = new Layer({ 
 		layout: 'image', 
 		type:'rti',
 		url: 'assets/rti/ptm/info.json'
 	});
 	layer1.transform.x = +200;
-	lime.canvas.addLayer('ptm', layer1); 
+	lime.canvas.addLayer('ptm', layer1);  */
 
 
 
