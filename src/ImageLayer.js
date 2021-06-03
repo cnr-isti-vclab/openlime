@@ -33,23 +33,32 @@ class ImageLayer extends Layer {
 
 		let shader = new Shader({
 			'label': 'Rgb',
-			'samplers': [{ id:0, name:'kd', type:'vec3' }],
-			'body': `#version 300 es
+			'samplers': [{ id:0, name:'kd', type:'vec3' }]
+		});
+		
+		shader.fragShaderSrc = function(gl) {
 
-precision highp float; 
-precision highp int; 
+			let gl2 = gl instanceof WebGL2RenderingContext;
+			let str = `${gl2? '#version 300 es' : ''}
+
+precision highp float;
+precision highp int;
 
 uniform sampler2D kd;
 
-in vec2 v_texcoord;
-out vec4 color;
+
+${gl2? 'in' : 'varying'} vec2 v_texcoord;
+${gl2? 'out' : ''} vec4 color;
 
 
 void main() {
 	color = texture(kd, v_texcoord);
+	${gl2? '':'gl_FragColor = color;'}
 }
-`
-		});
+`;
+			return str;
+
+		};
 
 		this.shaders = {'standard': shader };
 		this.setShader('standard');

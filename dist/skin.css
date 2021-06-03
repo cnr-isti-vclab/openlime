@@ -1,17 +1,12 @@
-<<<<<<< HEAD
 .openlime-overlay, .openline-svgoverlay {
 /*	pointer-events: none; */
 }
 
 .openlime-overlay {
-=======
-.openlime-overlay, .openlime-svgoverlay {
->>>>>>> 7e18c3a (openlime/testing: fixed pinch zoom + small bugs)
 	position:absolute;
 	top:0px;
 	width:100%;
 	height:100%;
-<<<<<<< HEAD
 }
 
 .openlime-scale {
@@ -31,9 +26,6 @@
 	stroke-width:2px;
 }
 
-=======
-  }
->>>>>>> 7e18c3a (openlime/testing: fixed pinch zoom + small bugs)
 
 .openlime-toolbar rect[style] {
 	fill:rgb(255, 255, 255, 0) !important;

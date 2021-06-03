@@ -60,8 +60,7 @@ class ShaderBRDF extends Shader {
 	}
 	fragShaderSrc(gl) {
 		let gl2 = gl instanceof WebGL2RenderingContext;
-		
-		return  `#version 300 es
+		let str = `${gl2? '#version 300 es' : ''}
 
 precision highp float; 
 precision highp int; 
@@ -71,7 +70,7 @@ precision highp int;
 #define PI (3.14159265359)
 #define ISO_WARD_EXPONENT (4.0)
 
-in vec2 v_texcoord;
+${gl2? 'in' : 'varying'} vec2 v_texcoord;
 uniform sampler2D uTexKd;
 uniform sampler2D uTexKs;
 uniform sampler2D uTexNormals;
@@ -82,7 +81,7 @@ uniform vec2 uAlphaLimits;
 uniform int uInputColorSpaceKd; // 0: Linear; 1: sRGB
 uniform int uInputColorSpaceKs; // 0: Linear; 1: sRGB
 
-out vec4 color;
+${gl2? 'out' : ''}  vec4 color;
 
 vec3 getNormal(const in vec2 texCoord) {
 	vec3 n = texture(uTexNormals, texCoord).xyz;
@@ -169,8 +168,10 @@ void main() {
 	
 	vec3 finalColor = applyGamma ? pow(linearColor * 1.0, vec3(1.0/2.2)) : linearColor;
 	color = vec4(finalColor, 1.0);
+	${gl2?'':'gl_FragColor = color;'}
 }
 `;
+	return str;
 	}
 
 }
