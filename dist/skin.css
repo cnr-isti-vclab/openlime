@@ -147,7 +147,9 @@ g.openlime-expand {
 	text-decoration:none;
 }
 
-.openlime-layers-menu .openlime-button:hover {
+.openlime-layers-menu .openlime-button:hover,
+.openlime-layers-menu .openlime-button:focus {
+
 	background-color: rgb(40, 40, 40); 
 	color:#fff;
 }
@@ -158,12 +160,10 @@ g.openlime-expand {
 }
 
 .openlime-layers-menu .openlime-button.active,
-.openlime-layers-menu .openlime-button:active,
-.openlime-layers-menu .openlime-button:focus {
+.openlime-layers-menu .openlime-button:active {
 	background-color: rgb(80, 80, 80); 
 	color:#fff;
 }
-
 
 
 .openlime-layers-menu .openlime-list .openlime-button {

@@ -3,6 +3,7 @@ import { Layer } from './Layer.js'
 import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { PointerManager } from './PointerManager.js'
+import { AnnotationLayer } from './AnnotationLayer.js'
 
 /* Basic viewer for a single layer.
  *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
@@ -68,7 +69,7 @@ class UIBasic {
 		for (let [id, layer] of Object.entries(this.lime.canvas.layers)) {
 			let modes = []
 			for (let m of layer.getModes()) {
-				let mode = { button: m, mode: m, layer: id, onclick: () => { layer.setMode(m); } };
+				let mode = { button: m, mode: m, layer: id, onclick: () => { layer.setMode(m); this.updateMenu(); } };
 				if (m == 'specular')
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
 				modes.push(mode);
@@ -319,7 +320,6 @@ class UIBasic {
 		let active = div.classList.toggle('openlime-light-active');
 		this.lightActive = active;
 
-		//for(let c of this.activeLayer.controllers)
 		for (let layer of Object.values(this.lime.canvas.layers))
 			for (let c of layer.controllers)
 				if (c.control == 'light')
@@ -392,8 +392,7 @@ class UIBasic {
 		if (entry.onclick)
 			entry.element.addEventListener('click', (e) => {
 				entry.onclick();
-				entry.element.classList.add('active');
-				this.updateMenu();
+				//this.updateMenu();
 			});
 		if (entry.oninput)
 			entry.element.addEventListener('input', entry.oninput);
@@ -456,24 +455,23 @@ class UIBasic {
 		if (typeof layer_on == 'string')
 			layer_on = this.lime.canvas.layers[layer_on];
 
-		this.activeLayer = layer_on;
+		if(layer_on instanceof AnnotationLayer) { //just toggle
+			layer_on.setVisible(!layer_on.visible);
 
-		/*for(let li of this.layerMenu.querySelectorAll('li')) {
-			li.classList.remove('active');
-			let id = li.getAttribute('data-layer');
-			if(this.lime.canvas.layers[id] == layer_on)
-				li.classList.add('active');
-		}*/
-		for (let layer of Object.values(this.lime.canvas.layers)) {
-			layer.setVisible(layer == layer_on);
-			for (let c of layer.controllers) {
-				if (c.control == 'light')
-					c.active = this.lightActive && layer == layer_on;
+		} else {
+			for (let layer of Object.values(this.lime.canvas.layers)) {
+				if(layer instanceof AnnotationLayer)
+					continue;
+
+				layer.setVisible(layer == layer_on);
+				for (let c of layer.controllers) {
+					if (c.control == 'light')
+						c.active = this.lightActive && layer == layer_on;
+				}
 			}
 		}
-		this.lime.redraw();
-
 		this.updateMenu();
+		this.lime.redraw();
 	}
 
 	closeLayersMenu() {

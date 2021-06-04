@@ -19,7 +19,7 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //imageTest('deepzoom');
 //flipTest();
 //brdfTest();
-rtiTest('rbf');
+//rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 
@@ -27,7 +27,7 @@ rtiTest('rbf');
 //lensTest();
 //testSVGAnnotations();
 
-//testMedicalAnnotations();
+testMedicalAnnotations();
 
 function testMedicalAnnotations() {
 	let layer0 = new Layer({
