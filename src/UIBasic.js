@@ -4,6 +4,7 @@ import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { PointerManager } from './PointerManager.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
+import { AnnotationEditor } from './AnnotationEditor.js'
 
 /* Basic viewer for a single layer.
  *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
@@ -56,7 +57,8 @@ class UIBasic {
 			},
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
-			unit: null
+			unit: null,
+			editor: new AnnotationEditor(lime),
 		});
 
 		Object.assign(this, options);
@@ -74,12 +76,19 @@ class UIBasic {
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
 				modes.push(mode);
 			}
-			this.menu.push({
-				button: layer.label || id,
-				onclick: () => { this.setLayer(layer); },
+			let layerEntry = {
+				button: layer.label || id, 
+				onclick: ()=> { this.setLayer(layer); },
 				list: modes,
 				layer: id
-			});
+			};
+			if(layer.editable) {
+				layerEntry.list.push({
+					button: 'New point',
+					onclick: () => { this.editor.setMode(layer, 'point'); }
+				});
+			}
+			this.menu.push(layerEntry);
 		}
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
@@ -92,7 +101,6 @@ class UIBasic {
 
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
-
 			this.createMenu();
 			this.updateMenu();
 

@@ -1,3 +1,4 @@
+import { Annotation } from './Annotation.js';
 import { BoundingBox } from './BoundingBox.js';
 import { Layer } from './Layer.js'
 
@@ -60,6 +61,11 @@ class AnnotationLayer extends Layer {
 			return;
 		}
 		this.annotations = await response.json();
+		this.annotations = this.annotations.map(a => {
+			if('@context' in a) 
+				return Annotation.fromJsonld(a);
+			return a;
+		});
 	}
 
 	async loadSVG(url) {
@@ -92,7 +98,7 @@ class AnnotationLayer extends Layer {
 	}
 
 	boundingBox() {
-		return [-this.viewBox[2]/2, -this.viewBox[3]/2, this.viewBox[2]/2, this.viewBox[3]/2];
+		return this.viewBox;
 	}
 
 	setVisible(visible) {
@@ -111,39 +117,37 @@ class AnnotationLayer extends Layer {
 		let c = this.viewBox.center();
 		this.svgGroup.setAttribute("transform", 
 			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${-c[0]} ${-c[1]})`); 
-
 		return true;
 	}
 
 	prefetch(transform) {
 		if(!this.visible) return;
-		if(!this.svgElement)
-		return;
+		if(!this.svgElement) return;
 
-		for(let a of this.annotations) {
-			if(!a.target || !a.target.selector || a.target.selector.type != 'SvgSelector')
-				continue;
-			let svg = a.target.selector.value;
-
+		for(let a of this.annotations) {			
 			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
-			if(!a.svgElement) {
-				if(svg) {
-					let parser = new DOMParser();
-					a.svgElement = parser.parseFromString(svg, "image/svg+xml").documentElement;
+			if(typeof a.element == 'string') {
+				let parser = new DOMParser();
+				a.element = parser.parseFromString(a.element, "image/svg+xml").documentElement;
 
-				} else if(this.svgXML) {
+
+/*				} else if(this.svgXML) {
 					a.svgElement = this.svgXML.querySelector(`#${a.id}`);
 					if(!a.svgElement)
 						throw Error(`Could not find element with id: ${id} in svg`);
-				}
+				} */
 			}
-			if(a.svgElement) {
-				for(let child of a.svgElement.children)
+
+			if(a.element instanceof SVGElement) {
+				//second time will be 0 elements, but we need to 
+				//store somewhere knowledge of which items in the scene and which still not.
+				for(let child of a.element.children) {
+					child.setAttribute('id', a.id);
 					this.svgGroup.appendChild(child);
+				}
 			}
 		}
 	}
-	
 }
 
 Layer.prototype.types['annotations'] = (options) => { return new AnnotationLayer(options); }

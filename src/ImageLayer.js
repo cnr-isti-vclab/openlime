@@ -46,7 +46,6 @@ precision highp int;
 
 uniform sampler2D kd;
 
-
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
 ${gl2? 'out' : ''} vec4 color;
 

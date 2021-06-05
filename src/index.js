@@ -45,7 +45,8 @@ function testMedicalAnnotations() {
 			path { fill:none; stroke-width:1; stroke:red; vector-effect:non-scaling-stroke; }
 			path:hover { cursor:pointer; fill:rgba(255, 0, 0, 0.1); }
 		`,
-		annotations: 'assets/medical/PH1101-1.json'
+		annotations: 'assets/medical/PH1101-1.json',
+		editable: true
 	}); 
 
 	lime.canvas.addLayer('img', layer0);
