@@ -98,16 +98,13 @@ class UIBasic {
 				layer: id
 			};
 			if(layer.editable) {
-				layerEntry.list.push({
-					button: 'New point',
-					onclick: () => { this.editor.setMode(layer, 'point'); this.updateMenu(); },
-					status: () => this.editor.mode == 'point' ? 'active': '',
-				});
-				layerEntry.list.push({
-					button: 'New line',
-					onclick: () => { this.editor.setMode(layer, 'line'); this.updateMenu(); },
-					status: () => this.editor.mode == 'line' ? 'active': '',
-				});
+				for(const [mode, label] of Object.entries({ point: 'New point', line: 'New line', box: 'New box', circle: 'New circle' }))
+					layerEntry.list.push({
+						button: label,
+						onclick: () => { this.editor.setMode(layer, mode); this.updateMenu(); },
+						status: () => this.editor.mode == mode ? 'active': '',
+					});
+
 			}
 			this.menu.push(layerEntry);
 		}

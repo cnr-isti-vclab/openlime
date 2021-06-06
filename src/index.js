@@ -45,7 +45,9 @@ function testMedicalAnnotations() {
 			path { fill:rgba(255, 255, 255, 0.01); stroke-width:1; stroke:red; vector-effect:non-scaling-stroke; }
 			path:hover { cursor:pointer; fill:rgba(255, 0, 0, 0.1); }
 
+			rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
 			circle { fill:red; stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
+
 			.selected { fill:#ffaaaa; stroke:$ff0000 }
 		`,
 		infoTemplate: (annotation) => { return `
