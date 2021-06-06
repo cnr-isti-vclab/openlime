@@ -42,11 +42,20 @@ function testMedicalAnnotations() {
 		style:` 
 			.openlime-annotation { pointer-events:all; opacity: 0.7; }
 			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
-			path { fill:none; stroke-width:1; stroke:red; vector-effect:non-scaling-stroke; }
+			path { fill:rgba(255, 255, 255, 0.01); stroke-width:1; stroke:red; vector-effect:non-scaling-stroke; }
 			path:hover { cursor:pointer; fill:rgba(255, 0, 0, 0.1); }
+
+			circle { fill:red; stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
+			.selected { fill:#ffaaaa; stroke:$ff0000 }
 		`,
+		infoTemplate: (annotation) => { return `
+			<h3>${annotation.class}</h3>
+			<p>${annotation.description}</p>
+			
+		`; },
 		annotations: 'assets/medical/PH1101-1.json',
-		editable: true
+		editable: true,
+
 	}); 
 
 	lime.canvas.addLayer('img', layer0);

@@ -107,6 +107,7 @@ class Canvas {
 	}
 
 	addLayer(id, layer) {
+		layer.id = id;
 		layer.addEvent('update', () => { this.emit('update'); });
 		layer.addEvent('updateSize', () => { this.updateSize(); });
 		layer.gl = this.gl;

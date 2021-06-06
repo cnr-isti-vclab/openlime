@@ -67,11 +67,25 @@ class UIBasic {
 
 		this.menu = [];
 
+		/*let element = entry.element;
+		let group = element.getAttribute('data-group');
+		let layer = element.getAttribute('data-layer');
+		let mode = element.getAttribute('data-mode');
+		let active = (layer && this.lime.canvas.layers[layer].visible) &&
+			(!mode || this.lime.canvas.layers[layer].getMode() == mode);
+		entry.element.classList.toggle('active', active); */
+
 		this.menu.push({ section: "Layers" });
 		for (let [id, layer] of Object.entries(this.lime.canvas.layers)) {
 			let modes = []
 			for (let m of layer.getModes()) {
-				let mode = { button: m, mode: m, layer: id, onclick: () => { layer.setMode(m); this.updateMenu(); } };
+				let mode = { 
+					button: m, 
+					mode: m, 
+					layer: id, 
+					onclick: () => { layer.setMode(m); this.updateMenu(); },
+					status: () => layer.getMode() == m ? 'active' : '',
+				};
 				if (m == 'specular')
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
 				modes.push(mode);
@@ -79,13 +93,20 @@ class UIBasic {
 			let layerEntry = {
 				button: layer.label || id, 
 				onclick: ()=> { this.setLayer(layer); },
+				status: () => layer.visible? 'active' : '',
 				list: modes,
 				layer: id
 			};
 			if(layer.editable) {
 				layerEntry.list.push({
 					button: 'New point',
-					onclick: () => { this.editor.setMode(layer, 'point'); }
+					onclick: () => { this.editor.setMode(layer, 'point'); this.updateMenu(); },
+					status: () => this.editor.mode == 'point' ? 'active': '',
+				});
+				layerEntry.list.push({
+					button: 'New line',
+					onclick: () => { this.editor.setMode(layer, 'line'); this.updateMenu(); },
+					status: () => this.editor.mode == 'line' ? 'active': '',
 				});
 			}
 			this.menu.push(layerEntry);
@@ -101,6 +122,10 @@ class UIBasic {
 
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+			this.lime.pointerManager.on("fingerSingleTap", {"fingerSingleTap": (e) => { this.showInfo(e);}, priority: 10000 });
+			//this.lime.pointerManager.on("fingerHover", {"fingerHover": (e) => { this.showInfo(e);}, priority: 10000 });
+
+			this.editor.addEvent('modeChanged', ()=> { this.updateMenu() });
 			this.createMenu();
 			this.updateMenu();
 
@@ -146,6 +171,57 @@ class UIBasic {
 				this.toggleLightController();
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
+	}
+	infoTemplate(annotation) {
+		return `
+		<p>${annotation.description}</p>
+		<p>${annotation.class}</p>
+		`;
+	}
+
+	hideInfo() {
+		if(!this.info) return;
+		this.info.setAttribute('data-anno', null);
+		this.info.style.display = 'none';
+	}
+
+	showInfo(e) {
+		if(!e.originSrc) {
+			this.hideInfo();
+			return true;
+		}
+
+		let layer = e.originSrc.getAttribute('data-layer');
+		if(!layer) {
+			this.hideInfo();
+			return true;
+		}
+		layer = this.lime.canvas.layers[layer];
+
+		if(e.fingerType == 'fingerHover' && !layer.hoverable)
+			return true;
+
+		if(!this.info) {
+			let html = `<div class="openlime-info">
+			</div>
+			`;
+			let template = document.createElement('template');
+			template.innerHTML = html.trim();
+			this.info = template.content.firstChild;
+			this.lime.containerElement.appendChild(this.info);
+		}
+		let info_id = this.info.getAttribute('data-anno');
+		let anno_id = e.originSrc.getAttribute('data-anno');
+		if(anno_id == info_id)
+			return true;
+
+		
+		let annotation = layer.getAnnotationById(anno_id);
+		this.info.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.infoTemplate(annotation);
+		this.info.setAttribute('data-anno', anno_id);
+		this.info.style.display = '';
+		//todo position info appropriately.
+		e.preventDefault();
 	}
 
 	async loadSkin() {
@@ -274,7 +350,7 @@ class UIBasic {
 		if(length50 > min) return { length: length50, label: label50 };
 		return { length: 0, label: 0 }
 	}
-
+	
 	updateScale(line, text) {
 		//let zoom = this.lime.camera.getCurrentTransform(performance.now()).z;
 		let zoom = this.lime.camera.target.z;
@@ -412,13 +488,16 @@ class UIBasic {
 	}
 
 	updateEntry(entry) {
-		let element = entry.element;
+		let status = entry.status ? entry.status() : '';
+		entry.element.classList.toggle('active', status == 'active');
+
+		/*let element = entry.element;
 		let group = element.getAttribute('data-group');
 		let layer = element.getAttribute('data-layer');
 		let mode = element.getAttribute('data-mode');
 		let active = (layer && this.lime.canvas.layers[layer].visible) &&
 			(!mode || this.lime.canvas.layers[layer].getMode() == mode);
-		entry.element.classList.toggle('active', active);
+			entry.element.classList.toggle('active', active); */
 
 		if ('list' in entry)
 			for (let e of entry.list)

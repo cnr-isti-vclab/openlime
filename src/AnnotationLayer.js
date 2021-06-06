@@ -22,7 +22,9 @@ class AnnotationLayer extends Layer {
 			geometry: null,
 			style: null,
 			annotations: {},
-			overlayElement: null
+			overlayElement: null,
+			shadow: true,
+			hoverable: false, //display info about annotation on mousehover.
 		}, options);
 		super(options);
 
@@ -67,6 +69,12 @@ class AnnotationLayer extends Layer {
 			return a;
 		});
 	}
+	getAnnotationById(id) {
+		for(const anno of this.annotations)
+			if(anno.id == id)
+				return anno;
+		return null;
+	}
 
 	async loadSVG(url) {
 		var response = await fetch(url);
@@ -87,7 +95,9 @@ class AnnotationLayer extends Layer {
 		this.svgElement.append(this.svgGroup);
 		this.svgElement.setAttribute('viewBox', this.viewBox.toString()); // box is currently a string of numbers
 
-		let root = this.overlayElement.attachShadow( { mode: "open" });
+		let root = this.overlayElement;
+		if(this.shadow)
+			root = this.overlayElement.attachShadow( { mode: "open" });
 
 		if(this.style) {
 			const style = document.createElement('style');
@@ -95,6 +105,9 @@ class AnnotationLayer extends Layer {
 			root.append(style);
 		}
 		root.appendChild(this.svgElement);
+
+
+		this.svgElement.addEventListener('click', (e) => { console.log('a', e); }, true);
 	}
 
 	boundingBox() {
@@ -142,8 +155,10 @@ class AnnotationLayer extends Layer {
 				//second time will be 0 elements, but we need to 
 				//store somewhere knowledge of which items in the scene and which still not.
 				for(let child of a.element.children) {
-					child.setAttribute('id', a.id);
+					child.setAttribute('data-anno', a.id);
+					child.setAttribute('data-layer', this.id);
 					this.svgGroup.appendChild(child);
+					child.addEventListener('click', (e) => { console.log("E:", e); });
 				}
 			}
 		}

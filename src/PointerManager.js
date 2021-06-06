@@ -267,7 +267,7 @@ class PointerManager {
             const cp = new SinglePointerHandler(this, e.pointerId, { ppmm: this.ppmm });
             handled = cp.handleEvent(e);
         }
-        e.preventDefault();
+        //e.preventDefault();
     }
 
 }
@@ -310,8 +310,7 @@ class SinglePointerHandler {
         this.status = this.stateEnum.IDLE;
         this.timeout = null;
         this.holdTimeoutThreshold = 600;
-        this.tapTimeoutThreshold = 300;
-        this.upDuration = 400;
+        this.tapTimeoutThreshold = 100;
         this.oldDownPos = { clientX: 0, clientY: 0 };
         this.movingThreshold = 1; // 1mm
         this.idx = this.parent.addCurrPointer(this);
@@ -384,6 +383,7 @@ class SinglePointerHandler {
     createOutputEvent(e, type) {
         const result = e;
         result.fingerType = type;
+        result.originSrc = this.originSrc;
         result.speedX = 0;
         result.speedY = 0;
         result.idx = this.idx;
@@ -422,6 +422,7 @@ class SinglePointerHandler {
                 if (e.type == 'pointermove') {
                     this.emit(this.createOutputEvent(e, 'fingerHover'));
                     this.status = this.stateEnum.HOVER;
+                    this.originSrc = e.composedPath()[0];
                 } else if (e.type == 'pointerdown') {
                     this.status = this.stateEnum.DETECT;
                     this.emit(this.createOutputEvent(e, 'fingerDown'));
@@ -429,6 +430,7 @@ class SinglePointerHandler {
                         this.status = this.stateEnum.MOVING;
                         break;
                     }
+                    this.originSrc = e.composedPath()[0];
                     this.timeout = setTimeout(() => {
                         this.emit(this.createOutputEvent(e, 'fingerHold'));
                         if(e.defaultPrevented) this.status = this.stateEnum.IDLE;
