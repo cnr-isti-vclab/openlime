@@ -30,7 +30,8 @@ class AnnotationEditor {
 		if(options)
 			Object.assign(this, options);
 		
-		lime.pointerManager.onEvent(this);
+		//at the moment is not really possible to unregister the events registered here.
+		this.lime.pointerManager.onEvent(this);
 	}
 	addEvent(event, callback) { this.signals[event].push(callback); }
 	emit(event) { for(let r of this.signals[event]) r(this); }
@@ -102,6 +103,7 @@ class AnnotationEditor {
 
 		let annotation = new Annotation({element: svg});
 		this.layer.annotations.push(annotation);
+
 		if(!this.multiple)
 			this.setMode(null, null);
 		this.lime.redraw();

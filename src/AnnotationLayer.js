@@ -155,10 +155,24 @@ class AnnotationLayer extends Layer {
 				//second time will be 0 elements, but we need to 
 				//store somewhere knowledge of which items in the scene and which still not.
 				for(let child of a.element.children) {
-					child.setAttribute('data-anno', a.id);
+					child.setAttribute('id', a.id);
 					child.setAttribute('data-layer', this.id);
 					this.svgGroup.appendChild(child);
-					child.addEventListener('click', (e) => { console.log("E:", e); });
+
+					/*
+					//utils
+function createElement(tag, attributes) {
+	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+	if(attributes)
+		for(const [key, value] of Object.entries(attributes))
+			e.setAttribute(key, value);
+	return e;
+}
+
+					let parser = new DOMParser();
+					let use = createElement('use', { 'xlink:href': '#' + a.id,  'stroke-width': 10,  'pointer-events': 'stroke' });
+					//let use = parser.parseFromString(`<use xlink:href="${a.id}" stroke-width="10" pointer-events="stroke"/>`, "image/svg+xml");
+					this.svgGroup.appendChild(use); */
 				}
 			}
 		}

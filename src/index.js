@@ -42,8 +42,8 @@ function testMedicalAnnotations() {
 		style:` 
 			.openlime-annotation { pointer-events:all; opacity: 0.7; }
 			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
-			path { fill:rgba(255, 255, 255, 0.01); stroke-width:1; stroke:red; vector-effect:non-scaling-stroke; }
-			path:hover { cursor:pointer; fill:rgba(255, 0, 0, 0.1); }
+			path { fill:none; stroke-width:1; stroke:#800; vector-effect:non-scaling-stroke; pointer-events:all; }
+			path:hover { cursor:pointer; stroke:#f00; }
 
 			rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
 			circle { fill:red; stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }

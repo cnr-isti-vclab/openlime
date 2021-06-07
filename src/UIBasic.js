@@ -207,15 +207,15 @@ class UIBasic {
 			this.info = template.content.firstChild;
 			this.lime.containerElement.appendChild(this.info);
 		}
-		let info_id = this.info.getAttribute('data-anno');
-		let anno_id = e.originSrc.getAttribute('data-anno');
+		let info_id = this.info.getAttribute('data-annotation');
+		let anno_id = e.originSrc.getAttribute('id');
 		if(anno_id == info_id)
 			return true;
 
 		
 		let annotation = layer.getAnnotationById(anno_id);
 		this.info.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.infoTemplate(annotation);
-		this.info.setAttribute('data-anno', anno_id);
+		this.info.setAttribute('data-annotation', anno_id);
 		this.info.style.display = '';
 		//todo position info appropriately.
 		e.preventDefault();
