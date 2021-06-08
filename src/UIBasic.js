@@ -58,6 +58,7 @@ class UIBasic {
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
 			unit: null,
+			info: new Info(lime.containerElement),
 			editor: new AnnotationEditor(lime),
 		});
 
@@ -120,9 +121,10 @@ class UIBasic {
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 			this.lime.pointerManager.on("fingerSingleTap", {"fingerSingleTap": (e) => { this.showInfo(e);}, priority: 10000 });
+			
 			//this.lime.pointerManager.on("fingerHover", {"fingerHover": (e) => { this.showInfo(e);}, priority: 10000 });
 
-			this.editor.addEvent('modeChanged', ()=> { this.updateMenu() });
+			this.editor.addEvent('modeChanged', ()=> { this.updateMenu(); });
 			this.createMenu();
 			this.updateMenu();
 
@@ -169,58 +171,26 @@ class UIBasic {
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
-	infoTemplate(annotation) {
-		return `
-		<p>${annotation.description}</p>
-		<p>${annotation.class}</p>
-		`;
-	}
-
-	hideInfo() {
-		if(!this.info) return;
-		this.info.setAttribute('data-anno', null);
-		this.info.style.display = 'none';
-	}
-
+	
 	showInfo(e) {
 		if(!e.originSrc) {
-			this.hideInfo();
-			return true;
+			throw "This should never happen!";
 		}
 
 		let layer = e.originSrc.getAttribute('data-layer');
-		if(!layer) {
-			this.hideInfo();
-			return true;
-		}
+		if(!layer)
+			return this.info.hide();
+			
 		layer = this.lime.canvas.layers[layer];
 
 		if(e.fingerType == 'fingerHover' && !layer.hoverable)
-			return true;
+			return;
 
-		if(!this.info) {
-			let html = `<div class="openlime-info">
-			</div>
-			`;
-			let template = document.createElement('template');
-			template.innerHTML = html.trim();
-			this.info = template.content.firstChild;
-			this.lime.containerElement.appendChild(this.info);
-		}
-		let info_id = this.info.getAttribute('data-annotation');
-		let anno_id = e.originSrc.getAttribute('id');
-		if(anno_id == info_id)
-			return true;
-
-		
-		let annotation = layer.getAnnotationById(anno_id);
-		this.info.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.infoTemplate(annotation);
-		this.info.setAttribute('data-annotation', anno_id);
-		this.info.style.display = '';
-		//todo position info appropriately.
-		e.preventDefault();
+		let id = e.originSrc.getAttribute('id');
+		this.info.show(e, layer, id);
 	}
 
+	
 	async loadSkin() {
 		var response = await fetch(this.skin);
 		if (!response.ok) {
@@ -560,6 +530,60 @@ class UIBasic {
 
 	closeLayersMenu() {
 		this.layerMenu.style.display = 'none';
+	}
+}
+
+
+class Info {
+	constructor(container) {
+		Object.assign(this, {
+			element: null,
+			svgElement: null,  //svg for annotation, TODO: should be inside annotation!
+			annotation: null,
+			container: container
+		});			
+	}
+	
+	hide() {
+		if(!this.element) return;
+		this.element.style.display = 'none';
+
+		if(this.svgElement)
+			this.svgElement.classList.remove('selected');
+		
+		this.annotation = null;
+		this.svgElement = null;
+	}
+
+	show(e, layer, id) {
+		if(!this.element) {
+			let html = '<div class="openlime-info"></div>';
+			let template = document.createElement('template');
+			template.innerHTML = html.trim();
+			this.element = template.content.firstChild;
+			this.container.appendChild(this.element);
+		}
+
+		if(this.annotation && id == this.annotation.id)
+			return;
+
+		this.hide();
+		
+		e.originSrc.classList.add('selected');
+		let annotation = layer.getAnnotationById(id);
+		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.template(annotation);
+		this.annotation = annotation;
+		this.svgElement = e.originSrc;
+
+		this.element.style.display = '';
+		//todo position info appropriately.
+		e.preventDefault();
+	}
+	template(annotation) {
+		return `
+		<p>${annotation.description}</p>
+		<p>${annotation.class}</p>
+		`;
 	}
 }
 

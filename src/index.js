@@ -27,7 +27,50 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //lensTest();
 //testSVGAnnotations();
 
-testMedicalAnnotations();
+//testMedicalAnnotations();
+
+testAnnotationEditor();
+
+function testAnnotationEditor() {
+	let layer0 = new Layer({ 
+		label: 'Coin 10',
+		layout: 'image', 
+		type:'rti',
+		url: 'assets/rti/hsh/info.json',
+		normals: true
+	});
+	lime.canvas.addLayer('hsh', layer0);
+	
+	let layer1 = new AnnotationLayer({ 
+		label: 'Annotations',
+		viewBox: "0 0 256 256",
+		style:` 
+			.openlime-annotation { pointer-events:all; opacity: 0.7; }
+			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+			
+			:focus { fill:yellow; }
+			path { fill:none; stroke-width:1; stroke:#800; vector-effect:non-scaling-stroke; pointer-events:all; }
+			path:hover { cursor:pointer; stroke:#f00; }
+
+			rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
+			circle { fill:rgba(255, 0, 0, 0.2); stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
+			circle.point { stroke-width:10px }
+			.selected { fill:#ffaaaa; stroke:$ff0000 }
+		`,
+		infoTemplate: (annotation) => { return `
+			<h3>${annotation.class}</h3>
+			<p>${annotation.description}</p>
+			
+		`; },
+		annotations: 'assets/medical/PH1101-1.json',
+		editable: true,
+
+	}); 
+	lime.canvas.addLayer('anno', layer1);
+
+	let ui = new UIBasic(lime);
+	
+}
 
 function testMedicalAnnotations() {
 	let layer0 = new Layer({
@@ -42,11 +85,12 @@ function testMedicalAnnotations() {
 		style:` 
 			.openlime-annotation { pointer-events:all; opacity: 0.7; }
 			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+			
 			path { fill:none; stroke-width:1; stroke:#800; vector-effect:non-scaling-stroke; pointer-events:all; }
 			path:hover { cursor:pointer; stroke:#f00; }
 
 			rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
-			circle { fill:red; stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
+			circle { fill:rgba(255, 0, 0, 0.2); stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
 
 			.selected { fill:#ffaaaa; stroke:$ff0000 }
 		`,

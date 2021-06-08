@@ -40,15 +40,14 @@ class AnnotationEditor {
 		this.layer = layer;
 		this.mode = mode;
 		this.currentAnnotation = null;
-		if(!mode)
-			return;
+		if(mode) {
 
-		let modes = { 'point': Point, 'circle': Circle, 'box': Box, 'line': Line };
-		if(!mode in modes)
-			throw "Unknown editor mode: " + mode;
+			let modes = { 'point': Point, 'circle': Circle, 'box': Box, 'line': Line };
+			if(!mode in modes)
+				throw "Unknown editor mode: " + mode;
 
-		this.factory = new modes[mode]();
-
+			this.factory = new modes[mode]();
+		}
 		this.emit('modeChanged');
 	}
 
@@ -123,7 +122,7 @@ class AnnotationEditor {
 class Point {
 	create(pos) {
 		//const pos = this.mapToSvg(e);
-		return  createElement('circle', { cx: pos.x, cy: pos.y, r: 200 });
+		return  createElement('circle', { cx: pos.x, cy: pos.y, r: 10, class:'point' });
 	}
 }
 

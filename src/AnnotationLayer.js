@@ -120,6 +120,11 @@ class AnnotationLayer extends Layer {
 		}
 		super.setVisible(visible);
 	}
+	//set selected class for annotation
+	setSelected(id, on = true) {
+		let a = this.svgGroup.getElementById(id);
+		a.classList.toggle('selected', on);
+	}
 
 	draw(transform, viewport) {
 		if(!this.svgElement)
@@ -157,6 +162,7 @@ class AnnotationLayer extends Layer {
 				for(let child of a.element.children) {
 					child.setAttribute('id', a.id);
 					child.setAttribute('data-layer', this.id);
+					child.classList.add('openlime-annotation');
 					this.svgGroup.appendChild(child);
 
 					/*
