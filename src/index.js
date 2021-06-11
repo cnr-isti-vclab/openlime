@@ -12,6 +12,8 @@ import { UIBasic } from './UIBasic.js'
 import { LensLayer } from './LensLayer.js'
 import { Lens } from './Lens.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
+import { NeuralLayer } from './NeuralLayer.js'
+
 
 let lime = new OpenLIME('#openlime', { background: 'black' });
 
@@ -19,13 +21,25 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //imageTest('deepzoom');
 //flipTest();
 //brdfTest();
-rtiTest('rbf');
+//rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 
 //testUISvg();
 //lensTest();
 //testSVGAnnotations();
+testNeural();
+
+function testNeural() {
+	let layer0 = new Layer({
+		type: 'neural',
+		url: 'assets/neural/',
+		layout: 'image',
+		zindex: 0,
+	});
+	lime.canvas.addLayer('neural', layer0);
+	let ui = new UIBasic(lime);
+}
 
 function testSVGAnnotations() {
 	let layer0 = new Layer({
