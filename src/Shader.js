@@ -3,6 +3,9 @@
  *  @param {object} options
  * *label*: used for menu
  * *samplers*: array of rasters {id:, type: } color, normals, etc.
+ *         bind: false will not used in preparegl
+ *         load: false will not be loaded from raster
+ *         both options are used in neural where the coefficients are loaded, but used by tf
  * *uniforms*: type = <vec4|vec3|vec2|float|int>, needsUpdate controls when updated in gl, size is unused, value is and array or a float, 
  *             we also want to support interpolation: source (value is the target), start, end are the timing (same as camera interpolation)
  * *body*: code actually performing the rendering, needs to return a vec4

@@ -33,8 +33,8 @@ testNeural();
 function testNeural() {
 	let layer0 = new Layer({
 		type: 'neural',
-		url: 'assets/neural/',
-		layout: 'image',
+		url: 'assets/neural/san_michele/',
+		layout: 'deepzoom',
 		zindex: 0,
 	});
 	lime.canvas.addLayer('neural', layer0);

@@ -317,11 +317,15 @@ class Layer {
 
 		//bind textures
 		let gl = this.gl;
-		for(var i = 0; i < this.shader.samplers.length; i++) {
-			let id = this.shader.samplers[i].id;
-			gl.uniform1i(this.shader.samplers[i].location, i);
+		let i = 0;
+		for(let sampler of this.shader.samplers) {
+			if(sampler.bind === false)
+				continue;
+			let id = sampler.id;
+			gl.uniform1i(sampler.location, i);
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, tiledata.tex[id]);
+			i++;
 		}
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
 	}
@@ -396,9 +400,13 @@ class Layer {
 
 		if(!this.tiles.length) {
 			this.tiles = JSON.parse(JSON.stringify(this.layout.tiles));
+			let toload = 0;
+			for(let sampler of this.shader.samplers)
+				if(sampler.load !== false)
+					toload++;;
 			for(let tile of this.tiles) {
 				tile.tex = new Array(this.shader.samplers.length);
-				tile.missing = this.shader.samplers.length;
+				tile.missing = toload;
 				tile.size = 0;
 			}
 			return;
@@ -407,7 +415,7 @@ class Layer {
 		for(let tile of this.tiles) {
 			tile.missing = this.shader.samplers.length;;
 			for(let sampler of this.shader.samplers) {
-				if(tile.tex[sampler.id])
+				if(tile.tex[sampler.id] || tile.load === false)
 					tile.missing--;
 			}
 		}
@@ -499,6 +507,8 @@ class Layer {
 		this.requested[tile.index] = true;
 
 		for(let sampler of this.shader.samplers) {
+			if(sampler.load === false)
+				continue;
 			
 			let raster = this.rasters[sampler.id];
 			tile.url = raster.layout.getTileURL(raster.url, tile);
