@@ -11,49 +11,112 @@ import { simplify, smooth, smoothToPath, simplifyLineRDP } from './Simplify.js'
 	problems: allow pan and drawing at the same time! especially in the line after line mode: 
 	   middle mouse for panning (two fingers for mobile?)
 
-	
+	events:
+		modeChanged: when entering some editing mode (point, line etc.)
+		createAnnotation(editor, annotation)
+		deleteAnnotation(editor, annotation)
+		updateAnnotation(editor, annotation)
+
+		Annotation parameter is a json containing all the data of the annotation (see Annotation.js)
 */
 class AnnotationEditor {
 	constructor(lime, options) {
 		Object.assign(this, {
 			lime: lime,
 			panning: false,
-			mode: null, //doing nothing, could: ['line', 'polygon', 'point', 'box', 'circle']
+			tool: null, //doing nothing, could: ['line', 'polygon', 'point', 'box', 'circle']
 			startPoint: null, //starting point for box and  circle
 			currentLine: [],
 			currentElement: null,
 			currentAnnotation: null,
 			priority: 20000,
 			multiple: false, //if true multiple elements per annotation.
-			signals: {'modeChanged':[]}
+			signals: {'toolChanged':[], 'createAnnotation':[], 'deleteAnnotation':[], 'updateAnnotation':[]},
+			tools: { 
+				point: { 
+					img: '<svg width=24 height=24><circle cx=12 cy=12 r=3 fill="red" stroke="gray"/></svg>',
+					tooltip: 'New point',
+					tool: Point,
+				},
+				line: {
+					img: `<svg width=24 height=24>
+							<path d="m 4.7,4.5 c 0.5,4.8 0.8,8.5 3.1,11 2.4,2.6 4.2,-4.8 6.3,-5 2.7,-0.3 5.1,9.3 5.1,9.3" stroke-width="3" fill="none" stroke="grey"/>
+							<path d="m 4.7,4.5 c 0.5,4.8 0.8,8.5 3.1,11 2.4,2.6 4.2,-4.8 6.3,-5 2.7,-0.3 5.1,9.3 5.1,9.3" stroke-width="1" fill="none" stroke="red"/></svg>`,
+					tooltip: 'New line',
+					tool: Line,
+				},
+				box: {
+					img: '<svg width=24 height=24><rect x=5 y=5 width=14 height=14 fill="red" stroke="gray"/></svg>',
+					tooltip: 'New box',
+					tool: Box,
+				},
+				circle: {
+					img: '<svg width=24 height=24><circle cx=12 cy=12 r=7 fill="red" stroke="gray"/></svg>',
+					tooltip: 'New circle',
+					tool: Circle,
+				}
+			}
 		});
 		if(options)
 			Object.assign(this, options);
 		
 		//at the moment is not really possible to unregister the events registered here.
 		this.lime.pointerManager.onEvent(this);
+		document.addEventListener('keyup', (e) => { this.keyEvent(e); });
 	}
 	addEvent(event, callback) { this.signals[event].push(callback); }
-	emit(event) { for(let r of this.signals[event]) r(this); }
+	emit(event, ...parameters) { for(let r of this.signals[event]) r(this, ...parameters); }
 
-	setMode(layer, mode) {
+	setTool(layer, tool) {
 		this.layer = layer;
-		this.mode = mode;
+		this.tool = tool;
 		this.currentAnnotation = null;
-		if(mode) {
+		if(tool) {
 
-			let modes = { 'point': Point, 'circle': Circle, 'box': Box, 'line': Line };
-			if(!mode in modes)
-				throw "Unknown editor mode: " + mode;
+			if(!tool in this.tools)
+				throw "Unknown editor tool: " + tool;
 
-			this.factory = new modes[mode]();
+			this.factory = new this.tools[tool].tool;
 		}
-		this.emit('modeChanged');
+		this.emit('toolChanged');
+	}
+
+	menuWidget(layer) {
+		let menu = [];
+		for(const [id, tool] of Object.entries(this.tools))
+			menu.push({
+				button: tool.img,
+				tooltip: tool.tooltip,
+				onclick: () => { this.setTool(layer, id); },
+				status: () => this.tool == id ? 'active': '' ,
+				classes: 'openlime-tool'
+			});
+
+		let toolbar = {
+			html: '',
+			classes: 'openlime-tools',
+			list: menu,
+			status: () => 'active'
+		};	
+		return toolbar;
+	}
+
+	keyEvent(e) {
+		console.log(e);
+		switch(e.key) {
+		case 'Escape':
+			if(this.tool)
+				this.setTool(null, null);
+			break;
+		case 'Delete':
+		case 'Backspace':
+			break;	
+		}
 	}
 
 	panStart(e) {
 		//console.log(e.composedPath());
-		if(!['line', 'box', 'circle'].includes(this.mode))
+		if(!['line', 'box', 'circle'].includes(this.tool))
 			return;
 		this.panning = true;
 		e.preventDefault();
@@ -62,8 +125,8 @@ class AnnotationEditor {
 		let svg = createElement('svg');
 		svg.appendChild(this.factory.create(pos));
 
-		let annotation = new Annotation({element: svg});
-		this.layer.annotations.push(annotation);
+		this.currentAnnotation = new Annotation({element: svg});
+		this.layer.annotations.push(this.currentAnnotation);
 		this.lime.redraw();
 	}
 
@@ -82,9 +145,10 @@ class AnnotationEditor {
 
 		const pos = this.mapToSvg(e);
 		this.factory.finish(pos);
+		this.layer.emit('createAnnotation', this.currentAnnotation);
 
 		if(!this.multiple)
-			this.setMode(null, null);
+			this.setTool(null, null);
 	}
 
 	fingerSingleTap(e) {
@@ -92,7 +156,7 @@ class AnnotationEditor {
 		
 //		console.log("Editor:", e, e.composedPath());
 
-		if(!['point', 'polygon'].includes(this.mode))
+		if(!['point', 'polygon'].includes(this.tool))
 			return;
 		e.preventDefault();
 
@@ -100,11 +164,12 @@ class AnnotationEditor {
 		let svg = createElement('svg');
 		svg.appendChild(this.factory.create(pos));
 
-		let annotation = new Annotation({element: svg});
-		this.layer.annotations.push(annotation);
+		this.currentAnnotation = new Annotation({element: svg});
+		this.layer.annotations.push(this.currentAnnotation);
+		this.layer.emit('createAnnotation', this.currentAnnotation);
 
 		if(!this.multiple)
-			this.setMode(null, null);
+			this.setTool(null, null);
 		this.lime.redraw();
 	}
 
@@ -122,7 +187,9 @@ class AnnotationEditor {
 class Point {
 	create(pos) {
 		//const pos = this.mapToSvg(e);
-		return  createElement('circle', { cx: pos.x, cy: pos.y, r: 10, class:'point' });
+		let point = createElement('circle', { cx: pos.x, cy: pos.y, r: 10, class:'point' });
+		//point.classList.add('selected');
+		return point;
 	}
 }
 
@@ -134,7 +201,9 @@ class Box {
 
 	create(pos) {
 		this.origin = pos;
-		return this.box = createElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0 });
+		this.box = createElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0 });
+		//this.box.classList.add('selected');
+		return this.box;
 	}
 
 	adjust(pos) {
@@ -157,7 +226,9 @@ class Circle {
 	}
 	create(pos) {
 		this.origin = pos;
-		return this.circle = createElement('circle', { cx: pos.x, cy: pos.y, r: 0 });
+		this.circle = createElement('circle', { cx: pos.x, cy: pos.y, r: 0 });
+		//this.circle.classList.add('selected');
+		return this.circle;
 	}
 	adjust(pos) {
 		let p = this.origin;
@@ -175,7 +246,9 @@ class Line {
 
 	create(pos) {
 		this.points = [pos];
-		return this.path = createElement('path', { d: `M${pos.x} ${pos.y}` });
+		this.path = createElement('path', { d: `M${pos.x} ${pos.y}` });
+		//this.path.classList.add('selected');
+		return this.path;
 	}
 
 	adjust(pos) {

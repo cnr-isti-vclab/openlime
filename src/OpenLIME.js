@@ -16,6 +16,10 @@ import { ControllerPanZoom } from './ControllerPanZoom.js'
 
 import { PointerManager } from './PointerManager.js'
 
+import { Annotation	 } from './Annotation.js'
+import { AnnotationLayer } from './AnnotationLayer.js'
+import { AnnotationEditor } from './AnnotationEditor.js'
+
 /**
  * Manages an OpenLIME viewer functionality on a canvas
  * how do I write more substantial documentation.
@@ -144,5 +148,5 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic}
+export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic, Annotation, AnnotationLayer, AnnotationEditor }
 

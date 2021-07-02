@@ -99,12 +99,13 @@ class UIBasic {
 				layer: id
 			};
 			if(layer.editable) {
-				for(const [mode, label] of Object.entries({ point: 'New point', line: 'New line', box: 'New box', circle: 'New circle' }))
+				layerEntry.list.push(this.editor.menuWidget(layer));
+/*				for(const [mode, label] of Object.entries({ point: 'New point', line: 'New line', box: 'New box', circle: 'New circle' }))
 					layerEntry.list.push({
 						button: label,
 						onclick: () => { this.editor.setMode(layer, mode); this.updateMenu(); },
 						status: () => this.editor.mode == mode ? 'active': '',
-					});
+					}); */
 
 			}
 			this.menu.push(layerEntry);
@@ -124,7 +125,7 @@ class UIBasic {
 			
 			//this.lime.pointerManager.on("fingerHover", {"fingerHover": (e) => { this.showInfo(e);}, priority: 10000 });
 
-			this.editor.addEvent('modeChanged', ()=> { this.updateMenu(); });
+			this.editor.addEvent('toolChanged', ()=> { this.updateMenu(); });
 			this.createMenu();
 			this.updateMenu();
 
@@ -409,28 +410,29 @@ class UIBasic {
 			entry.id = 'entry_' + (this.entry_count++);
 
 		let id = `id="${entry.id}"`;
-
+		let tooltip = 'tooltip' in entry ? `title="${entry.tooltip}"` : '';
+		let classes = 'classes' in entry ? entry.classes : '';
 		let html = '';
 		if ('title' in entry) {
-			html += `<h2 ${id} class="openlime-title">${entry.title}</h2>`;
+			html += `<h2 ${id} class="openlime-title ${classes}" ${tooltip}>${entry.title}</h2>`;
 
 		} else if ('section' in entry) {
-			html += `<h3 ${id} class="openlime-section">${entry.section}</h3>`;
+			html += `<h3 ${id} class="openlime-section ${classes}" ${tooltip}>${entry.section}</h3>`;
 
 		} else if ('html' in entry) {
-			html += `<div ${id}>${entry.html}</div>`;
+			html += `<div ${id} class="${classes}">${entry.html}</div>`;
 
 		} else if ('button' in entry) {
 			let group = 'group' in entry ? `data-group="${entry.group}"` : '';
 			let layer = 'layer' in entry ? `data-layer="${entry.layer}"` : '';
 			let mode = 'mode' in entry ? `data-mode="${entry.mode}"` : '';
-			html += `<a href="#" ${id} ${group} ${layer} ${mode} class="openlime-button">${entry.button}</a>`;
+			html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry ${classes}">${entry.button}</a>`;
 		} else if ('slider' in entry) {
-			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider" ${id}>`;
+			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider ${classes}" ${id}>`;
 		}
 
 		if ('list' in entry) {
-			let ul = `<div class="openlime-list">`;
+			let ul = `<div class="openlime-list ${classes}">`;
 			for (let li of entry.list)
 				ul += this.createEntry(li);
 			ul += '</div>';
@@ -457,14 +459,6 @@ class UIBasic {
 	updateEntry(entry) {
 		let status = entry.status ? entry.status() : '';
 		entry.element.classList.toggle('active', status == 'active');
-
-		/*let element = entry.element;
-		let group = element.getAttribute('data-group');
-		let layer = element.getAttribute('data-layer');
-		let mode = element.getAttribute('data-mode');
-		let active = (layer && this.lime.canvas.layers[layer].visible) &&
-			(!mode || this.lime.canvas.layers[layer].getMode() == mode);
-			entry.element.classList.toggle('active', active); */
 
 		if ('list' in entry)
 			for (let e of entry.list)

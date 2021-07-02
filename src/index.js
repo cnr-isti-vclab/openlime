@@ -69,6 +69,8 @@ function testAnnotationEditor() {
 	lime.canvas.addLayer('anno', layer1);
 
 	let ui = new UIBasic(lime);
+	layer1.addEvent('createAnnotation', (annotation) => { console.log(annotation); });
+	ui.editor.multiple = true;
 	
 }
 

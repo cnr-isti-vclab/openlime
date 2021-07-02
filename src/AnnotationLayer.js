@@ -28,6 +28,8 @@ class AnnotationLayer extends Layer {
 		}, options);
 		super(options);
 
+		this.signals = {...this.signals, ...{ 'createAnnotation':[], 'updateAnnotation':[], 'deleteAnnotation':[] } };
+
 
 		if(typeof(this.viewBox) == "string") {
 			this.viewBox = this.viewBox.split(' '); 
@@ -107,7 +109,7 @@ class AnnotationLayer extends Layer {
 		root.appendChild(this.svgElement);
 
 
-		this.svgElement.addEventListener('click', (e) => { console.log('a', e); }, true);
+		//this.svgElement.addEventListener('click', (e) => { console.log('a', e); }, true);
 	}
 
 	boundingBox() {

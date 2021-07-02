@@ -69,7 +69,6 @@
 .openlime-toolbar .openlime-button:hover {
 	cursor:pointer;
 	opacity:50%;
-
 }
 
 
@@ -150,7 +149,7 @@ g.openlime-expand {
 
 
 
-.openlime-layers-menu .openlime-button {
+.openlime-layers-menu .openlime-entry {
 	color: #ccc;
 	background-color: rgb(20, 20, 20, 0.8);
 	padding:12px 20px;
@@ -159,29 +158,36 @@ g.openlime-expand {
 	text-decoration:none;
 }
 
-.openlime-layers-menu .openlime-button:hover,
-.openlime-layers-menu .openlime-button:focus {
+.openlime-layers-menu .openlime-entry:hover,
+.openlime-layers-menu .openlime-entry:focus {
 
 	background-color: rgb(40, 40, 40); 
 	color:#fff;
 }
 
-.openlime-layers-menu .openlime-button:active {
+.openlime-layers-menu .openlime-entry:active {
 	position:relative;
 	top:1px;
 }
 
-.openlime-layers-menu .openlime-button.active,
-.openlime-layers-menu .openlime-button:active {
+.openlime-layers-menu .openlime-entry.active,
+.openlime-layers-menu .openlime-entry:active {
 	background-color: rgb(80, 80, 80); 
 	color:#fff;
 }
 
 
-.openlime-layers-menu .openlime-list .openlime-button {
+.openlime-layers-menu .openlime-list .openlime-entry {
 	font-size:90%;
 	max-width:100%;
 	padding: 5px 20px 0px 20px;
 }
 
+.openlime-layers-menu .openlime-tool {
+	padding:0px !important;
+}
 
+
+.openlime-list .openlime-tools {
+	flex-direction:row;
+}

@@ -99,9 +99,9 @@ class Layer {
 		this.signals[event].push(callback);
 	}
 
-	emit(event) {
+	emit(event, ...parameters) {
 		for(let r of this.signals[event])
-			r(this);
+			r(this, ...parameters);
 	}
 
 	setLayout(layout) {
