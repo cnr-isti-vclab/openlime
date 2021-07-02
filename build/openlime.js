@@ -550,8 +550,7 @@
     				options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity' };
     			var response = await fetch(tile.url, options);
     			if(!response.ok) {
-    				console.log();
-    				callback("Failed loading " + url + ": " + response.statusText);
+    				callback("Failed loading " + tile.url + ": " + response.statusText);
     				return;
     			}
 
@@ -709,7 +708,7 @@
     	}
 
     	updateUniforms(gl, program) {
-    		let now = performance.now();
+    		performance.now();
     		for(const [name, uniform] of Object.entries(this.uniforms)) {
     			if(!uniform.location)
     				uniform.location = gl.getUniformLocation(program, name);
@@ -1119,7 +1118,7 @@ void main() {
 
     		this.getTileURL = (url, tile) => {
     			let tw = this.tilesize;
-    			let ilevel = parseInt(this.nlevels - 1 - tile.level);
+    			parseInt(this.nlevels - 1 - tile.level);
     			let s = Math.pow(2, tile.level);
 
     			//region parameters
@@ -1359,9 +1358,9 @@ void main() {
     		this.signals[event].push(callback);
     	}
 
-    	emit(event) {
+    	emit(event, ...parameters) {
     		for(let r of this.signals[event])
-    			r(this);
+    			r(this, ...parameters);
     	}
 
     	setLayout(layout) {
@@ -1564,7 +1563,7 @@ void main() {
     		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
     		for(let index in torender) {
-    			let tile = torender[index];
+    			torender[index];
     //			if(tile.complete)
     				this.drawTile(torender[index]);
     		}
@@ -1904,6 +1903,7 @@ void main() {
     	}
 
     	addLayer(id, layer) {
+    		layer.id = id;
     		layer.addEvent('update', () => { this.emit('update'); });
     		layer.addEvent('updateSize', () => { this.updateSize(); });
     		layer.gl = this.gl;
@@ -2119,6 +2119,8 @@ void main() {
     	loadBasis(data) {
     		let tmp = new Uint8Array(data);
     		this.basis = new Float32Array(data.length);
+
+    		new Float32Array(tmp.length);
     		for(let plane = 0; plane < this.nplanes+1; plane++) {
     			for(let c = 0; c < this.ndimensions; c++) {
     				for(let k = 0; k < 3; k++) {
@@ -2682,8 +2684,8 @@ vec4 render(vec3 base[np1]) {
     		
     	}
     	fragShaderSrc(gl) {
-    		
-    		return  `#version 300 es
+    		let gl2 = gl instanceof WebGL2RenderingContext;
+    		let str = `${gl2? '#version 300 es' : ''}
 
 precision highp float; 
 precision highp int; 
@@ -2693,7 +2695,7 @@ precision highp int;
 #define PI (3.14159265359)
 #define ISO_WARD_EXPONENT (4.0)
 
-in vec2 v_texcoord;
+${gl2? 'in' : 'varying'} vec2 v_texcoord;
 uniform sampler2D uTexKd;
 uniform sampler2D uTexKs;
 uniform sampler2D uTexNormals;
@@ -2704,7 +2706,7 @@ uniform vec2 uAlphaLimits;
 uniform int uInputColorSpaceKd; // 0: Linear; 1: sRGB
 uniform int uInputColorSpaceKs; // 0: Linear; 1: sRGB
 
-out vec4 color;
+${gl2? 'out' : ''}  vec4 color;
 
 vec3 getNormal(const in vec2 texCoord) {
 	vec3 n = texture(uTexNormals, texCoord).xyz;
@@ -2791,8 +2793,10 @@ void main() {
 	
 	vec3 finalColor = applyGamma ? pow(linearColor * 1.0, vec3(1.0/2.2)) : linearColor;
 	color = vec4(finalColor, 1.0);
+	${gl2?'':'gl_FragColor = color;'}
 }
 `;
+    	return str;
     	}
 
     }
@@ -2864,6 +2868,69 @@ void main() {
 
 
     Layer.prototype.types['brdf'] = (options) => { return new BRDFLayer(options); };
+
+    /**
+     * Display a simple image. Extends {@link Layer}.
+     * @param {options} options Same as {@link Layer}, but url and layout are required.
+     */
+
+    class ImageLayer extends Layer {
+    	constructor(options) {
+    		super(options);
+
+    		if(Object.keys(this.rasters).length != 0)
+    			throw "Rasters options should be empty!";
+
+    		if(!this.url)
+    			throw "Url option is required";
+
+    		if(!this.layout)
+    			this.layout = 'image';
+
+    		
+
+    		let size = {width:this.width || 0, height:this.height || 0 };
+    		this.setLayout(new Layout(this.url, this.layout, size));
+    		let raster = new Raster({ url: this.url, type: 'vec3', attribute: 'kd', colorspace: 'sRGB' });
+    		raster.layout = this.layout;
+
+    		this.rasters.push(raster);
+    		
+
+    		let shader = new Shader({
+    			'label': 'Rgb',
+    			'samplers': [{ id:0, name:'kd', type:'vec3' }]
+    		});
+    		
+    		shader.fragShaderSrc = function(gl) {
+
+    			let gl2 = gl instanceof WebGL2RenderingContext;
+    			let str = `${gl2? '#version 300 es' : ''}
+
+precision highp float;
+precision highp int;
+
+uniform sampler2D kd;
+
+${gl2? 'in' : 'varying'} vec2 v_texcoord;
+${gl2? 'out' : ''} vec4 color;
+
+
+void main() {
+	color = texture(kd, v_texcoord);
+	${gl2? '':'gl_FragColor = color;'}
+}
+`;
+    			return str;
+
+    		};
+
+    		this.shaders = {'standard': shader };
+    		this.setShader('standard');
+    	}
+    }
+
+    Layer.prototype.types['image'] = (options) => { return new ImageLayer(options); };
 
     /**
      * Virtual nase class for controllers: classes that handle mouse and touch events and links to pan, zoom, etc.
@@ -3028,9 +3095,9 @@ void main() {
     		if (!this.zooming)
     			return;
     		const scale = this.distance(e1, e2);
-    		const pos = this.camera.mapToScene((e1.x + e2.x)/2, (e1.y + e2.y)/2, this.camera.getCurrentTransform(performance.now()));
-    		const absoluteZoom = this.camera.target.z * scale/this.initialDistance;
-    		this.camera.zoom(this.zoomDelay, absoluteZoom, pos.x, pos.y);
+    		const pos = this.camera.mapToScene((e1.offsetX + e2.offsetX)/2, (e1.offsetY + e2.offsetY)/2, this.camera.getCurrentTransform(performance.now()));
+    		const dz = scale/this.initialDistance;
+    		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
     		this.initialDistance = scale;
     	}
 
@@ -3052,440 +3119,6 @@ void main() {
     		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
     	}
 
-    }
-
-    /* Basic viewer for a single layer.
-     *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
-     *  and custom.
-     * actions supported are:
-     *  home: reset the camera
-     *  zoomin, zoomout
-     *  fullscreen
-     *  rotate (45/90 deg rotation option.
-     *  light: turn on light changing.
-     *  switch layer(s)
-     *  lens.
-     * 
-     * How the menu works:
-     * Each entry eg: { title: 'Coin 16' }
-     * title: large title
-     * section: smaller title
-     * html: whatever html
-     * button: visually a button, attributes: group, layer, mode
-     * slider: callback(percent)
-     * list: an array of entries.
-     * 
-     * Additional attributes:
-     * onclick: a function(event) {}
-     * group: a group of entries where at most one is active
-     * layer: a layer id: will be active if layer is visible
-     * mode: a layer visualization mode, active if it's the current mode.
-     * layer + mode: if both are specified, both must be current for an active.
-     */
-
-    class UIBasic {
-    	constructor(lime, options) {
-    		//we need to know the size of the scene but the layers are not ready.
-    		let camera = lime.camera;
-    		Object.assign(this, {
-    			lime: lime,
-    			camera: lime.camera,
-    			skin: 'skin.svg',
-    			autoFit: true,
-    			//skinCSS: 'skin.css', // TODO: probably not useful
-    			actions: {
-    				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
-    				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
-    				layers:     { title: 'Layers',     display: true, task: (event) => { this.toggleLayers(event); } },
-    				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
-    				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
-    				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
-    				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
-    				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
-    			},
-    			viewport: [0, 0, 0, 0], //in scene coordinates
-    			scale: null,
-    			unit: null
-    		});
-
-    		Object.assign(this, options);
-    		if(this.autoFit)
-    			this.lime.canvas.addEvent('updateSize', () => this.lime.camera.fitCameraBox(0));
-
-    		this.menu = [];
-    		
-    		this.menu.push({ section: "Layers" });
-    		for(let [id, layer] of Object.entries(this.lime.canvas.layers)) {
-    			let modes = [];
-    			for(let m of layer.getModes()) {
-    				let mode = { button: m, mode: m, layer: id, onclick: ()=>{ layer.setMode(m); } };
-    				if(m == 'specular')
-    					mode.list = [{slider: '', oninput:(e)=> { layer.shader.setSpecularExp(e.target.value); } }];
-    				modes.push( mode);
-    			}
-    			this.menu.push({
-    				button: layer.label || id, 
-    				onclick: ()=> { this.setLayer(layer); },
-    				list: modes,
-    				layer: id
-    			});
-    		}
-    		if(queueMicrotask) queueMicrotask(() => { this.init(); }); //allows modification of actions and layers before init.
-    		else setTimeout(() => { this.init(); }, 0);
-    	}
-
-
-
-    	init() {		
-    		(async () => {
-
-    			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
-    			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
-    	
-    			//if(this.actions.layers && this.actions.layers.display == 'auto')
-    		//		this.actions.layers.display = this.lime.canvas.layers.length > 0;
-
-    				
-    			this.createMenu();
-    			this.updateMenu();
-    			
-    			let lightLayers = [];
-    			for(let [id, layer] of Object.entries(this.lime.canvas.layers)) 
-    					if(layer.controls.light)					lightLayers.push(layer);
-
-    			if(lightLayers.length) {
-    				if(this.actions.light && this.actions.light.display === 'auto')
-    					this.actions.light.display = true;
-
-    				let controller = new Controller2D((x, y)=> { 
-    					for(let layer of lightLayers)
-    						layer.setLight([x, y], 0); 
-    				}, { active:false, control:'light' });
-
-    				controller.priority = 0;
-    				this.lime.pointerManager.onEvent(controller);
-    				for(let layer of lightLayers) {
-    					layer.setLight([0.5, 0.5], 0);
-    					layer.controllers.push(controller);
-    				}
-
-    			}
-    	
-
-    			if(this.skin)
-    				await this.loadSkin();
-    			/* TODO: this is probably not needed
-    			if(this.skinCSS)
-    				await this.loadSkinCSS();
-    			*/
-
-    			this.setupActions();
-    			this.setupScale();
-
-    			for(let l of Object.values(this.lime.canvas.layers)) {
-    				//this.setLayer(l);
-    				break;
-    			}
-
-    			if(this.actions.light.active == true)
-    				this.toggleLightController();
-
-    		})().catch(e => { console.log(e); throw Error("Something failed") });
-    	}
-
-    	async loadSkin() {
-    		var response = await fetch(this.skin);
-    		if(!response.ok) {
-    			throw Error("Failed loading " + url + ": " + response.statusText);
-    		}
-
-    		let text = await response.text();
-    		let parser = new DOMParser();
-    		let skin= parser.parseFromString(text, "image/svg+xml").documentElement;
-
-
-    		let toolbar = document.createElement('div');
-    		toolbar.classList.add('openlime-toolbar');
-    		this.lime.containerElement.appendChild(toolbar);
-
-
-    		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
-    		{
-    			for(let [name, action] of Object.entries(this.actions)) {
-
-    				if(action.display !== true)
-    					continue;
-
-    				let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    				
-    				toolbar.appendChild(svg);
-    		
-    				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
-    				if(!element) continue;
-    				svg.appendChild(element);
-    				let box = element.getBBox();
-
-    				let tlist = element.transform.baseVal;
-    				if(tlist.numberOfItems == 0)
-    					tlist.appendItem(svg.createSVGTransform());
-    				tlist.getItem(0).setTranslate(-box.x,-box.y);
-    				
-    				svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-    				svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');	
-    			}
-
-    		}
-    	}
-
-    	setupActions() {
-    		for(let [name, action] of Object.entries(this.actions)) {
-    			let element = this.lime.containerElement.querySelector('.openlime-' + name);
-    			if(!element)
-    				continue;
-    			element.addEventListener('click', action.task);
-    		}
-    		let items = document.querySelectorAll('.openlime-layers-button');
-    		for(let item of items) {
-    			let id = item.getAttribute('data-layer');
-    			if(!id) continue;
-    			item.addEventListener('click', ()=> {
-    				this.setLayer(this.lime.layers[id]);
-    			});
-    		}
-    	}
-    	//find best length for scale from min -> max
-    	//zoom 2 means a pixel in image is now 2 pixel on screen, scale is
-    	bestScaleLength(min, max, scale, zoom) {
-    		scale /= zoom;
-    		//closest power of 10:
-    		let label10 = Math.pow(10, Math.floor(Math.log(max*scale)/Math.log(10)));
-    		let length10 = label10/scale;
-    		if(length10 > min) return { length: length10, label: label10 };
-
-    		let label20 = label10 * 2;
-    		let length20 = length10 * 2;
-    		if(length20 > min) return { length: length20, label: label20 };
-
-    		let label50 = label10 * 5;
-    		let length50 = length10 * 5;
-
-    		if(length50 > min) return { length: length50, label: label50 };
-    		return { length: 0, label: 0 }
-    	}
-
-    	updateScale(line, text) {
-    		//let zoom = this.lime.camera.getCurrentTransform(performance.now()).z;
-    		let zoom = this.lime.camera.target.z;
-    		if(zoom == this.lastScaleZoom)
-    			return;
-    		this.lastScaleZoom = zoom;
-    		let s = this.bestScaleLength(100, 200, this.scale, zoom);
-    		//let line = document.querySelector('.openlime-scale > line');
-    		let margin = 200 - 10 - s.length;
-    		line.setAttribute('x1', margin/2);
-    		line.setAttribute('x2', 200 - margin/2);
-    		//let text = document.querySelector('.openlime-scale > text');
-    		text.textContent = s.label + "mm";
-
-
-    	}
-
-    	//scale is length of a pixel in mm
-    	setupScale() {
-    		if(!this.scale) return;
-    		this.scales = { 'mm': 1, 'cm':10, 'm':1000, 'km':1000000 };
-
-    		
-    		let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    		svg.setAttribute('viewBox', `0 0 200 40`);
-    		svg.classList.add('openlime-scale');
-    		let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    		line.setAttribute('x1', 5);
-    		line.setAttribute('y1', 26.5);
-    		line.setAttribute('x2', 195);
-    		line.setAttribute('y2', 26.5);
-    		let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    		text.setAttribute('x', '50%');
-    		text.setAttribute('y', '16px');
-    		text.setAttribute('dominant-baseline', 'middle');
-    		text.setAttribute('text-anchor', 'middle');
-    		text.textContent = "10mm";
-    		//var label = document.createTextNode("10mm");
-    		//text.appendChild(label);
-
-
-    		svg.appendChild(line);
-    		svg.appendChild(text);
-    		this.lime.containerElement.appendChild(svg);
-    		this.lime.camera.addEvent('update', () => { this.updateScale(line, text); } );
-    	}
-
-    	//we need the concept of active layer! so we an turn on and off light.
-    	toggleLightController() {
-    		let div = this.lime.containerElement;
-    		let active = div.classList.toggle('openlime-light-active');
-    		this.lightActive = active;
-
-    		//for(let c of this.activeLayer.controllers)
-    		for(let layer of Object.values(this.lime.canvas.layers))
-    			for(let c of layer.controllers)
-    				if(c.control == 'light')
-    					c.active = active;
-    	}
-
-    	toggleFullscreen() {
-    		let canvas = this.lime.canvasElement;
-    		let div = this.lime.containerElement;
-    		let active = div.classList.toggle('openlime-fullscreen-active');
-
-    		if(!active) {
-    			var request = document.exitFullscreen || document.webkitExitFullscreen ||
-    				document.mozCancelFullScreen || document.msExitFullscreen;
-    			request.call(document);document.querySelector('.openlime-scale > line');
-
-    			this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
-    		} else {
-    			var request = div.requestFullscreen || div.webkitRequestFullscreen ||
-    				div.mozRequestFullScreen || div.msRequestFullscreen;
-    			request.call(div);
-    		}
-    		this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
-    	}
-
-    	startRuler() {
-    	}
-
-    	endRuler() {
-    	}
-
-    /* Layer management */
-
-    	createEntry(entry) {
-    		if(!('id' in entry))
-    			entry.id = 'entry_' + (this.entry_count++);
-
-    		let id = `id="${entry.id}"`;
-    		
-    		let html = '';
-    		if('title' in entry) {
-    			html += `<h2 ${id} class="openlime-title">${entry.title}</h2>`;
-
-    		} else if('section' in entry) {
-    			html += `<h3 ${id} class="openlime-section">${entry.section}</h3>`;
-
-    		} else if('html' in entry) {
-    			html += `<div ${id}>${entry.html}</div>`;
-    			
-    		} else if('button' in entry) {
-    			let group = 'group' in entry? `data-group="${entry.group}"`:'';
-    			let layer = 'layer' in entry? `data-layer="${entry.layer}"`:'';
-    			let mode  = 'mode'  in entry? `data-mode="${entry.mode}"`  :'';
-    			html += `<a href="#" ${id} ${group} ${layer} ${mode} class="openlime-button">${entry.button}</a>`;
-    		} else if('slider' in entry) {
-    			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider" ${id}>`;
-    		}
-    		
-    		if('list' in entry) {
-    			let ul = `<div class="openlime-list">`;
-    			for(let li of entry.list)
-    				ul += this.createEntry(li);
-    			ul += '</div>';
-    			html += ul;
-    		}
-    		return html;
-    	}
-    	addEntryCallbacks(entry) {
-    		entry.element = this.layerMenu.querySelector('#' + entry.id);
-    		if(entry.onclick)
-    			entry.element.addEventListener('click', (e)=> { 
-    				entry.onclick();
-    				entry.element.classList.add('active');
-    				this.updateMenu();
-    			});
-    		if(entry.oninput)
-    			entry.element.addEventListener('input', entry.oninput);
-    		
-
-    		if('list' in entry) 
-    			for(let e of entry.list)
-    				this.addEntryCallbacks(e);
-    	}
-
-    	updateEntry(entry) {
-    		let element = entry.element;
-    		let group = element.getAttribute('data-group');
-    		let layer = element.getAttribute('data-layer');
-    		let mode = element.getAttribute('data-mode');
-    		let active = (layer && this.lime.canvas.layers[layer].visible) &&
-    			(!mode || this.lime.canvas.layers[layer].getMode() == mode);
-    		entry.element.classList.toggle('active', active);
-
-    		if('list' in entry)
-    			for(let e of entry.list)
-    				this.updateEntry(e);
-    	}
-
-    	updateMenu() {
-    		for(let entry of this.menu)
-    			this.updateEntry(entry);
-    	}
-
-    	createMenu() {
-    		this.entry_count = 0;
-    		let html = `<div class="openlime-layers-menu">`;
-    		for(let entry of this.menu) {
-    			html += this.createEntry(entry);
-    		}
-    		html += '</div>';
-
-
-    		let template = document.createElement('template');
-    		template.innerHTML = html.trim();
-    		this.layerMenu = template.content.firstChild;
-    		this.lime.containerElement.appendChild(this.layerMenu);
-
-    		for(let entry of this.menu) {
-    			this.addEntryCallbacks(entry);
-    		}
-
-
-    /*		for(let li of document.querySelectorAll('[data-layer]'))
-    			li.addEventListener('click', (e) => {
-    				this.setLayer(this.lime.canvas.layers[li.getAttribute('data-layer')]);
-    			}); */
-    	}
-
-    	toggleLayers(event) {
-    		this.layerMenu.classList.toggle('open');
-    	}
-
-    	setLayer(layer_on) {
-    		if(typeof layer_on == 'string')
-    			layer_on = this.lime.canvas.layers[layer_on];
-
-    		this.activeLayer = layer_on;
-
-    		/*for(let li of this.layerMenu.querySelectorAll('li')) {
-    			li.classList.remove('active');
-    			let id = li.getAttribute('data-layer');
-    			if(this.lime.canvas.layers[id] == layer_on)
-    				li.classList.add('active');
-    		}*/
-    		for(let layer of Object.values(this.lime.canvas.layers)) {
-    			layer.setVisible(layer == layer_on);
-    			for(let c of layer.controllers) {
-    				if(c.control == 'light')
-    					c.active = this.lightActive && layer == layer_on;
-    			}
-    		}
-    		this.lime.redraw();
-
-    		this.updateMenu();
-    	}
-
-    	closeLayersMenu() {
-    		this.layerMenu.style.display = 'none';
-    	}
     }
 
     /**
@@ -3757,7 +3390,7 @@ void main() {
                 const cp = new SinglePointerHandler(this, e.pointerId, { ppmm: this.ppmm });
                 handled = cp.handleEvent(e);
             }
-            e.preventDefault();
+            //e.preventDefault();
         }
 
     }
@@ -3800,8 +3433,7 @@ void main() {
             this.status = this.stateEnum.IDLE;
             this.timeout = null;
             this.holdTimeoutThreshold = 600;
-            this.tapTimeoutThreshold = 300;
-            this.upDuration = 400;
+            this.tapTimeoutThreshold = 100;
             this.oldDownPos = { clientX: 0, clientY: 0 };
             this.movingThreshold = 1; // 1mm
             this.idx = this.parent.addCurrPointer(this);
@@ -3847,7 +3479,7 @@ void main() {
         }
 
         handlePointerUp(e) {
-            const tapDuration = e.timeStamp - this.startTap;
+            e.timeStamp - this.startTap;
         }
 
         isLikelySamePointer(e) {
@@ -3874,6 +3506,7 @@ void main() {
         createOutputEvent(e, type) {
             const result = e;
             result.fingerType = type;
+            result.originSrc = this.originSrc;
             result.speedX = 0;
             result.speedY = 0;
             result.idx = this.idx;
@@ -3912,6 +3545,7 @@ void main() {
                     if (e.type == 'pointermove') {
                         this.emit(this.createOutputEvent(e, 'fingerHover'));
                         this.status = this.stateEnum.HOVER;
+                        this.originSrc = e.composedPath()[0];
                     } else if (e.type == 'pointerdown') {
                         this.status = this.stateEnum.DETECT;
                         this.emit(this.createOutputEvent(e, 'fingerDown'));
@@ -3919,6 +3553,7 @@ void main() {
                             this.status = this.stateEnum.MOVING;
                             break;
                         }
+                        this.originSrc = e.composedPath()[0];
                         this.timeout = setTimeout(() => {
                             this.emit(this.createOutputEvent(e, 'fingerHold'));
                             if(e.defaultPrevented) this.status = this.stateEnum.IDLE;
@@ -4106,6 +3741,1266 @@ void main() {
 
     }
 
+    /** coordinates for annotations are relative to the top left corner!!!!
+     */
+
+    class Annotation {
+    	constructor(options) {
+    		Object.assign(
+    			this, 
+    			{
+    				id: Annotation.UUID(),
+    				code: null,
+    				description: null,
+    				class: null,
+    				target: null,
+    				data: {},
+    				element: null, //svg element (could be a group... a circle a path.)
+    				bbox: null,
+    				style: null,
+    			}, 
+    			options);
+    	}
+
+    	static UUID() {
+    		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    			return v.toString(16);
+    		});
+    	}
+
+    	static fromJsonld(entry) {
+    		if(entry.type != 'Annotation')
+    			throw "Not a jsonld annotation.";
+    		let options = {id: entry.id};
+
+    		let rename = { 'identifying': 'code', 'describing': 'description', 'classifying':'class' };
+    		for(let item of entry.body) {
+    			let field = rename[item.purpose];
+    			if(field)
+    				options[field] = item.value;
+    		}
+    		let selector = entry.target && entry.target.selector;
+    		if(selector) {
+    			switch(selector.type) {
+    			case 'SvgSelector':
+    				options.element = selector.value;
+    				break;
+    			default:
+    				throw "Unsupported selector: " + selector.type;
+    			}
+    		}
+    		return new Annotation(options);
+    	}
+    	toJsonld() {
+    		let body = [];
+    		if(this.code !== null)
+    			body.push( { type: 'TextualBody', value: this.code, purpose: 'indentifying' });
+    		if(this.class !== null)
+    			body.push( { type: 'TextualBody', value: this.class, purpose: 'classifying' });
+    		if(this.description !== null)
+    			body.push( { type: 'TextualBody', value: this.description, purpose: 'describing' });
+
+    		({
+    			"@context": "http://www.w3.org/ns/anno.jsonld",
+    			id: this.id,
+    			type: "Annotation",
+    			body: body,
+    			target: { selector: {} }
+    		});
+    		if(this.target)
+    			target.selector.source = this.target;
+
+
+    		if(this.element) {
+    			var s = new XMLSerializer();
+    			target.selector.type = SvgSelector;
+    			target.selector.value = s.serializeToString(this.element);
+    		}
+    	}
+    }
+
+    /**
+     * SVG or OpenGL polygons/lines/points annotation layer
+     * @param {object} options
+     * * *svgURL*: url for the svg containing the annotations
+     * * *svgXML*: svg string containing the annotatiosn
+     * * *geometry*: TODO: should contain the areas/lines/points for OpenGL rendering
+     * * *style*: css style for the annotation elements (shadow dom allows css to apply only to this layer)
+     * * *annotations*: collection of annotations info: each annotations is id: { label, svg (optional), data (custom data) (TODO)
+     */
+
+
+    class AnnotationLayer extends Layer {
+    	constructor(options) {
+    		options = Object.assign({
+    			viewBox: null,
+    			svgURL: null,
+    			svgXML: null, 
+    			geometry: null,
+    			style: null,
+    			annotations: {},
+    			overlayElement: null,
+    			shadow: true,
+    			hoverable: false, //display info about annotation on mousehover.
+    		}, options);
+    		super(options);
+
+    		this.signals = {...this.signals, ...{ 'createAnnotation':[], 'updateAnnotation':[], 'deleteAnnotation':[] } };
+
+
+    		if(typeof(this.viewBox) == "string") {
+    			this.viewBox = this.viewBox.split(' '); 
+    		}
+    		if (Array.isArray(this.viewBox)) {
+    			let box = new BoundingBox(); 
+    			box.fromArray(this.viewBox);
+    			this.viewBox = box;
+    		}
+
+
+    		(async () => {
+    			if(typeof(this.annotations) == "string") { //assume it is an URL
+    				await this.loadAnnotations(this.annotations);
+    			}
+    			if(this.svgURL)
+    				await this.loadSVG(this.svgURL);
+    			
+    			this.createSVGElement();
+
+    			this.status = 'ready';
+    			this.emit('update');
+
+    		})();/*.catch(e => { 
+    			console.log(e); 
+    			this.status = e; 
+    		});*/
+    	}
+    	async loadAnnotations(url) {
+    		var response = await fetch(url);
+    		if(!response.ok) {
+    			this.status = "Failed loading " + this.url + ": " + response.statusText;
+    			return;
+    		}
+    		this.annotations = await response.json();
+    		this.annotations = this.annotations.map(a => {
+    			if('@context' in a) 
+    				return Annotation.fromJsonld(a);
+    			return a;
+    		});
+    	}
+    	getAnnotationById(id) {
+    		for(const anno of this.annotations)
+    			if(anno.id == id)
+    				return anno;
+    		return null;
+    	}
+
+    	async loadSVG(url) {
+    		var response = await fetch(url);
+    		if(!response.ok) {
+    			this.status = "Failed loading " + this.url + ": " + response.statusText;
+    			return;
+    		}
+    		let text = await response.text();
+    		let parser = new DOMParser();
+    		this.svgXML = parser.parseFromString(text, "image/svg+xml").documentElement;
+    		throw "if viewbox is set in svgURL should it overwrite options.viewbox or viceversa?"
+    	}
+
+    	createSVGElement() {
+    		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    		this.svgElement.classList.add('openlime-svgoverlay');
+    		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    		this.svgElement.append(this.svgGroup);
+    		this.svgElement.setAttribute('viewBox', this.viewBox.toString()); // box is currently a string of numbers
+
+    		let root = this.overlayElement;
+    		if(this.shadow)
+    			root = this.overlayElement.attachShadow( { mode: "open" });
+
+    		if(this.style) {
+    			const style = document.createElement('style');
+    			style.textContent = this.style;
+    			root.append(style);
+    		}
+    		root.appendChild(this.svgElement);
+
+
+    		//this.svgElement.addEventListener('click', (e) => { console.log('a', e); }, true);
+    	}
+
+    	boundingBox() {
+    		return this.viewBox;
+    	}
+
+    	setVisible(visible) {
+    		if(this.svgElement) {
+    			this.svgElement.style.display = visible? 'block' : 'none';
+    		}
+    		super.setVisible(visible);
+    	}
+    	//set selected class for annotation
+    	setSelected(id, on = true) {
+    		let a = this.svgGroup.getElementById(id);
+    		a.classList.toggle('selected', on);
+    	}
+
+    	draw(transform, viewport) {
+    		if(!this.svgElement)
+    			return;
+
+    		let t =  this.transform.compose(transform);
+    		this.svgElement.setAttribute('viewBox', `${-viewport.w/2} ${-viewport.h/2} ${viewport.w} ${viewport.h}`);
+    		let c = this.viewBox.center();
+    		this.svgGroup.setAttribute("transform", 
+    			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${-c[0]} ${-c[1]})`); 
+    		return true;
+    	}
+
+    	prefetch(transform) {
+    		if(!this.visible) return;
+    		if(!this.svgElement) return;
+
+    		for(let a of this.annotations) {			
+    			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
+    			if(typeof a.element == 'string') {
+    				let parser = new DOMParser();
+    				a.element = parser.parseFromString(a.element, "image/svg+xml").documentElement;
+
+
+    /*				} else if(this.svgXML) {
+    					a.svgElement = this.svgXML.querySelector(`#${a.id}`);
+    					if(!a.svgElement)
+    						throw Error(`Could not find element with id: ${id} in svg`);
+    				} */
+    			}
+
+    			if(a.element instanceof SVGElement) {
+    				//second time will be 0 elements, but we need to 
+    				//store somewhere knowledge of which items in the scene and which still not.
+    				for(let child of a.element.children) {
+    					child.setAttribute('id', a.id);
+    					child.setAttribute('data-layer', this.id);
+    					child.classList.add('openlime-annotation');
+    					this.svgGroup.appendChild(child);
+
+    					/*
+    					//utils
+    function createElement(tag, attributes) {
+    	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    	if(attributes)
+    		for(const [key, value] of Object.entries(attributes))
+    			e.setAttribute(key, value);
+    	return e;
+    }
+
+    					let parser = new DOMParser();
+    					let use = createElement('use', { 'xlink:href': '#' + a.id,  'stroke-width': 10,  'pointer-events': 'stroke' });
+    					//let use = parser.parseFromString(`<use xlink:href="${a.id}" stroke-width="10" pointer-events="stroke"/>`, "image/svg+xml");
+    					this.svgGroup.appendChild(use); */
+    				}
+    			}
+    		}
+    	}
+    }
+
+    Layer.prototype.types['annotations'] = (options) => { return new AnnotationLayer(options); };
+
+    /* FROM: https://stackoverflow.com/questions/40650306/how-to-draw-a-smooth-continuous-line-with-mouse-using-html-canvas-and-javascript */
+
+
+    function simplify(points, length) {
+    	let length2 = Math.pow(length, 2);
+
+        var simplify1 = function(start, end) { // recursize simplifies points from start to end
+            var index, i, xx , yy, dx, dy, ddx, ddy,  t, dist, dist1;
+            let p1 = points[start];
+            let p2 = points[end];   
+            xx = p1.x;
+            yy = p1.y;
+            ddx = p2.x - xx;
+            ddy = p2.y - yy;
+            dist1 = ddx * ddx + ddy * ddy;
+            let maxDist = length2;
+            for (var i = start + 1; i < end; i++) {
+                let p = points[i];
+                if (ddx !== 0 || ddy !== 0) {
+                    t = ((p.x - xx) * ddx + (p.y - yy) * ddy) / dist1;
+                    if (t > 1) {
+                        dx = p.x - p2.x;
+                        dy = p.y - p2.y;
+                    } else 
+                    if (t > 0) {
+                        dx = p.x - (xx + ddx * t);
+                        dy = p.y - (yy + ddy * t);
+                    } else {
+                        dx = p.x - xx;
+                        dy = p.y - yy;
+                    }
+                } else {
+                    dx = p.x - xx;
+                    dy = p.y - yy;
+                }
+                dist = dx * dx + dy * dy; 
+                if (dist > maxDist) {
+                    index = i;
+                    maxDist = dist;
+                }
+            }
+
+            if (maxDist > length2) { 
+                if (index - start > 1){
+                    simplify1(start, index);
+                }
+                newLine.push(points[index]);
+                if (end - index > 1){
+                    simplify1(index, end);
+                }
+            }
+        };    
+        var end = points.length - 1;
+        var newLine = [points[0]];
+        simplify1(0, end);
+        newLine.push(points[end]);
+        return newLine;
+    }
+
+
+
+    function smooth(points, cornerThres, match) {
+    	cornerThres *= 3.1415/180;
+    	let newPoints = []; // array for new points
+
+    	if(points.length <= 2)
+    		return points.map((p) => [p.x, p.y]);
+
+    	let nx1, ny1, nx2, ny2, dist1, dist2;
+
+    	function dot(x, y, xx, yy) {  // get do product
+    		// dist1,dist2,nx1,nx2,ny1,ny2 are the length and  normals and used outside function
+    		// normalise both vectors
+    		
+    		dist1 = Math.sqrt(x * x + y * y); // get length
+    		if (dist1  > 0) {  // normalise
+    			nx1 = x / dist1 ;
+    			ny1 = y / dist1 ;
+    		} else {
+    			nx1 = 1;  // need to have something so this will do as good as anything
+    			ny1 = 0;
+    		}
+    		dist2  = Math.sqrt(xx * xx + yy * yy);
+    		if (dist2  > 0) {
+    			nx2 = xx / dist2;
+    			ny2 = yy / dist2;
+    		} else {
+    			nx2 = 1;
+    			ny2 = 0;
+    		}
+    		return Math.acos(nx1 * nx2 + ny1 * ny2 ); // dot product
+    	}
+
+    	let p1 = points[0];
+    	let endP = points[points.length-1];
+    	let i = 0;  // start from second poitn if line not closed
+    	let closed = false;
+    	let len = Math.hypot(p1.x- endP.x, p1.y-endP.y);
+    	
+    	if(len < Math.SQRT2){  // end points are the same. Join them in coordinate space
+    		endP =  p1;
+    		i = 0;			 // start from first point if line closed
+    		p1 = points[points.length-2];
+    		closed = true;
+    	}	   
+    	newPoints.push([points[i].x,points[i].y]);
+    	for(; i < points.length-1; i++){
+    		let p2 = points[i];
+    		let p3 = points[i + 1];
+    		let angle = Math.abs(dot(p2.x - p1.x, p2.y - p1.y, p3.x - p2.x, p3.y - p2.y));
+    		if(dist1 !== 0){  // dist1 and dist2 come from dot function
+    			if( angle < cornerThres){ // bend it if angle between lines is small
+    				  if(match){
+    					  dist1 = Math.min(dist1,dist2);
+    					  dist2 = dist1;
+    				  }
+    				  // use the two normalized vectors along the lines to create the tangent vector
+    				  let x = (nx1 + nx2) / 2;  
+    				  let y = (ny1 + ny2) / 2;
+    				  len = Math.sqrt(x * x + y * y);  // normalise the tangent
+    				  if(len === 0){
+    					  newPoints.push([p2.x,p2.y]);								  
+    				  } else {
+    					  x /= len;
+    					  y /= len;
+    					  if(newPoints.length > 0){
+    						  var np = newPoints[newPoints.length-1];
+    						  np.push(p2.x-x*dist1*0.25);
+    						  np.push(p2.y-y*dist1*0.25);
+    					  }
+    					  newPoints.push([  // create the new point with the new bezier control points.
+    							p2.x,
+    							p2.y,
+    							p2.x+x*dist2*0.25,
+    							p2.y+y*dist2*0.25
+    					  ]);
+    				  }
+    			} else {
+    				newPoints.push([p2.x,p2.y]);			
+    			}
+    		}
+    		p1 = p2;
+    	}  
+    	if(closed){ // if closed then copy first point to last.
+    		p1 = [];
+    		for(i = 0; i < newPoints[0].length; i++){
+    			p1.push(newPoints[0][i]);
+    		}
+    		newPoints.push(p1);
+    	}else {
+    		newPoints.push([points[points.length-1].x,points[points.length-1].y]);	  
+    	}
+    	return newPoints;	
+    }
+
+    function smoothToPath(smoothed) {
+    	let p = smoothed[0];
+    	let d = [`M${p[0]} ${p[1]}`];
+
+    	
+    	let p1;
+    	for(let i = 0; i < smoothed.length-1; i++) {
+    		p = smoothed[i];
+    		p1 = smoothed[i+1];
+    		if(p.length == 2)
+    			d.push(`l${(p1[0]-p[0]).toFixed(1)} ${(p1[1]-p[1]).toFixed(1)}`);
+    		else if(p.length == 4) 
+    			d.push(`q${(p[2]-p[0]).toFixed(1)} ${(p[3]-p[1]).toFixed(1)} ${(p1[0]-p[0]).toFixed(1)} ${(p1[1]-p[1]).toFixed(1)}`);
+    		else
+    			d.push(`c${(p[2]-p[0]).toFixed(1)} ${(p[3]-p[1]).toFixed(1)} ${(p[4]-p[0]).toFixed(1)} ${(p[5]-p[1]).toFixed(1)} ${(p1[0]-p[0]).toFixed(1)} ${(p1[1]-p[1]).toFixed(1)}`);
+    	}
+    	//if(p.length == 2)
+    	//	d.push(`L${p1[0]} ${p1[1]}`);
+    	return d.join();
+    }
+
+    /**annotation editor interface:
+       click a button and we get into a modality:
+          new line: when user pan start start drawing a line. on end can eigher get out or remain in this mode until a new button  is pressed (or ex)
+    	  new box (same thing)
+    	  new polygon: just finget SingleTab. how to finish? either click on first point, hit esc or enter doubleclick.
+    	  new point (just fingerSingleTap) (and you can zoom)
+
+    	problems: allow pan and drawing at the same time! especially in the line after line mode: 
+    	   middle mouse for panning (two fingers for mobile?)
+
+    	events:
+    		modeChanged: when entering some editing mode (point, line etc.)
+    		createAnnotation(editor, annotation)
+    		deleteAnnotation(editor, annotation)
+    		updateAnnotation(editor, annotation)
+
+    		Annotation parameter is a json containing all the data of the annotation (see Annotation.js)
+    */
+    class AnnotationEditor {
+    	constructor(lime, options) {
+    		Object.assign(this, {
+    			lime: lime,
+    			panning: false,
+    			tool: null, //doing nothing, could: ['line', 'polygon', 'point', 'box', 'circle']
+    			startPoint: null, //starting point for box and  circle
+    			currentLine: [],
+    			currentElement: null,
+    			currentAnnotation: null,
+    			priority: 20000,
+    			multiple: false, //if true multiple elements per annotation.
+    			signals: {'toolChanged':[], 'createAnnotation':[], 'deleteAnnotation':[], 'updateAnnotation':[]},
+    			tools: { 
+    				point: { 
+    					img: '<svg width=24 height=24><circle cx=12 cy=12 r=3 fill="red" stroke="gray"/></svg>',
+    					tooltip: 'New point',
+    					tool: Point,
+    				},
+    				line: {
+    					img: `<svg width=24 height=24>
+							<path d="m 4.7,4.5 c 0.5,4.8 0.8,8.5 3.1,11 2.4,2.6 4.2,-4.8 6.3,-5 2.7,-0.3 5.1,9.3 5.1,9.3" stroke-width="3" fill="none" stroke="grey"/>
+							<path d="m 4.7,4.5 c 0.5,4.8 0.8,8.5 3.1,11 2.4,2.6 4.2,-4.8 6.3,-5 2.7,-0.3 5.1,9.3 5.1,9.3" stroke-width="1" fill="none" stroke="red"/></svg>`,
+    					tooltip: 'New line',
+    					tool: Line,
+    				},
+    				box: {
+    					img: '<svg width=24 height=24><rect x=5 y=5 width=14 height=14 fill="red" stroke="gray"/></svg>',
+    					tooltip: 'New box',
+    					tool: Box,
+    				},
+    				circle: {
+    					img: '<svg width=24 height=24><circle cx=12 cy=12 r=7 fill="red" stroke="gray"/></svg>',
+    					tooltip: 'New circle',
+    					tool: Circle,
+    				}
+    			}
+    		});
+    		if(options)
+    			Object.assign(this, options);
+    		
+    		//at the moment is not really possible to unregister the events registered here.
+    		this.lime.pointerManager.onEvent(this);
+    		document.addEventListener('keyup', (e) => { this.keyEvent(e); });
+    	}
+    	addEvent(event, callback) { this.signals[event].push(callback); }
+    	emit(event, ...parameters) { for(let r of this.signals[event]) r(this, ...parameters); }
+
+    	setTool(layer, tool) {
+    		this.layer = layer;
+    		this.tool = tool;
+    		this.currentAnnotation = null;
+    		if(tool) {
+
+    			if(!tool in this.tools)
+    				throw "Unknown editor tool: " + tool;
+
+    			this.factory = new this.tools[tool].tool;
+    		}
+    		this.emit('toolChanged');
+    	}
+
+    	menuWidget(layer) {
+    		let menu = [];
+    		for(const [id, tool] of Object.entries(this.tools))
+    			menu.push({
+    				button: tool.img,
+    				tooltip: tool.tooltip,
+    				onclick: () => { this.setTool(layer, id); },
+    				status: () => this.tool == id ? 'active': '' ,
+    				classes: 'openlime-tool'
+    			});
+
+    		let toolbar = {
+    			html: '',
+    			classes: 'openlime-tools',
+    			list: menu,
+    			status: () => 'active'
+    		};	
+    		return toolbar;
+    	}
+
+    	keyEvent(e) {
+    		console.log(e);
+    		switch(e.key) {
+    		case 'Escape':
+    			if(this.tool)
+    				this.setTool(null, null);
+    			break;
+    		}
+    	}
+
+    	panStart(e) {
+    		//console.log(e.composedPath());
+    		if(!['line', 'box', 'circle'].includes(this.tool))
+    			return;
+    		this.panning = true;
+    		e.preventDefault();
+
+    		const pos = this.mapToSvg(e);
+    		let svg = createElement('svg');
+    		svg.appendChild(this.factory.create(pos));
+
+    		this.currentAnnotation = new Annotation({element: svg});
+    		this.layer.annotations.push(this.currentAnnotation);
+    		this.lime.redraw();
+    	}
+
+    	panMove(e) {
+    		if(!this.panning)
+    			return false;
+
+    		const pos = this.mapToSvg(e);
+    		this.factory.adjust(pos);
+    	}
+
+    	panEnd(e) {
+    		if(!this.panning)
+    			return false;
+    		this.panning = false;
+
+    		const pos = this.mapToSvg(e);
+    		this.factory.finish(pos);
+    		this.layer.emit('createAnnotation', this.currentAnnotation);
+
+    		if(!this.multiple)
+    			this.setTool(null, null);
+    	}
+
+    	fingerSingleTap(e) {
+    		if(!this.layer) return true;
+    		
+    //		console.log("Editor:", e, e.composedPath());
+
+    		if(!['point', 'polygon'].includes(this.tool))
+    			return;
+    		e.preventDefault();
+
+    		const pos = this.mapToSvg(e);
+    		let svg = createElement('svg');
+    		svg.appendChild(this.factory.create(pos));
+
+    		this.currentAnnotation = new Annotation({element: svg});
+    		this.layer.annotations.push(this.currentAnnotation);
+    		this.layer.emit('createAnnotation', this.currentAnnotation);
+
+    		if(!this.multiple)
+    			this.setTool(null, null);
+    		this.lime.redraw();
+    	}
+
+    	mapToSvg(e) {
+    		let camera = this.lime.camera;
+    		let transform = camera.getCurrentTransform(performance.now());
+    		let pos = camera.mapToScene(e.offsetX, e.offsetY, transform);
+    		pos.x += this.layer.boundingBox().width()/2;
+    		pos.y += this.layer.boundingBox().height()/2;
+    		pos.z = transform.z;
+    		return pos;
+    	}
+    }
+
+    class Point {
+    	create(pos) {
+    		//const pos = this.mapToSvg(e);
+    		let point = createElement('circle', { cx: pos.x, cy: pos.y, r: 10, class:'point' });
+    		//point.classList.add('selected');
+    		return point;
+    	}
+    }
+
+    class Box {
+    	constructor() {
+    		this.origin = null;
+    		this.box = null;
+    	}
+
+    	create(pos) {
+    		this.origin = pos;
+    		this.box = createElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0 });
+    		//this.box.classList.add('selected');
+    		return this.box;
+    	}
+
+    	adjust(pos) {
+    		let p = this.origin;
+
+    		this.box.setAttribute('x', Math.min(p.x, pos.x));
+    		this.box.setAttribute('width', Math.abs(pos.x - p.x));
+    		this.box.setAttribute('y', Math.min(p.y, pos.y));
+    		this.box.setAttribute('height', Math.abs(pos.y - p.y));
+    	}
+
+    	finish(pos) {
+    	}
+    }
+
+    class Circle {
+    	constructor() {
+    		this.origin = null;
+    		this.circle = null;
+    	}
+    	create(pos) {
+    		this.origin = pos;
+    		this.circle = createElement('circle', { cx: pos.x, cy: pos.y, r: 0 });
+    		//this.circle.classList.add('selected');
+    		return this.circle;
+    	}
+    	adjust(pos) {
+    		let p = this.origin;
+    		let r = Math.hypot(pos.x - p.x, pos.y - p.y);
+    		this.circle.setAttribute('r', r);
+    	}
+    	finish() {
+    	}
+    }
+
+    class Line {
+    	constructor() {
+    		this.points = [];
+    	}
+
+    	create(pos) {
+    		this.points = [pos];
+    		this.path = createElement('path', { d: `M${pos.x} ${pos.y}` });
+    		//this.path.classList.add('selected');
+    		return this.path;
+    	}
+
+    	adjust(pos) {
+    		let gap = this.distanceToLast(this.points, pos);
+    		if(gap*pos.z < 2) return;
+
+    		this.points.push(pos);
+
+    		let d = this.path.getAttribute('d');
+    		this.path.setAttribute('d', d + `L${pos.x} ${pos.y}`);
+    	}
+
+    	finish(pos) {
+    		//todo should pick the last one? or the smallest?
+    		let tolerance = 2/this.points[0].z;
+    		let tmp = simplify(this.points, tolerance);
+
+    		let smoothed = smooth(tmp, 90, true);
+    		let d = smoothToPath(smoothed);
+
+    		this.path.setAttribute('d', d);
+    	}
+
+    	distanceToLast(line, point) {
+    		let last = line[line.length-1];
+    		let dx = last.x - point.x;
+    		let dy = last.y - point.y; 
+    		return Math.sqrt(dx*dx + dy*dy);
+    	}
+    }
+
+    //utils
+    function createElement(tag, attributes) {
+    	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    	if(attributes)
+    		for(const [key, value] of Object.entries(attributes))
+    			e.setAttribute(key, value);
+    	return e;
+    }
+
+    /* Basic viewer for a single layer.
+     *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
+     *  and custom.
+     * actions supported are:
+     *  home: reset the camera
+     *  zoomin, zoomout
+     *  fullscreen
+     *  rotate (45/90 deg rotation option.
+     *  light: turn on light changing.
+     *  switch layer(s)
+     *  lens.
+     * 
+     * How the menu works:
+     * Each entry eg: { title: 'Coin 16' }
+     * title: large title
+     * section: smaller title
+     * html: whatever html
+     * button: visually a button, attributes: group, layer, mode
+     * slider: callback(percent)
+     * list: an array of entries.
+     * 
+     * Additional attributes:
+     * onclick: a function(event) {}
+     * group: a group of entries where at most one is active
+     * layer: a layer id: will be active if layer is visible
+     * mode: a layer visualization mode, active if it's the current mode.
+     * layer + mode: if both are specified, both must be current for an active.
+     */
+
+    class UIBasic {
+    	constructor(lime, options) {
+    		//we need to know the size of the scene but the layers are not ready.
+    		let camera = lime.camera;
+    		Object.assign(this, {
+    			lime: lime,
+    			camera: lime.camera,
+    			skin: 'skin.svg',
+    			autoFit: true,
+    			//skinCSS: 'skin.css', // TODO: probably not useful
+    			actions: {
+    				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
+    				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
+    				layers:     { title: 'Layers',     display: true, task: (event) => { this.toggleLayers(event); } },
+    				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
+    				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
+    				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
+    				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
+    				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
+    			},
+    			viewport: [0, 0, 0, 0], //in scene coordinates
+    			scale: null,
+    			unit: null,
+    			info: new Info(lime.containerElement),
+    			editor: new AnnotationEditor(lime),
+    		});
+
+    		Object.assign(this, options);
+    		if (this.autoFit)
+    			this.lime.canvas.addEvent('updateSize', () => this.lime.camera.fitCameraBox(0));
+
+    		this.menu = [];
+
+    		/*let element = entry.element;
+    		let group = element.getAttribute('data-group');
+    		let layer = element.getAttribute('data-layer');
+    		let mode = element.getAttribute('data-mode');
+    		let active = (layer && this.lime.canvas.layers[layer].visible) &&
+    			(!mode || this.lime.canvas.layers[layer].getMode() == mode);
+    		entry.element.classList.toggle('active', active); */
+
+    		this.menu.push({ section: "Layers" });
+    		for (let [id, layer] of Object.entries(this.lime.canvas.layers)) {
+    			let modes = [];
+    			for (let m of layer.getModes()) {
+    				let mode = { 
+    					button: m, 
+    					mode: m, 
+    					layer: id, 
+    					onclick: () => { layer.setMode(m); this.updateMenu(); },
+    					status: () => layer.getMode() == m ? 'active' : '',
+    				};
+    				if (m == 'specular')
+    					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
+    				modes.push(mode);
+    			}
+    			let layerEntry = {
+    				button: layer.label || id, 
+    				onclick: ()=> { this.setLayer(layer); },
+    				status: () => layer.visible? 'active' : '',
+    				list: modes,
+    				layer: id
+    			};
+    			if(layer.editable) {
+    				layerEntry.list.push(this.editor.menuWidget(layer));
+    /*				for(const [mode, label] of Object.entries({ point: 'New point', line: 'New line', box: 'New box', circle: 'New circle' }))
+    					layerEntry.list.push({
+    						button: label,
+    						onclick: () => { this.editor.setMode(layer, mode); this.updateMenu(); },
+    						status: () => this.editor.mode == mode ? 'active': '',
+    					}); */
+
+    			}
+    			this.menu.push(layerEntry);
+    		}
+    		if (queueMicrotask) queueMicrotask(() => { this.init(); }); //allows modification of actions and layers before init.
+    		else setTimeout(() => { this.init(); }, 0);
+    	}
+
+
+
+    	init() {
+    		(async () => {
+
+    			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
+    			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+    			this.lime.pointerManager.on("fingerSingleTap", {"fingerSingleTap": (e) => { this.showInfo(e);}, priority: 10000 });
+    			
+    			//this.lime.pointerManager.on("fingerHover", {"fingerHover": (e) => { this.showInfo(e);}, priority: 10000 });
+
+    			this.editor.addEvent('toolChanged', ()=> { this.updateMenu(); });
+    			this.createMenu();
+    			this.updateMenu();
+
+    			let lightLayers = [];
+    			for (let [id, layer] of Object.entries(this.lime.canvas.layers))
+    				if (layer.controls.light) lightLayers.push(layer);
+
+    			if (lightLayers.length) {
+    				if (this.actions.light && this.actions.light.display === 'auto')
+    					this.actions.light.display = true;
+
+    				let controller = new Controller2D((x, y) => {
+    					for (let layer of lightLayers)
+    						layer.setLight([x, y], 0);
+    				}, { active: false, control: 'light' });
+
+    				controller.priority = 0;
+    				this.lime.pointerManager.onEvent(controller);
+    				for (let layer of lightLayers) {
+    					layer.setLight([0.5, 0.5], 0);
+    					layer.controllers.push(controller);
+    				}
+
+    			}
+
+
+    			if (this.skin)
+    				await this.loadSkin();
+    			/* TODO: this is probably not needed
+    			if(this.skinCSS)
+    				await this.loadSkinCSS();
+    			*/
+
+    			this.setupActions();
+    			this.setupScale();
+
+    			for (let l of Object.values(this.lime.canvas.layers)) {
+    				//this.setLayer(l);
+    				break;
+    			}
+
+    			if (this.actions.light.active == true)
+    				this.toggleLightController();
+
+    		})().catch(e => { console.log(e); throw Error("Something failed") });
+    	}
+    	
+    	showInfo(e) {
+    		if(!e.originSrc) {
+    			throw "This should never happen!";
+    		}
+
+    		let layer = e.originSrc.getAttribute('data-layer');
+    		if(!layer)
+    			return this.info.hide();
+    			
+    		layer = this.lime.canvas.layers[layer];
+
+    		if(e.fingerType == 'fingerHover' && !layer.hoverable)
+    			return;
+
+    		let id = e.originSrc.getAttribute('id');
+    		this.info.show(e, layer, id);
+    	}
+
+    	
+    	async loadSkin() {
+    		var response = await fetch(this.skin);
+    		if (!response.ok) {
+    			throw Error("Failed loading " + url + ": " + response.statusText);
+    		}
+
+    		let text = await response.text();
+    		let parser = new DOMParser();
+    		let skin = parser.parseFromString(text, "image/svg+xml").documentElement;
+
+
+    		let toolbar = document.createElement('div');
+    		toolbar.classList.add('openlime-toolbar');
+    		this.lime.containerElement.appendChild(toolbar);
+
+
+    		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
+    		{
+    			for (let [name, action] of Object.entries(this.actions)) {
+
+    				if (action.display !== true)
+    					continue;
+
+    				let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+    				toolbar.appendChild(svg);
+
+    				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
+    				if (!element) continue;
+    				svg.appendChild(element);
+    				let box = element.getBBox();
+
+    				let tlist = element.transform.baseVal;
+    				if (tlist.numberOfItems == 0)
+    					tlist.appendItem(svg.createSVGTransform());
+    				tlist.getItem(0).setTranslate(-box.x, -box.y);
+
+    				svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    				svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    			}
+
+    		}
+    	}
+
+    	setupActions() {
+    		for (let [name, action] of Object.entries(this.actions)) {
+    			let element = this.lime.containerElement.querySelector('.openlime-' + name);
+    			if (!element)
+    				continue;
+    			// let pointerManager = new PointerManager(element);
+    			// pointerManager.onEvent({ fingerSingleTap: action.task, priority: -2000 });
+    			element.addEventListener('click', (e) => {
+    				action.task(e);
+    				e.preventDefault();
+    			});
+    		}
+    		let items = document.querySelectorAll('.openlime-layers-button');
+    		for (let item of items) {
+    			let id = item.getAttribute('data-layer');
+    			if (!id) continue;
+    			item.addEventListener('click', () => {
+    				this.setLayer(this.lime.layers[id]);
+    			});
+    		}
+    	}
+    	//find best length for scale from min -> max
+    	//zoom 2 means a pixel in image is now 2 pixel on screen, scale is
+    	bestScaleLength(min, max, scale, zoom) {
+    		scale /= zoom;
+    		//closest power of 10:
+    		let label10 = Math.pow(10, Math.floor(Math.log(max*scale)/Math.log(10)));
+    		let length10 = label10/scale;
+    		if(length10 > min) return { length: length10, label: label10 };
+
+    		let label20 = label10 * 2;
+    		let length20 = length10 * 2;
+    		if(length20 > min) return { length: length20, label: label20 };
+
+    		let label50 = label10 * 5;
+    		let length50 = length10 * 5;
+
+    		if(length50 > min) return { length: length50, label: label50 };
+    		return { length: 0, label: 0 }
+    	}
+    	
+    	updateScale(line, text) {
+    		//let zoom = this.lime.camera.getCurrentTransform(performance.now()).z;
+    		let zoom = this.lime.camera.target.z;
+    		if(zoom == this.lastScaleZoom)
+    			return;
+    		this.lastScaleZoom = zoom;
+    		let s = this.bestScaleLength(100, 200, this.scale, zoom);
+    		//let line = document.querySelector('.openlime-scale > line');
+    		let margin = 200 - 10 - s.length;
+    		line.setAttribute('x1', margin/2);
+    		line.setAttribute('x2', 200 - margin/2);
+    		//let text = document.querySelector('.openlime-scale > text');
+    		text.textContent = s.label + "mm";
+
+
+    	}
+
+    	//scale is length of a pixel in mm
+    	setupScale() {
+    		if(!this.scale) return;
+    		this.scales = { 'mm': 1, 'cm':10, 'm':1000, 'km':1000000 };
+
+    		
+    		let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    		svg.setAttribute('viewBox', `0 0 200 40`);
+    		svg.classList.add('openlime-scale');
+    		let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    		line.setAttribute('x1', 5);
+    		line.setAttribute('y1', 26.5);
+    		line.setAttribute('x2', 195);
+    		line.setAttribute('y2', 26.5);
+    		let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    		text.setAttribute('x', '50%');
+    		text.setAttribute('y', '16px');
+    		text.setAttribute('dominant-baseline', 'middle');
+    		text.setAttribute('text-anchor', 'middle');
+    		text.textContent = "10mm";
+    		//var label = document.createTextNode("10mm");
+    		//text.appendChild(label);
+
+
+    		svg.appendChild(line);
+    		svg.appendChild(text);
+    		this.lime.containerElement.appendChild(svg);
+    		this.lime.camera.addEvent('update', () => { this.updateScale(line, text); } );
+    	}
+
+    	//we need the concept of active layer! so we an turn on and off light.
+    	toggleLightController() {
+    		let div = this.lime.containerElement;
+    		let active = div.classList.toggle('openlime-light-active');
+    		this.lightActive = active;
+
+    		for (let layer of Object.values(this.lime.canvas.layers))
+    			for (let c of layer.controllers)
+    				if (c.control == 'light')
+    					c.active = active;
+    	}
+
+    	toggleFullscreen() {
+    		let canvas = this.lime.canvasElement;
+    		let div = this.lime.containerElement;
+    		let active = div.classList.toggle('openlime-fullscreen-active');
+
+    		if (!active) {
+    			var request = document.exitFullscreen || document.webkitExitFullscreen ||
+    				document.mozCancelFullScreen || document.msExitFullscreen;
+    			request.call(document);document.querySelector('.openlime-scale > line');
+
+    			this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
+    		} else {
+    			var request = div.requestFullscreen || div.webkitRequestFullscreen ||
+    				div.mozRequestFullScreen || div.msRequestFullscreen;
+    			request.call(div);
+    		}
+    		this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
+    	}
+
+    	startRuler() {
+    	}
+
+    	endRuler() {
+    	}
+
+    	/* Layer management */
+
+    	createEntry(entry) {
+    		if (!('id' in entry))
+    			entry.id = 'entry_' + (this.entry_count++);
+
+    		let id = `id="${entry.id}"`;
+    		let tooltip = 'tooltip' in entry ? `title="${entry.tooltip}"` : '';
+    		let classes = 'classes' in entry ? entry.classes : '';
+    		let html = '';
+    		if ('title' in entry) {
+    			html += `<h2 ${id} class="openlime-title ${classes}" ${tooltip}>${entry.title}</h2>`;
+
+    		} else if ('section' in entry) {
+    			html += `<h3 ${id} class="openlime-section ${classes}" ${tooltip}>${entry.section}</h3>`;
+
+    		} else if ('html' in entry) {
+    			html += `<div ${id} class="${classes}">${entry.html}</div>`;
+
+    		} else if ('button' in entry) {
+    			let group = 'group' in entry ? `data-group="${entry.group}"` : '';
+    			let layer = 'layer' in entry ? `data-layer="${entry.layer}"` : '';
+    			let mode = 'mode' in entry ? `data-mode="${entry.mode}"` : '';
+    			html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry ${classes}">${entry.button}</a>`;
+    		} else if ('slider' in entry) {
+    			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider ${classes}" ${id}>`;
+    		}
+
+    		if ('list' in entry) {
+    			let ul = `<div class="openlime-list ${classes}">`;
+    			for (let li of entry.list)
+    				ul += this.createEntry(li);
+    			ul += '</div>';
+    			html += ul;
+    		}
+    		return html;
+    	}
+    	addEntryCallbacks(entry) {
+    		entry.element = this.layerMenu.querySelector('#' + entry.id);
+    		if (entry.onclick)
+    			entry.element.addEventListener('click', (e) => {
+    				entry.onclick();
+    				//this.updateMenu();
+    			});
+    		if (entry.oninput)
+    			entry.element.addEventListener('input', entry.oninput);
+
+
+    		if ('list' in entry)
+    			for (let e of entry.list)
+    				this.addEntryCallbacks(e);
+    	}
+
+    	updateEntry(entry) {
+    		let status = entry.status ? entry.status() : '';
+    		entry.element.classList.toggle('active', status == 'active');
+
+    		if ('list' in entry)
+    			for (let e of entry.list)
+    				this.updateEntry(e);
+    	}
+
+    	updateMenu() {
+    		for (let entry of this.menu)
+    			this.updateEntry(entry);
+    	}
+
+    	createMenu() {
+    		this.entry_count = 0;
+    		let html = `<div class="openlime-layers-menu">`;
+    		for (let entry of this.menu) {
+    			html += this.createEntry(entry);
+    		}
+    		html += '</div>';
+
+
+    		let template = document.createElement('template');
+    		template.innerHTML = html.trim();
+    		this.layerMenu = template.content.firstChild;
+    		this.lime.containerElement.appendChild(this.layerMenu);
+
+    		for (let entry of this.menu) {
+    			this.addEntryCallbacks(entry);
+    		}
+
+
+    		/*		for(let li of document.querySelectorAll('[data-layer]'))
+    					li.addEventListener('click', (e) => {
+    						this.setLayer(this.lime.canvas.layers[li.getAttribute('data-layer')]);
+    					}); */
+    	}
+
+    	toggleLayers(event) {
+    		this.layerMenu.classList.toggle('open');
+    	}
+
+    	setLayer(layer_on) {
+    		if (typeof layer_on == 'string')
+    			layer_on = this.lime.canvas.layers[layer_on];
+
+    		if(layer_on instanceof AnnotationLayer) { //just toggle
+    			layer_on.setVisible(!layer_on.visible);
+
+    		} else {
+    			for (let layer of Object.values(this.lime.canvas.layers)) {
+    				if(layer instanceof AnnotationLayer)
+    					continue;
+
+    				layer.setVisible(layer == layer_on);
+    				for (let c of layer.controllers) {
+    					if (c.control == 'light')
+    						c.active = this.lightActive && layer == layer_on;
+    				}
+    			}
+    		}
+    		this.updateMenu();
+    		this.lime.redraw();
+    	}
+
+    	closeLayersMenu() {
+    		this.layerMenu.style.display = 'none';
+    	}
+    }
+
+
+    class Info {
+    	constructor(container) {
+    		Object.assign(this, {
+    			element: null,
+    			svgElement: null,  //svg for annotation, TODO: should be inside annotation!
+    			annotation: null,
+    			container: container
+    		});			
+    	}
+    	
+    	hide() {
+    		if(!this.element) return;
+    		this.element.style.display = 'none';
+
+    		if(this.svgElement)
+    			this.svgElement.classList.remove('selected');
+    		
+    		this.annotation = null;
+    		this.svgElement = null;
+    	}
+
+    	show(e, layer, id) {
+    		if(!this.element) {
+    			let html = '<div class="openlime-info"></div>';
+    			let template = document.createElement('template');
+    			template.innerHTML = html.trim();
+    			this.element = template.content.firstChild;
+    			this.container.appendChild(this.element);
+    		}
+
+    		if(this.annotation && id == this.annotation.id)
+    			return;
+
+    		this.hide();
+    		
+    		e.originSrc.classList.add('selected');
+    		let annotation = layer.getAnnotationById(id);
+    		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.template(annotation);
+    		this.annotation = annotation;
+    		this.svgElement = e.originSrc;
+
+    		this.element.style.display = '';
+    		//todo position info appropriately.
+    		e.preventDefault();
+    	}
+    	template(annotation) {
+    		return `
+		<p>${annotation.description}</p>
+		<p>${annotation.class}</p>
+		`;
+    	}
+    }
+
     /**
      * Manages an OpenLIME viewer functionality on a canvas
      * how do I write more substantial documentation.
@@ -4210,8 +5105,8 @@ void main() {
     		if(!time) time = performance.now();
     		this.animaterequest = null;
 
-    		let viewport = this.camera.viewport;
-    		let transform = this.camera.getCurrentTransform(time);
+    		this.camera.viewport;
+    		this.camera.getCurrentTransform(time);
 
     		let done = this.canvas.draw(time);
     		if(!done)
@@ -4234,6 +5129,9 @@ void main() {
     	}
     }
 
+    exports.Annotation = Annotation;
+    exports.AnnotationEditor = AnnotationEditor;
+    exports.AnnotationLayer = AnnotationLayer;
     exports.Camera = Camera;
     exports.Canvas = Canvas;
     exports.Layer = Layer;
