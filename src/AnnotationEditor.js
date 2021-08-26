@@ -1,5 +1,5 @@
 import { Annotation } from './Annotation.js'
-import { simplify, smooth, smoothToPath, simplifyLineRDP } from './Simplify.js'
+import { simplify, smooth, smoothToPath } from './Simplify.js'
 
 /**annotation editor interface:
    click a button and we get into a modality:
@@ -27,8 +27,7 @@ class AnnotationEditor {
 			tool: null, //doing nothing, could: ['line', 'polygon', 'point', 'box', 'circle']
 			startPoint: null, //starting point for box and  circle
 			currentLine: [],
-			currentElement: null,
-			currentAnnotation: null,
+			annotation: null,
 			priority: 20000,
 			multiple: false, //if true multiple elements per annotation.
 			signals: {'toolChanged':[], 'createAnnotation':[], 'deleteAnnotation':[], 'updateAnnotation':[]},
@@ -62,15 +61,40 @@ class AnnotationEditor {
 		
 		//at the moment is not really possible to unregister the events registered here.
 		this.lime.pointerManager.onEvent(this);
-		document.addEventListener('keyup', (e) => { this.keyEvent(e); });
 	}
 	addEvent(event, callback) { this.signals[event].push(callback); }
 	emit(event, ...parameters) { for(let r of this.signals[event]) r(this, ...parameters); }
 
-	setTool(layer, tool) {
-		this.layer = layer;
+/*	newAnnotation() {
+		let svg = createElement('svg');
+		this.annotation = new Annotation({ element: svg, selector_type: 'SvgSelector'});
+	}
+
+	saveAnnotation() {
+		let { x, y, width, height } = this.annotation.svg.firstChild.getBBox();
+		for(let shape of this.annotation.svg.children) {
+			const { sx, sy, swidth, sheight } = shape.getBBox();
+			x = Math.min(x, sx);
+			y = Math.min(x, sy);
+			width = Math.max(width + x, sx + swidth) - x; 
+			height = Math.max(height + y, sy + sheight) - y; 
+		}
+		this.annotation.bbox = { x, y, width, height };
+		this.annotation.selector_value = '<svg xmlns="http://www.w3.org/2000/svg">';
+		let serializer = new XMLSerializer();
+		for(let shape of this.annotation.svg.children) 
+			this.annotation.selector_value += serializer.serializeToString(this.annotation.shape)
+		//this.annotation.selector_value = '<svg xmlns="http://www.w3.org/2000/svg">' + (new XMLSerializer()).serializeToString(this.annotation.shape) + '</svg>';
+		this.layer.emit('createAnnotation', this.annotation);
+
+		this.layer.annotations.push(this.annotation);
+		this.annotation = null;
+	} */
+
+	setTool(layer, annotation, tool) {
+		this.layer = layer; //needsd for bounding box
+		this.annotation = annotation;
 		this.tool = tool;
-		this.currentAnnotation = null;
 		if(tool) {
 
 			if(!tool in this.tools)
@@ -80,7 +104,7 @@ class AnnotationEditor {
 		}
 		this.emit('toolChanged');
 	}
-
+/*
 	menuWidget(layer) {
 		let menu = [];
 		for(const [id, tool] of Object.entries(this.tools))
@@ -99,34 +123,46 @@ class AnnotationEditor {
 			status: () => 'active'
 		};	
 		return toolbar;
-	}
+	} */
 
-	keyEvent(e) {
-		console.log(e);
+	keyUp(e) {
+		if(e.defaultPrevented) return;
 		switch(e.key) {
 		case 'Escape':
-			if(this.tool)
+			if(this.tool) {
 				this.setTool(null, null);
+				e.preventDefault();
+			}
 			break;
 		case 'Delete':
+			if(!this.layer.selected.size)
+				return;
+			if(confirm(`Deleting`))
+				return;
 		case 'Backspace':
 			break;	
+		case 'z':
+			if(!e.ctrlKey)
+				break;
+			//undo!
+			break;
 		}
 	}
 
 	panStart(e) {
-		//console.log(e.composedPath());
+		if(e.buttons != 1)
+			return;
 		if(!['line', 'box', 'circle'].includes(this.tool))
 			return;
 		this.panning = true;
 		e.preventDefault();
 
 		const pos = this.mapToSvg(e);
-		let svg = createElement('svg');
-		svg.appendChild(this.factory.create(pos));
+		let shape = this.factory.create(pos);
 
-		this.currentAnnotation = new Annotation({element: svg});
-		this.layer.annotations.push(this.currentAnnotation);
+		this.annotation.selector.elements.push(shape);
+		this.annotation.needsUpdate = true;
+		
 		this.lime.redraw();
 	}
 
@@ -144,15 +180,22 @@ class AnnotationEditor {
 		this.panning = false;
 
 		const pos = this.mapToSvg(e);
-		this.factory.finish(pos);
-		this.layer.emit('createAnnotation', this.currentAnnotation);
+		let shape = this.factory.finish(pos);
+
+		this.annotation.selector.elements.push(shape);
+		this.annotation.needsUpdate = true;
+
+/*		const { x, y, width, height } = shape.getBBox();
+		this.currentAnnotation.bbox = { x, y, width, height };
+		this.currentAnnotation.selector_value = '<svg xmlns="http://www.w3.org/2000/svg">' + (new XMLSerializer()).serializeToString(this.currentAnnotation.shape) + '</svg>';
+		this.layer.emit('createAnnotation', this.currentAnnotation);*/
 
 		if(!this.multiple)
 			this.setTool(null, null);
 	}
 
 	fingerSingleTap(e) {
-		if(!this.layer) return true;
+		//if(!this.layer) return true;
 		
 //		console.log("Editor:", e, e.composedPath());
 
@@ -161,13 +204,15 @@ class AnnotationEditor {
 		e.preventDefault();
 
 		const pos = this.mapToSvg(e);
-		let svg = createElement('svg');
-		svg.appendChild(this.factory.create(pos));
-
-		this.currentAnnotation = new Annotation({element: svg});
-		this.layer.annotations.push(this.currentAnnotation);
-		this.layer.emit('createAnnotation', this.currentAnnotation);
-
+		let shape = this.factory.create(pos)
+		
+		//const { x, y, width, height } = shape.getBBox();
+//		this.currentAnnotation = new Annotation({element: svg, bbox: {x, y, width, height } });
+//		this.annotation.selector_value = '<svg xmlns="http://www.w3.org/2000/svg">' + (new XMLSerializer()).serializeToString(this.annotation.shape) + '</svg>';
+		
+		this.annotations.elements.push(shape);
+		this.annotation.needsUpdate = true;
+		
 		if(!this.multiple)
 			this.setTool(null, null);
 		this.lime.redraw();
@@ -201,8 +246,7 @@ class Box {
 
 	create(pos) {
 		this.origin = pos;
-		this.box = createElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0 });
-		//this.box.classList.add('selected');
+		this.box = createElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
 		return this.box;
 	}
 
@@ -216,6 +260,7 @@ class Box {
 	}
 
 	finish(pos) {
+		return this.box;
 	}
 }
 
@@ -226,8 +271,7 @@ class Circle {
 	}
 	create(pos) {
 		this.origin = pos;
-		this.circle = createElement('circle', { cx: pos.x, cy: pos.y, r: 0 });
-		//this.circle.classList.add('selected');
+		this.circle = createElement('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
 		return this.circle;
 	}
 	adjust(pos) {
@@ -236,6 +280,7 @@ class Circle {
 		this.circle.setAttribute('r', r);
 	}
 	finish() {
+		return this.circle;
 	}
 }
 
@@ -246,8 +291,7 @@ class Line {
 
 	create(pos) {
 		this.points = [pos];
-		this.path = createElement('path', { d: `M${pos.x} ${pos.y}` });
-		//this.path.classList.add('selected');
+		this.path = createElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 		return this.path;
 	}
 
@@ -270,6 +314,7 @@ class Line {
 		let d = smoothToPath(smoothed);
 
 		this.path.setAttribute('d', d);
+		return this.path;
 	}
 
 	distanceToLast(line, point) {

@@ -191,3 +191,8 @@ g.openlime-expand {
 .openlime-list .openlime-tools {
 	flex-direction:row;
 }
+
+.openlime-annotations {
+	padding: 0px 5px;
+	margin:0px;
+}

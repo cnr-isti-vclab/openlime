@@ -11,22 +11,40 @@ class Annotation {
 				description: null,
 				class: null,
 				target: null,
+				selector: { type: null, value: null, elements: [] }, //svg element (could be a group... a circle a path.)
 				data: {},
-				element: null, //svg element (could be a group... a circle a path.)
-				bbox: null,
 				style: null,
+				bbox: null,
+
+				ready: false, //already: convertted to svg
+				needsUpdate: true,
 			}, 
 			options);
 	}
 
 	static UUID() {
-		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+		return 'axxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
 			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
 			return v.toString(16);
 		});
 	}
 
-	static fromJsonld(entry) {
+	getBBoxFromElements() {
+		let box = { x: 0, y: 0, width: 0, height: 0 }
+		if(!this.selector.elements.length)
+			return box;
+		let { x, y, width, height } = this.selector.elements[0].getBBox();
+		for(let shape of this.selector.elements) {
+				const { sx, sy, swidth, sheight } = shape.getBBox();
+				x = Math.min(x, sx);
+				y = Math.min(x, sy);
+				width = Math.max(width + x, sx + swidth) - x; 
+				height = Math.max(height + y, sy + sheight) - y; 
+		}
+		return { x, y, width, height };
+	}
+
+	static fromJsonLd(entry) {
 		if(entry.type != 'Annotation')
 			throw "Not a jsonld annotation.";
 		let options = {id: entry.id};
@@ -41,7 +59,7 @@ class Annotation {
 		if(selector) {
 			switch(selector.type) {
 			case 'SvgSelector':
-				options.element = selector.value;
+				options.selector = { type: 'svg', value: selector.value, elements:[] }
 				break;
 			default:
 				throw "Unsupported selector: " + selector.type;
@@ -49,7 +67,7 @@ class Annotation {
 		}
 		return new Annotation(options);
 	}
-	toJsonld() {
+	toJsonLd() {
 		let body = [];
 		if(this.code !== null)
 			body.push( { type: 'TextualBody', value: this.code, purpose: 'indentifying' });
@@ -71,8 +89,8 @@ class Annotation {
 
 		if(this.element) {
 			var s = new XMLSerializer();
-			target.selector.type = SvgSelector;
-			target.selector.value = s.serializeToString(this.element);
+			obj.target.selector.type = 'SvgSelector';
+			obj.target.selector.value = s.serializeToString(this.element);
 		}
 	}
 }

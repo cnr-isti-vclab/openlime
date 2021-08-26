@@ -46,14 +46,14 @@ class UIBasic {
 			autoFit: true,
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
-				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
-				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
-				layers:     { title: 'Layers',     display: true, task: (event) => { this.toggleLayers(event); } },
-				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
-				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
-				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
-				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
-				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
+				home:       { title: 'Home',       display: true,   key: 'Home', task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
+				fullscreen: { title: 'Fullscreen', display: true,   key: 'f', task: (event) => { this.toggleFullscreen(); } },
+				layers:     { title: 'Layers',     display: true,   key: 'Escape', task: (event) => { this.toggleLayers(event); } },
+				zoomin:     { title: 'Zoom in',    display: false,  key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
+				zoomout:    { title: 'Zoom out',   display: false,  key: '-', task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
+				rotate:     { title: 'Rotate',     display: false,  key: 'r', task: (event) => { camera.rotate(250, -45); } },
+				light:      { title: 'Light',      display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
+				ruler:      { title: 'Ruler',      display: false,            task: (event) => { this.startRuler(); } },
 			},
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
@@ -98,15 +98,10 @@ class UIBasic {
 				list: modes,
 				layer: id
 			};
-			if(layer.editable) {
-				layerEntry.list.push(this.editor.menuWidget(layer));
-/*				for(const [mode, label] of Object.entries({ point: 'New point', line: 'New line', box: 'New box', circle: 'New circle' }))
-					layerEntry.list.push({
-						button: label,
-						onclick: () => { this.editor.setMode(layer, mode); this.updateMenu(); },
-						status: () => this.editor.mode == mode ? 'active': '',
-					}); */
-
+			if(layer.annotations) {
+				layerEntry.list.push(layer.annotationsEntry());
+				if(layer.editable) 
+					layer.editor = this.editor;
 			}
 			this.menu.push(layerEntry);
 		}
@@ -118,6 +113,9 @@ class UIBasic {
 
 	init() {
 		(async () => {
+
+			document.addEventListener('keydow', (e) => this.keyDown(e), false);
+			document.addEventListener('keyup', (e) => this.keyUp(e), false);
 
 			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
@@ -172,7 +170,26 @@ class UIBasic {
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
-	
+
+	keyDown(e) {
+	}
+
+	keyUp(e) {
+		if(e.target != document.body && e.target.closest('input, textarea') != null)
+		return;
+
+		this.editor.keyUp(e);
+		if(e.defaultPrevented) return;
+		
+		for(const a of Object.values(this.actions)) {
+			if('key' in a && a.key == e.key) {
+				e.preventDefault();
+				a.task(e);
+				return;
+			}
+		}
+	}
+
 	showInfo(e) {
 		if(!e.originSrc) {
 			throw "This should never happen!";
@@ -188,7 +205,9 @@ class UIBasic {
 			return;
 
 		let id = e.originSrc.getAttribute('id');
-		this.info.show(e, layer, id);
+		layer.setSelected(id);
+
+		//this.info.show(e, layer, id);
 	}
 
 	
@@ -449,7 +468,8 @@ class UIBasic {
 			});
 		if (entry.oninput)
 			entry.element.addEventListener('input', entry.oninput);
-
+		if(entry.oncreate)
+			entry.oncreate();
 
 		if ('list' in entry)
 			for (let e of entry.list)
@@ -532,7 +552,8 @@ class Info {
 	constructor(container) {
 		Object.assign(this, {
 			element: null,
-			svgElement: null,  //svg for annotation, TODO: should be inside annotation!
+			//svgElement: null,  //svg for annotation, TODO: should be inside annotation!
+			layer: null,
 			annotation: null,
 			container: container
 		});			
@@ -542,11 +563,11 @@ class Info {
 		if(!this.element) return;
 		this.element.style.display = 'none';
 
-		if(this.svgElement)
-			this.svgElement.classList.remove('selected');
+		if(this.layer)
+			this.layer.setSelected(this.annotation.id, false);
 		
 		this.annotation = null;
-		this.svgElement = null;
+		this.layer = null;
 	}
 
 	show(e, layer, id) {
@@ -563,11 +584,10 @@ class Info {
 
 		this.hide();
 		
-		e.originSrc.classList.add('selected');
 		let annotation = layer.getAnnotationById(id);
 		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.template(annotation);
 		this.annotation = annotation;
-		this.svgElement = e.originSrc;
+		this.layer = layer;
 
 		this.element.style.display = '';
 		//todo position info appropriately.

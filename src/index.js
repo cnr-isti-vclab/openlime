@@ -27,9 +27,9 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //lensTest();
 //testSVGAnnotations();
 
-//testMedicalAnnotations();
+testMedicalAnnotations();
 
-testAnnotationEditor();
+//testAnnotationEditor();
 
 function testAnnotationEditor() {
 	let layer0 = new Layer({ 
@@ -69,7 +69,10 @@ function testAnnotationEditor() {
 	lime.canvas.addLayer('anno', layer1);
 
 	let ui = new UIBasic(lime);
-	layer1.addEvent('createAnnotation', (annotation) => { console.log(annotation); });
+	layer1.addEvent('createAnnotation', (annotation) => { console.log("Created annotation: ", annotation); });
+	layer1.addEvent('deleteAnnotation', (annotation) => { console.log("Deleted annotation: ", annotation); });
+	layer1.addEvent('updateAnnotation', (annotation) => { console.log("Updated annotation: ", annotation); });
+
 	ui.editor.multiple = true;
 	
 }
@@ -106,6 +109,20 @@ function testMedicalAnnotations() {
 
 	}); 
 
+	layer1.addEvent('createAnnotation', (layer, annotation) => { console.log("Created annotation: ", annotation); createAnnotation(layer, annotation); });
+	layer1.addEvent('deleteAnnotation', (layer, annotation) => { console.log("Deleted annotation: ", annotation); });
+	layer1.addEvent('updateAnnotation', (layer, annotation) => { console.log("Updated annotation: ", annotation); });
+
+	async function createAnnotation(layer, annotation) {
+		annotation.action = 'create';
+		const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(annotation)});
+		if (!response.ok) {
+			 const message = `An error has occured: ${response.status}`;
+			 throw new Error(message);
+		}
+		let json = await response.json();
+		console.log(json);
+	}
 	lime.canvas.addLayer('img', layer0);
 	lime.canvas.addLayer('anno', layer1);
 	let ui = new UIBasic(lime);
