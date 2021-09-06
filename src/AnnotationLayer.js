@@ -79,6 +79,13 @@ class AnnotationLayer extends Layer {
 			this.createAnnotationsList();
 	}
 
+	newAnnotation() {
+		let svg = createElement('svg');
+		let annotation = new Annotation({ element: svg, selector_type: 'SvgSelector'});
+		this.addAnnotation(annotation, true);
+		return annotation;
+	}
+
 	annotationsEntry() {
 		return this.annotationsListEntry =  {
 			html: this.editable? '<a href="#" class="openlime-entry">New annotation...</a>': '',
@@ -93,12 +100,7 @@ class AnnotationLayer extends Layer {
 		}
 	}
 
-	newAnnotation() {
-		let svg = createElement('svg');
-		let annotation = new Annotation({ element: svg, selector_type: 'SvgSelector'});
-		this.addAnnotation(annotation, true);
-		return annotation;
-	}
+
 
 	addAnnotation(annotation, selected = true) {
 		this.annotations.push(annotation);
@@ -109,6 +111,7 @@ class AnnotationLayer extends Layer {
 		let list =  this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
 		list.appendChild(template.content.firstChild);
 		this.emit('createAnnotation', annotation);
+		this.clearSelected();
 		this.setSelected(annotation.id);
 	}
 
@@ -129,8 +132,15 @@ class AnnotationLayer extends Layer {
 		let list =  this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
 		list.addEventListener('click', (e) =>  { 
 			let id = e.srcElement.getAttribute('data-annotation');
-			if(id) 
-				this.setSelected(id);
+			this.clearSelected();
+
+			if(id) {
+				let anno = this.getAnnotationById(id);
+				if(anno.editing)  {
+					e.srcElement.classList.toggle('selected', on);
+				} else
+					this.setSelected(id);
+			}
 		});
 		list.innerHTML = html;
 	}
@@ -196,7 +206,7 @@ class AnnotationLayer extends Layer {
 	}
 	//set selected class for annotation
 	setSelected(id, on = true) {
-		this.clearSelected();
+		let anno = this.getAnnotationById(id);
 
 		if(on)
 			this.selected.add(id);
@@ -209,7 +219,6 @@ class AnnotationLayer extends Layer {
 		if(!this.editable)
 			return;
 		//find corresponding entry
-		let anno = this.getAnnotationById(id);
 		let entry = document.querySelector(`[data-annotation="${id}"]`);
 
 		let html = `
@@ -235,6 +244,7 @@ class AnnotationLayer extends Layer {
 	}
 
 	saveAnnotation(edit, anno) {
+		anno.editing = false;
 		anno.code = edit.querySelector('[name=code]').value;
 		anno.class = edit.querySelector('[name=class]').value;
 		anno.description = edit.querySelector('[name=description]').value;
@@ -262,6 +272,7 @@ class AnnotationLayer extends Layer {
 	}
 
 	editAnnotation(edit, anno) {
+		anno.editing = true;
 		this.editor.setTool(this, anno, 'line');
 	}
 
@@ -340,4 +351,4 @@ function createElement(tag, attributes) {
 
 Layer.prototype.types['annotations'] = (options) => { return new AnnotationLayer(options); }
 
-export { AnnotationLayer } 
+export { AnnotationLayer }

@@ -18,6 +18,7 @@ class Annotation {
 
 				ready: false, //already: convertted to svg
 				needsUpdate: true,
+				editing: false,
 			}, 
 			options);
 	}

@@ -1,18 +1,8 @@
 ﻿<?php
 
+include("database.php");
 $request_body = file_get_contents('php://input');
 $data = json_decode($request_body);
-
-$server = 'mysql:host=localhost';
-$user = 'openlime';
-$password = 'not12345';
-$database = 'openlime';
-
-/*$server = "mysql:unix_socket='/var/run/mysqld/mysqld.sock'";
-$server = 'mysql:host=91.216.107.219';
-$user = 'mercu1165701_1363u';
-$password = 'tq75uh8fui';
-$database = 'mercu1165701_1363u'; */
 
 
 try {
