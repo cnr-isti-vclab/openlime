@@ -52,7 +52,7 @@ ${gl2? 'out' : ''} vec4 color;
 
 
 void main() {
-	color = texture(kd, v_texcoord);
+	color = texture${gl2?'':'2D'}(kd, v_texcoord);
 	${gl2? '':'gl_FragColor = color;'}
 }
 `;
