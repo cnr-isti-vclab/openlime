@@ -51,6 +51,7 @@ function testMedicalAnnotations() {
 	lime.canvas.addLayer('img', layer0);
 	lime.canvas.addLayer('anno', layer1);
 	let ui = new UIBasic(lime);
+	ui.panzoom.zoomAmount = 2.0;
 }
 
 	

@@ -63,6 +63,8 @@ class UIBasic {
 		if (this.autoFit)
 			this.lime.canvas.addEvent('updateSize', () => this.lime.camera.fitCameraBox(0));
 
+		this.panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
+
 		this.menu = [];
 
 		this.menu.push({ section: "Layers" });
@@ -90,8 +92,7 @@ class UIBasic {
 	init() {
 		(async () => {
 
-			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
-			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+			this.lime.pointerManager.onEvent(this.panzoom); //register wheel, doubleclick, pan and pinch
 
 			this.createMenu();
 			this.updateMenu();
