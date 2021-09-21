@@ -11,7 +11,10 @@ import {ControllerLens} from './ControllerLens.js'
 import { UIBasic } from './UIBasic.js'
 import { LensLayer } from './LensLayer.js'
 import { Lens } from './Lens.js'
+import { Skin } from './Skin.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
+import { SvgAnnotationLayer } from './SvgAnnotationLayer.js'
+import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
 
 let lime = new OpenLIME('#openlime', { background: 'black' });
 
@@ -27,9 +30,9 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //lensTest();
 //testSVGAnnotations();
 
-testMedicalAnnotations();
+//testMedicalAnnotations();
 
-//testAnnotationEditor();
+testAnnotationEditor();
 
 function testAnnotationEditor() {
 	let layer0 = new Layer({ 
@@ -37,11 +40,11 @@ function testAnnotationEditor() {
 		layout: 'image', 
 		type:'rti',
 		url: 'assets/rti/hsh/info.json',
-		normals: true
+		normals: false
 	});
 	lime.canvas.addLayer('hsh', layer0);
 	
-	let layer1 = new AnnotationLayer({ 
+	let layer1 = new SvgAnnotationLayer({ 
 		label: 'Annotations',
 		viewBox: "0 0 256 256",
 		style:` 
@@ -49,8 +52,8 @@ function testAnnotationEditor() {
 			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
 			
 			:focus { fill:yellow; }
-			path { fill:none; stroke-width:1; stroke:#800; vector-effect:non-scaling-stroke; pointer-events:all; }
-			path:hover { cursor:pointer; stroke:#f00; }
+			polyline, path { fill:none; stroke-width:1; stroke:#800; vector-effect:non-scaling-stroke; pointer-events:all; }
+			polyline, path:hover { cursor:pointer; stroke:#f00; }
 
 			rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
 			circle { fill:rgba(255, 0, 0, 0.2); stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
@@ -66,14 +69,18 @@ function testAnnotationEditor() {
 		editable: true,
 
 	}); 
-	lime.canvas.addLayer('anno', layer1);
+	lime.canvas.addLayer('anno', layer1); //here the overlayelement created and attached to layer1
+	
+	Skin.setUrl('skin.svg');
 
+	let editor = new SvgAnnotationEditor(lime, layer1, { lime: lime });
 	let ui = new UIBasic(lime);
-	layer1.addEvent('createAnnotation', (annotation) => { console.log("Created annotation: ", annotation); });
-	layer1.addEvent('deleteAnnotation', (annotation) => { console.log("Deleted annotation: ", annotation); });
-	layer1.addEvent('updateAnnotation', (annotation) => { console.log("Updated annotation: ", annotation); });
 
-	ui.editor.multiple = true;
+	editor.createCallback = (annotation) => { console.log("Created annotation: ", annotation); return true; };
+	editor.deleteCallback = (annotation) => { console.log("Deleted annotation: ", annotation); return true; };
+	editor.updateCallback = (annotation) => { console.log("Updated annotation: ", annotation); return true; };
+
+	editor.multiple = true;
 	
 }
 

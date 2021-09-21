@@ -136,13 +136,16 @@ g.openlime-expand {
 	display:flex;
 	flex-direction:column;
 	justify-content:start;
-	max-height:0%;
+	height:0;
+	max-height:0;
 	overflow:hidden;
 	transition: max-height 0.5s;
+	transition: height 0.5s;
 }
 
 .active + .openlime-list {
-	max-height:100%
+	height:auto; 
+	max-height:100%;
 }
 
 
@@ -152,7 +155,7 @@ g.openlime-expand {
 .openlime-layers-menu .openlime-entry {
 	color: #ccc;
 	background-color: rgb(20, 20, 20, 0.8);
-	padding:12px 20px;
+	padding:8px 20px;
 	border-radius:3px;
 	cursor:pointer;
 	text-decoration:none;
@@ -177,10 +180,16 @@ g.openlime-expand {
 }
 
 
+.openlime-layers-menu .openlime-entry.selected {
+	background-color: rgb(80, 80, 80); 
+	color:#fff;
+}
+
+
 .openlime-layers-menu .openlime-list .openlime-entry {
 	font-size:90%;
 	max-width:100%;
-	padding: 5px 20px 0px 20px;
+	padding: 5px 5px 0px 20px;
 }
 
 .openlime-layers-menu .openlime-tool {
@@ -195,4 +204,55 @@ g.openlime-expand {
 .openlime-annotations {
 	padding: 0px 5px;
 	margin:0px;
+}
+
+.openlime-list.openlime-annotations {
+	overflow:auto;
+}
+
+
+/* Works on Firefox */
+.openlime-list.openlime-annotations {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(80, 80, 80);
+}
+
+/* Works on Chrome, Edge, and Safari */
+.openlime-list.openlime-annotations::-webkit-scrollbar {
+  width: 10px;
+}
+
+.openlime-list.openlime-annotations::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.openlime-list.openlime-annotations::-webkit-scrollbar-thumb {
+  background-color: rgb(80, 80, 80);
+  border-radius: 10px;
+  border: 0px solid black;
+}
+
+/* editor */
+
+.openlime-annotation-edit.hidden { display: none; }
+.openlime-annotation-edit-tools svg, .openlime-tools svg { height:25px; cursor: pointer; margin-right: 10px } 
+.openlime-annotation-edit-tools { margin-top: 5px; }
+.openlime-tool { height: 25px; width:25px; }
+
+.openlime-eye, .openlime-eye-off { height:14px; float: right;}
+.openline-eye, .hidden .openlime-eye-off { display: block; }
+.openlime-eye-off, .hidden .openlime-eye { display: none; }
+ 
+.openlime-eye:hover, .openlime-eye-off:hover { color: #ffa; }
+
+/*.openlime-annotation-edit-tools .active {  background-color:rgb(80, 80, 80); } */
+
+.openlime-tool.active, .openlime-tool.active * { stroke:#fff !important; }
+.openlime-annotation-edit-tools .active * { stroke:#fff !important; }
+
+.openlime-overlay.erase {
+	cursor: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'><circle fill='rgba(255, 255, 255, 0.7)' cx='11' cy='11' r='10'/></svg>") 11 11, pointer;
+}
+.openlime-overlay.crosshair {
+	cursor: crosshair;
 }

@@ -1,10 +1,10 @@
 import { Canvas } from './Canvas.js'
+import { Skin } from './Skin.js'
 import { Layer } from './Layer.js'
 import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { PointerManager } from './PointerManager.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
-import { AnnotationEditor } from './AnnotationEditor.js'
 
 /* Basic viewer for a single layer.
  *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
@@ -59,7 +59,6 @@ class UIBasic {
 			scale: null,
 			unit: null,
 			info: new Info(lime.containerElement),
-			editor: new AnnotationEditor(lime),
 		});
 
 		Object.assign(this, options);
@@ -100,8 +99,10 @@ class UIBasic {
 			};
 			if(layer.annotations) {
 				layerEntry.list.push(layer.annotationsEntry());
-				if(layer.editable) 
-					layer.editor = this.editor;
+				//TODO: this could be a convenience, creating an editor which can be
+				//customized later using layer.editor.
+				//if(layer.editable) 
+				//	layer.editor = this.editor;
 			}
 			this.menu.push(layerEntry);
 		}
@@ -123,7 +124,6 @@ class UIBasic {
 			
 			//this.lime.pointerManager.on("fingerHover", {"fingerHover": (e) => { this.showInfo(e);}, priority: 10000 });
 
-			this.editor.addEvent('toolChanged', ()=> { this.updateMenu(); });
 			this.createMenu();
 			this.updateMenu();
 
@@ -176,9 +176,8 @@ class UIBasic {
 
 	keyUp(e) {
 		if(e.target != document.body && e.target.closest('input, textarea') != null)
-		return;
+			return;
 
-		this.editor.keyUp(e);
 		if(e.defaultPrevented) return;
 		
 		for(const a of Object.values(this.actions)) {
@@ -205,24 +204,14 @@ class UIBasic {
 			return;
 
 		let id = e.originSrc.getAttribute('id');
-		layer.setSelected(id);
+		let anno = layer.getAnnotationById(id);
+		layer.setSelected(anno);
 
 		//this.info.show(e, layer, id);
 	}
 
 	
 	async loadSkin() {
-		var response = await fetch(this.skin);
-		if (!response.ok) {
-			throw Error("Failed loading " + url + ": " + response.statusText);
-			return;
-		}
-
-		let text = await response.text();
-		let parser = new DOMParser();
-		let skin = parser.parseFromString(text, "image/svg+xml").documentElement;
-
-
 		let toolbar = document.createElement('div');
 		toolbar.classList.add('openlime-toolbar');
 		this.lime.containerElement.appendChild(toolbar);
@@ -239,22 +228,7 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
-				let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-
-				toolbar.appendChild(svg);
-
-				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
-				if (!element) continue;
-				svg.appendChild(element);
-				let box = element.getBBox();
-
-				let tlist = element.transform.baseVal;
-				if (tlist.numberOfItems == 0)
-					tlist.appendItem(svg.createSVGTransform());
-				tlist.getItem(0).setTranslate(-box.x, -box.y);
-
-				svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-				svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+				await Skin.appendIcon(toolbar, '.openlime-' + name); 
 			}
 
 		}
@@ -564,7 +538,7 @@ class Info {
 		this.element.style.display = 'none';
 
 		if(this.layer)
-			this.layer.setSelected(this.annotation.id, false);
+			this.layer.setSelected(this.annotation, false);
 		
 		this.annotation = null;
 		this.layer = null;

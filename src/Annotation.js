@@ -8,13 +8,19 @@ class Annotation {
 			{
 				id: Annotation.UUID(),
 				code: null,
+				title: null,
 				description: null,
 				class: null,
 				target: null,
-				selector: { type: null, value: null, elements: [] }, //svg element (could be a group... a circle a path.)
+				selector: { 
+					type: null, 
+					value: null, 
+					elements: []  //svg elements (referencing those in the layer.svgElement
+				}, 
 				data: {},
 				style: null,
 				bbox: null,
+				visible: true,
 
 				ready: false, //already: convertted to svg
 				needsUpdate: true,

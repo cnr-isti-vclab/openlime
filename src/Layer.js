@@ -101,7 +101,7 @@ class Layer {
 
 	emit(event, ...parameters) {
 		for(let r of this.signals[event])
-			r(this, ...parameters);
+			r(...parameters);
 	}
 
 	setLayout(layout) {

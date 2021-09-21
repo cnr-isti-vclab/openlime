@@ -708,7 +708,7 @@
     	}
 
     	updateUniforms(gl, program) {
-    		performance.now();
+    		let now = performance.now();
     		for(const [name, uniform] of Object.entries(this.uniforms)) {
     			if(!uniform.location)
     				uniform.location = gl.getUniformLocation(program, name);
@@ -1118,7 +1118,7 @@ void main() {
 
     		this.getTileURL = (url, tile) => {
     			let tw = this.tilesize;
-    			parseInt(this.nlevels - 1 - tile.level);
+    			let ilevel = parseInt(this.nlevels - 1 - tile.level);
     			let s = Math.pow(2, tile.level);
 
     			//region parameters
@@ -1563,7 +1563,7 @@ void main() {
     		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
     		for(let index in torender) {
-    			torender[index];
+    			let tile = torender[index];
     //			if(tile.complete)
     				this.drawTile(torender[index]);
     		}
@@ -2119,8 +2119,6 @@ void main() {
     	loadBasis(data) {
     		let tmp = new Uint8Array(data);
     		this.basis = new Float32Array(data.length);
-
-    		new Float32Array(tmp.length);
     		for(let plane = 0; plane < this.nplanes+1; plane++) {
     			for(let c = 0; c < this.ndimensions; c++) {
     				for(let k = 0; k < 3; k++) {
@@ -3479,7 +3477,7 @@ void main() {
         }
 
         handlePointerUp(e) {
-            e.timeStamp - this.startTap;
+            const tapDuration = e.timeStamp - this.startTap;
         }
 
         isLikelySamePointer(e) {
@@ -3754,22 +3752,41 @@ void main() {
     				description: null,
     				class: null,
     				target: null,
+    				selector: { type: null, value: null, elements: [] }, //svg element (could be a group... a circle a path.)
     				data: {},
-    				element: null, //svg element (could be a group... a circle a path.)
-    				bbox: null,
     				style: null,
+    				bbox: null,
+
+    				ready: false, //already: convertted to svg
+    				needsUpdate: true,
+    				editing: false,
     			}, 
     			options);
     	}
 
     	static UUID() {
-    		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    		return 'axxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     			return v.toString(16);
     		});
     	}
 
-    	static fromJsonld(entry) {
+    	getBBoxFromElements() {
+    		let box = { x: 0, y: 0, width: 0, height: 0 };
+    		if(!this.selector.elements.length)
+    			return box;
+    		let { x, y, width, height } = this.selector.elements[0].getBBox();
+    		for(let shape of this.selector.elements) {
+    				const { sx, sy, swidth, sheight } = shape.getBBox();
+    				x = Math.min(x, sx);
+    				y = Math.min(x, sy);
+    				width = Math.max(width + x, sx + swidth) - x; 
+    				height = Math.max(height + y, sy + sheight) - y; 
+    		}
+    		return { x, y, width, height };
+    	}
+
+    	static fromJsonLd(entry) {
     		if(entry.type != 'Annotation')
     			throw "Not a jsonld annotation.";
     		let options = {id: entry.id};
@@ -3784,7 +3801,7 @@ void main() {
     		if(selector) {
     			switch(selector.type) {
     			case 'SvgSelector':
-    				options.element = selector.value;
+    				options.selector = { type: 'svg', value: selector.value, elements:[] };
     				break;
     			default:
     				throw "Unsupported selector: " + selector.type;
@@ -3792,7 +3809,7 @@ void main() {
     		}
     		return new Annotation(options);
     	}
-    	toJsonld() {
+    	toJsonLd() {
     		let body = [];
     		if(this.code !== null)
     			body.push( { type: 'TextualBody', value: this.code, purpose: 'indentifying' });
@@ -3801,21 +3818,21 @@ void main() {
     		if(this.description !== null)
     			body.push( { type: 'TextualBody', value: this.description, purpose: 'describing' });
 
-    		({
+    		let obj = {
     			"@context": "http://www.w3.org/ns/anno.jsonld",
     			id: this.id,
     			type: "Annotation",
     			body: body,
     			target: { selector: {} }
-    		});
+    		};
     		if(this.target)
     			target.selector.source = this.target;
 
 
     		if(this.element) {
     			var s = new XMLSerializer();
-    			target.selector.type = SvgSelector;
-    			target.selector.value = s.serializeToString(this.element);
+    			obj.target.selector.type = 'SvgSelector';
+    			obj.target.selector.value = s.serializeToString(this.element);
     		}
     	}
     }
@@ -3843,6 +3860,11 @@ void main() {
     			overlayElement: null,
     			shadow: true,
     			hoverable: false, //display info about annotation on mousehover.
+    			selected: new Set,
+    			annotationsListEntry: null,
+
+    			svgElement: null, //the svg layer
+    			svgGroup: null,
     		}, options);
     		super(options);
 
@@ -3885,10 +3907,79 @@ void main() {
     		this.annotations = await response.json();
     		this.annotations = this.annotations.map(a => {
     			if('@context' in a) 
-    				return Annotation.fromJsonld(a);
+    				return Annotation.fromJsonLd(a);
     			return a;
     		});
+    		if(this.annotationsListEntry)
+    			this.createAnnotationsList();
     	}
+
+    	newAnnotation() {
+    		let svg = createElement('svg');
+    		let annotation = new Annotation({ element: svg, selector_type: 'SvgSelector'});
+    		this.addAnnotation(annotation, true);
+    		return annotation;
+    	}
+
+    	annotationsEntry() {
+    		return this.annotationsListEntry =  {
+    			html: this.editable? '<a href="#" class="openlime-entry">New annotation...</a>': '',
+    			list: [], //will be filled later.
+    			classes: 'openlime-annotations',
+    			status: () => 'active',
+    			onclick: this.editable? () => { this.newAnnotation(); } : null,
+    			oncreate: () => { 
+    				if(Array.isArray(this.annotations))
+    					this.createAnnotationsList();
+    			}
+    		}
+    	}
+
+
+
+    	addAnnotation(annotation, selected = true) {
+    		this.annotations.push(annotation);
+    		let html = this.createAnnotationEntry(annotation);
+    		let template = document.createElement('template');
+    		template.innerHTML = html.trim();
+    		
+    		let list =  this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+    		list.appendChild(template.content.firstChild);
+    		this.emit('createAnnotation', annotation);
+    		this.clearSelected();
+    		this.setSelected(annotation.id);
+    	}
+
+    	
+    	createAnnotationEntry(a) {
+    		let title = a.title? a.title : (a.class? a.class : '');
+    		return `<a href="#" data-annotation="${a.id}" class="openlime-entry">${a.code || a.code} ${title}</a>`;
+    	}
+    	createAnnotationEdit(a) {
+    		//should just fill the template with some stuff<<
+    	}
+
+    	createAnnotationsList() {
+    		let html ='';
+    		for(let a of this.annotations) {
+    			html += this.createAnnotationEntry(a);
+    		}
+    		let list =  this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+    		list.addEventListener('click', (e) =>  { 
+    			let id = e.srcElement.getAttribute('data-annotation');
+    			this.clearSelected();
+
+    			if(id) {
+    				let anno = this.getAnnotationById(id);
+    				if(anno.editing)  {
+    					e.srcElement.classList.toggle('selected', on);
+    				} else
+    					this.setSelected(id);
+    			}
+    		});
+    		list.innerHTML = html;
+    	}
+
     	getAnnotationById(id) {
     		for(const anno of this.annotations)
     			if(anno.id == id)
@@ -3940,10 +4031,84 @@ void main() {
     		}
     		super.setVisible(visible);
     	}
+    	clearSelected() {
+    		let entry = document.querySelector(`div[data-annotation]`);
+    		if(this.edited) {
+    			entry.replaceWith(this.edited);
+    			this.edited = null;
+    		}
+    		this.svgGroup.querySelectorAll('[data-layer]').forEach((e) => e.classList.remove('selected'));
+    	}
     	//set selected class for annotation
     	setSelected(id, on = true) {
-    		let a = this.svgGroup.getElementById(id);
-    		a.classList.toggle('selected', on);
+    		let anno = this.getAnnotationById(id);
+
+    		if(on)
+    			this.selected.add(id);
+    		else
+    			this.selected.delete(id);
+    			
+    		for(let a of this.svgElement.querySelectorAll(`[id=${id}]`))
+    			a.classList.toggle('selected', on);
+
+    		if(!this.editable)
+    			return;
+    		//find corresponding entry
+    		let entry = document.querySelector(`[data-annotation="${id}"]`);
+
+    		let html = `
+	<div data-annotation="${id}" class="openlime-annotation-edit">
+		<span>Code:</span> <input name="code" type="text" value="${anno.code}">
+		<span>Class:</span> <input name="class" type="text" value="${anno.class}">
+		<span>Description:</span> <input name="description" type="text" value="${anno.description}">
+		<button name="save" type="button">Save</button>
+		<button name="edit" type="button">Edit</button>
+		<button name="delete" type="button">Delete</button>
+	</div>`;
+
+
+    		//this should definitely be a function in some 'utils'.
+    		let template = document.createElement('template');
+    		template.innerHTML = html.trim();
+    		let edit = template.content.firstChild;
+    		entry.replaceWith(edit);
+    		this.edited = entry;
+    		edit.querySelector('button[name="save"]').addEventListener('click', (e) => this.saveAnnotation(edit, anno));
+    		edit.querySelector('button[name="edit"]').addEventListener('click', (e) => this.editAnnotation(edit, anno));
+    		edit.querySelector('button[name="delete"]').addEventListener('click', (e) => this.deleteAnnotation(edit, anno));
+    	}
+
+    	saveAnnotation(edit, anno) {
+    		anno.editing = false;
+    		anno.code = edit.querySelector('[name=code]').value;
+    		anno.class = edit.querySelector('[name=class]').value;
+    		anno.description = edit.querySelector('[name=description]').value;
+    		
+    		anno.bbox = anno.getBBoxFromElements();
+    		let serializer = new XMLSerializer();
+    		anno.selector.value = `<svg xmlns="http://www.w3.org/2000/svg">
+			${anno.selector.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
+			</svg>`;
+    		this.emit('updateAnnotation', anno);
+    	}
+
+    	deleteAnnotation(edit, anno) {
+    		//remove svg elements from the canvas
+    		for(let e  of this.svgGroup.querySelectorAll('#' + anno.id))
+    			e.remove();
+    		//remove entry from the list
+    		let list =  this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+    		for(let e of list.querySelectorAll(`[data-annotation="${anno.id}"]`))
+    			e.remove();
+    		this.edited = null;
+
+    		this.annotations = this.annotations.filter(a => a !== anno);
+    		this.emit('deleteAnnotation', anno);
+    	}
+
+    	editAnnotation(edit, anno) {
+    		anno.editing = true;
+    		this.editor.setTool(this, anno, 'line');
     	}
 
     	draw(transform, viewport) {
@@ -3962,12 +4127,18 @@ void main() {
     		if(!this.visible) return;
     		if(!this.svgElement) return;
 
-    		for(let a of this.annotations) {			
-    			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
-    			if(typeof a.element == 'string') {
-    				let parser = new DOMParser();
-    				a.element = parser.parseFromString(a.element, "image/svg+xml").documentElement;
+    		//find which annotations needs to be added to the ccanvas, some 
+    		//indexing whould be used, for the moment we just iterate all of them.
 
+    		for(let a of this.annotations) {
+
+    			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
+    			if(!a.ready && typeof a.selector.value == 'string') {
+    				let parser = new DOMParser();
+    				let element = parser.parseFromString(a.selector.value, "image/svg+xml").documentElement;
+    				for(let c of element.children)
+    					a.selector.elements.push(c);
+    				a.ready = true;
 
     /*				} else if(this.svgXML) {
     					a.svgElement = this.svgXML.querySelector(`#${a.id}`);
@@ -3976,34 +4147,42 @@ void main() {
     				} */
     			}
 
-    			if(a.element instanceof SVGElement) {
-    				//second time will be 0 elements, but we need to 
-    				//store somewhere knowledge of which items in the scene and which still not.
-    				for(let child of a.element.children) {
-    					child.setAttribute('id', a.id);
-    					child.setAttribute('data-layer', this.id);
-    					child.classList.add('openlime-annotation');
-    					this.svgGroup.appendChild(child);
+    			if(!a.needsUpdate)
+    				continue;
 
-    					/*
-    					//utils
+    			for(let e of this.svgGroup.querySelectorAll(`[id="${a.id}"]`))
+    				e.remove();
+    			//second time will be 0 elements, but we need to 
+    			//store somewhere knowledge of which items in the scene and which still not.
+    			for(let child of a.selector.elements) {
+    				let c = child; //.cloneNode(true);
+    				c.setAttribute('id', a.id);
+    				c.setAttribute('data-layer', this.id);
+    				c.classList.add('openlime-annotation');
+    				if(this.selected.has(a.id))
+    					c.classList.add('selected');
+    				this.svgGroup.appendChild(c);
+
+    					
+    				//utils
+
+    /*				let parser = new DOMParser();
+    				let use = createElement('use', { 'xlink:href': '#' + a.id,  'stroke-width': 10,  'pointer-events': 'stroke' });
+    				//let use = parser.parseFromString(`<use xlink:href="${a.id}" stroke-width="10" pointer-events="stroke"/>`, "image/svg+xml");
+    				this.svgGroup.appendChild(use);  */
+    			}
+    			a.needsUpdate = false;
+    		}
+    	}
+    }
+
     function createElement(tag, attributes) {
     	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
     	if(attributes)
     		for(const [key, value] of Object.entries(attributes))
     			e.setAttribute(key, value);
     	return e;
-    }
-
-    					let parser = new DOMParser();
-    					let use = createElement('use', { 'xlink:href': '#' + a.id,  'stroke-width': 10,  'pointer-events': 'stroke' });
-    					//let use = parser.parseFromString(`<use xlink:href="${a.id}" stroke-width="10" pointer-events="stroke"/>`, "image/svg+xml");
-    					this.svgGroup.appendChild(use); */
-    				}
-    			}
-    		}
-    	}
-    }
+    } 
 
     Layer.prototype.types['annotations'] = (options) => { return new AnnotationLayer(options); };
 
@@ -4209,8 +4388,7 @@ void main() {
     			tool: null, //doing nothing, could: ['line', 'polygon', 'point', 'box', 'circle']
     			startPoint: null, //starting point for box and  circle
     			currentLine: [],
-    			currentElement: null,
-    			currentAnnotation: null,
+    			annotation: null,
     			priority: 20000,
     			multiple: false, //if true multiple elements per annotation.
     			signals: {'toolChanged':[], 'createAnnotation':[], 'deleteAnnotation':[], 'updateAnnotation':[]},
@@ -4244,15 +4422,40 @@ void main() {
     		
     		//at the moment is not really possible to unregister the events registered here.
     		this.lime.pointerManager.onEvent(this);
-    		document.addEventListener('keyup', (e) => { this.keyEvent(e); });
     	}
     	addEvent(event, callback) { this.signals[event].push(callback); }
     	emit(event, ...parameters) { for(let r of this.signals[event]) r(this, ...parameters); }
 
-    	setTool(layer, tool) {
-    		this.layer = layer;
+    /*	newAnnotation() {
+    		let svg = createElement('svg');
+    		this.annotation = new Annotation({ element: svg, selector_type: 'SvgSelector'});
+    	}
+
+    	saveAnnotation() {
+    		let { x, y, width, height } = this.annotation.svg.firstChild.getBBox();
+    		for(let shape of this.annotation.svg.children) {
+    			const { sx, sy, swidth, sheight } = shape.getBBox();
+    			x = Math.min(x, sx);
+    			y = Math.min(x, sy);
+    			width = Math.max(width + x, sx + swidth) - x; 
+    			height = Math.max(height + y, sy + sheight) - y; 
+    		}
+    		this.annotation.bbox = { x, y, width, height };
+    		this.annotation.selector_value = '<svg xmlns="http://www.w3.org/2000/svg">';
+    		let serializer = new XMLSerializer();
+    		for(let shape of this.annotation.svg.children) 
+    			this.annotation.selector_value += serializer.serializeToString(this.annotation.shape)
+    		//this.annotation.selector_value = '<svg xmlns="http://www.w3.org/2000/svg">' + (new XMLSerializer()).serializeToString(this.annotation.shape) + '</svg>';
+    		this.layer.emit('createAnnotation', this.annotation);
+
+    		this.layer.annotations.push(this.annotation);
+    		this.annotation = null;
+    	} */
+
+    	setTool(layer, annotation, tool) {
+    		this.layer = layer; //needsd for bounding box
+    		this.annotation = annotation;
     		this.tool = tool;
-    		this.currentAnnotation = null;
     		if(tool) {
 
     			if(!tool in this.tools)
@@ -4262,7 +4465,7 @@ void main() {
     		}
     		this.emit('toolChanged');
     	}
-
+    /*
     	menuWidget(layer) {
     		let menu = [];
     		for(const [id, tool] of Object.entries(this.tools))
@@ -4281,31 +4484,46 @@ void main() {
     			status: () => 'active'
     		};	
     		return toolbar;
-    	}
+    	} */
 
-    	keyEvent(e) {
-    		console.log(e);
+    	keyUp(e) {
+    		if(e.defaultPrevented) return;
     		switch(e.key) {
     		case 'Escape':
-    			if(this.tool)
+    			if(this.tool) {
     				this.setTool(null, null);
+    				e.preventDefault();
+    			}
+    			break;
+    		case 'Delete':
+    			if(!this.layer.selected.size)
+    				return;
+    			if(confirm(`Deleting`))
+    				return;
+    		case 'Backspace':
+    			break;	
+    		case 'z':
+    			if(!e.ctrlKey)
+    				break;
+    			//undo!
     			break;
     		}
     	}
 
     	panStart(e) {
-    		//console.log(e.composedPath());
+    		if(e.buttons != 1)
+    			return;
     		if(!['line', 'box', 'circle'].includes(this.tool))
     			return;
     		this.panning = true;
     		e.preventDefault();
 
     		const pos = this.mapToSvg(e);
-    		let svg = createElement('svg');
-    		svg.appendChild(this.factory.create(pos));
+    		let shape = this.factory.create(pos);
 
-    		this.currentAnnotation = new Annotation({element: svg});
-    		this.layer.annotations.push(this.currentAnnotation);
+    		this.annotation.selector.elements.push(shape);
+    		this.annotation.needsUpdate = true;
+    		
     		this.lime.redraw();
     	}
 
@@ -4323,15 +4541,22 @@ void main() {
     		this.panning = false;
 
     		const pos = this.mapToSvg(e);
-    		this.factory.finish(pos);
-    		this.layer.emit('createAnnotation', this.currentAnnotation);
+    		let shape = this.factory.finish(pos);
+
+    		this.annotation.selector.elements.push(shape);
+    		this.annotation.needsUpdate = true;
+
+    /*		const { x, y, width, height } = shape.getBBox();
+    		this.currentAnnotation.bbox = { x, y, width, height };
+    		this.currentAnnotation.selector_value = '<svg xmlns="http://www.w3.org/2000/svg">' + (new XMLSerializer()).serializeToString(this.currentAnnotation.shape) + '</svg>';
+    		this.layer.emit('createAnnotation', this.currentAnnotation);*/
 
     		if(!this.multiple)
     			this.setTool(null, null);
     	}
 
     	fingerSingleTap(e) {
-    		if(!this.layer) return true;
+    		//if(!this.layer) return true;
     		
     //		console.log("Editor:", e, e.composedPath());
 
@@ -4340,13 +4565,15 @@ void main() {
     		e.preventDefault();
 
     		const pos = this.mapToSvg(e);
-    		let svg = createElement('svg');
-    		svg.appendChild(this.factory.create(pos));
-
-    		this.currentAnnotation = new Annotation({element: svg});
-    		this.layer.annotations.push(this.currentAnnotation);
-    		this.layer.emit('createAnnotation', this.currentAnnotation);
-
+    		let shape = this.factory.create(pos);
+    		
+    		//const { x, y, width, height } = shape.getBBox();
+    //		this.currentAnnotation = new Annotation({element: svg, bbox: {x, y, width, height } });
+    //		this.annotation.selector_value = '<svg xmlns="http://www.w3.org/2000/svg">' + (new XMLSerializer()).serializeToString(this.annotation.shape) + '</svg>';
+    		
+    		this.annotations.elements.push(shape);
+    		this.annotation.needsUpdate = true;
+    		
     		if(!this.multiple)
     			this.setTool(null, null);
     		this.lime.redraw();
@@ -4366,7 +4593,7 @@ void main() {
     class Point {
     	create(pos) {
     		//const pos = this.mapToSvg(e);
-    		let point = createElement('circle', { cx: pos.x, cy: pos.y, r: 10, class:'point' });
+    		let point = createElement$1('circle', { cx: pos.x, cy: pos.y, r: 10, class:'point' });
     		//point.classList.add('selected');
     		return point;
     	}
@@ -4380,8 +4607,7 @@ void main() {
 
     	create(pos) {
     		this.origin = pos;
-    		this.box = createElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0 });
-    		//this.box.classList.add('selected');
+    		this.box = createElement$1('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
     		return this.box;
     	}
 
@@ -4395,6 +4621,7 @@ void main() {
     	}
 
     	finish(pos) {
+    		return this.box;
     	}
     }
 
@@ -4405,8 +4632,7 @@ void main() {
     	}
     	create(pos) {
     		this.origin = pos;
-    		this.circle = createElement('circle', { cx: pos.x, cy: pos.y, r: 0 });
-    		//this.circle.classList.add('selected');
+    		this.circle = createElement$1('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
     		return this.circle;
     	}
     	adjust(pos) {
@@ -4415,6 +4641,7 @@ void main() {
     		this.circle.setAttribute('r', r);
     	}
     	finish() {
+    		return this.circle;
     	}
     }
 
@@ -4425,8 +4652,7 @@ void main() {
 
     	create(pos) {
     		this.points = [pos];
-    		this.path = createElement('path', { d: `M${pos.x} ${pos.y}` });
-    		//this.path.classList.add('selected');
+    		this.path = createElement$1('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
     		return this.path;
     	}
 
@@ -4449,6 +4675,7 @@ void main() {
     		let d = smoothToPath(smoothed);
 
     		this.path.setAttribute('d', d);
+    		return this.path;
     	}
 
     	distanceToLast(line, point) {
@@ -4460,7 +4687,7 @@ void main() {
     }
 
     //utils
-    function createElement(tag, attributes) {
+    function createElement$1(tag, attributes) {
     	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
     	if(attributes)
     		for(const [key, value] of Object.entries(attributes))
@@ -4508,14 +4735,14 @@ void main() {
     			autoFit: true,
     			//skinCSS: 'skin.css', // TODO: probably not useful
     			actions: {
-    				home:       { title: 'Home',       display: true,  task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
-    				fullscreen: { title: 'Fullscreen', display: true,  task: (event) => { this.toggleFullscreen(); } },
-    				layers:     { title: 'Layers',     display: true, task: (event) => { this.toggleLayers(event); } },
-    				zoomin:     { title: 'Zoom in',    display: false, task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
-    				zoomout:    { title: 'Zoom out',   display: false, task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
-    				rotate:     { title: 'Rotate',     display: false, task: (event) => { camera.rotate(250, -45); } },
-    				light:      { title: 'Light',      display: 'auto',  task: (event) => { this.toggleLightController(); } },
-    				ruler:      { title: 'Ruler',      display: false, task: (event) => { this.startRuler(); } },
+    				home:       { title: 'Home',       display: true,   key: 'Home', task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
+    				fullscreen: { title: 'Fullscreen', display: true,   key: 'f', task: (event) => { this.toggleFullscreen(); } },
+    				layers:     { title: 'Layers',     display: true,   key: 'Escape', task: (event) => { this.toggleLayers(event); } },
+    				zoomin:     { title: 'Zoom in',    display: false,  key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
+    				zoomout:    { title: 'Zoom out',   display: false,  key: '-', task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
+    				rotate:     { title: 'Rotate',     display: false,  key: 'r', task: (event) => { camera.rotate(250, -45); } },
+    				light:      { title: 'Light',      display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
+    				ruler:      { title: 'Ruler',      display: false,            task: (event) => { this.startRuler(); } },
     			},
     			viewport: [0, 0, 0, 0], //in scene coordinates
     			scale: null,
@@ -4560,15 +4787,10 @@ void main() {
     				list: modes,
     				layer: id
     			};
-    			if(layer.editable) {
-    				layerEntry.list.push(this.editor.menuWidget(layer));
-    /*				for(const [mode, label] of Object.entries({ point: 'New point', line: 'New line', box: 'New box', circle: 'New circle' }))
-    					layerEntry.list.push({
-    						button: label,
-    						onclick: () => { this.editor.setMode(layer, mode); this.updateMenu(); },
-    						status: () => this.editor.mode == mode ? 'active': '',
-    					}); */
-
+    			if(layer.annotations) {
+    				layerEntry.list.push(layer.annotationsEntry());
+    				if(layer.editable) 
+    					layer.editor = this.editor;
     			}
     			this.menu.push(layerEntry);
     		}
@@ -4580,6 +4802,9 @@ void main() {
 
     	init() {
     		(async () => {
+
+    			document.addEventListener('keydow', (e) => this.keyDown(e), false);
+    			document.addEventListener('keyup', (e) => this.keyUp(e), false);
 
     			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
     			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
@@ -4634,7 +4859,26 @@ void main() {
 
     		})().catch(e => { console.log(e); throw Error("Something failed") });
     	}
-    	
+
+    	keyDown(e) {
+    	}
+
+    	keyUp(e) {
+    		if(e.target != document.body && e.target.closest('input, textarea') != null)
+    		return;
+
+    		this.editor.keyUp(e);
+    		if(e.defaultPrevented) return;
+    		
+    		for(const a of Object.values(this.actions)) {
+    			if('key' in a && a.key == e.key) {
+    				e.preventDefault();
+    				a.task(e);
+    				return;
+    			}
+    		}
+    	}
+
     	showInfo(e) {
     		if(!e.originSrc) {
     			throw "This should never happen!";
@@ -4650,7 +4894,9 @@ void main() {
     			return;
 
     		let id = e.originSrc.getAttribute('id');
-    		this.info.show(e, layer, id);
+    		layer.setSelected(id);
+
+    		//this.info.show(e, layer, id);
     	}
 
     	
@@ -4869,7 +5115,8 @@ void main() {
     			});
     		if (entry.oninput)
     			entry.element.addEventListener('input', entry.oninput);
-
+    		if(entry.oncreate)
+    			entry.oncreate();
 
     		if ('list' in entry)
     			for (let e of entry.list)
@@ -4952,7 +5199,8 @@ void main() {
     	constructor(container) {
     		Object.assign(this, {
     			element: null,
-    			svgElement: null,  //svg for annotation, TODO: should be inside annotation!
+    			//svgElement: null,  //svg for annotation, TODO: should be inside annotation!
+    			layer: null,
     			annotation: null,
     			container: container
     		});			
@@ -4962,11 +5210,11 @@ void main() {
     		if(!this.element) return;
     		this.element.style.display = 'none';
 
-    		if(this.svgElement)
-    			this.svgElement.classList.remove('selected');
+    		if(this.layer)
+    			this.layer.setSelected(this.annotation.id, false);
     		
     		this.annotation = null;
-    		this.svgElement = null;
+    		this.layer = null;
     	}
 
     	show(e, layer, id) {
@@ -4983,11 +5231,10 @@ void main() {
 
     		this.hide();
     		
-    		e.originSrc.classList.add('selected');
     		let annotation = layer.getAnnotationById(id);
     		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.template(annotation);
     		this.annotation = annotation;
-    		this.svgElement = e.originSrc;
+    		this.layer = layer;
 
     		this.element.style.display = '';
     		//todo position info appropriately.
@@ -5105,8 +5352,8 @@ void main() {
     		if(!time) time = performance.now();
     		this.animaterequest = null;
 
-    		this.camera.viewport;
-    		this.camera.getCurrentTransform(time);
+    		let viewport = this.camera.viewport;
+    		let transform = this.camera.getCurrentTransform(time);
 
     		let done = this.canvas.draw(time);
     		if(!done)

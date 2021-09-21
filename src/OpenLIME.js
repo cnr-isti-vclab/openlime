@@ -18,7 +18,8 @@ import { PointerManager } from './PointerManager.js'
 
 import { Annotation	 } from './Annotation.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
-import { AnnotationEditor } from './AnnotationEditor.js'
+import { SvgAnnotationLayer } from './SvgAnnotationLayer.js'
+import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
 
 /**
  * Manages an OpenLIME viewer functionality on a canvas
@@ -148,5 +149,5 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic, Annotation, AnnotationLayer, AnnotationEditor }
+export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic, Annotation, AnnotationLayer, SvgAnnotationLayer, SvgAnnotationEditor }
 
