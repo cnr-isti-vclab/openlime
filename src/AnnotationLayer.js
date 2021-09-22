@@ -38,8 +38,7 @@ class AnnotationLayer extends Layer {
 		}
 
 		if (typeof (this.annotations) == "string") { //assumes it is an URL
-			this.annotations = [];
-			(async () => { await this.loadAnnotations(this.annotations); });
+			(async () => { await this.loadAnnotations(this.annotations); })();
 		}
 	}
 

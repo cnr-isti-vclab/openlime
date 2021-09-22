@@ -85,6 +85,8 @@ class SvgAnnotationLayer extends AnnotationLayer {
 	}
 
 	draw(transform, viewport) {
+		if(!this.svgElement)
+			return;
 		let t = this.transform.compose(transform);
 		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
 		let c = this.viewBox.center();
@@ -95,6 +97,8 @@ class SvgAnnotationLayer extends AnnotationLayer {
 
 	prefetch(transform) {
 		if (!this.visible) return;
+		if(this.status != 'ready') 
+			return;
 		if(!this.svgElement)
 			this.createSVGElement();
 

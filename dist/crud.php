@@ -14,20 +14,22 @@ try {
 
 switch($data->action) {
 	case 'create':
-		$sql = "INSERT INTO annotations (id, classes, selector_type, selector_value, `left`, `right`, top, bottom) " .
-			"VALUES (:id, :selector_type, :selector_value, :left, :right, :top, :bottom)";
+		$sql = "INSERT INTO annotations (id, title, description, svg) " .
+			"VALUES (:id, :title, :description, :svg)";
 		$q = $pdo->prepare($sql);
 		$vars = [
 			':id'     => $data->id,
-			':code'  => $data->code,
-			':class'  => $data->class,
+//			':code'  => $data->code,
+//			':class'  => $data->class,
+			':title'  => $data->title,
 			':description'  => $data->description,
-			':selector_type'  => $data->selector_type, 
-			':selector_value' => $data->selector_value,
-			':left'   => $data->bbox->x,
-			':bottom' => $data->bbox->y,
-			':right'  => $data->bbox->width + $data->bbox->x,
-			':top'    => $data->bbox->height + $data->bbox->y
+			':svg' => $data->svg,
+//			':selector_type'  => $data->selector_type, 
+//			':selector_value' => $data->selector_value,
+//			':left'   => $data->bbox->x,
+//			':bottom' => $data->bbox->y,
+//			':right'  => $data->bbox->width + $data->bbox->x,
+//			':top'    => $data->bbox->height + $data->bbox->y
 		];
 		$result = $q->execute($vars);
 		if(!$result) {
@@ -49,15 +51,9 @@ switch($data->action) {
 	case 'update':
 		$vars = [
 			'id'     => $data->id,
-			'code'  => $data->code,
-			'class'  => $data->class,
+			'title'  => $data->title,
 			'description'  => $data->description,
-			'selector_type'  => $data->selector->type, 
-			'selector_value' => $data->selector->value,
-			'left'   => $data->bbox->x,
-			'bottom' => $data->bbox->y,
-			'right'  => $data->bbox->width + $data->bbox->left,
-			'top'    => $data->bbox->height + $data->bbox->bottom
+			'svg'   => $data->svg,
 		];
 
 	
@@ -75,6 +71,7 @@ switch($data->action) {
 			return;
 		}
 		break;
+
 	default:
 		$sql = "select * from annotations";
 		$stm = $pdo->query($sql);
@@ -87,7 +84,7 @@ switch($data->action) {
 				"body"=> [
 					[
 					"type"=> "TextualBody",
-					"value"=> $row['code'],
+					"value"=> $row['title'],
 					"purpose"=> "identifying"
 					],
 					[
@@ -95,16 +92,16 @@ switch($data->action) {
 					"value"=> $row['description'],
 					"purpose"=> "describing"
 					],
-					[
+/*					[
 					"type"=> "TextualBody",
 					"value"=> $row['class'],
 					"purpose"=> "classifying"
-					]
+					] */
 				],
 				"target"=> [
 				  "selector"=> [
 					"type"=> "SvgSelector",
-					"value"=> $row["selector_value"]
+					"value"=> $row["svg"]
 				  ]
 				]
 			];

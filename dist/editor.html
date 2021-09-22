@@ -49,7 +49,7 @@ let lime = new OpenLIME.OpenLIME('#openlime');
 
 let layer0 = new OpenLIME.Layer({ 
 	label: '4',
-	layout: 'tarzoom', 
+	layout: 'image', 
 	type:'rti',
 	url: 'assets/rti/hsh/info.json',
 //	url: 'Data/4/info.json',
@@ -57,7 +57,7 @@ let layer0 = new OpenLIME.Layer({
 });
 lime.canvas.addLayer('coin', layer0);
 	
-let anno = new OpenLIME.AnnotationLayer({ 
+let anno = new OpenLIME.SvgAnnotationLayer({ 
 	label: 'Annotations',
 	viewBox: "0 0 256 256",
 	style:` 
@@ -81,45 +81,58 @@ let anno = new OpenLIME.AnnotationLayer({
 	editable: true,
 }); 
 
-anno.addEvent('createAnnotation', createAnnotation);
-anno.addEvent('deleteAnnotation', deleteAnnotation);
-anno.addEvent('updateAnnotation', updateAnnotation);
 
-lime.canvas.addLayer('anno', anno);
+lime.canvas.addLayer('anno', anno); //here the overlayelement created and attached to layer
+
+OpenLIME.Skin.setUrl('skin.svg');
+
+let editor = new OpenLIME.SvgAnnotationEditor(lime, anno, { lime: lime });
 let ui = new OpenLIME.UIBasic(lime);
-ui.editor.multiple = true;
 
-async function updateAnnotation(layer, annotation) {
-	annotation.action = 'update';
-	const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(annotation)});
+editor.createCallback = (anno) => { console.log("Created annotation: ", anno); createAnnotation(anno); return true; };
+editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); deleteAnnotation(anno); return true; };
+editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); updateAnnotation(anno); return true; };
+
+editor.multiple = true;
+
+
+async function updateAnnotation(anno) {
+	(async () => {
+	anno.action = 'update';
+	const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(anno)});
 	if (!response.ok) {
 		 const message = `An error has occured: ${response.status}`;
 		 throw new Error(message);
 	}
 	let json = await response.json();
 	console.log(json);
+	})();
 }
 
-async function createAnnotation(layer, annotation) {
-	annotation.action = 'create';
-	const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(annotation)});
+async function createAnnotation(anno) {
+(async () => {
+	anno.action = 'create';
+	const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(anno)});
 	if (!response.ok) {
 		 const message = `An error has occured: ${response.status}`;
 		 throw new Error(message);
 	}
 	let json = await response.json();
 	console.log(json);
+})();
 }
 
-async function deleteAnnotation(layer, annotation) {
-	annotation.action = 'delete';
-	const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(annotation)});
+async function deleteAnnotation(anno) {
+(async () => {
+	anno.action = 'delete';
+	const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(anno)});
 	if (!response.ok) {
 		 const message = `An error has occured: ${response.status}`;
 		 throw new Error(message);
 	}
 	let json = await response.json();
 	console.log(json);
+})();
 }
 
 </script>

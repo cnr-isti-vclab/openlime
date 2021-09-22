@@ -155,13 +155,15 @@ function smooth(points, cornerThres, match) {
 
 function smoothToPath(smoothed) {
 	let p = smoothed[0];
-	let d = [`M${p[0]} ${p[1]}`];
+	let d = [`M${p[0].toFixed(1)} ${p[1].toFixed(1)}`];
 
-	
+
 	let p1;
 	for(let i = 0; i < smoothed.length-1; i++) {
 		p = smoothed[i];
 		p1 = smoothed[i+1];
+	
+		
 		if(p.length == 2)
 			d.push(`l${(p1[0]-p[0]).toFixed(1)} ${(p1[1]-p[1]).toFixed(1)}`)
 		else if(p.length == 4) 
@@ -169,8 +171,6 @@ function smoothToPath(smoothed) {
 		else
 			d.push(`c${(p[2]-p[0]).toFixed(1)} ${(p[3]-p[1]).toFixed(1)} ${(p[4]-p[0]).toFixed(1)} ${(p[5]-p[1]).toFixed(1)} ${(p1[0]-p[0]).toFixed(1)} ${(p1[1]-p[1]).toFixed(1)}`);
 	}
-	//if(p.length == 2)
-	//	d.push(`L${p1[0]} ${p1[1]}`);
 	return d.join();
 }
 

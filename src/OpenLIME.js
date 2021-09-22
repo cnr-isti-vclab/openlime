@@ -10,6 +10,7 @@ import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 
+import { Skin } from './Skin.js'
 import { UIBasic } from './UIBasic.js'
 import { Controller } from './Controller.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
@@ -149,5 +150,5 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic, Annotation, AnnotationLayer, SvgAnnotationLayer, SvgAnnotationEditor }
+export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, Skin, UIBasic, Annotation, AnnotationLayer, SvgAnnotationLayer, SvgAnnotationEditor }
 
