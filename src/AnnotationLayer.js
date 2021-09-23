@@ -145,7 +145,7 @@ class AnnotationLayer extends Layer {
 	}
 	//set selected class for annotation
 	setSelected(anno, on = true) {
-		this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation=${anno.id}]`).classList.toggle('selected', on);
+		this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.toggle('selected', on);
 		if(on)
 			this.selected.add(anno.id);
 		else

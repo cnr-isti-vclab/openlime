@@ -70,7 +70,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 	}
 
 	setSelected(anno, on = true) {
-		for (let a of this.svgElement.querySelectorAll(`[data-annotation=${anno.id}]`))
+		for (let a of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))
 			a.classList.toggle('selected', on);
 
 		super.setSelected(anno, on);

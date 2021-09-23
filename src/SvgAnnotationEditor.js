@@ -209,7 +209,7 @@ class SvgAnnotationEditor {
 		template.innerHTML = this.layer.createAnnotationEntry(anno);
 		let entry =  template.content.firstChild;
 		//TODO find a better way to locate the entry!
-		this.layer.annotationsListEntry.element.parentElement.querySelector(`[data-annotation=${anno.id}]`).replaceWith(entry);
+		this.layer.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).replaceWith(entry);
 	}
 
 	deleteSelected() {
@@ -230,7 +230,7 @@ class SvgAnnotationEditor {
 			}
 		}
 		//remove svg elements from the canvas
-		this.layer.svgGroup.querySelectorAll(`[data-annotation=${anno.id}]`).forEach(e => e.remove());
+		this.layer.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`).forEach(e => e.remove());
 
 		//remove entry from the list
 		let list = this.layer.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
@@ -291,7 +291,7 @@ class SvgAnnotationEditor {
 			if (!tool in this.tools)
 				throw "Unknown editor tool: " + tool;
 
-			this.factory = new this.tools[tool].tool;
+			this.factory = new this.tools[tool].tool();
 			this.factory.annotation = annotation;
 		}
 		document.querySelector('.openlime-overlay').classList.toggle('erase', tool =='erase');
@@ -330,7 +330,7 @@ class SvgAnnotationEditor {
 	}
 
 	panStart(e) {
-		if (e.buttons != 1)
+		if (e.buttons != 1 || e.ctrlKey || e.shiftKey || e.metaKey)
 			return;
 		if (!['line', 'erase', 'box', 'circle'].includes(this.tool))
 			return;
@@ -372,12 +372,12 @@ class SvgAnnotationEditor {
 
 	fingerSingleTap(e) {
 
-		if (!['point', 'pen'].includes(this.tool))
+		if (!['point', 'line'].includes(this.tool))
 			return;
 		e.preventDefault();
 
 		const pos = this.mapToSvg(e);
-		let shape = this.factory.create(pos)
+		let shape = this.factory.tap(pos)
 
 		if(shape)
 			this.annotation.selector.elements.push(shape);
@@ -400,7 +400,7 @@ class SvgAnnotationEditor {
 }
 
 class Point {
-	create(pos) {
+	tap(pos) {
 		//const pos = this.mapToSvg(e);
 		let point = createElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
 		//point.classList.add('selected');
@@ -488,12 +488,44 @@ class Circle {
 class Line {
 	constructor() {
 		this.points = [];
+		this.history = [];
 	}
 
 	create(pos) {
+		for(let e of this.annotation.selector.elements) {
+			if(!e.points || e.points.length < 2)
+				continue;
+			if(Line.distance(e.points[0], pos)*pos.z < 5) {
+				e.points.reverse();
+				this.path = e;
+				this.points = e.points;
+				if(!this.history.length)
+					this.history = [[...this.points]];
+				this.path.setAttribute('d', this.svgPath());
+				//reverse points!
+				return;
+			}
+			if(Line.distanceToLast(e.points, pos) < 5) {
+				this.path = e;
+				this.points = e.points;
+				if(!this.history.length)
+				this.history = [[...this.points]];
+				this.adjust(pos);
+				return;
+			}
+		}
+		this.history = [];
 		this.points = [pos];
 		this.path = createElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 		return this.path;
+	}
+	tap(pos) {
+		if(!this.points.length)
+			this.create(pos);
+		else {
+			this.history.push([...this.points]);
+			this.adjust(pos);
+		}
 	}
 
 	adjust(pos) {
@@ -508,22 +540,40 @@ class Line {
 
 	finish(pos) {
 		//todo should pick the last one? or the smallest?
+		/*let tolerance = 2 / this.points[0].z;
+		let tmp = simplify(this.points, tolerance);
+
+		let smoothed = smooth(tmp, 90, true);
+		let d = smoothToPath(smoothed); */
+
+		//this.path.setAttribute('data-points', this.path.getAttribute('d'));
+		this.path.points = this.points;
+		this.path.setAttribute('d', this.svgPath());
+		this.history.push([...this.points]);
+		return this.path;
+	}
+	undo() {
+		if(this.history.length) {
+			this.points = this.history.pop();
+			this.path.points = this.points;
+			this.path.setAttribute('d', this.svgPath());
+
+			return true;
+		} else {
+			this.points = [];
+			return false;
+		}
+	}
+
+	svgPath() {
 		let tolerance = 2 / this.points[0].z;
 		let tmp = simplify(this.points, tolerance);
 
 		let smoothed = smooth(tmp, 90, true);
-		let d = smoothToPath(smoothed);
-
-		//this.path.setAttribute('data-points', this.path.getAttribute('d'));
-		this.path.points = this.points;
-		this.path.setAttribute('d', d);
-		return this.path;
+		return smoothToPath(smoothed);
+		
+		return this.points.map((p, i) =>  `${(i == 0? "M" : "L")}${p.x} ${p.y}`).join(' '); 
 	}
-	undo() {
-		this.points = [];
-		return false;
-	}
-
 	static distanceToLast(line, point) {
 		let last = line[line.length - 1];
 		return Line.distance(last, point);
