@@ -24,15 +24,15 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="7.2407736"
-     inkscape:cx="358.45347"
-     inkscape:cy="-215.41482"
+     inkscape:zoom="1.8101934"
+     inkscape:cx="403.76257"
+     inkscape:cy="-122.62143"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="1920"
      inkscape:window-height="1056"
-     inkscape:window-x="1920"
+     inkscape:window-x="0"
      inkscape:window-y="24"
      inkscape:window-maximized="1"
      inkscape:snap-grids="true"
@@ -674,6 +674,43 @@
          id="path2672-8"
          d="m 496.80948,606.89135 8.5358,-8.32864"
          style="fill:#808080;fill-opacity:1;stroke:#808080;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <g
+       id="g1136"
+       transform="rotate(45,438.97919,21.188813)"
+       class="openlime-tool openlime-colorpick">
+      <path
+         sodipodi:nodetypes="cccccccccc"
+         inkscape:connector-curvature="0"
+         id="path1088"
+         d="m 738.80879,506.95529 v 19.40677 l 4.69121,2.97686 v 0 l 4.82068,-2.9783 -0.001,-19.4054 M 743.5,529.33892 v 0.5 4.5 z"
+         style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:3.94960642;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path1090"
+         d="m 734.45739,503.17352 h 17.67767"
+         style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:3.95019889;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         inkscape:connector-curvature="0"
+         id="rect1106"
+         d="m 738.55977,494.00875 v 9.16476 l 9.51142,-0.001 v -9.16201 c -0.0712,-6.17158 -9.42262,-6.29673 -9.51142,-0.002 z"
+         style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:3.95019889;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    </g>
+    <g
+       id="g1007"
+       transform="translate(75.63949,-99.492423)"
+       class="openlime-tool openlime-redo">
+      <polyline
+         style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:2.34910274;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         id="polyline2-8-6-6"
+         points="1 4 1 10 7 10"
+         transform="matrix(-1.9361882,0,0,1.9361882,646.2967,585.58659)" />
+      <path
+         style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:4.54830503;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         id="path4-8-7-2"
+         d="m 639.50067,614.62942 a 17.425694,17.425694 0 1 1 -4.12407,-18.12273 l 8.98391,8.44178"
+         inkscape:connector-curvature="0" />
     </g>
   </g>
 </svg>

@@ -74,6 +74,16 @@ function testAnnotationEditor() {
 	Skin.setUrl('skin.svg');
 
 	let editor = new SvgAnnotationEditor(lime, layer1, { lime: lime });
+	editor.classes = {
+		'': { color: '#000', label: '' },
+		'class1': { color: '#770', label: '' },
+		'class2': { color: '#707', label: '' },
+		'class3': { color: '#777', label: '' },
+		'class4': { color: '#070', label: '' },
+		'class5': { color: '#007', label: '' },
+		'class6': { color: '#077', label: '' },
+	};
+	
 	let ui = new UIBasic(lime);
 
 	editor.createCallback = (annotation) => { console.log("Created annotation: ", annotation); return true; };

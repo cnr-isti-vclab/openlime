@@ -239,6 +239,9 @@ g.openlime-expand {
 .openlime-annotation-edit-tools { margin-top: 5px; }
 .openlime-tool { height: 25px; width:25px; }
 
+.openlime-annotation-edit select, .openlime-annotation-edit option { width: 40px; }
+.openlime-annotation-edit option:hover { background:red; }
+
 .openlime-eye, .openlime-eye-off { height:14px; float: right;}
 .openline-eye, .hidden .openlime-eye-off { display: block; }
 .openlime-eye-off, .hidden .openlime-eye { display: none; }

@@ -12,15 +12,20 @@ try {
 	return;
 }
 
+if(!$data) {
+	export($pdo);
+	return;
+}
+
 switch($data->action) {
 	case 'create':
-		$sql = "INSERT INTO annotations (id, title, description, svg) " .
-			"VALUES (:id, :title, :description, :svg)";
+		$sql = "INSERT INTO annotations (id, title, description, group, svg) " .
+			"VALUES (:id, :title, :description, :group, :svg)";
 		$q = $pdo->prepare($sql);
 		$vars = [
 			':id'     => $data->id,
 //			':code'  => $data->code,
-//			':class'  => $data->class,
+			':group'  => $data->group,
 			':title'  => $data->title,
 			':description'  => $data->description,
 			':svg' => $data->svg,
@@ -34,7 +39,7 @@ switch($data->action) {
 		$result = $q->execute($vars);
 		if(!$result) {
 			echo (json_encode(['status' => 'error', 'msg' => $q->errorInfo()]));
-			return;
+			exit(0);;
 		}
 	 	break;
 
@@ -44,7 +49,7 @@ switch($data->action) {
 		$result = $q->execute([':id' => $data->id]);
 		if(!$result) {
 			echo (json_encode(['status' => 'error', 'msg' => $q->errorInfo()]));
-			return;
+			exit(0);
 		}
 		break;
 
@@ -53,6 +58,7 @@ switch($data->action) {
 			'id'     => $data->id,
 			'title'  => $data->title,
 			'description'  => $data->description,
+			'group' => $data->group,
 			'svg'   => $data->svg,
 		];
 
@@ -68,13 +74,18 @@ switch($data->action) {
 		$result = $q->execute($vars);
 		if(!$result) {
 			echo (json_encode(['status' => 'error', 'msg' => $q->errorInfo()]));
-			return;
+			exit(0);
 		}
 		break;
+}
 
-	default:
+function export($pdo) {
 		$sql = "select * from annotations";
 		$stm = $pdo->query($sql);
+		if(!$stm) {
+			echo (json_encode(['status' => 'error', 'msg' => $pdo->errorInfo()]));
+			exit(0);
+		}
 		$annotations = [];
 		while ($row = $stm->fetch()) {
 			$annotations[] =  [
@@ -92,11 +103,11 @@ switch($data->action) {
 					"value"=> $row['description'],
 					"purpose"=> "describing"
 					],
-/*					[
+					[
 					"type"=> "TextualBody",
-					"value"=> $row['class'],
+					"value"=> $row['group'],
 					"purpose"=> "classifying"
-					] */
+					] 
 				],
 				"target"=> [
 				  "selector"=> [
