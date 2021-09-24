@@ -15,7 +15,6 @@ class SvgAnnotationEditor {
 			currentLine: [],
 			annotation: null,
 			priority: 20000,
-			multiple: true, //if true multiple elements per annotation.
 			groups: {
 				''      : { stroke: '#000', label: '' },
 				'class1': { stroke: '#770', label: '' },
@@ -76,7 +75,7 @@ class SvgAnnotationEditor {
 		lime.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
 		layer.addEvent('selected', (anno) => {
-			if(anno == this.annotation)
+			if(!anno || anno == this.annotation)
 				return;
 			this.showEditWidget(anno);
 		});
@@ -151,6 +150,8 @@ class SvgAnnotationEditor {
 
 	showEditWidget(anno) {
 		this.annotation = anno;
+		this.setTool(null);
+		this.setActiveTool();
 		this.layer.annotationsListEntry.element.querySelector('.openlime-edit').classList.add('active');
 		(async () => { 
 			await this.createEditWidget();
@@ -187,16 +188,16 @@ class SvgAnnotationEditor {
 		
 		let tools = edit.querySelector('.openlime-annotation-edit-tools');
 		
-		let setActive = e => { tools.querySelectorAll('svg').forEach(a => a.classList.remove('active')); if(e) e.classList.add('active'); };
+
 
 		let draw = await Skin.appendIcon(tools, '.openlime-draw'); 
-		draw.addEventListener('click', (e) => { this.setTool(this.annotation, 'line'); setActive(draw); });
+		draw.addEventListener('click', (e) => { this.setTool('line'); this.setActiveTool(draw); });
 
 //		let pen = await Skin.appendIcon(tools, '.openlime-pen'); 
-//		pen.addEventListener('click', (e) => { this.setTool(this.annotation, 'pen'); setActive(pen); });
+//		pen.addEventListener('click', (e) => { this.setTool('pen'); setActive(pen); });
 
 		let erase = await Skin.appendIcon(tools, '.openlime-erase'); 
-		erase.addEventListener('click', (e) => { this.setTool(this.annotation, 'erase'); setActive(erase); });
+		erase.addEventListener('click', (e) => { this.setTool('erase'); this.setActiveTool(erase); });
 
 		let undo = await Skin.appendIcon(tools, '.openlime-undo'); 
 		undo.addEventListener('click', (e) => { this.undo(); });
@@ -253,6 +254,7 @@ class SvgAnnotationEditor {
 		let entry =  template.content.firstChild;
 		//TODO find a better way to locate the entry!
 		this.layer.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).replaceWith(entry);
+		this.layer.setSelected(anno);
 	}
 
 	deleteSelected() {
@@ -326,16 +328,25 @@ class SvgAnnotationEditor {
 		e.click();
 		document.body.removeChild(e);
 	}
-	
-	setTool(annotation, tool) {
-		this.annotation = annotation;
+	setActiveTool(e) { 
+		if(!this.editWidget) return;
+		let tools = this.editWidget.querySelector('.openlime-annotation-edit-tools');
+		tools.querySelectorAll('svg').forEach(a => 
+			a.classList.remove('active')); 
+		if(e) 
+			e.classList.add('active'); 
+	}
+	setTool(tool) {
 		this.tool = tool;
+		if(this.factory && this.factory.quit)
+			this.factory.quit();
 		if (tool) {
 			if (!tool in this.tools)
 				throw "Unknown editor tool: " + tool;
 
 			this.factory = new this.tools[tool].tool();
-			this.factory.annotation = annotation;
+			this.factory.annotation = this.annotation;
+			this.factory.layer = this.layer;
 		}
 		document.querySelector('.openlime-overlay').classList.toggle('erase', tool =='erase');
 		document.querySelector('.openlime-overlay').classList.toggle('crosshair', tool && tool !='erase');
@@ -407,6 +418,7 @@ class SvgAnnotationEditor {
 		switch (e.key) {
 			case 'Escape':
 				if (this.tool) {
+					this.setActiveTool();
 					this.setTool(null);
 					e.preventDefault();
 				}
@@ -428,7 +440,7 @@ class SvgAnnotationEditor {
 	}
 
 	panStart(e) {
-		if (e.buttons != 1 || e.ctrlKey || e.shiftKey || e.metaKey)
+		if (e.buttons != 1 || e.ctrlKey || e.altKey || e.shiftKey || e.metaKey)
 			return;
 		if (!['line', 'erase', 'box', 'circle'].includes(this.tool))
 			return;
@@ -462,18 +474,25 @@ class SvgAnnotationEditor {
 		let changed = this.factory.finish(pos, e);
 		if(!changed) //nothing changed no need to keep current situation in history.
 			this.annotation.history.pop();
-
+		else
+			this.saveAnnotation();
 		this.annotation.needsUpdate = true;
-		this.saveAnnotation();
-		console.log(this.annotation.selector.elements);
+		this.lime.redraw();
+	}
 
-	if (!this.multiple)
-			this.setTool(null);
+	fingerHover(e) {
+		if(this.tool != 'line')
+			return;
+		e.preventDefault();
+		const pos = this.mapToSvg(e);
+		let changed = this.factory.hover(pos, e);
+		this.annotation.needsUpdate = true;
+		this.lime.redraw();
 	}
 
 	fingerSingleTap(e) {
 		console.log(e);
-		if (!['point', 'line'].includes(this.tool))
+		if (!['point', 'line', 'erase'].includes(this.tool))
 			return;
 		e.preventDefault();
 
@@ -483,11 +502,10 @@ class SvgAnnotationEditor {
 		let changed = this.factory.tap(pos, e)
 		if(!changed) //nothing changed no need to keep current situation in history.
 			this.annotation.history.pop();
-		
-			this.annotation.needsUpdate = true;
+		else
+			this.saveAnnotation();
+		this.annotation.needsUpdate = true;
 
-		if (!this.multiple)
-			this.setTool(null);
 		this.lime.redraw();
 	}
 
@@ -513,6 +531,7 @@ class Point {
 
 class Pen {
 	constructor() {
+		//TODO Use this.path.points as in line, instead.
 		this.points = [];
 	}
 	create(pos) {
@@ -590,6 +609,10 @@ class Circle {
 class Line {
 
 	create(pos) {
+		if(this.segment) {
+			this.layer.svgGroup.removeChild(this.segment);
+			this.segment = null;
+		}
 		for(let e of this.annotation.selector.elements) {
 			if(!e.points || e.points.length < 2)
 				continue;
@@ -597,7 +620,7 @@ class Line {
 				e.points.reverse();
 				this.path = e;
 				this.points = e.points;
-				this.path.setAttribute('d', this.svgPath());
+				this.path.setAttribute('d', Line.svgPath());
 				//reverse points!
 				return;
 			}
@@ -622,6 +645,30 @@ class Line {
 			return true;
 		}
 	}
+	hover(pos, event) {
+		if(!this.path)
+			return false;
+		let s = this.path.points[this.path.points.length -1];
+		if(!this.segment) {
+			this.segment = createElement('path', { class: 'line' });
+			this.layer.svgGroup.appendChild(this.segment);
+		}
+		pos.x = pos.x - s.x;
+		pos.y = pos.y - s.y;
+		let len = Math.sqrt(pos.x*pos.x + pos.y*pos.y);
+		if(len > 30) {
+			pos.x *= 30/len;
+			pos.y *= 30/len;
+		}
+		this.segment.setAttribute('d', `M${s.x} ${s.y} l${pos.x} ${pos.y}`);
+		return true;
+	}
+	quit() {
+		if(this.segment) {
+			this.layer.svgGroup.removeChild(this.segment);
+			this.segment = null;
+		}
+	}
 
 	adjust(pos) {
 		let gap = Line.distanceToLast(this.path.points, pos);
@@ -638,22 +685,11 @@ class Line {
 		return true; //some changes where made!
 	}
 
-/*	undo() {
-		if(!this.history || !this.history.length)
-			return;
-		this.points = this.history.pop();
-		this.path.points = this.points;
-		this.path.setAttribute('d', this.svgPath(this.points));
-		return true;
-	} */
-
 	static svgPath(points) {
 		let tolerance = 2 / points[0].z;
 		let tmp = simplify(points, tolerance);
 
 		let smoothed = smooth(tmp, 90, true);
-		return smoothToPath(smoothed);
-		
 		return points.map((p, i) =>  `${(i == 0? "M" : "L")}${p.x} ${p.y}`).join(' '); 
 	}
 	static distanceToLast(line, point) {
@@ -671,13 +707,14 @@ class Erase {
 	create(pos, event) { this.erased = false; this.erase(pos, event); }
 	adjust(pos, event) { this.erase(pos, event); }
 	finish(pos, event) { return this.erase(pos, event); } //true if some points where removed.
+	tap(pos, event) { return this.erase(pos, event); }
 	erase(pos, event) {
 		for(let e of this.annotation.selector.elements) {
 			let points = e.points;
 			if(!points) { //remove entire line for old lines
 				if(e != event.originSrc)
 					continue;
-				this.points = [];
+				e.points = [];
 				this.erased = true;
 				continue;
 			}

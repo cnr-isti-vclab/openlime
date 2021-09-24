@@ -119,7 +119,7 @@ class AnnotationLayer extends Layer {
 			if(id) {
 				this.clearSelected();
 				let anno = this.getAnnotationById(id);
-				this.setSelected(anno);
+				this.setSelected(anno, true);
 			}
 		});
 	}

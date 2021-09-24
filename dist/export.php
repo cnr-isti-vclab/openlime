@@ -1,18 +1,10 @@
 <?php
 
+include('database.php');
+
 $request_body = file_get_contents('php://input');
 $data = json_decode($request_body);
 
-$server = 'mysql:host=localhost';
-$user = 'openlime';
-$password = 'not12345';
-$database = 'openlime';
-
-/*$server = "mysql:unix_socket='/var/run/mysqld/mysqld.sock'";
-$server = 'mysql:host=91.216.107.219';
-$user = 'mercu1165701_1363u';
-$password = 'tq75uh8fui';
-$database = 'mercu1165701_1363u'; */
 
 $style = ".openlime-annotation { pointer-events:stroke; opacity: 0.7; }
 .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
@@ -33,11 +25,11 @@ try {
 	return;
 }
 
-$sql = "select id, `code`, class, description, selector_value from annotations";
+$sql = "select id, title, group, description, svg from annotations";
 $stm = $pdo->query($sql);
 echo("<svg xmlns=\"http://www.w3.org/2000/svg\">\n<style>\n$style\n</style>\n");
 while ($row = $stm->fetch()) {
-	$xml = new SimpleXMLElement($row['selector_value']);
+	$xml = new SimpleXMLElement($row['svg']);
 	foreach($xml as $e)
 		echo( $e->asXML()."\n");
 }
