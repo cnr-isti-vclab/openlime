@@ -15,7 +15,7 @@ class SvgAnnotationEditor {
 			currentLine: [],
 			annotation: null,
 			priority: 20000,
-			groups: {
+			classes: {
 				''      : { stroke: '#000', label: '' },
 				'class1': { stroke: '#770', label: '' },
 				'class2': { stroke: '#707', label: '' },
@@ -70,7 +70,7 @@ class SvgAnnotationEditor {
 			deleteCallback: null
 		}, options);
 
-		layer.style += Object.entries(this.groups).map((g) => `[group=${g[0]}] { stroke:${g[1].stroke}; }`).join('\n');
+		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`).join('\n');
 		//at the moment is not really possible to unregister the events registered here.
 		lime.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
@@ -142,13 +142,13 @@ class SvgAnnotationEditor {
 		let edit = this.editWidget;
 		if(!anno.class)
 			anno.class = '';
-		edit.querySelector('[name=title]').value = anno.title || '';
+		edit.querySelector('[name=label]').value = anno.label || '';
 		edit.querySelector('[name=description]').value = anno.description || '';
-		edit.querySelector('[name=groups]').value = anno.class;
+		edit.querySelector('[name=classes]').value = anno.class;
 		edit.classList.remove('hidden');
 		let button = edit.querySelector('.openlime-select-button');
-		button.textContent = this.groups[anno.class].label;
-		button.style.background = this.groups[anno.class].stroke;
+		button.textContent = this.classes[anno.class].label;
+		button.style.background = this.classes[anno.class].stroke;
 	}
 
 	showEditWidget(anno) {
@@ -177,17 +177,17 @@ class SvgAnnotationEditor {
 
 		let html = `
 				<div class="openlime-annotation-edit">
-					<span>Title:</span> <input name="title" type="text">
+					<span>Title:</span> <input name="label" type="text">
 					<span>Description:</span> <input name="description" type="text">
 					
 
 					<span>Class:</span> 
 					<div class="openlime-select">
-						<input type="hidden" name="groups" value=""/>
+						<input type="hidden" name="classes" value=""/>
 						<div class="openlime-select-button"></div>
 						<ul class="openlime-select-menu">
-						${Object.entries(this.groups).map((c) => 
-							`<li rel="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
+						${Object.entries(this.classes).map((c) => 
+							`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
 					<div class="openlime-annotation-edit-tools"></div>
@@ -200,7 +200,7 @@ class SvgAnnotationEditor {
 		let button = edit.querySelector('.openlime-select-button');
 		let ul = edit.querySelector('ul');
 		let options = edit.querySelectorAll('li');
-		let input = edit.querySelector('[name=groups]');
+		let input = edit.querySelector('[name=classes]');
 
 		button.addEventListener('click', (e) => {
 			e.stopPropagation();
@@ -213,10 +213,9 @@ class SvgAnnotationEditor {
 		ul.addEventListener('click', (e) => {
 			e.stopPropagation();
 			
-			let group = e.srcElement.getAttribute('rel');
-			input.value = group;
+			input.value = e.srcElement.getAttribute('data-classes');
 			input.dispatchEvent(new Event('change'));
-			button.style.background = this.groups[group].stroke;
+			button.style.background = this.classes[input.value].stroke;
 			button.textContent = e.srcElement.textContent;
 
 			select.classList.toggle('active');
@@ -250,14 +249,14 @@ class SvgAnnotationEditor {
 /*		let colorpick = await Skin.appendIcon(tools, '.openlime-colorpick'); 
 		undo.addEventListener('click', (e) => { this.pickColor(); }); */
 
-		let title = edit.querySelector('[name=title]');
-		title.addEventListener('blur', (e) => { if(this.annotation.title != title.value) this.saveCurrent(); this.saveAnnotation(); });
+		let label = edit.querySelector('[name=label]');
+		label.addEventListener('blur', (e) => { if(this.annotation.label != label.value) this.saveCurrent(); this.saveAnnotation(); });
 
 		let descr = edit.querySelector('[name=description]');
 		descr.addEventListener('blur', (e) => { if(this.annotation.description != descr.value) this.saveCurrent(); this.saveAnnotation(); });
 
-		let groups = edit.querySelector('[name=groups]');
-		groups.addEventListener('change', (e) => { if(this.annotation.class != groups.value) this.saveCurrent(); this.saveAnnotation(); });
+		let classes = edit.querySelector('[name=classes]');
+		classes.addEventListener('change', (e) => { if(this.annotation.class != classes.value) this.saveCurrent(); this.saveAnnotation(); });
 
 		edit.classList.add('hidden');
 		this.editWidget = edit;
@@ -270,34 +269,33 @@ class SvgAnnotationEditor {
 		let edit = this.editWidget;
 		let anno = this.annotation;
 
-		
-
-		anno.title = edit.querySelector('[name=title]').value;
-		anno.description = edit.querySelector('[name=description]').value;
-		let select = edit.querySelector('[name=groups]');
-		anno.group = anno.class = select.value;
-		if(!anno.class)
-			anno.group = anno.class = '';
+		anno.label = edit.querySelector('[name=label]').value || '';
+		anno.description = edit.querySelector('[name=description]').value || '';
+		let select = edit.querySelector('[name=classes]');
+		anno.class = select.value || '';
 
 		let button = edit.querySelector('.openlime-select-button');
-		button.style.background = this.groups[anno.class].stroke;
+		button.style.background = this.classes[anno.class].stroke;
 
 		for(let e of this.annotation.selector.elements)
-			e.setAttribute('group', anno.group);
+			e.setAttribute('data-class', anno.class);
 
-		let post = { id: anno.id, title: anno.title, description: anno.description, group: anno.group };
+		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class };
 		//anno.bbox = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
 		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">
 				${anno.selector.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
 				</svg>`;
+
 		if(this.updateCallback) {
 			let result = this.updateCallback(post);
 			if(!result) {
 				alert("Failed to update annotation");
 				return;
 			}
-		}
+		}				//for (let c of element.children)
+			//		a.selector.elements.push(c);
+
 		//update the entry
 		let template = document.createElement('template');
 		template.innerHTML = this.layer.createAnnotationEntry(anno);
@@ -316,7 +314,7 @@ class SvgAnnotationEditor {
 	deleteAnnotation(id) {
 		let anno = this.layer.getAnnotationById(id);
 		if(this.deleteCallback) {
-			if(!confirm(`Deleting annotation ${anno.title}, are you sure?`))
+			if(!confirm(`Deleting annotation ${anno.label}, are you sure?`))
 				return;
 			let result = this.deleteCallback(anno);
 			if(!result)  {
@@ -359,7 +357,7 @@ class SvgAnnotationEditor {
 
 		let svg = serializer.serializeToString(svgElement);
 		/*(${this.layer.annotations.map(anno => {
-			return `<group id="${anno.id}" title="${anno.title}" data-description="${anno.description}">
+			return `<group id="${anno.id}" title="${anno.label}" data-description="${anno.description}">
 				${anno.selector.elements.map((s) => { 
 					s.classList.remove('selected'); 
 					return serializer.serializeToString(s) 
@@ -462,14 +460,14 @@ class SvgAnnotationEditor {
 
 	annoToData(anno) {
 		let data = {};
-		for( let i of ['id', 'title', 'description', 'group'])
+		for( let i of ['id', 'label', 'description', 'class'])
 			data[i] = `${anno[i] || ''}`;
 		data.elements = anno.selector.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
 		return data;
 	}
 
 	dataToAnno(data, anno) {
-		for( let i of ['id', 'title', 'description', 'group'])
+		for( let i of ['id', 'label', 'description', 'class'])
 			anno[i] = `${data[i]}`;
 		anno.selector.elements = data.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; } );
 	}

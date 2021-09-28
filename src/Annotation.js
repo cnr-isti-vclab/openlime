@@ -8,7 +8,7 @@ class Annotation {
 			{
 				id: Annotation.UUID(),
 				code: null,
-				title: null,
+				label: null,
 				description: null,
 				class: null,
 				target: null,
@@ -56,7 +56,7 @@ class Annotation {
 			throw "Not a jsonld annotation.";
 		let options = {id: entry.id};
 
-		let rename = { 'identifying': 'code', 'identifying': 'title', 'describing': 'description', 'classifying':'class' };
+		let rename = { 'identifying': 'code', 'identifying': 'label', 'describing': 'description', 'classifying':'class' };
 		for(let item of entry.body) {
 			let field = rename[item.purpose];
 			if(field)

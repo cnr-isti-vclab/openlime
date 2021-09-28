@@ -19,14 +19,14 @@ if(!$data) {
 
 switch($data->action) {
 	case 'create':
-		$sql = "INSERT INTO annotations (id, title, description, `group`, svg) " .
-			"VALUES (:id, :title, :description, :group, :svg)";
+		$sql = "INSERT INTO annotations (id, label, description, `class`, svg) " .
+			"VALUES (:id, :label, :description, :class, :svg)";
 		$q = $pdo->prepare($sql);
 		$vars = [
 			':id'     => $data->id,
 //			':code'  => $data->code,
-			':group'  => $data->group,
-			':title'  => $data->title,
+			':class'  => $data->class,
+			':label'  => $data->label,
 			':description'  => $data->description,
 			':svg' => $data->svg,
 //			':selector_type'  => $data->selector_type, 
@@ -56,9 +56,9 @@ switch($data->action) {
 	case 'update':
 		$vars = [
 			'id'     => $data->id,
-			'title'  => $data->title,
+			'label'  => $data->label,
 			'description'  => $data->description,
-			'group' => $data->group,
+			'class' => $data->class,
 			'svg'   => $data->svg,
 		];
 
@@ -89,7 +89,17 @@ function export($pdo) {
 		$annotations = [];
 		while ($row = $stm->fetch()) {
 			$annotations[] =  [
-				"@context" => "http://www.w3.org/ns/anno.jsonld",
+				"id" => $row['id'],
+				"label"=> $row['label'],
+				"class"=> $row['class'],
+				"description"=> $row['description'],
+				"selector"=> [
+					"type"=> "SvgSelector",
+					"value"=> $row["svg"]
+				]
+			];
+
+/*				"@context" => "http://www.w3.org/ns/anno.jsonld",
 				"id" => $row['id'],
 				"type"=> "Annotation",
 				"body"=> [
@@ -105,7 +115,7 @@ function export($pdo) {
 					],
 					[
 					"type"=> "TextualBody",
-					"value"=> $row['group'],
+					"value"=> $row['class'],
 					"purpose"=> "classifying"
 					] 
 				],
@@ -115,7 +125,7 @@ function export($pdo) {
 					"value"=> $row["svg"]
 				  ]
 				]
-			];
+*/				
 		}
 		echo(json_encode($annotations));
 		return;

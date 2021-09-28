@@ -111,8 +111,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 			if (!a.ready && typeof a.selector.value == 'string') {
 				let parser = new DOMParser();
 				let element = parser.parseFromString(a.selector.value, "image/svg+xml").documentElement;
-				for (let c of element.children)
-					a.selector.elements.push(c);
+				a.selector.elements = [...element.children]
 				a.ready = true;
 
 				/*				} else if(this.svgXML) {
@@ -138,6 +137,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 			for (let child of a.selector.elements) {
 				let c = child; //.cloneNode(true);
 				c.setAttribute('data-annotation', a.id);
+				c.setAttribute('data-class', a.class);
 				//c.setAttribute('data-layer', this.id);
 				c.classList.add('openlime-annotation');
 				if (this.selected.has(a.id))
