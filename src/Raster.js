@@ -33,8 +33,8 @@ class Raster {
 	}
 
 
-	loadImage(tile, gl, callback) {
-		(async () => {
+	async loadImage(tile, gl, callback) {
+		//(async () => {
 			let options = {};
 			if(tile.end)
 				options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity' }
@@ -45,36 +45,47 @@ class Raster {
 			}
 
 			let blob = await response.blob();
+			return await this.blobToImage(blob, gl, callback);
+			
+		//})().catch(e => { callback(null); });
+	}
 
-			if(typeof createImageBitmap != 'undefined') {
-				var isFirefox = typeof InstallTrigger !== 'undefined';
-				//firefox does not support options for this call, BUT the image is automatically flipped.
-				if(isFirefox) {
-					createImageBitmap(blob).then((img) => this.loadTexture(gl, img, callback));
-				} else {
-					createImageBitmap(blob, { imageOrientation1: 'flipY' }).then((img) => this.loadTexture(gl, img, callback));
-				}
+	async blobToImage(blob, gl, callback) {
+		let tex, img;
+		if(typeof createImageBitmap != 'undefined') {
+			var isFirefox = typeof InstallTrigger !== 'undefined';
+			//firefox does not support options for this call, BUT the image is automatically flipped.
+			if(isFirefox) {
+				createImageBitmap(blob).then((img) => this.loadTexture(gl, img, callback));
+			} else {
+				img = await createImageBitmap(blob, { imageOrientation1: 'flipY' });
+				tex = this.loadTexture(gl, img, callback);
 
-			} else { //fallback for IOS
-				let urlCreator = window.URL || window.webkitURL;
-				let img = document.createElement('img');
-				img.onerror = function(e) { console.log("Texture loading error!"); };
-				img.src = urlCreator.createObjectURL(blob);
-
-				img.onload = function() {
-					urlCreator.revokeObjectURL(img.src);
-
-
-					this.loadTexture(gl, img, callback);
-				}
 			}
-		})().catch(e => { callback(null); });
+
+		} else { //fallback for IOS
+			let urlCreator = window.URL || window.webkitURL;
+			img = document.createElement('img');
+			img.onerror = function(e) { console.log("Texture loading error!"); };
+			img.src = urlCreator.createObjectURL(blob);
+
+			img.onload = function() {
+				urlCreator.revokeObjectURL(img.src);
+
+
+				tex = this.loadTexture(gl, img, callback);
+			}
+		}
+		let size = img.width*img.height*3;
+		return [tex, size];
+		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
+		callback(tex, img.width*img.height*3);
 	}
 /*
  * @param {function} callback as function(tex, sizeinBytes)
  */
 
-	loadTexture(gl, img, callback) {
+	loadTexture(gl, img) {
 		this.width = img.width;  //this will be useful for layout image.
 		this.height = img.height;
 
@@ -85,8 +96,7 @@ class Raster {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
-		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
-		callback(tex, img.width*img.height*3);
+		return tex;
 	}
 }
 

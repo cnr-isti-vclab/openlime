@@ -10,7 +10,8 @@ class Controller2D extends Controller {
 
 	constructor(callback, options) {
 		super(options);
-
+		//By default the controller is active only with no modifiers.
+		//you can select which subsets of the modifiers are active.
 		this.callback = callback;
 		if(!this.box) {
 			this.box = new BoundingBox({xLow:-0.99, yLow: -0.99, xHigh: 0.99, yHigh: 0.99});
@@ -29,7 +30,7 @@ class Controller2D extends Controller {
 	}
 
 	panStart(e) {
-		if(!this.active)
+		if(!this.active || !this.activeModifiers.includes(this.modifierState(e)))
 			return;
 		this.update(e);
 		this.panning = true;
@@ -49,6 +50,8 @@ class Controller2D extends Controller {
 	}
 
 	fingerSingleTap(e) {
+		if(!this.active || !this.activeModifiers.includes(this.modifierState(e)))
+			return;
 		this.update(e);
 		e.preventDefault();
 	}

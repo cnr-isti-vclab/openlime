@@ -504,33 +504,60 @@ class Layer {
 		Cache.setCandidates(this);
 	}
 
-	loadTile(tile, callback) {
+	async loadTile(tile, callback) {
 		if(this.requested[tile.index])
 			throw"AAARRGGHHH double request!";
 
 		this.requested[tile.index] = true;
 
+		if(this.layout.type == 'itarzoom') {
+			tile.url = this.layout.getTileURL(this.layout.url, tile);
+			let options = {};
+			if(tile.end)
+				options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity' }
+			
+			var response = await fetch(tile.url, options);
+			if(!response.ok) {
+				callback("Failed loading " + tile.url + ": " + response.statusText);
+				return;
+			}
+			let blob = await response.blob();
+			
+			console.log(this.shader.samplers.length);
+			let i = 0;
+			for(let sampler of this.shader.samplers) {
+				let raster = this.rasters[sampler.id];
+				let imgblob = blob.slice(tile.offsets[i], tile.offsets[i+1]);
+				const [tex, size] = await raster.blobToImage(imgblob, this.gl);
+				tile.size += size;
+				tile.tex[sampler.id] = tex;
+				i++;
+			}
+			tile.missing = 0;
+			this.emit('update');
+			delete this.requested[tile.index];
+			if(callback) callback(tile.size);
+			return;
+		}
+
 		for(let sampler of this.shader.samplers) {
 			
 			let raster = this.rasters[sampler.id];
 			tile.url = raster.layout.getTileURL(raster.url, tile);
-
-			raster.loadImage(tile, this.gl, (tex, size) => {
-
-				if(this.layout.type == "image") {
-					this.layout.width = raster.width;
-					this.layout.height = raster.height;
-					this.layout.initBoxes();
-				}
-				tile.size += size;
-				tile.tex[sampler.id] = tex;
-				tile.missing--;
-				if(tile.missing <= 0) {
-					this.emit('update');
-					delete this.requested[tile.index];
-					if(callback) callback(size);
-				}
-			});
+			const [tex, size] = await raster.loadImage(tile, this.gl);
+			if(this.layout.type == "image") {
+				this.layout.width = raster.width;
+				this.layout.height = raster.height;
+				this.layout.initBoxes();
+			}
+			tile.size += size;
+			tile.tex[sampler.id] = tex;
+			tile.missing--;
+			if(tile.missing <= 0) {
+				this.emit('update');
+				delete this.requested[tile.index];
+				if(callback) callback(size);
+			}
 		}
 	}
 

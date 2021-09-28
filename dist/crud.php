@@ -19,7 +19,7 @@ if(!$data) {
 
 switch($data->action) {
 	case 'create':
-		$sql = "INSERT INTO annotations (id, title, description, group, svg) " .
+		$sql = "INSERT INTO annotations (id, title, description, `group`, svg) " .
 			"VALUES (:id, :title, :description, :group, :svg)";
 		$q = $pdo->prepare($sql);
 		$vars = [

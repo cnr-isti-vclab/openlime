@@ -135,7 +135,7 @@ skin.svg
 
 Run 
 ```bash
-svgo -p skin.svg -o skin.min.svg
+svgo -p 1 skin.svg -o skin.min.svg
 ```
 to minimize svg.
 

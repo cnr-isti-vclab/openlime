@@ -34,6 +34,7 @@ class Layout {
 					case 'deepzoom1px': await this.initDeepzoom(true); break;
 					case 'deepzoom': await this.initDeepzoom(false); break;
 					case 'tarzoom':  await this.initTarzoom(); break;
+					case 'itarzoom':  await this.initITarzoom(); break;
 					case 'zoomify':  await this.initZoomify(); break;
 					case 'iiif':     await this.initIIIF(); break;
 				}
@@ -308,6 +309,30 @@ class Layout {
 		this.getTileURL = (url, tile) => {
 			tile.start = this.offsets[tile.index];
 			tile.end = this.offsets[tile.index+1];
+			url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
+			return url; // + level + '/' + x + '_' + y + '.' + this.suffix;
+		}; 
+	}
+
+
+	async initITarzoom() {		
+		var response = await fetch(this.url);
+		if(!response.ok) {
+			this.status = "Failed loading " + this.url + ": " + response.statusText;
+			return;
+		}
+		let json = await response.json();
+		Object.assign(this, json); //suffix, tilesize, overlap, width, height, levels
+		//this.nlevels = this.levels.length;
+		this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '.tzb';
+
+		this.getTileURL = (url, tile) => {
+			let index = tile.index*this.stride;
+			tile.start = this.offsets[index];
+			tile.end = this.offsets[index+this.stride];
+			tile.offsets = []
+			for(let i = 0; i < this.stride+1; i++)
+				tile.offsets.push(this.offsets[index + i] - tile.start);
 			url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
 			return url; // + level + '/' + x + '_' + y + '.' + this.suffix;
 		}; 

@@ -69,14 +69,13 @@ class OpenLIME {
 
 		this.canvas = new Canvas(this.canvasElement, this.overlayElement, this.camera, this.canvas);
 		this.canvas.addEvent('update', () => { this.redraw(); });
-		this.camera.addEvent('update', () => { this.redraw(); });
 
 		this.pointerManager = new PointerManager(this.overlayElement);
 
 		this.canvasElement.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            return false;
-        });
+			e.preventDefault();
+			return false;
+		});
 		
 		var resizeobserver = new ResizeObserver( entries => {
 			for (let entry of entries) {

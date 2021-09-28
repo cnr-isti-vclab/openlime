@@ -70,7 +70,6 @@ function testAnnotationEditor() {
 
 	}); 
 	lime.canvas.addLayer('anno', layer1); //here the overlayelement created and attached to layer1
-	
 	Skin.setUrl('skin.svg');
 
 	let editor = new SvgAnnotationEditor(lime, layer1, { lime: lime });
@@ -85,6 +84,8 @@ function testAnnotationEditor() {
 	};
 	
 	let ui = new UIBasic(lime);
+	lime.camera.maxFixedZoom = 4;
+
 
 	editor.createCallback = (annotation) => { console.log("Created annotation: ", annotation); return true; };
 	editor.deleteCallback = (annotation) => { console.log("Deleted annotation: ", annotation); return true; };

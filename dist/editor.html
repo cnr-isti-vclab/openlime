@@ -83,67 +83,41 @@ let anno = new OpenLIME.SvgAnnotationLayer({
 
 lime.canvas.addLayer('anno', anno); //here the overlayelement created and attached to layer
 
+lime.camera.maxFixedZoom = 4;
+
 OpenLIME.Skin.setUrl('skin.svg');
 
 let editor = new OpenLIME.SvgAnnotationEditor(lime, anno, { 
 	lime: lime, 
 	groups: {
 		'': { stroke: '#000', label: '' },
-		'class1': { stroke: '#770', label: '' },
-		'class2': { stroke: '#707', label: '' },
-		'class3': { stroke: '#777', label: '' },
-		'class4': { stroke: '#070', label: '' },
-		'class5': { stroke: '#007', label: '' },
-		'class6': { stroke: '#077', label: '' },
+		'class1': { stroke: '#770', label: 'A' },
+		'class2': { stroke: '#707', label: 'B' },
+		'class3': { stroke: '#777', label: 'C' },
+		'class4': { stroke: '#070', label: 'D' },
+		'class5': { stroke: '#007', label: 'E' },
+		'class6': { stroke: '#077', label: 'F' },
 	}
 });
 
 let ui = new OpenLIME.UIBasic(lime);
 
-editor.createCallback = (anno) => { console.log("Created annotation: ", anno); createAnnotation(anno); return true; };
-editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); deleteAnnotation(anno); return true; };
-editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); updateAnnotation(anno); return true; };
+editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
+editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
+editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); processRequest(anno, 'update'); return true; };
 
 editor.multiple = true;
 
-
-async function updateAnnotation(anno) {
-	(async () => {
-	anno.action = 'update';
+async function processRequest(anno, action) {
+	anno.action = action;
 	const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(anno)});
 	if (!response.ok) {
-		 const message = `An error has occured: ${response.status}`;
+		 const message = `An error has occured: ${response.status} ${response.statusText} `;
+		 alert(message);
 		 throw new Error(message);
 	}
 	let json = await response.json();
 	console.log(json);
-	})();
-}
-
-async function createAnnotation(anno) {
-(async () => {
-	anno.action = 'create';
-	const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(anno)});
-	if (!response.ok) {
-		 const message = `An error has occured: ${response.status}`;
-		 throw new Error(message);
-	}
-	let json = await response.json();
-	console.log(json);
-})();
-}
-
-async function deleteAnnotation(anno) {
-(async () => {
-	anno.action = 'delete';
-	const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(anno)});
-	if (!response.ok) {
-		 const message = `An error has occured: ${response.status}`;
-		 throw new Error(message);
-	}
-	let json = await response.json();
-	console.log(json);
-})();
 }
 
 </script>

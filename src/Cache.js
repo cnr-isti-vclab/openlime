@@ -91,7 +91,7 @@ class _Cache {
  */
 	loadTile(layer, tile) {
 		this.requested++;
-		layer.loadTile(tile, (size) => { this.size += size; this.requested--; this.update(); } );
+		(async () =>  { layer.loadTile(tile, (size) => { this.size += size; this.requested--; this.update(); } ); })();
 	}
 /*
  */

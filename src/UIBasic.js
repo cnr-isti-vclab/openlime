@@ -1,6 +1,7 @@
 import { Canvas } from './Canvas.js'
 import { Skin } from './Skin.js'
 import { Layer } from './Layer.js'
+import { Controller } from './Controller.js'
 import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { PointerManager } from './PointerManager.js'
@@ -118,7 +119,10 @@ class UIBasic {
 			document.addEventListener('keydow', (e) => this.keyDown(e), false);
 			document.addEventListener('keyup', (e) => this.keyUp(e), false);
 
-			let panzoom = new ControllerPanZoom(this.lime.camera, { priority: -1000 });
+			let panzoom = this.panzoom = new ControllerPanZoom(this.lime.camera, { 
+				priority: -1000, 
+				activeModifiers: [0, 1] 
+			});
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 			this.lime.pointerManager.on("fingerSingleTap", {"fingerSingleTap": (e) => { this.showInfo(e);}, priority: 10000 });
 			
@@ -138,7 +142,7 @@ class UIBasic {
 				let controller = new Controller2D((x, y) => {
 					for (let layer of lightLayers)
 						layer.setLight([x, y], 0);
-				}, { active: false, control: 'light' });
+				}, { active: true, activeModifiers: [2, 4], control: 'light' });
 
 				controller.priority = 0;
 				this.lime.pointerManager.onEvent(controller);
@@ -367,8 +371,10 @@ class UIBasic {
 
 		for (let layer of Object.values(this.lime.canvas.layers))
 			for (let c of layer.controllers)
-				if (c.control == 'light')
-					c.active = active;
+				if (c.control == 'light') {
+					c.active = true;
+					c.activeModifiers = active ? [0, 2, 4] : [2, 4];  //nothing, shift and alt
+				}
 	}
 
 	toggleFullscreen() {

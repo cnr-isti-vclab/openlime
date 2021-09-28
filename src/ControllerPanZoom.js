@@ -19,7 +19,7 @@ class ControllerPanZoom extends Controller {
 	}
 
 	panStart(e) {
-		if(!this.active || this.panning)
+		if(!this.active || this.panning || !this.activeModifiers.includes(this.modifierState(e)))
 			return;
 		this.panning = true;
 
@@ -80,6 +80,8 @@ class ControllerPanZoom extends Controller {
 	}
 
 	fingerDoubleTap(e) {
+		if(!this.active || !this.activeModifiers.includes(this.modifierState(e)))
+			return;
 		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
 		const dz = this.zoomAmount;
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);

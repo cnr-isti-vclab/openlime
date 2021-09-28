@@ -259,3 +259,72 @@ g.openlime-expand {
 .openlime-overlay.crosshair {
 	cursor: crosshair;
 }
+
+/* Editor select */
+
+.openlime-select  {
+	background: #888; 
+	position: relative; 
+	cursor: pointer;
+	display: inline-block;
+	height:24px;
+	width:100%;
+}
+
+.openlime-select-button {
+	position:absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background-color: #888;
+	padding: 2px 15px;
+}
+.openlime-select-button:after {
+	content:"";
+	width: 0;
+	height: 0;
+	border: 7px solid transparent;
+	border-color: #fff transparent transparent transparent; 
+	position: absolute;
+	top: 8px;
+	right: 10px;
+}
+.openlime-select-button:hover {
+	background-color: #444;
+}
+
+.active .openlime-select-button {
+	background-color: #888;
+}
+.active .openlime-select-button:after {
+	top: 1px;	
+	border-color: transparent transparent #fff transparent; 
+
+}
+.openlime-select-menu { 
+	display: none;
+	position: absolute;
+	top: 100%;
+	right: 0;
+	left: 0;
+	z-index: 999;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.active .openlime-select-menu { display: block; }
+
+
+
+.openlime-select-menu li {
+	margin: 0;
+	padding: 2px 0;
+	text-indent: 15px;
+	/* border-top: 1px solid darken($select-background, 10); */
+/*	@include transition(all 0.15s ease-in); */
+}
+.openlime-select-menu li:hover {
+	color: #fff;
+	border: 1px #aaa;
+}
