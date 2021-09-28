@@ -117,6 +117,8 @@ async function processRequest(anno, action) {
 		 throw new Error(message);
 	}
 	let json = await response.json();
+	if(json.status == 'error')
+		alert(json.msg);
 	console.log(json);
 }
 

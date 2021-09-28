@@ -270,6 +270,8 @@ class SvgAnnotationEditor {
 		let edit = this.editWidget;
 		let anno = this.annotation;
 
+		
+
 		anno.title = edit.querySelector('[name=title]').value;
 		anno.description = edit.querySelector('[name=description]').value;
 		let select = edit.querySelector('[name=groups]');
@@ -283,13 +285,14 @@ class SvgAnnotationEditor {
 		for(let e of this.annotation.selector.elements)
 			e.setAttribute('group', anno.group);
 
+		let post = { id: anno.id, title: anno.title, description: anno.description, group: anno.group };
 		//anno.bbox = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
-		anno.svg = `<svg xmlns="http://www.w3.org/2000/svg">
+		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">
 				${anno.selector.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
 				</svg>`;
 		if(this.updateCallback) {
-			let result = this.updateCallback(anno);
+			let result = this.updateCallback(post);
 			if(!result) {
 				alert("Failed to update annotation");
 				return;
