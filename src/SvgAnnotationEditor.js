@@ -114,7 +114,8 @@ class SvgAnnotationEditor {
 
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
-		anno.svg = "";
+		anno.publish = 1;
+		anno.label = anno.description  = anno.class = '';
 		if(this.createCallback) {
 			let result = this.createCallback(anno);
 			if(!result)
@@ -145,6 +146,7 @@ class SvgAnnotationEditor {
 		edit.querySelector('[name=label]').value = anno.label || '';
 		edit.querySelector('[name=description]').value = anno.description || '';
 		edit.querySelector('[name=classes]').value = anno.class;
+		edit.querySelector('[name=publish]').checked = anno.publish == 1;
 		edit.classList.remove('hidden');
 		let button = edit.querySelector('.openlime-select-button');
 		button.textContent = this.classes[anno.class].label;
@@ -190,6 +192,7 @@ class SvgAnnotationEditor {
 							`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
+					<span><input type="checkbox" name="publish" value=""> Publish</span>
 					<div class="openlime-annotation-edit-tools"></div>
 				</div>`;
 		let template = document.createElement('template');
@@ -258,6 +261,9 @@ class SvgAnnotationEditor {
 		let classes = edit.querySelector('[name=classes]');
 		classes.addEventListener('change', (e) => { if(this.annotation.class != classes.value) this.saveCurrent(); this.saveAnnotation(); });
 
+		let publish = edit.querySelector('[name=publish]');
+		publish.addEventListener('change', (e) => { if(this.annotation.publish != publish.value) this.saveCurrent(); this.saveAnnotation(); });
+
 		edit.classList.add('hidden');
 		this.editWidget = edit;
 	}
@@ -271,6 +277,7 @@ class SvgAnnotationEditor {
 
 		anno.label = edit.querySelector('[name=label]').value || '';
 		anno.description = edit.querySelector('[name=description]').value || '';
+		anno.publish = edit.querySelector('[name=publish]').checked? 1 : 0;
 		let select = edit.querySelector('[name=classes]');
 		anno.class = select.value || '';
 
@@ -280,7 +287,7 @@ class SvgAnnotationEditor {
 		for(let e of this.annotation.selector.elements)
 			e.setAttribute('data-class', anno.class);
 
-		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class };
+		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class, publish: anno.publish };
 		//anno.bbox = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
 		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">
@@ -460,14 +467,14 @@ class SvgAnnotationEditor {
 
 	annoToData(anno) {
 		let data = {};
-		for( let i of ['id', 'label', 'description', 'class'])
+		for( let i of ['id', 'label', 'description', 'class', 'publish'])
 			data[i] = `${anno[i] || ''}`;
 		data.elements = anno.selector.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
 		return data;
 	}
 
 	dataToAnno(data, anno) {
-		for( let i of ['id', 'label', 'description', 'class'])
+		for( let i of ['id', 'label', 'description', 'class', 'publish'])
 			anno[i] = `${data[i]}`;
 		anno.selector.elements = data.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; } );
 	}

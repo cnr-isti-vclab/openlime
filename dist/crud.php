@@ -19,7 +19,7 @@ if(!$data) {
 
 switch($data->action) {
 	case 'create':
-		$sql = "INSERT INTO annotations (id, label, description, `class`, svg) " .
+		$sql = "INSERT INTO annotations (id, label, description, `class`, publish, svg) " .
 			"VALUES (:id, :label, :description, :class, :svg)";
 		$q = $pdo->prepare($sql);
 		$vars = [
@@ -28,6 +28,7 @@ switch($data->action) {
 			':class'  => $data->class,
 			':label'  => $data->label,
 			':description'  => $data->description,
+			':publish' => $data->publish,
 			':svg' => $data->svg,
 //			':selector_type'  => $data->selector_type, 
 //			':selector_value' => $data->selector_value,
@@ -59,6 +60,7 @@ switch($data->action) {
 			'label'  => $data->label,
 			'description'  => $data->description,
 			'class' => $data->class,
+			'publish' => $data->publish,
 			'svg'   => $data->svg,
 		];
 
@@ -93,6 +95,7 @@ function export($pdo) {
 				"label"=> $row['label'],
 				"class"=> $row['class'],
 				"description"=> $row['description'],
+				"publish" => $row['publish'],
 				"selector"=> [
 					"type"=> "SvgSelector",
 					"value"=> $row["svg"]
