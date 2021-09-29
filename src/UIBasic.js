@@ -55,7 +55,8 @@ class UIBasic {
 				rotate:     { title: 'Rotate',     display: false,  key: 'r', task: (event) => { camera.rotate(250, -45); } },
 				light:      { title: 'Light',      display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
 				ruler:      { title: 'Ruler',      display: false,            task: (event) => { this.startRuler(); } },
-				help:       { title: 'Help',       display: false,  key: '?', task: (event) => { this.showHelp(this.actions.help, true); }, html: '<p>Help here!</p>' },
+				help:       { title: 'Help',       display: false,  key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' },
+				snapshot:   { title: 'Snapshot',   display: false,            task: (event) => { this.snapshot() } },
 			},
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
@@ -404,7 +405,7 @@ class UIBasic {
 	endRuler() {
 	}
 
-	showHelp(help, on) {
+	toggleHelp(help, on) {
 		
 		if(!help.element) {
 			let html = `<div class="openlime-help-window"></div>`;
@@ -419,13 +420,28 @@ class UIBasic {
 			(async ()=> {
 				let close = await Skin.appendIcon(div, '.openlime-close');
 				close.classList.add('openlime-close');
-				close.addEventListener('click', () => this.showHelp(help, false ));
+				close.addEventListener('click', () => this.toggleHelp(help, false ));
 				div.appendChild(close);
 			})();
+			div.style.display = 'none';
 			this.lime.containerElement.appendChild(div);
 			help.element = div;
+			div.style.display
 		}
+		if(on == null)
+			on = help.element.style.display == 'none';
+
 		help.element.style.display = on? 'block' : 'none';
+	}
+	
+	snapshot() {
+		var e = document.createElement('a');
+		e.setAttribute('href', this.lime.canvas.canvasElement.toDataURL());
+		e.setAttribute('download', 'snapshot.png');
+		e.style.display = 'none';
+		document.body.appendChild(e);
+		e.click();
+		document.body.removeChild(e);
 	}
 
 	/* Layer management */

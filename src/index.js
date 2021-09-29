@@ -16,7 +16,7 @@ import { AnnotationLayer } from './AnnotationLayer.js'
 import { SvgAnnotationLayer } from './SvgAnnotationLayer.js'
 import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
 
-let lime = new OpenLIME('#openlime', { background: 'black' });
+let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 //combinerTest();
 //imageTest('deepzoom');
@@ -86,7 +86,9 @@ function testAnnotationEditor() {
 	let ui = new UIBasic(lime);
 	lime.camera.maxFixedZoom = 4;
 	ui.actions.help.display = true;
-	ui.actions.help.html = "This is just for the help";
+	ui.actions.help.html = "Help text could be here.";
+	ui.actions.snapshot.display = true;
+
 
 	editor.createCallback = (annotation) => { console.log("Created annotation: ", annotation); return true; };
 	editor.deleteCallback = (annotation) => { console.log("Deleted annotation: ", annotation); return true; };

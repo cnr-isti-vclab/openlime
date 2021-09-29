@@ -45,7 +45,8 @@
 
 
 <script>
-let lime = new OpenLIME.OpenLIME('#openlime');
+	//TODO: preserve is needed for snapshots, unfortunately we would have to recreate the webgl just before snapshot.
+let lime = new OpenLIME.OpenLIME('#openlime', { canvas: { preserveDrawingBuffer: true} });
 
 let layer0 = new OpenLIME.Layer({ 
 	label: '4',
@@ -101,6 +102,7 @@ let editor = new OpenLIME.SvgAnnotationEditor(lime, anno, {
 });
 
 let ui = new OpenLIME.UIBasic(lime);
+ui.actions.snapshot.display = true;
 ui.actions.help.display = true;
 ui.actions.help.html = `
 <h2>Help</h2>
