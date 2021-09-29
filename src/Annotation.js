@@ -27,6 +27,7 @@ class Annotation {
 				editing: false,
 			}, 
 			options);
+			this.selector.elements = []; //assign options is not recursive!!!
 	}
 
 	static UUID() {

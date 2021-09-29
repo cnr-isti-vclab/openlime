@@ -116,8 +116,9 @@ class SvgAnnotationEditor {
 		let anno = this.layer.newAnnotation();
 		anno.publish = 1;
 		anno.label = anno.description  = anno.class = '';
+		let post = { id: anno.id, label: anno.label, description:anno.description, 'class': anno.class, svg:null, publish: anno.publish };
 		if(this.createCallback) {
-			let result = this.createCallback(anno);
+			let result = this.createCallback(post);
 			if(!result)
 				alert("Failed to create annotation!");
 		}
@@ -216,7 +217,7 @@ class SvgAnnotationEditor {
 		ul.addEventListener('click', (e) => {
 			e.stopPropagation();
 			
-			input.value = e.srcElement.getAttribute('data-classes');
+			input.value = e.srcElement.getAttribute('data-class');
 			input.dispatchEvent(new Event('change'));
 			button.style.background = this.classes[input.value].stroke;
 			button.textContent = e.srcElement.textContent;
