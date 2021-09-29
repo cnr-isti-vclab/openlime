@@ -1,10 +1,9 @@
 
-let url = null;
+let url = 'skin.svg';
 let svg = null;
 let pad = 5;
 
 class Skin {
-	constructor() {}
 
 	static setUrl(u) { url = u; }
 	static async loadSvg() {
