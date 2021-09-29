@@ -33,7 +33,7 @@ class Raster {
 	}
 
 
-	async loadImage(tile, gl, callback) {
+	async loadImage(tile, gl) {
 		//(async () => {
 			let options = {};
 			if(tile.end)
@@ -45,23 +45,20 @@ class Raster {
 			}
 
 			let blob = await response.blob();
-			return await this.blobToImage(blob, gl, callback);
+			return await this.blobToImage(blob, gl);
 			
 		//})().catch(e => { callback(null); });
 	}
 
-	async blobToImage(blob, gl, callback) {
+	async blobToImage(blob, gl) {
 		let tex, img;
 		if(typeof createImageBitmap != 'undefined') {
 			var isFirefox = typeof InstallTrigger !== 'undefined';
 			//firefox does not support options for this call, BUT the image is automatically flipped.
-			if(isFirefox) {
-				createImageBitmap(blob).then((img) => this.loadTexture(gl, img, callback));
-			} else {
+			if(isFirefox)
+				img = await createImageBitmap(blob); 
+			else
 				img = await createImageBitmap(blob, { imageOrientation1: 'flipY' });
-				tex = this.loadTexture(gl, img, callback);
-
-			}
 
 		} else { //fallback for IOS
 			let urlCreator = window.URL || window.webkitURL;
@@ -69,17 +66,15 @@ class Raster {
 			img.onerror = function(e) { console.log("Texture loading error!"); };
 			img.src = urlCreator.createObjectURL(blob);
 
-			img.onload = function() {
-				urlCreator.revokeObjectURL(img.src);
-
-
-				tex = this.loadTexture(gl, img, callback);
-			}
+			await new Promise((resolve, reject) => { img.onload = () => resolve() });
+			urlCreator.revokeObjectURL(img.src);
+			
 		}
+		tex = this.loadTexture(gl, img);
+		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
 		let size = img.width*img.height*3;
 		return [tex, size];
-		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
-		callback(tex, img.width*img.height*3);
+		
 	}
 /*
  * @param {function} callback as function(tex, sizeinBytes)

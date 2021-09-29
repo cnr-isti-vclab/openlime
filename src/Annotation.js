@@ -29,6 +29,7 @@ class Annotation {
 			options);
 			//TODO label as null is problematic, sort this issue.
 			if(!this.label) this.label = ''; 
+			this.selector.elements = []; //assign options is not recursive!!!
 	}
 
 	static UUID() {

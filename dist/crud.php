@@ -17,27 +17,30 @@ if(!$data) {
 	return;
 }
 
+$vars = [
+	'id'     => $data->id,
+	'label'  => $data->label,
+	'description'  => $data->description,
+	'class' => $data->class,
+	'publish' => $data->publish,
+	'svg'   => $data->svg,
+];
+
+$keys = [];
+$values = [];
+$bind = [];
+foreach($vars as $key => $value) {
+	$keys[] = "`$key`";
+	$values[] = ":$key";
+	$bind[":$key"] = $value;
+}
+
 switch($data->action) {
 	case 'create':
-		$sql = "INSERT INTO annotations (id, label, description, `class`, publish, svg) " .
-			"VALUES (:id, :label, :description, :class, :svg)";
+		$sql = "INSERT INTO annotations (".implode(', ', $keys).") " .
+			"VALUES (".implode(',', $values).")";
 		$q = $pdo->prepare($sql);
-		$vars = [
-			':id'     => $data->id,
-//			':code'  => $data->code,
-			':class'  => $data->class,
-			':label'  => $data->label,
-			':description'  => $data->description,
-			':publish' => $data->publish,
-			':svg' => $data->svg,
-//			':selector_type'  => $data->selector_type, 
-//			':selector_value' => $data->selector_value,
-//			':left'   => $data->bbox->x,
-//			':bottom' => $data->bbox->y,
-//			':right'  => $data->bbox->width + $data->bbox->x,
-//			':top'    => $data->bbox->height + $data->bbox->y
-		];
-		$result = $q->execute($vars);
+		$result = $q->execute($bind);
 		if(!$result) {
 			echo (json_encode(['status' => 'error', 'msg' => $q->errorInfo()]));
 			exit(0);;
@@ -55,16 +58,6 @@ switch($data->action) {
 		break;
 
 	case 'update':
-		$vars = [
-			'id'     => $data->id,
-			'label'  => $data->label,
-			'description'  => $data->description,
-			'class' => $data->class,
-			'publish' => $data->publish,
-			'svg'   => $data->svg,
-		];
-
-	
 		$sql = "UPDATE annotations set";
 		$tmp = [];
 		foreach($vars as $key => $value) {
