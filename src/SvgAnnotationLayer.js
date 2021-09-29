@@ -112,6 +112,8 @@ class SvgAnnotationLayer extends AnnotationLayer {
 				let parser = new DOMParser();
 				let element = parser.parseFromString(a.selector.value, "image/svg+xml").documentElement;
 				a.selector.elements = [...element.children]
+//				for(let c of a.selector.elements)
+//					c.addEventListener('click', (e) => console.log(e) );
 				a.ready = true;
 
 				/*				} else if(this.svgXML) {

@@ -85,7 +85,8 @@ function testAnnotationEditor() {
 	
 	let ui = new UIBasic(lime);
 	lime.camera.maxFixedZoom = 4;
-
+	ui.actions.help.display = true;
+	ui.actions.help.html = "This is just for the help";
 
 	editor.createCallback = (annotation) => { console.log("Created annotation: ", annotation); return true; };
 	editor.deleteCallback = (annotation) => { console.log("Deleted annotation: ", annotation); return true; };

@@ -101,6 +101,22 @@ let editor = new OpenLIME.SvgAnnotationEditor(lime, anno, {
 });
 
 let ui = new OpenLIME.UIBasic(lime);
+ui.actions.help.display = true;
+ui.actions.help.html = `
+<p>Si la lumière est éteinte, cliquez et déplacez pour déplacer l'image</p>
+<p>Si la lumière est allumée, cliquez et déplacez pour déplacer la lumière
+Cliquez sur la lumière pour changer sa fonction</p>
+
+<p>Cliquez sur l'icone <b>Calques</b> pour afficher les annotations
+Selectionnez une annotations et activez l'outil "dessin" en cliquant dessus.</p>
+<p>Commencez un dessin libre en cliquant sur une petite distance, vous pouvez le continuer en
+cliquand point par point. Pour commencer une nouvelle trace, il faut garder cliqué et bouger
+légèrmeent la souris.</p>
+
+<p>En mode <b>Annotation</b>, la combinaison <i>Majuscule</i> + clic et déplacement fait bouger la lumière
+La combinaison <i>Alt</i> + clic et déplacement fait bouger l'image
+Le bouton annuler permet d'annuler, il est possible aussi de faire <i>Ctrl</i>+z</p>
+`;
 
 editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
 editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };

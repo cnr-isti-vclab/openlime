@@ -55,7 +55,7 @@ class UIBasic {
 				rotate:     { title: 'Rotate',     display: false,  key: 'r', task: (event) => { camera.rotate(250, -45); } },
 				light:      { title: 'Light',      display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
 				ruler:      { title: 'Ruler',      display: false,            task: (event) => { this.startRuler(); } },
-				help:       { title: 'Help',      display: false,            task: (event) => { this.showHelp(); } },
+				help:       { title: 'Help',       display: false,  key: '?', task: (event) => { this.showHelp(this.actions.help, true); }, html: '<p>Help here!</p>' },
 			},
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
@@ -117,7 +117,7 @@ class UIBasic {
 	init() {
 		(async () => {
 
-			document.addEventListener('keydow', (e) => this.keyDown(e), false);
+			document.addEventListener('keydown', (e) => this.keyDown(e), false);
 			document.addEventListener('keyup', (e) => this.keyUp(e), false);
 
 			let panzoom = this.panzoom = new ControllerPanZoom(this.lime.camera, { 
@@ -404,12 +404,28 @@ class UIBasic {
 	endRuler() {
 	}
 
-	showHelp() {
-		if(!this.help) return;
-		let html = `<div class="openlime-help-window">${this.help}</div>`;
-		let template = document.createElement('template');
-		template.innerHTML = html.trim();
-		this.lime.containerElement.appendChild(template.content.firstChild);
+	showHelp(help, on) {
+		
+		if(!help.element) {
+			let html = `<div class="openlime-help-window"></div>`;
+			let div = document.createElement('div');
+			div.classList.add('openlime-help-window');
+	
+			if (help.html instanceof HTMLElement) 
+				div.appendChild(help.html);
+			else
+				div.innerHTML = help.html;
+
+			(async ()=> {
+				let close = await Skin.appendIcon(div, '.openlime-close');
+				close.classList.add('openlime-close');
+				close.addEventListener('click', () => this.showHelp(help, false ));
+				div.appendChild(close);
+			})();
+			this.lime.containerElement.appendChild(div);
+			help.element = div;
+		}
+		help.element.style.display = on? 'block' : 'none';
 	}
 
 	/* Layer management */

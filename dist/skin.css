@@ -81,6 +81,34 @@
 
 
 
+.openlime-help-window {
+	position:absolute;
+	top: 10%;
+	left: 30%;
+	right: 30%;
+	bottom: 10%;
+	color:#fff;
+	background: #444;
+	opacity:0.8;
+	padding:20px 40px;
+	border-radius:5px;
+
+}
+
+.openlime-help-window .openlime-close {
+	position:absolute;
+	top:10px;
+	right:10px;
+	width:30px;
+	height:30px;
+	cursor:pointer;
+}
+.openlime-close:hover  * {
+	stroke:#fff !important;
+}
+
+/* layers menu */
+
 g.openlime-compact {
 	visibility:hidden !important;
 }
@@ -328,3 +356,5 @@ g.openlime-expand {
 	color: #fff;
 	border: 1px #aaa;
 }
+
+
