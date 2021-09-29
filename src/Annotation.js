@@ -27,6 +27,8 @@ class Annotation {
 				editing: false,
 			}, 
 			options);
+			//TODO label as null is problematic, sort this issue.
+			if(!this.label) this.label = ''; 
 	}
 
 	static UUID() {

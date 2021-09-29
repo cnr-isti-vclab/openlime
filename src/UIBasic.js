@@ -55,6 +55,7 @@ class UIBasic {
 				rotate:     { title: 'Rotate',     display: false,  key: 'r', task: (event) => { camera.rotate(250, -45); } },
 				light:      { title: 'Light',      display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
 				ruler:      { title: 'Ruler',      display: false,            task: (event) => { this.startRuler(); } },
+				help:       { title: 'Help',      display: false,            task: (event) => { this.showHelp(); } },
 			},
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
@@ -147,7 +148,8 @@ class UIBasic {
 				controller.priority = 0;
 				this.lime.pointerManager.onEvent(controller);
 				for (let layer of lightLayers) {
-					layer.setLight([0.5, 0.5], 0);
+					controller.setPosition(0.5, 0.5);
+					//layer.setLight([0.5, 0.5], 0);
 					layer.controllers.push(controller);
 				}
 
@@ -400,6 +402,14 @@ class UIBasic {
 	}
 
 	endRuler() {
+	}
+
+	showHelp() {
+		if(!this.help) return;
+		let html = `<div class="openlime-help-window">${this.help}</div>`;
+		let template = document.createElement('template');
+		template.innerHTML = html.trim();
+		this.lime.containerElement.appendChild(template.content.firstChild);
 	}
 
 	/* Layer management */

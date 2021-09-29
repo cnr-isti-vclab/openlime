@@ -27,6 +27,13 @@ class Controller2D extends Controller {
 
 		this.panning = false;
 	}
+	//TODO find a decent name for functions and variables!
+	setPosition(x, y) {
+		this.current_x = x;
+		this.current_y = y;
+		this.callback(x, y);
+	}
+
 	project(e) {
 		let rect = e.target.getBoundingClientRect();
 		let x = 2*e.offsetX/rect.width - 1;
@@ -72,8 +79,8 @@ class Controller2D extends Controller {
 		this.panning = false;
 		if(this.relative) {
 			let [x, y] = this.project(e);
-			this.current_x = x;// = (x -1)*this.box.xLow/2 + (x+1)*this.box.width()/2;
-			this.current_y = y;// = (y -1)*this.box.yLow/2 + (y+1)*this.box.height()/2;
+			this.current_x = clamp(this.speed*(x - this.start_x) + this.current_x, -1, 1);
+			this.current_y = clamp(this.speed*(y - this.start_y) + this.current_y, -1, 1);
 		}
 	}
 
