@@ -31,7 +31,7 @@ class Canvas {
 			
 		for(let id in this.layers)
 			this.addLayer(id, new Layer(id, this.layers[id]));
-
+		this.camera.addEvent('update', () => this.emit('update'));
 	}
 
 	addEvent(event, callback) {

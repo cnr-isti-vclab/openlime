@@ -142,7 +142,7 @@ class UIBasic {
 				let controller = new Controller2D((x, y) => {
 					for (let layer of lightLayers)
 						layer.setLight([x, y], 0);
-				}, { active: true, activeModifiers: [2, 4], control: 'light' });
+				}, { active: true, activeModifiers: [2, 4], control: 'light', relative: true });
 
 				controller.priority = 0;
 				this.lime.pointerManager.onEvent(controller);
