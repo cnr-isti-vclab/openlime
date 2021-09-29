@@ -105,16 +105,14 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		//find which annotations needs to be added to the ccanvas, some 
 		//indexing whould be used, for the moment we just iterate all of them.
 
-		for (let a of this.annotations) {
+		for (let anno of this.annotations) {
 
 			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
-			if (!a.ready && typeof a.selector.value == 'string') {
+			if (!anno.ready && typeof anno.selector.value == 'string') {
 				let parser = new DOMParser();
-				let element = parser.parseFromString(a.selector.value, "image/svg+xml").documentElement;
-				a.selector.elements = [...element.children]
-//				for(let c of a.selector.elements)
-//					c.addEventListener('click', (e) => console.log(e) );
-				a.ready = true;
+				let element = parser.parseFromString(anno.selector.value, "image/svg+xml").documentElement;
+				anno.selector.elements = [...element.children]
+				anno.ready = true;
 
 				/*				} else if(this.svgXML) {
 									a.svgElement = this.svgXML.querySelector(`#${a.id}`);
@@ -123,28 +121,35 @@ class SvgAnnotationLayer extends AnnotationLayer {
 								} */
 			}
 
-			if (!a.needsUpdate)
+			if (!anno.needsUpdate)
 				continue;
 
-			a.needsUpdate = false;
+			anno.needsUpdate = false;
 
-			for (let e of this.svgGroup.querySelectorAll(`[data-annotation="${a.id}"]`))
+			for (let e of this.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`))
 				e.remove();
 
-			if(!a.visible)
+			if(!anno.visible)
 				continue;
 
 			//second time will be 0 elements, but we need to 
 			//store somewhere knowledge of which items in the scene and which still not.
-			for (let child of a.selector.elements) {
+			for (let child of anno.selector.elements) {
 				let c = child; //.cloneNode(true);
-				c.setAttribute('data-annotation', a.id);
-				c.setAttribute('data-class', a.class);
+				c.setAttribute('data-annotation', anno.id);
+				c.setAttribute('data-class', anno.class);
+
 				//c.setAttribute('data-layer', this.id);
 				c.classList.add('openlime-annotation');
-				if (this.selected.has(a.id))
+				if (this.selected.has(anno.id))
 					c.classList.add('selected');
 				this.svgGroup.appendChild(c);
+				c.onpointerdown =  (e) => {
+					if(this.selected.has(anno.id))
+						return;
+					this.clearSelected();
+					this.setSelected(anno, true);
+				}
 
 
 				//utils

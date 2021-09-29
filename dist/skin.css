@@ -88,10 +88,11 @@
 	right: 30%;
 	bottom: 10%;
 	color:#fff;
-	background: #444;
-	opacity:0.8;
+	background: #222;
+	opacity:0.95;
 	padding:20px 40px;
-	border-radius:5px;
+	border-radius:5px;	
+    font-family: "Open Sans",sans-serif;
 
 }
 
