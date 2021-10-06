@@ -346,11 +346,15 @@ class SvgAnnotationEditor {
 	exportAnnotations() {
 		let svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		svgElement.setAttribute('viewBox', '0 0 256 256');
-
 		let style = createElement('style');
 		style.textContent = this.layer.style;
 		svgElement.appendChild(style);
-
+		const vbox = {
+			x0: null,
+			y0: null,
+			x1: 0,
+			y1: 0
+		}
 		let serializer = new XMLSerializer();
 		//let svg = `<svg xmlns="http://www.w3.org/2000/svg">
 		for (let anno of this.layer.annotations) {
@@ -360,10 +364,19 @@ class SvgAnnotationEditor {
 					let d = e.getAttribute('d');
 					e.setAttribute('d', d.replaceAll(',', ' '));
 				}
+				const bbox = e.getBBox();
+				if (!vbox.x0) vbox.x0 = bbox.x;
+				if (!vbox.y0) vbox.y0 = bbox.y;
+				if(bbox.x < vbox.x0) vbox.x0 = bbox.x;
+				if(bbox.y < vbox.y0) vbox.y0 = bbox.y;
+				if(bbox.x + bbox.width > vbox.x1) vbox.x1 = bbox.x + bbox.width;
+				if(bbox.y + bbox.height > vbox.y1) vbox.y1 = bbox.y + bbox.height;
 				svgElement.appendChild(e.cloneNode());
 			}
 		}
-
+		const w=vbox.x1-vbox.x0;
+		const h=vbox.y1-vbox.y0;
+		svgElement.setAttribute('viewBox', `${vbox.x0} ${vbox.y0} ${w} ${h}`);
 		let svg = serializer.serializeToString(svgElement);
 		/*(${this.layer.annotations.map(anno => {
 			return `<group id="${anno.id}" title="${anno.label}" data-description="${anno.description}">
