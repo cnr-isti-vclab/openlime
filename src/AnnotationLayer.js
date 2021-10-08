@@ -16,7 +16,6 @@ import { Layer } from './Layer.js'
 class AnnotationLayer extends Layer {
 	constructor(options) {
 		options = Object.assign({
-			viewBox: null,   //usually defined by Layout, TODO: should we use layout for multiresolution annotations?
 			// geometry: null,  //unused, might want to store here the quads/shapes for opengl rendering
 			style: null,    //straightforward for svg annotations, to be defined oro opengl rendering
 			annotations: [],
@@ -27,15 +26,6 @@ class AnnotationLayer extends Layer {
 		super(options);
 
 		this.signals.selected = [];
-
-		if(typeof(this.viewBox) == "string") {
-			this.viewBox = this.viewBox.split(' '); 
-		}
-		if (Array.isArray(this.viewBox)) {
-			let box = new BoundingBox(); 
-			box.fromArray(this.viewBox);
-			this.viewBox = box;
-		}
 
 		if (typeof (this.annotations) == "string") { //assumes it is an URL
 			(async () => { await this.loadAnnotations(this.annotations); })();
@@ -140,10 +130,6 @@ class AnnotationLayer extends Layer {
 			if(anno.id == id)
 				return anno;
 		return null;
-	}
-
-	boundingBox() {
-		return this.viewBox;
 	}
 
 	clearSelected() {

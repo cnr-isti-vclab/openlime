@@ -32,7 +32,8 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		this.svgElement.classList.add('openlime-svgoverlay');
 		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 		this.svgElement.append(this.svgGroup);
-		this.svgElement.setAttribute('viewBox', this.viewBox.toString()); // box is currently a string of numbers
+		const bBox=this.boundingBox();
+		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
 
 		let root = this.overlayElement;
 		if (this.shadow)
@@ -89,9 +90,9 @@ class SvgAnnotationLayer extends AnnotationLayer {
 			return;
 		let t = this.transform.compose(transform);
 		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
-		let c = this.viewBox.center();
+		let c = this.boundingBox().corner(0);
 		this.svgGroup.setAttribute("transform",
-			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${-c[0]} ${-c[1]})`);
+			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`);
 		return true;
 	}
 
