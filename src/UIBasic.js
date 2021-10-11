@@ -62,6 +62,7 @@ class UIBasic {
 			scale: null,
 			unit: null,
 			info: new Info(lime.containerElement),
+			lightcontroller: null,
 		});
 
 		Object.assign(this, options);
@@ -153,7 +154,7 @@ class UIBasic {
 					//layer.setLight([0.5, 0.5], 0);
 					layer.controllers.push(controller);
 				}
-
+				this.lightcontroller = controller;
 			}
 
 
