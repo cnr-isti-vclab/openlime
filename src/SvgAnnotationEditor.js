@@ -16,7 +16,7 @@ class SvgAnnotationEditor {
 			annotation: null,
 			priority: 20000,
 			classes: {
-				''      : { stroke: '#000', label: '' },
+				'': { stroke: '#000', label: '' },
 				'class1': { stroke: '#770', label: '' },
 				'class2': { stroke: '#707', label: '' },
 				'class3': { stroke: '#777', label: '' },
@@ -57,16 +57,16 @@ class SvgAnnotationEditor {
 					tooltip: 'New circle',
 					tool: Circle,
 				},
-/*				colorpick: {
-					img: '',
-					tooltip: 'Pick a color',
-					tool: Colorpick,
-				} */
+				/*				colorpick: {
+									img: '',
+									tooltip: 'Pick a color',
+									tool: Colorpick,
+								} */
 			},
 			annotation: null, //not null only when editWidget is shown.
-			editWidget: null, 
+			editWidget: null,
 			createCallback: null, //callbacks for backend
-			updateCallback: null, 
+			updateCallback: null,
 			deleteCallback: null
 		}, options);
 
@@ -75,32 +75,32 @@ class SvgAnnotationEditor {
 		lime.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
 		layer.addEvent('selected', (anno) => {
-			if(!anno || anno == this.annotation)
+			if (!anno || anno == this.annotation)
 				return;
 			this.showEditWidget(anno);
 		});
 
 		layer.annotationsEntry = () => {
 
-			let entry =  {
+			let entry = {
 				html: `<div class="openlime-tools"></div>`,
 				list: [], //will be filled later.
 				classes: 'openlime-annotations',
 				status: () => 'active',
 				oncreate: () => {
-					if(Array.isArray(layer.annotations))
+					if (Array.isArray(layer.annotations))
 						layer.createAnnotationsList();
 
 					let tools = {
-						'add':    { action: () => { this.createAnnotation(); },  title: "New annotation" },
-						'edit':   { action: () => { this.toggleEditWidget(); },  title: "Edit annotations" },
+						'add': { action: () => { this.createAnnotation(); }, title: "New annotation" },
+						'edit': { action: () => { this.toggleEditWidget(); }, title: "Edit annotations" },
 						'export': { action: () => { this.exportAnnotations(); }, title: "Export annotations" },
-						'trash':  { action: () => { this.deleteSelected(); },    title: "Delete selected annotations" },
+						'trash': { action: () => { this.deleteSelected(); }, title: "Delete selected annotations" },
 					};
 					(async () => {
-						
-						for(const [label,tool] of Object.entries(tools)) {
-							let icon = await Skin.appendIcon(entry.element.firstChild, '.openlime-' + label ); 
+
+						for (const [label, tool] of Object.entries(tools)) {
+							let icon = await Skin.appendIcon(entry.element.firstChild, '.openlime-' + label);
 							icon.setAttribute('title', tool.title);
 							icon.addEventListener('click', tool.action);
 						}
@@ -115,26 +115,26 @@ class SvgAnnotationEditor {
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
 		anno.publish = 1;
-		anno.label = anno.description  = anno.class = '';
-		let post = { id: anno.id, label: anno.label, description:anno.description, 'class': anno.class, svg:null, publish: anno.publish };
-		if(this.createCallback) {
+		anno.label = anno.description = anno.class = '';
+		let post = { id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null, publish: anno.publish };
+		if (this.createCallback) {
 			let result = this.createCallback(post);
-			if(!result)
+			if (!result)
 				alert("Failed to create annotation!");
 		}
 		this.showEditWidget(anno);
 		this.layer.setSelected(anno);
 	}
-	
+
 
 	toggleEditWidget() {
-		if(this.annotation)
+		if (this.annotation)
 			return this.hideEditWidget();
 
-		let id = this.layer.selected.values().next().value; 
-		if(!id)
+		let id = this.layer.selected.values().next().value;
+		if (!id)
 			return;
-		
+
 		let anno = this.layer.getAnnotationById(id);
 		this.showEditWidget(anno);
 	}
@@ -142,7 +142,7 @@ class SvgAnnotationEditor {
 	updateEditWidget() {
 		let anno = this.annotation;
 		let edit = this.editWidget;
-		if(!anno.class)
+		if (!anno.class)
 			anno.class = '';
 		edit.querySelector('[name=label]').value = anno.label || '';
 		edit.querySelector('[name=description]').value = anno.description || '';
@@ -159,7 +159,7 @@ class SvgAnnotationEditor {
 		this.setTool(null);
 		this.setActiveTool();
 		this.layer.annotationsListEntry.element.querySelector('.openlime-edit').classList.add('active');
-		(async () => { 
+		(async () => {
 			await this.createEditWidget();
 			this.updateEditWidget();
 		})();
@@ -167,6 +167,7 @@ class SvgAnnotationEditor {
 
 	hideEditWidget() {
 		this.annotation = null;
+		this.setTool(null);
 		this.editWidget.classList.add('hidden');
 		this.layer.annotationsListEntry.element.querySelector('.openlime-edit').classList.remove('active');
 	}
@@ -174,7 +175,7 @@ class SvgAnnotationEditor {
 
 	//TODO this should actually be in the html.
 	async createEditWidget() {
-		if(this.editWidget)
+		if (this.editWidget)
 			return;
 
 		let html = `
@@ -188,8 +189,8 @@ class SvgAnnotationEditor {
 						<input type="hidden" name="classes" value=""/>
 						<div class="openlime-select-button"></div>
 						<ul class="openlime-select-menu">
-						${Object.entries(this.classes).map((c) => 
-							`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
+						${Object.entries(this.classes).map((c) =>
+			`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
 					<span><input type="checkbox" name="publish" value=""> Publish</span>
@@ -207,15 +208,15 @@ class SvgAnnotationEditor {
 
 		button.addEventListener('click', (e) => {
 			e.stopPropagation();
-			for(let o of options)
+			for (let o of options)
 				o.classList.remove('selected');
 			select.classList.toggle('active');
-			
+
 		});
-		
+
 		ul.addEventListener('click', (e) => {
 			e.stopPropagation();
-			
+
 			input.value = e.srcElement.getAttribute('data-class');
 			input.dispatchEvent(new Event('change'));
 			button.style.background = this.classes[input.value].stroke;
@@ -223,46 +224,46 @@ class SvgAnnotationEditor {
 
 			select.classList.toggle('active');
 		});
-	  
+
 		document.addEventListener('click', (e) => {
 			select.classList.remove('active');
 		});
 
 		document.querySelector('.openlime-layers-menu').appendChild(edit);
-		
+
 		let tools = edit.querySelector('.openlime-annotation-edit-tools');
-		
 
 
-		let draw = await Skin.appendIcon(tools, '.openlime-draw'); 
+
+		let draw = await Skin.appendIcon(tools, '.openlime-draw');
 		draw.addEventListener('click', (e) => { this.setTool('line'); this.setActiveTool(draw); });
 
-//		let pen = await Skin.appendIcon(tools, '.openlime-pen'); 
-//		pen.addEventListener('click', (e) => { this.setTool('pen'); setActive(pen); });
+		//		let pen = await Skin.appendIcon(tools, '.openlime-pen'); 
+		//		pen.addEventListener('click', (e) => { this.setTool('pen'); setActive(pen); });
 
-		let erase = await Skin.appendIcon(tools, '.openlime-erase'); 
+		let erase = await Skin.appendIcon(tools, '.openlime-erase');
 		erase.addEventListener('click', (e) => { this.setTool('erase'); this.setActiveTool(erase); });
 
-		let undo = await Skin.appendIcon(tools, '.openlime-undo'); 
+		let undo = await Skin.appendIcon(tools, '.openlime-undo');
 		undo.addEventListener('click', (e) => { this.undo(); });
 
-		let redo = await Skin.appendIcon(tools, '.openlime-redo'); 
+		let redo = await Skin.appendIcon(tools, '.openlime-redo');
 		redo.addEventListener('click', (e) => { this.redo(); });
 
-/*		let colorpick = await Skin.appendIcon(tools, '.openlime-colorpick'); 
-		undo.addEventListener('click', (e) => { this.pickColor(); }); */
+		/*		let colorpick = await Skin.appendIcon(tools, '.openlime-colorpick'); 
+				undo.addEventListener('click', (e) => { this.pickColor(); }); */
 
 		let label = edit.querySelector('[name=label]');
-		label.addEventListener('blur', (e) => { if(this.annotation.label != label.value) this.saveCurrent(); this.saveAnnotation(); });
+		label.addEventListener('blur', (e) => { if (this.annotation.label != label.value) this.saveCurrent(); this.saveAnnotation(); });
 
 		let descr = edit.querySelector('[name=description]');
-		descr.addEventListener('blur', (e) => { if(this.annotation.description != descr.value) this.saveCurrent(); this.saveAnnotation(); });
+		descr.addEventListener('blur', (e) => { if (this.annotation.description != descr.value) this.saveCurrent(); this.saveAnnotation(); });
 
 		let classes = edit.querySelector('[name=classes]');
-		classes.addEventListener('change', (e) => { if(this.annotation.class != classes.value) this.saveCurrent(); this.saveAnnotation(); });
+		classes.addEventListener('change', (e) => { if (this.annotation.class != classes.value) this.saveCurrent(); this.saveAnnotation(); });
 
 		let publish = edit.querySelector('[name=publish]');
-		publish.addEventListener('change', (e) => { if(this.annotation.publish != publish.value) this.saveCurrent(); this.saveAnnotation(); });
+		publish.addEventListener('change', (e) => { if (this.annotation.publish != publish.value) this.saveCurrent(); this.saveAnnotation(); });
 
 		edit.classList.add('hidden');
 		this.editWidget = edit;
@@ -277,14 +278,14 @@ class SvgAnnotationEditor {
 
 		anno.label = edit.querySelector('[name=label]').value || '';
 		anno.description = edit.querySelector('[name=description]').value || '';
-		anno.publish = edit.querySelector('[name=publish]').checked? 1 : 0;
+		anno.publish = edit.querySelector('[name=publish]').checked ? 1 : 0;
 		let select = edit.querySelector('[name=classes]');
 		anno.class = select.value || '';
 
 		let button = edit.querySelector('.openlime-select-button');
 		button.style.background = this.classes[anno.class].stroke;
 
-		for(let e of this.annotation.selector.elements)
+		for (let e of this.annotation.selector.elements)
 			e.setAttribute('data-class', anno.class);
 
 		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class, publish: anno.publish };
@@ -294,37 +295,37 @@ class SvgAnnotationEditor {
 				${anno.selector.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
 				</svg>`;
 
-		if(this.updateCallback) {
+		if (this.updateCallback) {
 			let result = this.updateCallback(post);
-			if(!result) {
+			if (!result) {
 				alert("Failed to update annotation");
 				return;
 			}
 		}				//for (let c of element.children)
-			//		a.selector.elements.push(c);
+		//		a.selector.elements.push(c);
 
 		//update the entry
 		let template = document.createElement('template');
 		template.innerHTML = this.layer.createAnnotationEntry(anno);
-		let entry =  template.content.firstChild;
+		let entry = template.content.firstChild;
 		//TODO find a better way to locate the entry!
 		this.layer.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).replaceWith(entry);
 		this.layer.setSelected(anno);
 	}
 
 	deleteSelected() {
-		let id = this.layer.selected.values().next().value; 
-		if(id) 
+		let id = this.layer.selected.values().next().value;
+		if (id)
 			this.deleteAnnotation(id);
 	}
 
 	deleteAnnotation(id) {
 		let anno = this.layer.getAnnotationById(id);
-		if(this.deleteCallback) {
-			if(!confirm(`Deleting annotation ${anno.label}, are you sure?`))
+		if (this.deleteCallback) {
+			if (!confirm(`Deleting annotation ${anno.label}, are you sure?`))
 				return;
 			let result = this.deleteCallback(anno);
-			if(!result)  {
+			if (!result) {
 				alert("Failed to delete this annotation.");
 				return;
 			}
@@ -344,24 +345,37 @@ class SvgAnnotationEditor {
 	exportAnnotations() {
 		let svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		svgElement.setAttribute('viewBox', '0 0 256 256');
-
 		let style = createElement('style');
 		style.textContent = this.layer.style;
 		svgElement.appendChild(style);
-
+		const vbox = {
+			x0: null,
+			y0: null,
+			x1: 0,
+			y1: 0
+		}
 		let serializer = new XMLSerializer();
 		//let svg = `<svg xmlns="http://www.w3.org/2000/svg">
-		for(let anno of this.layer.annotations) {
-			for(let e of anno.selector.elements) {
-				if(e.tagName == 'path') {
+		for (let anno of this.layer.annotations) {
+			for (let e of anno.selector.elements) {
+				if (e.tagName == 'path') {
 					//Inkscape nitpicks on the commas in svg path.
 					let d = e.getAttribute('d');
 					e.setAttribute('d', d.replaceAll(',', ' '));
 				}
+				const bbox = e.getBBox();
+				if (!vbox.x0) vbox.x0 = bbox.x;
+				if (!vbox.y0) vbox.y0 = bbox.y;
+				if(bbox.x < vbox.x0) vbox.x0 = bbox.x;
+				if(bbox.y < vbox.y0) vbox.y0 = bbox.y;
+				if(bbox.x + bbox.width > vbox.x1) vbox.x1 = bbox.x + bbox.width;
+				if(bbox.y + bbox.height > vbox.y1) vbox.y1 = bbox.y + bbox.height;
 				svgElement.appendChild(e.cloneNode());
 			}
 		}
-
+		const w=vbox.x1-vbox.x0;
+		const h=vbox.y1-vbox.y0;
+		svgElement.setAttribute('viewBox', `${vbox.x0} ${vbox.y0} ${w} ${h}`);
 		let svg = serializer.serializeToString(svgElement);
 		/*(${this.layer.annotations.map(anno => {
 			return `<group id="${anno.id}" title="${anno.label}" data-description="${anno.description}">
@@ -374,7 +388,7 @@ class SvgAnnotationEditor {
 		</svg>`; */
 
 		///console.log(svg);
-		
+
 		var e = document.createElement('a');
 		e.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(svg));
 		e.setAttribute('download', 'annotations.svg');
@@ -384,18 +398,18 @@ class SvgAnnotationEditor {
 		document.body.removeChild(e);
 	}
 
-	setActiveTool(e) { 
-		if(!this.editWidget) return;
+	setActiveTool(e) {
+		if (!this.editWidget) return;
 		let tools = this.editWidget.querySelector('.openlime-annotation-edit-tools');
-		tools.querySelectorAll('svg').forEach(a => 
-			a.classList.remove('active')); 
-		if(e) 
-			e.classList.add('active'); 
+		tools.querySelectorAll('svg').forEach(a =>
+			a.classList.remove('active'));
+		if (e)
+			e.classList.add('active');
 	}
 
 	setTool(tool) {
 		this.tool = tool;
-		if(this.factory && this.factory.quit)
+		if (this.factory && this.factory.quit)
 			this.factory.quit();
 		if (tool) {
 			if (!tool in this.tools)
@@ -405,29 +419,29 @@ class SvgAnnotationEditor {
 			this.factory.annotation = this.annotation;
 			this.factory.layer = this.layer;
 		}
-		document.querySelector('.openlime-overlay').classList.toggle('erase', tool =='erase');
-		document.querySelector('.openlime-overlay').classList.toggle('crosshair', tool && tool !='erase');
+		document.querySelector('.openlime-overlay').classList.toggle('erase', tool == 'erase');
+		document.querySelector('.openlime-overlay').classList.toggle('crosshair', tool && tool != 'erase');
 	}
 
-// UNDO STUFF	
+	// UNDO STUFF	
 
 	undo() {
 		let anno = this.annotation; //current annotation.
-		if(!anno)
+		if (!anno)
 			return;
-		if(this.factory && this.factory.undo && this.factory.undo()) {
+		if (this.factory && this.factory.undo && this.factory.undo()) {
 			anno.needsUpdate = true;
 			this.lime.redraw();
 			return;
 		}
 
-		if(anno.history && anno.history.length) {
+		if (anno.history && anno.history.length) {
 			//TODO history will be more complicated if it has to manage multiple tools.
 			anno.future.push(this.annoToData(anno));
 
 			let data = anno.history.pop();
 			this.dataToAnno(data, anno);
-			
+
 			anno.needsUpdate = true;
 			this.lime.redraw();
 			this.updateEditWidget();
@@ -436,14 +450,14 @@ class SvgAnnotationEditor {
 
 	redo() {
 		let anno = this.annotation; //current annotation.
-		if(!anno)
+		if (!anno)
 			return;
-		if(this.factory && this.factory.redo && this.factory.redo()) {
+		if (this.factory && this.factory.redo && this.factory.redo()) {
 			anno.needsUpdate = true;
 			this.lime.redraw();
 			return;
 		}
-		if(anno.future && anno.future.length) {
+		if (anno.future && anno.future.length) {
 			anno.history.push(this.annoToData(anno));
 
 			let data = anno.future.pop();
@@ -458,7 +472,7 @@ class SvgAnnotationEditor {
 	saveCurrent() {
 		console.log('save current');
 		let anno = this.annotation; //current annotation.
-		if(!anno.history) 
+		if (!anno.history)
 			anno.history = [];
 
 		anno.history.push(this.annoToData(anno));
@@ -467,19 +481,19 @@ class SvgAnnotationEditor {
 
 	annoToData(anno) {
 		let data = {};
-		for( let i of ['id', 'label', 'description', 'class', 'publish'])
+		for (let i of ['id', 'label', 'description', 'class', 'publish'])
 			data[i] = `${anno[i] || ''}`;
 		data.elements = anno.selector.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
 		return data;
 	}
 
 	dataToAnno(data, anno) {
-		for( let i of ['id', 'label', 'description', 'class', 'publish'])
+		for (let i of ['id', 'label', 'description', 'class', 'publish'])
 			anno[i] = `${data[i]}`;
-		anno.selector.elements = data.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; } );
+		anno.selector.elements = data.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
 	}
 
-// TOOLS STUFF
+	// TOOLS STUFF
 
 	keyUp(e) {
 		if (e.defaultPrevented) return;
@@ -497,11 +511,11 @@ class SvgAnnotationEditor {
 			case 'Backspace':
 				break;
 			case 'z':
-				if(e.ctrlKey)
+				if (e.ctrlKey)
 					this.undo();
 				break;
 			case 'Z':
-				if(e.ctrlKey) 
+				if (e.ctrlKey)
 					this.redo();
 				break;
 		}
@@ -540,7 +554,7 @@ class SvgAnnotationEditor {
 
 		const pos = this.mapToSvg(e);
 		let changed = this.factory.finish(pos, e);
-		if(!changed) //nothing changed no need to keep current situation in history.
+		if (!changed) //nothing changed no need to keep current situation in history.
 			this.annotation.history.pop();
 		else
 			this.saveAnnotation();
@@ -549,7 +563,7 @@ class SvgAnnotationEditor {
 	}
 
 	fingerHover(e) {
-		if(this.tool != 'line')
+		if (this.tool != 'line')
 			return;
 		e.preventDefault();
 		const pos = this.mapToSvg(e);
@@ -567,7 +581,7 @@ class SvgAnnotationEditor {
 
 		const pos = this.mapToSvg(e);
 		let changed = this.factory.tap(pos, e)
-		if(!changed) //nothing changed no need to keep current situation in history.
+		if (!changed) //nothing changed no need to keep current situation in history.
 			this.annotation.history.pop();
 		else
 			this.saveAnnotation();
@@ -585,7 +599,7 @@ class SvgAnnotationEditor {
 
 		const pos = this.mapToSvg(e);
 		let changed = this.factory.doubleTap(pos, e)
-		if(!changed) //nothing changed no need to keep current situation in history.
+		if (!changed) //nothing changed no need to keep current situation in history.
 			this.annotation.history.pop();
 		else
 			this.saveAnnotation();
@@ -622,23 +636,24 @@ class Pen {
 	}
 	create(pos) {
 		this.points.push(pos);
-		if(this.points.length == 1) {saveCurrent
-			
+		if (this.points.length == 1) {
+			saveCurrent
+
 			this.path = createElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 			return this.path;
-		} 
+		}
 		let p = this.path.getAttribute('d');
 		this.path.setAttribute('d', p + ` L${pos.x} ${pos.y}`);
 		this.path.points = this.points;
 	}
 	undo() {
-		if(!this.points.length)
+		if (!this.points.length)
 			return;
 		this.points.pop();
 		let d = this.points.map((p, i) => `${i == 0 ? 'M' : 'L'}${p.x} ${p.y}`).join(' ');
 		this.path.setAttribute('d', d);
-		
-		if(this.points.length < 2) {
+
+		if (this.points.length < 2) {
 			this.points = [];
 			this.annotation.selector.elements = this.annotation.selector.elements.filter((e) => e != this.path);
 		}
@@ -702,10 +717,10 @@ class Line {
 			this.layer.svgGroup.removeChild(this.segment);
 			this.segment = null;
 		}*/
-		for(let e of this.annotation.selector.elements) {
-			if(!e.points || e.points.length < 2)
+		for (let e of this.annotation.selector.elements) {
+			if (!e.points || e.points.length < 2)
 				continue;
-			if(Line.distance(e.points[0], pos)*pos.z < 5) {
+			if (Line.distance(e.points[0], pos) * pos.z < 5) {
 				e.points.reverse();
 				this.path = e;
 				this.path.setAttribute('d', Line.svgPath(e.points));
@@ -713,7 +728,7 @@ class Line {
 				this.history = [this.path.points.length];
 				return;
 			}
-			if(Line.distanceToLast(e.points, pos) < 5) {
+			if (Line.distanceToLast(e.points, pos) < 5) {
 				this.path = e;
 				this.adjust(pos);
 				this.history = [this.path.points.length];
@@ -727,47 +742,47 @@ class Line {
 	}
 
 	tap(pos) {
-		if(!this.path) {
+		if (!this.path) {
 			this.create(pos);
 			return false;
 		} else {
-			if(this.adjust(pos))
-				this.history = [this.path.points.length-1];
+			if (this.adjust(pos))
+				this.history = [this.path.points.length - 1];
 			return true;
 		}
 	}
 	doubleTap(pos) {
-		if(!this.path)
+		if (!this.path)
 			return false;
-		if(this.adjust(pos)) {
-			this.history = [this.path.points.length-1];
+		if (this.adjust(pos)) {
+			this.history = [this.path.points.length - 1];
 			this.path = null;
 		}
 		return false;
 	}
-	
+
 	hover(pos, event) {
 		return;
-		if(!this.path)
+		if (!this.path)
 			return false;
-		let s = this.path.points[this.path.points.length -1];
-		if(!this.segment) {
+		let s = this.path.points[this.path.points.length - 1];
+		if (!this.segment) {
 			this.segment = createElement('path', { class: 'line' });
 			this.layer.svgGroup.appendChild(this.segment);
 		}
 		pos.x = pos.x - s.x;
 		pos.y = pos.y - s.y;
-		let len = Math.sqrt(pos.x*pos.x + pos.y*pos.y);
-		if(len > 30) {
-			pos.x *= 30/len;
-			pos.y *= 30/len;
+		let len = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
+		if (len > 30) {
+			pos.x *= 30 / len;
+			pos.y *= 30 / len;
 		}
 		this.segment.setAttribute('d', `M${s.x} ${s.y} l${pos.x} ${pos.y}`);
 		return true;
 	}
 	quit() {
 		return;
-		if(this.segment) {
+		if (this.segment) {
 			this.layer.svgGroup.removeChild(this.segment);
 			this.segment = null;
 		}
@@ -790,7 +805,7 @@ class Line {
 	}
 
 	undo() {
-		if(!this.path || !this.history.length)
+		if (!this.path || !this.history.length)
 			return false;
 		this.path.points = this.path.points.slice(0, this.history.pop());
 		this.path.setAttribute('d', Line.svgPath(this.path.points));
@@ -827,25 +842,25 @@ class Erase {
 	finish(pos, event) { return this.erase(pos, event); } //true if some points where removed.
 	tap(pos, event) { return this.erase(pos, event); }
 	erase(pos, event) {
-		for(let e of this.annotation.selector.elements) {
-			if(e == event.originSrc) {
+		for (let e of this.annotation.selector.elements) {
+			if (e == event.originSrc) {
 				e.points = [];
 				this.erased = true;
 				continue;
 			}
-			
+
 			let points = e.points;
-			 if(!points || !points.length)
+			if (!points || !points.length)
 				continue;
 
-			if(Line.distanceToLast(points, pos) < 10)
+			if (Line.distanceToLast(points, pos) < 10)
 				this.erased = true, points.pop();
-			else if(Line.distance(points[0], pos) < 10)
+			else if (Line.distance(points[0], pos) < 10)
 				this.erased = true, points.shift();
 			else
 				continue;
 
-			if(points.length <= 2) {
+			if (points.length <= 2) {
 				e.points = [];
 				e.setAttribute('d', '');
 				this.annotation.needsUpdate = true;
