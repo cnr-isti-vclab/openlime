@@ -166,7 +166,6 @@ class SvgAnnotationEditor {
 	}
 
 	hideEditWidget() {
-		console.log('hide');
 		this.annotation = null;
 		this.editWidget.classList.add('hidden');
 		this.layer.annotationsListEntry.element.querySelector('.openlime-edit').classList.remove('active');
@@ -802,12 +801,14 @@ class Line {
 	}
 	//TODO: smooth should be STABLE, if possible.
 	static svgPath(points) {
+		//return points.map((p, i) =>  `${(i == 0? "M" : "L")}${p.x} ${p.y}`).join(' '); 
+
 		let tolerance = 1.5 / points[0].z;
 		let tmp = simplify(points, tolerance);
 
 		let smoothed = smooth(tmp, 90, true);
 		return smoothToPath(smoothed);
-		//return points.map((p, i) =>  `${(i == 0? "M" : "L")}${p.x} ${p.y}`).join(' '); 
+		
 	}
 	static distanceToLast(line, point) {
 		let last = line[line.length - 1];
