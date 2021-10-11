@@ -426,26 +426,27 @@ class Layer {
 
 		let gl = this.gl;
 
+		if(!this.ibuffer) { //this part might go into another function.
+			this.ibuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuffer);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([3,2,1,3,1,0]), gl.STATIC_DRAW);
+
+			this.vbuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]), gl.STATIC_DRAW);
+
+			this.tbuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0,  0, 1,  1, 1,  1, 0]), gl.STATIC_DRAW);
+		}
+		
 		if(this.shader.needsUpdate)
 			this.shader.createProgram(gl);
 
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);
 
-		if(this.ibuffer) //this part might go into another function.
-			return;
 
-		this.ibuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuffer);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([3,2,1,3,1,0]), gl.STATIC_DRAW);
-
-		this.vbuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]), gl.STATIC_DRAW);
-
-		this.tbuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0,  0, 1,  1, 1,  1, 0]), gl.STATIC_DRAW);
 	}
 
 	sameNeeded(a, b) {
