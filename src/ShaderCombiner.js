@@ -32,7 +32,7 @@ class ShaderCombiner extends Shader {
 	}
 
 	fragShaderSrc(gl) {
-		let gl2 = gl instanceof WebGL2RenderingContext;
+		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let operation = this.modes[this.mode];
 		return `${gl2? '#version 300 es' : ''}
 
@@ -56,7 +56,7 @@ void main() {
 	}
 
 	vertShaderSrc(gl) {
-		let gl2 = gl instanceof WebGL2RenderingContext;
+		let gl2 = !(gl instanceof WebGLRenderingContext);
 		return `${gl2? '#version 300 es':''}
 
 precision highp float; 
