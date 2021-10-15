@@ -164,7 +164,9 @@ class Canvas {
 			transform = this.camera.getCurrentTransform(performance.now());
 		for(let id in this.layers) {
 			let layer = this.layers[id];
-			if(layer.visible)
+			//console.log(layer);
+			//console.log(layer.layout.status);
+			if(layer.visible && layer.layout.status == 'ready')
 				layer.prefetch(transform, this.camera.viewport);
 		}
 	}

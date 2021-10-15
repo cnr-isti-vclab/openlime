@@ -168,7 +168,7 @@ class UIBasic {
 			this.setupScale();
 
 			for (let l of Object.values(this.lime.canvas.layers)) {
-				//this.setLayer(l);
+				this.setLayer(l);
 				break;
 			}
 

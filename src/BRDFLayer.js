@@ -25,9 +25,6 @@ class BRDFLayer extends Layer {
 			this.colorspaces['ks'] = 'linear';
 		}
 
-		if(!this.layout)
-			this.layout = new Layout('image');
-
 		this.rasters.push(new Raster({ url: this.channels['kd'],      type: 'vec3',  attribute: 'kd',      colorspace: this.colorspaces['kd'] }));
 		this.rasters.push(new Raster({ url: this.channels['ks'],      type: 'vec3',  attribute: 'ks',      colorspace: this.colorspaces['ks'] }));
 		this.rasters.push(new Raster({ url: this.channels['normals'], type: 'vec3',  attribute: 'normals', colorspace: 'linear' }));
@@ -36,7 +33,7 @@ class BRDFLayer extends Layer {
 		let size = {width:this.width, height:this.height};
 
 		for(let raster of this.rasters)
-			raster.layout = new Layout(raster.url, this.layout, size);
+			raster.layout = new Layout(raster.url, this.layout.type, size);
 
 		this.setLayout(this.rasters[0].layout); 
 		

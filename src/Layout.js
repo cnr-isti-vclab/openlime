@@ -24,29 +24,31 @@ class Layout {
 		if(options)
 			Object.assign(this, options);
 
-		if(typeof(url) == 'string') {
-			this.url = url;
-
-			(async () => {
-				switch(this.type) {
-					case 'image':    await this.initImage(); break;
-					case 'google':   await this.initGoogle(); break;
-					case 'deepzoom1px': await this.initDeepzoom(true); break;
-					case 'deepzoom': await this.initDeepzoom(false); break;
-					case 'tarzoom':  await this.initTarzoom(); break;
-					case 'itarzoom':  await this.initITarzoom(); break;
-					case 'zoomify':  await this.initZoomify(); break;
-					case 'iiif':     await this.initIIIF(); break;
-				}
-				this.initBoxes();
-				this.status = 'ready';
-				this.emit('ready');
-				
-			})().catch(e => { console.log(e); this.status = e; });
-		}
+		if(typeof(url) == 'string')
+			this.setUrl(url);
 
 		if(typeof(url) == 'object')
 			Object.assign(this, url);
+	}
+
+	setUrl(url) {
+		this.url = url;
+		(async () => {
+			switch(this.type) {
+				case 'image':    await this.initImage(); break;
+				case 'google':   await this.initGoogle(); break;
+				case 'deepzoom1px': await this.initDeepzoom(true); break;
+				case 'deepzoom': await this.initDeepzoom(false); break;
+				case 'tarzoom':  await this.initTarzoom(); break;
+				case 'itarzoom':  await this.initITarzoom(); break;
+				case 'zoomify':  await this.initZoomify(); break;
+				case 'iiif':     await this.initIIIF(); break;
+			}
+			this.initBoxes();
+			this.status = 'ready';
+			this.emit('ready');
+			
+		})().catch(e => { console.log(e); this.status = e; });
 	}
 
 	addEvent(event, callback) {

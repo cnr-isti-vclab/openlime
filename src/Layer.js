@@ -92,7 +92,10 @@ class Layer {
 
 		this.transform = new Transform(this.transform);
 
-		
+		if(typeof(this.layout)=='string') {
+			let size = {width:this.width || 0, height:this.height || 0 };
+			this.layout = new Layout(null, this.layout, size);
+		}
 	}
 
 	addEvent(event, callback) {

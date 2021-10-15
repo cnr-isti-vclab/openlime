@@ -3,6 +3,7 @@ import { Raster } from './Raster.js'
 import { Layer } from './Layer.js'
 import { ImageLayer } from './ImageLayer.js'
 import { CombinerLayer } from './CombinerLayer.js'
+import { ShaderCombiner } from './ShaderCombiner.js'
 import { RTILayer } from './RTILayer.js'
 import { BRDFLayer } from './BRDFLayer.js'
 import { Controller2D } from './Controller2D.js'
@@ -19,7 +20,7 @@ import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
 let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 //combinerTest();
-//imageTest('deepzoom');
+imageTest('zoomify'); // image google deepzoom zoomify iiif
 //flipTest();
 //brdfTest();
 //rtiTest('rbf');
@@ -32,7 +33,7 @@ let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDr
 
 //testMedicalAnnotations();
 
-testAnnotationEditor();
+//testAnnotationEditor();
 
 function testAnnotationEditor() {
 	let layer0 = new Layer({ 
@@ -240,14 +241,24 @@ function flipTest() {
 
 
 function rtiTest(dataset) {
+
 	let layer0 = new Layer({ 
+		label: '4',
 		layout: 'image', 
 		type:'rti',
 		url: 'assets/rti/hsh/info.json',
-		normals: true
+		normals: false
 	});
-	//layer0.transform.x = -200;
-	lime.canvas.addLayer('hsh', layer0); 
+	lime.canvas.addLayer('coin', layer0);
+
+	// let layer0 = new Layer({ 
+	// 	layout: 'image', 
+	// 	type:'rti',
+	// 	url: 'assets/rti/hsh/info.json',
+	// 	normals: true
+	// });
+	// //layer0.transform.x = -200;
+	// lime.canvas.addLayer('hsh', layer0); 
 
 
 	/*let layer1 = new Layer({ 
@@ -261,7 +272,7 @@ function rtiTest(dataset) {
 
 
 	let ui = new UIBasic(lime);
-	lime.camera.maxFixedZoom = 1;
+	lime.camera.maxFixedZoom = 4;
 	ui.menu[0].section = "Prova";
 	ui.menu.push({ html: "<p>Prova</p>" });
 	ui.scale = 0.002;
@@ -298,9 +309,21 @@ function combinerTest() {
 		layers: [layer0, layer1]
 	});
 
+	let shader = new ShaderCombiner();
+	shader.mode = 'diff';
+
+	combiner.shaders = {'standard': shader };
+	combiner.setShader('standard'); 
+
+	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
+	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+
 	lime.canvas.addLayer('kdmap', layer0);
 	lime.canvas.addLayer('ksmap', layer1);
 	lime.canvas.addLayer('combiner', combiner);
+
+	let ui = new UIBasic(lime);
+	ui.actions.snapshot.display = true;
 }
 
 /* COMBINER TEST */
@@ -324,28 +347,23 @@ function lensTest() {
 		border:10
 	});
 
-	let controllerLens = new ControllerLens({lensLayer: lensLayer,
-											camera: lime.camera,
-											hover: true,
+	let controllerLens = new ControllerLens(lensLayer, lime.camera,
+											{ hover: true,
 											priority: 0});
 	lime.pointerManager.onEvent(controllerLens); 
 	lensLayer.controllers.push(controllerLens);
 
-
-	
-	// let ui = new UIBasic(lime);
-	// const { home, fullscreen, rotate } = ui.actions;
-	// ui.actions = { home, fullscreen, rotate };
+	let ui = new UIBasic(lime);
+	 //const { home, fullscreen, rotate } = ui.actions;
+	 //ui.actions = { home, fullscreen, rotate };
 
 	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
 	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+	lime.camera.maxFixedZoom = 4;
 
 	lime.canvas.addLayer('kdmap', layer0);
 	lime.canvas.addLayer('lens', lensLayer);
 }
-
-
-
 
 /* IMAGE TEST */
 function imageTest(layout) {
@@ -358,10 +376,12 @@ function imageTest(layout) {
 	switch (layout) {
 		case 'image':
 			options.url = 'assets/svbrdf/vis/glossMap.jpg';
+//			options.url = 'http://dev.isti.cnr.it/iipsrv/iipsrv.fcgi?IIIF=/home/ponchio/Sync/html/cenobium/sites/monreale/tif/N1ShNWNW.tif/2048,0,1952,2048/244.875,256/0/default.jpg';
 			break;
 
 		case 'deepzoom':
 			options.url = 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
+			//options.url = 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
 			break;
 
 		case 'google':
@@ -375,7 +395,8 @@ function imageTest(layout) {
 			break;
 
 		case 'iiif':
-			options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=PIA03883.pyr.tif/info.json';
+			//options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=PIA03883.pyr.tif/info.json';
+			options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=HD3/HD3_pyr_000_090.tif/info.json';
 			break;
 	}
 	let layer0 = new Layer(options);

@@ -21,8 +21,11 @@ class RTILayer extends Layer {
 		if(!this.url)
 			throw "Url option is required";
 
-		if(!this.layout)
-			this.layout = 'image';
+		// if(!this.layout)
+		// 	this.layout = 'image';
+
+		// this.layout.setUrl(this.url);
+		// this.setLayout(this.layout);
 
 		this.shaders['rti'] = new RTIShader({ normals: this.normals });
 		this.setShader('rti');
@@ -36,7 +39,7 @@ class RTILayer extends Layer {
 
 	imageUrl(url, plane) {
 		let path = this.url.substring(0, this.url.lastIndexOf('/')+1);
-		switch(this.layout) {
+		switch(this.layout.type) {
 			case 'image':    return path + plane + '.jpg'; break;
 			case 'google':   return path + plane;          break;
 			case 'deepzoom': return path + plane + '.dzi'; break;
@@ -45,7 +48,7 @@ class RTILayer extends Layer {
 			case 'zoomify':  return path + plane + '/ImageProperties.xml'; break;
 			//case 'iip':      return this.plane.throw Error("Unimplemented");
 			case 'iiif': throw Error("Unimplemented");
-			default:     throw Error("Unknown layout: " + layout);
+			default:     throw Error("Unknown layout: " + layout.type);
 		}
 	}
 
@@ -67,14 +70,17 @@ class RTILayer extends Layer {
 			}
 			let json = await response.json();
 			this.shader.init(json);
-
+			if(this.layout.type == 'image') { 
+				this.width = json.width;
+				this.height = json.height;
+			}
 			let size = {width:this.width, height:this.height};
 			for(let p = 0; p < this.shader.njpegs; p++) {
 				let url = this.imageUrl(this.url, 'plane_' + p);
 				let raster = new Raster({ url: url, type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
 				//Tarzoom need to load all the indexes for all of the rasters (others just reuse the first layout).
-				if(p == 0 || this.layout == 'tarzoom')
-					raster.layout = new Layout(url, this.layout, size);
+				if(p == 0 || this.layout.type == 'tarzoom')
+					raster.layout = new Layout(url, this.layout.type, size);
 				else
 					raster.layout = this.rasters[0].layout;
 				this.rasters.push(raster);
@@ -82,7 +88,7 @@ class RTILayer extends Layer {
 			if(this.normals) {
 				let url = this.imageUrl(this.url, 'normals');
 				let raster = new Raster({ url: url, type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
-				raster.layout = new Layout(url, this.layout, size);
+				raster.layout = new Layout(url, this.layout.type, size);
 				this.rasters.push(raster);
 				
 			}			

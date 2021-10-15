@@ -15,9 +15,8 @@ class CombinerLayer extends Layer {
 
 		if(Object.keys(this.rasters).length != 0)
 			throw "Rasters options should be empty!";
-
-		this.layout = 'image';
-		this.setLayout(new Layout(this.url, this.layout));
+		this.layout.setUrl(this.url);
+		this.setLayout(this.layout);
 
 
 /*		let shader = new ShaderCombiner({

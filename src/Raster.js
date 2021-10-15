@@ -16,7 +16,6 @@
  * * *type*: vec3 (default value) for standard images, vec4 when including alpha, vec2, float other purpouses.
  * * *attribute*: <coeff|kd|ks|gloss|normals|dem> meaning of the image.
  * * *colorSpace*: <linear|srgb> colorspace used for rendering.
- * * *cors*: use cross orgini fetch (default: true), if false will use slower image.src method.
  */
 
 class Raster {
@@ -26,7 +25,7 @@ class Raster {
 		Object.assign(this, { 
 			type: 'vec3', 
 			colorSpace: 'linear',
-			attribute: 'kd',
+			attribute: 'kd'
 		 });
 
 		Object.assign(this, options);
@@ -34,20 +33,27 @@ class Raster {
 
 
 	async loadImage(tile, gl) {
-		//(async () => {
+		let img;
+		if (tile.end || typeof createImageBitmap == 'undefined') {
 			let options = {};
-			if(tile.end)
-				options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity' }
-			var response = await fetch(tile.url, options);
-			if(!response.ok) {
+			options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity', mode: 'cors' }
+			let response = await fetch(tile.url, options);
+			if (!response.ok) {
 				callback("Failed loading " + tile.url + ": " + response.statusText);
 				return;
 			}
-
 			let blob = await response.blob();
-			return await this.blobToImage(blob, gl);
-			
-		//})().catch(e => { callback(null); });
+			img = await this.blobToImage(blob, gl);
+		} else {
+			img = document.createElement('img');
+			img.onerror = function (e) { console.log("Texture loading error!"); };
+			img.src = tile.url;
+			await new Promise((resolve, reject) => { img.onload = () => resolve() });
+		}
+		let tex = this.loadTexture(gl, img);
+		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
+		let size = img.width * img.height * 3;
+		return [tex, size];	
 	}
 
 	async blobToImage(blob, gl) {
@@ -70,11 +76,7 @@ class Raster {
 			urlCreator.revokeObjectURL(img.src);
 			
 		}
-		tex = this.loadTexture(gl, img);
-		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
-		let size = img.width*img.height*3;
-		return [tex, size];
-		
+		return img;		
 	}
 /*
  * @param {function} callback as function(tex, sizeinBytes)
