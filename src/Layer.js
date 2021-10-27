@@ -94,7 +94,9 @@ class Layer {
 
 		if(typeof(this.layout)=='string') {
 			let size = {width:this.width || 0, height:this.height || 0 };
-			this.layout = new Layout(null, this.layout, size);
+			this.setLayout(new Layout(null, this.layout, size));
+		} else {
+			this.setLayout(this.layout);
 		}
 	}
 
@@ -109,13 +111,6 @@ class Layer {
 
 	setLayout(layout) {
 		let callback = () => {
-						//this ckeck is needed for tarzom where all layout are loaded separately.
-			for(let r of this.rasters)
-				if(r.layout.status != "ready") {
-					r.layout.addEvent('ready', callback);
-					return;
-				}
-
 			this.status = 'ready';
 			this.setupTiles(); //setup expect status to be ready!
 			this.emit('ready');
@@ -514,7 +509,7 @@ class Layer {
 		this.requested[tile.index] = true;
 
 		if(this.layout.type == 'itarzoom') {
-			tile.url = this.layout.getTileURL(this.layout.url, tile);
+			tile.url = this.layout.getTileURL(null, tile);
 			let options = {};
 			if(tile.end)
 				options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity' }
@@ -531,7 +526,9 @@ class Layer {
 			for(let sampler of this.shader.samplers) {
 				let raster = this.rasters[sampler.id];
 				let imgblob = blob.slice(tile.offsets[i], tile.offsets[i+1]);
-				const [tex, size] = await raster.blobToImage(imgblob, this.gl);
+				const img = await raster.blobToImage(imgblob, this.gl);
+				let tex = raster.loadTexture(this.gl, img);
+				let size = img.width * img.height * 3;		
 				tile.size += size;
 				tile.tex[sampler.id] = tex;
 				i++;
@@ -546,7 +543,7 @@ class Layer {
 		for(let sampler of this.shader.samplers) {
 			
 			let raster = this.rasters[sampler.id];
-			tile.url = raster.layout.getTileURL(raster.url, tile);
+			tile.url = this.layout.getTileURL(sampler.id, tile);
 			const [tex, size] = await raster.loadImage(tile, this.gl);
 			if(this.layout.type == "image") {
 				this.layout.width = raster.width;

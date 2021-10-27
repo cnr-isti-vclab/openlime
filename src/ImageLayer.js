@@ -18,10 +18,8 @@ class ImageLayer extends Layer {
 		if(!this.url)
 			throw "Url option is required";
 
-		this.layout.setUrl(this.url);
-		this.setLayout(this.layout);
-		let raster = new Raster({ url: this.url, type: 'vec3', attribute: 'kd', colorspace: 'sRGB' });
-		raster.layout = this.layout;
+		this.layout.setUrls([this.url]);
+		let raster = new Raster({ type: 'vec3', attribute: 'kd', colorspace: 'sRGB' });
 
 		this.rasters.push(raster);
 		

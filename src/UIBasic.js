@@ -89,7 +89,7 @@ class UIBasic {
 					onclick: () => { layer.setMode(m); this.updateMenu(); },
 					status: () => layer.getMode() == m ? 'active' : '',
 				};
-				if (m == 'specular')
+				if (m == 'specular' && layer.shader.setSpecularExp)
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
 				modes.push(mode);
 			}

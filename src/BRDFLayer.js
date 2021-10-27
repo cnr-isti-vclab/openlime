@@ -25,17 +25,14 @@ class BRDFLayer extends Layer {
 			this.colorspaces['ks'] = 'linear';
 		}
 
-		this.rasters.push(new Raster({ url: this.channels['kd'],      type: 'vec3',  attribute: 'kd',      colorspace: this.colorspaces['kd'] }));
-		this.rasters.push(new Raster({ url: this.channels['ks'],      type: 'vec3',  attribute: 'ks',      colorspace: this.colorspaces['ks'] }));
-		this.rasters.push(new Raster({ url: this.channels['normals'], type: 'vec3',  attribute: 'normals', colorspace: 'linear' }));
-		this.rasters.push(new Raster({ url: this.channels['gloss'],   type: 'float', attribute: 'gloss',   colorspace: 'linear' }));
+		this.rasters.push(new Raster({ type: 'vec3',  attribute: 'kd',      colorspace: this.colorspaces['kd'] }));
+		this.rasters.push(new Raster({ type: 'vec3',  attribute: 'ks',      colorspace: this.colorspaces['ks'] }));
+		this.rasters.push(new Raster({ type: 'vec3',  attribute: 'normals', colorspace: 'linear' }));
+		this.rasters.push(new Raster({ type: 'float', attribute: 'gloss',   colorspace: 'linear' }));
 
 		let size = {width:this.width, height:this.height};
 
-		for(let raster of this.rasters)
-			raster.layout = new Layout(raster.url, this.layout.type, size);
-
-		this.setLayout(this.rasters[0].layout); 
+		this.layout.setUrls(['kd', 'ks', 'normals', 'gloss'].map(c => this.channels[c]));
 		
 		let now = performance.now();
 		this.controls['light'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };

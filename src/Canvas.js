@@ -166,8 +166,9 @@ class Canvas {
 			let layer = this.layers[id];
 			//console.log(layer);
 			//console.log(layer.layout.status);
-			if(layer.visible && layer.layout.status == 'ready')
+			if(layer.visible && layer.status == 'ready') {
 				layer.prefetch(transform, this.camera.viewport);
+			}
 		}
 	}
 }

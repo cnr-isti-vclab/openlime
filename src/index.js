@@ -20,7 +20,7 @@ import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
 let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 //combinerTest();
-imageTest('zoomify'); // image google deepzoom zoomify iiif
+//imageTest('deepzoom'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
 //rtiTest('rbf');
@@ -107,8 +107,8 @@ function testMedicalAnnotations() {
 		zindex: 0,
 	});
 
-	let layer1 = new AnnotationLayer({ 
-		viewBox: "0 0 47962 53040",
+	let layer1 = new SvgAnnotationLayer({ 
+		layout: layer0.layout,
 		style:` 
 			.openlime-annotation { pointer-events:all; opacity: 0.7; }
 			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
@@ -131,20 +131,6 @@ function testMedicalAnnotations() {
 
 	}); 
 
-	layer1.addEvent('createAnnotation', (layer, annotation) => { console.log("Created annotation: ", annotation); createAnnotation(layer, annotation); });
-	layer1.addEvent('deleteAnnotation', (layer, annotation) => { console.log("Deleted annotation: ", annotation); });
-	layer1.addEvent('updateAnnotation', (layer, annotation) => { console.log("Updated annotation: ", annotation); });
-
-	async function createAnnotation(layer, annotation) {
-		annotation.action = 'create';
-		const response = await fetch('crud.php', {method: 'POST', body: JSON.stringify(annotation)});
-		if (!response.ok) {
-			 const message = `An error has occured: ${response.status}`;
-			 throw new Error(message);
-		}
-		let json = await response.json();
-		console.log(json);
-	}
 	lime.canvas.addLayer('img', layer0);
 	lime.canvas.addLayer('anno', layer1);
 	let ui = new UIBasic(lime);
@@ -161,7 +147,7 @@ function testSVGAnnotations() {
 	});
 
 	let layer1 = new AnnotationLayer({ 
-		viewBox: "0 0 300 553",
+		layout: layer0.layout,
 		svgURL: 'assets/svbrdf/vis/annotations.svg',
 		style:` 
 			.openlime-annotation { pointer-events:all; opacity: 0.7; }
@@ -174,9 +160,9 @@ function testSVGAnnotations() {
 	lime.canvas.addLayer('img', layer0);
 	lime.canvas.addLayer('anno', layer1);
 	let ui = new UIBasic(lime);
-	const { home, fullscreen, rotate } = ui.actions;
-	ui.actions = { home, fullscreen, rotate };
-	ui.actions.zoomin = { title: "Zoom in", task: (event) => { lime.camera.deltaZoom(1000, 2, 0, 0); } }; //actions can be modified just after ui creation (not later!)
+	// const { home, fullscreen, rotate } = ui.actions;
+	// ui.actions = { home, fullscreen, rotate };
+	// ui.actions.zoomin = { title: "Zoom in", task: (event) => { lime.camera.deltaZoom(1000, 2, 0, 0); } }; //actions can be modified just after ui creation (not later!)
 }
 
 function testUIBasic() {
@@ -353,16 +339,14 @@ function lensTest() {
 	lime.pointerManager.onEvent(controllerLens); 
 	lensLayer.controllers.push(controllerLens);
 
-	let ui = new UIBasic(lime);
-	 //const { home, fullscreen, rotate } = ui.actions;
-	 //ui.actions = { home, fullscreen, rotate };
-
 	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
 	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
 	lime.camera.maxFixedZoom = 4;
 
 	lime.canvas.addLayer('kdmap', layer0);
 	lime.canvas.addLayer('lens', lensLayer);
+	let ui = new UIBasic(lime);
+
 }
 
 /* IMAGE TEST */
@@ -372,16 +356,19 @@ function imageTest(layout) {
 
 //	let options = { layout: layout, type: 'image', transform: { x: -100, a: 45 } };
 	let options = { layout: layout, type: 'image'};
-	console.log(options);
+	console.log("OPTIONS: ", options);
 	switch (layout) {
 		case 'image':
 			options.url = 'assets/svbrdf/vis/glossMap.jpg';
 //			options.url = 'http://dev.isti.cnr.it/iipsrv/iipsrv.fcgi?IIIF=/home/ponchio/Sync/html/cenobium/sites/monreale/tif/N1ShNWNW.tif/2048,0,1952,2048/244.875,256/0/default.jpg';
 			break;
 
-		case 'deepzoom':
-			options.url = 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
-			//options.url = 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
+			case 'deepzoom1px':
+				options.url = 'assets/deepzoom/anatra.dzi';
+			break;	
+			case 'deepzoom':
+				//options.url = 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
+				options.url = 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
 			break;
 
 		case 'google':
@@ -396,8 +383,18 @@ function imageTest(layout) {
 
 		case 'iiif':
 			//options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=PIA03883.pyr.tif/info.json';
-			options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=HD3/HD3_pyr_000_090.tif/info.json';
+			//options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=HD3/HD3_pyr_000_090.tif/info.json';
+			options.url = 'http://dev.isti.cnr.it/iipsrv/iipsrv.fcgi?IIIF=/home/ponchio/Sync/html/cenobium/sites/monreale/tif/N1ShNWNW.tif/info.json';
 			break;
+
+		case 'tarzoom':
+			options.url = 'assets/rti/hsh/plane_0.tzi';
+			break;
+
+		case 'itarzoom':
+			options.url = 'assets/rti/hsh/planes.tzi';
+			break;
+		
 	}
 	let layer0 = new Layer(options);
 	lime.canvas.addLayer('kdmap', layer0);

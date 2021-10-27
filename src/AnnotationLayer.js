@@ -52,7 +52,6 @@ class AnnotationLayer extends Layer {
 		if(this.annotationsListEntry)
 			this.createAnnotationsList();
 		
-		this.status = 'ready';
 		this.emit('update');
 	}
 

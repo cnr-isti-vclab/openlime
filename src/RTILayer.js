@@ -70,29 +70,20 @@ class RTILayer extends Layer {
 			}
 			let json = await response.json();
 			this.shader.init(json);
-			if(this.layout.type == 'image') { 
-				this.width = json.width;
-				this.height = json.height;
-			}
-			let size = {width:this.width, height:this.height};
+			let urls = [];
 			for(let p = 0; p < this.shader.njpegs; p++) {
 				let url = this.imageUrl(this.url, 'plane_' + p);
-				let raster = new Raster({ url: url, type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
-				//Tarzoom need to load all the indexes for all of the rasters (others just reuse the first layout).
-				if(p == 0 || this.layout.type == 'tarzoom')
-					raster.layout = new Layout(url, this.layout.type, size);
-				else
-					raster.layout = this.rasters[0].layout;
+				urls.push(url);
+				let raster = new Raster({ type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
 				this.rasters.push(raster);
 			}
-			if(this.normals) {
+			if(this.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
 				let url = this.imageUrl(this.url, 'normals');
-				let raster = new Raster({ url: url, type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
-				raster.layout = new Layout(url, this.layout.type, size);
-				this.rasters.push(raster);
-				
+				urls.push(url);
+				let raster = new Raster({ type: 'vec3', attribute: 'coeff', colorspace: 'linear' });
+				this.rasters.push(raster);				
 			}			
-			this.setLayout(this.rasters[0].layout);
+			this.layout.setUrls(urls);
 
 		})().catch(e => { console.log(e); this.status = e; });
 	}

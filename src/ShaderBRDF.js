@@ -56,8 +56,9 @@ class ShaderBRDF extends Shader {
 				throw Error("ShaderBRDF: Unknown mode: " + mode);
 			break;
 		}
-		
+		this.needsUpdate = true;
 	}
+
 	fragShaderSrc(gl) {
 		let gl2 = gl instanceof WebGL2RenderingContext;
 		let str = `${gl2? '#version 300 es' : ''}

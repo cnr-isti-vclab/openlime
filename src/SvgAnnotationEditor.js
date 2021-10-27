@@ -100,7 +100,7 @@ class SvgAnnotationEditor {
 					(async () => {
 
 						for (const [label, tool] of Object.entries(tools)) {
-							let icon = await Skin.appendIcon(entry.element.firstChild, '.openlime-' + label);
+							let icon = await Skin.appendIcon(entry.element.firstChild, '.openlime-' + label); // TODO pass entry.element.firstChild as parameter in onCreate
 							icon.setAttribute('title', tool.title);
 							icon.addEventListener('click', tool.action);
 						}

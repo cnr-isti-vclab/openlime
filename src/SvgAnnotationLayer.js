@@ -23,17 +23,17 @@ class SvgAnnotationLayer extends AnnotationLayer {
 			svgGroup: null,
 		}, options);
 		super(options);
-
+		console.log("SVG LAYOUT: ", this.layout);
 		//this.createSVGElement();
+		//this.setLayout(this.layout);
 	}
 
 	createSVGElement() {
+		console.log("HERE");
 		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svgElement.classList.add('openlime-svgoverlay');
 		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 		this.svgElement.append(this.svgGroup);
-		const bBox=this.boundingBox();
-		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
 
 		let root = this.overlayElement;
 		if (this.shadow)
@@ -61,16 +61,21 @@ class SvgAnnotationLayer extends AnnotationLayer {
 */
 
 	setVisible(visible) {
+		if(!this.svgElement)
+		return;
 		this.svgElement.style.display = visible ? 'block' : 'none';
 		super.setVisible(visible);
 	}
 
 	clearSelected() {
+		if(!this.svgElement) this.createSVGElement();
+//		return;
 		this.svgGroup.querySelectorAll('[data-annotation]').forEach((e) => e.classList.remove('selected'));
 		super.clearSelected();
 	}
 
 	setSelected(anno, on = true) {
+		console.log("SET SELECTED");
 		for (let a of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))
 			a.classList.toggle('selected', on);
 
@@ -86,6 +91,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 	}
 
 	draw(transform, viewport) {
+		console.log("SvgAnnotationLayer draw()");
 		if(!this.svgElement)
 			return;
 		let t = this.transform.compose(transform);
@@ -97,12 +103,19 @@ class SvgAnnotationLayer extends AnnotationLayer {
 	}
 
 	prefetch(transform) {
-		if (!this.visible) return;
-		if(this.status != 'ready') 
-			return;
+		console.log("SvgAnnotationLayer prefetch()");
 		if(!this.svgElement)
 			this.createSVGElement();
 
+		console.log("SVG ELM ", this.svgElement);
+
+		if (!this.visible) return;
+		if(this.status != 'ready') 
+			return;
+
+		const bBox=this.boundingBox();
+		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
+	
 		//find which annotations needs to be added to the ccanvas, some 
 		//indexing whould be used, for the moment we just iterate all of them.
 
@@ -146,6 +159,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 					c.classList.add('selected');
 				this.svgGroup.appendChild(c);
 				c.onpointerdown =  (e) => {
+					console.log("CLICK");
 					if(this.selected.has(anno.id))
 						return;
 					this.clearSelected();

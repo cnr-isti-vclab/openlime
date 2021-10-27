@@ -34,9 +34,10 @@ class Raster {
 
 	async loadImage(tile, gl) {
 		let img;
+		let cors = (new URL(tile.url, window.location.href)).origin !== window.location.origin;
 		if (tile.end || typeof createImageBitmap == 'undefined') {
 			let options = {};
-			options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity', mode: 'cors' }
+			options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity', mode: cors? 'cors' : 'same-origin' };
 			let response = await fetch(tile.url, options);
 			if (!response.ok) {
 				callback("Failed loading " + tile.url + ": " + response.statusText);
@@ -46,6 +47,7 @@ class Raster {
 			img = await this.blobToImage(blob, gl);
 		} else {
 			img = document.createElement('img');
+			if (cors) img.crossOrigin="";
 			img.onerror = function (e) { console.log("Texture loading error!"); };
 			img.src = tile.url;
 			await new Promise((resolve, reject) => { img.onload = () => resolve() });

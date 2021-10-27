@@ -58,7 +58,6 @@ class _Cache {
 
 	findBestCandidate() {
 		let best = null;
-		let candidates = [];
 		for(let layer of this.layers) {
 			if(!layer.queue.length)
 				continue;
