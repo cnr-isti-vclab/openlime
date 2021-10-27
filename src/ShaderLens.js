@@ -32,8 +32,7 @@ class ShaderLens extends Shader {
     }
     
 	fragShaderSrc(gl) {
-        let gl2 = gl instanceof WebGL2RenderingContext;
-
+		let gl2 = !(gl instanceof WebGLRenderingContext);
 		return `${gl2? '#version 300 es':''}
 
         precision highp float; 
@@ -66,7 +65,7 @@ class ShaderLens extends Shader {
     }
 
     vertShaderSrc(gl) {
-        let gl2 = gl instanceof WebGL2RenderingContext;
+		let gl2 = !(gl instanceof WebGLRenderingContext);
 		return `${gl2? '#version 300 es':''}
 
 precision highp float; 

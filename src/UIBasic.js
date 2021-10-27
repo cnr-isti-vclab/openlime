@@ -62,6 +62,7 @@ class UIBasic {
 			scale: null,
 			unit: null,
 			info: new Info(lime.containerElement),
+			lightcontroller: null,
 		});
 
 		Object.assign(this, options);
@@ -109,6 +110,30 @@ class UIBasic {
 			}
 			this.menu.push(layerEntry);
 		}
+
+
+		let controller = new Controller2D((x, y) => {
+			for (let layer of lightLayers)
+				layer.setLight([x, y], 0);
+		}, { active: false, activeModifiers: [2, 4], control: 'light', relative: true });
+
+		controller.priority = 0;
+		this.lime.pointerManager.onEvent(controller);
+		this.lightcontroller = controller;
+
+
+		let lightLayers = [];
+		for (let [id, layer] of Object.entries(this.lime.canvas.layers))
+			if (layer.controls.light) lightLayers.push(layer);
+		
+		if (lightLayers.length) {
+			for (let layer of lightLayers) {
+				controller.setPosition(0.5, 0.5);
+				//layer.setLight([0.5, 0.5], 0);
+				layer.controllers.push(controller);
+			}
+		}
+
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
 	}
@@ -133,28 +158,8 @@ class UIBasic {
 			this.createMenu();
 			this.updateMenu();
 
-			let lightLayers = [];
-			for (let [id, layer] of Object.entries(this.lime.canvas.layers))
-				if (layer.controls.light) lightLayers.push(layer);
-
-			if (lightLayers.length) {
-				if (this.actions.light && this.actions.light.display === 'auto')
-					this.actions.light.display = true;
-
-				let controller = new Controller2D((x, y) => {
-					for (let layer of lightLayers)
-						layer.setLight([x, y], 0);
-				}, { active: true, activeModifiers: [2, 4], control: 'light', relative: true });
-
-				controller.priority = 0;
-				this.lime.pointerManager.onEvent(controller);
-				for (let layer of lightLayers) {
-					controller.setPosition(0.5, 0.5);
-					//layer.setLight([0.5, 0.5], 0);
-					layer.controllers.push(controller);
-				}
-
-			}
+			if (this.actions.light && this.actions.light.display === 'auto')
+				this.actions.light.display = true;
 
 
 			if (this.skin)

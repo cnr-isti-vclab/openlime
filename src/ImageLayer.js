@@ -31,7 +31,7 @@ class ImageLayer extends Layer {
 		
 		shader.fragShaderSrc = function(gl) {
 
-			let gl2 = gl instanceof WebGL2RenderingContext;
+			let gl2 = !(gl instanceof WebGLRenderingContext);
 			let str = `${gl2? '#version 300 es' : ''}
 
 precision highp float;
