@@ -20,7 +20,7 @@ import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
 let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 //combinerTest();
-imageTest('deepzoom'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
+//imageTest('iiif'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
 //rtiTest('rbf');
@@ -28,7 +28,7 @@ imageTest('deepzoom'); // image google deepzoom deepzoom1px zoomify iiif tarzoon
 //testUIBasic();
 
 //testUISvg();
-//lensTest();
+lensTest();
 //testSVGAnnotations();
 
 //testMedicalAnnotations();
@@ -334,9 +334,13 @@ function lensTest() {
 		border:10
 	});
 
-	let controllerLens = new ControllerLens(lensLayer, lime.camera,
-											{ hover: true,
-											priority: 0});
+	let controllerLens = new ControllerLens({
+		camera: lime.camera,
+		lensLayer: lensLayer,
+		hover: true,
+		priority: 0
+	});
+	
 	lime.pointerManager.onEvent(controllerLens); 
 	lensLayer.controllers.push(controllerLens);
 
