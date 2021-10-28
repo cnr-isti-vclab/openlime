@@ -285,7 +285,7 @@ class Layer {
 		//how linear or srgb should be specified here.
 //		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
 		if(!this.status == 'ready' || this.tiles.length == 0)
-			return;
+			return true;
 
 		if(!this.shader)
 			throw "Shader not specified!";

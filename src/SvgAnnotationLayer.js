@@ -15,7 +15,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 
 	constructor(options) {
 		options = Object.assign({
-			svgURL: null,
+				svgURL: null,
 			svgXML: null,
 			overlayElement: null,    //reference to canvas overlayElement. TODO: check if really needed.
 			shadow: true,            //svg attached as shadow node (so style apply
@@ -61,9 +61,8 @@ class SvgAnnotationLayer extends AnnotationLayer {
 */
 
 	setVisible(visible) {
-		if(!this.svgElement)
-		return;
-		this.svgElement.style.display = visible ? 'block' : 'none';
+		if(this.svgElement)
+			this.svgElement.style.display = visible ? 'block' : 'none';
 		super.setVisible(visible);
 	}
 
@@ -93,7 +92,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 	draw(transform, viewport) {
 		console.log("SvgAnnotationLayer draw()");
 		if(!this.svgElement)
-			return;
+			return true;
 		let t = this.transform.compose(transform);
 		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
 		let c = this.boundingBox().corner(0);
