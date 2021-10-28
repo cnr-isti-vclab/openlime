@@ -16,7 +16,6 @@
  * * *type*: vec3 (default value) for standard images, vec4 when including alpha, vec2, float other purpouses.
  * * *attribute*: <coeff|kd|ks|gloss|normals|dem> meaning of the image.
  * * *colorSpace*: <linear|srgb> colorspace used for rendering.
- * * *cors*: use cross orgini fetch (default: true), if false will use slower image.src method.
  */
 
 class Raster {
@@ -26,56 +25,66 @@ class Raster {
 		Object.assign(this, { 
 			type: 'vec3', 
 			colorSpace: 'linear',
-			attribute: 'kd',
+			attribute: 'kd'
 		 });
 
 		Object.assign(this, options);
 	}
 
 
-	loadImage(tile, gl, callback) {
-		(async () => {
+	async loadImage(tile, gl) {
+		let img;
+		let cors = (new URL(tile.url, window.location.href)).origin !== window.location.origin;
+		if (tile.end || typeof createImageBitmap == 'undefined') {
 			let options = {};
-			if(tile.end)
-				options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity' }
-			var response = await fetch(tile.url, options);
-			if(!response.ok) {
-				console.log();
+			options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity', mode: cors? 'cors' : 'same-origin' };
+			let response = await fetch(tile.url, options);
+			if (!response.ok) {
 				callback("Failed loading " + tile.url + ": " + response.statusText);
 				return;
 			}
-
 			let blob = await response.blob();
+			img = await this.blobToImage(blob, gl);
+		} else {
+			img = document.createElement('img');
+			if (cors) img.crossOrigin="";
+			img.onerror = function (e) { console.log("Texture loading error!"); };
+			img.src = tile.url;
+			await new Promise((resolve, reject) => { img.onload = () => resolve() });
+		}
+		let tex = this.loadTexture(gl, img);
+		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
+		let size = img.width * img.height * 3;
+		return [tex, size];	
+	}
 
-			if(typeof createImageBitmap != 'undefined') {
-				var isFirefox = typeof InstallTrigger !== 'undefined';
-				//firefox does not support options for this call, BUT the image is automatically flipped.
-				if(isFirefox) {
-					createImageBitmap(blob).then((img) => this.loadTexture(gl, img, callback));
-				} else {
-					createImageBitmap(blob, { imageOrientation1: 'flipY' }).then((img) => this.loadTexture(gl, img, callback));
-				}
+	async blobToImage(blob, gl) {
+		let tex, img;
+		if(typeof createImageBitmap != 'undefined') {
+			var isFirefox = typeof InstallTrigger !== 'undefined';
+			//firefox does not support options for this call, BUT the image is automatically flipped.
+			if(isFirefox)
+				img = await createImageBitmap(blob); 
+			else
+				img = await createImageBitmap(blob, { imageOrientation1: 'flipY' });
 
-			} else { //fallback for IOS
-				let urlCreator = window.URL || window.webkitURL;
-				let img = document.createElement('img');
-				img.onerror = function(e) { console.log("Texture loading error!"); };
-				img.src = urlCreator.createObjectURL(blob);
+		} else { //fallback for IOS
+			let urlCreator = window.URL || window.webkitURL;
+			img = document.createElement('img');
+			img.onerror = function(e) { console.log("Texture loading error!"); };
+			img.src = urlCreator.createObjectURL(blob);
 
-				img.onload = function() {
-					urlCreator.revokeObjectURL(img.src);
-
-
-					this.loadTexture(gl, img, callback);
-				}
-			}
-		})().catch(e => { callback(null); });
+			await new Promise((resolve, reject) => { img.onload = () => resolve() });
+			urlCreator.revokeObjectURL(img.src);
+			
+		}
+		return img;		
 	}
 /*
  * @param {function} callback as function(tex, sizeinBytes)
  */
 
-	loadTexture(gl, img, callback) {
+	loadTexture(gl, img) {
 		this.width = img.width;  //this will be useful for layout image.
 		this.height = img.height;
 
@@ -86,8 +95,7 @@ class Raster {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
-		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
-		callback(tex, img.width*img.height*3);
+		return tex;
 	}
 }
 

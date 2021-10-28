@@ -15,24 +15,25 @@ class ShaderCombiner extends Shader {
 			{ id:1, name:'source2', type:'vec3' }
 		];
 
-		this.modes = {
+		this.modes = ['first','second','mean','diff'];
+		this.operations = {
 			'first': 'color = c1;',
 			'second': 'color = c2;',
 			'mean': 'color = (c1 + c2)/2.0;',
 			'diff': 'color = vec4(c2.rgb - c1.rgb, c1.a);'
 		};
-
 	}
 
 	setMode(mode) {
-		if(!(mode in this.modes))
+//		if(!(mode in this.modes))
+		if(this.modes.indexOf(mode)==-1)
 			throw Error("Unknown mode: " + mode);
 		this.mode = mode;
 		this.needsUpdate = true;
 	}
 
 	fragShaderSrc(gl) {
-		let gl2 = gl instanceof WebGL2RenderingContext;
+		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let operation = this.modes[this.mode];
 		return `${gl2? '#version 300 es' : ''}
 
@@ -56,7 +57,7 @@ void main() {
 	}
 
 	vertShaderSrc(gl) {
-		let gl2 = gl instanceof WebGL2RenderingContext;
+		let gl2 = !(gl instanceof WebGLRenderingContext);
 		return `${gl2? '#version 300 es':''}
 
 precision highp float; 

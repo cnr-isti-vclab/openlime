@@ -7,3 +7,6 @@ dist/assets/rti/512
 dist/assets/rti/test
 docs
 package-lock.json
+build
+dist/database.php
+

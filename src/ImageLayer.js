@@ -18,15 +18,8 @@ class ImageLayer extends Layer {
 		if(!this.url)
 			throw "Url option is required";
 
-		if(!this.layout)
-			this.layout = 'image';
-
-		
-
-		let size = {width:this.width || 0, height:this.height || 0 };
-		this.setLayout(new Layout(this.url, this.layout, size));
-		let raster = new Raster({ url: this.url, type: 'vec3', attribute: 'kd', colorspace: 'sRGB' });
-		raster.layout = this.layout;
+		this.layout.setUrls([this.url]);
+		let raster = new Raster({ type: 'vec3', attribute: 'kd', colorspace: 'sRGB' });
 
 		this.rasters.push(raster);
 		
@@ -38,14 +31,13 @@ class ImageLayer extends Layer {
 		
 		shader.fragShaderSrc = function(gl) {
 
-			let gl2 = gl instanceof WebGL2RenderingContext;
+			let gl2 = !(gl instanceof WebGLRenderingContext);
 			let str = `${gl2? '#version 300 es' : ''}
 
 precision highp float;
 precision highp int;
 
 uniform sampler2D kd;
-
 
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
 ${gl2? 'out' : ''} vec4 color;

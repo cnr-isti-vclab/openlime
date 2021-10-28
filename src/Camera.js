@@ -7,7 +7,8 @@ import { BoundingBox } from './BoundingBox.js'
  * * *bounded*: limit translation of the camera to the boundary of the scene.
  * * *maxZoom*: maximum zoom, 1:maxZoom is screen pixel to image pixel ratio.
  * * *minZoom*: minimum zoom,
- * 
+ * * *minScreenFraction: the minimum portion of the screen to zoom in
+ * * *maxFixedZoom: maximum pixel size
  * Signals:
  * Emits 'update' event when target is changed.
  */
@@ -233,6 +234,7 @@ class Camera {
 	
 		this.minZoom = Math.min(w/bw, h/bh) * this.minScreenFraction;
 		this.maxZoom = minScale > 0 ? this.maxFixedZoom / minScale : this.maxFixedZoom;
+		this.maxZoom = Math.max(this.minZoom, this.maxZoom);
 	}
 }
 

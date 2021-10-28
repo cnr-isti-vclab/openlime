@@ -10,11 +10,17 @@ import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 
+import { Skin } from './Skin.js'
 import { UIBasic } from './UIBasic.js'
 import { Controller } from './Controller.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 
 import { PointerManager } from './PointerManager.js'
+
+import { Annotation	 } from './Annotation.js'
+import { AnnotationLayer } from './AnnotationLayer.js'
+import { SvgAnnotationLayer } from './SvgAnnotationLayer.js'
+import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
 
 /**
  * Manages an OpenLIME viewer functionality on a canvas
@@ -63,14 +69,13 @@ class OpenLIME {
 
 		this.canvas = new Canvas(this.canvasElement, this.overlayElement, this.camera, this.canvas);
 		this.canvas.addEvent('update', () => { this.redraw(); });
-		this.camera.addEvent('update', () => { this.redraw(); });
 
 		this.pointerManager = new PointerManager(this.overlayElement);
 
 		this.canvasElement.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            return false;
-        });
+			e.preventDefault();
+			return false;
+		});
 		
 		var resizeobserver = new ResizeObserver( entries => {
 			for (let entry of entries) {
@@ -144,5 +149,5 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, UIBasic}
+export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, Skin, UIBasic, Annotation, AnnotationLayer, SvgAnnotationLayer, SvgAnnotationEditor }
 

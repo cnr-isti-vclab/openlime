@@ -169,8 +169,9 @@ class RTIShader extends Shader {
 	}
 
 	fragShaderSrc(gl) {
+		
 		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
-		let gl2 = gl instanceof WebGL2RenderingContext;
+		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let str = `${gl2? '#version 300 es' : ''}
 
 precision highp float; 

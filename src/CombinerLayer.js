@@ -16,10 +16,6 @@ class CombinerLayer extends Layer {
 		if(Object.keys(this.rasters).length != 0)
 			throw "Rasters options should be empty!";
 
-		this.layout = 'image';
-		this.setLayout(new Layout(this.url, this.layout));
-
-
 /*		let shader = new ShaderCombiner({
 			'label': 'Combiner',
 			'samplers': [{ id:0, name:'source1', type:'vec3' }, { id:1, name:'source2', type:'vec3' }],
@@ -32,6 +28,7 @@ class CombinerLayer extends Layer {
 
 		this.textures = [];
 		this.framebuffers = [];
+		this.status = 'ready';
 	}
 
 
@@ -85,6 +82,7 @@ class CombinerLayer extends Layer {
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
 	}
 
+	
 	createFramebuffers() {
 		let gl = this.gl;
 		for(let i = 0; i < this.layers.length; i++) {

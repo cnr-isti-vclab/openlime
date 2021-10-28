@@ -17,35 +17,41 @@ class Layout {
 			suffix: 'jpg',
 			qbox: [],          //array of bounding box in tiles, one for mipmap 
 			bbox: [],          //array of bounding box in pixels (w, h)
-
+			urls: [],
 			signals: { ready: [], updateSize: [] },          //callbacks when the layout is ready.
 			status: null
 		});
 		if(options)
 			Object.assign(this, options);
 
-		if(typeof(url) == 'string') {
-			this.url = url;
-
-			(async () => {
-				switch(this.type) {
-					case 'image':    await this.initImage(); break;
-					case 'google':   await this.initGoogle(); break;
-					case 'deepzoom1px': await this.initDeepzoom(true); break;
-					case 'deepzoom': await this.initDeepzoom(false); break;
-					case 'tarzoom':  await this.initTarzoom(); break;
-					case 'zoomify':  await this.initZoomify(); break;
-					case 'iiif':     await this.initIIIF(); break;
-				}
-				this.initBoxes();
-				this.status = 'ready';
-				this.emit('ready');
-				
-			})().catch(e => { console.log(e); this.status = e; });
-		}
+		if(typeof(url) == 'string')
+			this.setUrls([url]);
 
 		if(typeof(url) == 'object')
 			Object.assign(this, url);
+	}
+
+	setUrls(urls) {
+		this.urls = urls;
+		(async () => {
+			switch(this.type) {
+				case 'image':    await this.initImage(); break; // No Url needed
+				case 'google':   await this.initGoogle(); break; // No Url needed
+
+				case 'deepzoom1px': await this.initDeepzoom(true); break; // urls[0] only needed
+				case 'deepzoom': await this.initDeepzoom(false); break; // urls[0] only needed
+				case 'zoomify':  await this.initZoomify(); break; // urls[0] only needed
+				case 'iiif':     await this.initIIIF(); break; // urls[0] only needed
+
+				case 'tarzoom':  await this.initTarzoom(); break; // all urls needed
+
+				case 'itarzoom':  await this.initITarzoom(); break; // actually it has just one url
+			}
+			this.initBoxes();
+			this.status = 'ready';
+			this.emit('ready');
+			console.log("LOADED ", this);
+		})().catch(e => { console.log(e); this.status = e; });
 	}
 
 	addEvent(event, callback) {
@@ -98,7 +104,6 @@ class Layout {
 		}
 
 		let tiles = [];
-		var index = 0;
 		for(let level = this.nlevels - 1; level >= 0; level--) {
 			this.qbox[level] = new BoundingBox({xLow:0, yLow: 0, xHigh: 0, yHigh: 0});
 			this.bbox[level] = new BoundingBox({xLow:0, yLow: 0, xHigh: w, yHigh: h}); 
@@ -222,7 +227,7 @@ class Layout {
 		return { level: minlevel, pyramid: pyramid };
 	}
 
-	getTileURL(url, tile) {
+	getTileURL(id, tile) {
 		throw Error("Layout not defined or ready.");
 	}
 
@@ -232,7 +237,7 @@ class Layout {
  * Witdh and height can be recovered once the image is downloaded.
 */
 	initImage() {
-		this.getTileURL = (url, tile) => { return url; }
+		this.getTileURL = (rasterid, tile) => { return this.urls[rasterid]; }
 		this.nlevels = 1;
 		this.tilesize = 0;
 	}
@@ -252,8 +257,8 @@ class Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.getTileURL = (url, tile) => {
-			return url + "/" + tile.level + "/" + tile.y + "/" + tile.x + '.' + this.suffix;
+		this.getTileURL = (rasterid, tile) => {
+			return this.urls[rasterid] + "/" + tile.level + "/" + tile.y + "/" + tile.x + '.' + this.suffix;
 		};
 	}
 
@@ -261,11 +266,12 @@ class Layout {
 /**
  * Expects the url to point to .dzi config file
  */
-	async initDeepzoom(onepixel) {		
-		var response = await fetch(this.url);
+	async initDeepzoom(onepixel) {
+		let url = this.urls[0];
+		var response = await fetch(url);
 		if(!response.ok) {
-			this.status = "Failed loading " + this.url + ": " + response.statusText;
-			return;
+			this.status = "Failed loading " + url + ": " + response.statusText;
+			throw new Error(this.status);
 		}
 		let text = await response.text();
 		let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
@@ -282,34 +288,61 @@ class Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '_files/';
+		this.urls[0] = url.substr(0, url.lastIndexOf(".")) + '_files/';
 		this.skiplevels = 0;
 		if(onepixel)
 			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
 
-		this.getTileURL = (url, tile) => {
+		this.getTileURL = (rasterid, tile) => {
+			let url = this.urls[rasterid];
 			let level = tile.level + this.skiplevels;
-			url = url.substr(0, url.lastIndexOf(".")) + '_files/';
 			return url + level + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
 		}; 
 	}
 
-	async initTarzoom() {		
-		var response = await fetch(this.url);
+	async initTarzoom() {
+		this.tarzoom =[];	
+		for (let url of this.urls) {
+			var response = await fetch(url);
+			if (!response.ok) {
+				this.status = "Failed loading " + url + ": " + response.statusText;
+				throw new Error(this.status);
+			}
+			let json = await response.json();
+			console.log("JSON: ", json);
+			json.url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
+			Object.assign(this, json);
+			this.tarzoom.push(json);
+		}
+
+		this.getTileURL = (rasterid, tile) => {
+			const tar = this.tarzoom[rasterid];
+			tile.start = tar.offsets[tile.index];
+			tile.end = tar.offsets[tile.index+1];
+			return tar.url;
+		}; 
+	}
+
+
+	async initITarzoom() {
+		const url = this.urls[0];		
+		var response = await fetch(url);
 		if(!response.ok) {
-			this.status = "Failed loading " + this.url + ": " + response.statusText;
-			return;
+			this.status = "Failed loading " + url + ": " + response.statusText;
+			throw new Error(this.status);
 		}
 		let json = await response.json();
 		Object.assign(this, json); //suffix, tilesize, overlap, width, height, levels
-		//this.nlevels = this.levels.length;
-		this.url = this.url.substr(0, this.url.lastIndexOf(".")) + '.tzb';
+		this.url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
 
-		this.getTileURL = (url, tile) => {
-			tile.start = this.offsets[tile.index];
-			tile.end = this.offsets[tile.index+1];
-			url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
-			return url; // + level + '/' + x + '_' + y + '.' + this.suffix;
+		this.getTileURL = (rasterid, tile) => {
+			let index = tile.index*this.stride;
+			tile.start = this.offsets[index];
+			tile.end = this.offsets[index+this.stride];
+			tile.offsets = []
+			for(let i = 0; i < this.stride+1; i++)
+				tile.offsets.push(this.offsets[index + i] - tile.start);
+			return this.url;
 		}; 
 	}
 
@@ -319,11 +352,12 @@ class Layout {
  * Expects the url to point to ImageProperties.xml file.
  */
 	async initZoomify() {
+		const url = this.urls[0];
 		this.overlap = 0;
-		var response = await fetch(this.url);
+		var response = await fetch(url);
 		if(!response.ok) {
-			this.status = "Failed loading " + this.url + ": " + response.statusText;
-			return;
+			this.status = "Failed loading " + url + ": " + response.statusText;
+			throw new Error(this.status);
 		}
 		let text = await response.text();
 		let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
@@ -337,23 +371,21 @@ class Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.url = this.url.substr(0, this.url.lastIndexOf("/"));
-
-		this.getTileURL = (url, tile) => {
-			//let index = this.index(level, x, y)>>>0;
+		this.getTileURL = (rasterid, tile) => {
+			const tileUrl = this.urls[rasterid].substr(0, url.lastIndexOf("/"));
 			let group = tile.index >> 8;
-			url = url.substr(0, url.lastIndexOf("/"));
-			return this.url + "/TileGroup" + group + "/" + tile.level + "-" + tile.x + "-" + tile.y + "." + this.suffix;
+			return tileUrl + "/TileGroup" + group + "/" + tile.level + "-" + tile.x + "-" + tile.y + "." + this.suffix;
 		};
 	}
 
 	async initIIIF() {
+		const url = this.urls[0];
 		this.overlap = 0;
 
-		var response = await fetch(this.url);
+		var response = await fetch(url);
 		if(!response.ok) {
-			this.status = "Failed loading " + this.url + ": " + response.statusText;
-			return;
+			this.status = "Failed loading " + url + ": " + response.statusText;
+			throw new Error(this.status);
 		}
 		let info = await response.json();
 		this.width = info.width;
@@ -361,9 +393,8 @@ class Layout {
 		this.nlevels = info.tiles[0].scaleFactors.length;
 		this.tilesize = info.tiles[0].width;
 
-		this.url = this.url.substr(0, this.url.lastIndexOf("/"));
-
-		this.getTileURL = (url, tile) => {
+		this.getTileURL = (rasterid, tile) => {
+			const tileUrl = this.urls[rasterid].substr(0, url.lastIndexOf("/"));
 			let tw = this.tilesize;
 			let ilevel = parseInt(this.nlevels - 1 - tile.level);
 			let s = Math.pow(2, tile.level);
@@ -382,8 +413,7 @@ class Layout {
 			if (yr + tw*s > this.height)
 				hs = (this.height - yr + s - 1) / s
 
-			url = url.substr(0, url.lastIndexOf("/"));
-			return `${url}/${xr},${yr},${wr},${hr}/${ws},${hs}/0/default.jpg`;
+			return `${tileUrl}/${xr},${yr},${wr},${hr}/${ws},${hs}/0/default.jpg`;
 		};
 	}
 }

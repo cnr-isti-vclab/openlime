@@ -24,15 +24,33 @@
 
 class Controller {
 	constructor(options) {
+
+/*	For some reason can't define these variables static, for the moment just use the numeric value.
+	static NoModifiers = 0;
+	static CrtlModifier = 1;
+	static ShiftModifier = 2;
+	static AltModifier = 4; */
+
 		Object.assign(this, {
 			active: true,
 			debug: false,
 			panDelay: 50,
 			zoomDelay: 200,
-			priority: 0
+			priority: 0,
+			activeModifiers: [0]
 		});
 
 		Object.assign(this, options);
+
+	}
+
+	modifierState(e) {
+		let state = 0;
+		if(e.ctrlKey) state += 1;
+		if(e.shiftKey) state += 2;
+		if(e.altKey) state += 4;
+		
+		return state;
 	}
 
 	captureEvents() {

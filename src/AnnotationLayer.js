@@ -1,3 +1,4 @@
+import { Annotation } from './Annotation.js';
 import { BoundingBox } from './BoundingBox.js';
 import { Layer } from './Layer.js'
 
@@ -15,44 +16,22 @@ import { Layer } from './Layer.js'
 class AnnotationLayer extends Layer {
 	constructor(options) {
 		options = Object.assign({
-			viewBox: null,
-			svgURL: null,
-			svgXML: null, 
-			geometry: null,
-			style: null,
-			annotations: {},
-			overlayElement: null
+			// geometry: null,  //unused, might want to store here the quads/shapes for opengl rendering
+			style: null,    //straightforward for svg annotations, to be defined oro opengl rendering
+			annotations: [],
+			hoverable: false, //display info about annotation on mousehover.
+			selected: new Set,
+			annotationsListEntry: null, //TODO: horrible name for the interface list of annotations
 		}, options);
 		super(options);
 
+		this.signals.selected = [];
 
-		if(typeof(this.viewBox) == "string") {
-			this.viewBox = this.viewBox.split(' '); 
+		if (typeof (this.annotations) == "string") { //assumes it is an URL
+			(async () => { await this.loadAnnotations(this.annotations); })();
 		}
-		if (Array.isArray(this.viewBox)) {
-			let box = new BoundingBox(); 
-			box.fromArray(this.viewBox);
-			this.viewBox = box;
-		}
-
-
-		(async () => {
-			if(typeof(this.annotations) == "string") { //assume it is an URL
-				await this.loadAnnotations(this.annotations);
-			}
-			if(this.svgURL)
-				await this.loadSVG(this.svgURL);
-			
-			this.createSVGElement();
-
-			this.status = 'ready';
-			this.emit('update');
-
-		})()/*.catch(e => { 
-			console.log(e); 
-			this.status = e; 
-		});*/
 	}
+
 	async loadAnnotations(url) {
 		var response = await fetch(url);
 		if(!response.ok) {
@@ -60,92 +39,111 @@ class AnnotationLayer extends Layer {
 			return;
 		}
 		this.annotations = await response.json();
-	}
-
-	async loadSVG(url) {
-		var response = await fetch(url);
-		if(!response.ok) {
-			this.status = "Failed loading " + this.url + ": " + response.statusText;
+		if(this.annotations.status == 'error') {
+			alert("Failed to load annotations: " + this.annotations.msg);
 			return;
 		}
-		let text = await response.text();
-		let parser = new DOMParser();
-		this.svgXML = parser.parseFromString(text, "image/svg+xml").documentElement;
-		throw "if viewbox is set in svgURL should it overwrite options.viewbox or viceversa?"
+		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
+		this.annotations = this.annotations.map(a => new Annotation(a));
+		for(let a of this.annotations)
+			if(a.publish != 1)
+				a.visible = false;
+		this.annotations.sort((a, b) => a.label.localeCompare(b.label));
+		if(this.annotationsListEntry)
+			this.createAnnotationsList();
+		
+		this.emit('update');
 	}
 
-	createSVGElement() {
-		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		this.svgElement.classList.add('openlime-svgoverlay');
-		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-		this.svgElement.append(this.svgGroup);
-		this.svgElement.setAttribute('viewBox', this.viewBox.toString()); // box is currently a string of numbers
 
-		let root = this.overlayElement.attachShadow( { mode: "open" });
+	newAnnotation(annotation, selected = true) {
+		if(!annotation)
+			annotation = new Annotation();
 
-		if(this.style) {
-			const style = document.createElement('style');
-			style.textContent = this.style;
-			root.append(style);
+		this.annotations.push(annotation);
+		let html = this.createAnnotationEntry(annotation);
+		let template = document.createElement('template');
+		template.innerHTML = html.trim();
+		
+		let list =  this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+		list.appendChild(template.content.firstChild);
+		
+		this.clearSelected();
+		this.setSelected(annotation);
+
+		return annotation;
+	}
+
+
+	annotationsEntry() {
+		return this.annotationsListEntry =  {
+			html: '',
+			list: [], //will be filled later.
+			classes: 'openlime-annotations',
+			status: () => 'active',
+			oncreate: () => { 
+				if(Array.isArray(this.annotations))
+					this.createAnnotationsList();
+			}
 		}
-		root.appendChild(this.svgElement);
 	}
 
-	boundingBox() {
-		return [-this.viewBox[2]/2, -this.viewBox[3]/2, this.viewBox[2]/2, this.viewBox[3]/2];
-	}
-
-	setVisible(visible) {
-		if(this.svgElement) {
-			this.svgElement.style.display = visible? 'block' : 'none';
-		}
-		super.setVisible(visible);
-	}
-
-	draw(transform, viewport) {
-		if(!this.svgElement)
-			return;
-
-		let t =  this.transform.compose(transform);
-		this.svgElement.setAttribute('viewBox', `${-viewport.w/2} ${-viewport.h/2} ${viewport.w} ${viewport.h}`);
-		let c = this.viewBox.center();
-		this.svgGroup.setAttribute("transform", 
-			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${-c[0]} ${-c[1]})`); 
-
-		return true;
-	}
-
-	prefetch(transform) {
-		if(!this.visible) return;
-		if(!this.svgElement)
-		return;
-
+	createAnnotationsList() {
+		let html ='';
 		for(let a of this.annotations) {
-			if(!a.target || !a.target.selector || a.target.selector.type != 'SvgSelector')
-				continue;
-			let svg = a.target.selector.value;
-
-			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
-			if(!a.svgElement) {
-				if(svg) {
-					let parser = new DOMParser();
-					a.svgElement = parser.parseFromString(svg, "image/svg+xml").documentElement;
-
-				} else if(this.svgXML) {
-					a.svgElement = this.svgXML.querySelector(`#${a.id}`);
-					if(!a.svgElement)
-						throw Error(`Could not find element with id: ${id} in svg`);
-				}
-			}
-			if(a.svgElement) {
-				for(let child of a.svgElement.children)
-					this.svgGroup.appendChild(child);
-			}
+			html += this.createAnnotationEntry(a);
 		}
+
+		let list =  this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+		list.innerHTML = html;
+		list.addEventListener('click', (e) =>  { 
+			let svg = e.srcElement.closest('svg');
+			if(svg) {
+				let entry = svg.closest('[data-annotation]')
+				entry.classList.toggle('hidden');
+				let id = entry.getAttribute('data-annotation');
+				let anno = this.getAnnotationById(id);
+				anno.visible = !anno.visible;
+				anno.needsUpdate = true;
+				this.emit('update');
+			}
+
+			let id = e.srcElement.getAttribute('data-annotation');
+			if(id) {
+				this.clearSelected();
+				let anno = this.getAnnotationById(id);
+				this.setSelected(anno, true);
+			}
+		});
 	}
-	
+
+	createAnnotationEntry(a) {
+		return `<a href="#" data-annotation="${a.id}" class="openlime-entry ${a.visible == 0? 'hidden':''}">${a.label || ''}
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="openlime-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="openlime-eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+			</a>`;
+	}
+
+	getAnnotationById(id) {
+		for(const anno of this.annotations)
+			if(anno.id == id)
+				return anno;
+		return null;
+	}
+
+	clearSelected() {
+		this.annotationsListEntry.element.parentElement.querySelectorAll(`[data-annotation]`).forEach((e) => e.classList.remove('selected'));
+		this.selected.clear();
+	}
+	//set selected class for annotation
+	setSelected(anno, on = true) {
+		this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.toggle('selected', on);
+		if(on)
+			this.selected.add(anno.id);
+		else
+			this.selected.delete(anno.id);
+		this.emit('selected', anno);
+	}
 }
 
-Layer.prototype.types['annotations'] = (options) => { return new AnnotationLayer(options); }
-
-export { AnnotationLayer } 
+export { AnnotationLayer }

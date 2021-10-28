@@ -3,6 +3,7 @@ import { Raster } from './Raster.js'
 import { Layer } from './Layer.js'
 import { ImageLayer } from './ImageLayer.js'
 import { CombinerLayer } from './CombinerLayer.js'
+import { ShaderCombiner } from './ShaderCombiner.js'
 import { RTILayer } from './RTILayer.js'
 import { BRDFLayer } from './BRDFLayer.js'
 import { Controller2D } from './Controller2D.js'
@@ -11,12 +12,15 @@ import {ControllerLens} from './ControllerLens.js'
 import { UIBasic } from './UIBasic.js'
 import { LensLayer } from './LensLayer.js'
 import { Lens } from './Lens.js'
+import { Skin } from './Skin.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
+import { SvgAnnotationLayer } from './SvgAnnotationLayer.js'
+import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
 
-let lime = new OpenLIME('#openlime', { background: 'black' });
+let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 //combinerTest();
-//imageTest('deepzoom');
+//imageTest('deepzoom'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
 //rtiTest('rbf');
@@ -27,7 +31,73 @@ let lime = new OpenLIME('#openlime', { background: 'black' });
 //lensTest();
 //testSVGAnnotations();
 
-testMedicalAnnotations();
+//testMedicalAnnotations();
+
+//testAnnotationEditor();
+
+function testAnnotationEditor() {
+	let layer0 = new Layer({ 
+		label: 'Coin 10',
+		layout: 'image', 
+		type:'rti',
+		url: 'assets/rti/hsh/info.json',
+		normals: false
+	});
+	lime.canvas.addLayer('hsh', layer0);
+	
+	let layer1 = new SvgAnnotationLayer({ 
+		label: 'Annotations',
+		viewBox: "0 0 256 256",
+		style:` 
+			.openlime-annotation { pointer-events:all; opacity: 0.7; }
+			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+			
+			:focus { fill:yellow; }
+			polyline, path { fill:none; stroke-width:1; stroke:#800; vector-effect:non-scaling-stroke; pointer-events:all; }
+			polyline, path:hover { cursor:pointer; stroke:#f00; }
+
+			rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
+			circle { fill:rgba(255, 0, 0, 0.2); stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
+			circle.point { stroke-width:10px }
+			.selected { fill:#ffaaaa; stroke:$ff0000 }
+		`,
+		infoTemplate: (annotation) => { return `
+			<h3>${annotation.class}</h3>
+			<p>${annotation.description}</p>
+			
+		`; },
+		annotations: 'assets/medical/PH1101-1.json',
+		editable: true,
+
+	}); 
+	lime.canvas.addLayer('anno', layer1); //here the overlayelement created and attached to layer1
+	Skin.setUrl('skin.svg');
+
+	let editor = new SvgAnnotationEditor(lime, layer1, { lime: lime });
+	editor.classes = {
+		'': { color: '#000', label: '' },
+		'class1': { color: '#770', label: '' },
+		'class2': { color: '#707', label: '' },
+		'class3': { color: '#777', label: '' },
+		'class4': { color: '#070', label: '' },
+		'class5': { color: '#007', label: '' },
+		'class6': { color: '#077', label: '' },
+	};
+	
+	let ui = new UIBasic(lime);
+	lime.camera.maxFixedZoom = 4;
+	ui.actions.help.display = true;
+	ui.actions.help.html = "Help text could be here.";
+	ui.actions.snapshot.display = true;
+
+
+	editor.createCallback = (annotation) => { console.log("Created annotation: ", annotation); return true; };
+	editor.deleteCallback = (annotation) => { console.log("Deleted annotation: ", annotation); return true; };
+	editor.updateCallback = (annotation) => { console.log("Updated annotation: ", annotation); return true; };
+
+	editor.multiple = true;
+	
+}
 
 function testMedicalAnnotations() {
 	let layer0 = new Layer({
@@ -37,15 +107,28 @@ function testMedicalAnnotations() {
 		zindex: 0,
 	});
 
-	let layer1 = new AnnotationLayer({ 
-		viewBox: "0 0 47962 53040",
+	let layer1 = new SvgAnnotationLayer({ 
+		layout: layer0.layout,
 		style:` 
 			.openlime-annotation { pointer-events:all; opacity: 0.7; }
 			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
-			path { fill:none; stroke-width:1; stroke:red; vector-effect:non-scaling-stroke; }
-			path:hover { cursor:pointer; fill:rgba(255, 0, 0, 0.1); }
+			
+			path { fill:none; stroke-width:1; stroke:#800; vector-effect:non-scaling-stroke; pointer-events:all; }
+			path:hover { cursor:pointer; stroke:#f00; }
+
+			rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
+			circle { fill:rgba(255, 0, 0, 0.2); stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
+
+			.selected { fill:#ffaaaa; stroke:$ff0000 }
 		`,
-		annotations: 'assets/medical/PH1101-1.json'
+		infoTemplate: (annotation) => { return `
+			<h3>${annotation.class}</h3>
+			<p>${annotation.description}</p>
+			
+		`; },
+		annotations: 'assets/medical/PH1101-1.json',
+		editable: true,
+
 	}); 
 
 	lime.canvas.addLayer('img', layer0);
@@ -65,7 +148,7 @@ function testSVGAnnotations() {
 	});
 
 	let layer1 = new AnnotationLayer({ 
-		viewBox: "0 0 300 553",
+		layout: layer0.layout,
 		svgURL: 'assets/svbrdf/vis/annotations.svg',
 		style:` 
 			.openlime-annotation { pointer-events:all; opacity: 0.7; }
@@ -78,9 +161,9 @@ function testSVGAnnotations() {
 	lime.canvas.addLayer('img', layer0);
 	lime.canvas.addLayer('anno', layer1);
 	let ui = new UIBasic(lime);
-	const { home, fullscreen, rotate } = ui.actions;
-	ui.actions = { home, fullscreen, rotate };
-	ui.actions.zoomin = { title: "Zoom in", task: (event) => { lime.camera.deltaZoom(1000, 2, 0, 0); } }; //actions can be modified just after ui creation (not later!)
+	// const { home, fullscreen, rotate } = ui.actions;
+	// ui.actions = { home, fullscreen, rotate };
+	// ui.actions.zoomin = { title: "Zoom in", task: (event) => { lime.camera.deltaZoom(1000, 2, 0, 0); } }; //actions can be modified just after ui creation (not later!)
 }
 
 function testUIBasic() {
@@ -145,14 +228,24 @@ function flipTest() {
 
 
 function rtiTest(dataset) {
+
 	let layer0 = new Layer({ 
+		label: '4',
 		layout: 'image', 
 		type:'rti',
 		url: 'assets/rti/hsh/info.json',
-		normals: true
+		normals: false
 	});
-	//layer0.transform.x = -200;
-	lime.canvas.addLayer('hsh', layer0); 
+	lime.canvas.addLayer('coin', layer0);
+
+	// let layer0 = new Layer({ 
+	// 	layout: 'image', 
+	// 	type:'rti',
+	// 	url: 'assets/rti/hsh/info.json',
+	// 	normals: true
+	// });
+	// //layer0.transform.x = -200;
+	// lime.canvas.addLayer('hsh', layer0); 
 
 
 	/*let layer1 = new Layer({ 
@@ -166,7 +259,7 @@ function rtiTest(dataset) {
 
 
 	let ui = new UIBasic(lime);
-	lime.camera.maxFixedZoom = 1;
+	lime.camera.maxFixedZoom = 4;
 	ui.menu[0].section = "Prova";
 	ui.menu.push({ html: "<p>Prova</p>" });
 	ui.scale = 0.002;
@@ -203,9 +296,21 @@ function combinerTest() {
 		layers: [layer0, layer1]
 	});
 
+	let shader = new ShaderCombiner();
+	shader.mode = 'diff';
+
+	combiner.shaders = {'standard': shader };
+	combiner.setShader('standard'); 
+
+	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
+	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+
 	lime.canvas.addLayer('kdmap', layer0);
 	lime.canvas.addLayer('ksmap', layer1);
 	lime.canvas.addLayer('combiner', combiner);
+
+	let ui = new UIBasic(lime);
+	ui.actions.snapshot.display = true;
 }
 
 /* COMBINER TEST */
@@ -229,28 +334,21 @@ function lensTest() {
 		border:10
 	});
 
-	let controllerLens = new ControllerLens({lensLayer: lensLayer,
-											camera: lime.camera,
-											hover: true,
+	let controllerLens = new ControllerLens(lensLayer, lime.camera,
+											{ hover: true,
 											priority: 0});
 	lime.pointerManager.onEvent(controllerLens); 
 	lensLayer.controllers.push(controllerLens);
 
-
-	
-	// let ui = new UIBasic(lime);
-	// const { home, fullscreen, rotate } = ui.actions;
-	// ui.actions = { home, fullscreen, rotate };
-
 	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
 	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+	lime.camera.maxFixedZoom = 4;
 
 	lime.canvas.addLayer('kdmap', layer0);
 	lime.canvas.addLayer('lens', lensLayer);
+	let ui = new UIBasic(lime);
+
 }
-
-
-
 
 /* IMAGE TEST */
 function imageTest(layout) {
@@ -259,14 +357,19 @@ function imageTest(layout) {
 
 //	let options = { layout: layout, type: 'image', transform: { x: -100, a: 45 } };
 	let options = { layout: layout, type: 'image'};
-	console.log(options);
+	console.log("OPTIONS: ", options);
 	switch (layout) {
 		case 'image':
 			options.url = 'assets/svbrdf/vis/glossMap.jpg';
+//			options.url = 'http://dev.isti.cnr.it/iipsrv/iipsrv.fcgi?IIIF=/home/ponchio/Sync/html/cenobium/sites/monreale/tif/N1ShNWNW.tif/2048,0,1952,2048/244.875,256/0/default.jpg';
 			break;
 
-		case 'deepzoom':
-			options.url = 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
+			case 'deepzoom1px':
+				options.url = 'assets/deepzoom/anatra.dzi';
+			break;	
+			case 'deepzoom':
+				//options.url = 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
+				options.url = 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
 			break;
 
 		case 'google':
@@ -280,8 +383,19 @@ function imageTest(layout) {
 			break;
 
 		case 'iiif':
-			options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=PIA03883.pyr.tif/info.json';
+			//options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=PIA03883.pyr.tif/info.json';
+			//options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=HD3/HD3_pyr_000_090.tif/info.json';
+			options.url = 'http://dev.isti.cnr.it/iipsrv/iipsrv.fcgi?IIIF=/home/ponchio/Sync/html/cenobium/sites/monreale/tif/N1ShNWNW.tif/info.json';
 			break;
+
+		case 'tarzoom':
+			options.url = 'assets/rti/hsh/plane_0.tzi';
+			break;
+
+		case 'itarzoom':
+			options.url = 'assets/rti/hsh/planes.tzi';
+			break;
+		
 	}
 	let layer0 = new Layer(options);
 	lime.canvas.addLayer('kdmap', layer0);

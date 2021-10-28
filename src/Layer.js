@@ -92,27 +92,25 @@ class Layer {
 
 		this.transform = new Transform(this.transform);
 
-		
+		if(typeof(this.layout)=='string') {
+			let size = {width:this.width || 0, height:this.height || 0 };
+			this.setLayout(new Layout(null, this.layout, size));
+		} else {
+			this.setLayout(this.layout);
+		}
 	}
 
 	addEvent(event, callback) {
 		this.signals[event].push(callback);
 	}
 
-	emit(event) {
+	emit(event, ...parameters) {
 		for(let r of this.signals[event])
-			r(this);
+			r(...parameters);
 	}
 
 	setLayout(layout) {
 		let callback = () => {
-						//this ckeck is needed for tarzom where all layout are loaded separately.
-			for(let r of this.rasters)
-				if(r.layout.status != "ready") {
-					r.layout.addEvent('ready', callback);
-					return;
-				}
-
 			this.status = 'ready';
 			this.setupTiles(); //setup expect status to be ready!
 			this.emit('ready');
@@ -287,7 +285,7 @@ class Layer {
 		//how linear or srgb should be specified here.
 //		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
 		if(!this.status == 'ready' || this.tiles.length == 0)
-			return;
+			return true;
 
 		if(!this.shader)
 			throw "Shader not specified!";
@@ -426,26 +424,27 @@ class Layer {
 
 		let gl = this.gl;
 
+		if(!this.ibuffer) { //this part might go into another function.
+			this.ibuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuffer);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([3,2,1,3,1,0]), gl.STATIC_DRAW);
+
+			this.vbuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]), gl.STATIC_DRAW);
+
+			this.tbuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0,  0, 1,  1, 1,  1, 0]), gl.STATIC_DRAW);
+		}
+		
 		if(this.shader.needsUpdate)
 			this.shader.createProgram(gl);
 
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);
 
-		if(this.ibuffer) //this part might go into another function.
-			return;
 
-		this.ibuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuffer);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([3,2,1,3,1,0]), gl.STATIC_DRAW);
-
-		this.vbuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]), gl.STATIC_DRAW);
-
-		this.tbuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0,  0, 1,  1, 1,  1, 0]), gl.STATIC_DRAW);
 	}
 
 	sameNeeded(a, b) {
@@ -504,33 +503,62 @@ class Layer {
 		Cache.setCandidates(this);
 	}
 
-	loadTile(tile, callback) {
+	async loadTile(tile, callback) {
 		if(this.requested[tile.index])
 			throw"AAARRGGHHH double request!";
 
 		this.requested[tile.index] = true;
 
+		if(this.layout.type == 'itarzoom') {
+			tile.url = this.layout.getTileURL(null, tile);
+			let options = {};
+			if(tile.end)
+				options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity' }
+			
+			var response = await fetch(tile.url, options);
+			if(!response.ok) {
+				callback("Failed loading " + tile.url + ": " + response.statusText);
+				return;
+			}
+			let blob = await response.blob();
+			
+			console.log(this.shader.samplers.length);
+			let i = 0;
+			for(let sampler of this.shader.samplers) {
+				let raster = this.rasters[sampler.id];
+				let imgblob = blob.slice(tile.offsets[i], tile.offsets[i+1]);
+				const img = await raster.blobToImage(imgblob, this.gl);
+				let tex = raster.loadTexture(this.gl, img);
+				let size = img.width * img.height * 3;		
+				tile.size += size;
+				tile.tex[sampler.id] = tex;
+				i++;
+			}
+			tile.missing = 0;
+			this.emit('update');
+			delete this.requested[tile.index];
+			if(callback) callback(tile.size);
+			return;
+		}
+
 		for(let sampler of this.shader.samplers) {
 			
 			let raster = this.rasters[sampler.id];
-			tile.url = raster.layout.getTileURL(raster.url, tile);
-
-			raster.loadImage(tile, this.gl, (tex, size) => {
-
-				if(this.layout.type == "image") {
-					this.layout.width = raster.width;
-					this.layout.height = raster.height;
-					this.layout.initBoxes();
-				}
-				tile.size += size;
-				tile.tex[sampler.id] = tex;
-				tile.missing--;
-				if(tile.missing <= 0) {
-					this.emit('update');
-					delete this.requested[tile.index];
-					if(callback) callback(size);
-				}
-			});
+			tile.url = this.layout.getTileURL(sampler.id, tile);
+			const [tex, size] = await raster.loadImage(tile, this.gl);
+			if(this.layout.type == "image") {
+				this.layout.width = raster.width;
+				this.layout.height = raster.height;
+				this.layout.initBoxes();
+			}
+			tile.size += size;
+			tile.tex[sampler.id] = tex;
+			tile.missing--;
+			if(tile.missing <= 0) {
+				this.emit('update');
+				delete this.requested[tile.index];
+				if(callback) callback(size);
+			}
 		}
 	}
 

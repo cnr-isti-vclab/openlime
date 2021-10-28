@@ -31,7 +31,7 @@ class Canvas {
 			
 		for(let id in this.layers)
 			this.addLayer(id, new Layer(id, this.layers[id]));
-
+		this.camera.addEvent('update', () => this.emit('update'));
 	}
 
 	addEvent(event, callback) {
@@ -107,6 +107,7 @@ class Canvas {
 	}
 
 	addLayer(id, layer) {
+		layer.id = id;
 		layer.addEvent('update', () => { this.emit('update'); });
 		layer.addEvent('updateSize', () => { this.updateSize(); });
 		layer.gl = this.gl;
@@ -163,8 +164,11 @@ class Canvas {
 			transform = this.camera.getCurrentTransform(performance.now());
 		for(let id in this.layers) {
 			let layer = this.layers[id];
-			if(layer.visible)
+			//console.log(layer);
+			//console.log(layer.layout.status);
+			if(layer.visible && layer.status == 'ready') {
 				layer.prefetch(transform, this.camera.viewport);
+			}
 		}
 	}
 }
