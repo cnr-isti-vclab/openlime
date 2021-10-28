@@ -7,6 +7,7 @@ dist/assets/rti/512
 dist/assets/rti/test
 docs
 package-lock.json
-build
+build/openlime.js
+build/openlime.min.js
 dist/database.php
 
