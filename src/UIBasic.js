@@ -415,30 +415,35 @@ class UIBasic {
 	toggleHelp(help, on) {
 		
 		if(!help.element) {
-			let html = `<div class="openlime-help-window"></div>`;
 			let div = document.createElement('div');
 			div.classList.add('openlime-help-window');
+			div.addEventListener('click', (e) => { if(e.target == div) this.toggleHelp(help, false); });
+
+			let content = document.createElement('div');
+			content.classList.add('openlime-help-content');
+			div.appendChild(content);
 	
 			if (help.html instanceof HTMLElement) 
-				div.appendChild(help.html);
+				content.appendChild(help.html);
 			else
-				div.innerHTML = help.html;
+				content.innerHTML = help.html;
 
 			(async ()=> {
-				let close = await Skin.appendIcon(div, '.openlime-close');
+				let close = await Skin.appendIcon(content, '.openlime-close');
 				close.classList.add('openlime-close');
 				close.addEventListener('click', () => this.toggleHelp(help, false ));
-				div.appendChild(close);
+				//content.appendChild(close);
 			})();
-			div.style.display = 'none';
 			this.lime.containerElement.appendChild(div);
 			help.element = div;
-			div.style.display
 		}
-		if(on == null)
-			on = help.element.style.display == 'none';
+		//let hidden = help.element.classList.includes('hidden');
+		//if(on == null)
+		//	hidden = true;
+		
+		setTimeout(() => help.element.classList.toggle('shown', on), 0);
 
-		help.element.style.display = on? 'block' : 'none';
+		//help.element.style.display = on? 'block' : 'none';
 	}
 	
 	snapshot() {

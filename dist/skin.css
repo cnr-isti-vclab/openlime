@@ -80,8 +80,33 @@
 }
 
 
+.openlime-help-window.shown {
+	visibility:visible; 
+	opacity:0.95;
+	transition: visibility 0s linear 0s, opacity 300ms;
+
+}
 
 .openlime-help-window {
+
+	opacity: 0.0;
+    visibility:hidden; 
+	transition: visibility 0s linear 300ms, opacity 300ms;
+
+	position:absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	color:#fff;
+	background: rgb(0, 0, 0, 0.5);
+	padding:20px 40px;
+	border-radius:5px;	
+    font-family: "Open Sans",sans-serif;
+	cursor:pointer;
+}
+
+.openlime-help-content {
 	position:absolute;
 	top: 10%;
 	left: 30%;
@@ -92,8 +117,7 @@
 	opacity:0.95;
 	padding:20px 40px;
 	border-radius:5px;	
-    font-family: "Open Sans",sans-serif;
-
+	cursor:auto;
 }
 
 .openlime-help-window .openlime-close {

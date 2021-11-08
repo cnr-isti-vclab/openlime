@@ -53,6 +53,7 @@ class AnnotationLayer extends Layer {
 			this.createAnnotationsList();
 		
 		this.emit('update');
+		this.emit('ready');
 	}
 
 

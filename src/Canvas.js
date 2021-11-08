@@ -23,21 +23,21 @@ class Canvas {
 			overlayElement: overlay,
 			camera: camera,
 			layers: {},
-			signals: {'update':[], 'updateSize':[]}
+			signals: {'update':[], 'updateSize':[], 'ready': []}
 		});
 		Object.assign(this, options);
 
 		this.init(canvas);
 			
 		for(let id in this.layers)
-			this.addLayer(id, new Layer(id, this.layers[id]));
+		this.addLayer(id, new Layer(id, this.layers[id]));
 		this.camera.addEvent('update', () => this.emit('update'));
 	}
 
 	addEvent(event, callback) {
 		this.signals[event].push(callback);
 	}
-
+	
 	emit(event) {
 		for(let r of this.signals[event])
 			r(this);
@@ -108,6 +108,10 @@ class Canvas {
 
 	addLayer(id, layer) {
 		layer.id = id;
+		layer.addEvent('ready', () => { 
+			if(Object.values(this.layers).every( l => l.status == 'ready')) 
+				this.emit('ready');
+		});
 		layer.addEvent('update', () => { this.emit('update'); });
 		layer.addEvent('updateSize', () => { this.updateSize(); });
 		layer.gl = this.gl;
