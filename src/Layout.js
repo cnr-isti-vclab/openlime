@@ -288,7 +288,7 @@ class Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.urls[0] = url.substr(0, url.lastIndexOf(".")) + '_files/';
+		this.urls = this.urls.map(url => url.substr(0, url.lastIndexOf(".")) + '_files/');
 		this.skiplevels = 0;
 		if(onepixel)
 			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
