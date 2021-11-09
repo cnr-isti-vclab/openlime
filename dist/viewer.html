@@ -14,9 +14,13 @@
 		  height: 100%;
 		}
 	
-		#openlime {
+		.container {
 		  height: 100%;
 		  position:relative;
+		}
+		#openlime {
+			width: 100%;
+			height: 100%;
 		}
 	
 		#openlime>canvas {
@@ -52,17 +56,49 @@
 		.openlime-markers .openlime-button-off {
 			visibility:hidden !important;
 		}
-
+		#navigator {
+			position:absolute;
+			bottom: 20px;
+			width: 200px;
+			left:calc(50% - 100px);
+			background-color: rgba(32, 32, 32, 0.9);
+			padding:4px;
+			border-radius: 12px;
+			display: flex;
+			color:white;
+			display:flex;
+			justify-content:space-between;
+		}
+		#navigator svg {
+			cursor:pointer;
+			fill:none;
+			stroke: white;
+			stroke-width:3px;
+			height:24px;
+			width:24px;
+		}
+		#navigator p {
+			line-height:24px;
+			margin:0px;
+			font-family:arial;
+		}
 	  </style>
 	
 </head>
 <body>
 
-<div id="openlime">
+<div class="container">
+	<div id="openlime">
+	</div>
 	<div id="logos">
-		<a href="https://www.musee-histoire-marseille-voie-historique.fr/"></a><img src="img/marseille.svg"/></a>
-		<a href="https://mercurioimaging.com/"></a><img src="img/mercurio.svg"/></a>
-		<a href="https://vcg.isti.cnr.it"></a><img src="img/vcg.svg"/></a>
+		<a href="https://www.musee-histoire-marseille-voie-historique.fr/"><img src="img/marseille.svg"/></a>
+		<a href="https://mercurioimaging.com/"><img src="img/mercurio.svg"/></a>
+		<a href="https://vcg.isti.cnr.it"><img src="img/vcg.svg"/></a>
+	</div>
+	<div id="navigator">
+		<svg class="prev" xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d="M20 4 L8 12 L20 20"></path></svg>
+		<p></p>
+		<svg class="next" xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d="M4 4 L16 12 L4 20"></path></svg>
 	</div>
 	<div id="feedback" class="openlime-help-window">
 		<div class="openlime-help-content">
@@ -91,22 +127,13 @@ let layer0 = new OpenLIME.Layer({
 
 lime.canvas.addLayer('coin', layer0);
 
+
 let annotations = new OpenLIME.SvgAnnotationLayer({ 
 	label: 'Annotations',
 	layout: layer0.layout,
 	annotations: 'fetch.php',
 	lod: [ 
-		{ min: 0, max: 2,   type: 'pin', onclick: (anno) => { 
-			let cx = anno.box.x + anno.box.width/2;
-			let cy = anno.box.y + anno.box.height/2;
-			const topLeft = annotations.boundingBox().corner(0);
-			cx += topLeft[0]; 
-			cy += topLeft[1];
-			let z = 5;
-			lime.camera.setPosition(400, -cx*z, -cy*z, 5, 0);
-			layer0.setLight([0.5, 0.5], 400);
-			 return true; 
-		} },
+		{ min: 0, max: 2,   type: 'pin', onclick: zoomToAnnotation },
 		{ min: 2, max: 100, type: 'vector' }
 	],
 	style:` 
@@ -160,7 +187,7 @@ help.html = `
 <p>Si la lumière est éteinte, cliquez et déplacez pour déplacer l'image</p>
 <p>Si la lumière est allumée, cliquez et déplacez pour déplacer la lumière
 Cliquez sur la lumière pour changer sa fonction</p>
-
+iewer.html#
 <p>Cliquez sur l'icone <b>Calques</b> pour afficher les annotations
 Selectionnez une annotations et activez l'outil "dessin" en cliquant dessus.</p>
 <p>Commencez un dessin libre en cliquant sur une petite distance, vous pouvez le continuer en
@@ -202,7 +229,50 @@ let feedback_window = document.getElementById('feedback');
 })();
 
 
+function zoomToAnnotation(anno) {
+	let cx = anno.box.x + anno.box.width/2;
+	let cy = anno.box.y + anno.box.height/2;
+	const topLeft = annotations.boundingBox().corner(0);
+	cx += topLeft[0]; 
+	cy += topLeft[1];
+	let z = 5;
+	lime.camera.setPosition(400, -cx*z, -cy*z, 5, 0);
+	layer0.setLight([0.5, 0.5], 400);
+	navigator.querySelector('p').textContent = anno.label;
+	return true;
+}
 
+let currentAnno = -1;
+function nextAnnotation(e) {
+	let a = Object.values(annotations.annotations);
+	if(currentAnno >= a.length -1)
+		return false;
+	currentAnno++;
+	zoomToAnnotation(a[currentAnno]);
+
+	e.preventDefault();
+	e.stopPropagation();
+}
+
+function prevAnnotation(e) {
+	let a = Object.values(annotations.annotations);
+	if(currentAnno <= 0)
+		return false;
+	currentAnno--;
+	zoomToAnnotation(a[currentAnno]);
+
+	e.preventDefault();
+	e.stopPropagation();
+}
+
+function setAnnotation(i) {
+	let anno = Object.entries(annotations.annotations)[i];
+
+}
+
+let navigator = document.getElementById('navigator');
+navigator.querySelector('.prev').addEventListener('click', prevAnnotation);
+navigator.querySelector('.next').addEventListener('click', nextAnnotation);
 
 lime.canvas.addEvent('ready', 
 	() => {
@@ -211,7 +281,10 @@ lime.canvas.addEvent('ready',
 
 		lime.camera.deltaZoom(500, 1.1, 0, 0);
 		layer0.setLight([-0.5, 0.5], 500);
-		setTimeout(() => { ui.toggleHelp(ui.actions.help); }, 700);
+		setTimeout(() => { 
+			ui.toggleHelp(ui.actions.help); 
+
+		}, 700);
 	});
 
 </script>
