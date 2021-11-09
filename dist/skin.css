@@ -88,7 +88,6 @@
 }
 
 .openlime-help-window {
-
 	opacity: 0.0;
     visibility:hidden; 
 	transition: visibility 0s linear 300ms, opacity 300ms;
@@ -382,4 +381,12 @@ g.openlime-expand {
 	border: 1px #aaa;
 }
 
+.openlime-pin circle {
+	fill: #888;
+	stroke: #aaa;
+}
+
+.openlime-pin text {
+	font-size:8px; 
+}
 

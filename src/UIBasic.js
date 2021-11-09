@@ -242,7 +242,11 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
-				await Skin.appendIcon(toolbar, '.openlime-' + name); 
+				action.element = await Skin.appendIcon(toolbar, '.openlime-' + name); 
+
+				let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+				title.textContent = action.title;
+				action.element.appendChild(title);
 			}
 
 		}
@@ -255,8 +259,9 @@ class UIBasic {
 			for (let [name, action] of Object.entries(this.actions)) {
 				if (action.display !== true)
 					continue;
-				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
+				let element = skin.querySelector('.openlime-' + name).cloneNode(true);				
 				if (!element) continue;
+
 				svg.appendChild(element);
 				let box = element.getBBox();
 				h = Math.max(h, box.height);
@@ -287,7 +292,7 @@ class UIBasic {
 
 	setupActions() {
 		for (let [name, action] of Object.entries(this.actions)) {
-			let element = this.lime.containerElement.querySelector('.openlime-' + name);
+			let element = action.element;
 			if (!element)
 				continue;
 			// let pointerManager = new PointerManager(element);

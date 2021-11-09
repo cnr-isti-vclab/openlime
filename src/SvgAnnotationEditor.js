@@ -289,9 +289,9 @@ class SvgAnnotationEditor {
 			e.setAttribute('data-class', anno.class);
 
 		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class, publish: anno.publish };
-		//anno.bbox = anno.getBBoxFromElements();
+		let box = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
-		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">
+		post.svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box.x} ${box.y} ${box.width} ${box.height}">
 				${anno.selector.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
 				</svg>`;
 

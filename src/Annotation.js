@@ -45,13 +45,13 @@ class Annotation {
 			return box;
 		let { x, y, width, height } = this.selector.elements[0].getBBox();
 		for(let shape of this.selector.elements) {
-				const { sx, sy, swidth, sheight } = shape.getBBox();
-				x = Math.min(x, sx);
-				y = Math.min(x, sy);
-				width = Math.max(width + x, sx + swidth) - x; 
-				height = Math.max(height + y, sy + sheight) - y; 
+			let b = shape.getBBox();
+			x = Math.min(x, b.x);
+			y = Math.min(x, b.y);
+			width = Math.max(width + x, b.x + b.width) - x; 
+			height = Math.max(height + y, b.y + b.height) - y; 
 		}
-		return { x, y, width, height };
+		return { x: Math.floor(x), y: Math.floor(y), width: Math.floor(width), height: Math.floor(height) };
 	}
 
 	static fromJsonLd(entry) {
