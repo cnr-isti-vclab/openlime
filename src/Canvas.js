@@ -109,8 +109,9 @@ class Canvas {
 	addLayer(id, layer) {
 		layer.id = id;
 		layer.addEvent('ready', () => { 
-			if(Object.values(this.layers).every( l => l.status == 'ready')) 
+			if(Object.values(this.layers).every( l => l.status == 'ready'))
 				this.emit('ready');
+			this.prefetch();
 		});
 		layer.addEvent('update', () => { this.emit('update'); });
 		layer.addEvent('updateSize', () => { this.updateSize(); });

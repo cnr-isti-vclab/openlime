@@ -153,11 +153,12 @@ class SvgAnnotationLayer extends AnnotationLayer {
 						if(l.type == 'vector')
 							anno.lod.push(anno.selector.elements);
 						else if(l.type == 'pin') {
+							//problem: are the coords in the box wrong???
 							let cx = box.x + box.width/2;
 							let cy = box.y + box.height/2;
 					
 							let pin = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
-								<circle cx='${cx}' cy='${cy}' r='10'/>
+								<circle cx='${cx}' cy='${cy}' r='300'/>
 								<text x='${cx}' y='${cy}'>${count++}</text></svg>`;
 							let parser = new DOMParser();
 							let svg = parser.parseFromString(pin, "image/svg+xml").documentElement; //"text/html").body.childNodes[0];

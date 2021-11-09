@@ -14,9 +14,13 @@
 		  height: 100%;
 		}
 	
-		#openlime {
+		.container {
 		  height: 100%;
 		  position:relative;
+		}
+		#openlime {
+			width: 100%;
+			height: 100%;
 		}
 	
 		#openlime>canvas {
@@ -52,17 +56,49 @@
 		.openlime-markers .openlime-button-off {
 			visibility:hidden !important;
 		}
-
+		#navigator {
+			position:absolute;
+			bottom: 20px;
+			width: 200px;
+			left:calc(50% - 100px);
+			background-color: rgba(32, 32, 32, 0.9);
+			padding:4px;
+			border-radius: 12px;
+			display: flex;
+			color:white;
+			display:flex;
+			justify-content:space-between;
+		}
+		#navigator svg {
+			cursor:pointer;
+			fill:none;
+			stroke: white;
+			stroke-width:3px;
+			height:24px;
+			width:24px;
+		}
+		#navigator p {
+			line-height:24px;
+			margin:0px;
+			font-family:arial;
+		}
 	  </style>
 	
 </head>
 <body>
 
+<div class="container">
 <div id="openlime">
+	</div>
 	<div id="logos">
-		<a href="https://www.musee-histoire-marseille-voie-historique.fr/"></a><img src="img/marseille.svg"/></a>
-		<a href="https://mercurioimaging.com/"></a><img src="img/mercurio.svg"/></a>
-		<a href="https://vcg.isti.cnr.it"></a><img src="img/vcg.svg"/></a>
+		<a href="https://www.musee-histoire-marseille-voie-historique.fr/"><img src="img/marseille.svg"/></a>
+		<a href="https://mercurioimaging.com/"><img src="img/mercurio.svg"/></a>
+		<a href="https://vcg.isti.cnr.it"><img src="img/vcg.svg"/></a>
+	</div>
+	<div id="navigator">
+		<svg class="prev" xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d="M20 4 L8 12 L20 20"></path></svg>
+		<p></p>
+		<svg class="next" xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d="M4 4 L16 12 L4 20"></path></svg>
 	</div>
 	<div id="feedback" class="openlime-help-window">
 		<div class="openlime-help-content">
@@ -82,10 +118,10 @@ let lime = new OpenLIME.OpenLIME('#openlime', { canvas: { preserveDrawingBuffer:
 
 let layer0 = new OpenLIME.Layer({ 
 	label: '4',
-	layout: 'tarzoom', 
+	layout: 'itarzoom', 
 	type:'rti',
-	url: 'assets/rti/hsh/info.json',
-//	url: 'Data/4/info.json',
+//	url: 'Data/ptm_lowdef_mask/info.json',
+	url: '../mhm/Data/ptm_itarzoom/info.json',
 	normals: false
 });
 
@@ -96,19 +132,9 @@ let annotations = new OpenLIME.SvgAnnotationLayer({
 	layout: layer0.layout,
 	annotations: 'fetch.php',
 	lod: [ 
-		{ min: 0, max: 2,   type: 'pin', onclick: (anno) => { 
-			let cx = anno.box.x + anno.box.width/2;
-			let cy = anno.box.y + anno.box.height/2;
-			const topLeft = annotations.boundingBox().corner(0);
-			cx += topLeft[0]; 
-			cy += topLeft[1];
-			let z = 5;
-			lime.camera.setPosition(400, -cx*z, -cy*z, 5, 0);
-			layer0.setLight([0.5, 0.5], 400);
-			 return true; 
-		} },
-		{ min: 2, max: 100, type: 'vector' }
-	],
+		{ min: 0, max: 0.1,   type: 'pin', onclick: zoomToAnnotation },
+		{ min: 0.1, max: 1000, type: 'vector' }
+	], 
 	style:` 
 		.openlime-annotation { pointer-events:stroke; opacity: 0.7; }
 		.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
@@ -122,7 +148,7 @@ let annotations = new OpenLIME.SvgAnnotationLayer({
 		circle.point { stroke-width:10px }
 		.selected { stroke:#ff0000 !important; stroke-width:3; }
 
-		circle.openlime-pin { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; }
+		circle.openlime-pin { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
 		text.openlime-pin { cursor:pointer; font-family:arial; font-size:10px; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
 
 		`,
@@ -202,8 +228,52 @@ let feedback_window = document.getElementById('feedback');
 })();
 
 
+function zoomToAnnotation(anno) {
+	let cx = anno.box.x + anno.box.width/2;
+	let cy = anno.box.y + anno.box.height/2;
+	const topLeft = annotations.boundingBox().corner(0);
+	cx += topLeft[0]; 
+	cy += topLeft[1];
+	let z = 1/10;
+	lime.camera.setPosition(400, -cx*z, -cy*z, 1/10, 0);
+	layer0.setLight([0.5, 0.5], 400);
+	navigator.querySelector('p').textContent = anno.label;
+	return true;
+}
 
+let currentAnno = -1;
+function nextAnnotation(e) {
+	let a = pins;
+	if(currentAnno >= a.length -1)
+		return false;
+	currentAnno++;
+	zoomToAnnotation(a[currentAnno]);
 
+	e.preventDefault();
+	e.stopPropagation();
+}
+
+function prevAnnotation(e) {
+	let a = pins;
+	if(currentAnno <= 0)
+		return false;
+	currentAnno--;
+	zoomToAnnotation(a[currentAnno]);
+
+	e.preventDefault();
+	e.stopPropagation();
+}
+
+function setAnnotation(i) {
+	let anno = pins[i];
+
+}
+
+let navigator = document.getElementById('navigator');
+navigator.querySelector('.prev').addEventListener('click', prevAnnotation);
+navigator.querySelector('.next').addEventListener('click', nextAnnotation);
+
+let pins = [];
 lime.canvas.addEvent('ready', 
 	() => {
 		let logos = document.getElementById('logos');
@@ -211,7 +281,12 @@ lime.canvas.addEvent('ready',
 
 		lime.camera.deltaZoom(500, 1.1, 0, 0);
 		layer0.setLight([-0.5, 0.5], 500);
-		setTimeout(() => { ui.toggleHelp(ui.actions.help); }, 700);
+		setTimeout(() => { 
+			ui.toggleHelp(ui.actions.help); 
+
+		}, 700);
+
+		pins = Object.values(annotations.annotations).filter(a => a.publish == "1");
 	});
 
 </script>
