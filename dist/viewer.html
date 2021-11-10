@@ -88,6 +88,7 @@
 <body>
 
 <div class="container">
+
 	<div id="openlime">
 	</div>
 	<div id="logos">
@@ -118,10 +119,11 @@ let lime = new OpenLIME.OpenLIME('#openlime', { canvas: { preserveDrawingBuffer:
 
 let layer0 = new OpenLIME.Layer({ 
 	label: '4',
-	layout: 'tarzoom', 
+	layout: 'itarzoom', 
 	type:'rti',
 	url: 'assets/rti/hsh/info.json',
-//	url: 'Data/4/info.json',
+//	url: 'Data/ptm_lowdef_mask/info.json',
+//	url: '../mhm/Data/ptm_itarzoom/info.json',
 	normals: false
 });
 
@@ -133,8 +135,9 @@ let annotations = new OpenLIME.SvgAnnotationLayer({
 	layout: layer0.layout,
 	annotations: 'fetch.php',
 	lod: [ 
-		{ min: 0, max: 2,   type: 'pin', onclick: zoomToAnnotation },
-		{ min: 2, max: 100, type: 'vector' }
+
+		{ min: 0, max: 3.5,   type: 'pin', onclick: zoomToAnnotation },
+		{ min: 3.5, max: 100, type: 'vector' }
 	],
 	style:` 
 		.openlime-annotation { pointer-events:stroke; opacity: 0.7; }
@@ -149,8 +152,10 @@ let annotations = new OpenLIME.SvgAnnotationLayer({
 		circle.point { stroke-width:10px }
 		.selected { stroke:#ff0000 !important; stroke-width:3; }
 
-		circle.openlime-pin { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; }
-		text.openlime-pin { cursor:pointer; font-family:arial; font-size:10px; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
+		circle.openlime-pin { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
+		text.openlime-pin { cursor:pointer; font-family:arial; font-size:1vh; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
+		.pin circle { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; stroke-width:1px;  }
+		.pin text { cursor:pointer; font-family:arial; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
 
 		`,
 	infoTemplate: (anno) => { return `
@@ -235,8 +240,8 @@ function zoomToAnnotation(anno) {
 	const topLeft = annotations.boundingBox().corner(0);
 	cx += topLeft[0]; 
 	cy += topLeft[1];
-	let z = 5;
-	lime.camera.setPosition(400, -cx*z, -cy*z, 5, 0);
+	let z = 1/10;
+	lime.camera.setPosition(400, -cx*z, -cy*z, 1/10, 0);
 	layer0.setLight([0.5, 0.5], 400);
 	navigator.querySelector('p').textContent = anno.label;
 	return true;
@@ -244,7 +249,7 @@ function zoomToAnnotation(anno) {
 
 let currentAnno = -1;
 function nextAnnotation(e) {
-	let a = Object.values(annotations.annotations);
+	let a = pins;
 	if(currentAnno >= a.length -1)
 		return false;
 	currentAnno++;
@@ -255,7 +260,7 @@ function nextAnnotation(e) {
 }
 
 function prevAnnotation(e) {
-	let a = Object.values(annotations.annotations);
+	let a = pins;
 	if(currentAnno <= 0)
 		return false;
 	currentAnno--;
@@ -266,7 +271,7 @@ function prevAnnotation(e) {
 }
 
 function setAnnotation(i) {
-	let anno = Object.entries(annotations.annotations)[i];
+	let anno = pins[i];
 
 }
 
@@ -274,6 +279,7 @@ let navigator = document.getElementById('navigator');
 navigator.querySelector('.prev').addEventListener('click', prevAnnotation);
 navigator.querySelector('.next').addEventListener('click', nextAnnotation);
 
+let pins = [];
 lime.canvas.addEvent('ready', 
 	() => {
 		let logos = document.getElementById('logos');
@@ -285,6 +291,8 @@ lime.canvas.addEvent('ready',
 			ui.toggleHelp(ui.actions.help); 
 
 		}, 700);
+
+		pins = Object.values(annotations.annotations).filter(a => a.publish == "1");
 	});
 
 </script>

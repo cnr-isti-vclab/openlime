@@ -381,12 +381,3 @@ g.openlime-expand {
 	border: 1px #aaa;
 }
 
-.openlime-pin circle {
-	fill: #888;
-	stroke: #aaa;
-}
-
-.openlime-pin text {
-	font-size:8px; 
-}
-

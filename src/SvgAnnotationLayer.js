@@ -35,16 +35,16 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 		this.svgElement.append(this.svgGroup);
 
-		let root = this.overlayElement;
+		this.root = this.overlayElement;
 		if (this.shadow)
-			root = this.overlayElement.attachShadow({ mode: "open" });
+			this.root = this.overlayElement.attachShadow({ mode: "open" });
 
 		if (this.style) {
 			const style = document.createElement('style');
 			style.textContent = this.style;
-			root.append(style);
+			this.root.append(style);
 		}
-		root.appendChild(this.svgElement);
+		this.root.appendChild(this.svgElement);
 	}
 /*  unused for the moment!!! 
 	async loadSVG(url) {
@@ -94,8 +94,16 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		let t = this.transform.compose(transform);
 		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
 		let c = this.boundingBox().corner(0);
-		this.svgGroup.setAttribute("transform",
-			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`);
+		/*this.svgGroup.setAttribute("transform",
+			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`); */
+		console.log(c);
+		let w = viewport.w;
+		let h = viewport.h;
+		let x = -0.5*w/t.z - t.x/t.z - c[0];
+		let y = -0.5*h/t.z - t.y/t.z - c[1];
+		let dx = w/t.z; 
+		let dy = h/t.z; 
+		this.svgElement.setAttribute('viewBox', `${x} ${y} ${dx} ${dy}`);
 		return true;
 	}
 
@@ -103,12 +111,13 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		if(!this.svgElement)
 			this.createSVGElement();
 
+
 		if (!this.visible) return;
 		if(this.status != 'ready') 
 			return;
 
-		const bBox=this.boundingBox();
-		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
+		//const bBox=this.boundingBox();
+//		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
 	
 		//find which annotations needs to be added to the ccanvas, some 
 		//indexing whould be used, for the moment we just iterate all of them.
@@ -153,12 +162,26 @@ class SvgAnnotationLayer extends AnnotationLayer {
 						if(l.type == 'vector')
 							anno.lod.push(anno.selector.elements);
 						else if(l.type == 'pin') {
+							//problem: are the coords in the box wrong???
 							let cx = box.x + box.width/2;
 							let cy = box.y + box.height/2;
+
 					
 							let pin = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
-								<circle cx='${cx}' cy='${cy}' r='10'/>
+								<defs>
+								<marker class="pin" id="pin${count}" viewBox="0 0 20 20" refX="0" refY="0" orient="auto"
+									 markerWidth="20" markerHeight="20">
+									 <circle cx='7' cy='7' r='5'/>
+									 <text x='7' y='7'>${count}</text>
+								</marker>
+							  </defs>
+				  			<polyline vector-effect="non-scaling-stroke" points="${cx}, ${cy}, ${cx + 0.1}, ${cy}" fill="none" stroke="none" 
+								stroke-width="3" marker-end="url(#pin${count})" /></svg>`;
+
+							pin = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+								<circle cx='${cx}' cy='${cy}' r="2%"/>
 								<text x='${cx}' y='${cy}'>${count++}</text></svg>`;
+							count++;
 							let parser = new DOMParser();
 							let svg = parser.parseFromString(pin, "image/svg+xml").documentElement; //"text/html").body.childNodes[0];
 							anno.lod.push([...svg.children]);
@@ -166,9 +189,10 @@ class SvgAnnotationLayer extends AnnotationLayer {
 					}
 				}
 			}
-
+			
 			if (!anno.needsUpdate && !lodChanged)
 				continue;
+
 
 			anno.needsUpdate = false;
 
@@ -184,8 +208,9 @@ class SvgAnnotationLayer extends AnnotationLayer {
 			let type = 'openlime-annotation';
 			let clickHandler = null;
 			if(this.currentLod !== null) { 
-				elements = anno.lod[this.currentLod];
 				let lodtype = this.lod[this.currentLod].type;
+
+				elements = anno.lod[this.currentLod];
 				clickHandler = this.lod[this.currentLod].onclick;
 				if(lodtype == 'pin')
 					type = 'openlime-pin';

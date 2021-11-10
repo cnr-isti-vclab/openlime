@@ -47,7 +47,7 @@ class Annotation {
 		for(let shape of this.selector.elements) {
 			let b = shape.getBBox();
 			x = Math.min(x, b.x);
-			y = Math.min(x, b.y);
+			y = Math.min(y, b.y);
 			width = Math.max(width + x, b.x + b.width) - x; 
 			height = Math.max(height + y, b.y + b.height) - y; 
 		}
