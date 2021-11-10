@@ -14,11 +14,14 @@ class ShaderBRDF extends Shader {
 		this.alphaLimits = [0.01, 0.5];
 		Object.assign(this, options);
 		
+		const kdCS = this.colorspaces['kd'] == 'linear' ? 0 : 1;
+		const ksCS = this.colorspaces['ks'] == 'linear' ? 0 : 1;
+
 		this.uniforms = {
 			uLightInfo:          { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
 			uAlphaLimits:        { type: 'vec2', needsUpdate: true, size: 2, value: this.alphaLimits },
-			uInputColorSpaceKd:  { type: 'int', needsUpdate: true, size: 1, value: this.colorspaces['kd'] },
-			uInputColorSpaceKs:  { type: 'int', needsUpdate: true, size: 1, value: this.colorspaces['ks'] },
+			uInputColorSpaceKd:  { type: 'int', needsUpdate: true, size: 1, value: kdCS },
+			uInputColorSpaceKs:  { type: 'int', needsUpdate: true, size: 1, value: ksCS },
 		}
 
 		this.innerCode = '';
