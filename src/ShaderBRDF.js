@@ -61,8 +61,9 @@ class ShaderBRDF extends Shader {
 
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
+		let hasGloss = this.samplers.findIndex( s => s.name == 'uTexGloss') != -1;
+		let hasKs = this.samplers.findIndex( s => s.name == 'uTexKs') != -1;	
 		let str = `${gl2? '#version 300 es' : ''}
-
 precision highp float; 
 precision highp int; 
 
@@ -142,7 +143,7 @@ void main() {
 	float NdotL = max(dot(N,L),0.0);
 
 	vec3 kd = texture(uTexKd, v_texcoord).xyz;
-	vec3 ks = texture(uTexKs, v_texcoord).xyz;
+	vec3 ks = ${hasKs ? 'texture(uTexKs, v_texcoord).xyz' : 'vec3(0.0, 0.0, 0.0)'};
 	if(uInputColorSpaceKd == 1) {
 		kd = sRGB2Linear(kd);
 	}
@@ -151,7 +152,7 @@ void main() {
 	}
 	kd /= PI;
 
-	float gloss = texture(uTexGloss, v_texcoord).x;
+	float gloss = ${hasGloss ? 'texture(uTexGloss, v_texcoord).x' : '0.0'};
 	float minGloss = 1.0 - pow(uAlphaLimits[1], 1.0 / ISO_WARD_EXPONENT);
 	float maxGloss = 1.0 - pow(uAlphaLimits[0], 1.0 / ISO_WARD_EXPONENT);
 

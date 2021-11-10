@@ -50,7 +50,6 @@ class Layout {
 			this.initBoxes();
 			this.status = 'ready';
 			this.emit('ready');
-			console.log("LOADED ", this);
 		})().catch(e => { console.log(e); this.status = e; });
 	}
 
@@ -309,7 +308,6 @@ class Layout {
 				throw new Error(this.status);
 			}
 			let json = await response.json();
-			console.log("JSON: ", json);
 			json.url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
 			Object.assign(this, json);
 			this.tarzoom.push(json);

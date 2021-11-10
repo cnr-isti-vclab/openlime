@@ -22,13 +22,13 @@ let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDr
 //combinerTest();
 //imageTest('iiif'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
-//brdfTest();
+brdfTest();
 //rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 
 //testUISvg();
-lensTest();
+//lensTest();
 //testSVGAnnotations();
 
 //testMedicalAnnotations();
