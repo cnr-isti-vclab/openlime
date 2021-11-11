@@ -88,7 +88,6 @@
 <body>
 
 <div class="container">
-
 	<div id="openlime">
 	</div>
 	<div id="logos">
@@ -133,9 +132,10 @@ let count = 0;
 
 function buildPin(anno, cx, cy) {
 	let pin = `
-<svg xmlns='http://www.w3.org/2000/svg' x='${cx}' y='${cy}' width="4%" height="4%" viewBox="-16 -16 32 32">
-	<circle cx='0' cy='0' r="14"/>
-	<text x='0' y='0'>${count}</text>
+<svg xmlns='http://www.w3.org/2000/svg' x='${cx}' y='${cy}' width="4%" height="4%" viewBox="-2 -2 20 20">
+
+	<path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/>
+	<text x='7' y='8'>${count}</text>
 </svg>`;
 
 	let parser = new DOMParser();
@@ -168,13 +168,13 @@ let annotations = new OpenLIME.SvgAnnotationLayer({
 		.selected { stroke:#ff0000 !important; stroke-width:3; }
 
 		circle.openlime-pin { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
-		text.openlime-pin { cursor:pointer; font-family:arial; font-size:1vh; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
+		text.openlime-pin { cursor:pointer; user-select: none; font-family:arial; font-size:1vh; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
 
-		svg.openlime-pin circle { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
-		svg.openlime-pin text { cursor:pointer; user-select: none; font-family:arial; font-size:16px; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
+		svg.openlime-pin path { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
+		svg.openlime-pin text { cursor:pointer; user-select: none; font-family:arial; font-size:8px; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
 		`,
 	infoTemplate: (anno) => { return `
-		<h3>${anno.class}</h3>
+		<h3>${anno.label}</h3>
 		<p>${anno.description}</p>
 		`; },
 
@@ -197,7 +197,7 @@ OpenLIME.Skin.setUrl('skin.svg');
 
 
 
-let ui = new OpenLIME.UIBasic(lime);
+let ui = new OpenLIME.UIBasic(lime, { showLightDirections: true });
 let { help, home, fullscreen, light } = ui.actions
 
 help.display = true;
@@ -259,56 +259,53 @@ function zoomToAnnotation(anno) {
 	lime.camera.setPosition(400, -cx*z, -cy*z, 1/10, 0);
 	layer0.setLight([0.5, 0.5], 400);
 	navigator.querySelector('p').textContent = anno.label;
+	ui.info.show(annotations, anno);
 	return true;
 }
 
 let currentAnno = -1;
 function nextAnnotation(e) {
-	let a = pins;
-	if(currentAnno >= a.length -1)
+	if(currentAnno >= pins.length -1)
 		return false;
 	currentAnno++;
-	zoomToAnnotation(a[currentAnno]);
+	zoomToAnnotation(pins[currentAnno]);
 
 	e.preventDefault();
 	e.stopPropagation();
 }
 
 function prevAnnotation(e) {
-	let a = pins;
+	
 	if(currentAnno <= 0)
 		return false;
 	currentAnno--;
-	zoomToAnnotation(a[currentAnno]);
+	zoomToAnnotation(pins[currentAnno]);
 
 	e.preventDefault();
 	e.stopPropagation();
 }
 
-function setAnnotation(i) {
-	let anno = pins[i];
-
-}
 
 let navigator = document.getElementById('navigator');
-navigator.querySelector('.prev').addEventListener('click', prevAnnotation);
-navigator.querySelector('.next').addEventListener('click', nextAnnotation);
 
-let pins = [];
+
+let pins = null;
 lime.canvas.addEvent('ready', 
 	() => {
 		let logos = document.getElementById('logos');
-		lime.containerElement.appendChild(logos);
 
 		lime.camera.deltaZoom(500, 1.1, 0, 0);
 		layer0.setLight([-0.5, 0.5], 500);
 		setTimeout(() => { 
 			ui.toggleHelp(ui.actions.help); 
 
-		}, 700);
+		}, 700);	});
 
-		pins = Object.values(annotations.annotations).filter(a => a.publish == "1");
-	});
+annotations.addEvent('loaded', () => { 
+	pins = Object.values(annotations.annotations).filter(a => a.publish == "1"); 
+	navigator.querySelector('.prev').addEventListener('click', prevAnnotation);
+	navigator.querySelector('.next').addEventListener('click', nextAnnotation);
+});
 
 </script>
 </body>

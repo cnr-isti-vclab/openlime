@@ -26,7 +26,7 @@ import { AnnotationLayer } from './AnnotationLayer.js'
  * html: whatever html
  * button: visually a button, attributes: group, layer, mode
  * slider: callback(percent)
- * list: an array of entries.
+ * list: an array of entries.element
  * 
  * Additional attributes:
  * onclick: a function(event) {}
@@ -63,6 +63,7 @@ class UIBasic {
 			unit: null,
 			info: new Info(lime.containerElement),
 			lightcontroller: null,
+			showLightDirections: false,
 		});
 
 		Object.assign(this, options);
@@ -117,7 +118,16 @@ class UIBasic {
 		let controller = new Controller2D((x, y) => {
 			for (let layer of lightLayers)
 				layer.setLight([x, y], 0);
-		}, { active: false, activeModifiers: [2, 4], control: 'light', relative: true });
+				if(this.showLightDirections)
+					this.updateLightDirections(x, y);
+			}, 
+			{ 
+				active: false, 
+				activeModifiers: [2, 4], 
+				control: 'light', 
+				onPanStart: this.showLightDirections ? () => {  this.enableLightDirections(true) } : null,
+				onPanEnd: this.showLightDirections ? () => { this.enableLightDirections(false) } : null,
+				relative: true });
 
 		controller.priority = 0;
 		this.lime.pointerManager.onEvent(controller);
@@ -129,6 +139,7 @@ class UIBasic {
 			if (layer.controls.light) lightLayers.push(layer);
 		
 		if (lightLayers.length) {
+			this.createLightDirections();
 			for (let layer of lightLayers) {
 				controller.setPosition(0.5, 0.5);
 				//layer.setLight([0.5, 0.5], 0);
@@ -139,7 +150,38 @@ class UIBasic {
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
 	}
-
+	createLightDirections() {
+		this.lightDirections = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		this.lightDirections.setAttribute('viewBox', '-100, -100, 200 200');
+		this.lightDirections.style.display = 'none';
+		this.lightDirections.classList.add('openlime-lightdir');
+		for(let x = -1; x <= 1; x++) {
+			for(let y = -1; y <= 1; y++) {
+				let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+				line.pos = [x*35, y*35];
+				//line.setAttribute('data-start', `${x} ${y}`);
+				this.lightDirections.appendChild(line);
+			}
+		}
+		this.lime.containerElement.appendChild(this.lightDirections);
+	}
+	
+	updateLightDirections(lx, ly) {
+		let lines = [...this.lightDirections.children];
+		for(let line of lines) {
+			let x = line.pos[0];
+			let y = line.pos[1];
+			
+			line.setAttribute('x1', 0.6*x -25*lx);
+			line.setAttribute('y1', 0.6*y +25*ly);
+			line.setAttribute('x2', x/0.6 + 60*lx);
+			line.setAttribute('y2', y/0.6 - 60*ly);
+		}
+	}
+	enableLightDirections(show) {
+		console.log(show);
+		this.lightDirections.style.display = show? 'block' : 'none';
+	}
 
 
 	init() {
@@ -419,7 +461,7 @@ class UIBasic {
 
 	toggleHelp(help, on) {
 		
-		if(!help.element) {
+		if(!help.dialog) {
 			let div = document.createElement('div');
 			div.classList.add('openlime-help-window');
 			div.addEventListener('click', (e) => { if(e.target == div) this.toggleHelp(help, false); });
@@ -440,13 +482,13 @@ class UIBasic {
 				//content.appendChild(close);
 			})();
 			this.lime.containerElement.appendChild(div);
-			help.element = div;
+			help.dialog = div;
 		}
 		//let hidden = help.element.classList.includes('hidden');
 		//if(on == null)
 		//	hidden = true;
 		
-		setTimeout(() => help.element.classList.toggle('shown', on), 0);
+		setTimeout(() => help.dialog.classList.toggle('shown', on), 0);
 
 		//help.element.style.display = on? 'block' : 'none';
 	}
@@ -610,22 +652,31 @@ class Info {
 	}
 
 	show(layer, anno) {
+		(async () => {
 		if(!this.element) {
 			let html = '<div class="openlime-info"></div>';
 			let template = document.createElement('template');
 			template.innerHTML = html.trim();
 			this.element = template.content.firstChild;
+			
 			this.container.appendChild(this.element);
 		}
 
 		this.hide();
 		
 		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(anno) : this.template(anno);
+
+		let close = await Skin.appendIcon(this.element, '.openlime-close');
+		close.classList.add('openlime-close');
+		close.addEventListener('click', () =>this.hide());
+
+
 		this.annotation = anno;
 		this.layer = layer;
 
 		this.element.style.display = '';
 		//todo position info appropriately.
+		})();
 	}
 	template(anno) {
 		return `

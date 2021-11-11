@@ -161,14 +161,13 @@ class SvgAnnotationLayer extends AnnotationLayer {
 				anno.selector.elements = [...element.children]
 				anno.ready = true;
 				let box = element.viewBox.baseVal;
-				console.log(box, box1);
 				anno.box = box;
 				
-				/*				} else if(this.svgXML) {
-									a.svgElement = this.svgXML.querySelector(`#${a.id}`);
-									if(!a.svgElement)
-										throw Error(`Could not find element with id: ${id} in svg`);
-								} */
+				/*} else if(this.svgXML) {
+					a.svgElement = this.svgXML.querySelector(`#${a.id}`);
+					if(!a.svgElement)
+						throw Error(`Could not find element with id: ${id} in svg`);
+				} */
 				if(this.lod) {
 
 					anno.lod = [];

@@ -119,7 +119,7 @@
 	cursor:auto;
 }
 
-.openlime-help-window .openlime-close {
+.openlime-help-window .openlime-close, .openlime-info .openlime-close {
 	position:absolute;
 	top:10px;
 	right:10px;
@@ -127,6 +127,10 @@
 	height:30px;
 	cursor:pointer;
 }
+.openlime-close {
+	stroke:#fff !important;
+}
+
 .openlime-close:hover  * {
 	stroke:#fff !important;
 }
@@ -381,3 +385,17 @@ g.openlime-expand {
 	border: 1px #aaa;
 }
 
+.openlime-lightdir {
+	position:absolute;
+	top:0px;
+	left:0px;
+	bottom:0px;
+	right:0px;
+	pointer-events:none;
+}
+.openlime-lightdir line {
+	stroke: #ff0;
+	opacity: 0.5;
+	stroke-width:1px;
+	vector-effect: non-scaling-stroke;
+}
