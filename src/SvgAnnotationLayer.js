@@ -92,18 +92,18 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		if(!this.svgElement)
 			return true;
 		let t = this.transform.compose(transform);
-		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
 		let c = this.boundingBox().corner(0);
-		/*this.svgGroup.setAttribute("transform",
-			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`); */
-		console.log(c);
+//		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
+//		this.svgGroup.setAttribute("transform",
+//			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`); 
+		
 		let w = viewport.w;
 		let h = viewport.h;
 		let x = -0.5*w/t.z - t.x/t.z - c[0];
 		let y = -0.5*h/t.z - t.y/t.z - c[1];
 		let dx = w/t.z; 
 		let dy = h/t.z; 
-		this.svgElement.setAttribute('viewBox', `${x} ${y} ${dx} ${dy}`);
+		this.svgElement.setAttribute('viewBox', `${x} ${y} ${dx} ${dy}`); 
 		return true;
 	}
 
@@ -135,10 +135,24 @@ class SvgAnnotationLayer extends AnnotationLayer {
 			lodChanged = true;
 		}
 
-
+		let box1 = this.boundingBox()
 
 		let count = 0;
+		function buildPin(anno, cx, cy) {
+			let pin = `
+		<svg xmlns='http://www.w3.org/2000/svg' x='${cx}' y='${cy}' width="4%" height="4%" viewBox="-16 -16 32 32">
+			<circle cx='0' cy='0' r="14"/>
+			<text x='0' y='0'>${count}</text>
+		</svg>`;
+		
+			let parser = new DOMParser();
+			let svg = parser.parseFromString(pin, "image/svg+xml").documentElement; //"text/html").body.childNodes[0];
+			count++;
+			return svg;
+		}
+
 		for (let anno of this.annotations) {
+			if(anno.publish != '1') continue;
 			
 			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
 			if (!anno.ready && typeof anno.selector.value == 'string') {
@@ -147,8 +161,8 @@ class SvgAnnotationLayer extends AnnotationLayer {
 				anno.selector.elements = [...element.children]
 				anno.ready = true;
 				let box = element.viewBox.baseVal;
+				console.log(box, box1);
 				anno.box = box;
-				
 				
 				/*				} else if(this.svgXML) {
 									a.svgElement = this.svgXML.querySelector(`#${a.id}`);
@@ -162,29 +176,11 @@ class SvgAnnotationLayer extends AnnotationLayer {
 						if(l.type == 'vector')
 							anno.lod.push(anno.selector.elements);
 						else if(l.type == 'pin') {
-							//problem: are the coords in the box wrong???
 							let cx = box.x + box.width/2;
 							let cy = box.y + box.height/2;
 
-					
-							let pin = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
-								<defs>
-								<marker class="pin" id="pin${count}" viewBox="0 0 20 20" refX="0" refY="0" orient="auto"
-									 markerWidth="20" markerHeight="20">
-									 <circle cx='7' cy='7' r='5'/>
-									 <text x='7' y='7'>${count}</text>
-								</marker>
-							  </defs>
-				  			<polyline vector-effect="non-scaling-stroke" points="${cx}, ${cy}, ${cx + 0.1}, ${cy}" fill="none" stroke="none" 
-								stroke-width="3" marker-end="url(#pin${count})" /></svg>`;
-
-							pin = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
-								<circle cx='${cx}' cy='${cy}' r="2%"/>
-								<text x='${cx}' y='${cy}'>${count++}</text></svg>`;
-							count++;
-							let parser = new DOMParser();
-							let svg = parser.parseFromString(pin, "image/svg+xml").documentElement; //"text/html").body.childNodes[0];
-							anno.lod.push([...svg.children]);
+							let buildFunction = l.build || buildPin;
+							anno.lod.push([buildFunction(anno, cx, cy)]);
 						}
 					}
 				}

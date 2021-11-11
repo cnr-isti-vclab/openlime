@@ -609,7 +609,7 @@ class Info {
 		this.layer = null;
 	}
 
-	show(e, layer, id) {
+	show(layer, anno) {
 		if(!this.element) {
 			let html = '<div class="openlime-info"></div>';
 			let template = document.createElement('template');
@@ -618,24 +618,19 @@ class Info {
 			this.container.appendChild(this.element);
 		}
 
-		if(this.annotation && id == this.annotation.id)
-			return;
-
 		this.hide();
 		
-		let annotation = layer.getAnnotationById(id);
-		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.template(annotation);
-		this.annotation = annotation;
+		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(anno) : this.template(anno);
+		this.annotation = anno;
 		this.layer = layer;
 
 		this.element.style.display = '';
 		//todo position info appropriately.
-		e.preventDefault();
 	}
-	template(annotation) {
+	template(anno) {
 		return `
-		<p>${annotation.description}</p>
-		<p>${annotation.class}</p>
+		<p>${anno.title}</p>
+		<p>${anno.description}</p>
 		`;
 	}
 }
