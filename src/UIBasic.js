@@ -6,7 +6,7 @@ import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { PointerManager } from './PointerManager.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
-import { UiDialog } from './UiDialog.js'
+import { UIDialog } from './UIDialog.js'
 
 /* Basic viewer for a single layer.
  *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
@@ -459,7 +459,7 @@ class UIBasic {
 
 	toggleHelp(help, on) {
 		if(!help.dialog) {
-			help.dialog = new UiDialog(this.lime.containerElement, { modal: true });
+			help.dialog = new UIDialog(this.lime.containerElement, { modal: true });
 			help.dialog.setContent(help.html);
 		} else
 			help.dialog.toggle(on);		
