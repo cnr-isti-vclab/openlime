@@ -6,6 +6,7 @@ import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { PointerManager } from './PointerManager.js'
 import { AnnotationLayer } from './AnnotationLayer.js'
+import { UiDialog } from './UiDialog.js'
 
 /* Basic viewer for a single layer.
  *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
@@ -185,46 +186,43 @@ class UIBasic {
 
 
 	init() {
-		(async () => {
 
-			document.addEventListener('keydown', (e) => this.keyDown(e), false);
-			document.addEventListener('keyup', (e) => this.keyUp(e), false);
+		document.addEventListener('keydown', (e) => this.keyDown(e), false);
+		document.addEventListener('keyup', (e) => this.keyUp(e), false);
 
-			let panzoom = this.panzoom = new ControllerPanZoom(this.lime.camera, { 
-				priority: -1000, 
-				activeModifiers: [0, 1] 
-			});
-			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
-			this.lime.pointerManager.on("fingerSingleTap", {"fingerSingleTap": (e) => { this.showInfo(e);}, priority: 10000 });
-			
-			//this.lime.pointerManager.on("fingerHover", {"fingerHover": (e) => { this.showInfo(e);}, priority: 10000 });
+		let panzoom = this.panzoom = new ControllerPanZoom(this.lime.camera, { 
+			priority: -1000, 
+			activeModifiers: [0, 1] 
+		});
+		this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+		this.lime.pointerManager.on("fingerSingleTap", {"fingerSingleTap": (e) => { this.showInfo(e);}, priority: 10000 });
+		
+		//this.lime.pointerManager.on("fingerHover", {"fingerHover": (e) => { this.showInfo(e);}, priority: 10000 });
 
-			this.createMenu();
-			this.updateMenu();
+		this.createMenu();
+		this.updateMenu();
 
-			if (this.actions.light && this.actions.light.display === 'auto')
-				this.actions.light.display = true;
+		if (this.actions.light && this.actions.light.display === 'auto')
+			this.actions.light.display = true;
 
 
-			if (this.skin)
-				await this.loadSkin();
-			/* TODO: this is probably not needed
-			if(this.skinCSS)
-				await this.loadSkinCSS();
-			*/
+		if (this.skin)
+			this.loadSkin();
+		/* TODO: this is probably not needed
+		if(this.skinCSS)
+			await this.loadSkinCSS();
+		*/
 
-			this.setupActions();
-			this.setupScale();
+		this.setupActions();
+		this.setupScale();
 
-			for (let l of Object.values(this.lime.canvas.layers)) {
-				this.setLayer(l);
-				break;
-			}
+		for (let l of Object.values(this.lime.canvas.layers)) {
+			this.setLayer(l);
+			break;
+		}
 
-			if (this.actions.light.active == true)
-				this.toggleLightController();
-
-		})().catch(e => { console.log(e); throw Error("Something failed") });
+		if (this.actions.light.active == true)
+			this.toggleLightController();
 	}
 
 	keyDown(e) {
@@ -267,7 +265,7 @@ class UIBasic {
 	}
 
 	
-	async loadSkin() {
+	loadSkin() {
 		let toolbar = document.createElement('div');
 		toolbar.classList.add('openlime-toolbar');
 		this.lime.containerElement.appendChild(toolbar);
@@ -284,7 +282,7 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
-				action.element = await Skin.appendIcon(toolbar, '.openlime-' + name); 
+				action.element = Skin.appendIcon(toolbar, '.openlime-' + name); 
 
 				let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
 				title.textContent = action.title;
@@ -460,37 +458,11 @@ class UIBasic {
 	}
 
 	toggleHelp(help, on) {
-		
 		if(!help.dialog) {
-			let div = document.createElement('div');
-			div.classList.add('openlime-help-window');
-			div.addEventListener('click', (e) => { if(e.target == div) this.toggleHelp(help, false); });
-
-			let content = document.createElement('div');
-			content.classList.add('openlime-help-content');
-			div.appendChild(content);
-	
-			if (help.html instanceof HTMLElement) 
-				content.appendChild(help.html);
-			else
-				content.innerHTML = help.html;
-
-			(async ()=> {
-				let close = await Skin.appendIcon(content, '.openlime-close');
-				close.classList.add('openlime-close');
-				close.addEventListener('click', () => this.toggleHelp(help, false ));
-				//content.appendChild(close);
-			})();
-			this.lime.containerElement.appendChild(div);
-			help.dialog = div;
-		}
-		//let hidden = help.element.classList.includes('hidden');
-		//if(on == null)
-		//	hidden = true;
-		
-		setTimeout(() => help.dialog.classList.toggle('shown', on), 0);
-
-		//help.element.style.display = on? 'block' : 'none';
+			help.dialog = new UiDialog(this.lime.containerElement, { modal: true });
+			help.dialog.setContent(help.html);
+		} else
+			help.dialog.toggle(on);		
 	}
 	
 	snapshot() {
@@ -666,7 +638,7 @@ class Info {
 		
 		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(anno) : this.template(anno);
 
-		let close = await Skin.appendIcon(this.element, '.openlime-close');
+		let close = Skin.appendIcon(this.element, '.openlime-close');
 		close.classList.add('openlime-close');
 		close.addEventListener('click', () =>this.hide());
 

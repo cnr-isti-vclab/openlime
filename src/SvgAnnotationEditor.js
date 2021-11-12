@@ -97,14 +97,11 @@ class SvgAnnotationEditor {
 						'export': { action: () => { this.exportAnnotations(); }, title: "Export annotations" },
 						'trash': { action: () => { this.deleteSelected(); }, title: "Delete selected annotations" },
 					};
-					(async () => {
-
-						for (const [label, tool] of Object.entries(tools)) {
-							let icon = await Skin.appendIcon(entry.element.firstChild, '.openlime-' + label); // TODO pass entry.element.firstChild as parameter in onCreate
-							icon.setAttribute('title', tool.title);
-							icon.addEventListener('click', tool.action);
-						}
-					})();
+					for (const [label, tool] of Object.entries(tools)) {
+						let icon = Skin.appendIcon(entry.element.firstChild, '.openlime-' + label); // TODO pass entry.element.firstChild as parameter in onCreate
+						icon.setAttribute('title', tool.title);
+						icon.addEventListener('click', tool.action);
+					}
 				}
 			}
 			layer.annotationsListEntry = entry;
@@ -159,10 +156,9 @@ class SvgAnnotationEditor {
 		this.setTool(null);
 		this.setActiveTool();
 		this.layer.annotationsListEntry.element.querySelector('.openlime-edit').classList.add('active');
-		(async () => {
-			await this.createEditWidget();
-			this.updateEditWidget();
-		})();
+		
+		this.createEditWidget();
+		this.updateEditWidget();
 	}
 
 	hideEditWidget() {
@@ -174,7 +170,7 @@ class SvgAnnotationEditor {
 
 
 	//TODO this should actually be in the html.
-	async createEditWidget() {
+	createEditWidget() {
 		if (this.editWidget)
 			return;
 
@@ -235,19 +231,19 @@ class SvgAnnotationEditor {
 
 
 
-		let draw = await Skin.appendIcon(tools, '.openlime-draw');
+		let draw = Skin.appendIcon(tools, '.openlime-draw');
 		draw.addEventListener('click', (e) => { this.setTool('line'); this.setActiveTool(draw); });
 
 		//		let pen = await Skin.appendIcon(tools, '.openlime-pen'); 
 		//		pen.addEventListener('click', (e) => { this.setTool('pen'); setActive(pen); });
 
-		let erase = await Skin.appendIcon(tools, '.openlime-erase');
+		let erase = Skin.appendIcon(tools, '.openlime-erase');
 		erase.addEventListener('click', (e) => { this.setTool('erase'); this.setActiveTool(erase); });
 
-		let undo = await Skin.appendIcon(tools, '.openlime-undo');
+		let undo = Skin.appendIcon(tools, '.openlime-undo');
 		undo.addEventListener('click', (e) => { this.undo(); });
 
-		let redo = await Skin.appendIcon(tools, '.openlime-redo');
+		let redo = Skin.appendIcon(tools, '.openlime-redo');
 		redo.addEventListener('click', (e) => { this.redo(); });
 
 		/*		let colorpick = await Skin.appendIcon(tools, '.openlime-colorpick'); 
