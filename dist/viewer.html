@@ -147,13 +147,10 @@ let annotations = new OpenLIME.SvgAnnotationLayer({
 	label: 'Annotations',
 	layout: layer0.layout,
 	annotations: 'fetch.php',
-	lod: [ 
+	/*lod: [ 
 		{ min: 3.5, max: 100, type: 'vector' }
-	],
+	], */
 	style:` 
-		.openlime-annotation { pointer-events:stroke; opacity: 0.7; }
-		.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
-			
 		path { fill:none; stroke-width:2; stroke:#666; vector-effect:non-scaling-stroke; pointer-events:all; }
 		path:hover { cursor:pointer; stroke:#000; }
 		:focus, .selected { stroke:#000 !important; stroke-width:3; }
@@ -171,6 +168,9 @@ let annotations = new OpenLIME.SvgAnnotationLayer({
 		'class4': { stroke: '#070', label: 'D' },
 		'class5': { stroke: '#007', label: 'E' },
 		'class6': { stroke: '#077', label: 'F' },
+	},
+	annotationUpdate: (anno, transform) => {
+		anno.selector.elements.forEach((e) => e.setAttribute('opacity', Math.max(0, 0.5*(transform.z - 2)) ))
 	}
 }); 
 
@@ -244,10 +244,10 @@ feedbackDialog.hide();
 
 function zoomToAnnotation(anno) {
 	let cam = anno.camera;
-	lime.camera.setPosition(400, cam.x, cam.y, cam.z, 0);
+	lime.camera.setPosition(1000, cam.x, cam.y, cam.z, 0, 'ease-out');
 
 	let light = anno.light;
-	layer0.setLight([light.x, light.y], 400);
+	layer0.setLight([light.x, light.y], 1000);
 	navigator.querySelector('p').textContent = `${currentAnno + 1} ${anno.label}`;
 
 	annotations.clearSelected();
@@ -255,8 +255,8 @@ function zoomToAnnotation(anno) {
 		let targetAnno = annotations.getAnnotationById(id)
 		annotations.setSelected(targetAnno);
 	}
-
-	ui.info.show(pois, anno);
+	ui.info.setContent(`<h2>${anno.label}</h2><p>${anno.description}</p>`);
+	ui.info.show();
 	return true;
 }
 

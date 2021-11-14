@@ -31,7 +31,7 @@
 	top:10px;
 	left:10px;
 	width:20%;
-	height:auto;
+	height:fit-content;
 	background-color:rgb(20, 20, 20, 0.9);
 	padding:0px 20px;
 	color:white;

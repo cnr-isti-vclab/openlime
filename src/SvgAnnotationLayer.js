@@ -112,16 +112,9 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		if(!this.svgElement)
 			this.createSVGElement();
 
-
-		if (!this.visible) return;
-		if(this.status != 'ready') 
+		if(!this.annotations || this.status != 'ready' || !this.visible) 
 			return;
 
-		//const bBox=this.boundingBox();
-//		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
-	
-		//find which annotations needs to be added to the ccanvas, some 
-		//indexing whould be used, for the moment we just iterate all of them.
 		let lod = null;
 		if(this.lod)
 			this.lod.find((l, index) => { 
@@ -132,22 +125,6 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		if(this.currentLod !== lod) {
 			this.currentLod = lod;
 			lodChanged = true;
-		}
-
-		let box1 = this.boundingBox()
-
-		let count = 0;
-		function buildPin(anno, cx, cy) {
-			let pin = `
-		<svg xmlns='http://www.w3.org/2000/svg' x='${cx}' y='${cy}' width="4%" height="4%" viewBox="-16 -16 32 32">
-			<circle cx='0' cy='0' r="14"/>
-			<text x='0' y='0'>${count}</text>
-		</svg>`;
-		
-			let parser = new DOMParser();
-			let svg = parser.parseFromString(pin, "image/svg+xml").documentElement; //"text/html").body.childNodes[0];
-			count++;
-			return svg;
 		}
 
 		for (let anno of this.annotations) {
@@ -161,11 +138,6 @@ class SvgAnnotationLayer extends AnnotationLayer {
 				let box = element.viewBox.baseVal;
 				anno.box = box;
 				
-				/*} else if(this.svgXML) {
-					a.svgElement = this.svgXML.querySelector(`#${a.id}`);
-					if(!a.svgElement)
-						throw Error(`Could not find element with id: ${id} in svg`);
-				} */
 				if(this.lod) {
 
 					anno.lod = [];
@@ -183,20 +155,20 @@ class SvgAnnotationLayer extends AnnotationLayer {
 				}
 			}
 			
+			if(this.annotationUpdate)
+				this.annotationUpdate(anno, transform);
+
 			if (!anno.needsUpdate && !lodChanged)
 				continue;
-
 
 			anno.needsUpdate = false;
 
 			for (let e of this.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`))
-				e.remove();
+					e.remove();
 
 			if(!anno.visible)
 				continue;
 
-			//second time will be 0 elements, but we need to 
-			//store somewhere knowledge of which items in the scene and which still not.
 			let elements = anno.selector.elements;
 			let type = 'openlime-annotation';
 			if(this.lod && this.currentLod === null)

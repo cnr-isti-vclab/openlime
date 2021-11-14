@@ -30,6 +30,7 @@ class Camera {
 		Object.assign(this, options);
 		this.target = new Transform(this.target);
 		this.source = this.target.copy();
+		this.transition = 'linear';
 	}
 
 	copy() {
@@ -87,9 +88,11 @@ class Camera {
 		return { x: x, y: y };
 	}
 
-	setPosition(dt, x, y, z, a) {
+	setPosition(dt, x, y, z, a, easing) {
 		// Discard events due to cursor outside window
 		if (Math.abs(x) > 64000 || Math.abs(y) > 64000) return;
+		this.easing = easing || 'linear';
+
 
 		if (this.bounded) {
 			const sw = this.viewport.dx;
@@ -200,7 +203,7 @@ class Camera {
 		if(time >= this.target.t)
 			Object.assign(pos, this.target);
 		else 
-			pos.interpolate(this.source, this.target, time);
+			pos.interpolate(this.source, this.target, time, this.easing);
 
 		pos.t = time;
 		return pos;

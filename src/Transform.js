@@ -94,7 +94,7 @@ class Transform {
 		return box;
 	}
 
-	interpolate(source, target, time) {
+	interpolate(source, target, time, easing) {
 		let t = (target.t - source.t);
 
 		this.t = time;
@@ -104,7 +104,11 @@ class Transform {
 			return Object.assign(this, target);		
 
 		let tt = (time - source.t)/t;
-		let st = (target.t - time)/t;
+		switch(easing) {
+			case 'ease-out': tt = 1 - Math.pow(1 - tt, 2); break;
+			case 'ease-in-out': tt = tt < 0.5 ? 2*tt*tt : 1 - Math.pow(-2 * tt + 2, 2) / 2; break;
+		}
+		let st = 1 -tt; //(target.t - time)/t;
 		
 		for(let i of ['x', 'y', 'z', 'a'])
 			this[i] = (st*source[i] + tt*target[i]);
