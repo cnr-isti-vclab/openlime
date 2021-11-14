@@ -62,10 +62,12 @@ class UIBasic {
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
 			unit: null,
-			info: new Info(lime.containerElement),
+			//info: new Info(lime.containerElement),
+			info: new UIDialog(lime.containerElement, { class: 'openlime-info'}),
 			lightcontroller: null,
 			showLightDirections: false,
 		});
+		this.info.hide();
 
 		Object.assign(this, options);
 		if (this.autoFit)
@@ -126,8 +128,14 @@ class UIBasic {
 				active: false, 
 				activeModifiers: [2, 4], 
 				control: 'light', 
-				onPanStart: this.showLightDirections ? () => {  this.enableLightDirections(true) } : null,
-				onPanEnd: this.showLightDirections ? () => { this.enableLightDirections(false) } : null,
+				onPanStart: this.showLightDirections ? () => {
+					this.info.fade(true);
+					Object.values(this.lime.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false) );
+					this.enableLightDirections(true) } : null,
+				onPanEnd: this.showLightDirections ? () => { 
+					this.info.fade(false);
+					Object.values(this.lime.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true) );
+					this.enableLightDirections(false) } : null,
 				relative: true });
 
 		controller.priority = 0;
@@ -154,6 +162,7 @@ class UIBasic {
 	createLightDirections() {
 		this.lightDirections = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.lightDirections.setAttribute('viewBox', '-100, -100, 200 200');
+		this.lightDirections.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 		this.lightDirections.style.display = 'none';
 		this.lightDirections.classList.add('openlime-lightdir');
 		for(let x = -1; x <= 1; x++) {
@@ -173,14 +182,13 @@ class UIBasic {
 			let x = line.pos[0];
 			let y = line.pos[1];
 			
-			line.setAttribute('x1', 0.6*x -25*lx);
-			line.setAttribute('y1', 0.6*y +25*ly);
+			line.setAttribute('x1', 0.6*x -25*0*lx);
+			line.setAttribute('y1', 0.6*y +25*0*ly);
 			line.setAttribute('x2', x/0.6 + 60*lx);
 			line.setAttribute('y2', y/0.6 - 60*ly);
 		}
 	}
 	enableLightDirections(show) {
-		console.log(show);
 		this.lightDirections.style.display = show? 'block' : 'none';
 	}
 
@@ -260,8 +268,9 @@ class UIBasic {
 		let id = e.originSrc.getAttribute('id');
 		let anno = layer.getAnnotationById(id);
 		layer.setSelected(anno);
-
-		//this.info.show(e, layer, id);
+		
+		this.info.show();
+		this.info.setContent(layer.infoTemplate ? layer.infoTemplate(anno) : `<h2>${anno.label}</h2><p>${anno.description}</p>`);
 	}
 
 	
@@ -600,62 +609,42 @@ class UIBasic {
 	}
 }
 
-
+/*
 class Info {
 	constructor(container) {
 		Object.assign(this, {
-			element: null,
-			//svgElement: null,  //svg for annotation, TODO: should be inside annotation!
+			dialog: new UIDialog(container, { class: 'openlime-info'}),
 			layer: null,
 			annotation: null,
 			container: container
-		});			
+		});
+		this.dialog.hide();
 	}
 	
 	hide() {
-		if(!this.element) return;
-		this.element.style.display = 'none';
+		this.dialog.hide();
 
-		if(this.layer)
-			this.layer.setSelected(this.annotation, false);
+		//if(this.layer)
+		//		this.layer.setSelected(this.annotation, false);
 		
 		this.annotation = null;
 		this.layer = null;
 	}
 
 	show(layer, anno) {
-		(async () => {
-		if(!this.element) {
-			let html = '<div class="openlime-info"></div>';
-			let template = document.createElement('template');
-			template.innerHTML = html.trim();
-			this.element = template.content.firstChild;
-			
-			this.container.appendChild(this.element);
-		}
-
-		this.hide();
-		
-		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(anno) : this.template(anno);
-
-		let close = Skin.appendIcon(this.element, '.openlime-close');
-		close.classList.add('openlime-close');
-		close.addEventListener('click', () =>this.hide());
-
-
 		this.annotation = anno;
 		this.layer = layer;
-
-		this.element.style.display = '';
-		//todo position info appropriately.
-		})();
+		this.dialog.setContent(layer.infoTemplate ? layer.infoTemplate(anno) : this.template(anno));
+		this.dialog.show();
 	}
+
 	template(anno) {
+		console.log(anno);
 		return `
-		<p>${anno.title}</p>
+		<h2>${anno.label}</h2>
 		<p>${anno.description}</p>
 		`;
 	}
-}
+}*/
 
 export { UIBasic }

@@ -521,8 +521,6 @@ class Layer {
 				return;
 			}
 			let blob = await response.blob();
-			
-			console.log(this.shader.samplers.length);
 			let i = 0;
 			for(let sampler of this.shader.samplers) {
 				let raster = this.rasters[sampler.id];

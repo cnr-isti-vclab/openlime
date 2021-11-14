@@ -52,7 +52,7 @@ class ControllerPanZoom extends Controller {
 
 	pinchStart(e1, e2) {
 		this.zooming = true;
-		this.initialDistance = this.distance(e1, e2);
+		this.initialDistance = Math.max(30, this.distance(e1, e2));
 		e1.preventDefault();
 		//e2.preventDefault(); //TODO this is optional?
 	}

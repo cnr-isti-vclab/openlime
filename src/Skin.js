@@ -1,25 +1,34 @@
 
 let url = 'skin.svg';
 let svg = null;
+let fetch_promise = null;
+let text_promise = null;
 let pad = 5;
 
 class Skin {
 
 	static setUrl(u) { url = u; }
 	static async loadSvg() {
-		var response = await fetch(url);
+		if(!fetch_promise) 
+			fetch_promise = fetch(url);
+
+		let response = await fetch_promise;
 		if (!response.ok) {
 			throw Error("Failed loading " + url + ": " + response.statusText);
 			return;
 		}
+		if(svg) return; //already readed.
 
-		let text = await response.text();
+		if(!text_promise)
+			text_promise = response.text();
+
+		let text = await text_promise;
 		let parser = new DOMParser();
 		svg = parser.parseFromString(text, "image/svg+xml").documentElement;
 	}
 	static async getElement(selector) { 
 		if(!svg)
-		await Skin.loadSvg();
+			await Skin.loadSvg();
 		return svg.querySelector(selector).cloneNode(true);
 	}
 

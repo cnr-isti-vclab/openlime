@@ -30,21 +30,22 @@ class SvgAnnotationLayer extends AnnotationLayer {
 	}
 
 	createSVGElement() {
+		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svgElement.classList.add('openlime-svgoverlay');
-		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 		this.svgElement.append(this.svgGroup);
-
-		this.root = this.overlayElement;
-		if (this.shadow)
-			this.root = this.overlayElement.attachShadow({ mode: "open" });
+		
+		this.div = document.createElement('div');
+		this.div.classList.add('openlime-overlay');
+		this.overlayElement.append(this.div);
+		this.root = this.div.attachShadow({ mode: "open" });
+		this.root.appendChild(this.svgElement);
 
 		if (this.style) {
 			const style = document.createElement('style');
 			style.textContent = this.style;
-			this.root.append(style);
+			this.svgElement.append(style);
 		}
-		this.root.appendChild(this.svgElement);
 	}
 /*  unused for the moment!!! 
 	async loadSVG(url) {
@@ -122,15 +123,13 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		//find which annotations needs to be added to the ccanvas, some 
 		//indexing whould be used, for the moment we just iterate all of them.
 		let lod = null;
-		if(this.lod) {
-			for(lod = 0; lod < this.lod.length; lod++) {
-				let l = this.lod[lod];
-				if(transform.z >  l.min && transform.z <= l.max)
-					break;
-			}
-		}
+		if(this.lod)
+			this.lod.find((l, index) => { 
+				if(transform.z >  l.min && transform.z <= l.max) { 
+					lod = index; return true; } });
+
 		let lodChanged = false;
-		if(lod !== null && this.currentLod != lod) {
+		if(this.currentLod !== lod) {
 			this.currentLod = lod;
 			lodChanged = true;
 		}
@@ -152,7 +151,6 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		}
 
 		for (let anno of this.annotations) {
-			if(anno.publish != '1') continue;
 			
 			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
 			if (!anno.ready && typeof anno.selector.value == 'string') {
@@ -201,12 +199,13 @@ class SvgAnnotationLayer extends AnnotationLayer {
 			//store somewhere knowledge of which items in the scene and which still not.
 			let elements = anno.selector.elements;
 			let type = 'openlime-annotation';
-			let clickHandler = null;
+			if(this.lod && this.currentLod === null)
+				continue;
+
 			if(this.currentLod !== null) { 
 				let lodtype = this.lod[this.currentLod].type;
 
 				elements = anno.lod[this.currentLod];
-				clickHandler = this.lod[this.currentLod].onclick;
 				if(lodtype == 'pin')
 					type = 'openlime-pin';
 			}
@@ -225,7 +224,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 				c.onpointerdown =  (e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					if(clickHandler && clickHandler(anno))
+					if(this.onClick && this.onClick(anno))
 						return;
 						
 					if(this.selected.has(anno.id))

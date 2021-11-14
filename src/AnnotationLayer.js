@@ -46,10 +46,7 @@ class AnnotationLayer extends Layer {
 		}
 		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
 		this.annotations = this.annotations.map(a => new Annotation(a));
-		for(let a of this.annotations)
-			if(a.publish != 1)
-				a.visible = false;
-		this.annotations.sort((a, b) => a.label.localeCompare(b.label));
+		//this.annotations.sort((a, b) => a.label.localeCompare(b.label));
 		if(this.annotationsListEntry)
 			this.createAnnotationsList();
 		

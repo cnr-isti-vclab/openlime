@@ -28,7 +28,7 @@ class UIDialog {
         let dialog = document.createElement('div');
         dialog.classList.add('openlime-dialog');
         if(this.class)
-            dialog.classList.add(this.classes);
+            dialog.classList.add(this.class);
 
         let close = Skin.appendIcon(dialog, '.openlime-close');
         close.classList.add('openlime-close');
@@ -66,6 +66,10 @@ class UIDialog {
         this.element.classList.add('hidden');
         this.emit('closed');
     }
+	fade(on) {
+		this.element.classList.toggle('fading');
+	}
+
     toggle(on) {
         this.element.classList.toggle('hidden', on);
     }

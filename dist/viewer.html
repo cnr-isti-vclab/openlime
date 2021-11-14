@@ -100,12 +100,10 @@
 		<p></p>
 		<svg class="next" xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d="M4 4 L16 12 L4 20"></path></svg>
 	</div>
-	<div id="feedback" class="openlime-help-window">
-		<div class="openlime-help-content">
-			<h2> A fancy title</h2>
-			<p>Some text about the feedback</p>
-			<p>And a <a href="">link to the google form</a></p>
-		</div>
+	<div id="feedback">
+		<h2> A fancy title</h2>
+		<p>Some text about the feedback</p>
+		<p>And a <a href="">link to the google form</a></p>
 	</div>
 </div>
 
@@ -150,28 +148,15 @@ let annotations = new OpenLIME.SvgAnnotationLayer({
 	layout: layer0.layout,
 	annotations: 'fetch.php',
 	lod: [ 
-
-		{ min: 0, max: 3.5,   type: 'pin', build: buildPin, onclick: zoomToAnnotation },
 		{ min: 3.5, max: 100, type: 'vector' }
 	],
 	style:` 
 		.openlime-annotation { pointer-events:stroke; opacity: 0.7; }
 		.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
 			
-		:focus { fill:yellow; }
-		path { fill:none; stroke-width:2; stroke:#000; vector-effect:non-scaling-stroke; pointer-events:all; }
-		path:hover { cursor:pointer; stroke:#f00; }
-
-		rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
-		circle { fill:rgba(255, 0, 0, 0.2); stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; pointer-events:all;  }
-		circle.point { stroke-width:10px }
-		.selected { stroke:#ff0000 !important; stroke-width:3; }
-
-		circle.openlime-pin { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
-		text.openlime-pin { cursor:pointer; user-select: none; font-family:arial; font-size:1vh; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
-
-		svg.openlime-pin path { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
-		svg.openlime-pin text { cursor:pointer; user-select: none; font-family:arial; font-size:8px; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
+		path { fill:none; stroke-width:2; stroke:#666; vector-effect:non-scaling-stroke; pointer-events:all; }
+		path:hover { cursor:pointer; stroke:#000; }
+		:focus, .selected { stroke:#000 !important; stroke-width:3; }
 		`,
 	infoTemplate: (anno) => { return `
 		<h3>${anno.label}</h3>
@@ -190,6 +175,23 @@ let annotations = new OpenLIME.SvgAnnotationLayer({
 }); 
 
 lime.canvas.addLayer('anno', annotations); //here the overlayelement created and attached to layer
+
+let pois = new OpenLIME.SvgAnnotationLayer({
+	label: 'Points of interest',
+	layout: layer0.layout,
+	annotations: 'poi.json',
+	lod: [ 
+		{ min: 0, max: 3.6, type: 'vector' }
+	],
+	style: `
+		path { cursor:pointer; fill: rgba(32, 32, 32, 0.8); stroke: #aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
+		text { cursor:pointer; user-select: none; font-family:arial; font-size:8px; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
+		`,
+
+	onClick: (anno) => { zoomToAnnotation(anno); }
+});
+
+lime.canvas.addLayer('pins', pois); //here the overlayelement created and attached to layer
 
 lime.camera.maxFixedZoom = 4;
 
@@ -219,13 +221,14 @@ La combinaison <i>Alt</i> + clic et déplacement fait bouger l'image
 Le bouton annuler permet d'annuler, il est possible aussi de faire <i>Ctrl</i>+z</p>
 `;
 let feedback = { title: 'Feedback', display: true, task: (event) => { 
-	lime.containerElement.appendChild(feedback_window);
-	feedback_window.classList.add('shown');
+	feedbackDialog.toggle();
 } };
 
 let markers = { title: 'Show annotations', display: true, task: (event) => { 
 	let button = markers.element.querySelector('.openlime-button');
-	annotations.setVisible(!annotations.visible);
+	let visible = !annotations.visible;
+	annotations.setVisible(visible);
+	pois.setVisible(visible);
 	button.classList.toggle('active', !annotations.visible);
 } };
 
@@ -233,33 +236,27 @@ ui.actions = { feedback, markers, help, home, fullscreen, light };
 
 
 
-let feedback_window = document.getElementById('feedback');
-
-(async () => {
-	let content = feedback_window.querySelector('.openlime-help-content');
-	let close = await OpenLIME.Skin.appendIcon(content, '.openlime-close');
-	close.classList.add('openlime-close');
-	close.addEventListener('click', () =>feedback_window.classList.remove('shown'));
-
-	feedback_window.addEventListener('click', (e) => { 
-		if(e.target == feedback_window) 
-			feedback_window.classList.remove('shown');
-		e.preventDefault();
-	});
-})();
+let openlime = document.getElementById('openlime');
+let feedbackDialog = new OpenLIME.UIDialog(openlime, { modal: true} );
+feedbackDialog.setContent(document.getElementById('feedback'));
+feedbackDialog.hide();
 
 
 function zoomToAnnotation(anno) {
-	let cx = anno.box.x + anno.box.width/2;
-	let cy = anno.box.y + anno.box.height/2;
-	const topLeft = annotations.boundingBox().corner(0);
-	cx += topLeft[0]; 
-	cy += topLeft[1];
-	let z = 1/10;
-	lime.camera.setPosition(400, -cx*z, -cy*z, 1/10, 0);
-	layer0.setLight([0.5, 0.5], 400);
-	navigator.querySelector('p').textContent = anno.label;
-	ui.info.show(annotations, anno);
+	let cam = anno.camera;
+	lime.camera.setPosition(400, cam.x, cam.y, cam.z, 0);
+
+	let light = anno.light;
+	layer0.setLight([light.x, light.y], 400);
+	navigator.querySelector('p').textContent = `${currentAnno + 1} ${anno.label}`;
+
+	annotations.clearSelected();
+	for(let id of anno.target) {
+		let targetAnno = annotations.getAnnotationById(id)
+		annotations.setSelected(targetAnno);
+	}
+
+	ui.info.show(pois, anno);
 	return true;
 }
 
@@ -301,8 +298,8 @@ lime.canvas.addEvent('ready',
 
 		}, 700);	});
 
-annotations.addEvent('loaded', () => { 
-	pins = Object.values(annotations.annotations).filter(a => a.publish == "1"); 
+pois.addEvent('loaded', () => { 
+	pins = Object.values(pois.annotations);
 	navigator.querySelector('.prev').addEventListener('click', prevAnnotation);
 	navigator.querySelector('.next').addEventListener('click', nextAnnotation);
 });

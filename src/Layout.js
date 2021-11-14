@@ -50,7 +50,6 @@ class Layout {
 			this.initBoxes();
 			this.status = 'ready';
 			this.emit('ready');
-			console.log("LOADED ", this);
 		})().catch(e => { console.log(e); this.status = e; });
 	}
 

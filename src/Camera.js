@@ -76,6 +76,16 @@ class Camera {
 		let r = Transform.rotate(x, y, -transform.a);
 		return {x:r.x, y:r.y};
 	}
+	sceneToCanvas(x, y, transform) {
+		let r = Transform.rotate(x, y, transform.a);
+		x = r.x * transform.z;
+		y = t.y * transform.z;
+		x += transform.x;
+		y += transform.y;
+		x += this.viewport/2;
+		y += this.viewport/2;
+		return { x: x, y: y };
+	}
 
 	setPosition(dt, x, y, z, a) {
 		// Discard events due to cursor outside window
