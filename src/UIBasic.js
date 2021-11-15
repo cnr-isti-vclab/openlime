@@ -468,7 +468,7 @@ class UIBasic {
 
 	toggleHelp(help, on) {
 		if(!help.dialog) {
-			help.dialog = new UIDialog(this.lime.containerElement, { modal: true });
+			help.dialog = new UIDialog(this.lime.containerElement, { modal: true, class: 'openlime-help-dialog' });
 			help.dialog.setContent(help.html);
 		} else
 			help.dialog.toggle(on);		

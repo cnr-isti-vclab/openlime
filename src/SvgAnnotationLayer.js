@@ -112,7 +112,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 		if(!this.svgElement)
 			this.createSVGElement();
 
-		if(!this.annotations || this.status != 'ready' || !this.visible) 
+		if(!this.annotations || typeof(this.annotations) == 'string'|| this.status != 'ready' || !this.visible) 
 			return;
 
 		let lod = null;
@@ -137,7 +137,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 				anno.ready = true;
 				let box = element.viewBox.baseVal;
 				anno.box = box;
-				
+				anno.needsUpdate = true;
 				if(this.lod) {
 
 					anno.lod = [];
