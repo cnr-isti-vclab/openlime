@@ -30,10 +30,10 @@
 	position:absolute;
 	top:10px;
 	left:10px;
-	width:20%;
+	width:25%;
 	height:fit-content;
 	background-color:rgb(20, 20, 20, 0.9);
-	padding:0px 20px;
+	padding:0px 10px;
 	color:white;
 	border-radius:3px;
 	border:1px solid rgb(60, 60, 60);
@@ -101,17 +101,17 @@
 	background: rgb(0, 0, 0, 0.5);
 	padding:20px 40px;
 	border-radius:5px;	
-    font-family: "Open Sans",sans-serif;
 	cursor:pointer;
 }
 
 .openlime-dialog {
 	position:absolute;
 	top: 10%;
-	left: 20%;
-	right: 20%;
-	bottom: 10%;
+	left: 15%;
+	right: 15%;
+	bottom: 7%;
 	color:#fff;
+	font-family: "Open Sans",sans-serif;
 	background: rgb(32, 32, 32, 0.9);
 	opacity:0.95;
 	padding:20px 40px;
@@ -431,6 +431,10 @@ g.openlime-expand {
 .openlime-lightdir line {
 	stroke: #ff0;
 	opacity: 0.5;
-	stroke-width:1px;
+	stroke-width:2px;
 	vector-effect: non-scaling-stroke;
 }
+
+@media (orientation: portrait) {
+
+	}
