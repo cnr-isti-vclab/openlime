@@ -7,6 +7,7 @@ import { ShaderCombiner } from './ShaderCombiner.js'
 import { RTILayer } from './RTILayer.js'
 import { BRDFLayer } from './BRDFLayer.js'
 import { Controller2D } from './Controller2D.js'
+import { ControllerLensTilt } from './ControllerLensTilt.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import {ControllerLens} from './ControllerLens.js'
 import { UIBasic } from './UIBasic.js'
@@ -316,41 +317,65 @@ function combinerTest() {
 /* COMBINER TEST */
 function lensTest() {
 
+	// let layer0 = new Layer({
+	// 	type: 'brdf',
+	// 	channels: {
+	// 		'kd': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_kd.tzi',
+	// 		'ks': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_ks.tzi',
+	// 		'normals': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_n.tzi',
+	// 		'gloss': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_gm.tzi'
+	// 	},
+	// 	colorspaces: {
+	// 		'kd': 'linear',
+	// 		'ks': 'linear'
+	// 	},
+	// 	layout: 'tarzoom',
+		
+	// 	transform: { x: 0, y: 0, z: 1, a: 0 },
+	// });
+
 	let layer0 = new Layer({
 		type: 'image',
 		url: 'assets/svbrdf/vis/kdMap.jpg',
 		layout: 'image',
 		zindex: 0,
-		transform: { x: 0, y: 0, z: 0.5, a: 0 },
+		transform: { x: 0, y: 0, z: 1, a: 0 },
 		visible: false
 	});
 
 	let lensLayer = new LensLayer({
 		layers: [layer0],
 		camera: lime.camera,
-		x:0, 
-		y:0,
-		radius:150,
+		radius:50,
 		border:10
 	});
 
-	let controllerLens = new ControllerLens({
-		camera: lime.camera,
-		lensLayer: lensLayer,
-		hover: true,
-		priority: 0
-	});
+	// let controllerLens = new ControllerLens({
+	// 	camera: lime.camera,
+	// 	lensLayer: lensLayer,
+	// 	hover: true,
+	// 	priority: 0
+	// });
+	lime.camera.bounded = false;
+	let controllerLens = new ControllerLensTilt({
+		camera: lime.camera, 
+		lensLayer: lensLayer, 
+		limeCanvas:lime.canvas, 
+		hover: true, 
+		priority: 0});
+	setInterval(function updateController() {controllerLens.updatePosition();}, controllerLens.updateTimeInterval);
 	
 	lime.pointerManager.onEvent(controllerLens); 
 	lensLayer.controllers.push(controllerLens);
 
-	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
-	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
+	let cameraCtrl = new ControllerPanZoom(lime.camera, { priority: -1000 });
+	lime.camera.setPosition(1000,0,0,1,0);
+	lime.pointerManager.onEvent(cameraCtrl); //register wheel, doubleclick, pan and pinch
 	lime.camera.maxFixedZoom = 4;
 
 	lime.canvas.addLayer('kdmap', layer0);
 	lime.canvas.addLayer('lens', lensLayer);
-	let ui = new UIBasic(lime);
+	//let ui = new UIBasic(lime);
 
 }
 

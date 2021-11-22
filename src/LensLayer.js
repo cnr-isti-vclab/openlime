@@ -21,7 +21,7 @@ class LensLayer extends CombinerLayer {
 		let now = performance.now();
         this.controls['center'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
         this.controls['radius'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
-        this.setLens(0,0,150,10);
+        this.setLens(0,0,this.radius,this.border);
 
     }
 
@@ -31,8 +31,7 @@ class LensLayer extends CombinerLayer {
         this.setRadius(r);
     }
     
-    setRadius(r) {
-        const delayms = 100;
+    setRadius(r, delayms = 100) {
         this.setControl('radius', [r, 0], delayms);
     }
 
@@ -40,8 +39,7 @@ class LensLayer extends CombinerLayer {
         return this.controls['radius'].current.value[0];
     }
 
-    setCenter(x, y) {
-        const delayms = 100;
+    setCenter(x, y, delayms = 100) {
         this.setControl('center', [x, y], delayms);
     }
 
