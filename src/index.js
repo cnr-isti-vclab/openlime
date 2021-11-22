@@ -317,29 +317,31 @@ function combinerTest() {
 /* COMBINER TEST */
 function lensTest() {
 
-	let layer0 = new Layer({
-		type: 'brdf',
-		channels: {
-			'kd': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_kd.tzi',
-			'ks': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_ks.tzi',
-			'normals': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_n.tzi',
-			'gloss': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_gm.tzi'
-		},
-		colorspaces: {
-			'kd': 'linear',
-			'ks': 'linear'
-		},
-		layout: 'tarzoom',
-	});
-
 	// let layer0 = new Layer({
-	// 	type: 'image',
-	// 	url: 'assets/svbrdf/vis/kdMap.jpg',
-	// 	layout: 'image',
-	// 	zindex: 0,
+	// 	type: 'brdf',
+	// 	channels: {
+	// 		'kd': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_kd.tzi',
+	// 		'ks': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_ks.tzi',
+	// 		'normals': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_n.tzi',
+	// 		'gloss': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_gm.tzi'
+	// 	},
+	// 	colorspaces: {
+	// 		'kd': 'linear',
+	// 		'ks': 'linear'
+	// 	},
+	// 	layout: 'tarzoom',
+		
 	// 	transform: { x: 0, y: 0, z: 1, a: 0 },
-	// 	visible: false
 	// });
+
+	let layer0 = new Layer({
+		type: 'image',
+		url: 'assets/svbrdf/vis/kdMap.jpg',
+		layout: 'image',
+		zindex: 0,
+		transform: { x: 0, y: 0, z: 1, a: 0 },
+		visible: false
+	});
 
 	let lensLayer = new LensLayer({
 		layers: [layer0],
