@@ -350,12 +350,6 @@ function lensTest() {
 		border:10
 	});
 
-	// let controllerLens = new ControllerLens({
-	// 	camera: lime.camera,
-	// 	lensLayer: lensLayer,
-	// 	hover: true,
-	// 	priority: 0
-	// });
 	lime.camera.bounded = false;
 	let controllerLens = new ControllerLensTilt({
 		camera: lime.camera, 
@@ -363,7 +357,6 @@ function lensTest() {
 		limeCanvas:lime.canvas, 
 		hover: true, 
 		priority: 0});
-	setInterval(function updateController() {controllerLens.updatePosition();}, controllerLens.updateTimeInterval);
 	
 	lime.pointerManager.onEvent(controllerLens); 
 	lensLayer.controllers.push(controllerLens);

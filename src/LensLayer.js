@@ -22,6 +22,7 @@ class LensLayer extends CombinerLayer {
         this.controls['center'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
         this.controls['radius'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
         this.setLens(0,0,this.radius,this.border);
+        this.signals.draw = [];
 
     }
 
@@ -61,8 +62,9 @@ class LensLayer extends CombinerLayer {
 
         if(!this.shader)
             throw "Shader not specified!";
-            
-         let gl = this.gl;
+
+        this.emit('draw');
+        let gl = this.gl;
 
         // Draw on a restricted viewport around the lens
         let lensViewport = this.getLensViewport(transform, viewport);
