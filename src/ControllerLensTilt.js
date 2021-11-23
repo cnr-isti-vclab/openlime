@@ -21,21 +21,24 @@ class ControllerLensTilt extends Controller {
 
         this.maxDatasetSize = 1000; // Update when camera.boundingBox is set
         this.minDatasetSize = 1000;
-        this.springK = 500; 
+        this.springK = 1000; 
+        this.mass = 1;
+        this.damping = this.criticalDamping(this.mass, this.springK);
 
         let callback = () => {
             const discardHidden = true;
             const bbox = this.camera.boundingBox;
             this.maxDatasetSize = Math.max(bbox.width(), bbox.height());
             this.minDatasetSize = Math.min(bbox.width(), bbox.height());
-            this.springK = 500;//this.minDatasetSize/4;
             console.log("Box w: " + this.minDatasetSize + ", h " + this.maxDatasetSize);
-            console.log(options.camera);
 		};
         this.limeCanvas.addEvent('updateSize', callback);
+
+        let updateCallback = () => {
+            this.updatePosition();
+        }
+        this.lensLayer.addEvent('draw', updateCallback);
 	
-        // Spring stuff
-        this.mass = 1;
         this.updateTimeInterval = 10;
         this.zoomDelay = 10;
 
@@ -62,7 +65,7 @@ class ControllerLensTilt extends Controller {
         this.clickInsideLens = false;
 
         const canvas = this.limeCanvas.gl.canvas;
-        this.initialRadius = Math.max(canvas.clientWidth, canvas.clientHeight) / 8;
+        this.initialRadius = Math.max(canvas.clientWidth, canvas.clientHeight) / 16;
  
         this.lensLayer.setRadius(this.initialRadius, 0);
         this.lensRadius = this.initialRadius;
@@ -97,6 +100,7 @@ class ControllerLensTilt extends Controller {
 
 		let now = performance.now();
         this.startTime = now;
+        this.lastTick = now;
 
 		e.preventDefault();
 	}
@@ -112,6 +116,7 @@ class ControllerLensTilt extends Controller {
 	panEnd(e) {
 		this.panning = false;
         this.releaseTime = performance.now();
+        console.log("RELEASE");
 	}
 
 	mouseWheel(e) {
@@ -143,79 +148,95 @@ class ControllerLensTilt extends Controller {
     */
     updatePosition() {
         const now = performance.now();
-        const dt = (now - this.lastTick) * 0.001;
+        const dtFull = (now - this.lastTick) * 0.001;
+        
         this.lastTick = now;
 
+        // Skip spurios calls: it happens to be called  each ms:20,1,20,1
+        const dtMin = 0.005;
+        if (dtFull < dtMin) return;
+
         if (!this.clickInsideLens || this.zooming) return;
-        
         this.updateCameraPosition();
 
-        const m = this.camera.getCurrentTransform(now);
-
-        // Spring between clicked mouse pos and lens position
+        const N = Math.floor(dtFull / dtMin);
+        let counter = 0;
+        const dt = dtFull / N;
         const K = this.getSpringConstants();
-
-        // Mouse-Lens Spring
-        let lensScreenP =  this.getScreenPosition(this.lensPosition);
-        const lensMouseForce =  [(-K.fix*(lensScreenP[0] - this.cursorPos[0] - this.deltaCursorLens[0])), 
-                                 (-K.fix*(lensScreenP[1] - this.cursorPos[1] - this.deltaCursorLens[1]))];
         const maxK = Math.max(K.fix, Math.max(K.camera, K.focusTarget));
-        const damping = 1.5 * this.criticalDamping(maxK, this.mass);
-        //console.log("MaxK " + maxK.toFixed(0) + " damping " + damping.toFixed(0));
-        const lensDampingForce = [damping*this.lensVelocity[0], damping*this.lensVelocity[1]];
+        const damping =  this.criticalDamping(maxK, this.mass);
+
+        while (counter < N) {
+
+            // Spring between clicked mouse pos and lens position
+          
+            // Mouse-Lens Spring
+            let lensScreenP =  this.getScreenPosition(this.lensPosition);
+            const lensMouseForce =  [(-K.fix*(lensScreenP[0] - this.cursorPos[0] - this.deltaCursorLens[0])), 
+                                    (-K.fix*(lensScreenP[1] - this.cursorPos[1] - this.deltaCursorLens[1]))];
+            const maxK = Math.max(K.fix, Math.max(K.camera, K.focusTarget));
+            const lensDampingForce = [damping*this.lensVelocity[0], damping*this.lensVelocity[1]];
+            
+            // Lens-Camera Spring
+            const cameraLensForce = [-K.camera*(this.cameraPosition[0] - this.lensPosition[0]), 
+                                    -K.camera*(this.cameraPosition[1] - this.lensPosition[1])];
+            const cameraDampingForce = [damping*this.cameraVelocity[0], damping*this.cameraVelocity[1]];
+            
+            // Tilt: lens-target Spring
+            const targetLensForce = [-K.focusTarget*(this.targetPosition[0] - this.lensPosition[0]), 
+                                    -K.focusTarget*(this.targetPosition[1] - this.lensPosition[1])];
+            const targetCameraForce = [-K.camera*(this.targetPosition[0] - this.cameraPosition[0]), 
+                                    -K.camera*(this.targetPosition[1] - this.cameraPosition[1])];
+            const targetDampingForce = [damping*this.targetVelocity[0], damping*this.targetVelocity[1]];
+            const targetForce = [targetLensForce[0]+targetCameraForce[0]-targetDampingForce[0], 
+                                targetLensForce[1]+targetCameraForce[1]-targetDampingForce[1]];
+
+            // Sum Forces
+            const lensForce = [lensMouseForce[0]-lensDampingForce[0]-cameraLensForce[0]+cameraDampingForce[0], 
+                            lensMouseForce[1]-lensDampingForce[1]-cameraLensForce[1]+cameraDampingForce[1]];
+            const cameraForce = [cameraLensForce[0]-cameraDampingForce[0], 
+                                cameraLensForce[1]-cameraDampingForce[1]];
+
+            
+            // Compute accelerations
+            const lensAcceleration = [lensForce[0]/this.mass, lensForce[1]/this.mass];
+            const cameraAcceleration = [cameraForce[0]/this.mass, cameraForce[1]/this.mass];
+            const targetAcceleration = [targetForce[0]/this.mass, targetForce[1]/this.mass];
+
+            // Lens velocity and positions
+            this.lensVelocity[0] += lensAcceleration[0]*dt;
+            this.lensVelocity[1] += lensAcceleration[1]*dt;
+            this.lensPosition[0] += this.lensVelocity[0]*dt;
+            this.lensPosition[1] += this.lensVelocity[1]*dt;
+
+            // console.log("counter " + counter + ", Dt " + dt.toFixed(3) + ", LenSForce " + lensForce[0].toFixed(0) + " dx " + (this.lensVelocity[0]*dt).toFixed(0));
+            if (Math.abs(this.lensVelocity[0]*dt) > 200) {
+                console.log("Mamma! Mia!");
+            }
+
+            // Camera velocity and positions
+            this.cameraVelocity[0] += cameraAcceleration[0] * dt;
+            this.cameraVelocity[1] += cameraAcceleration[1] * dt;
+            this.cameraPosition[0] += this.cameraVelocity[0] * dt;
+            this.cameraPosition[1] += this.cameraVelocity[1] * dt;
+            
+            // // target velocity and positions
+            this.targetVelocity[0] += targetAcceleration[0]*dt;
+            this.targetVelocity[1] += targetAcceleration[1]*dt;
+            this.targetPosition[0] += this.targetVelocity[0]*dt;
+            this.targetPosition[1] += this.targetVelocity[1]*dt;
+
+            this.clipOnDataset(this.lensPosition, this.lensVelocity);
+            this.clipOnDataset(this.cameraPosition, this.cameraVelocity);
+            this.clipOnDataset(this.targetPosition, this.targetVelocity);
+            ++counter;
+        }
         
-        // Lens-Camera Spring
-        const cameraLensForce = [-K.camera*(this.cameraPosition[0] - this.lensPosition[0]), 
-                                 -K.camera*(this.cameraPosition[1] - this.lensPosition[1])];
-        const cameraDampingForce = [damping*this.cameraVelocity[0], damping*this.cameraVelocity[1]];
-        
-        // Tilt: lens-target Spring
-        const targetLensForce = [-K.focusTarget*(this.targetPosition[0] - this.lensPosition[0]), 
-                                 -K.focusTarget*(this.targetPosition[1] - this.lensPosition[1])];
-        const targetCameraForce = [-K.camera*(this.targetPosition[0] - this.cameraPosition[0]), 
-                                   -K.camera*(this.targetPosition[1] - this.cameraPosition[1])];
-        const targetDampingForce = [damping*this.targetVelocity[0], damping*this.targetVelocity[1]];
-        const targetForce = [targetLensForce[0]+targetCameraForce[0]-targetDampingForce[0], 
-                             targetLensForce[1]+targetCameraForce[1]-targetDampingForce[1]];
-
-        // Sum Forces
-        const lensForce = [lensMouseForce[0]-lensDampingForce[0]-cameraLensForce[0]+cameraDampingForce[0], 
-                           lensMouseForce[1]-lensDampingForce[1]-cameraLensForce[1]+cameraDampingForce[1]];
-        const cameraForce = [cameraLensForce[0]-cameraDampingForce[0], 
-                             cameraLensForce[1]-cameraDampingForce[1]];
-
-        // Compute accelerations
-        const lensAcceleration = [lensForce[0]/this.mass, lensForce[1]/this.mass];
-        const cameraAcceleration = [cameraForce[0]/this.mass, cameraForce[1]/this.mass];
-        const targetAcceleration = [targetForce[0]/this.mass, targetForce[1]/this.mass];
-
-        // Lens velocity and positions
-        this.lensVelocity[0] += lensAcceleration[0]*dt;
-        this.lensVelocity[1] += lensAcceleration[1]*dt;
-        this.lensPosition[0] += this.lensVelocity[0]*dt;
-        this.lensPosition[1] += this.lensVelocity[1]*dt;
-        
-        // Camera velocity and positions
-        this.cameraVelocity[0] += cameraAcceleration[0] * dt;
-        this.cameraVelocity[1] += cameraAcceleration[1] * dt;
-        this.cameraPosition[0] += this.cameraVelocity[0] * dt;
-        this.cameraPosition[1] += this.cameraVelocity[1] * dt;
-        
-        // // target velocity and positions
-        this.targetVelocity[0] += targetAcceleration[0]*dt;
-        this.targetVelocity[1] += targetAcceleration[1]*dt;
-        this.targetPosition[0] += this.targetVelocity[0]*dt;
-        this.targetPosition[1] += this.targetVelocity[1]*dt;
-
-        this.clipOnDataset(this.lensPosition, this.lensVelocity);
-        this.clipOnDataset(this.cameraPosition, this.cameraVelocity);
-        this.clipOnDataset(this.targetPosition, this.targetVelocity);
-
-        const lsp = this.getScreenPosition(this.lensPosition)[0];
-
+        const m = this.camera.getCurrentTransform(now);
         this.camera.setPosition(this.updateTimeInterval, -this.cameraPosition[0]*m.z, this.cameraPosition[1]*m.z, m.z, m.a);
         this.lensLayer.setCenter(this.lensPosition[0], this.lensPosition[1], 0);
     }
+
 
     updateCameraPosition() {
         const m = this.camera.getCurrentTransform(performance.now());
@@ -388,6 +409,92 @@ class ControllerLensTilt extends Controller {
             pWorld[3] = 1;
         }
         return pWorld;
+    }
+
+    updatePositionBackup() {
+        const now = performance.now();
+        const dt = (now - this.lastTick) * 0.001;
+        
+        this.lastTick = now;
+
+        // Skip spurios calls: it happens to be called  each ms:20,1,20,1
+        if (dt < 0.005) return;
+        
+         
+        if (!this.clickInsideLens || this.zooming) return;
+        this.updateCameraPosition();
+
+        const m = this.camera.getCurrentTransform(now);
+
+        // Spring between clicked mouse pos and lens position
+        const K = this.getSpringConstants();
+
+        // Mouse-Lens Spring
+        let lensScreenP =  this.getScreenPosition(this.lensPosition);
+        const lensMouseForce =  [(-K.fix*(lensScreenP[0] - this.cursorPos[0] - this.deltaCursorLens[0])), 
+                                 (-K.fix*(lensScreenP[1] - this.cursorPos[1] - this.deltaCursorLens[1]))];
+        const maxK = Math.max(K.fix, Math.max(K.camera, K.focusTarget));
+        const damping = this.damping;//0.5 * this.criticalDamping(maxK, this.mass);
+        console.log("MaxK " + maxK.toFixed(0) + " damping " + damping.toFixed(0));
+        const lensDampingForce = [damping*this.lensVelocity[0], damping*this.lensVelocity[1]];
+        
+        // Lens-Camera Spring
+        const cameraLensForce = [-K.camera*(this.cameraPosition[0] - this.lensPosition[0]), 
+                                 -K.camera*(this.cameraPosition[1] - this.lensPosition[1])];
+        const cameraDampingForce = [damping*this.cameraVelocity[0], damping*this.cameraVelocity[1]];
+        
+        // Tilt: lens-target Spring
+        const targetLensForce = [-K.focusTarget*(this.targetPosition[0] - this.lensPosition[0]), 
+                                 -K.focusTarget*(this.targetPosition[1] - this.lensPosition[1])];
+        const targetCameraForce = [-K.camera*(this.targetPosition[0] - this.cameraPosition[0]), 
+                                   -K.camera*(this.targetPosition[1] - this.cameraPosition[1])];
+        const targetDampingForce = [damping*this.targetVelocity[0], damping*this.targetVelocity[1]];
+        const targetForce = [targetLensForce[0]+targetCameraForce[0]-targetDampingForce[0], 
+                             targetLensForce[1]+targetCameraForce[1]-targetDampingForce[1]];
+
+        // Sum Forces
+        const lensForce = [lensMouseForce[0]-lensDampingForce[0]-cameraLensForce[0]+cameraDampingForce[0], 
+                           lensMouseForce[1]-lensDampingForce[1]-cameraLensForce[1]+cameraDampingForce[1]];
+        const cameraForce = [cameraLensForce[0]-cameraDampingForce[0], 
+                             cameraLensForce[1]-cameraDampingForce[1]];
+
+        
+        // Compute accelerations
+        const lensAcceleration = [lensForce[0]/this.mass, lensForce[1]/this.mass];
+        const cameraAcceleration = [cameraForce[0]/this.mass, cameraForce[1]/this.mass];
+        const targetAcceleration = [targetForce[0]/this.mass, targetForce[1]/this.mass];
+
+        // Lens velocity and positions
+        this.lensVelocity[0] += lensAcceleration[0]*dt;
+        this.lensVelocity[1] += lensAcceleration[1]*dt;
+        this.lensPosition[0] += this.lensVelocity[0]*dt;
+        this.lensPosition[1] += this.lensVelocity[1]*dt;
+
+        console.log("Dt " + dt.toFixed(3) + ", LenSForce " + lensForce[0].toFixed(0) + " dx " + (this.lensVelocity[0]*dt).toFixed(0));
+        if (Math.abs(this.lensVelocity[0]*dt) > 200) {
+            console.log("Mamma! Mia!");
+        }
+
+        // Camera velocity and positions
+        this.cameraVelocity[0] += cameraAcceleration[0] * dt;
+        this.cameraVelocity[1] += cameraAcceleration[1] * dt;
+        this.cameraPosition[0] += this.cameraVelocity[0] * dt;
+        this.cameraPosition[1] += this.cameraVelocity[1] * dt;
+        
+        // // target velocity and positions
+        this.targetVelocity[0] += targetAcceleration[0]*dt;
+        this.targetVelocity[1] += targetAcceleration[1]*dt;
+        this.targetPosition[0] += this.targetVelocity[0]*dt;
+        this.targetPosition[1] += this.targetVelocity[1]*dt;
+
+        this.clipOnDataset(this.lensPosition, this.lensVelocity);
+        this.clipOnDataset(this.cameraPosition, this.cameraVelocity);
+        this.clipOnDataset(this.targetPosition, this.targetVelocity);
+
+        const lsp = this.getScreenPosition(this.lensPosition)[0];
+
+        this.camera.setPosition(this.updateTimeInterval, -this.cameraPosition[0]*m.z, this.cameraPosition[1]*m.z, m.z, m.a);
+        this.lensLayer.setCenter(this.lensPosition[0], this.lensPosition[1], 0);
     }
 };
 
