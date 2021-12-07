@@ -80,7 +80,6 @@ class ControllerPanZoom extends Controller {
 	}
 
 	mouseWheel(e) {
-		console.log(e.offsetX);
 		let delta = e.deltaY > 0 ? 1 : -1;
 		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
 		const dz = Math.pow(this.zoomAmount, delta);		
