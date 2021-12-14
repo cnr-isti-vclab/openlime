@@ -21,9 +21,9 @@ import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
 let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 //combinerTest();
-//imageTest('iiif'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
+imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
-brdfTest();
+//brdfTest();
 //rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
