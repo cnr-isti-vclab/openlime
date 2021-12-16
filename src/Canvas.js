@@ -121,6 +121,13 @@ class Canvas {
 		this.prefetch();
 	}
 
+	removeLayer(id, layer) {
+		delete this.layers[id];
+		Canvas.flushLayer(layer);
+		delete Canvas.layers[layer];
+		this.prefetch();
+	}
+
 	updateSize() {
 		const discardHidden = true;
 		let sceneBBox = Layer.computeLayersBBox(this.layers, discardHidden);
