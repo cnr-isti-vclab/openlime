@@ -73,7 +73,7 @@ class _Cache {
 	findWorstTile() {
 		let worst = null;
 		for(let layer of this.layers) {
-			for(let tile of layer.tiles) {
+			for(let tile of layer.tiles.values()) {
 				//TODO might be some are present when switching shaders.
 				if(tile.missing != 0) continue;
 				if(!worst || 
@@ -98,12 +98,10 @@ class _Cache {
 		for(let i = 0; i < tile.tex.length; i++) {
 			if(tile.tex[i]) {
 				layer.gl.deleteTexture(tile.tex[i]);
-				tile.tex[i] = null;
-				tile.missing++;
 			}
 		}
 		this.size -= tile.size;
-		tile.size = 0;
+		layer.tiles.delete(tile.index);
 	}
 /* Flush all memory
  */

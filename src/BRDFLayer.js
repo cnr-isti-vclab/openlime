@@ -18,6 +18,9 @@ class BRDFLayer extends Layer {
 
 		if(!this.channels)
 			throw "channels option is required";
+
+		if(!this.channels.kd || !this.channels.normals)
+			throw "kd and normals channels are required";
 	
 		if(!this.colorspaces) {
 			console.log("LayerBRDF: missing colorspaces: force both to linear");
@@ -25,30 +28,59 @@ class BRDFLayer extends Layer {
 			this.colorspaces['ks'] = 'linear';
 		}
 
-		this.rasters.push(new Raster({ type: 'vec3',  attribute: 'kd',      colorspace: this.colorspaces['kd'] }));
-		this.rasters.push(new Raster({ type: 'vec3',  attribute: 'ks',      colorspace: this.colorspaces['ks'] }));
-		this.rasters.push(new Raster({ type: 'vec3',  attribute: 'normals', colorspace: 'linear' }));
-		this.rasters.push(new Raster({ type: 'float', attribute: 'gloss',   colorspace: 'linear' }));
+		let id = 0;
+		let urls = [];
+		let samplers = [];
+		for (let c in this.channels) {
+			let url = this.channels[c];
+			switch (c) {
+				case 'kd':
+					this.rasters.push(new Raster({ type: 'vec3', attribute: 'kd', colorspace: this.colorspaces['kd'] }));
+					samplers.push({ 'id': id, 'name': 'uTexKd' });
+					break;
+				case 'ks':
+					this.rasters.push(new Raster({ type: 'vec3',  attribute: 'ks',      colorspace: this.colorspaces['ks'] }));
+					samplers.push({ 'id': id, 'name': 'uTexKs' });
+					break;
+				case 'normals':
+					this.rasters.push(new Raster({ type: 'vec3',  attribute: 'normals', colorspace: 'linear' }));
+					samplers.push({ 'id': id, 'name': 'uTexNormals' });
+					break;
+				case 'gloss':
+					this.rasters.push(new Raster({ type: 'float', attribute: 'gloss',   colorspace: 'linear' }));
+					samplers.push({ 'id': id, 'name': 'uTexGloss' });
+					break;
 
-		let size = {width:this.width, height:this.height};
-
-		this.layout.setUrls(['kd', 'ks', 'normals', 'gloss'].map(c => this.channels[c]));
+				default:
+					break;
+			}
+			urls[id] = url;
+			id++;
+		}
+		this.layout.setUrls(urls);
 		
 		let now = performance.now();
 		this.controls['light'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };
 
-		let shader = new ShaderBRDF({'label': 'Rgb', 
-									 'samplers': [ { id:0, name: 'uTexKd'}, 
-												   { id:1, name: 'uTexKs'},
-												   { id:2, name: 'uTexNormals'},
-												   { id:3, name: 'uTexGloss'}],
-									 'colorspaces': this.colorspaces});
+		let shader = new ShaderBRDF({
+			'label': 'Rgb',
+			'samplers': samplers,
+			'colorspaces': this.colorspaces
+		});
 
 		this.shaders['brdf'] = shader;
 		this.setShader('brdf');
 	}
 
 	setLight(light, dt) {
+		let r2 =  light[0]*light[0] + light[1]*light[1];
+		if (r2 > 1.0) {
+			let r = Math.sqrt(r2);
+			light[0] /= r;
+			light[1] /= r;
+			r2 = 1.0;
+		}
+		light[2] = Math.sqrt(1-r2);
 		this.setControl('light', light, dt);
 	}
 
@@ -56,8 +88,17 @@ class BRDFLayer extends Layer {
 		let done = super.interpolateControls();
 		if(!done) {
 			let light = this.controls['light'].current.value;
-			let z = Math.sqrt(1 - light[0]*light[0] - light[1]*light[1]);
-			this.shader.setLight([light[0], light[1], z, 0]);
+			let r2 =  light[0]*light[0] + light[1]*light[1];
+			if (r2 > 1.0) {
+				light[0] /= r2;
+				light[1] /= r2;
+				r2 = 1.0;
+			}
+			light[2] = Math.sqrt(1-r2);
+	
+
+			//let z = Math.sqrt(1 - light[0]*light[0] - light[1]*light[1]);
+			this.shader.setLight([light[0], light[1], light[2], 0]);
 		}
 		return done;
 	}

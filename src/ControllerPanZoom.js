@@ -60,15 +60,23 @@ class ControllerPanZoom extends Controller {
 	pinchMove(e1, e2) {
 		if (!this.zooming)
 			return;
+		let rect1 = e1.target.getBoundingClientRect();
+		let offsetX1 = e1.clientX - rect1.left;
+		let offsetY1 = e1.clientY - rect1.top;
+		let rect2 = e2.target.getBoundingClientRect();
+		let offsetX2 = e2.clientX - rect2.left;
+		let offsetY2 = e2.clientY - rect2.top;
 		const scale = this.distance(e1, e2);
-		const pos = this.camera.mapToScene((e1.offsetX + e2.offsetX)/2, (e1.offsetY + e2.offsetY)/2, this.camera.getCurrentTransform(performance.now()));
+		const pos = this.camera.mapToScene((offsetX1 + offsetX2)/2, (offsetY1 + offsetY2)/2, this.camera.getCurrentTransform(performance.now()));
 		const dz = scale/this.initialDistance;
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
 		this.initialDistance = scale;
+		e1.preventDefault();
 	}
 
 	pinchEnd(e, x, y, scale) {
 		this.zooming = false;
+		e.preventDefault();
 	}
 
 	mouseWheel(e) {

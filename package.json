@@ -23,7 +23,7 @@
   "devDependencies": {
     "documentation": "^13.2.3",
     "html-webpack-plugin": "^4.5.0",
-    "nodemon": "^2.0.14",
+    "nodemon": "^2.0.15",
     "rollup": "^2.52.3",
     "rollup-plugin-terser": "^7.0.2",
     "webpack": "^4.44.2",

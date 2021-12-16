@@ -13,7 +13,6 @@ class Layout {
 			tilesize: 256,
 			overlap: 0, 
 			nlevels: 1,        //level 0 is the top, single tile level.
-			tiles: [],
 			suffix: 'jpg',
 			qbox: [],          //array of bounding box in tiles, one for mipmap 
 			bbox: [],          //array of bounding box in pixels (w, h)
@@ -50,7 +49,6 @@ class Layout {
 			this.initBoxes();
 			this.status = 'ready';
 			this.emit('ready');
-			console.log("LOADED ", this);
 		})().catch(e => { console.log(e); this.status = e; });
 	}
 
@@ -97,33 +95,29 @@ class Layout {
 		if(this.type == 'image') {
 			this.qbox[0] = new BoundingBox({xLow:0, yLow: 0, xHigh: 1, yHigh: 1});
 			this.bbox[0] = new BoundingBox({xLow:0, yLow: 0, xHigh: w, yHigh: h}); 
-			this.tiles.push({index:0, level:0, x:0, y:0});
 			// Acknowledge bbox change (useful for knowing scene extension (at canvas level))
 			this.emit('updateSize');
 			return 1;
 		}
 
-		let tiles = [];
 		for(let level = this.nlevels - 1; level >= 0; level--) {
 			this.qbox[level] = new BoundingBox({xLow:0, yLow: 0, xHigh: 0, yHigh: 0});
 			this.bbox[level] = new BoundingBox({xLow:0, yLow: 0, xHigh: w, yHigh: h}); 
-			for(let y = 0; y*this.tilesize < h; y++) {
-				this.qbox[level].yHigh = y+1;
-				for(let x = 0; x*this.tilesize < w; x ++) {
-					this.qbox[level].xHigh = x+1;
-					tiles.push({level:level, x:x, y:y});
-				}
-			}
+
+			this.qbox[level].yHigh = Math.ceil(h/this.tilesize);
+			this.qbox[level].xHigh = Math.ceil(w/this.tilesize);
+
+			// for(let y = 0; y*this.tilesize < h; y++) { // TODO replace with division
+			// 	this.qbox[level].yHigh = y+1;
+			// }
+			// for (let x = 0; x * this.tilesize < w; x++) {
+			// 	this.qbox[level].xHigh = x + 1;
+			// 	//					tiles.push({level:level, x:x, y:y});
+			// }
+
 			w >>>= 1;
 			h >>>= 1;
 		}
-		this.tiles = [];
-		for(let tile of tiles) {
-			let index = this.index(tile.level, tile.x, tile.y);
-			tile.index = index;
-			this.tiles[index] = tile;
-		}
-
 		// Acknowledge bbox (useful for knowing scene extension (at canvas level))
 		this.emit('updateSize');
 	}
@@ -288,7 +282,7 @@ class Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.urls[0] = url.substr(0, url.lastIndexOf(".")) + '_files/';
+		this.urls = this.urls.map(url => url.substr(0, url.lastIndexOf(".")) + '_files/');
 		this.skiplevels = 0;
 		if(onepixel)
 			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
@@ -309,7 +303,6 @@ class Layout {
 				throw new Error(this.status);
 			}
 			let json = await response.json();
-			console.log("JSON: ", json);
 			json.url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
 			Object.assign(this, json);
 			this.tarzoom.push(json);
