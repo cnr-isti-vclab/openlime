@@ -113,6 +113,10 @@ class _Cache {
 /* Flush all tiles for a layer.
  */
 	flush(layer) {
+		if(!this.layers.includes(layer))
+			return;
+		for(let tile of this.layers[layer])
+			this.dropTile(layer, tile);
 	}
 
 /* 

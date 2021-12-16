@@ -109,14 +109,22 @@ class Canvas {
 	addLayer(id, layer) {
 		layer.id = id;
 		layer.addEvent('ready', () => { 
-			if(Object.values(this.layers).every( l => l.status == 'ready')) 
+			if(Object.values(this.layers).every( l => l.status == 'ready'))
 				this.emit('ready');
+			this.prefetch();
 		});
 		layer.addEvent('update', () => { this.emit('update'); });
 		layer.addEvent('updateSize', () => { this.updateSize(); });
 		layer.gl = this.gl;
 		layer.overlayElement = this.overlayElement;
 		this.layers[id] = layer;
+		this.prefetch();
+	}
+
+	removeLayer(id, layer) {
+		delete this.layers[id];
+		Canvas.flushLayer(layer);
+		delete Canvas.layers[layer];
 		this.prefetch();
 	}
 
