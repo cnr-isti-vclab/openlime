@@ -95,13 +95,8 @@ class _Cache {
 /*
  */
 	dropTile(layer, tile) {
-		for(let i = 0; i < tile.tex.length; i++) {
-			if(tile.tex[i]) {
-				layer.gl.deleteTexture(tile.tex[i]);
-			}
-		}
 		this.size -= tile.size;
-		layer.tiles.delete(tile.index);
+		layer.dropTile(tile);
 	}
 /* Flush all memory
  */
@@ -110,10 +105,10 @@ class _Cache {
 
 /* Flush all tiles for a layer.
  */
-	flush(layer) {
+	flushLayer(layer) {
 		if(!this.layers.includes(layer))
 			return;
-		for(let tile of this.layers[layer])
+		for(let tile of layer.tiles.values())
 			this.dropTile(layer, tile);
 	}
 

@@ -1,5 +1,6 @@
 import { Camera } from './Camera.js'
 import { Layer  } from './Layer.js'
+import { Cache } from './Cache.js'
 
 /**
  * @param {Element|String} canvas dom element or query selector for a <canvas> element.
@@ -103,6 +104,7 @@ class Canvas {
 			if(layer.shader)
 				layer.shader.restoreWebGL(this.gl);
 		}
+		this.prefetch();
 		this.emit('update');
 	}
 
@@ -121,10 +123,11 @@ class Canvas {
 		this.prefetch();
 	}
 
-	removeLayer(id, layer) {
-		delete this.layers[id];
-		Canvas.flushLayer(layer);
-		delete Canvas.layers[layer];
+	removeLayer(layer) {
+		layer.clear(); //order is important.
+
+		delete this.layers[layer.id];
+		delete Cache.layers[layer];
 		this.prefetch();
 	}
 

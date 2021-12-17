@@ -269,13 +269,22 @@ class Layer {
 		return false;
 	}
 
+	dropTile(tile) {
+		for(let i = 0; i < tile.tex.length; i++) {
+			if(tile.tex[i]) {
+				this.gl.deleteTexture(tile.tex[i]);
+			}
+		}
+		this.tiles.delete(tile.index);
+	}
+
 	clear() {
 		this.ibuffer = this.vbuffer = null;
+		Cache.flushLayer(this);
 		this.tiles = new Map(); //TODO We need to drop these tile textures before clearing Map
 		this.setupTiles();
 		this.queue = [];
 		this.previouslyNeeded = false;
-		this.prefetch();
 	}
 	/**
 	 *  render the 
@@ -284,7 +293,7 @@ class Layer {
 		//exception for layout image where we still do not know the image size
 		//how linear or srgb should be specified here.
 		//		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
-		if (!this.status == 'ready' || this.tiles.size == 0)
+		if (this.status != 'ready')// || this.tiles.size == 0)
 			return true;
 
 		if (!this.shader)
@@ -402,13 +411,13 @@ class Layer {
 			return;
 
 		// if(!this.tiles.size) {
-		// 	this.tiles = JSON.parse(JSON.stringify(this.layout.tiles));
-		// 	for(let tile of this.tiles) {
-		// 		tile.tex = new Array(this.shader.samplers.length);
-		// 		tile.missing = this.shader.samplers.length;
-		// 		tile.size = 0;
-		// 	}
-		// 	return;
+		// 	 this.tiles = JSON.parse(JSON.stringify(this.layout.tiles));
+		// 	 for(let tile of this.tiles) {
+		// 	 	tile.tex = new Array(this.shader.samplers.length);
+		// 	 	tile.missing = this.shader.samplers.length;
+		//  		tile.size = 0;
+		//  	}
+		//  	return;
 		// }
 
 		for (let tile of this.tiles) {
