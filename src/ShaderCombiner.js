@@ -34,7 +34,7 @@ class ShaderCombiner extends Shader {
 
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		let operation = this.modes[this.mode];
+		let operation = this.operations[this.mode];
 		return `${gl2? '#version 300 es' : ''}
 
 precision highp float; 

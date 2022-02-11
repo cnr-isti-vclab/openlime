@@ -230,7 +230,7 @@ class Layout {
 /*
  * Witdh and height can be recovered once the image is downloaded.
 */
-	initImage() {
+	async initImage() {
 		this.getTileURL = (rasterid, tile) => { return this.urls[rasterid]; }
 		this.nlevels = 1;
 		this.tilesize = 0;
@@ -241,7 +241,7 @@ class Layout {
 
  *  width and height must be defined
  */
-	initGoogle(callback) {
+	async initGoogle(callback) {
 		if(!this.width || !this.height)
 			throw "Google rasters require to specify width and height";
 
