@@ -24,7 +24,7 @@ jobs:
         cache: 'npm'
 
     - name: Install npm
-      run: npm ci
+      run: npm c
 
     - name: Rollup
       run: npm run rollup
