@@ -1,13 +1,7 @@
 node_modules
 *_files
-dist/assets/svbrdf/vis/ksMap_file
-dist/assets/svbrdf/vis/kdMap
-dist/assets/svbrdf/vis/glossMap
-dist/assets/rti/512
-dist/assets/rti/test
+dist/assets
 docs
-package-lock.json
-build/openlime.js
-build/openlime.min.js
+build
 dist/database.php
 
