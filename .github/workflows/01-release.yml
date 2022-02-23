@@ -32,7 +32,7 @@ jobs:
     - name: ZIP build 
       uses: montudor/action-zip@v1
       with:
-        args: zip -qq openlime-${{ steps.get_version.outputs.VERSION }}.zip build/*
+        args: zip -qq -r openlime-${{ steps.get_version.outputs.VERSION }}.zip build
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
