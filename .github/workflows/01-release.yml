@@ -35,6 +35,8 @@ jobs:
       run: |
         cp -r dist/css build
         cp -r dist/skin build
+        cp README.md build
+        cp LICENSE build
 
     - name: Rename build to openlime
       run: mv build openlime
