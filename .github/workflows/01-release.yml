@@ -11,12 +11,14 @@ jobs:
     runs-on: ubuntu-latest    
     steps:
 
-    - name: Get the version
+    - name: Get tag version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
@@ -29,16 +31,19 @@ jobs:
     - name: Rollup
       run: npm run rollup
 
-    - name: ZIP build 
+    - name: Install Zip 
       uses: montudor/action-zip@v1
-      with:
-        args: zip -qq -r openlime-${{ steps.get_version.outputs.VERSION }}.zip build
 
-    - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v2
+    - name: ZIP Output  
+      run: zip -qq -r openlime-${{ env.RELEASE_VERSION }}.zip .
+      working-directory: build
+
+    - name: Create commits list
+      run: jsdoc/releases/gen_changelog.sh >> jsdoc/releases/rel-${{ env.RELEASE_VERSION }}.md
+
+    - name: Create automatic release
+      uses: ncipollo/release-action@v1
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: openlime-${{ steps.get_version.outputs.VERSION }}.zip
-        tag: ${{ github.ref }}
-        overwrite: true
-        body: "OpenLIME Rel. ${{ steps.get_version.outputs.VERSION }}"
+        artifacts: "build/openlime-${{ env.RELEASE_VERSION }}.zip"
+        bodyFile: "jsdoc/releases/rel-${{ env.RELEASE_VERSION }}.md"
+        token: ${{ secrets.GITHUB_TOKEN }}
