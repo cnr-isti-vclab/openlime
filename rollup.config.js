@@ -16,14 +16,14 @@ export default [
 		output: [{
 			format: 'umd',
 			name: 'OpenLIME',
-			file: 'build/openlime.min.js',
+			file: 'build/js/openlime.min.js',
 			plugins: [terser()],
 			globals: {  }
 		},
 		{
 			format: 'umd',
 			name: 'OpenLIME',
-			file: 'build/openlime.js',
+			file: 'build/js/openlime.js',
 			globals: { }
 		}],
 		external: []

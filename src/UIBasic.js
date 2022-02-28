@@ -43,7 +43,7 @@ class UIBasic {
 		Object.assign(this, {
 			lime: lime,
 			camera: lime.camera,
-			skin: 'skin.svg',
+			skin: 'skin/skin.svg',
 			autoFit: true,
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {

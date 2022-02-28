@@ -1,5 +1,5 @@
 
-let url = 'skin.svg';
+let url = 'skin/skin.svg';
 let svg = null;
 let pad = 5;
 

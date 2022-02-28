@@ -1,1 +1,1 @@
-../build/openlime.js
+../build/js/openlime.js

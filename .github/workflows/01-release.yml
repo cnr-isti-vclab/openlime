@@ -31,6 +31,11 @@ jobs:
     - name: Rollup
       run: npm run rollup
 
+    - name: Copy css, skin, etc...
+      run: |
+        cp -r dist/css build
+        cp -r dist/skin build
+
     - name: Install Zip 
       uses: montudor/action-zip@v1
 
