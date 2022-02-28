@@ -36,12 +36,14 @@ jobs:
         cp -r dist/css build
         cp -r dist/skin build
 
+    - name: Rename build to openlime
+      run: mv build openlime
+
     - name: Install Zip 
       uses: montudor/action-zip@v1
 
     - name: ZIP Output  
-      run: zip -qq -r openlime-${{ env.RELEASE_VERSION }}.zip .
-      working-directory: build
+      run: zip -qq -r openlime-${{ env.RELEASE_VERSION }}.zip openlime
 
     - name: Create commits list
       run: jsdoc/releases/gen_changelog.sh >> jsdoc/releases/rel-${{ env.RELEASE_VERSION }}.md
