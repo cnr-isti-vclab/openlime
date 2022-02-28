@@ -7,7 +7,7 @@ The process of building a release is partly manual and partly automatic.
 When the software is sufficiently mature to be released, the following steps can be taken:
 1. Check out to the *main branch*, and put everything in a clean state
 2. Choose a new release version ID (`v<MAJOR>.<MINOR>.<PATCH>`)
-3. Edit the file `./jsdoc/releases/rel-v<MAJOR>.<MINOR>.<PATCH>.md`. Describe the new release and the *What's new* section.
+3. Edit the file `./jsdoc/releases/rel-v<MAJOR>.<MINOR>.<PATCH>.md`. Describe the new release and add information about the new features in the *What's new* session.
 4. Add and commit the file, and push the *main branch* to the github host
 5. Tag the release (create an annotated tag):
 ```
