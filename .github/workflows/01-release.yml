@@ -51,6 +51,6 @@ jobs:
     - name: Create automatic release
       uses: ncipollo/release-action@v1
       with:
-        artifacts: "build/openlime-${{ env.RELEASE_VERSION }}.zip"
+        artifacts: "openlime/openlime-${{ env.RELEASE_VERSION }}.zip"
         bodyFile: "jsdoc/releases/rel-${{ env.RELEASE_VERSION }}.md"
         token: ${{ secrets.GITHUB_TOKEN }}
