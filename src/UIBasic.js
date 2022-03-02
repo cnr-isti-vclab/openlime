@@ -5,7 +5,7 @@ import { Controller } from './Controller.js'
 import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { PointerManager } from './PointerManager.js'
-import { AnnotationLayer } from './AnnotationLayer.js'
+import { LayerAnnotation } from './LayerAnnotation.js'
 
 /* Basic viewer for a single layer.
  *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
@@ -557,12 +557,12 @@ class UIBasic {
 		if (typeof layer_on == 'string')
 			layer_on = this.lime.canvas.layers[layer_on];
 
-		if(layer_on instanceof AnnotationLayer) { //just toggle
+		if(layer_on instanceof LayerAnnotation) { //just toggle
 			layer_on.setVisible(!layer_on.visible);
 
 		} else {
 			for (let layer of Object.values(this.lime.canvas.layers)) {
-				if(layer instanceof AnnotationLayer)
+				if(layer instanceof LayerAnnotation)
 					continue;
 
 				layer.setVisible(layer == layer_on);

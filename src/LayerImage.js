@@ -8,7 +8,7 @@ import { Layout } from './Layout.js'
  * @param {options} options Same as {@link Layer}, but url and layout are required.
  */
 
-class ImageLayer extends Layer {
+class LayerImage extends Layer {
 	constructor(options) {
 		super(options);
 
@@ -57,6 +57,6 @@ void main() {
 	}
 }
 
-Layer.prototype.types['image'] = (options) => { return new ImageLayer(options); }
+Layer.prototype.types['image'] = (options) => { return new LayerImage(options); }
 
-export { ImageLayer }
+export { LayerImage }

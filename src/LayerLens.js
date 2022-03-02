@@ -1,4 +1,4 @@
-import {CombinerLayer}  from './CombinerLayer.js'
+import {LayerCombiner}  from './LayerCombiner.js'
 import {Lens}           from './Lens.js'
 import {ShaderLens}     from './ShaderLens.js'
 import {Layout}         from './Layout.js'
@@ -6,7 +6,7 @@ import {Layout}         from './Layout.js'
 /**
  * options must contain one layer and lens = {x:, y:, r:, border: }
  */
-class LensLayer extends CombinerLayer {
+class LayerLens extends LayerCombiner {
 	constructor(options) {
         super(options);
         
@@ -141,4 +141,4 @@ class LensLayer extends CombinerLayer {
 
 }
 
-export {LensLayer}
+export {LayerLens}

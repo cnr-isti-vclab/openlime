@@ -59,7 +59,7 @@ let layer0 = new OpenLIME.Layer({
 
 lime.canvas.addLayer('coin', layer0);
 console.log(layer0);
-let anno = new OpenLIME.SvgAnnotationLayer({ 
+let anno = new OpenLIME.LayerSvgAnnotation({ 
 	label: 'Annotations',
 	//layout: new OpenLIME.Layout({width: 512, height: 512, type: "image"}),
 	layout: layer0.layout,

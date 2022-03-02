@@ -5,7 +5,7 @@ import { Shader } from './Shader.js'
  * *compose*: compose operation: add, subtract, multiply, etc.
  */
 
-class RTIShader extends Shader {
+class ShaderRTI extends Shader {
 	constructor(options) {
 		super({});
 
@@ -560,5 +560,5 @@ class BLN {
 }
 
 
-export { RTIShader }
+export { ShaderRTI }
 

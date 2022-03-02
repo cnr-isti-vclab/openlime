@@ -1,6 +1,6 @@
 import { Layer }  from './Layer.js'
 import { Raster } from './Raster.js'
-import { RTIShader } from './RTIShader.js'
+import { ShaderRTI } from './ShaderRTI.js'
 import { Layout } from './Layout.js'
 import { Transform } from './Transform.js'
 
@@ -11,7 +11,7 @@ import { Transform } from './Transform.js'
  * **plane**: url for the first coefficient (plane_0), needed for IIIF and IIP (without /info.json)
  */
 
-class RTILayer extends Layer {
+class LayerRTI extends Layer {
 	constructor(options) {
 		super(options);
 
@@ -27,7 +27,7 @@ class RTILayer extends Layer {
 		// this.layout.setUrl(this.url);
 		// this.setLayout(this.layout);
 
-		this.shaders['rti'] = new RTIShader({ normals: this.normals });
+		this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
 		this.setShader('rti');
 
 		let now = performance.now();
@@ -107,6 +107,6 @@ class RTILayer extends Layer {
 	}
 }
 
-Layer.prototype.types['rti'] = (options) => { return new RTILayer(options); }
+Layer.prototype.types['rti'] = (options) => { return new LayerRTI(options); }
 
-export { RTILayer }
+export { LayerRTI }

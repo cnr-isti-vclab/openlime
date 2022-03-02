@@ -9,7 +9,7 @@ import { Layout } from './Layout.js'
  * @param {options} options Same as {@link Layer}, but channels(ks,kd,normals,gloss) are required.
  */
 
-class BRDFLayer extends Layer {
+class LayerBRDF extends Layer {
 	constructor(options) {
 		super(options);
 
@@ -105,6 +105,6 @@ class BRDFLayer extends Layer {
 }
 
 
-Layer.prototype.types['brdf'] = (options) => { return new BRDFLayer(options); }
+Layer.prototype.types['brdf'] = (options) => { return new LayerBRDF(options); }
 
-export { BRDFLayer }
+export { LayerBRDF }

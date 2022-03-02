@@ -1,10 +1,10 @@
-import { SvgAnnotationLayer } from './SvgAnnotationLayer.js';
+import { LayerSvgAnnotation } from './LayerSvgAnnotation.js';
 import { Annotation } from './Annotation.js';
 import { Skin } from './Skin.js';
 import { simplify, smooth, smoothToPath } from './Simplify.js'
 
 
-class SvgAnnotationEditor {
+class EditorSvgAnnotation {
 	constructor(lime, layer, options) {
 		this.layer = layer;
 		Object.assign(this, {
@@ -872,4 +872,4 @@ function createElement(tag, attributes) {
 
 
 
-export { SvgAnnotationEditor }
+export { EditorSvgAnnotation }

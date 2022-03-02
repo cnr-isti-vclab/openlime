@@ -1,22 +1,22 @@
 import { OpenLIME } from './OpenLIME.js'
 import { Raster } from './Raster.js'
 import { Layer } from './Layer.js'
-import { ImageLayer } from './ImageLayer.js'
-import { CombinerLayer } from './CombinerLayer.js'
+import { LayerImage } from './LayerImage.js'
+import { LayerCombiner } from './LayerCombiner.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
-import { RTILayer } from './RTILayer.js'
-import { BRDFLayer } from './BRDFLayer.js'
+import { LayerRTI } from './LayerRTI.js'
+import { LayerBRDF } from './LayerBRDF.js'
 import { Controller2D } from './Controller2D.js'
 import { ControllerLensTilt } from './ControllerLensTilt.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import {ControllerLens} from './ControllerLens.js'
 import { UIBasic } from './UIBasic.js'
-import { LensLayer } from './LensLayer.js'
+import { LayerLens } from './LayerLens.js'
 import { Lens } from './Lens.js'
 import { Skin } from './Skin.js'
-import { AnnotationLayer } from './AnnotationLayer.js'
-import { SvgAnnotationLayer } from './SvgAnnotationLayer.js'
-import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
+import { LayerAnnotation } from './LayerAnnotation.js'
+import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
+import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 
 let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
@@ -46,7 +46,7 @@ function testAnnotationEditor() {
 	});
 	lime.canvas.addLayer('hsh', layer0);
 	
-	let layer1 = new SvgAnnotationLayer({ 
+	let layer1 = new LayerSvgAnnotation({ 
 		label: 'Annotations',
 		viewBox: "0 0 256 256",
 		style:` 
@@ -74,7 +74,7 @@ function testAnnotationEditor() {
 	lime.canvas.addLayer('anno', layer1); //here the overlayelement created and attached to layer1
 	Skin.setUrl('skin/skin.svg');
 
-	let editor = new SvgAnnotationEditor(lime, layer1, { lime: lime });
+	let editor = new EditorSvgAnnotation(lime, layer1, { lime: lime });
 	editor.classes = {
 		'': { color: '#000', label: '' },
 		'class1': { color: '#770', label: '' },
@@ -108,7 +108,7 @@ function testMedicalAnnotations() {
 		zindex: 0,
 	});
 
-	let layer1 = new SvgAnnotationLayer({ 
+	let layer1 = new LayerSvgAnnotation({ 
 		layout: layer0.layout,
 		style:` 
 			.openlime-annotation { pointer-events:all; opacity: 0.7; }
@@ -148,7 +148,7 @@ function testSVGAnnotations() {
 		transform: { x: 0, y: 0, z: 1.2, a: 0 },
 	});
 
-	let layer1 = new AnnotationLayer({ 
+	let layer1 = new LayerAnnotation({ 
 		layout: layer0.layout,
 		svgURL: 'assets/svbrdf/vis/annotations.svg',
 		style:` 
@@ -293,7 +293,7 @@ function combinerTest() {
 		visible: false
 	});
 
-	let combiner = new CombinerLayer({
+	let combiner = new LayerCombiner({
 		layers: [layer0, layer1]
 	});
 
@@ -343,7 +343,7 @@ function lensTest() {
 		visible: false
 	});
 
-	let lensLayer = new LensLayer({
+	let lensLayer = new LayerLens({
 		layers: [layer0],
 		camera: lime.camera,
 		radius:50,

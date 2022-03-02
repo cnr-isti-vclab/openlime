@@ -1,6 +1,6 @@
 import { Layer } from './Layer.js';
 import { Annotation } from './Annotation.js';
-import { AnnotationLayer } from './AnnotationLayer.js';
+import { LayerAnnotation } from './LayerAnnotation.js';
 
 
 /**
@@ -11,7 +11,7 @@ import { AnnotationLayer } from './AnnotationLayer.js';
  * * *style*: css style for the annotation elements (shadow dom allows css to apply only to this layer)
  */
 
-class SvgAnnotationLayer extends AnnotationLayer {
+class LayerSvgAnnotation extends LayerAnnotation {
 
 	constructor(options) {
 		options = Object.assign({
@@ -90,7 +90,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 	}
 
 	draw(transform, viewport) {
-		console.log("SvgAnnotationLayer draw()");
+		console.log("LayerSvgAnnotation draw()");
 		if(!this.svgElement)
 			return true;
 		let t = this.transform.compose(transform);
@@ -102,7 +102,7 @@ class SvgAnnotationLayer extends AnnotationLayer {
 	}
 
 	prefetch(transform) {
-		console.log("SvgAnnotationLayer prefetch()");
+		console.log("LayerSvgAnnotation prefetch()");
 		if(!this.svgElement)
 			this.createSVGElement();
 
@@ -185,7 +185,7 @@ function createElement(tag, attributes) {
 	return e;
 }
 
-Layer.prototype.types['svg_annotations'] = (options) => { return new SvgAnnotationLayer(options); }
+Layer.prototype.types['svg_annotations'] = (options) => { return new LayerSvgAnnotation(options); }
 
-export { SvgAnnotationLayer }
+export { LayerSvgAnnotation }
 

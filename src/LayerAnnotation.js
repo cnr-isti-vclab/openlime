@@ -13,7 +13,7 @@ import { Layer } from './Layer.js'
  */
 
 
-class AnnotationLayer extends Layer {
+class LayerAnnotation extends Layer {
 	constructor(options) {
 		options = Object.assign({
 			// geometry: null,  //unused, might want to store here the quads/shapes for opengl rendering
@@ -147,4 +147,4 @@ class AnnotationLayer extends Layer {
 	}
 }
 
-export { AnnotationLayer }
+export { LayerAnnotation }

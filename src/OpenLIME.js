@@ -2,9 +2,9 @@ import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
 import { Transform } from './Transform.js'
 import { Layer } from './Layer.js'
-import { RTILayer } from './RTILayer.js'
-import { BRDFLayer } from './BRDFLayer.js'
-import { ImageLayer } from './ImageLayer.js'
+import { LayerRTI } from './LayerRTI.js'
+import { LayerBRDF } from './LayerBRDF.js'
+import { LayerImage } from './LayerImage.js'
 
 import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
@@ -18,9 +18,9 @@ import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { PointerManager } from './PointerManager.js'
 
 import { Annotation	 } from './Annotation.js'
-import { AnnotationLayer } from './AnnotationLayer.js'
-import { SvgAnnotationLayer } from './SvgAnnotationLayer.js'
-import { SvgAnnotationEditor } from './SvgAnnotationEditor.js'
+import { LayerAnnotation } from './LayerAnnotation.js'
+import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
+import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 
 /**
  * Manages an OpenLIME viewer functionality on a canvas
@@ -149,5 +149,5 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, Layer, RTILayer, Raster, Shader, Layout, Skin, UIBasic, Annotation, AnnotationLayer, SvgAnnotationLayer, SvgAnnotationEditor }
+export { OpenLIME, Canvas, Camera, Transform, Layer, LayerRTI, Raster, Shader, Layout, Skin, UIBasic, Annotation, LayerAnnotation, LayerSvgAnnotation, EditorSvgAnnotation }
 
