@@ -43,6 +43,10 @@ class Raster {
 				callback("Failed loading " + tile.url + ": " + response.statusText);
 				return;
 			}
+
+			if (response.status != 206)
+				throw "The server doesn't support partial content requests (206).";
+
 			let blob = await response.blob();
 			img = await this.blobToImage(blob, gl);
 		} else {

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - GoogleMaps Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <style>
+        html,
+        body {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+        }
+
+        #openlime {
+            height: 80%;
+            position: relative;
+        }
+
+        #openlime>canvas {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* this is important, it would cause firefox flickering! */
+        }
+
+        .openlime-toolbar {
+			background-color: rgba(62, 133, 146, 0.5);
+		}
+    </style>
+
+</head>
+
+<body>
+    <h1>OpenLIME - GoogleMaps Viewer</h1>
+    <div id="openlime">
+    </div>
+    <script src="../../openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into #openlime
+        const lime = new OpenLIME.OpenLIME('#openlime');
+
+        // Create an image layer and add it to the canvans
+        // The Google Maps format requires that the width 
+        // and height of the image be explicitly specified.
+        const layer = new OpenLIME.Layer({
+            layout: 'google',
+            type: 'image',
+            width: 3184,
+            height: 2024,
+            url: '../../assets/lime/google/lime'
+        });
+        lime.canvas.addLayer('Base', layer);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+
+        // Remove light from the toolbar
+        ui.actions.light.display=false;
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display=true;
+        ui.actions.zoomout.display=true;       
+    </script>
+</body>
+
+</html>
