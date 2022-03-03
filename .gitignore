@@ -1,6 +1,5 @@
 node_modules
 *_files
-dist/assets
 docs
 build
 dist/database.php

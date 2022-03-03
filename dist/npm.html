@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>OpenLime</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+
+  <!-- Fake favicon -->
+<!--  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo="> -->
+  <link rel="stylesheet" href="css/skin.css"/>
+  <style>
+    html,
+    body {
+      margin: 0px;
+      padding: 0px;
+      height: 100%;
+    }
+
+    #openlime {
+      height: 80%;
+      position:relative;
+    }
+
+    #openlime>canvas {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      /* this is important, it would cause firefox flickering! */
+    }
+
+  </style>
+
+  <!-- <script src="webgl-debug.js"></script> -->
+</head>
+
+<body>
+  <h1>OpenLime demo</h1>
+  <p><a href="ui_custom.html">Custom html interface demo</a>
+	<a href="ui_svg.html">Custom svg interface demo</a></p>
+  <div id="openlime">
+  </div>
+  <script src="main.js"></script>
+</body>
+
+</html>
