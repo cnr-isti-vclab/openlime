@@ -21,6 +21,7 @@ class LayerAnnotation extends Layer {
 			annotations: [],
 			hoverable: false, //display info about annotation on mousehover.
 			selected: new Set,
+			overlay: true,
 			annotationsListEntry: null, //TODO: horrible name for the interface list of annotations
 		}, options);
 		super(options);

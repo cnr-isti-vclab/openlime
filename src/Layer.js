@@ -64,7 +64,7 @@ class Layer {
 			visible: true,
 			zindex: 0,
 			opacity: 1.0,
-
+			overlay: false, //in the GUI it won't affect the visibility of the other layers
 			rasters: [],
 			layers: [],
 			controls: {},

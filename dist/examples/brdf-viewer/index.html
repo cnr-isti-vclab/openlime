@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - BRDF Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <style>
+        html,
+        body {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+        }
+
+        #openlime {
+            height: 80%;
+            position: relative;
+        }
+
+        #openlime>canvas {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* this is important, it would cause firefox flickering! */
+        }
+
+        .openlime-toolbar {
+            background-color: rgba(62, 133, 146, 0.5);
+        }
+
+        #attribution {
+            float:right;
+            margin-top: 10px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>OpenLIME - BRDF Viewer</h1>
+    <div id="openlime">
+    </div>
+    <div id="attribution">Cape Spartivento Lighthouse, oil on canvas, 24x18 cm, 2004 - by Fabio Marton </div>
+    <script src="../../openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into #openlime
+        const lime = new OpenLIME.OpenLIME('#openlime');
+
+        // Create a BRDF layer and add it to the canvans
+        // A BRDF layer has 4 channels. In this example the channel are stored as deepzoom files
+        const layer = new OpenLIME.Layer({
+            type: 'brdf',
+            channels: {
+                'kd': '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
+                'ks': '../../assets/lighthouse/deepzoom/lighthouse-ksmap.dzi',
+                'normals': '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
+                'gloss': '../../assets/lighthouse/deepzoom/lighthouse-glmap.dzi'
+            },
+            colorspaces: {
+                'kd': 'linear',
+                'ks': 'linear'
+            },
+            layout: 'deepzoom',
+        });
+        lime.canvas.addLayer('Base', layer);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;       
+    </script>
+</body>
+
+</html>

@@ -5,15 +5,19 @@ import { Layer } from './Layer.js'
 import { LayerRTI } from './LayerRTI.js'
 import { LayerBRDF } from './LayerBRDF.js'
 import { LayerImage } from './LayerImage.js'
+import { LayerCombiner } from './LayerCombiner.js'
+import { LayerLens } from './LayerLens.js'
 
 import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
+import { ShaderCombiner } from './ShaderCombiner.js'
 
 import { Skin } from './Skin.js'
 import { UIBasic } from './UIBasic.js'
 import { Controller } from './Controller.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
+import { ControllerLens } from './ControllerLens.js'
 
 import { PointerManager } from './PointerManager.js'
 
@@ -149,5 +153,5 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, Layer, LayerRTI, Raster, Shader, Layout, Skin, UIBasic, Annotation, LayerAnnotation, LayerSvgAnnotation, EditorSvgAnnotation }
+export { OpenLIME, Canvas, Camera, Transform, ControllerLens, ControllerPanZoom, Layer, Raster, Shader, ShaderCombiner, Layout, Skin, UIBasic, Annotation, LayerAnnotation, LayerSvgAnnotation, EditorSvgAnnotation }
 

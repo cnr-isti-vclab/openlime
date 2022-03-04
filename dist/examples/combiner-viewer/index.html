@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Image Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <style>
+        html,
+        body {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+        }
+
+        #openlime {
+            height: 80%;
+            position: relative;
+        }
+
+        #openlime>canvas {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* this is important, it would cause firefox flickering! */
+        }
+
+        .openlime-toolbar {
+            background-color: rgba(62, 133, 146, 0.5);
+        }
+
+        #attribution {
+            float:right;
+            margin-top: 10px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>OpenLIME - Image Viewer</h1>
+    <div id="openlime">
+    </div>
+    <div id="attribution">Lime, photo image - by <a href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a> from <a href="https://pixabay.com/it/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Pixabay</a></div>
+    <script src="../../openlime.js"></script>
+    <script>
+        // This example shows how to combine two images using the LayerCombiner class. 
+        // The combining operations are freely defined by shaders (in this case 
+        // we use the ShaderCombiner class, which is part of the OpenLIME shader library). 
+
+        // Create an OpenLIME canvas into #openlime
+        const lime = new OpenLIME.OpenLIME('#openlime');
+
+        // Create a layer for the first image and add it to the canvans (labelling it 'lime')
+        let layer0 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lime/image/lime.jpg',
+            layout: 'image',
+            zindex: 0,
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: false
+        });
+        lime.canvas.addLayer('lime', layer0);
+
+        // Create a layer for the second image and add it to the canvans (labelling it 'lime_fx')
+        const layer1 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lime/image/lime_fx.jpg',
+            layout: 'image',
+            zindex: 0,
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: false
+        });
+        lime.canvas.addLayer('lime_fx', layer1);
+
+        // Instantiate the LayerCombiner class and set the two inputs (layer0 and layer1)
+        const combiner = new OpenLIME.Layer({
+            type: 'combiner',
+            layers: [layer0, layer1]
+        });
+
+        // Instantiate the ShaderCombiner class and select 'diff' as default mode (for visualisation purposes)
+        const shader = new OpenLIME.ShaderCombiner();
+        shader.mode = 'diff';
+
+        // Assign the newly created shader to the combiner (labelling it 'standard') and enable it
+        combiner.shaders = { 'standard': shader };
+        combiner.setShader('standard');
+
+        // Add the combiner to the canvas
+        lime.canvas.addLayer('combiner', combiner);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+
+        // Remove light from the toolbar
+        ui.actions.light.display = false;
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;       
+    </script>
+</body>
+
+</html>

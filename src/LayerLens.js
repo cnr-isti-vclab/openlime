@@ -1,3 +1,4 @@
+import { Layer }  from './Layer.js'
 import {LayerCombiner}  from './LayerCombiner.js'
 import {Lens}           from './Lens.js'
 import {ShaderLens}     from './ShaderLens.js'
@@ -8,6 +9,9 @@ import {Layout}         from './Layout.js'
  */
 class LayerLens extends LayerCombiner {
 	constructor(options) {
+        options = Object.assign({
+			overlay: true
+        }, options);
         super(options);
         
         let shader = new ShaderLens({
@@ -140,5 +144,7 @@ class LayerLens extends LayerCombiner {
     }
 
 }
+
+Layer.prototype.types['lens'] = (options) => { return new LayerLens(options); }
 
 export {LayerLens}

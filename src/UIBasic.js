@@ -557,12 +557,12 @@ class UIBasic {
 		if (typeof layer_on == 'string')
 			layer_on = this.lime.canvas.layers[layer_on];
 
-		if(layer_on instanceof LayerAnnotation) { //just toggle
+		if(layer_on.overlay) { //just toggle
 			layer_on.setVisible(!layer_on.visible);
 
 		} else {
 			for (let layer of Object.values(this.lime.canvas.layers)) {
-				if(layer instanceof LayerAnnotation)
+				if(layer.overlay)
 					continue;
 
 				layer.setVisible(layer == layer_on);
