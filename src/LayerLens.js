@@ -132,7 +132,7 @@ class LayerLens extends LayerCombiner {
         const lensC = this.getCurrentCenter();
         const l = transform.sceneToViewportCoords(viewport, lensC);
         const r = this.getRadius() * transform.z;
-
+        console.log(lensC, l);
         return {x: Math.floor(l[0]-r), y: Math.floor(l[1]-r), dx: Math.ceil(2*r), dy: Math.ceil(2*r), w:viewport.w, h:viewport.h};
     }
 

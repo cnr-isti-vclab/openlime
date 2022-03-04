@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLIME - Lens Viewer</title>
+    <title>OpenLIME - RTI Viewer</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <style>
         html,
@@ -32,7 +32,7 @@
         }
 
         #attribution {
-            float: right;
+            float:right;
             margin-top: 10px;
         }
     </style>
@@ -40,57 +40,52 @@
 </head>
 
 <body>
-    <h1>OpenLIME - Lens Viewer</h1>
+    <h1>OpenLIME - RTI Viewer</h1>
     <div id="openlime">
     </div>
-    <div id="attribution">Cape Spartivento Lighthouse, oil on canvas, 14x18 cm, 2004 - by Fabio Marton </div>
     <script src="../../openlime.js"></script>
     <script>
         // Create an OpenLIME canvas into #openlime
         const lime = new OpenLIME.OpenLIME('#openlime');
 
+        // Create 4 RTI layers and add them to the canvans
+        // A RTI layer has many channels. In this example the 4 layers store 
+        // channels in 4 different ways: image, deepzoom, tarzoom and itarzoom 
         const layer0 = new OpenLIME.Layer({
-            type: 'image',
-            url: '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
-            layout: 'deepzoom',
-            transform: { x: 0, y: 0, z: 1, a: 0 },
-            visible: false
+            label: 'coin-image',
+            layout: 'image',
+            type: 'rti',
+            url: '../../assets/rti/ptm/info.json',
+            normals: false
         });
-        lime.canvas.addLayer('kdmap', layer0);
+        lime.canvas.addLayer('coin0', layer0);
 
         const layer1 = new OpenLIME.Layer({
-            type: 'image',
-            url: '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
+            label: 'coin-deepzoom',
             layout: 'deepzoom',
-            transform: { x: 0, y: 0, z: 1, a: 0 },
-            visible: false
+            type: 'rti',
+            url: '../../assets/rti/hsh/info.json',
+            normals: false
         });
-        lime.canvas.addLayer('nomap', layer1);      
+        lime.canvas.addLayer('coin1', layer1);
 
-        const lensLayer = new OpenLIME.Layer({
-            type: "lens",
-            layers: [layer1],
-            camera: lime.camera,
-            radius: 50,
-            border: 10,
-            visible: true
+        const layer2 = new OpenLIME.Layer({
+            label: 'coin-tarzoom',
+            layout: 'tarzoom',
+            type: 'rti',
+            url: '../../assets/rti/bln/info.json',
+            normals: false
         });
+        lime.canvas.addLayer('coin2', layer2);
 
-        lime.camera.bounded = false;
-        const controllerLens = new OpenLIME.ControllerLens({
-            lensLayer: lensLayer,
-            camera: lime.camera,
-            hover: true,
-            priority: 0
+        const layer3 = new OpenLIME.Layer({
+            label: 'coin-itarzoom',
+            layout: 'itarzoom',
+            type: 'rti',
+            url: '../../assets/rti/ybnl/info.json',
+            normals: false
         });
-
-        lime.pointerManager.onEvent(controllerLens);
-        lensLayer.controllers.push(controllerLens);
-
-        // const panzoom = new OpenLIME.ControllerPanZoom(lime.camera, { priority: -1000 });
-        // lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
-
-        lime.canvas.addLayer('lens', lensLayer);
+        lime.canvas.addLayer('coin3', layer3);
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
@@ -100,8 +95,7 @@
 
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display = true;
-        ui.actions.zoomout.display = true;
-
+        ui.actions.zoomout.display = true;       
     </script>
 </body>
 
