@@ -25,7 +25,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.8101934"
-     inkscape:cx="892.4461"
+     inkscape:cx="806.26744"
      inkscape:cy="132.03009"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -513,15 +513,6 @@
          id="circle1011"
          inkscape:connector-curvature="0" />
     </g>
-    <rect
-       style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#3f0099;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="rect985"
-       width="71"
-       height="71"
-       x="945.03229"
-       y="303.33893"
-       rx="12"
-       ry="12" />
     <g
        id="g961-3"
        transform="translate(-760.59571,50.602215)"
@@ -558,16 +549,29 @@
         </g>
       </g>
     </g>
-    <text
-       xml:space="preserve"
-       style="font-size:64px;line-height:1.25;font-family:'Palace Script MT';-inkscape-font-specification:'Palace Script MT';font-variant-ligatures:none;letter-spacing:0px;word-spacing:0px;fill:#3f0099;fill-opacity:1"
-       x="973.18854"
-       y="359.47955"
-       id="text25157"><tspan
-         sodipodi:role="line"
-         id="tspan25155"
+    <g
+       id="g907"
+       class="openlime-button openlime-markers">
+      <rect
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#3f0099;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect985"
+         width="71"
+         height="71"
+         x="945.03229"
+         y="303.33893"
+         rx="12"
+         ry="12" />
+      <text
+         xml:space="preserve"
+         style="font-size:64px;line-height:1.25;font-family:'Palace Script MT';-inkscape-font-specification:'Palace Script MT';font-variant-ligatures:none;letter-spacing:0px;word-spacing:0px;fill:#3f0099;fill-opacity:1"
          x="973.18854"
          y="359.47955"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:64px;font-family:Calibri;-inkscape-font-specification:'Calibri Bold';fill:#3f0099;fill-opacity:1">i</tspan></text>
+         id="text25157"><tspan
+           sodipodi:role="line"
+           id="tspan25155"
+           x="973.18854"
+           y="359.47955"
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:64px;font-family:Calibri;-inkscape-font-specification:'Calibri Bold';fill:#3f0099;fill-opacity:1">i</tspan></text>
+    </g>
   </g>
 </svg>
