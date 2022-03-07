@@ -14,9 +14,7 @@
 
 <body>
     <h1>OpenLIME - DeepZoom(1px) Viewer</h1>
-    <div class="openlime">
-    </div>
-    <div id="attribution">Lime, photo image - by <a href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a> from <a href="https://pixabay.com/it/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Pixabay</a></div>
+    <div class="openlime"></div>
     <script src="../../openlime.js"></script>
     <script>
         // Create an OpenLIME canvas into #openlime
@@ -41,7 +39,9 @@
 
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display=true;
-        ui.actions.zoomout.display=true;       
+        ui.actions.zoomout.display=true;
+
+        ui.attribution = `Lime, photo image - by <a href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a> from <a href="https://pixabay.com/it/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Pixabay</a>`;
     </script>
 </body>
 
