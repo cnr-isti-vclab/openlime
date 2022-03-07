@@ -8,18 +8,22 @@ import { Shader } from './Shader.js'
 class ShaderBRDF extends Shader {
 	constructor(options) {
 		super({});
-
 		this.modes = ['ward', 'diffuse', 'specular', 'normals'];
 		this.mode = 'ward';
-		this.alphaLimits = [0.01, 0.5];
+
 		Object.assign(this, options);
 		
 		const kdCS = this.colorspaces['kd'] == 'linear' ? 0 : 1;
 		const ksCS = this.colorspaces['ks'] == 'linear' ? 0 : 1;
 
+		const brightness = options.brightness ? options.brightness : 1.0;
+		const gamma = options.gamma ? options.gamma : 2.2;
+		const alphaLimits = options.alphaLimits ? options.alphaLimits : [0.01, 0.5];
+
 		this.uniforms = {
 			uLightInfo:          { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
-			uAlphaLimits:        { type: 'vec2', needsUpdate: true, size: 2, value: this.alphaLimits },
+			uAlphaLimits:        { type: 'vec2', needsUpdate: true, size: 2, value: alphaLimits },
+			uBrightnessGamma:    { type: 'vec2', needsUpdate: true, size: 2, value: [brightness, gamma] },		
 			uInputColorSpaceKd:  { type: 'int', needsUpdate: true, size: 1, value: kdCS },
 			uInputColorSpaceKs:  { type: 'int', needsUpdate: true, size: 1, value: ksCS },
 		}
@@ -83,6 +87,8 @@ uniform sampler2D uTexGloss;
 
 uniform vec4 uLightInfo; // [x,y,z,w] (if .w==0 => Directional, if w==1 => Spot)
 uniform vec2 uAlphaLimits;
+uniform vec2 uBrightnessGamma;
+
 uniform int uInputColorSpaceKd; // 0: Linear; 1: sRGB
 uniform int uInputColorSpaceKs; // 0: Linear; 1: sRGB
 
@@ -170,8 +176,8 @@ void main() {
 	bool applyGamma = true;
 
 	${this.innerCode}
-	
-	vec3 finalColor = applyGamma ? pow(linearColor * 1.0, vec3(1.0/2.2)) : linearColor;
+
+	vec3 finalColor = applyGamma ? pow(linearColor * uBrightnessGamma[0], vec3(1.0/uBrightnessGamma[1])) : linearColor;
 	color = vec4(finalColor, 1.0);
 	${gl2?'':'gl_FragColor = color;'}
 }

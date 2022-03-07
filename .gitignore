@@ -1,5 +1,4 @@
 node_modules
-*_files
 docs
 build
 dist/database.php

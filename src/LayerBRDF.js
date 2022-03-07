@@ -61,11 +61,17 @@ class LayerBRDF extends Layer {
 		
 		let now = performance.now();
 		this.controls['light'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };
+		const brightness = options.brightness ? options.brightness : 1.0;
+		const gamma = options.gamma ? options.gamma : 2.2;
+		const alphaLimits = options.alphaLimits ? options.alphaLimits : [0.01, 0.5];
 
 		let shader = new ShaderBRDF({
 			'label': 'Rgb',
 			'samplers': samplers,
-			'colorspaces': this.colorspaces
+			'colorspaces': this.colorspaces,
+			'brightness': brightness,
+			'gamma': gamma,
+			'alphaLimits': alphaLimits
 		});
 
 		this.shaders['brdf'] = shader;

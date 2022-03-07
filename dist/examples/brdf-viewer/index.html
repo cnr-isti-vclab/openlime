@@ -32,7 +32,7 @@
         }
 
         #attribution {
-            float:right;
+            float: right;
             margin-top: 10px;
         }
     </style>
@@ -64,6 +64,9 @@
                 'ks': 'linear'
             },
             layout: 'deepzoom',
+            alphaLimits: [0.05, 0.6],
+            brightness: 3.14,
+            gamma: 2.0
         });
         lime.canvas.addLayer('Base', layer);
 
