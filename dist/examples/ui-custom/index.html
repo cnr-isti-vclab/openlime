@@ -24,8 +24,9 @@
 
         .headline {
             background-color: #766dd680;
-            padding: 10px 0px 10px 0px;
+            padding: 15px 0px 10px 0px;
             margin-bottom: 5px;
+            margin-top: 0px;
         }
 
         #openlime {
@@ -58,20 +59,6 @@
             visibility: hidden !important;
         }
 
-        .openlime-dialog {
-            left: 0;
-            right: 0;
-            bottom: 100px;
-        }
-
-        .openlime-dialog.openlime-info {
-            top: 50px;
-            right: 10px;
-            width: auto;
-            max-height: 50%;
-            min-width: auto;
-        }
-
         #attribution {
             float: right;
             margin-top: 10px;
@@ -82,14 +69,14 @@
 
 <body>
     <!-- Decorations -->
-    <!-- <div id="info">
+    <div id="info">
         <h3>This is a info page</h3>
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
             labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
             laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
             voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat
             non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-    </div> -->
+    </div>
 
     <!-- Web page -->
     <h1 class="headline">OpenLIME - Image Viewer</h1>
@@ -124,14 +111,15 @@
         // Remove light from the toolbar
         light.display = false;
 
-        // Add zoomin and zoomout to the toolbar
+        // Add help, zoomin and zoomout to the toolbar
         zoomin.display = true;
         zoomout.display = true;
+        help.display = true;
 
-        // let openlime = document.getElementById('openlime');
-        // let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
-        // infoDialog.setContent(document.getElementById('info'));
-        // infoDialog.hide();
+        let openlime = document.getElementById('openlime');
+        let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
+        infoDialog.setContent(document.getElementById('info'));
+        infoDialog.hide();
 
         // Add new action
         let markers = {
@@ -142,7 +130,7 @@
                 let button = lime.containerElement.querySelector('.openlime-markers');
                 //let button = markers.element.querySelector('.openlime-button');
                 button.classList.toggle('active');
-                //infoDialog.toggle();
+                infoDialog.toggle();
             }
         };
 

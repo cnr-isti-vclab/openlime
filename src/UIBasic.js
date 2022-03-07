@@ -61,7 +61,6 @@ class UIBasic {
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
 			unit: null,
-			info: new Info(lime.containerElement),
 			lightcontroller: null,
 		});
 
@@ -113,7 +112,6 @@ class UIBasic {
 			this.menu.push(layerEntry);
 		}
 
-
 		let controller = new Controller2D((x, y) => {
 			for (let layer of lightLayers)
 				layer.setLight([x, y], 0);
@@ -140,8 +138,6 @@ class UIBasic {
 		else setTimeout(() => { this.init(); }, 0);
 	}
 
-
-
 	init() {
 		(async () => {
 
@@ -153,9 +149,7 @@ class UIBasic {
 				activeModifiers: [0, 1]
 			});
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
-			this.lime.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
-
-			//this.lime.pointerManager.on("fingerHover", {"fingerHover": (e) => { this.showInfo(e);}, priority: 10000 });
+			// this.lime.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
 
 			this.createMenu();
 			this.updateMenu();
@@ -202,29 +196,7 @@ class UIBasic {
 			}
 		}
 	}
-
-	showInfo(e) {
-		if (!e.originSrc) {
-			throw "This should never happen!";
-		}
-
-		let layer = e.originSrc.getAttribute('data-layer');
-		if (!layer)
-			return this.info.hide();
-
-		layer = this.lime.canvas.layers[layer];
-
-		if (e.fingerType == 'fingerHover' && !layer.hoverable)
-			return;
-
-		let id = e.originSrc.getAttribute('id');
-		let anno = layer.getAnnotationById(id);
-		layer.setSelected(anno);
-
-		//this.info.show(e, layer, id);
-	}
-
-
+	
 	async loadSkin() {
 		let toolbar = document.createElement('div');
 		toolbar.classList.add('openlime-toolbar');
@@ -413,37 +385,11 @@ class UIBasic {
 	}
 
 	toggleHelp(help, on) {
-
-		if (!help.element) {
-			let div = document.createElement('div');
-			div.classList.add('openlime-help-window');
-			div.addEventListener('click', (e) => { if (e.target == div) this.toggleHelp(help, false); });
-
-			let content = document.createElement('div');
-			content.classList.add('openlime-help-content');
-			div.appendChild(content);
-
-			if (help.html instanceof HTMLElement)
-				content.appendChild(help.html);
-			else
-				content.innerHTML = help.html;
-
-			(async () => {
-				let close = await Skin.appendIcon(content, '.openlime-close');
-				close.classList.add('openlime-close');
-				close.addEventListener('click', () => this.toggleHelp(help, false));
-				//content.appendChild(close);
-			})();
-			this.lime.containerElement.appendChild(div);
-			help.element = div;
-		}
-		//let hidden = help.element.classList.includes('hidden');
-		//if(on == null)
-		//	hidden = true;
-
-		setTimeout(() => help.element.classList.toggle('shown', on), 0);
-
-		//help.element.style.display = on? 'block' : 'none';
+		if(!help.dialog) {
+			help.dialog = new UIDialog(this.lime.containerElement, { modal: true, class: 'openlime-help-dialog' });
+			help.dialog.setContent(help.html);
+		} else
+			help.dialog.toggle(on);		
 	}
 
 	snapshot() {
@@ -493,6 +439,7 @@ class UIBasic {
 		}
 		return html;
 	}
+
 	addEntryCallbacks(entry) {
 		entry.element = this.layerMenu.querySelector('#' + entry.id);
 		if (entry.onclick)
@@ -581,133 +528,93 @@ class UIBasic {
 	}
 }
 
-
-class Info {
-	constructor(container) {
+class UIDialog {
+	constructor(container, options) {
 		Object.assign(this, {
-			element: null,
-			//svgElement: null,  //svg for annotation, TODO: should be inside annotation!
-			layer: null,
-			annotation: null,
-			container: container
-		});
+			dialog: null,
+			content: null,
+			container: container,
+			modal: false,
+			signals: { 'closed': [] },
+			class: null,
+		}, options);
+		this.create();
 	}
 
-	hide() {
-		if (!this.element) return;
-		this.element.style.display = 'none';
-
-		if (this.layer)
-			this.layer.setSelected(this.annotation, false);
-
-		this.annotation = null;
-		this.layer = null;
+	//TODO make QObject style events dependency
+	addEvent(event, callback) {
+		this.signals[event].push(callback);
+	}
+	
+	emit(event, ...parameters) {
+		for (let r of this.signals[event])
+			r(...parameters);
 	}
 
-	show(e, layer, id) {
-		if (!this.element) {
-			let html = '<div class="openlime-info"></div>';
-			let template = document.createElement('template');
-			template.innerHTML = html.trim();
-			this.element = template.content.firstChild;
-			this.container.appendChild(this.element);
+	create() {
+		let background = document.createElement('div');
+		background.classList.add('openlime-dialog-background');
+
+		let dialog = document.createElement('div');
+		dialog.classList.add('openlime-dialog');
+		if (this.class)
+			dialog.classList.add(this.class);
+
+		(async () => {
+			let close = await Skin.appendIcon(dialog, '.openlime-close');
+			close.classList.add('openlime-close');
+			close.addEventListener('click', () => this.hide());
+			//content.appendChild(close);
+		})();
+
+
+		// let close = Skin.appendIcon(dialog, '.openlime-close');
+		// close.classList.add('openlime-close');
+		// close.addEventListener('click', () => this.hide());
+
+		let content = document.createElement('div');
+		content.classList.add('openlime-dialog-content');
+		dialog.append(content);
+
+		if (this.modal) {
+			background.addEventListener('click', (e) => { if (e.target == background) this.hide(); });
+			background.appendChild(dialog);
+			this.container.appendChild(background);
+			this.element = background;
+
+		} else {
+
+			this.container.appendChild(dialog);
+			this.element = dialog;
 		}
 
-		if (this.annotation && id == this.annotation.id)
-			return;
-
-		this.hide();
-
-		let annotation = layer.getAnnotationById(id);
-		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.template(annotation);
-		this.annotation = annotation;
-		this.layer = layer;
-
-		this.element.style.display = '';
-		//todo position info appropriately.
-		e.preventDefault();
+		this.dialog = dialog;
+		this.content = content;
 	}
-	template(annotation) {
-		return `
-		<p>${annotation.description}</p>
-		<p>${annotation.class}</p>
-		`;
+	
+	setContent(html) {
+		if (typeof (html) == 'string')
+			this.content.innerHTML = html;
+		else
+			this.content.replaceChildren(html);
+	}
+	
+	show() {
+		this.element.classList.remove('hidden');
+	}
+	
+	hide() {
+		this.element.classList.add('hidden');
+		this.emit('closed');
+	}
+	
+	fade(on) {
+		this.element.classList.toggle('fading');
+	}
+
+	toggle(on) {
+		this.element.classList.toggle('hidden', on);
 	}
 }
 
-// class UIDialog {
-// 	constructor(container, options) {
-// 		Object.assign(this, {
-// 			dialog: null,
-// 			content: null,
-// 			container: container,
-// 			modal: false,
-// 			signals: { 'closed': [] },
-// 			class: null,
-// 		}, options);
-// 		this.create();
-// 	}
-// 	//TODO make QObject style events dependency
-// 	addEvent(event, callback) {
-// 		this.signals[event].push(callback);
-// 	}
-// 	emit(event, ...parameters) {
-// 		for (let r of this.signals[event])
-// 			r(...parameters);
-// 	}
-
-// 	create() {
-// 		let background = document.createElement('div');
-// 		background.classList.add('openlime-dialog-background');
-
-// 		let dialog = document.createElement('div');
-// 		dialog.classList.add('openlime-dialog');
-// 		if (this.class)
-// 			dialog.classList.add(this.class);
-
-// 		let close = Skin.appendIcon(dialog, '.openlime-close');
-// 		close.classList.add('openlime-close');
-// 		close.addEventListener('click', () => this.hide());
-
-// 		let content = document.createElement('div');
-// 		content.classList.add('openlime-dialog-content');
-// 		dialog.append(content);
-
-// 		if (this.modal) {
-// 			background.addEventListener('click', (e) => { if (e.target == background) this.hide(); });
-// 			background.appendChild(dialog);
-// 			this.container.appendChild(background);
-// 			this.element = background;
-
-// 		} else {
-
-// 			this.container.appendChild(dialog);
-// 			this.element = dialog;
-// 		}
-
-// 		this.dialog = dialog;
-// 		this.content = content;
-// 	}
-// 	setContent(html) {
-// 		if (typeof (html) == 'string')
-// 			this.content.innerHTML = html;
-// 		else
-// 			this.content.replaceChildren(html);
-// 	}
-// 	show() {
-// 		this.element.classList.remove('hidden');
-// 	}
-// 	hide() {
-// 		this.element.classList.add('hidden');
-// 		this.emit('closed');
-// 	}
-// 	fade(on) {
-// 		this.element.classList.toggle('fading');
-// 	}
-
-// 	toggle(on) {
-// 		this.element.classList.toggle('hidden', on);
-// 	}
-// }
-
-export { UIBasic }
+export { UIBasic, UIDialog }

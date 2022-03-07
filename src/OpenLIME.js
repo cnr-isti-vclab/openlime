@@ -153,5 +153,12 @@ class OpenLIME {
 	}
 }
 
-export { OpenLIME, Canvas, Camera, Transform, ControllerLens, ControllerPanZoom, Layer, Raster, Shader, ShaderCombiner, Layout, Skin, UIBasic, Annotation, LayerAnnotation, LayerSvgAnnotation, EditorSvgAnnotation }
+export { OpenLIME }
+export { Canvas, Camera, Transform }
+export { ControllerLens, ControllerPanZoom }
+export { Layer, Raster }
+export { Shader, ShaderCombiner }
+export { Layout }
+export { Skin, UIBasic, UIDialog }
+export { Annotation, LayerAnnotation, LayerSvgAnnotation, EditorSvgAnnotation }
 
