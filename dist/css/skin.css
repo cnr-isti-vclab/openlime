@@ -140,6 +140,11 @@
 	fill:white !important
 }
 
+.openlime-toolbar text {
+	stroke:white !important;
+	fill:white !important
+}
+
 .openlime-toolbar {
 	position:absolute; 
 	bottom:0px;

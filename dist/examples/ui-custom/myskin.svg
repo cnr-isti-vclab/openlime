@@ -25,10 +25,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.8101934"
-     inkscape:cx="806.26744"
+     inkscape:cx="842.17521"
      inkscape:cy="132.03009"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g907"
      showgrid="true"
      inkscape:window-width="1920"
      inkscape:window-height="1011"
@@ -516,34 +516,34 @@
     <g
        id="g961-3"
        transform="translate(-760.59571,50.602215)"
-       style="fill:#3f0099;fill-opacity:1">
+       style="fill:#3f0099;fill-opacity:1;stroke:#3f0099;stroke-opacity:1">
       <g
          id="g973"
          class="openlime-close"
          stroke="currentColor"
          transform="translate(68.587004,-12.267041)"
-         style="fill:#808080;fill-opacity:1;stroke:#808080;stroke-opacity:1">
+         style="fill:#808080;fill-opacity:1;stroke:#3f0099;stroke-opacity:1">
         <g
            id="path938"
-           style="fill:#808080;fill-opacity:1;stroke:#808080;stroke-opacity:1">
+           style="fill:#808080;fill-opacity:1;stroke:#3f0099;stroke-opacity:1">
           <path
-             style="color:#000000;fill:#808080;fill-opacity:1;stroke:#808080;stroke-width:5;stroke-opacity:1;-inkscape-stroke:none"
+             style="color:#000000;fill:#808080;fill-opacity:1;stroke:#3f0099;stroke-width:5;stroke-opacity:1;-inkscape-stroke:none"
              d="m 710.85787,237.98106 28.28428,-28.28428"
              id="path905" />
           <path
-             style="color:#000000;fill:#808080;fill-opacity:1;stroke:#808080;stroke-opacity:1;-inkscape-stroke:none"
+             style="color:#000000;fill:#3f0099;fill-opacity:1;stroke:#3f0099;stroke-opacity:1;-inkscape-stroke:none"
              d="m 737.375,207.92969 -28.28516,28.2832 3.53516,3.53516 28.28516,-28.28321 z"
              id="path907" />
         </g>
         <g
            id="path949"
-           style="fill:#808080;fill-opacity:1;stroke:#808080;stroke-opacity:1">
+           style="fill:#808080;fill-opacity:1;stroke:#3f0099;stroke-opacity:1">
           <path
-             style="color:#000000;fill:#808080;fill-opacity:1;stroke:#808080;stroke-width:5;stroke-opacity:1;-inkscape-stroke:none"
+             style="color:#000000;fill:#808080;fill-opacity:1;stroke:#3f0099;stroke-width:5;stroke-opacity:1;-inkscape-stroke:none"
              d="m 710.85787,209.69678 28.28428,28.28428"
              id="path911" />
           <path
-             style="color:#000000;fill:#808080;fill-opacity:1;stroke:#808080;stroke-opacity:1;-inkscape-stroke:none"
+             style="color:#000000;fill:#3f0099;fill-opacity:1;stroke:#3f0099;stroke-opacity:1;-inkscape-stroke:none"
              d="m 712.625,207.92969 -3.53516,3.53515 28.28516,28.28321 3.53516,-3.53516 z"
              id="path913" />
         </g>
@@ -561,17 +561,15 @@
          y="303.33893"
          rx="12"
          ry="12" />
-      <text
-         xml:space="preserve"
-         style="font-size:64px;line-height:1.25;font-family:'Palace Script MT';-inkscape-font-specification:'Palace Script MT';font-variant-ligatures:none;letter-spacing:0px;word-spacing:0px;fill:#3f0099;fill-opacity:1"
-         x="973.18854"
-         y="359.47955"
-         id="text25157"><tspan
-           sodipodi:role="line"
-           id="tspan25155"
-           x="973.18854"
-           y="359.47955"
-           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:64px;font-family:Calibri;-inkscape-font-specification:'Calibri Bold';fill:#3f0099;fill-opacity:1">i</tspan></text>
+      <g
+         aria-label="i"
+         id="text25157"
+         style="font-size:64px;line-height:1.25;font-family:'Palace Script MT';-inkscape-font-specification:'Palace Script MT';font-variant-ligatures:none;letter-spacing:0px;word-spacing:0px;fill:#3f0099">
+        <path
+           d="m 985.00104,358.41705 q 0,0.3125 -0.1875,0.5625 -0.1875,0.21875 -0.65625,0.375 -0.4375,0.15625 -1.1875,0.21875 -0.75,0.0937 -1.90625,0.0937 -1.15625,0 -1.90625,-0.0937 -0.75,-0.0625 -1.21875,-0.21875 -0.4375,-0.15625 -0.625,-0.375 -0.1875,-0.25 -0.1875,-0.5625 v -27.8125 q 0,-0.3125 0.1875,-0.53125 0.1875,-0.25 0.625,-0.40625 0.46875,-0.1875 1.21875,-0.28125 0.75,-0.0937 1.90625,-0.0937 1.15625,0 1.90625,0.0937 0.75,0.0937 1.1875,0.28125 0.46875,0.15625 0.65625,0.40625 0.1875,0.21875 0.1875,0.53125 z m 0.59375,-37.3125 q 0,2.375 -0.96875,3.28125 -0.96875,0.90625 -3.59375,0.90625 -2.65625,0 -3.59375,-0.875 -0.90625,-0.875 -0.90625,-3.15625 0,-2.375 0.9375,-3.28125 0.96875,-0.9375 3.625,-0.9375 2.625,0 3.5625,0.90625 0.9375,0.875 0.9375,3.15625 z"
+           style="font-weight:bold;font-family:Calibri;-inkscape-font-specification:'Calibri Bold'"
+           id="path906" />
+      </g>
     </g>
   </g>
 </svg>
