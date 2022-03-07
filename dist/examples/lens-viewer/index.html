@@ -15,20 +15,8 @@
             height: 100%;
         }
 
-        #openlime {
-            height: 80%;
-            position: relative;
-        }
-
-        #openlime>canvas {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            /* this is important, it would cause firefox flickering! */
-        }
-
-        .openlime-toolbar {
-            background-color: rgba(62, 133, 146, 0.5);
+        .openlime {
+            height:80%;
         }
 
         #attribution {
@@ -41,13 +29,13 @@
 
 <body>
     <h1>OpenLIME - Lens Viewer</h1>
-    <div id="openlime">
+    <div class="openlime">
     </div>
     <div id="attribution">Cape Spartivento Lighthouse, oil on canvas, 14x18 cm, 2004 - by Fabio Marton </div>
     <script src="../../openlime.js"></script>
     <script>
         // Create an OpenLIME canvas into #openlime
-        const lime = new OpenLIME.OpenLIME('#openlime');
+        const lime = new OpenLIME.OpenLIME('.openlime');
 
         const layer0 = new OpenLIME.Layer({
             type: 'image',

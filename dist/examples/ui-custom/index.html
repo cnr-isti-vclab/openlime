@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenLIME - Image Viewer</title>
-    <link rel="stylesheet" href="./myskin.css" />
+    <link rel="stylesheet" href="../../css/skin.css" />
     <style>
         html,
         body {
@@ -29,27 +29,31 @@
             margin-top: 0px;
         }
 
-        #openlime {
+        .openlime {
             height: 80%;
-            position: relative;
             top: 2px;
-        }
-
-        #openlime>canvas {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            /* this is important, it would cause firefox flickering! */
+            background-color:#fff;
         }
 
         .openlime-toolbar {
             background-color: #766dd680;
             border-radius: 8px;
             flex-direction: column;
-            top: 0px;
+            top: 10px;
             bottom: auto;
             right: 5px;
         }
+
+
+        .openlime-dialog-background {
+            background-color:rgba(255, 255, 255, 0.5);
+        }
+        .openlime-dialog {
+            background: #766dd6ff;
+            color:white;
+        }
+
+
 
         .openlime-markers.active .openlime-button-off {
             visibility: visible !important;
@@ -80,7 +84,7 @@
 
     <!-- Web page -->
     <h1 class="headline">OpenLIME - Image Viewer</h1>
-    <div id="openlime">
+    <div class="openlime">
     </div>
     <div id="attribution">Lime, photo image - by <a
             href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a>
@@ -90,7 +94,7 @@
     <script src="../../openlime.js"></script>
     <script>
         // Create an OpenLIME canvas into #openlime
-        const lime = new OpenLIME.OpenLIME('#openlime');
+        const lime = new OpenLIME.OpenLIME('.openlime');
 
         // Create an image layer and add it to the canvans
         const layer = new OpenLIME.Layer({
@@ -116,7 +120,7 @@
         zoomout.display = true;
         help.display = true;
 
-        let openlime = document.getElementById('openlime');
+        let openlime = document.querySelector('.openlime');
         let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
         infoDialog.setContent(document.getElementById('info'));
         infoDialog.hide();

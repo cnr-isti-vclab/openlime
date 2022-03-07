@@ -1,9 +1,23 @@
+.openlime {
+	position: relative;
+	background-color:#000;
+	height:100%;
+}
+
+.openlime > canvas {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	/* this is important, it would cause firefox flickering! */
+}
+
+
 .openlime-overlay,
 .openline-svgoverlay {
-    position: absolute;
-    top: 0;
-    width: 100%;
-    height: 100%;
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: 100%;
 }
 
 .openlime-overlay {
@@ -31,7 +45,7 @@
 	stroke-width:2px;
 }
 
-.openlime-info {
+/*.openlime-info {
 	position:absolute;
 	top:30%;
 	left:30%;
@@ -41,8 +55,80 @@
 	border-radius:3px;
 	border:1px solid rgb(60, 60, 60);
 
+} */
+
+.openlime-dialog-background {
+	opacity: 1.0;
+	transition: visibility 0s linear 300ms, opacity 300ms;
+
+	position:absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	color:#fff;
+	background: rgb(0, 0, 0, 0.5);
+	padding:20px 40px;
+	border-radius:5px;	
+	cursor:pointer;
 }
 
+.openlime-dialog {
+	position:absolute;
+	top: 10%;
+	left: 15%;
+	right: 15%;
+	bottom: 7%;
+	color:#fff;
+	font-family: "Open Sans",sans-serif;
+	background: rgb(32, 32, 32, 0.9);
+	opacity:0.95;
+	padding:20px 40px;
+	border-radius:5px;	
+	cursor:auto;
+	transition: visibility 0s linear 0s, opacity 300ms;
+	overflow-y: auto;
+}
+
+.openlime-dialog.openlime-info {
+	position:absolute;
+	top:10px;
+	left:10px;
+	width:25%;
+	height:fit-content;
+	background-color:rgb(20, 20, 20, 0.9);
+	padding:0px 10px;
+	color:white;
+	border-radius:3px;
+	border:1px solid rgb(60, 60, 60);
+}
+
+
+
+.openlime-dialog.fading {
+	opacity:0.0;
+}
+
+.openlime-dialog.hidden, .openlime-dialog-background.hidden {
+	visibility:hidden;
+	opacity:0.0;
+}
+
+.openlime-dialog .openlime-close {
+	position:absolute;
+	top:10px;
+	right:10px;
+	width:30px;
+	height:30px;
+	cursor:pointer;
+} 
+
+.openlime-close:hover  * {
+	stroke:#fff !important;
+	fill:#fff !important;
+}
+
+/* TOOLBAR */
 
 .openlime-toolbar rect[style] {
 	fill:rgb(255, 255, 255, 0) !important;
@@ -54,16 +140,14 @@
 	fill:white !important
 }
 
-
 .openlime-toolbar {
 	position:absolute; 
 	bottom:0px;
 	right:0px;
 	padding:5px;
-	background-color:rgb(0, 0, 0, 0.0);
+	background-color: transparent; 
 	display:flex;
 }
-
 
 .openlime-toolbar svg:not(:root) {
 	width:auto;
@@ -73,7 +157,7 @@
 
 .openlime-toolbar .openlime-button:hover {
 	cursor:pointer;
-	opacity:50%;
+	opacity:70%;
 }
 
 
@@ -83,6 +167,24 @@
 .openlime-light-active .openlime-light path[style] {
 	fill:#ffcc00 !important; 
 }
+
+g.openlime-compact {
+	visibility:hidden !important;
+}
+
+g.openlime-expand {
+	visibility:visible !important;
+}
+
+.openlime-fullscreen-active g.openlime-compact {
+	visibility:visible !important;
+}
+
+.openlime-fullscreen-active g.openlime-expand {
+	visibility:hidden !important;
+}
+
+
 
 
 .openlime-help-window.shown {
@@ -95,7 +197,7 @@
 .openlime-help-window {
 
 	opacity: 0.0;
-    visibility:hidden; 
+	visibility:hidden; 
 	transition: visibility 0s linear 300ms, opacity 300ms;
 
 	position:absolute;
@@ -107,7 +209,7 @@
 	background: rgb(0, 0, 0, 0.5);
 	padding:20px 40px;
 	border-radius:5px;	
-    font-family: "Open Sans",sans-serif;
+	font-family: "Open Sans",sans-serif;
 	cursor:pointer;
 }
 
@@ -137,23 +239,10 @@
 	stroke:#fff !important;
 }
 
-/* layers menu */
 
-g.openlime-compact {
-	visibility:hidden !important;
-}
 
-g.openlime-expand {
-	visibility:visible !important;
-}
 
-.openlime-fullscreen-active g.openlime-compact {
-	visibility:visible !important;
-}
-
-.openlime-fullscreen-active g.openlime-expand {
-	visibility:hidden !important;
-}
+/* LAYERS MENU */
 
 .openlime-layers-menu {
 	position:absolute;
