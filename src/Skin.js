@@ -42,6 +42,28 @@ class Skin {
 		icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 		return icon;
 	}
+
+	// static appendIcon(container, selector) {		
+	// 	let icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	// 	container.appendChild(icon);
+
+	// 	(async () => {
+	// 		let element = await Skin.getElement(selector);
+	// 		icon.appendChild(element);
+		
+	// 		let box = element.getBBox();
+
+	// 		let tlist = element.transform.baseVal;
+	// 		if (tlist.numberOfItems == 0)
+	// 			tlist.appendItem(icon.createSVGTransform());
+	// 		tlist.getItem(0).setTranslate(-box.x, -box.y);
+
+	// 		icon.setAttribute('viewBox', `${-pad} ${-pad} ${box.width + 2*pad} ${box.height + 2*pad}`);
+	// 		icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+	// 	})();
+	// 	return icon;
+	// }
+	
 }
 
 export { Skin }

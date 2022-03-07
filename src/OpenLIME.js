@@ -14,7 +14,7 @@ import { Shader } from './Shader.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
 
 import { Skin } from './Skin.js'
-import { UIBasic } from './UIBasic.js'
+import { UIBasic, UIDialog } from './UIBasic.js'
 import { Controller } from './Controller.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { ControllerLens } from './ControllerLens.js'

@@ -47,16 +47,16 @@ class UIBasic {
 			autoFit: true,
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
-				home:       { title: 'Home',       display: true,   key: 'Home', task: (event) => { if(camera.boundingBox) camera.fitCameraBox(250); } },
-				fullscreen: { title: 'Fullscreen', display: true,   key: 'f', task: (event) => { this.toggleFullscreen(); } },
-				layers:     { title: 'Layers',     display: true,   key: 'Escape', task: (event) => { this.toggleLayers(event); } },
-				zoomin:     { title: 'Zoom in',    display: false,  key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
-				zoomout:    { title: 'Zoom out',   display: false,  key: '-', task: (event) => { camera.deltaZoom(250, 1/1.25, 0, 0); } },
-				rotate:     { title: 'Rotate',     display: false,  key: 'r', task: (event) => { camera.rotate(250, -45); } },
-				light:      { title: 'Light',      display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
-				ruler:      { title: 'Ruler',      display: false,            task: (event) => { this.startRuler(); } },
-				help:       { title: 'Help',       display: false,  key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' },
-				snapshot:   { title: 'Snapshot',   display: false,            task: (event) => { this.snapshot() } },
+				home: { title: 'Home', display: true, key: 'Home', task: (event) => { if (camera.boundingBox) camera.fitCameraBox(250); } },
+				fullscreen: { title: 'Fullscreen', display: true, key: 'f', task: (event) => { this.toggleFullscreen(); } },
+				layers: { title: 'Layers', display: true, key: 'Escape', task: (event) => { this.toggleLayers(event); } },
+				zoomin: { title: 'Zoom in', display: false, key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
+				zoomout: { title: 'Zoom out', display: false, key: '-', task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
+				rotate: { title: 'Rotate', display: false, key: 'r', task: (event) => { camera.rotate(250, -45); } },
+				light: { title: 'Light', display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
+				ruler: { title: 'Ruler', display: false, task: (event) => { this.startRuler(); } },
+				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' },
+				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } },
 			},
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
@@ -85,10 +85,10 @@ class UIBasic {
 		for (let [id, layer] of Object.entries(this.lime.canvas.layers)) {
 			let modes = []
 			for (let m of layer.getModes()) {
-				let mode = { 
-					button: m, 
-					mode: m, 
-					layer: id, 
+				let mode = {
+					button: m,
+					mode: m,
+					layer: id,
 					onclick: () => { layer.setMode(m); this.updateMenu(); },
 					status: () => layer.getMode() == m ? 'active' : '',
 				};
@@ -97,13 +97,13 @@ class UIBasic {
 				modes.push(mode);
 			}
 			let layerEntry = {
-				button: layer.label || id, 
-				onclick: ()=> { this.setLayer(layer); },
-				status: () => layer.visible? 'active' : '',
+				button: layer.label || id,
+				onclick: () => { this.setLayer(layer); },
+				status: () => layer.visible ? 'active' : '',
 				list: modes,
 				layer: id
 			};
-			if(layer.annotations) {
+			if (layer.annotations) {
 				layerEntry.list.push(layer.annotationsEntry());
 				//TODO: this could be a convenience, creating an editor which can be
 				//customized later using layer.editor.
@@ -127,7 +127,7 @@ class UIBasic {
 		let lightLayers = [];
 		for (let [id, layer] of Object.entries(this.lime.canvas.layers))
 			if (layer.controls.light) lightLayers.push(layer);
-		
+
 		if (lightLayers.length) {
 			for (let layer of lightLayers) {
 				controller.setPosition(0.5, 0.5);
@@ -148,13 +148,13 @@ class UIBasic {
 			document.addEventListener('keydown', (e) => this.keyDown(e), false);
 			document.addEventListener('keyup', (e) => this.keyUp(e), false);
 
-			let panzoom = this.panzoom = new ControllerPanZoom(this.lime.camera, { 
-				priority: -1000, 
-				activeModifiers: [0, 1] 
+			let panzoom = this.panzoom = new ControllerPanZoom(this.lime.camera, {
+				priority: -1000,
+				activeModifiers: [0, 1]
 			});
 			this.lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
-			this.lime.pointerManager.on("fingerSingleTap", {"fingerSingleTap": (e) => { this.showInfo(e);}, priority: 10000 });
-			
+			this.lime.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
+
 			//this.lime.pointerManager.on("fingerHover", {"fingerHover": (e) => { this.showInfo(e);}, priority: 10000 });
 
 			this.createMenu();
@@ -189,13 +189,13 @@ class UIBasic {
 	}
 
 	keyUp(e) {
-		if(e.target != document.body && e.target.closest('input, textarea') != null)
+		if (e.target != document.body && e.target.closest('input, textarea') != null)
 			return;
 
-		if(e.defaultPrevented) return;
-		
-		for(const a of Object.values(this.actions)) {
-			if('key' in a && a.key == e.key) {
+		if (e.defaultPrevented) return;
+
+		for (const a of Object.values(this.actions)) {
+			if ('key' in a && a.key == e.key) {
 				e.preventDefault();
 				a.task(e);
 				return;
@@ -204,17 +204,17 @@ class UIBasic {
 	}
 
 	showInfo(e) {
-		if(!e.originSrc) {
+		if (!e.originSrc) {
 			throw "This should never happen!";
 		}
 
 		let layer = e.originSrc.getAttribute('data-layer');
-		if(!layer)
+		if (!layer)
 			return this.info.hide();
-			
+
 		layer = this.lime.canvas.layers[layer];
 
-		if(e.fingerType == 'fingerHover' && !layer.hoverable)
+		if (e.fingerType == 'fingerHover' && !layer.hoverable)
 			return;
 
 		let id = e.originSrc.getAttribute('id');
@@ -224,7 +224,7 @@ class UIBasic {
 		//this.info.show(e, layer, id);
 	}
 
-	
+
 	async loadSkin() {
 		let toolbar = document.createElement('div');
 		toolbar.classList.add('openlime-toolbar');
@@ -242,7 +242,7 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
-				await Skin.appendIcon(toolbar, '.openlime-' + name); 
+				await Skin.appendIcon(toolbar, '.openlime-' + name);
 			}
 
 		}
@@ -311,32 +311,32 @@ class UIBasic {
 	bestScaleLength(min, max, scale, zoom) {
 		scale /= zoom;
 		//closest power of 10:
-		let label10 = Math.pow(10, Math.floor(Math.log(max*scale)/Math.log(10)));
-		let length10 = label10/scale;
-		if(length10 > min) return { length: length10, label: label10 };
+		let label10 = Math.pow(10, Math.floor(Math.log(max * scale) / Math.log(10)));
+		let length10 = label10 / scale;
+		if (length10 > min) return { length: length10, label: label10 };
 
 		let label20 = label10 * 2;
 		let length20 = length10 * 2;
-		if(length20 > min) return { length: length20, label: label20 };
+		if (length20 > min) return { length: length20, label: label20 };
 
 		let label50 = label10 * 5;
 		let length50 = length10 * 5;
 
-		if(length50 > min) return { length: length50, label: label50 };
+		if (length50 > min) return { length: length50, label: label50 };
 		return { length: 0, label: 0 }
 	}
-	
+
 	updateScale(line, text) {
 		//let zoom = this.lime.camera.getCurrentTransform(performance.now()).z;
 		let zoom = this.lime.camera.target.z;
-		if(zoom == this.lastScaleZoom)
+		if (zoom == this.lastScaleZoom)
 			return;
 		this.lastScaleZoom = zoom;
 		let s = this.bestScaleLength(100, 200, this.scale, zoom);
 		//let line = document.querySelector('.openlime-scale > line');
 		let margin = 200 - 10 - s.length;
-		line.setAttribute('x1', margin/2);
-		line.setAttribute('x2', 200 - margin/2);
+		line.setAttribute('x1', margin / 2);
+		line.setAttribute('x2', 200 - margin / 2);
 		//let text = document.querySelector('.openlime-scale > text');
 		text.textContent = s.label + "mm";
 
@@ -345,10 +345,10 @@ class UIBasic {
 
 	//scale is length of a pixel in mm
 	setupScale() {
-		if(!this.scale) return;
-		this.scales = { 'mm': 1, 'cm':10, 'm':1000, 'km':1000000 };
+		if (!this.scale) return;
+		this.scales = { 'mm': 1, 'cm': 10, 'm': 1000, 'km': 1000000 };
 
-		
+
 		let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		svg.setAttribute('viewBox', `0 0 200 40`);
 		svg.classList.add('openlime-scale');
@@ -370,7 +370,7 @@ class UIBasic {
 		svg.appendChild(line);
 		svg.appendChild(text);
 		this.lime.containerElement.appendChild(svg);
-		this.lime.camera.addEvent('update', () => { this.updateScale(line, text); } );
+		this.lime.camera.addEvent('update', () => { this.updateScale(line, text); });
 	}
 
 	//we need the concept of active layer! so we an turn on and off light.
@@ -395,7 +395,7 @@ class UIBasic {
 		if (!active) {
 			var request = document.exitFullscreen || document.webkitExitFullscreen ||
 				document.mozCancelFullScreen || document.msExitFullscreen;
-			request.call(document);document.querySelector('.openlime-scale > line');
+			request.call(document); document.querySelector('.openlime-scale > line');
 
 			this.lime.resize(canvas.offsetWidth, canvas.offsetHeight);
 		} else {
@@ -413,25 +413,25 @@ class UIBasic {
 	}
 
 	toggleHelp(help, on) {
-		
-		if(!help.element) {
+
+		if (!help.element) {
 			let div = document.createElement('div');
 			div.classList.add('openlime-help-window');
-			div.addEventListener('click', (e) => { if(e.target == div) this.toggleHelp(help, false); });
+			div.addEventListener('click', (e) => { if (e.target == div) this.toggleHelp(help, false); });
 
 			let content = document.createElement('div');
 			content.classList.add('openlime-help-content');
 			div.appendChild(content);
-	
-			if (help.html instanceof HTMLElement) 
+
+			if (help.html instanceof HTMLElement)
 				content.appendChild(help.html);
 			else
 				content.innerHTML = help.html;
 
-			(async ()=> {
+			(async () => {
 				let close = await Skin.appendIcon(content, '.openlime-close');
 				close.classList.add('openlime-close');
-				close.addEventListener('click', () => this.toggleHelp(help, false ));
+				close.addEventListener('click', () => this.toggleHelp(help, false));
 				//content.appendChild(close);
 			})();
 			this.lime.containerElement.appendChild(div);
@@ -440,12 +440,12 @@ class UIBasic {
 		//let hidden = help.element.classList.includes('hidden');
 		//if(on == null)
 		//	hidden = true;
-		
+
 		setTimeout(() => help.element.classList.toggle('shown', on), 0);
 
 		//help.element.style.display = on? 'block' : 'none';
 	}
-	
+
 	snapshot() {
 		var e = document.createElement('a');
 		e.setAttribute('href', this.lime.canvas.canvasElement.toDataURL());
@@ -502,7 +502,7 @@ class UIBasic {
 			});
 		if (entry.oninput)
 			entry.element.addEventListener('input', entry.oninput);
-		if(entry.oncreate)
+		if (entry.oncreate)
 			entry.oncreate();
 
 		if ('list' in entry)
@@ -557,12 +557,12 @@ class UIBasic {
 		if (typeof layer_on == 'string')
 			layer_on = this.lime.canvas.layers[layer_on];
 
-		if(layer_on.overlay) { //just toggle
+		if (layer_on.overlay) { //just toggle
 			layer_on.setVisible(!layer_on.visible);
 
 		} else {
 			for (let layer of Object.values(this.lime.canvas.layers)) {
-				if(layer.overlay)
+				if (layer.overlay)
 					continue;
 
 				layer.setVisible(layer == layer_on);
@@ -590,22 +590,22 @@ class Info {
 			layer: null,
 			annotation: null,
 			container: container
-		});			
+		});
 	}
-	
+
 	hide() {
-		if(!this.element) return;
+		if (!this.element) return;
 		this.element.style.display = 'none';
 
-		if(this.layer)
+		if (this.layer)
 			this.layer.setSelected(this.annotation, false);
-		
+
 		this.annotation = null;
 		this.layer = null;
 	}
 
 	show(e, layer, id) {
-		if(!this.element) {
+		if (!this.element) {
 			let html = '<div class="openlime-info"></div>';
 			let template = document.createElement('template');
 			template.innerHTML = html.trim();
@@ -613,11 +613,11 @@ class Info {
 			this.container.appendChild(this.element);
 		}
 
-		if(this.annotation && id == this.annotation.id)
+		if (this.annotation && id == this.annotation.id)
 			return;
 
 		this.hide();
-		
+
 		let annotation = layer.getAnnotationById(id);
 		this.element.innerHTML = layer.infoTemplate ? layer.infoTemplate(annotation) : this.template(annotation);
 		this.annotation = annotation;
@@ -634,5 +634,80 @@ class Info {
 		`;
 	}
 }
+
+// class UIDialog {
+// 	constructor(container, options) {
+// 		Object.assign(this, {
+// 			dialog: null,
+// 			content: null,
+// 			container: container,
+// 			modal: false,
+// 			signals: { 'closed': [] },
+// 			class: null,
+// 		}, options);
+// 		this.create();
+// 	}
+// 	//TODO make QObject style events dependency
+// 	addEvent(event, callback) {
+// 		this.signals[event].push(callback);
+// 	}
+// 	emit(event, ...parameters) {
+// 		for (let r of this.signals[event])
+// 			r(...parameters);
+// 	}
+
+// 	create() {
+// 		let background = document.createElement('div');
+// 		background.classList.add('openlime-dialog-background');
+
+// 		let dialog = document.createElement('div');
+// 		dialog.classList.add('openlime-dialog');
+// 		if (this.class)
+// 			dialog.classList.add(this.class);
+
+// 		let close = Skin.appendIcon(dialog, '.openlime-close');
+// 		close.classList.add('openlime-close');
+// 		close.addEventListener('click', () => this.hide());
+
+// 		let content = document.createElement('div');
+// 		content.classList.add('openlime-dialog-content');
+// 		dialog.append(content);
+
+// 		if (this.modal) {
+// 			background.addEventListener('click', (e) => { if (e.target == background) this.hide(); });
+// 			background.appendChild(dialog);
+// 			this.container.appendChild(background);
+// 			this.element = background;
+
+// 		} else {
+
+// 			this.container.appendChild(dialog);
+// 			this.element = dialog;
+// 		}
+
+// 		this.dialog = dialog;
+// 		this.content = content;
+// 	}
+// 	setContent(html) {
+// 		if (typeof (html) == 'string')
+// 			this.content.innerHTML = html;
+// 		else
+// 			this.content.replaceChildren(html);
+// 	}
+// 	show() {
+// 		this.element.classList.remove('hidden');
+// 	}
+// 	hide() {
+// 		this.element.classList.add('hidden');
+// 		this.emit('closed');
+// 	}
+// 	fade(on) {
+// 		this.element.classList.toggle('fading');
+// 	}
+
+// 	toggle(on) {
+// 		this.element.classList.toggle('hidden', on);
+// 	}
+// }
 
 export { UIBasic }

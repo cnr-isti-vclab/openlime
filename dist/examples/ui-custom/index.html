@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Image Viewer</title>
+    <link rel="stylesheet" href="./myskin.css" />
+    <style>
+        html,
+        body {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            color: #3f0099;
+            font-family: Arial, sans-serif;
+            background-color: #9c98cc80;
+        }
+
+        a {
+            color: #3f0099;
+        }
+
+        .headline {
+            background-color: #766dd680;
+            padding: 10px 0px 10px 0px;
+            margin-bottom: 5px;
+        }
+
+        #openlime {
+            height: 80%;
+            position: relative;
+            top: 2px;
+        }
+
+        #openlime>canvas {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* this is important, it would cause firefox flickering! */
+        }
+
+        .openlime-toolbar {
+            background-color: #766dd680;
+            border-radius: 8px;
+            flex-direction: column;
+            top: 0px;
+            bottom: auto;
+            right: 5px;
+        }
+
+        .openlime-markers.active .openlime-button-off {
+            visibility: visible !important;
+        }
+
+        .openlime-markers .openlime-button-off {
+            visibility: hidden !important;
+        }
+
+        .openlime-dialog {
+            left: 0;
+            right: 0;
+            bottom: 100px;
+        }
+
+        .openlime-dialog.openlime-info {
+            top: 50px;
+            right: 10px;
+            width: auto;
+            max-height: 50%;
+            min-width: auto;
+        }
+
+        #attribution {
+            float: right;
+            margin-top: 10px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <!-- Decorations -->
+    <!-- <div id="info">
+        <h3>This is a info page</h3>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+            labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+            laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
+            voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat
+            non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+    </div> -->
+
+    <!-- Web page -->
+    <h1 class="headline">OpenLIME - Image Viewer</h1>
+    <div id="openlime">
+    </div>
+    <div id="attribution">Lime, photo image - by <a
+            href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a>
+        from <a
+            href="https://pixabay.com/it/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Pixabay</a>
+    </div>
+    <script src="../../openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into #openlime
+        const lime = new OpenLIME.OpenLIME('#openlime');
+
+        // Create an image layer and add it to the canvans
+        const layer = new OpenLIME.Layer({
+            layout: 'image',
+            type: 'image',
+            url: '../../assets/lime/image/lime.jpg'
+        });
+        lime.canvas.addLayer('Base', layer);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('./myskin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+
+        let { help, home, fullscreen, light, zoomin, zoomout } = ui.actions
+
+        // Remove light from the toolbar
+        light.display = false;
+
+        // Add zoomin and zoomout to the toolbar
+        zoomin.display = true;
+        zoomout.display = true;
+
+        // let openlime = document.getElementById('openlime');
+        // let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
+        // infoDialog.setContent(document.getElementById('info'));
+        // infoDialog.hide();
+
+        // Add new action
+        let markers = {
+            title: 'Show popup',
+            display: true,
+            key: 'm',
+            task: (event) => {
+                let button = lime.containerElement.querySelector('.openlime-markers');
+                //let button = markers.element.querySelector('.openlime-button');
+                button.classList.toggle('active');
+                //infoDialog.toggle();
+            }
+        };
+
+        ui.actions = { markers, help, home, fullscreen, light, zoomin, zoomout };
+
+    </script>
+</body>
+
+</html>
