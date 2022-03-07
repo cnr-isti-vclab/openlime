@@ -1,0 +1,17 @@
+html,
+body {
+	margin: 0px;
+	padding: 0px;
+	height: 100%;
+	font-family: "Open Sans",sans-serif;
+}
+h1 { margin-left: 50px; }
+
+.openlime {
+	height:80%;
+}
+
+#attribution {
+	float:right;
+	margin-top: 10px;
+}
