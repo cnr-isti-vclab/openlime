@@ -123,9 +123,13 @@
 	cursor:pointer;
 } 
 
-.openlime-close:hover  * {
+.openlime-close * {
 	stroke:#fff !important;
 	fill:#fff !important;
+}
+
+.openlime-close:hover  * {
+	opacity: 70%;
 }
 
 /* TOOLBAR */
@@ -240,12 +244,6 @@ g.openlime-expand {
 	height:30px;
 	cursor:pointer;
 }
-.openlime-close:hover  * {
-	stroke:#fff !important;
-}
-
-
-
 
 /* LAYERS MENU */
 
