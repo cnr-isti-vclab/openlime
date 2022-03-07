@@ -11,9 +11,7 @@
 	/* this is important, it would cause firefox flickering! */
 }
 
-
-.openlime-overlay,
-.openline-svgoverlay {
+.openlime-overlay, .openline-svgoverlay {
 	position: absolute;
 	top: 0;
 	width: 100%;
@@ -45,17 +43,7 @@
 	stroke-width:2px;
 }
 
-/*.openlime-info {
-	position:absolute;
-	top:30%;
-	left:30%;
-	background-color:rgb(20, 20, 20, 0.9);
-	padding:0px 20px;
-	color:white;
-	border-radius:3px;
-	border:1px solid rgb(60, 60, 60);
-
-} */
+/* DIALOG */
 
 .openlime-dialog-background {
 	opacity: 1.0;
@@ -244,6 +232,19 @@ g.openlime-expand {
 	height:30px;
 	cursor:pointer;
 }
+
+/* ATTRIBUTION */
+
+.openlime-attribution {
+    position:absolute;
+    left:20px;
+    bottom:0;
+    font-family: "Open Sans",sans-serif;
+    font-size:10px;
+    color:white;
+}
+
+
 
 /* LAYERS MENU */
 

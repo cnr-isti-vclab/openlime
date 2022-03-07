@@ -61,6 +61,7 @@ class UIBasic {
 			viewport: [0, 0, 0, 0], //in scene coordinates
 			scale: null,
 			unit: null,
+			attribution: null,     //image attribution
 			lightcontroller: null,
 		});
 
@@ -167,6 +168,14 @@ class UIBasic {
 
 			this.setupActions();
 			this.setupScale();
+			if(this.attribution) {
+				var p = document.createElement('p');
+				p.classList.add('openlime-attribution');
+				p.innerHTML = this.attribution;
+				this.lime.containerElement.appendChild(p);
+			}
+
+			
 
 			for (let l of Object.values(this.lime.canvas.layers)) {
 				this.setLayer(l);

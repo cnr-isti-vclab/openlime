@@ -21,6 +21,7 @@ class LayerLens extends LayerCombiner {
 		this.setShader('lens');
 
         this.startPos = [0, 0];
+        this.border = 2;
 
 		let now = performance.now();
         this.controls['center'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };

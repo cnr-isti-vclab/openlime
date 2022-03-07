@@ -20,9 +20,8 @@
 
 <body>
     <h1>OpenLIME - BRDF Viewer</h1>
-    <div class="openlime">
-    </div>
-    <div id="attribution">Cape Spartivento Lighthouse, oil on canvas, 24x18 cm, 2004 - by Fabio Marton </div>
+    <div class="openlime"></div>
+
     <script src="../../openlime.js"></script>
     <script>
         // Create an OpenLIME canvas into #openlime
@@ -57,7 +56,10 @@
 
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display = true;
-        ui.actions.zoomout.display = true;       
+        ui.actions.zoomout.display = true;
+
+        ui.attribution = `Cape Spartivento Lighthouse, oil on canvas, 24x18 cm, 2004 - by Fabio Marton`;
+
     </script>
 </body>
 
