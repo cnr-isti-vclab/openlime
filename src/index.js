@@ -7,9 +7,8 @@ import { ShaderCombiner } from './ShaderCombiner.js'
 import { LayerRTI } from './LayerRTI.js'
 import { LayerBRDF } from './LayerBRDF.js'
 import { Controller2D } from './Controller2D.js'
-import { ControllerLensTilt } from './ControllerLensTilt.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
-import {ControllerLens} from './ControllerLens.js'
+import { ControllerLens } from './ControllerLens.js'
 import { UIBasic } from './UIBasic.js'
 import { LayerLens } from './LayerLens.js'
 import { Lens } from './Lens.js'
@@ -351,13 +350,13 @@ function lensTest() {
 	});
 
 	lime.camera.bounded = false;
-	let controllerLens = new ControllerLensTilt({
-		camera: lime.camera, 
-		lensLayer: lensLayer, 
-		limeCanvas:lime.canvas, 
-		hover: true, 
-		priority: 0});
-	
+	const controllerLens = new OpenLIME.ControllerLens({
+		lensLayer: lensLayer,
+		camera: lime.camera,
+		hover: true,
+		priority: 0
+	});
+
 	lime.pointerManager.onEvent(controllerLens); 
 	lensLayer.controllers.push(controllerLens);
 
