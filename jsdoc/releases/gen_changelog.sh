@@ -5,11 +5,11 @@ for i in "${!a[@]}" ; do
   ! [[ ${a[$i]} =~ ^v[0-9]+\. ]] && unset -v 'a[$i]'
 done
 
-if [[ "${#a[@]}" -gt 0 ]] 
-then
-    echo "### Tag ${a[0]}"
-    git tag -l --format='%(contents)' "${a[0]}"
-fi
+#if [[ "${#a[@]}" -gt 0 ]] 
+#then
+#    echo "### Tag ${a[0]}"
+#    git tag -l --format='%(contents)' "${a[0]}"
+#fi
 
 if [[ "${#a[@]}" -gt 1 ]] 
 then
