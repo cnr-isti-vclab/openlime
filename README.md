@@ -1,4 +1,4 @@
-# Openlime (Open Layered IMage Explorer)
+# OpenLIME (Open Layered IMage Explorer)
 Web-based, advanced images viewer (RTI, multispectral, BRDF, etc. )
 
 ## Installing npm
