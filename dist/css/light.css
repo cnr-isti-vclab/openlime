@@ -2,7 +2,6 @@
 	background-color:white;
 }
 
-
 /* TOOLBAR */
 
 .openlime-toolbar rect[style] {
@@ -16,7 +15,6 @@
 /*    stroke: none !important; */
 }
 
-
 /* LAYERS MENU */
 
 .openlime-layers-menu {
@@ -28,7 +26,6 @@
 	background-color: rgb(200, 200, 200);
 	color: #000;
 }
-
 
 .openlime-attribution {
     color:black;

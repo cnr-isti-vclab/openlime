@@ -28,7 +28,7 @@
      inkscape:cx="842.17521"
      inkscape:cy="132.03009"
      inkscape:document-units="px"
-     inkscape:current-layer="g907"
+     inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="1920"
      inkscape:window-height="1011"
@@ -551,7 +551,7 @@
     </g>
     <g
        id="g907"
-       class="openlime-button openlime-markers">
+       class="openlime-button openlime-customInfo">
       <rect
          style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#3f0099;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
          id="rect985"

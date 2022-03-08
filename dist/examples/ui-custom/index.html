@@ -21,7 +21,6 @@
         }
 
         .headline {
-            background-color: #766dd680;
             padding: 15px 0px 10px 0px;
             margin-bottom: 5px;
             margin-top: 0px;
@@ -42,29 +41,31 @@
             right: 5px;
         }
 
-
         .openlime-dialog-background {
             background-color:rgba(255, 255, 255, 0.5);
         }
+
         .openlime-dialog {
             background: #766dd6ff;
             color:white;
         }
 
-
-
-        .openlime-markers.active .openlime-button-off {
+        .openlime-customInfo.active .openlime-button-off {
             visibility: visible !important;
         }
 
-        .openlime-markers .openlime-button-off {
+        .openlime-customInfo .openlime-button-off {
             visibility: hidden !important;
         }
 
-        #attribution {
-            float: right;
-            margin-top: 10px;
+        .openlime-attribution {
+            color:darkgray;
         }
+
+        .openlime-attribution a {
+            color:rgb(88, 88, 88);
+        }
+        
     </style>
 
 </head>
@@ -85,7 +86,7 @@
     <div class="openlime"></div>
     <script src="../../openlime.js"></script>
     <script>
-        // Create an OpenLIME canvas into #openlime
+        // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.OpenLIME('.openlime');
 
         // Create an image layer and add it to the canvans
@@ -96,44 +97,52 @@
         });
         lime.canvas.addLayer('Base', layer);
 
-        // Fetch a skin (visual elements for the web page)
+        // Fetch a (custom) skin. A skin is a set of visual elements for the web page.
         OpenLIME.Skin.setUrl('./myskin.svg');
 
         // Create an User Interface 
         const ui = new OpenLIME.UIBasic(lime);
 
+        // Get a subset of pre-defined actions to work on it
         let { help, home, fullscreen, light, zoomin, zoomout } = ui.actions
 
         // Remove light from the toolbar
         light.display = false;
 
         // Add help, zoomin and zoomout to the toolbar
+        help.display = true;
         zoomin.display = true;
         zoomout.display = true;
-        help.display = true;
 
+        // In this example, a new action (customInfo) is created, which is activated
+        // by a button on the toolbar (represented by an i). When the button is pressed, 
+        // an information dialogue is displayed.
+        //
+        // Create a custom dialog
         let openlime = document.querySelector('.openlime');
         let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
         infoDialog.setContent(document.getElementById('info'));
         infoDialog.hide();
 
-        // Add new action
-        let markers = {
+        // Add new action (customInfo). Its behaviour is defined in the function "task"
+        // The action can be activated by pressing the button (with i) in the toolbar
+        // or by pressing the "m" key on the keyboard.
+        let customInfo = {
             title: 'Show popup',
             display: true,
             key: 'm',
             task: (event) => {
-                let button = lime.containerElement.querySelector('.openlime-markers');
-                //let button = markers.element.querySelector('.openlime-button');
+                let button = lime.containerElement.querySelector('.openlime-customInfo');
                 button.classList.toggle('active');
                 infoDialog.toggle();
             }
         };
 
-        ui.actions = { markers, help, home, fullscreen, light, zoomin, zoomout };
+        // Add configured actions to the toolbar
+        ui.actions = { customInfo, help, home, fullscreen, light, zoomin, zoomout };
 
+        // Add image attribution 
         ui.attribution = `Lime, photo image - by <a href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a> from <a href="https://pixabay.com/it/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Pixabay</a>`;
-
 
     </script>
 </body>

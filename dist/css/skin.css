@@ -91,8 +91,6 @@
 	border:1px solid rgb(60, 60, 60);
 }
 
-
-
 .openlime-dialog.fading {
 	opacity:0.0;
 }
@@ -157,7 +155,6 @@
 	opacity:70%;
 }
 
-
 .openlime-light path[style] {
 	fill:#80808011 !important; 
 }
@@ -180,9 +177,6 @@ g.openlime-expand {
 .openlime-fullscreen-active g.openlime-expand {
 	visibility:hidden !important;
 }
-
-
-
 
 .openlime-help-window.shown {
 	visibility:visible; 
@@ -244,8 +238,6 @@ g.openlime-expand {
     color:white;
 }
 
-
-
 /* LAYERS MENU */
 
 .openlime-layers-menu {
@@ -271,16 +263,13 @@ g.openlime-expand {
 	z-index: 1;
 }
 
-
 .openlime-layers-menu > * {
 	margin:10px 10px 0px 10px;
 }
 
-
 .openlime-layers-menu.open {
 	width:100%
 }
-
 
 .openlime-list {
 	margin-left:20px;
@@ -298,10 +287,6 @@ g.openlime-expand {
 	height:auto; 
 	max-height:100%;
 }
-
-
-
-
 
 .openlime-layers-menu .openlime-entry {
 	color: #ccc;
@@ -330,12 +315,10 @@ g.openlime-expand {
 	color:#fff;
 }
 
-
 .openlime-layers-menu .openlime-entry.selected {
 	background-color: rgb(80, 80, 80); 
 	color:#fff;
 }
-
 
 .openlime-layers-menu .openlime-list .openlime-entry {
 	font-size:90%;
@@ -346,7 +329,6 @@ g.openlime-expand {
 .openlime-layers-menu .openlime-tool {
 	padding:0px !important;
 }
-
 
 .openlime-list .openlime-tools {
 	flex-direction:row;
@@ -431,6 +413,7 @@ g.openlime-expand {
 	background-color: #888;
 	padding: 2px 15px;
 }
+
 .openlime-select-button:after {
 	content:"";
 	width: 0;
@@ -441,6 +424,7 @@ g.openlime-expand {
 	top: 8px;
 	right: 10px;
 }
+
 .openlime-select-button:hover {
 	background-color: #444;
 }
@@ -448,11 +432,13 @@ g.openlime-expand {
 .active .openlime-select-button {
 	background-color: #888;
 }
+
 .active .openlime-select-button:after {
 	top: 1px;	
 	border-color: transparent transparent #fff transparent; 
 
 }
+
 .openlime-select-menu { 
 	display: none;
 	position: absolute;
@@ -464,9 +450,8 @@ g.openlime-expand {
 	padding: 0;
 	list-style: none;
 }
+
 .active .openlime-select-menu { display: block; }
-
-
 
 .openlime-select-menu li {
 	margin: 0;
@@ -475,9 +460,8 @@ g.openlime-expand {
 	/* border-top: 1px solid darken($select-background, 10); */
 /*	@include transition(all 0.15s ease-in); */
 }
+
 .openlime-select-menu li:hover {
 	color: #fff;
 	border: 1px #aaa;
 }
-
-
