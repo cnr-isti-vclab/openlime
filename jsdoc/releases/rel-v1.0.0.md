@@ -1,6 +1,6 @@
 ## OpenLIME Rel v1.0.0
 
-**OpenLIME** (Open Layered IMage Explorer) is an open-source library for the efficient display of high resolution images. 
+**OpenLIME** (Open Layered IMage Explorer) is an open-source library for the efficient display of high resolution relightable images. 
 For this purpose, **OpenLIME** uses optimized functions that exploit the capabilities of the latest graphics cards.
 
 **OpenLIME** helps people to quickly display high resolution images in a web browser. 
