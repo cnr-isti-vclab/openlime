@@ -270,8 +270,6 @@ class EditorSvgAnnotation {
 	}
 
 
-
-
 	saveAnnotation() {
 		let edit = this.editWidget;
 		let anno = this.annotation;

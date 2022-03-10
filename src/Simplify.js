@@ -171,7 +171,7 @@ function smoothToPath(smoothed) {
 		else
 			d.push(`c${(p[2]-p[0]).toFixed(1)} ${(p[3]-p[1]).toFixed(1)} ${(p[4]-p[0]).toFixed(1)} ${(p[5]-p[1]).toFixed(1)} ${(p1[0]-p[0]).toFixed(1)} ${(p1[1]-p[1]).toFixed(1)}`);
 	}
-	return d.join();
+	return d.join(' ');
 }
 
 export { simplify, smooth, smoothToPath }
