@@ -27,6 +27,7 @@ class LayerAnnotation extends Layer {
 		super(options);
 
 		this.signals.selected = [];
+		this.signals.loaded = [];
 
 		if (typeof (this.annotations) == "string") { //assumes it is an URL
 			(async () => { await this.loadAnnotations(this.annotations); })();
@@ -55,6 +56,7 @@ class LayerAnnotation extends Layer {
 		
 		this.emit('update');
 		this.emit('ready');
+		this.emit('loaded');
 	}
 
 

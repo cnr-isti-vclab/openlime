@@ -30,6 +30,7 @@ class Camera {
 		Object.assign(this, options);
 		this.target = new Transform(this.target);
 		this.source = this.target.copy();
+    		this.easing = 'linear';
 	}
 
 	copy() {
@@ -76,10 +77,21 @@ class Camera {
 		let r = Transform.rotate(x, y, -transform.a);
 		return {x:r.x, y:r.y};
 	}
+    	sceneToCanvas(x, y, transform) {
+    		let r = Transform.rotate(x, y, transform.a);
+    		x = r.x * transform.z;
+    		y = t.y * transform.z;
+    		x += transform.x;
+    		y += transform.y;
+    		x += this.viewport/2;
+    		y += this.viewport/2;
+    		return { x: x, y: y };
+    	}
 
-	setPosition(dt, x, y, z, a) {
+	setPosition(dt, x, y, z, a, easing) {
 		// Discard events due to cursor outside window
 		//if (Math.abs(x) > 64000 || Math.abs(y) > 64000) return;
+		this.easing = easing || this.easing;
 
 		if (this.bounded) {
 			const sw = this.viewport.dx;
@@ -190,7 +202,7 @@ class Camera {
 		if(time >= this.target.t)
 			Object.assign(pos, this.target);
 		else 
-			pos.interpolate(this.source, this.target, time);
+			pos.interpolate(this.source, this.target, time, this.easing);
 
 		pos.t = time;
 		return pos;
