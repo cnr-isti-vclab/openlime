@@ -15,21 +15,23 @@ class LayerSvgAnnotation extends LayerAnnotation {
 
 	constructor(options) {
 		options = Object.assign({
-				svgURL: null,
+			svgURL: null,
 			svgXML: null,
 			overlayElement: null,    //reference to canvas overlayElement. TODO: check if really needed.
 			shadow: true,            //svg attached as shadow node (so style apply
 			svgElement: null, //the svg layer
 			svgGroup: null,
+			classes: {
+				'': { stroke: '#000', label: '' },
+			}
 		}, options);
 		super(options);
-		console.log("SVG LAYOUT: ", this.layout);
+		this.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`).join('\n');
 		//this.createSVGElement();
 		//this.setLayout(this.layout);
 	}
 
 	createSVGElement() {
-		console.log("HERE");
 		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svgElement.classList.add('openlime-svgoverlay');
 		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -46,35 +48,34 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		}
 		root.appendChild(this.svgElement);
 	}
-/*  unused for the moment!!! 
-	async loadSVG(url) {
-		var response = await fetch(url);
-		if (!response.ok) {
-			this.status = "Failed loading " + this.url + ": " + response.statusText;
-			return;
+	/*  unused for the moment!!! 
+		async loadSVG(url) {
+			var response = await fetch(url);
+			if (!response.ok) {
+				this.status = "Failed loading " + this.url + ": " + response.statusText;
+				return;
+			}
+			let text = await response.text();
+			let parser = new DOMParser();
+			this.svgXML = parser.parseFromString(text, "image/svg+xml").documentElement;
+			throw "if viewbox is set in svgURL should it overwrite options.viewbox or viceversa?"
 		}
-		let text = await response.text();
-		let parser = new DOMParser();
-		this.svgXML = parser.parseFromString(text, "image/svg+xml").documentElement;
-		throw "if viewbox is set in svgURL should it overwrite options.viewbox or viceversa?"
-	}
-*/
+	*/
 
 	setVisible(visible) {
-		if(this.svgElement)
+		if (this.svgElement)
 			this.svgElement.style.display = visible ? 'block' : 'none';
 		super.setVisible(visible);
 	}
 
 	clearSelected() {
-		if(!this.svgElement) this.createSVGElement();
-//		return;
+		if (!this.svgElement) this.createSVGElement();
+		//		return;
 		this.svgGroup.querySelectorAll('[data-annotation]').forEach((e) => e.classList.remove('selected'));
 		super.clearSelected();
 	}
 
 	setSelected(anno, on = true) {
-		console.log("SET SELECTED");
 		for (let a of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))
 			a.classList.toggle('selected', on);
 
@@ -84,14 +85,13 @@ class LayerSvgAnnotation extends LayerAnnotation {
 
 	newAnnotation(annotation, selected = true) {
 		let svg = createElement('svg');
-		if(!annotation)
-			annotation = new Annotation({ element: svg, selector_type: 'SvgSelector'});
+		if (!annotation)
+			annotation = new Annotation({ element: svg, selector_type: 'SvgSelector' });
 		return super.newAnnotation(annotation, selected)
 	}
 
 	draw(transform, viewport) {
-		console.log("LayerSvgAnnotation draw()");
-		if(!this.svgElement)
+		if (!this.svgElement)
 			return true;
 		let t = this.transform.compose(transform);
 		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
@@ -102,29 +102,26 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	}
 
 	prefetch(transform) {
-		console.log("LayerSvgAnnotation prefetch()");
-		if(!this.svgElement)
+		if (!this.svgElement)
 			this.createSVGElement();
 
-		console.log("SVG ELM ", this.svgElement);
-
 		if (!this.visible) return;
-		if(this.status != 'ready') 
+		if (this.status != 'ready')
 			return;
 
-		const bBox=this.boundingBox();
-		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
-	
+		const bBox = this.boundingBox();
+		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh - bBox.xLow} ${bBox.yHigh - bBox.yLow}`);
+
 		//find which annotations needs to be added to the ccanvas, some 
 		//indexing whould be used, for the moment we just iterate all of them.
 
 		for (let anno of this.annotations) {
 
 			//TODO check for class visibility and bbox culling (or maybe should go to prefetch?)
-			if (!anno.ready && typeof anno.selector.value == 'string') {
+			if (!anno.ready && typeof anno.svg == 'string') {
 				let parser = new DOMParser();
-				let element = parser.parseFromString(anno.selector.value, "image/svg+xml").documentElement;
-				anno.selector.elements = [...element.children]
+				let element = parser.parseFromString(anno.svg, "image/svg+xml").documentElement;
+				anno.elements = [...element.children]
 				anno.ready = true;
 
 				/*				} else if(this.svgXML) {
@@ -142,12 +139,12 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			for (let e of this.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`))
 				e.remove();
 
-			if(!anno.visible)
+			if (!anno.visible)
 				continue;
 
 			//second time will be 0 elements, but we need to 
 			//store somewhere knowledge of which items in the scene and which still not.
-			for (let child of anno.selector.elements) {
+			for (let child of anno.elements) {
 				let c = child; //.cloneNode(true);
 				c.setAttribute('data-annotation', anno.id);
 				c.setAttribute('data-class', anno.class);
@@ -157,9 +154,12 @@ class LayerSvgAnnotation extends LayerAnnotation {
 				if (this.selected.has(anno.id))
 					c.classList.add('selected');
 				this.svgGroup.appendChild(c);
-				c.onpointerdown =  (e) => {
-					console.log("CLICK");
-					if(this.selected.has(anno.id))
+				c.onpointerdown = (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					if (this.onClick && this.onClick(anno))
+						return;
+					if (this.selected.has(anno.id))
 						return;
 					this.clearSelected();
 					this.setSelected(anno, true);

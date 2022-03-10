@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Annotation Editor</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+    <style>
+        html,
+        body {
+            color: #3f0099;
+            font-family: Arial, sans-serif;
+            background-color: #9c98cc80;
+        }
+
+        a {
+            color: #3f0099;
+        }
+
+        .headline {
+            padding: 15px 0px 10px 0px;
+            margin-bottom: 5px;
+            margin-top: 0px;
+        }
+
+        .openlime {
+            height: 80%;
+            top: 2px;
+            background-color: #fff;
+        }
+
+        .openlime-toolbar {
+            background-color: #766dd680;
+            border-radius: 8px;
+            flex-direction: column;
+            top: 10px;
+            bottom: auto;
+            right: 5px;
+        }
+
+        .openlime-dialog-background {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .openlime-dialog {
+            background: #766dd6ff;
+            color: white;
+        }
+
+        .openlime-customInfo.active .openlime-button-off {
+            visibility: visible !important;
+        }
+
+        .openlime-customInfo .openlime-button-off {
+            visibility: hidden !important;
+        }
+
+        .openlime-attribution {
+            left: auto;
+            right: 20px;
+            bottom: -30px;
+            /* color: darkgray; */
+        }
+
+        .openlime-attribution a {
+            color: rgb(88, 88, 88);
+        }
+    </style>
+
+</head>
+
+<body>
+    <!-- Web page -->
+    <h1 class="headline">OpenLIME - Annotation Editor</h1>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // Check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const editorEnable = urlParams.has('editor')
+
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.OpenLIME('.openlime');
+        lime.camera.bounded = false;
+
+        // Fetch a (custom) skin. A skin is a set of visual elements for the web page.
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create a custom dialog
+        let openlime = document.querySelector('.openlime');
+        let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
+        infoDialog.hide();
+
+        // Create an image layer and add it to the canvans
+        const layer = new OpenLIME.Layer({
+            type: 'image',
+            layout: 'deepzoom1px',
+            url: 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi',
+        });
+        lime.canvas.addLayer('Base', layer);
+
+        let aOptions = {
+            label: 'Annotations',
+            layout: layer.layout,
+
+            style: ` 
+            .openlime-annotation { pointer-events:stroke; opacity: 0.7; }
+            .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+
+            :focus { fill:yellow; }
+            path { fill:none; stroke-width:2; stroke:#000; vector-effect:non-scaling-stroke; pointer-events:all; }
+            path:hover { cursor:pointer; stroke:#f00; }
+            .selected { stroke-width:3; }
+            `,
+            infoTemplate: (annotation) => {
+                return `
+		        <h3>${annotation.class}</h3>
+		        <p>${annotation.description}</p>
+		    `;
+            },
+            annotations: 'http://localhost:3000/ol',
+            //annotations: 'http://127.0.0.1:8080/crud.php',
+            editable: true
+        }
+
+        if (!editorEnable) {
+            aOptions = {
+                ...aOptions,
+                onClick: (anno) => {
+                    infoDialog.setContent(`<h4>${anno.label}</h4><p>${anno.description}</p>`);
+                    infoDialog.show();
+                },
+                classes: {
+                    '': { stroke: '#000', label: '' },
+                    'class1': { stroke: '#770', label: 'A' },
+                    'class2': { stroke: '#707', label: 'B' },
+                    'class3': { stroke: '#777', label: 'C' },
+                    'class4': { stroke: '#070', label: 'D' },
+                    'class5': { stroke: '#007', label: 'E' },
+                    'class6': { stroke: '#077', label: 'F' },
+                }
+
+            }
+        }
+        const anno = new OpenLIME.LayerSvgAnnotation(aOptions);
+
+        lime.canvas.addLayer('anno', anno);
+
+        if (editorEnable) {
+            const editor = new OpenLIME.EditorSvgAnnotation(lime, anno, {
+                lime: lime,
+                classes: {
+                    '': { stroke: '#000', label: '' },
+                    'class1': { stroke: '#770', label: 'A' },
+                    'class2': { stroke: '#707', label: 'B' },
+                    'class3': { stroke: '#777', label: 'C' },
+                    'class4': { stroke: '#070', label: 'D' },
+                    'class5': { stroke: '#007', label: 'E' },
+                    'class6': { stroke: '#077', label: 'F' },
+                }
+            });
+            editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
+            editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
+            editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); processRequest(anno, 'update'); return true; };
+        }
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+
+        // Get a subset of pre-defined actions to work on it
+        let { help, home, layers, fullscreen, light, zoomin, zoomout } = ui.actions
+
+        // Remove light from the toolbar
+        light.display = false;
+
+        // Add help, zoomin and zoomout to the toolbar
+        help.display = true;
+        zoomin.display = true;
+        zoomout.display = true;
+
+        // Add configured actions to the toolbar
+        ui.actions = { help, home, layers, fullscreen, light, zoomin, zoomout };
+
+        // Add image attribution 
+        ui.attribution = `CRS4 Digital Pathology Platform - <a href="https://www.crs4.it/research/visual-and-data-intensive-computing/digital-health/">CRS4 Digital Health Research Program</a>`;
+
+        async function processRequest(anno, action) {
+            let method = "GET";
+            let url = "http://localhost:3000/ol"
+            let body = "";
+            switch (action) {
+                case "create":
+                    method = "POST";
+                    url = "http://localhost:3000/ol";
+                    body = JSON.stringify(anno);
+                    break;
+                case "update":
+                    method = "PUT";
+                    url = `http://localhost:3000/ol/${anno.id}`;
+                    body = JSON.stringify(anno);
+                    break;
+                case "delete":
+                    method = "DELETE";
+                    url = `http://localhost:3000/ol/${anno.id}`;
+                    body = "";
+                    break;
+
+                default:
+                    break;
+            }
+            const response = await fetch(url, {
+                method: method,
+                mode: 'cors', // this cannot be 'no-cors'
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: body
+            });
+            if (!response.ok) {
+                const message = `An error has occured: ${response.status} ${response.statusText} `;
+                alert(message);
+                throw new Error(message);
+            }
+            let json = await response.json();
+            if (json.status == 'error')
+                alert(json.msg);
+        }
+
+    </script>
+</body>
+
+</html>

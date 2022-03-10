@@ -12,11 +12,7 @@ class Annotation {
 				description: null,
 				class: null,
 				target: null,
-				selector: { 
-					type: null, 
-					value: null, 
-					elements: []  //svg elements (referencing those in the layer.svgElement
-				}, 
+				svg: null,
 				data: {},
 				style: null,
 				bbox: null,
@@ -29,7 +25,7 @@ class Annotation {
 			options);
 			//TODO label as null is problematic, sort this issue.
 			if(!this.label) this.label = ''; 
-			this.selector.elements = []; //assign options is not recursive!!!
+			this.elements = []; //assign options is not recursive!!!
 	}
 
 	static UUID() {
@@ -41,10 +37,10 @@ class Annotation {
 
 	getBBoxFromElements() {
 		let box = { x: 0, y: 0, width: 0, height: 0 }
-		if(!this.selector.elements.length)
+		if(!this.elements.length)
 			return box;
-		let { x, y, width, height } = this.selector.elements[0].getBBox();
-		for(let shape of this.selector.elements) {
+		let { x, y, width, height } = this.elements[0].getBBox();
+		for(let shape of this.elements) {
 				const { sx, sy, swidth, sheight } = shape.getBBox();
 				x = Math.min(x, sx);
 				y = Math.min(x, sy);
@@ -69,7 +65,8 @@ class Annotation {
 		if(selector) {
 			switch(selector.type) {
 			case 'SvgSelector':
-				options.selector = { type: 'svg', value: selector.value, elements:[] }
+				options.svg = selector.value;
+				options.elements = [];
 				break;
 			default:
 				throw "Unsupported selector: " + selector.type;

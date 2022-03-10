@@ -285,14 +285,14 @@ class EditorSvgAnnotation {
 		let button = edit.querySelector('.openlime-select-button');
 		button.style.background = this.classes[anno.class].stroke;
 
-		for (let e of this.annotation.selector.elements)
+		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
 
 		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class, publish: anno.publish };
 		//anno.bbox = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
 		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">
-				${anno.selector.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
+				${anno.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
 				</svg>`;
 
 		if (this.updateCallback) {
@@ -302,7 +302,7 @@ class EditorSvgAnnotation {
 				return;
 			}
 		}				//for (let c of element.children)
-		//		a.selector.elements.push(c);
+		//		a.elements.push(c);
 
 		//update the entry
 		let template = document.createElement('template');
@@ -352,7 +352,7 @@ class EditorSvgAnnotation {
 		let serializer = new XMLSerializer();
 		//let svg = `<svg xmlns="http://www.w3.org/2000/svg">
 		for (let anno of this.layer.annotations) {
-			for (let e of anno.selector.elements) {
+			for (let e of anno.elements) {
 				if (e.tagName == 'path') {
 					//Inkscape nitpicks on the commas in svg path.
 					let d = e.getAttribute('d');
@@ -364,7 +364,7 @@ class EditorSvgAnnotation {
 		let svg = serializer.serializeToString(svgElement);
 		/*(${this.layer.annotations.map(anno => {
 			return `<group id="${anno.id}" title="${anno.label}" data-description="${anno.description}">
-				${anno.selector.elements.map((s) => { 
+				${anno.elements.map((s) => { 
 					s.classList.remove('selected'); 
 					return serializer.serializeToString(s) 
 				}).join("\n")}
@@ -468,14 +468,14 @@ class EditorSvgAnnotation {
 		let data = {};
 		for (let i of ['id', 'label', 'description', 'class', 'publish'])
 			data[i] = `${anno[i] || ''}`;
-		data.elements = anno.selector.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
+		data.elements = anno.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
 		return data;
 	}
 
 	dataToAnno(data, anno) {
 		for (let i of ['id', 'label', 'description', 'class', 'publish'])
 			anno[i] = `${data[i]}`;
-		anno.selector.elements = data.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
+		anno.elements = data.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
 	}
 
 	// TOOLS STUFF
@@ -641,7 +641,7 @@ class Pen {
 
 		if (this.points.length < 2) {
 			this.points = [];
-			this.annotation.selector.elements = this.annotation.selector.elements.filter((e) => e != this.path);
+			this.annotation.elements = this.annotation.elements.filter((e) => e != this.path);
 		}
 	}
 }
@@ -703,7 +703,7 @@ class Line {
 			this.layer.svgGroup.removeChild(this.segment);
 			this.segment = null;
 		}*/
-		for (let e of this.annotation.selector.elements) {
+		for (let e of this.annotation.elements) {
 			if (!e.points || e.points.length < 2)
 				continue;
 			if (Line.distance(e.points[0], pos) * pos.z < 5) {
@@ -724,7 +724,7 @@ class Line {
 		this.path = createElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 		this.path.points = [pos];
 		this.history = [this.path.points.length];
-		this.annotation.selector.elements.push(this.path);
+		this.annotation.elements.push(this.path);
 	}
 
 	tap(pos) {
@@ -828,7 +828,7 @@ class Erase {
 	finish(pos, event) { return this.erase(pos, event); } //true if some points where removed.
 	tap(pos, event) { return this.erase(pos, event); }
 	erase(pos, event) {
-		for (let e of this.annotation.selector.elements) {
+		for (let e of this.annotation.elements) {
 			if (e == event.originSrc) {
 				e.points = [];
 				this.erased = true;
@@ -856,7 +856,7 @@ class Erase {
 
 			e.setAttribute('d', Line.svgPath(points));
 		}
-		this.annotation.selector.elements = this.annotation.selector.elements.filter(e => { return !e.points || e.points.length > 2; });
+		this.annotation.elements = this.annotation.elements.filter(e => { return !e.points || e.points.length > 2; });
 		return this.erased;
 	}
 }

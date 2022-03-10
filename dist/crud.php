@@ -1,4 +1,21 @@
 ﻿<?php
+// Allow from any origin
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+	header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+	header('Access-Control-Allow-Credentials: true');
+}
+
+// Access-Control headers are received during OPTIONS requests
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+
+	if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+		header("Access-Control-Allow-Methods: GET, POST, OPTIONS");         
+
+	if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+		header("Access-Control-Allow-Headers:        {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+
+	exit(0);
+}
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate');
@@ -94,39 +111,8 @@ function export($pdo) {
 				"class"=> $row['class'],
 				"description"=> $row['description'],
 				"publish" => $row['publish'],
-				"selector"=> [
-					"type"=> "SvgSelector",
-					"value"=> $row["svg"]
-				]
+				"svg" => $row['svg']
 			];
-
-/*				"@context" => "http://www.w3.org/ns/anno.jsonld",
-				"id" => $row['id'],
-				"type"=> "Annotation",
-				"body"=> [
-					[
-					"type"=> "TextualBody",
-					"value"=> $row['title'],
-					"purpose"=> "identifying"
-					],
-					[
-					"type"=> "TextualBody",
-					"value"=> $row['description'],
-					"purpose"=> "describing"
-					],
-					[
-					"type"=> "TextualBody",
-					"value"=> $row['class'],
-					"purpose"=> "classifying"
-					] 
-				],
-				"target"=> [
-				  "selector"=> [
-					"type"=> "SvgSelector",
-					"value"=> $row["svg"]
-				  ]
-				]
-*/				
 		}
 		echo(json_encode($annotations));
 		return;

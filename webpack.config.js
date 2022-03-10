@@ -26,7 +26,7 @@ module.exports = {
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
       title: 'OpenLIME',
-      template: __dirname + '/dist/index.html',
+      template: __dirname + '/dist/npm.html',
       inject: false
     }),
   ],
