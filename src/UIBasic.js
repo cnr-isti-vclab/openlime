@@ -116,7 +116,23 @@ class UIBasic {
 		let controller = new Controller2D((x, y) => {
 			for (let layer of lightLayers)
 				layer.setLight([x, y], 0);
-		}, { active: false, activeModifiers: [2, 4], control: 'light', relative: true });
+			if(this.showLightDirections)
+				this.updateLightDirections(x, y);
+
+			}, { 
+				active: false, 
+    			activeModifiers: [2, 4], 
+    			control: 'light', 
+    			onPanStart: this.showLightDirections ? () => {
+    				this.info.fade(true);
+    				Object.values(this.lime.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false) );
+    				this.enableLightDirections(true); } : null,
+    			onPanEnd: this.showLightDirections ? () => { 
+    				this.info.fade(false);
+    				Object.values(this.lime.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true) );
+    				this.enableLightDirections(false); } : null,
+    			relative: true 
+			});
 
 		controller.priority = 0;
 		this.lime.pointerManager.onEvent(controller);
@@ -128,6 +144,7 @@ class UIBasic {
 			if (layer.controls.light) lightLayers.push(layer);
 
 		if (lightLayers.length) {
+			this.createLightDirections();
 			for (let layer of lightLayers) {
 				controller.setPosition(0.5, 0.5);
 				//layer.setLight([0.5, 0.5], 0);
@@ -138,6 +155,40 @@ class UIBasic {
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
 	}
+
+	createLightDirections() {
+		this.lightDirections = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		this.lightDirections.setAttribute('viewBox', '-100, -100, 200 200');
+		this.lightDirections.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+		this.lightDirections.style.display = 'none';
+		this.lightDirections.classList.add('openlime-lightdir');
+		for(let x = -1; x <= 1; x++) {
+			for(let y = -1; y <= 1; y++) {
+				let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+				line.pos = [x*35, y*35];
+				//line.setAttribute('data-start', `${x} ${y}`);
+				this.lightDirections.appendChild(line);
+			}
+		}
+		this.lime.containerElement.appendChild(this.lightDirections);
+	}
+	
+	updateLightDirections(lx, ly) {
+		let lines = [...this.lightDirections.children];
+		for(let line of lines) {
+			let x = line.pos[0];
+			let y = line.pos[1];
+			
+			line.setAttribute('x1', 0.6*x -25*0*lx);
+			line.setAttribute('y1', 0.6*y +25*0*ly);
+			line.setAttribute('x2', x/0.6 + 60*lx);
+			line.setAttribute('y2', y/0.6 - 60*ly);
+		}
+	}
+	enableLightDirections(show) {
+		this.lightDirections.style.display = show? 'block' : 'none';
+	}
+	
 
 	init() {
 		(async () => {

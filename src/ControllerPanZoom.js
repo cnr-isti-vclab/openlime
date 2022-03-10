@@ -52,7 +52,7 @@ class ControllerPanZoom extends Controller {
 
 	pinchStart(e1, e2) {
 		this.zooming = true;
-		this.initialDistance = this.distance(e1, e2);
+		this.initialDistance = Math.max(30, this.distance(e1, e2));
 		e1.preventDefault();
 		//e2.preventDefault(); //TODO this is optional?
 	}
@@ -80,7 +80,7 @@ class ControllerPanZoom extends Controller {
 	}
 
 	mouseWheel(e) {
-		let delta = e.deltaY > 0 ? 1 : -1;
+		let delta = -e.deltaY/53;
 		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
 		const dz = Math.pow(this.zoomAmount, delta);		
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
