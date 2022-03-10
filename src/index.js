@@ -17,7 +17,7 @@ import { LayerAnnotation } from './LayerAnnotation.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 
-let lime = new OpenLIME('#openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
+let lime = new OpenLIME('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 //combinerTest();
 imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
@@ -381,26 +381,26 @@ function imageTest(layout) {
 	console.log("OPTIONS: ", options);
 	switch (layout) {
 		case 'image':
-			options.url = 'assets/svbrdf/vis/glossMap.jpg';
+			options.url = 'assets/lime/image/lime.jpg';
 //			options.url = 'http://dev.isti.cnr.it/iipsrv/iipsrv.fcgi?IIIF=/home/ponchio/Sync/html/cenobium/sites/monreale/tif/N1ShNWNW.tif/2048,0,1952,2048/244.875,256/0/default.jpg';
 			break;
 
 			case 'deepzoom1px':
-				options.url = 'assets/deepzoom/anatra.dzi';
+				options.url = 'assets/lime/deepzoom1px/lime.dzi';
 			break;	
 			case 'deepzoom':
 				//options.url = 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
-				options.url = 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
+				//options.url = 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
 			break;
 
 		case 'google':
-			options.width = 300;
-			options.height = 553;
-			options.url = 'assets/svbrdf/vis/kdMap';
+			options.width = 3184,
+            options.height = 2024,
+            options.url = 'assets/lime/google/lime'
 			break;
 
 		case 'zoomify':
-			options.url = 'assets/svbrdf/vis/glossMap/ImageProperties.xml';
+			options.url = 'assets/lime/zoomify/lime/ImageProperties.xml';
 			break;
 
 		case 'iiif':
@@ -410,11 +410,11 @@ function imageTest(layout) {
 			break;
 
 		case 'tarzoom':
-			options.url = 'assets/rti/hsh/plane_0.tzi';
+			options.url = 'assets/lime/tarzoom/lime.tzi';
 			break;
 
 		case 'itarzoom':
-			options.url = 'assets/rti/hsh/planes.tzi';
+			//options.url = 'assets/rti/hsh/planes.tzi';
 			break;
 		
 	}

@@ -2,4 +2,7 @@ node_modules
 docs
 build
 dist/database.php
+dist/examples/npm-demo/main.js
+dist/examples/npm-demo/index.html
+scratch
 
