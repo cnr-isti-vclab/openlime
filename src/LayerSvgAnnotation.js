@@ -155,14 +155,16 @@ class LayerSvgAnnotation extends LayerAnnotation {
 					c.classList.add('selected');
 				this.svgGroup.appendChild(c);
 				c.onpointerdown = (e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					if (this.onClick && this.onClick(anno))
-						return;
-					if (this.selected.has(anno.id))
-						return;
-					this.clearSelected();
-					this.setSelected(anno, true);
+					if (e.button == 0) {
+						e.preventDefault();
+						e.stopPropagation();
+						if (this.onClick && this.onClick(anno))
+							return;
+						if (this.selected.has(anno.id))
+							return;
+						this.clearSelected();
+						this.setSelected(anno, true);
+					}
 				}
 
 
