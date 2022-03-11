@@ -40,6 +40,19 @@ class Shader {
 
 	setUniform(name, value) {
 		let u = this.uniforms[name];
+		if(typeof(value) == "number" && u.value == value) 
+			return;
+		if(Array.isArray(value) && Array.isArray(u.value) && value.length == u.value.length) {
+			let equal = true;
+			for(let i = 0; i < value.length; i++)
+				if(value[i] != u.value[i]) {
+					equal = false;
+					break;
+				}
+			if(equal)
+				return;
+		}
+
 		u.value = value;
 		u.needsUpdate = true;
 		this.emit('update');

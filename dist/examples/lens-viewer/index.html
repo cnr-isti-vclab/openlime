@@ -19,35 +19,21 @@
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.OpenLIME('.openlime');
 
-        // const layer0 = new OpenLIME.Layer({
-        //     type: 'image',
-        //     url: '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
-        //     layout: 'deepzoom',
-        //     transform: { x: 0, y: 0, z: 1, a: 0 },
-        //     visible: false
-        // });
-        const layer0 = new OpenLIME.Layer({
-            type: 'image',
-            url: '../../assets/lighthouse/image/lighthouse-kdmap.jpg',
-            layout: 'image',
-            transform: { x: 0, y: 0, z: 1, a: 0 },
-            visible: false
-        });
+         const layer0 = new OpenLIME.Layer({
+             type: 'image',
+             url: '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
+             layout: 'deepzoom',
+             transform: { x: 0, y: 0, z: 1, a: 0 },
+             visible: false
+         });
         lime.canvas.addLayer('kdmap', layer0);
 
-        // const layer1 = new OpenLIME.Layer({
-        //     type: 'image',
-        //     url: '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
-        //     layout: 'deepzoom',
-        //     transform: { x: 0, y: 0, z: 1, a: 0 },
-        //     visible: false
-        // });
-        const layer1 = new OpenLIME.Layer({
-            type: 'image',
-            url: '../../assets/lighthouse/image/lighthouse-nomap.jpg',
-            layout: 'image',
-            transform: { x: 0, y: 0, z: 1, a: 0 },
-            visible: false
+         const layer1 = new OpenLIME.Layer({
+             type: 'image',
+             url: '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
+             layout: 'deepzoom',
+             transform: { x: 0, y: 0, z: 1, a: 0 },
+             visible: false
         });
 
         lime.canvas.addLayer('nomap', layer1);      

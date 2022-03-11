@@ -77,6 +77,8 @@ class Transform {
 	}
 
 /*  get the bounding box (in image coordinate sppace) of the vieport. 
+    the viewport has y -> pointing up
+	the image and screen transform has y pointing down. hence the inversion.
  */
 	getInverseBox(viewport) {
 		let inverse = this.inverse();
@@ -88,7 +90,7 @@ class Transform {
 		];
 		let box = new BoundingBox();
 		for(let corner of corners) {
-			let p = inverse.apply(corner.x -viewport.w/2, corner.y - viewport.h/2);
+			let p = inverse.apply(corner.x -viewport.w/2, -corner.y + viewport.h/2);
 			box.mergePoint(p);
 		}
 		return box;
