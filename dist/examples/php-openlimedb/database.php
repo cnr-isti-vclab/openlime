@@ -1,6 +1,6 @@
 <?php
 $server = 'mysql:host=localhost';
 $user = 'openlime';
-$password = 'Cagliari2020!';
+$password = 'NydROTic20';
 $database = 'openlime';
 ?>

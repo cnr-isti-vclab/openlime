@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mysql -u root -pCagliari2020! -vv < createdb.sql
+mysql -u root -pNydROTic20 -vv < createdb.sql

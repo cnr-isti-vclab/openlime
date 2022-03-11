@@ -1,5 +1,5 @@
-CREATE DATABASE;
-CREATE USER 'openlime'@'localhost' IDENTIFIED BY 'Cagliari2020!';
+CREATE DATABASE openlime;
+CREATE USER 'openlime'@'localhost' IDENTIFIED BY 'NydROTic20';
 GRANT ALL PRIVILEGES ON openlime . * TO 'openlime'@'localhost';
 USE openlime;
 CREATE TABLE annotations

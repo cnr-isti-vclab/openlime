@@ -26,7 +26,6 @@ async function dbcreate(item) {
         status = "ok";
         message = 'Annotation created successfully';
     }
-    console.log(result);
     return { status, message };
 }
 
