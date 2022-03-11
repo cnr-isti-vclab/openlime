@@ -9,7 +9,7 @@ module.exports = {
   devtool: 'eval-source-map',
 
   entry: {
-    main: path.resolve(__dirname + '/src/index.js'),
+    main: './src/index.js',
   },
 
   output: {
