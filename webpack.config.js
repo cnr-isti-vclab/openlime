@@ -1,5 +1,6 @@
 var webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const CopyPlugin = require("copy-webpack-plugin");
 const path = require('path')
 
 module.exports = {
@@ -34,6 +35,13 @@ module.exports = {
       title: 'OpenLIME',
       template: __dirname + '/dist/examples/npm-demo/index-template.html',
       inject: false
+    }),
+    new CopyPlugin({
+      patterns: [
+        { from: "dist/css", to: "./css" },
+        { from: "dist/skin", to: "./skin" },
+        { from: "dist/assets", to: "./assets" }
+      ],
     }),
   ],
 }

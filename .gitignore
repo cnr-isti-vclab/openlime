@@ -4,5 +4,8 @@ build
 dist/database.php
 dist/examples/npm-demo/main.js
 dist/examples/npm-demo/index.html
+dist/examples/npm-demo/css
+dist/examples/npm-demo/assets
+dist/examples/npm-demo/skin
 scratch
 
