@@ -33,14 +33,11 @@ jobs:
 
     - name: Copy css, skin, etc...
       run: |
-        mkdir openlime
-        cp -r dist/js openlime
-        cp -r dist/css openlime
-        cp -r dist/skin openlime
-        cp -r dist/examples openlime
-        cp -r dist/assets openlime
-        cp README.md openlime
-        cp LICENSE openlime
+        cp README.md dist
+        cp LICENSE dist
+
+    - name: Rename build to openlime
+      run: mv dist openlime
 
     - name: Install Zip 
       uses: montudor/action-zip@v1
