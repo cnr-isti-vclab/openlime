@@ -18,6 +18,7 @@ import { UIBasic, UIDialog } from './UIBasic.js'
 import { Controller } from './Controller.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { ControllerLens } from './ControllerLens.js'
+import { ControllerFocusContext } from './ControllerFocusContext'
 
 import { PointerManager } from './PointerManager.js'
 
@@ -155,7 +156,7 @@ class OpenLIME {
 
 export { OpenLIME }
 export { Canvas, Camera, Transform }
-export { ControllerLens, ControllerPanZoom }
+export { ControllerLens, ControllerPanZoom, ControllerFocusContext }
 export { Layer, Raster }
 export { Shader, ShaderCombiner }
 export { Layout }

@@ -20,6 +20,7 @@ class ControllerLens extends Controller {
         this.panning = false;
         this.zooming = false;
         this.initialDistance = 0;
+        this.startPos = [0, 0];
     }
 
 	panStart(e) {
@@ -32,7 +33,6 @@ class ControllerLens extends Controller {
         if (this.isInsideLens(p)) {
             this.panning = true;
             e.preventDefault();
-           
         }
 	}
 
@@ -47,6 +47,7 @@ class ControllerLens extends Controller {
     
             this.lensLayer.setCenter(c[0] + dx, c[1] + dy);
             this.startPos = p;
+            e.preventDefault();
         }
 	}
 
@@ -102,14 +103,16 @@ class ControllerLens extends Controller {
         return result;
     }
 
-	getScenePosition(e) {
+	getScenePosition(e, t = null) {
         let x = e.offsetX;
         let y = e.offsetY;
         let rect = e.target.getBoundingClientRect();
 
         // Transform canvas p to scene coords
-        let now = performance.now();
-        const t = this.camera.getCurrentTransform(now);
+        if (t == null) {
+            let now = performance.now();
+            t = this.camera.getCurrentTransform(now);
+        }
         const p = t.viewportToSceneCoords(this.camera.viewport, [x, rect.height- y]);
         
         return p;

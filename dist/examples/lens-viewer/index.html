@@ -48,9 +48,10 @@
         });
 
         lime.camera.bounded = false;
-        const controllerLens = new OpenLIME.ControllerLens({
+        const controllerLens = new OpenLIME.ControllerFocusContext({
             lensLayer: lensLayer,
             camera: lime.camera,
+            canvas: lime.canvas,
             hover: true,
             priority: 0
         });
