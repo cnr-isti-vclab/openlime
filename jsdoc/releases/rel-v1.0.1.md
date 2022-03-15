@@ -23,6 +23,8 @@ This relese adds a complete example of an Annotation Editor (examples/annotation
 Two simple db servers are also provided (php and express) with their instructions.
 #### Easing transitions
 This release adds easing transitions to interpolate camera movements.
+#### New Focus&Context Controller for LayerLens
+A new lens controller (**ControllerFocusContext**) allows joint adjustments in camera and lens parameters to ensure a good placement and sizing of the lens within the view.
 #### Migrating to Webpack 5.x
 The development environment now uses Webpack 5.x in order to improve build time and reduce chunk sizes.
 #### Bug fixing
