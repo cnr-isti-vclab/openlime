@@ -58,13 +58,15 @@ class _Cache {
 
 	findBestCandidate() {
 		let best = null;
+		console.log("Candidates: ");
 		for(let layer of this.layers) {
 			if(!layer.queue.length)
 				continue;
 			let tile = layer.queue.shift();
+			console.log(layer.id, tile.level, tile.x, tile.y, tile.priority, tile.time);
 			if(!best ||
-				tile.time > best.tile.time ||
-				(tile.time == best.tile.time && tile.priority > best.tile.priority))
+				tile.time > best.tile.time  + 1.0 ||  //old requests ignored
+				tile.priority > best.tile.priority)
 				best = { layer, tile }
 		}
 		return best;
@@ -90,6 +92,7 @@ class _Cache {
  */
 	loadTile(layer, tile) {
 		this.requested++;
+		console.log("Loading tile: " + layer.id, tile.x, tile.y, tile.level);
 		(async () =>  { layer.loadTile(tile, (size) => { this.size += size; this.requested--; this.update(); } ); })();
 	}
 /*
