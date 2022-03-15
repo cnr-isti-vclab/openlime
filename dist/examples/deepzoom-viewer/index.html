@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLIME - DeepZoom(1px) Viewer</title>
+    <title>OpenLIME - DeepZoom Viewer</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <link rel="stylesheet" href="../../css/light.css" />
     <link rel="stylesheet" href="../examples.css" />
@@ -13,7 +13,7 @@
 </head>
 
 <body>
-    <h1>OpenLIME - DeepZoom(1px) Viewer</h1>
+    <h1>OpenLIME - DeepZoom Viewer</h1>
     <div class="openlime"></div>
     <script src="../../js/openlime.js"></script>
     <script>
@@ -22,9 +22,9 @@
 
         // Create an image layer and add it to the canvans
         const layer = new OpenLIME.Layer({
-            layout: 'deepzoom1px',
+            layout: 'deepzoom',
             type: 'image',
-            url: '../../assets/lime/deepzoom1px/lime.dzi'
+            url: '../../assets/lime/deepzoom/lime.dzi'
         });
         lime.canvas.addLayer('Base', layer);
 
