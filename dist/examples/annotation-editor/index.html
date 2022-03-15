@@ -102,6 +102,18 @@
         });
         lime.canvas.addLayer('Base', layer);
 
+        // Define annotation parameters
+        let annotationServer = 'http://localhost:3000/ol';
+        const classParam = {
+            '': { stroke: '#000', label: '' },
+            'class1': { stroke: '#770', label: 'A' },
+            'class2': { stroke: '#707', label: 'B' },
+            'class3': { stroke: '#777', label: 'C' },
+            'class4': { stroke: '#070', label: 'D' },
+            'class5': { stroke: '#007', label: 'E' },
+            'class6': { stroke: '#077', label: 'F' },
+        };
+
         let aOptions = {
             label: 'Annotations',
             layout: layer.layout,
@@ -121,8 +133,7 @@
 		        <p>${annotation.description}</p>
 		    `;
             },
-            annotations: 'http://localhost:3000/ol',
-            //annotations: 'http://127.0.0.1:8080/crud.php',
+            annotations: annotationServer,
             editable: true
         }
 
@@ -133,34 +144,19 @@
                     infoDialog.setContent(`<h4>${anno.label}</h4><p>${anno.description}</p>`);
                     infoDialog.show();
                 },
-                classes: {
-                    '': { stroke: '#000', label: '' },
-                    'class1': { stroke: '#770', label: 'A' },
-                    'class2': { stroke: '#707', label: 'B' },
-                    'class3': { stroke: '#777', label: 'C' },
-                    'class4': { stroke: '#070', label: 'D' },
-                    'class5': { stroke: '#007', label: 'E' },
-                    'class6': { stroke: '#077', label: 'F' },
-                }
-
+                classes: classParam
             }
         }
-        const anno = new OpenLIME.LayerSvgAnnotation(aOptions);
 
+        // Create an annotation layer and add it to the canvans
+        const anno = new OpenLIME.LayerSvgAnnotation(aOptions);
         lime.canvas.addLayer('anno', anno);
 
+        // If editorEnable, create a SVG annotation Editor
         if (editorEnable) {
             const editor = new OpenLIME.EditorSvgAnnotation(lime, anno, {
                 lime: lime,
-                classes: {
-                    '': { stroke: '#000', label: '' },
-                    'class1': { stroke: '#770', label: 'A' },
-                    'class2': { stroke: '#707', label: 'B' },
-                    'class3': { stroke: '#777', label: 'C' },
-                    'class4': { stroke: '#070', label: 'D' },
-                    'class5': { stroke: '#007', label: 'E' },
-                    'class6': { stroke: '#077', label: 'F' },
-                }
+                classes: classParam
             });
             editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
             editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
@@ -187,27 +183,27 @@
         // Add image attribution 
         ui.attribution = `CRS4 Digital Pathology Platform - <a href="https://www.crs4.it/research/visual-and-data-intensive-computing/digital-health/">CRS4 Digital Health Research Program</a>`;
 
+        // Calback function to send http requests to the Annotation server
         async function processRequest(anno, action) {
             let method = "GET";
-            let url = "http://localhost:3000/ol"
+            let url = `${annotationServer}`;
             let body = "";
             switch (action) {
                 case "create":
                     method = "POST";
-                    url = "http://localhost:3000/ol";
+                    url = `${annotationServer}`;
                     body = JSON.stringify(anno);
                     break;
                 case "update":
                     method = "PUT";
-                    url = `http://localhost:3000/ol/${anno.id}`;
+                    url = `${annotationServer}/${anno.id}`;
                     body = JSON.stringify(anno);
                     break;
                 case "delete":
                     method = "DELETE";
-                    url = `http://localhost:3000/ol/${anno.id}`;
+                    url = `${annotationServer}/${anno.id}`;
                     body = "";
                     break;
-
                 default:
                     break;
             }
