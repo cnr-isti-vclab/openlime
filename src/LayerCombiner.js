@@ -127,10 +127,9 @@ class LayerCombiner extends Layer {
 	}
 	
 	scale() {
-		// Combiner ask the scale of all its children
-		// keeping the hidden, because they could be hidden, but revealed by the combiner
+		//Combiner ask the scale of all its children
+		//keeping the hidden, because they could be hidden, but revealed by the combiner
 		const discardHidden = false;
-		console.log("Combiner compute scale, visible " + this.visible);
 		let scale = Layer.computeLayersMinScale(this.layers, discardHidden);
 		scale *= this.transform.z;
 		return scale;

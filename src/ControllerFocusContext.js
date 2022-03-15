@@ -28,7 +28,6 @@ class ControllerFocusContext extends ControllerLens {
             this.maxDatasetSize = Math.max(bbox.width(), bbox.height());
             this.minDatasetSize = Math.min(bbox.width(), bbox.height());
             this.setDatasetDimensions(bbox.width(), bbox.height());
-            console.log("Box w: " + this.minDatasetSize + ", h " + this.maxDatasetSize);
 		};
         this.canvas.addEvent('updateSize', callback);
 
