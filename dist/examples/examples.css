@@ -4,6 +4,7 @@ body {
 	padding: 0px;
 	height: 100%;
 	font-family: "Open Sans",sans-serif;
+	overflow: hidden;
 }
 h1 { margin-left: 50px; }
 
