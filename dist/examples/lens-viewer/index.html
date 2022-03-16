@@ -18,26 +18,32 @@
     <script>
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.OpenLIME('.openlime');
+        // The visualization is unbounded (the camera is )
+        lime.camera.bounded = false;
 
-         const layer0 = new OpenLIME.Layer({
-             type: 'image',
-             url: '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
-             layout: 'deepzoom',
-             transform: { x: 0, y: 0, z: 1, a: 0 },
-             visible: true
-         });
+        // Create an image layer and add it to the canvans. This layer is used as background for the lens.
+        const layer0 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
+            layout: 'deepzoom',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: true
+        });
         lime.canvas.addLayer('kdmap', layer0);
 
-         const layer1 = new OpenLIME.Layer({
-             type: 'image',
-             url: '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
-             layout: 'deepzoom',
-             transform: { x: 0, y: 0, z: 1, a: 0 },
-             visible: false
+        // Create a second layer and add it to the canvans. This layer contains the normal map of the picture.
+        // It is displayed inside the lens.
+        const layer1 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
+            layout: 'deepzoom',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: false
         });
+        lime.canvas.addLayer('nomap', layer1);
 
-        lime.canvas.addLayer('nomap', layer1);      
-
+         // Create a lens layer and add it to the canvans.
+         // The field displayed inside the lens is layer1 (normal map)
         const lensLayer = new OpenLIME.Layer({
             type: "lens",
             layers: [layer1],
@@ -46,29 +52,25 @@
             border: 10,
             visible: true
         });
+        lime.canvas.addLayer('lens', lensLayer);
 
-        lime.camera.bounded = false;
+        // Create a lens controller for focus and context exploration.
         const controllerLens = new OpenLIME.ControllerFocusContext({
             lensLayer: lensLayer,
             camera: lime.camera,
             canvas: lime.canvas,
-            hover: true,
-            priority: 0
         });
-
         lime.pointerManager.onEvent(controllerLens);
         lensLayer.controllers.push(controllerLens);
-
-        // const panzoom = new OpenLIME.ControllerPanZoom(lime.camera, { priority: -1000 });
-        // lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
-
-        lime.canvas.addLayer('lens', lensLayer);
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
         // Create an User Interface 
         const ui = new OpenLIME.UIBasic(lime);
+
+        // Remove light from the toolbar
+        ui.actions.light.display=false;
 
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display = true;
