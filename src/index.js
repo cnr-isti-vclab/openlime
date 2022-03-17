@@ -394,9 +394,9 @@ function imageTest(layout) {
 			break;
 
 		case 'google':
-			options.width = 3184,
-            options.height = 2024,
-            options.url = 'assets/lime/google/lime'
+			options.width = 3184;
+            options.height = 2024;
+            options.url = 'assets/lime/google/lime';
 			break;
 
 		case 'zoomify':

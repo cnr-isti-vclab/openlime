@@ -31,7 +31,7 @@
             layout: 'image',
             zindex: 0,
             transform: { x: 0, y: 0, z: 1, a: 0 },
-            visible: false
+            visible: true
         });
         lime.canvas.addLayer('lime', layer0);
 
@@ -42,13 +42,14 @@
             layout: 'image',
             zindex: 0,
             transform: { x: 0, y: 0, z: 1, a: 0 },
-            visible: false
+            visible: true
         });
         lime.canvas.addLayer('lime_fx', layer1);
 
         // Instantiate the LayerCombiner class and set the two inputs (layer0 and layer1)
         const combiner = new OpenLIME.Layer({
             type: 'combiner',
+            visible: true,
             layers: [layer0, layer1]
         });
 
