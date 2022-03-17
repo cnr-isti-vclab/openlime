@@ -402,7 +402,7 @@ function imageTest(layout) {
 		case 'google':
 			options.width = 67108864;
 			options.height = 67108864;
-			options.mipmapBias = 1.0;
+			options.mipmapBias = 0.4;
 			options.url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 			break;
 

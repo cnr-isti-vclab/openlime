@@ -17,7 +17,8 @@ import { BoundingBox } from './BoundingBox.js'
  *  * *controls*: shader parameters that can be modified (eg. light direction)
  *  * *shader*: [shader](#shader) used for rendering
  *  * *layout*: one of image, deepzoom, google, iiif, or zoomify
- *  * *mipmapBias*: default 0.5, when to switch between different levels of the mipmap
+ *  * *mipmapBias*: default 0.4, when to switch between different levels of the mipmap, 0 means switch as early
+ *                  as the tile would be enlarged on the screen, while 1.0 means switch when 1 pixel in tile is >= 2 pixels on screen
  *  * *prefetchBorder*: border tiles prefetch (default 1)
  *  * *maxRequest*: max number of simultaneous requests (should be GLOBAL not per layer!) default 4
  */
@@ -75,7 +76,7 @@ class Layer {
 			gl: null,
 
 			prefetchBorder: 1,
-			mipmapBias: 0.5,
+			mipmapBias: 0.4,
 			maxRequest: 4,
 
 			signals: { update: [], ready: [], updateSize: [] },  //update callbacks for a redraw, ready once layout is known.
@@ -457,11 +458,14 @@ class Layer {
 	}
 
 	sameNeeded(a, b) {
-		return a.level == b.level &&
-			a.pyramid[a.level][0] == b.pyramid[a.level][0] &&
-			a.pyramid[a.level][1] == b.pyramid[a.level][1] &&
-			a.pyramid[a.level][2] == b.pyramid[a.level][2] &&
-			a.pyramid[a.level][3] == b.pyramid[a.level][3];
+		if(a.level != b.level)
+			return false;
+
+		for(let p of ['xLow', 'xHigh', 'yLow', 'yHigh'])
+			if(a.pyramid[a.level][p] != b.pyramid[a.level][p])
+				return false;
+		
+		return true;
 	}
 	/**
 	*  @param {object] transform is the canvas coordinate transformation
