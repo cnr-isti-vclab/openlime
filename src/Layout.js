@@ -18,7 +18,8 @@ class Layout {
 			bbox: [],          //array of bounding box in pixels (w, h)
 			urls: [],
 			signals: { ready: [], updateSize: [] },          //callbacks when the layout is ready.
-			status: null
+			status: null,
+			subdomains: 'abc'
 		});
 		if(options)
 			Object.assign(this, options);
@@ -28,6 +29,7 @@ class Layout {
 
 		if(typeof(url) == 'object')
 			Object.assign(this, url);
+
 	}
 
 	setUrls(urls) {
@@ -251,9 +253,16 @@ class Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.getTileURL = (rasterid, tile) => {
-			return this.urls[rasterid] + "/" + tile.level + "/" + tile.y + "/" + tile.x + '.' + this.suffix;
-		};
+		if( this.urls[0].includes('{')) {
+			this.getTileURL = (rasterid, tile) => {
+				let  s = this.subdomains ? this.subdomains[Math.abs(tile.x + tile.y) % this.subdomains.length] : '';
+				let vars = {s, ...tile, z: tile.level};
+				return this.urls[rasterid].replace(/{(.+?)}/g,(match,p)=> vars[p]);
+			}
+		} else
+			this.getTileURL = (rasterid, tile) => {
+				return this.urls[rasterid] + "/" + tile.level + "/" + tile.y + "/" + tile.x + '.' + this.suffix;
+			};
 	}
 
 

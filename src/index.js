@@ -393,10 +393,17 @@ function imageTest(layout) {
 				//options.url = 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
 			break;
 
+		// case 'google':
+		// 	options.width = 3184;
+        //     options.height = 2024;
+        //     options.url = 'assets/lime/google/lime';
+		// 	break;
+
 		case 'google':
-			options.width = 3184;
-            options.height = 2024;
-            options.url = 'assets/lime/google/lime';
+			options.width = 67108864;
+			options.height = 67108864;
+			options.mipmapBias = 1.0;
+			options.url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 			break;
 
 		case 'zoomify':

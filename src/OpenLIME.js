@@ -105,6 +105,9 @@ class OpenLIME {
 	*/
 
 	resize(width, height) {
+		// Test with retina display!
+		width *= window.devicePixelRatio;
+		height *= window.devicePixelRatio;
 		this.canvasElement.width = width;
 		this.canvasElement.height = height;
 
