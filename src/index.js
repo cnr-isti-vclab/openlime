@@ -400,10 +400,12 @@ function imageTest(layout) {
 		// 	break;
 
 		case 'google':
-			options.width = 67108864;
-			options.height = 67108864;
+			const l=19;
+			options.width = Math.pow(2, l+8);
+			options.height = Math.pow(2, l+8);
 			options.mipmapBias = 0.4;
-			options.url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+			options.url= 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+			//options.url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 			break;
 
 		case 'zoomify':
@@ -427,18 +429,19 @@ function imageTest(layout) {
 	}
 	let layer0 = new Layer(options);
 	lime.canvas.addLayer('kdmap', layer0);
+
 	let ui = new UIBasic(lime);
 
-	setTimeout(() => { 
-		console.log(layer0);
-		lime.canvas.removeLayer(layer0);
-		lime.redraw();
-	}, 3000);
-	setTimeout(() => {
-		console.log(layer0);
-		lime.canvas.addLayer('kdmap', layer0);
-		lime.redraw();
-	}, 6000);
+	// setTimeout(() => { 
+	// 	console.log(layer0);
+	// 	lime.canvas.removeLayer(layer0);
+	// 	lime.redraw();
+	// }, 3000);
+	// setTimeout(() => {
+	// 	console.log(layer0);
+	// 	lime.canvas.addLayer('kdmap', layer0);
+	// 	lime.redraw();
+	// }, 6000);
 
 }
 
