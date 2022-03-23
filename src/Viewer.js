@@ -85,10 +85,8 @@ class Viewer {
 
     resize(width, height) {
         // Test with retina display!
-        width *= window.devicePixelRatio;
-        height *= window.devicePixelRatio;
-        this.canvasElement.width = width;
-        this.canvasElement.height = height;
+        this.canvasElement.width = width * window.devicePixelRatio;
+        this.canvasElement.height = height * window.devicePixelRatio;
 
         this.camera.setViewport({ x: 0, y: 0, dx: width, dy: height, w: width, h: height });
         this.canvas.prefetch();

@@ -62,6 +62,13 @@ class Camera {
 		}
 	}
 
+	glViewport() {
+		let d = window.devicePixelRatio;
+		let viewport = {};
+		for (let i in this.viewport) 
+			viewport[i] = this.viewport[i]*d;
+		return viewport;
+	}
 /**
  *  Map coordinate relative to the canvas into scene coords. using the specified transform.
  * @returns [X, Y] in scene coordinates.
@@ -208,6 +215,13 @@ class Camera {
 		return pos;
 	}
 
+	getGlCurrentTransform(time) {
+		const pos = this.getCurrentTransform(time);
+		pos.x *= window.devicePixelRatio;
+		pos.y *= window.devicePixelRatio;
+		pos.z *= window.devicePixelRatio;
+		return pos;
+	}
 /**
  * @param {Array} box fit the specified rectangle [minx, miny, maxx, maxy] in the canvas.
  * @param {number} dt animation duration in millisecond 

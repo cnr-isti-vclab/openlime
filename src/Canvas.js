@@ -142,7 +142,7 @@ class Canvas {
 
 	draw(time) {
 		let gl = this.gl;
-		let view = this.camera.viewport;
+		let view = this.camera.glViewport();
 		gl.viewport(view.x, view.y, view.dx, view.dy);
 
 		var b = [0, 0, 0, 0];
@@ -153,7 +153,7 @@ class Canvas {
 		gl.enable(gl.BLEND);
 
 		//TODO: getCurren shoudl redurn {position, done}
-		let pos = this.camera.getCurrentTransform(time);
+		let pos = this.camera.getGlCurrentTransform(time);
 		//todo we could actually prefetch toward the future a little bit
 		this.prefetch(pos);
 
@@ -176,13 +176,13 @@ class Canvas {
  */
 	prefetch(transform) {
 		if(!transform)
-			transform = this.camera.getCurrentTransform(performance.now());
+			transform = this.camera.getGlCurrentTransform(performance.now());
 		for(let id in this.layers) {
 			let layer = this.layers[id];
 			//console.log(layer);
 			//console.log(layer.layout.status);
 			if(layer.visible && layer.status == 'ready') {
-				layer.prefetch(transform, this.camera.viewport);
+				layer.prefetch(transform, this.camera.glViewport());
 			}
 		}
 	}
