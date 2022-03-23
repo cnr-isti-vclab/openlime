@@ -2,30 +2,20 @@ import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
 import { Transform } from './Transform.js'
 import { Layer } from './Layer.js'
-import { LayerRTI } from './LayerRTI.js'
-import { LayerBRDF } from './LayerBRDF.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerCombiner } from './LayerCombiner.js'
-import { LayerLens } from './LayerLens.js'
 
 import { Layout } from './Layout.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
 
-import { Skin } from './Skin.js'
-import { UIBasic, UIDialog } from './UIBasic.js'
 import { Controller } from './Controller.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
-import { ControllerLens } from './ControllerLens.js'
-import { ControllerFocusContext } from './ControllerFocusContext'
 
-import { PointerManager } from './PointerManager.js'
+import { PointerManager } from './PointerManager.js' 
 
-import { Annotation	 } from './Annotation.js'
-import { LayerAnnotation } from './LayerAnnotation.js'
-import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
-import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
+/** @module OpenLIME */
 
 /**
  * Manages an OpenLIME viewer functionality on a canvas
@@ -36,6 +26,10 @@ import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
  * @param {object} options is a JSON describing the viewer content
  *  * **animate**: default *true*, calls requestAnimation() and manages refresh.
  *  * **background**: css style for background (overwrites css if present)
+ * 
+ * @example
+ * const lime = new OpenLIME.OpenLIME('.openlime');
+ * // .openlime is the class of a DIV element in the DOM.
  */
 
 class OpenLIME {
@@ -85,7 +79,6 @@ class OpenLIME {
 		var resizeobserver = new ResizeObserver( entries => {
 			for (let entry of entries) {
 				this.resize(entry.contentRect.width, entry.contentRect.height);
-				this.processEvent('resize', {}, entry.contentRect.width, entry.contentRect.height);
 			}
 		});
 		resizeobserver.observe(this.canvasElement);
@@ -141,28 +134,14 @@ class OpenLIME {
 			this.redraw();
 	}
 
-	processEvent(event, e, x, y, scale) {
-
-		//first check layers from top to bottom
-		let ordered = Object.values(this.canvas.layers).sort( (a, b) => b.zindex - a.zindex);
-		ordered.push(this);
-		for(let layer of ordered) {
-			for(let controller of layer.controllers) {
-				if(controller.active && controller[event])
-					controller[event](e);
-				if(e.defaultPrevented)
-					return;
-			}
-		}
-	}
 }
 
 export { OpenLIME }
 export { Canvas, Camera, Transform }
-export { ControllerLens, ControllerPanZoom, ControllerFocusContext }
-export { Layer, Raster }
-export { Shader, ShaderCombiner }
-export { Layout }
-export { Skin, UIBasic, UIDialog }
-export { Annotation, LayerAnnotation, LayerSvgAnnotation, EditorSvgAnnotation }
+export { Layer, LayerImage, LayerCombiner }
 
+export { Layout }
+export { Raster }
+export { Shader, ShaderCombiner }
+
+export { ControllerPanZoom }

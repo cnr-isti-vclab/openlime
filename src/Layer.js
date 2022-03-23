@@ -1,6 +1,4 @@
 import { Transform } from './Transform.js'
-import { Raster } from './Raster.js'
-import { Shader } from './Shader.js'
 import { Layout } from './Layout.js'
 import { Cache } from './Cache.js'
 import { BoundingBox } from './BoundingBox.js'
@@ -580,7 +578,6 @@ class Layer {
 	}
 
 }
-
 
 Layer.prototype.types = {}
 

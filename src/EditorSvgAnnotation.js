@@ -1,5 +1,3 @@
-import { LayerSvgAnnotation } from './LayerSvgAnnotation.js';
-import { Annotation } from './Annotation.js';
 import { Skin } from './Skin.js';
 import { simplify, smooth, smoothToPath } from './Simplify.js'
 
@@ -867,7 +865,5 @@ function createElement(tag, attributes) {
 			e.setAttribute(key, value);
 	return e;
 }
-
-
 
 export { EditorSvgAnnotation }

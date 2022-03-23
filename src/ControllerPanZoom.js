@@ -1,5 +1,4 @@
 import { Controller } from './Controller.js'
-import { Camera } from './Camera.js'
 
 class ControllerPanZoom extends Controller {
 

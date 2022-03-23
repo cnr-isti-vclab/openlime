@@ -1,6 +1,4 @@
 import {Controller} from './Controller.js'
-import {Lens} from './Lens.js'
-
 
 class ControllerLens extends Controller {
 	constructor(options) {

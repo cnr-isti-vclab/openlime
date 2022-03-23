@@ -1,11 +1,6 @@
-import { Canvas } from './Canvas.js'
 import { Skin } from './Skin.js'
-import { Layer } from './Layer.js'
-import { Controller } from './Controller.js'
 import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
-import { PointerManager } from './PointerManager.js'
-import { LayerAnnotation } from './LayerAnnotation.js'
 
 /* Basic viewer for a single layer.
  *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)

@@ -1,5 +1,4 @@
 import { Annotation } from './Annotation.js';
-import { BoundingBox } from './BoundingBox.js';
 import { Layer } from './Layer.js'
 
 /**

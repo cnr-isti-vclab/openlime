@@ -1,8 +1,6 @@
 import { Layer }  from './Layer.js'
 import { Raster } from './Raster.js'
 import { ShaderBRDF } from './ShaderBRDF.js'
-import { Shader } from './Shader.js'
-import { Layout } from './Layout.js'
 
 /**
  * Extends {@link Layer}.

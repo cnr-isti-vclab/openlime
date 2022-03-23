@@ -1,7 +1,6 @@
 import { Layer }  from './Layer.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
-import { Layout } from './Layout.js'
 
 /**
  * Display a simple image. Extends {@link Layer}.

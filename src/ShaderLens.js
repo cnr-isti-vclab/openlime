@@ -1,5 +1,4 @@
 import {Shader} from './Shader.js'
-import {Lens} from './Lens.js'
 
 class ShaderLens extends Shader {
     constructor(options) {

@@ -1,7 +1,6 @@
 import { Layer }  from './Layer.js'
 import { Raster } from './Raster.js'
 import { ShaderRTI } from './ShaderRTI.js'
-import { Layout } from './Layout.js'
 import { Transform } from './Transform.js'
 
 /**

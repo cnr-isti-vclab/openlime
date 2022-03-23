@@ -1,23 +1,17 @@
-import { OpenLIME } from './OpenLIME.js'
-import { Raster } from './Raster.js'
+import { Viewer } from './Viewer.js'
 import { Layer } from './Layer.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerCombiner } from './LayerCombiner.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
-import { LayerRTI } from './LayerRTI.js'
-import { LayerBRDF } from './LayerBRDF.js'
-import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
-import { ControllerLens } from './ControllerLens.js'
 import { UIBasic } from './UIBasic.js'
 import { LayerLens } from './LayerLens.js'
-import { Lens } from './Lens.js'
 import { Skin } from './Skin.js'
 import { LayerAnnotation } from './LayerAnnotation.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 
-let lime = new OpenLIME('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
+let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 //combinerTest();
 imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
@@ -276,7 +270,7 @@ function combinerTest() {
 
 	let layer0 = new Layer({
 		type: 'image',
-		url: 'assets/svbrdf/vis/kdMap.jpg',
+		url: './assets/lighthouse/image/lighthouse-kdmap.jpg',
 		layout: 'image',
 		zindex: 0,
 		transform: { x: 100, y: 0, z: 1, a: 0 },
@@ -285,7 +279,7 @@ function combinerTest() {
 
 	let layer1 = new Layer({
 		type: 'image',
-		url: 'assets/svbrdf/vis/ksMap.jpg',
+		url: './assets/lighthouse/image/lighthouse-nomap.jpg',
 		layout: 'image',
 		zindex: 0,
 		transform: { x: 0, y: 0, z: 1, a: 0 },

@@ -1,8 +1,5 @@
 
 import { Layer }  from './Layer.js'
-import { Raster } from './Raster.js'
-import { Shader } from './Shader.js'
-import { Layout } from './Layout.js'
 
 /**
  * Combines other layers (using a framebuffer) using a shader. Lens is an example. Extends {@link Layer}.

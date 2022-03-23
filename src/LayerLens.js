@@ -1,8 +1,6 @@
 import { Layer }  from './Layer.js'
 import {LayerCombiner}  from './LayerCombiner.js'
-import {Lens}           from './Lens.js'
 import {ShaderLens}     from './ShaderLens.js'
-import {Layout}         from './Layout.js'
 
 /**
  * options must contain one layer and lens = {x:, y:, r:, border: }
