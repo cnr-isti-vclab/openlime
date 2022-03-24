@@ -33,19 +33,19 @@ class LayerBRDF extends Layer {
 			let url = this.channels[c];
 			switch (c) {
 				case 'kd':
-					this.rasters.push(new Raster({ type: 'vec3', attribute: 'kd', colorspace: this.colorspaces['kd'] }));
+					this.rasters.push(new Raster({ format: 'vec3', attribute: 'kd', colorspace: this.colorspaces['kd'] }));
 					samplers.push({ 'id': id, 'name': 'uTexKd' });
 					break;
 				case 'ks':
-					this.rasters.push(new Raster({ type: 'vec3',  attribute: 'ks',      colorspace: this.colorspaces['ks'] }));
+					this.rasters.push(new Raster({ format: 'vec3',  attribute: 'ks',      colorspace: this.colorspaces['ks'] }));
 					samplers.push({ 'id': id, 'name': 'uTexKs' });
 					break;
 				case 'normals':
-					this.rasters.push(new Raster({ type: 'vec3',  attribute: 'normals', colorspace: 'linear' }));
+					this.rasters.push(new Raster({ format: 'vec3',  attribute: 'normals', colorspace: 'linear' }));
 					samplers.push({ 'id': id, 'name': 'uTexNormals' });
 					break;
 				case 'gloss':
-					this.rasters.push(new Raster({ type: 'float', attribute: 'gloss',   colorspace: 'linear' }));
+					this.rasters.push(new Raster({ format: 'float', attribute: 'gloss',   colorspace: 'linear' }));
 					samplers.push({ 'id': id, 'name': 'uTexGloss' });
 					break;
 

@@ -23,7 +23,7 @@ class Raster {
 	constructor(options) {
 
 		Object.assign(this, { 
-			type: 'vec3', 
+			format: 'vec3', 
 			colorSpace: 'linear',
 			attribute: 'kd'
 		 });
@@ -98,7 +98,21 @@ class Raster {
 		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); //_MIPMAP_LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+		let glFormat = gl.RGBA;
+		switch(this.format) {
+			case 'vec3':
+				glFormat = gl.RGB;
+				break;
+			case 'vec4':
+				glFormat = gl.RGBA;
+				break;
+			case 'float':
+				glFormat = gl.LUMINANCE;
+				break;
+			default:
+				break;
+		} 
+		gl.texImage2D(gl.TEXTURE_2D, 0, glFormat, glFormat, gl.UNSIGNED_BYTE, img);
 		return tex;
 	}
 }

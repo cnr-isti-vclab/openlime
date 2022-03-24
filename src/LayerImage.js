@@ -18,14 +18,15 @@ class LayerImage extends Layer {
 			throw "Url option is required";
 
 		this.layout.setUrls([this.url]);
-		let raster = new Raster({ type: 'vec3', attribute: 'kd', colorspace: 'sRGB' });
+		const rasterFormat = this.format != null ? this.format : 'vec4';
+		let raster = new Raster({ format: rasterFormat, attribute: 'kd', colorspace: 'sRGB' });
 
 		this.rasters.push(raster);
 		
 
 		let shader = new Shader({
 			'label': 'Rgb',
-			'samplers': [{ id:0, name:'kd', type:'vec3' }]
+			'samplers': [{ id:0, name:'kd', type: rasterFormat }]
 		});
 		
 		shader.fragShaderSrc = function(gl) {
