@@ -128,6 +128,16 @@ class Canvas {
     * @param {Layer} layer An OpenLIME Layer object.
     */
 	 addLayer(id, layer) {
+		/**
+		* The event is fired if a layer is updated, added or removed.
+		* @event Canvas#update
+		*/
+
+		/** 
+		* The event is fired when all the layers are ready (i.e. initialized and with data ready to be displayed).
+		* @event Canvas#ready
+		*/
+
 		layer.id = id;
 		layer.addEvent('ready', () => { 
 			if(Object.values(this.layers).every( l => l.status == 'ready'))
@@ -161,6 +171,10 @@ class Canvas {
 
 	/** @ignore */
 	updateSize() {
+		/**
+ 		* The event is fired if a layout changes its size or position (the event forces the re-computation of the layer bounding boxes).
+ 		* @event Canvas#updateSize
+ 		*/
 		const discardHidden = true;
 		let sceneBBox = Layer.computeLayersBBox(this.layers, discardHidden);
 		let minScale =  Layer.computeLayersMinScale(this.layers, discardHidden);
@@ -218,16 +232,5 @@ class Canvas {
 		}
 	}
 }
-/**
-* The event is fired if a layer is updated, added or removed.
-* @event Canvas#update
-*/
-/** 
-* The event is fired when all the layers are ready (i.e. initialized and with data ready to be displayed).
-* @event Canvas#ready
-*/
-/**
- * The event is fired if a layout changes its size or position (the event forces the re-computation of the layer bounding boxes).
- * @event Canvas#updateSize
- */
+
 export { Canvas }
