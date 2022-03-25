@@ -33,7 +33,7 @@
             transform: { x: 0, y: 0, z: 1, a: 0 },
             visible: true
         });
-        lime.canvas.addLayer('lime', layer0);
+        lime.addLayer('lime', layer0);
 
         // Create a layer for the second image and add it to the canvans (labelling it 'lime_fx')
         const layer1 = new OpenLIME.Layer({
@@ -44,7 +44,7 @@
             transform: { x: 0, y: 0, z: 1, a: 0 },
             visible: true
         });
-        lime.canvas.addLayer('lime_fx', layer1);
+        lime.addLayer('lime_fx', layer1);
 
         // Instantiate the LayerCombiner class and set the two inputs (layer0 and layer1)
         const combiner = new OpenLIME.Layer({
@@ -62,7 +62,7 @@
         combiner.setShader('standard');
 
         // Add the combiner to the canvas
-        lime.canvas.addLayer('combiner', combiner);
+        lime.addLayer('combiner', combiner);
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');

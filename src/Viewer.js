@@ -4,20 +4,32 @@ import { Camera } from './Camera.js'
 import { PointerManager } from './PointerManager.js'
 
 /**
- * Manages an OpenLIME viewer functionality on a canvas
- * how do I write more substantial documentation.
- *
- * @param {div} div of the DOM or selector (es. '#canvasid'), or a canvas.
- * @param {string} options is a url to a JSON describing the viewer content
- * @param {object} options is a JSON describing the viewer content
- *  * **animate**: default *true*, calls requestAnimation() and manages refresh.
- *  * **background**: css style for background (overwrites css if present)
+ * Instantiates a Viewer object given the `div` element or a DOM selector of a `div` element.
+ * Additionally, an object literal with Viewer `options` can be specified.
+ * The class creates the canvas, enables the WebGL context and takes care of the content redrawing when needed.
+ * Viewer is the main class of the OpenLIME framework. It allows access to all the internal structures that make up the system.
+ * 
+ * @param {(element|string)} div A DOM element or a selector (es. '#openlime' or '.openlime').
+ * @param {Object} [options]  An object literal describing the viewer content.
+ * @param {color} options.background CSS style for background (it overwrites CSS if present).
  * 
  * @example
- * const lime = new OpenLIME.OpenLIME('.openlime');
- * // .openlime is the class of a DIV element in the DOM.
- */
-
+ * // Create an OpenLIME canvas into .openlime
+ * const lime = new OpenLIME.Viewer('.openlime');
+ *
+ * // Create an image layer and add it to the canvans
+ * const layer = new OpenLIME.Layer({
+ *     layout: 'image',
+ *     type: 'image',
+ *     url: '../../assets/lime/image/lime.jpg'
+ * });
+ * lime.addLayer('Base', layer);
+ * 
+ * // Access to internal structures
+ * const camera = lime.camera;
+ * const canvas = lime.canvas;
+ * const layers = canvas.layers;
+*/
 class Viewer {
 
     constructor(div, options) {
@@ -28,7 +40,6 @@ class Viewer {
             controllers: [],
             camera: new Camera()
         });
-
 
         if (typeof (div) == 'string')
             div = document.querySelector(div);
@@ -51,7 +62,6 @@ class Viewer {
         this.overlayElement.classList.add('openlime-overlay');
         this.containerElement.appendChild(this.overlayElement);
 
-
         this.canvas = new Canvas(this.canvasElement, this.overlayElement, this.camera, this.canvas);
         this.canvas.addEvent('update', () => { this.redraw(); });
 
@@ -72,18 +82,36 @@ class Viewer {
         this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
     }
 
-
-    /* Convenience function, it actually passes to Canvas
+    /** Adds the given layer to the Viewer.
+    * @param {string} id A label to identify the layer.
+    * @param {Layer} layer An OpenLIME Layer object.
     */
     addLayer(id, layer) {
-        canvas.addLayer(id, layer);
+        this.canvas.addLayer(id, layer);
+        this.redraw();
     }
 
-    /**
-    * Resize the canvas (and the overlay) and triggers a redraw.
+    /** Remove the given layer from the Viewer.
+    * @param {(Layer|string)} layer An OpenLIME Layer or a Layer identifier.
     */
+    removeLayer(layer) {
+        if (typeof (layer) == 'string')
+            layer = this.canvas.layers[layer];
+        if (layer) {
+            this.canvas.removeLayer(layer);
+            this.redraw();
+        }
+    }
 
-    resize(width, height) {
+    /* Resizes the canvas (and the overlay) and triggers a redraw.
+     * This method is internal and used by a ResizeObserver of the Canvas size.
+     * @param {number} width A width value defined in CSS pixel.
+     * @param {number} height A height value defined in CSS pixel.
+    */
+    /**
+     * @ignore
+    */
+     resize(width, height) {
         // Test with retina display!
         this.canvasElement.width = width * window.devicePixelRatio;
         this.canvasElement.height = height * window.devicePixelRatio;
@@ -94,19 +122,22 @@ class Viewer {
     }
 
     /**
-    *
-    * Schedule a drawing.
+     * Schedules a redrawing.
     */
     redraw() {
         if (this.animaterequest) return;
         this.animaterequest = requestAnimationFrame((time) => { this.draw(time); });
     }
 
-    /**
-    * Do not call this if OpenLIME is animating, use redraw()
-    * @param {time} time as in performance.now()
+    /*
+     * Renders the canvas content.
+     * This method is internal.
+     * @param {time} time The current time (a DOMHighResTimeStamp variable, as in `performance.now()`).
     */
-    draw(time) {
+     /**
+     * @ignore
+    */
+      draw(time) {
         if (!time) time = performance.now();
         this.animaterequest = null;
 

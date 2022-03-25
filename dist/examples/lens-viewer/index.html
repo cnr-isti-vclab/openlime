@@ -29,7 +29,7 @@
             transform: { x: 0, y: 0, z: 1, a: 0 },
             visible: true
         });
-        lime.canvas.addLayer('kdmap', layer0);
+        lime.addLayer('kdmap', layer0);
 
         // Create a second layer and add it to the canvans. This layer contains the normal map of the picture.
         // It is displayed inside the lens.
@@ -40,7 +40,7 @@
             transform: { x: 0, y: 0, z: 1, a: 0 },
             visible: false
         });
-        lime.canvas.addLayer('nomap', layer1);
+        lime.addLayer('nomap', layer1);
 
          // Create a lens layer and add it to the canvans.
          // The field displayed inside the lens is layer1 (normal map)
@@ -52,7 +52,7 @@
             border: 10,
             visible: true
         });
-        lime.canvas.addLayer('lens', lensLayer);
+        lime.addLayer('lens', lensLayer);
 
         // Create a lens controller for focus and context exploration.
         const controllerLens = new OpenLIME.ControllerFocusContext({

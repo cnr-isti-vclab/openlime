@@ -2,6 +2,8 @@ import { Transform } from './Transform.js'
 import { BoundingBox } from './BoundingBox.js'
 
 /**
+ * Creates a scene's camera.
+ * Additionally, an object literal with Viewer `options` can be specified.
  *  NOTICE TODO: the camera has the transform relative to the whole canvas NOT the viewport.
  * @param {object} options
  * * *bounded*: limit translation of the camera to the boundary of the scene.

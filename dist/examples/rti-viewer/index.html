@@ -36,7 +36,7 @@
             url: '../../assets/rti/ptm/info.json',
             normals: false
         });
-        lime.canvas.addLayer('coin0', layer0);
+        lime.addLayer('coin0', layer0);
 
         const layer1 = new OpenLIME.Layer({
             label: 'coin-deepzoom',
@@ -45,7 +45,7 @@
             url: '../../assets/rti/hsh/info.json',
             normals: false
         });
-        lime.canvas.addLayer('coin1', layer1);
+        lime.addLayer('coin1', layer1);
 
         const layer2 = new OpenLIME.Layer({
             label: 'coin-tarzoom',
@@ -54,7 +54,7 @@
             url: '../../assets/rti/bln/info.json',
             normals: false
         });
-        lime.canvas.addLayer('coin2', layer2);
+        lime.addLayer('coin2', layer2);
 
         const layer3 = new OpenLIME.Layer({
             label: 'coin-itarzoom',
@@ -63,7 +63,7 @@
             url: '../../assets/rti/ybln/info.json',
             normals: false
         });
-        lime.canvas.addLayer('coin3', layer3);
+        lime.addLayer('coin3', layer3);
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
