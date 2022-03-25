@@ -22,6 +22,7 @@ class ShaderLens extends Shader {
         } else {
             this.samplers.length = 1;
         }
+        this.needsUpdate = true;
     }
 
     setLensUniforms(lensViewportCoords, windowWH) {
@@ -37,7 +38,7 @@ class ShaderLens extends Shader {
 
         if (this.samplers.length == 2) {
             samplerDeclaration += `uniform sampler2D ` + this.samplers[1].name + `;`;
-            
+
             secondSamplerCode =  
             `vec4 c1 = texture(source1, v_texcoord);
             if (centerDist2 > lensR2) {
