@@ -560,7 +560,7 @@ class Layer {
 
 			let raster = this.rasters[sampler.id];
 			tile.url = this.layout.getTileURL(sampler.id, tile);
-			const [tex, size] = await raster.loadImage(tile, this.gl);
+			const [tex, size] = await raster.loadImage(tile, this.gl); // TODO Parallelize request and url must be a parameter (implement request ques per url)
 			if (this.layout.type == "image") {
 				this.layout.width = raster.width;
 				this.layout.height = raster.height;
