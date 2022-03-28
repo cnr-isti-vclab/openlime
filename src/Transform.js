@@ -98,7 +98,7 @@ class Transform {
 
 	/**
 	* The type Easing defines the function that regulates the movement of the camera
-	* @typedef {('linear'|'ease-out'|'ease-in-out')} Easing
+	* @typedef {('linear'|'ease-out'|'ease-in-out')} Transform#Easing
 	*/
 
     interpolate(source, target, time, easing) {

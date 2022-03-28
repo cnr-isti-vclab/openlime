@@ -272,7 +272,6 @@ class PointerManager {
 
 }
 
-
 class SinglePointerHandler {
     constructor(parent, pointerId, options) {
 
@@ -516,7 +515,6 @@ class SinglePointerHandler {
 
 }
 
-
 class CircularBuffer {
     constructor(capacity) {
         if (typeof capacity != "number" || !Number.isInteger(capacity) || capacity < 1)
@@ -617,8 +615,5 @@ class CircularBuffer {
     }
 
 }
-
-
-
 
 export { PointerManager }
