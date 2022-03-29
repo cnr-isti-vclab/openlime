@@ -56,9 +56,7 @@ class LayerBRDF extends Layer {
 			id++;
 		}
 		this.layout.setUrls(urls);
-		
-		let now = performance.now();
-		this.controls['light'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };
+		this.addControl('light', [0, 0]); // FIXME Remove lines below
 		const brightness = options.brightness ? options.brightness : 1.0;
 		const gamma = options.gamma ? options.gamma : 2.2;
 		const alphaLimits = options.alphaLimits ? options.alphaLimits : [0.01, 0.5];

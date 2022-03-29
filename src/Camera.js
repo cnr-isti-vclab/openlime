@@ -16,7 +16,7 @@ import { BoundingBox } from './BoundingBox.js'
  * Creates a scene's camera. An update event is issued when the camera has completed its positioning.
  * Additionally, an object literal with Viewer `options` can be specified.
  * @param {Object} [options]
- * @param {boolean} options.bounded=true Weather to limit the translation of the camera to the boundary of the scene.
+ * @param {bool} options.bounded=true Weather to limit the translation of the camera to the boundary of the scene.
  * @param {number} options.maxFixedZoom=2 The maximum pixel size.
  * @param {number} options.minScreenFraction=1 The minimum portion of the screen to zoom in.
  */

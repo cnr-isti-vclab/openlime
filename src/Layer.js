@@ -4,26 +4,52 @@ import { Cache } from './Cache.js'
 import { BoundingBox } from './BoundingBox.js'
 
 /**
- * @param {string} id unique id for layer.
- * @param {object} options
- *  * *label*:
- *  * *transform*: relative coordinate [transformation](#transform) from layer to canvas
- *  * *visible*: where to render or not
- *  * *zindex*: stack ordering of the layer higher on top
- *  * *opacity*: from 0.0 to 1.0 (0.0 is fully transparent)
- *  * *rasters*: [rasters](#raster) used for rendering.
- *  * *controls*: shader parameters that can be modified (eg. light direction)
- *  * *shader*: [shader](#shader) used for rendering
- *  * *layout*: one of image, deepzoom, google, iiif, or zoomify
- *  * *mipmapBias*: default 0.4, when to switch between different levels of the mipmap, 0 means switch as early
- *                  as the tile would be enlarged on the screen, while 1.0 means switch when 1 pixel in tile is >= 2 pixels on screen
- *  * *prefetchBorder*: border tiles prefetch (default 1)
- *  * *maxRequest*: max number of simultaneous requests (should be GLOBAL not per layer!) default 4
+ * The Layer class is responsible for drawing slides in the OpenLIME viewer. 
+ * Layers can directly draw their contents on the viewer or be combined with each other to obtain more complex visualizations.
+ * OpenLIME provides a set of ready-to-use layers that allows developers to quickly publish their datasets on the web
+ * or make kiosk applications. Ready-to-use layers ranging from images, to multi-channel data (such as, for example, RTI or BRDF)
+ * or the combination of multiple layers or for visualization through lenses.
+ * 
+ * A Layer takes raster data (images) as input which are managed by the layout. A layer stores all the information
+ * and functions needed to render the graphics (shaders, shader parameters, data structures, etc.), and takes care
+ * of data prefetching and communication with the cache.
+ * 
+ * The Layer is a kind of primitive class from which other Layer classes can inherit.
+ * Each derived class "registers" on the Layer base class, the user can then use an instance of 
+ * Layer by indicating the chosen `type` in the `options`.
+ * 
+ * In the example below a Layer of type 'rti' is created, then a LayerRTI (class derived from Layer) is instantiated and added to the viewer's layer stack.
+ * 
+ * @example
+ *      const layer1 = new OpenLIME.Layer({
+ *          layout: 'deepzoom',
+ *          label: 'Ancient Roman coin',
+ *          type: 'rti',
+ *          url: '../../assets/rti/hsh/info.json',
+ *          normals: false
+ *      });
+ *      viewer.addLayer('coin1', layer1);
  */
-
 class Layer {
+	/**
+	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
+    * Signals are triggered when the layer is ready (i.e. completely initialized) or if its state variables have been updated (a redraw is needed).
+	* @param {Object} [options]
+	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
+	* @param {string} options.type A string identifier to select the specific derived layer class to instantiate.
+	* @param {string} options.id A label identifying the layer.
+	* @param {string} options.label A string with a more comprehensive definition of the layer. If it exists, it is used in the UI layer menu, otherwise the `id` value is taken.
+	* @param {Transform} options.transform The relative coords from layer to canvas.
+	* @param {bool} options.visible=true Whether to render the layer.
+	* @param {number} options.zindex Stack ordering value for the rendering of layers (higher zindex on top).
+	* @param {bool} options.overlay=false  Whether the layer must be rendered in overlay mode.
+	* @param {number} options.prefetchBorder=1 The threshold (in tile units) around the current camera position for which to prefetch tiles.
+	* @param {number} options.mipmapBias=0.4 The mipmap bias of the texture.
+	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader};
+	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
+	* @param {Object} options.controls
+	*/
 	constructor(options) {
-
 		//create from derived class if type specified
 		if (options.type) {
 			let type = options.type;
@@ -57,12 +83,12 @@ class Layer {
 		*/
 	}
 
+	/** @ignore */
 	init(options) {
 		Object.assign(this, {
 			transform: new Transform(),
 			visible: true,
 			zindex: 0,
-			opacity: 1.0,
 			overlay: false, //in the GUI it won't affect the visibility of the other layers
 			rasters: [],
 			layers: [],
@@ -75,7 +101,6 @@ class Layer {
 
 			prefetchBorder: 1,
 			mipmapBias: 0.4,
-			maxRequest: 4,
 
 			signals: { update: [], ready: [], updateSize: [] },  //update callbacks for a redraw, ready once layout is known.
 
@@ -99,16 +124,35 @@ class Layer {
 		}
 	}
 
+	/**
+ 	* Adds a Layer Event
+ 	* @param {*} event A label to identify the event.
+ 	* @param {*} callback The event callback function.
+	*/
 	addEvent(event, callback) {
 		this.signals[event].push(callback);
 	}
 
+	/**
+ 	* Emits an event (running all the callbacks referred to it).
+ 	* @param {*} event The event name
+ 	*/
 	emit(event, ...parameters) {
 		for (let r of this.signals[event])
 			r(...parameters);
 	}
 
+	/** @ignore */
 	setLayout(layout) {
+		/**
+		* The event is fired when a layer is initialized.
+		* @event Layer#ready
+		*/
+		/**
+		* The event is fired if a redraw is needed.
+		* @event Layer#update
+		*/
+
 		let callback = () => {
 			this.status = 'ready';
 			this.setupTiles(); //setup expect status to be ready!
@@ -125,11 +169,16 @@ class Layer {
 		this.layout.addEvent('updateSize', () => { this.emit('updateSize'); });
 	}
 
-	setTransform(tx) {
+	// OK
+	setTransform(tx) { //FIXME
 		this.transform = tx;
 		this.emit('updateSize');
 	}
 
+	/**
+	 * Sets the shader to use
+	 * @param {*} id the current shader identifier (the shader must already be registered in the `shaders` array)
+	 */
 	setShader(id) {
 		if (!id in this.shaders)
 			throw "Unknown shader: " + id;
@@ -138,23 +187,36 @@ class Layer {
 		this.shader.setEvent('update', () => { this.emit('update'); });
 	}
 
+	/**
+	 * Gets the current shader mode.
+	 * @returns {string} the shader mode
+	 */
 	getMode() {
 		return this.shader.mode;
 	}
 
+	/**
+	 * Gets an arrays of all the modes implemented in the current shader.
+	 * @returns {string[]} arrays of modes
+	 */
 	getModes() {
 		if (this.shader)
 			return this.shader.modes;
 		return [];
 	}
 
+	/**
+	 * Set the mode of the current shader.
+	 * @param {string} mode the mode of the current shader.
+	 */
 	setMode(mode) {
 		this.shader.setMode(mode);
 		this.emit('update');
 	}
 
 	/**
-	 * @param {bool} visible
+	 * Sets a value that indicates whether the layer is visible.
+	 * @param {bool} visible The value.
 	 */
 	setVisible(visible) {
 		this.visible = visible;
@@ -163,13 +225,21 @@ class Layer {
 	}
 
 	/**
-	 * @param {int} zindex
+	 * Sets the layer zindex value (stack ordering value for the rendering of layers).
+	 * @param {int} zindex The value.
 	 */
 	setZindex(zindex) {
 		this.zindex = zindex;
 		this.emit('update');
 	}
 
+	/**
+	 * Computes the minum scale value of the `layers`.
+	 * @param {Layer[]} layers 
+	 * @param {bool} discardHidden Whether hidden layers are not to be included in the computation.
+	 * @returns {number} the minimum scale.
+	 * @static
+	 */
 	static computeLayersMinScale(layers, discardHidden) {
 		if (layers == undefined || layers == null) {
 			console.log("ASKING SCALE INFO ON NO LAYERS");
@@ -185,11 +255,19 @@ class Layer {
 		return layersScale;
 	}
 
+	/**
+	 * Gets the scale of the layer transformation
+	 * @returns {number} The scale
+	 */
 	scale() {
 		// FIXME: this do not consider children layers
 		return this.transform.z;
 	}
 
+	/**
+	 * Gets the layer bounding box
+	 * @returns {BoundingBox} The bounding box 
+	 */
 	boundingBox() {
 		// FIXME: this do not consider children layers
 		// Take layout bbox
@@ -203,6 +281,13 @@ class Layer {
 		return result;
 	}
 
+	/**
+ 	* Computes the merge bounding box of all the 'layers`
+ 	* @param {Layer[]} layers 
+ 	* @param {bool} discardHidden Whether hidden layers are not to be included in the computation.
+ 	* @returns {BoundingBox} The bounding box 
+	* @static 
+ 	*/
 	static computeLayersBBox(layers, discardHidden) {
 		if (layers == undefined || layers == null) {
 			console.log("ASKING BBOX INFO ON NO LAYERS");
@@ -219,7 +304,25 @@ class Layer {
 		return layersBbox;
 	}
 
-	setControl(name, value, dt) {
+	/**
+	 * Adds a new shader parameter control.
+	 * @param {string} name The name of the control.
+	 * @param {*} value The value for initialization.
+	 */
+	addControl(name, value) {
+		if(this.controls[name])
+			throw new Error(`Control "$name" already exist!`);
+		let now = performance.now();
+		this.controls[name] = { 'source':{ 'value': value, 't': now }, 'target':{ 'value': value, 't': now }, 'current':{ 'value': value, 't': now } };
+	}
+
+	/**
+	 * Set a shader parameter control with new value
+	 * @param {*} name The name of the control.
+	 * @param {*} value The value for initialization.
+	 * @param {time} dt Duration of the interpolation (0=no interpolation).
+	 */
+	setControl(name, value, dt) { //When are created?
 		let now = performance.now();
 		let control = this.controls[name];
 		this.interpolateControl(control, now);
@@ -232,7 +335,10 @@ class Layer {
 
 		this.emit('update');
 	}
-
+	/**
+	 * Update the current values of the parameter controls.
+	 * @returns {bool} Weather the interpolation is finished (the time has now gone).
+	 */
 	interpolateControls() {
 		let now = performance.now();
 		let done = true;
@@ -241,6 +347,7 @@ class Layer {
 		return done;
 	}
 
+	/** @ignore */
 	interpolateControl(control, time) {
 		let source = control.source;
 		let target = control.target;
@@ -268,15 +375,20 @@ class Layer {
 		return false;
 	}
 
+	/////////////
+	/// CACHE HANDLING & RENDERING
+
+	/** @ignore */
 	dropTile(tile) {
-		for(let i = 0; i < tile.tex.length; i++) {
-			if(tile.tex[i]) {
+		for (let i = 0; i < tile.tex.length; i++) {
+			if (tile.tex[i]) {
 				this.gl.deleteTexture(tile.tex[i]);
 			}
 		}
 		this.tiles.delete(tile.index);
 	}
 
+	/** @ignore */
 	clear() {
 		this.ibuffer = this.vbuffer = null;
 		Cache.flushLayer(this);
@@ -285,9 +397,11 @@ class Layer {
 		this.queue = [];
 		this.previouslyNeeded = false;
 	}
-	/**
-	 *  render the 
+
+	/*
+	 * Renders the layer
 	 */
+	/** @ignore */
 	draw(transform, viewport) {
 		//exception for layout image where we still do not know the image size
 		//how linear or srgb should be specified here.
@@ -319,6 +433,7 @@ class Layer {
 		return done;
 	}
 
+	/** @ignore */
 	drawTile(tile) {
 		let tiledata = this.tiles.get(tile.index);
 		if (tiledata.missing != 0)
@@ -346,7 +461,7 @@ class Layer {
 	 *  complete is true if all of the 'brothers' in the hierarchy are loaded,
 	 *  drawing incomplete tiles enhance the resolution early at the cost of some overdrawing and problems with opacity.
 	 */
-
+	/** @ignore */
 	toRender(needed) {
 
 		let torender = {}; //array of minlevel, actual level, x, y (referred to minlevel)
@@ -383,7 +498,7 @@ class Layer {
 		return torender;
 	}
 
-
+	/** @ignore */
 	updateTileBuffers(coords, tcoords) {
 		let gl = this.gl;
 		//TODO to reduce the number of calls (probably not needed) we can join buffers, and just make one call per draw! (except the bufferData, which is per node)
@@ -400,11 +515,10 @@ class Layer {
 		gl.enableVertexAttribArray(this.shader.texattrib);
 	}
 
-
-
-	/**
+	/*
 	 *  If layout is ready and shader is assigned, creates or update tiles to keep track of what is missing.
 	 */
+	/** @ignore */
 	setupTiles() {
 		if (!this.shader || !this.layout || this.layout.status != 'ready')
 			return;
@@ -428,6 +542,7 @@ class Layer {
 		}
 	}
 
+	/** @ignore */
 	prepareWebGL() {
 
 		let gl = this.gl;
@@ -455,20 +570,19 @@ class Layer {
 
 	}
 
+	/** @ignore */
 	sameNeeded(a, b) {
-		if(a.level != b.level)
+		if (a.level != b.level)
 			return false;
 
-		for(let p of ['xLow', 'xHigh', 'yLow', 'yHigh'])
-			if(a.pyramid[a.level][p] != b.pyramid[a.level][p])
+		for (let p of ['xLow', 'xHigh', 'yLow', 'yHigh'])
+			if (a.pyramid[a.level][p] != b.pyramid[a.level][p])
 				return false;
-		
+
 		return true;
 	}
-	/**
-	*  @param {object] transform is the canvas coordinate transformation
-	*  @param {viewport} is the viewport for the rendering, note: for lens might be different! Where we change it? here layer should know!
-	*/
+
+	/** @ignore */
 	prefetch(transform, viewport) {
 		if (this.layers.length != 0) { //combine layers
 			for (let layer of this.layers)
@@ -515,6 +629,7 @@ class Layer {
 		Cache.setCandidates(this);
 	}
 
+	/** @ignore */
 	async loadTile(tile, callback) {
 		if (this.tiles.has(tile.index))
 			throw "AAARRGGHHH double tile!";

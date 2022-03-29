@@ -11,7 +11,7 @@ import { Cache } from './Cache.js'
  * @param {Camera} camera  The scene's camera.
  * @param {Object} [options] An object literal.
  * @param {Object} options.layers Object specifies layers (see. {@link Layer})
- * @param {boolean} options.preserveDrawingBuffer=false Whether to preserve the buffers until manually cleared or overwritten. Needed for screenshots 
+ * @param {bool} options.preserveDrawingBuffer=false Whether to preserve the buffers until manually cleared or overwritten. Needed for screenshots 
  * (otherwise is just a performance penalty).
  * 
 */
@@ -33,7 +33,7 @@ class Canvas {
 		this.init(canvas, overlay);
 			
 		for(let id in this.layers)
-		this.addLayer(id, new Layer(id, this.layers[id]));
+			this.addLayer(id, new Layer(this.layers[id]));
 		this.camera.addEvent('update', () => this.emit('update'));
 	}
 

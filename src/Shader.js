@@ -17,7 +17,7 @@ class Shader {
 			uniforms: {},
 			name: "",
 			program: null,      //webgl program
-			modes: [],
+			modes: [], //FIXME Where is setMode?
 			needsUpdate: true,
 			signals: { 'update':[] }
 		});

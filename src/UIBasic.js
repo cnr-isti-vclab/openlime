@@ -92,7 +92,7 @@ class UIBasic {
 				modes.push(mode);
 			}
 			let layerEntry = {
-				button: layer.label || id,
+				button: layer.label || id, //FIXME what is a label?
 				onclick: () => { this.setLayer(layer); },
 				status: () => layer.visible ? 'active' : '',
 				list: modes,

@@ -1,6 +1,5 @@
 import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
-
 import { PointerManager } from './PointerManager.js'
 
 /**
