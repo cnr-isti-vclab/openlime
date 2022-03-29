@@ -2,8 +2,29 @@
 import { Layer }  from './Layer.js'
 
 /**
- * Combines other layers (using a framebuffer) using a shader. Lens is an example. Extends {@link Layer}.
- * @param {options} options Same as {@link Layer}, but url and layout are required.
+ * Combines other layers (in the framebuffer) using a custom shader. {@link LayerLens} is an example.
+ * The class LayerImage can also be instantiated via the Layer parent class and `options.type='combiner'`.
+ * 
+ * Extends {@link Layer}.
+ * @param {options} options Same as {@link Layer}, but `options.layers` are required
+ * @example
+ * // Instantiate the LayerCombiner class and set the two inputs (layer0 and layer1)
+ * const combiner = new OpenLIME.Layer({
+ *     type: 'combiner',
+ *     visible: true,
+ *     layers: [layer0, layer1]
+ * });
+ * 
+ * // Instantiate the ShaderCombiner class (a custom shader) and select 'diff' as default mode (for visualization purposes)
+ * const shader = new OpenLIME.ShaderCombiner();
+ * shader.mode = 'diff';
+ *
+ * // Assign the newly created shader to the combiner (labelling it 'standard') and enable it
+ * combiner.shaders = { 'standard': shader };
+ * combiner.setShader('standard');
+ *
+ * // Add the combiner to the canvas
+ * lime.addLayer('combiner', combiner);
  */
 class LayerCombiner extends Layer {
 	constructor(options) {

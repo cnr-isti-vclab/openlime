@@ -100,7 +100,7 @@
             layout: 'deepzoom1px',
             url: 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi',
         });
-        lime.canvas.addLayer('Base', layer);
+        lime.addLayer('Base', layer);
 
         // Define annotation parameters
         let annotationServer = 'http://localhost:3000/ol';
@@ -117,7 +117,7 @@
         let aOptions = {
             label: 'Annotations',
             layout: layer.layout,
-
+            type: 'svg_annotations',
             style: ` 
             .openlime-annotation { pointer-events:stroke; opacity: 0.7; }
             .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
@@ -149,8 +149,8 @@
         }
 
         // Create an annotation layer and add it to the canvans
-        const anno = new OpenLIME.LayerSvgAnnotation(aOptions);
-        lime.canvas.addLayer('anno', anno);
+        const anno = new OpenLIME.Layer(aOptions);
+        lime.addLayer('anno', anno);
 
         // If editorEnable, create a SVG annotation Editor
         if (editorEnable) {

@@ -3,7 +3,7 @@ import {LayerCombiner}  from './LayerCombiner.js'
 import {ShaderLens}     from './ShaderLens.js'
 
 /**
- * options must contain one layer and lens = {x:, y:, r:, border: }
+ * Displays a lens on the canvas. 
  */
 class LayerLens extends LayerCombiner {
 	constructor(options) {
@@ -21,9 +21,9 @@ class LayerLens extends LayerCombiner {
 		this.startPos = [0, 0];
 		this.border = 2;
 
-		let now = performance.now();
-		this.controls['center'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
-		this.controls['radius'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
+		this.addControl('center', [0, 0]);
+		this.addControl('radius', [0, 0]);
+
 		this.setLens(0,0,this.radius,this.border);
 		this.signals.draw = [];
 

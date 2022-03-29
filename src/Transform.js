@@ -96,7 +96,13 @@ class Transform {
 		return box;
 	}
 
+	/**
+	* The type Easing defines the function that regulates the movement of the camera
+	* @typedef {('linear'|'ease-out'|'ease-in-out')} Transform#Easing
+	*/
+
     interpolate(source, target, time, easing) {
+
 		let t = (target.t - source.t);
 
 		this.t = time;

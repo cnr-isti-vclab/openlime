@@ -426,16 +426,14 @@ function imageTest(layout) {
 
 	let ui = new UIBasic(lime);
 
-	// setTimeout(() => { 
-	// 	console.log(layer0);
-	// 	lime.canvas.removeLayer(layer0);
-	// 	lime.redraw();
-	// }, 3000);
-	// setTimeout(() => {
-	// 	console.log(layer0);
-	// 	lime.canvas.addLayer('kdmap', layer0);
-	// 	lime.redraw();
-	// }, 6000);
+	setTimeout(() => { 
+		console.log(layer0);
+		lime.removeLayer('kdmap');
+	}, 3000);
+	setTimeout(() => {
+		console.log(layer0);
+		lime.addLayer('kdmap', layer0);
+	}, 6000);
 
 }
 
