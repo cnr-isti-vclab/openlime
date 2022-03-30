@@ -151,6 +151,11 @@ class UIBasic {
 		else setTimeout(() => { this.init(); }, 0);
 	}
 
+	getMenuLayerEntry(id) {
+		const found = this.menu.find(e => e.layer == id);
+		return found;
+	}
+
 	createLightDirections() {
 		this.lightDirections = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.lightDirections.setAttribute('viewBox', '-100, -100, 200 200');
@@ -482,7 +487,8 @@ class UIBasic {
 			let mode = 'mode' in entry ? `data-mode="${entry.mode}"` : '';
 			html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry ${classes}">${entry.button}</a>`;
 		} else if ('slider' in entry) {
-			html += `<input type="range" min="1" max="100" value="50" class="openlime-slider ${classes}" ${id}>`;
+			let value = ('value' in entry) ? entry['value'] : 50;
+			html += `<input type="range" min="1" max="100" value="${value}" class="openlime-slider ${classes}" ${id}>`;
 		}
 
 		if ('list' in entry) {

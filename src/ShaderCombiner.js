@@ -24,14 +24,6 @@ class ShaderCombiner extends Shader {
 		};
 	}
 
-	setMode(mode) {
-//		if(!(mode in this.modes))
-		if(this.modes.indexOf(mode)==-1)
-			throw Error("Unknown mode: " + mode);
-		this.mode = mode;
-		this.needsUpdate = true;
-	}
-
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let operation = this.operations[this.mode];

@@ -42,11 +42,23 @@
         });
         lime.addLayer('nomap', layer1);
 
+        // Create a third layer with annotations and add it to the canvans.
+        // This layer is transparent and will be displayed in overlay mode inside the lens.
+        const layer2 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lighthouse/image/lighthouse-anno.png',
+            layout: 'image',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: false
+        });
+        lime.addLayer('anno', layer2);
+
+
          // Create a lens layer and add it to the canvans.
          // The field displayed inside the lens is layer1 (normal map)
         const lensLayer = new OpenLIME.Layer({
             type: "lens",
-            layers: [layer1],
+            layers: [layer1, layer2],
             camera: lime.camera,
             radius: 200,
             border: 10,

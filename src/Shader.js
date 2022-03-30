@@ -25,6 +25,13 @@ class Shader {
 		Object.assign(this, options);
 	}
 
+	setMode(mode) {
+		if (this.modes.indexOf(mode) == -1)
+			throw Error("Unknown mode: " + mode);
+		this.mode = mode;
+		this.needsUpdate = true;
+	}
+
 	setEvent(event, callback) {
 		this.signals[event] = [callback];
 	}
