@@ -26,7 +26,10 @@ class LayerLens extends LayerCombiner {
 		this.controls['radius'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
 		this.setLens(0,0,this.radius,this.border);
 		this.signals.draw = [];
+	}
 
+	setSecondLayerEnabled(x) {
+		this.shader.setSecondLayerEnabled(x);
 	}
 
 	setLens(x = 0, y = 0, r = 100, border = 10) {
