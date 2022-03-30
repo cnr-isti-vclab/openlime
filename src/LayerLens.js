@@ -29,7 +29,15 @@ class LayerLens extends LayerCombiner {
 	}
 
 	setSecondLayerEnabled(x) {
-		this.shader.setSecondLayerEnabled(x);
+		if (this.layers.length == 2) {
+			// With two layers set visible or not the second layer and set the property in the shader
+			this.layers[1].setVisible(x);
+			this.shader.setSecondLayerEnabled(x);
+		} else if (!x) {
+			// With a single layer, just tell the shader to use only the first layer 
+			this.shader.setSecondLayerEnabled(x);
+		}
+
 	}
 
 	setLens(x = 0, y = 0, r = 100, border = 10) {
