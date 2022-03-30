@@ -5,7 +5,7 @@ class ShaderLens extends Shader {
         super(options);
         
         this.samplers = [
-			{ id:0, name:'source0' }
+			{ id:0, name:'source0' }, { id:1, name:'source1' }
 		];
         
         this.uniforms = {
@@ -14,14 +14,11 @@ class ShaderLens extends Shader {
         };
         this.label = "ShaderLens";
         this.needsUpdate = true;
+        this.secondLayerEnabled = false;
     }
 
     setSecondLayerEnabled(x) {
-        if (x) {
-            this.samplers[1] = { id:1, name:'source1' };
-        } else {
-            this.samplers.length = 1;
-        }
+        this.secondLayerEnabled = x;
         this.needsUpdate = true;
     }
 
@@ -36,7 +33,7 @@ class ShaderLens extends Shader {
         let samplerDeclaration = `uniform sampler2D ` + this.samplers[0].name + `;`;
         let secondSamplerCode = "";
 
-        if (this.samplers.length == 2) {
+        if (this.secondLayerEnabled) {
             samplerDeclaration += `uniform sampler2D ` + this.samplers[1].name + `;`;
 
             secondSamplerCode =  
@@ -47,6 +44,9 @@ class ShaderLens extends Shader {
             }
             color = color * (1.0 - c1.a) + c1 * c1.a; `
         }
+
+        console.log("Shader code 0 " + samplerDeclaration);
+        console.log("Shader code 1 " + secondSamplerCode);
 
 		return `${gl2? '#version 300 es':''}
 
