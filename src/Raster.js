@@ -1,21 +1,18 @@
 /**
- * Raster is a providers of images and planes of coefficies.
- * It support all files format supported by browser and a set of tiled formats.
- *
- * Layout can be:
- * * image: a single image (.jpg, .png etc.)
- * * google: there is no config file, so layout, suffix is mandatory if not .jpg,  and url is the base folder of the tiles.
- * * deepzoom: requires only url, can be autodetected from the extension (.dzi)
- * * zoomify: requires url, can be autodetected, from the ImageProperties.xml, suffix is required if not .jpg
- * * iip: requires url, can be autodetected from the url
- * * iiif: layout is mandatory, url should point to base url {scheme}://{server}{/prefix}/{identifier}
- *
- * @param {string} id an unique id for each raster
- * @param {url} url of the content
- * @param {object} options 
- * * *type*: vec3 (default value) for standard images, vec4 when including alpha, vec2, float other purpouses.
- * * *attribute*: <coeff|kd|ks|gloss|normals|dem> meaning of the image.
- * * *colorSpace*: <linear|srgb> colorspace used for rendering.
+ * An Raster Format describes the way that the images in textures and renderbuffers store their data.
+ * * 'vec3' format must be specified if the image is RGB (without alpha).
+ * * 'vec4' is related to RGBA images.
+ * * 'float' is for file containg coefficients.
+ * @typedef {('vec3'|'vec4'|'float')} Raster#Format
+ */
+
+/**
+ * Raster is a provider of image and/or plane of coefficients.
+ * It support all file formats supported by {@link Layout}.
+ * 
+ * An object literal with Raster `options` can be specified.
+ *  * @param {Object} [options] An object literal describing the raster content.
+ * @param {Raster#Format} options.format='vec3' The color format of the image.
  */
 
 class Raster {
@@ -24,14 +21,17 @@ class Raster {
 
 		Object.assign(this, { 
 			format: 'vec3', 
-			colorSpace: 'linear',
-			attribute: 'kd'
 		 });
 
 		Object.assign(this, options);
 	}
 
-
+	/**
+	 * Gets a tile.
+	 * @param {Tile} tile A tile.
+	 * @param {WebGLRenderingContext} gl The WebGL rendering context .
+	 * @returns {'[tex, size]'} A pair (tex,size).
+	 */
 	async loadImage(tile, gl) {
 		let img;
 		let cors = (new URL(tile.url, window.location.href)).origin !== window.location.origin;
@@ -62,6 +62,7 @@ class Raster {
 		return [tex, size];	
 	}
 
+	/** @ignore */
 	async blobToImage(blob, gl) {
 		let tex, img;
 		if(typeof createImageBitmap != 'undefined') {
@@ -84,10 +85,8 @@ class Raster {
 		}
 		return img;		
 	}
-/*
- * @param {function} callback as function(tex, sizeinBytes)
- */
 
+	/** @ignore */
 	loadTexture(gl, img) {
 		this.width = img.width;  //this will be useful for layout image.
 		this.height = img.height;

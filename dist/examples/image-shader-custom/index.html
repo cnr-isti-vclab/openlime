@@ -63,16 +63,9 @@
         // Creates an OpenLIME canvas into .openlime
         const lime = new OpenLIME.Viewer('.openlime');
 
-        // Creates an image layer and adds it to the canvans
-        const layer = new OpenLIME.Layer({
-            layout: 'image',
-            type: 'image',
-            url: '../../assets/lime/image/lime.jpg'
-        });
-        lime.addLayer('Base', layer);
-
         // Creates an image layer with a custom shader that displays the image as B&W. Adds it to the canvas.
-        const layerbw = new LayerCustom({  //FIXME use the layer above.
+        const layerbw = new LayerCustom({
+            label: 'Black and white',
             layout: 'image',
             url: '../../assets/lime/image/lime.jpg'
         });

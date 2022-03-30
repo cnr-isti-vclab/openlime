@@ -1,6 +1,6 @@
 import { Skin } from './Skin.js';
 import { simplify, smooth, smoothToPath } from './Simplify.js'
-
+import { createSVGElement } from './LayerSvgAnnotation.js'
 
 class EditorSvgAnnotation {
 	constructor(lime, layer, options) {
@@ -342,7 +342,7 @@ class EditorSvgAnnotation {
 		let svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		const bBox = this.layer.boundingBox();
 		svgElement.setAttribute('viewBox', `0 0 ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
-		let style = createElement('style');
+		let style = createSVGElement('style');
 		style.textContent = this.layer.style;
 		svgElement.appendChild(style);
 		let serializer = new XMLSerializer();
@@ -855,15 +855,6 @@ class Erase {
 		this.annotation.elements = this.annotation.elements.filter(e => { return !e.points || e.points.length > 2; });
 		return this.erased;
 	}
-}
-
-//utils
-function createElement(tag, attributes) {
-	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-	if (attributes)
-		for (const [key, value] of Object.entries(attributes))
-			e.setAttribute(key, value);
-	return e;
 }
 
 export { EditorSvgAnnotation }

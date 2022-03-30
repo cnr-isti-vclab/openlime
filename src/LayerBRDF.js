@@ -9,6 +9,11 @@ import { ShaderBRDF } from './ShaderBRDF.js'
 
 class LayerBRDF extends Layer {
 	constructor(options) {
+		options = Object.assign({
+			brightness: 1.0,
+			gamma: 2.2,
+			alphaLimits: [0.01, 0.5]
+		}, options);
 		super(options);
 
 		if(Object.keys(this.rasters).length != 0)
@@ -29,45 +34,29 @@ class LayerBRDF extends Layer {
 		let id = 0;
 		let urls = [];
 		let samplers = [];
+		let brdfSamplersMap = {
+			kd: { format: 'vec3', name: 'uTexKd' },
+			ks: { format: 'vec3', name: 'uTexKs' },
+			normals: { format: 'vec3', name: 'uTexNormals' },
+			gloss: { format: 'float', name: 'uTexGloss' }
+		};
 		for (let c in this.channels) {
-			let url = this.channels[c];
-			switch (c) {
-				case 'kd':
-					this.rasters.push(new Raster({ format: 'vec3', attribute: 'kd', colorspace: this.colorspaces['kd'] }));
-					samplers.push({ 'id': id, 'name': 'uTexKd' });
-					break;
-				case 'ks':
-					this.rasters.push(new Raster({ format: 'vec3',  attribute: 'ks',      colorspace: this.colorspaces['ks'] }));
-					samplers.push({ 'id': id, 'name': 'uTexKs' });
-					break;
-				case 'normals':
-					this.rasters.push(new Raster({ format: 'vec3',  attribute: 'normals', colorspace: 'linear' }));
-					samplers.push({ 'id': id, 'name': 'uTexNormals' });
-					break;
-				case 'gloss':
-					this.rasters.push(new Raster({ format: 'float', attribute: 'gloss',   colorspace: 'linear' }));
-					samplers.push({ 'id': id, 'name': 'uTexGloss' });
-					break;
-
-				default:
-					break;
-			}
-			urls[id] = url;
+			this.rasters.push(new Raster({ format: brdfSamplersMap[c].format }));
+			samplers.push({ 'id': id, 'name': brdfSamplersMap[c].name });
+			urls[id] = this.channels[c];
 			id++;
 		}
-		this.layout.setUrls(urls);
-		this.addControl('light', [0, 0]); // FIXME Remove lines below
-		const brightness = options.brightness ? options.brightness : 1.0;
-		const gamma = options.gamma ? options.gamma : 2.2;
-		const alphaLimits = options.alphaLimits ? options.alphaLimits : [0.01, 0.5];
 
+		this.layout.setUrls(urls);
+		this.addControl('light', [0, 0]);
+		
 		let shader = new ShaderBRDF({
 			'label': 'Rgb',
 			'samplers': samplers,
 			'colorspaces': this.colorspaces,
-			'brightness': brightness,
-			'gamma': gamma,
-			'alphaLimits': alphaLimits
+			'brightness': this.brightness,
+			'gamma': this.gamma,
+			'alphaLimits': this.alphaLimits
 		});
 
 		this.shaders['brdf'] = shader;

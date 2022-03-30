@@ -2,21 +2,20 @@ import { Layer } from './Layer.js';
 import { Annotation } from './Annotation.js';
 import { LayerAnnotation } from './LayerAnnotation.js';
 
-
 /**
- * SVG or OpenGL polygons/lines/points annotation layer
- * @param {object} options
- * * *svgURL*: url for the svg containing the annotations
- * * *svgXML*: svg string containing the annotatiosn
- * * *style*: css style for the annotation elements (shadow dom allows css to apply only to this layer)
+ * An annotation layer that draws SVG elements directly on the canvas (outside the WebGL context).
+ * 
+ * Here you will find a tutorial to learn how to build a client-server architecture to manage annotations in OpenLIME. //FIXME
+ * 
+ * Extends {@link LayerAnnotation}.
+ * @param {Object} [options] An object literal with options that inherits from {@link LayerAnnotation}.
+ * @param {Object} options.classes An object literal definying colors and labels of the annotation classes.
+ * @param {Function} options.onClick The callback to fire when the an annotation is clicked on the canvas. The callback is passed an object containing the selected annotation.
  */
-
 class LayerSvgAnnotation extends LayerAnnotation {
 
 	constructor(options) {
 		options = Object.assign({
-			svgURL: null,
-			svgXML: null,
 			overlayElement: null,    //reference to canvas overlayElement. TODO: check if really needed.
 			shadow: true,            //svg attached as shadow node (so style apply
 			svgElement: null, //the svg layer
@@ -31,6 +30,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		//this.setLayout(this.layout);
 	}
 
+	/** @ignore */
 	createSVGElement() {
 		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svgElement.classList.add('openlime-svgoverlay');
@@ -62,12 +62,17 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		}
 	*/
 
+	/**
+	 * Sets a value that indicates whether the layer is visible.
+	 * @param {bool} visible The value.
+	 */
 	setVisible(visible) {
 		if (this.svgElement)
 			this.svgElement.style.display = visible ? 'block' : 'none';
 		super.setVisible(visible);
 	}
 
+	/** @ignore */
 	clearSelected() {
 		if (!this.svgElement) this.createSVGElement();
 		//		return;
@@ -75,6 +80,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		super.clearSelected();
 	}
 
+	/** @ignore */
 	setSelected(anno, on = true) {
 		for (let a of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))
 			a.classList.toggle('selected', on);
@@ -82,14 +88,15 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		super.setSelected(anno, on);
 	}
 
-
+	/** @ignore */
 	newAnnotation(annotation, selected = true) {
-		let svg = createElement('svg');
+		let svg = createSVGElement('svg');
 		if (!annotation)
 			annotation = new Annotation({ element: svg, selector_type: 'SvgSelector' });
 		return super.newAnnotation(annotation, selected)
 	}
 
+	/** @ignore */
 	draw(transform, viewport) {
 		if (!this.svgElement)
 			return true;
@@ -101,6 +108,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		return true;
 	}
 
+	/** @ignore */
 	prefetch(transform) {
 		if (!this.svgElement)
 			this.createSVGElement();
@@ -179,7 +187,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	}
 }
 
-function createElement(tag, attributes) {
+/** @ignore */ 
+function createSVGElement(tag, attributes) {
 	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
 	if (attributes)
 		for (const [key, value] of Object.entries(attributes))
@@ -189,5 +198,5 @@ function createElement(tag, attributes) {
 
 Layer.prototype.types['svg_annotations'] = (options) => { return new LayerSvgAnnotation(options); }
 
-export { LayerSvgAnnotation }
+export { LayerSvgAnnotation, createSVGElement }
 
