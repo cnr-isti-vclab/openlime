@@ -127,14 +127,7 @@
             path:hover { cursor:pointer; stroke:#f00; }
             .selected { stroke-width:3; }
             `,
-            infoTemplate: (annotation) => {
-                return `
-		        <h3>${annotation.class}</h3>
-		        <p>${annotation.description}</p>
-		    `;
-            },
-            annotations: annotationServer,
-            editable: true
+            annotations: annotationServer
         }
 
         if (!editorEnable) {

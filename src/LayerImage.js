@@ -25,18 +25,19 @@ class LayerImage extends Layer {
  	* @param {string} options.url The URL of the image
  	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
  	*/
-	constructor(options) {
+	constructor(options) {	
 		super(options);
 
 		if(Object.keys(this.rasters).length != 0)
 			throw "Rasters options should be empty!";
 
-		if(!this.url)
-			throw "Url option is required";
+		if (this.url)
+			this.layout.setUrls([this.url]);
+		else if (this.layout.urls.length == 0)
+			throw "Missing options.url parameter";	
 
-		this.layout.setUrls([this.url]);
 		const rasterFormat = this.format != null ? this.format : 'vec4';
-		let raster = new Raster({ format: rasterFormat, attribute: 'kd', colorspace: 'sRGB' });
+		let raster = new Raster({ format: rasterFormat });
 
 		this.rasters.push(raster);
 		
