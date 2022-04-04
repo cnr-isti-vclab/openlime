@@ -6,7 +6,7 @@
 class _Cache {
 	/**
 	 * Instantiates a Cache object. Tiles to be fetched are stored in an ordered `queue` in {Layer}.
-	 * @param {Object} [options] An object literal to define cache parameters.
+	 * @param {Object} [options] An object literal with cache parameters.
 	 * @param {number} options.capacity=536870912 The total cache capacity (in bytes).
 	 * @param {number} options.maxRequest=6 Max number of concurrent HTTP requests. Most common browsers allow six connections per domain.
 	 */
