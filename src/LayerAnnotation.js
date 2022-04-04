@@ -2,18 +2,21 @@ import { Annotation } from './Annotation.js';
 import { Layer } from './Layer.js'
 
 /**
- * An annotation layer is a layer used to display decorations (text, drawing elements, glyphs, etc...) on top of other layers.
+ * An annotation layer is a layer used to display decorations (text, graphics elements, glyphs, etc...) on top of other layers.
  * Its purpose is to provide additional information useful for the interpretation of the underlying layers.
  * An object literal with `options` can be specified.
  * 
  * Here you will find a tutorial to learn how to build a client-server architecture to manage annotations in OpenLIME. //FIXME
  * 
  * Extends {@link Layer}.
- * @param {Object} [options] An object literal with options that inherits from {@link Layer}.
- * @param {String} options.style Properties to style annotations.
- * @param {(String|Array)} options.annotations The URL of the annotation data (JSON file or HTTP GET Request to an annotation server) or an array of annotations. 
  */
 class LayerAnnotation extends Layer {
+	/**
+	 * Instantiates a LayerAnnotation object.
+	 * @param {Object} [options] An object literal with options that inherits from {@link Layer}.
+	 * @param {String} options.style Properties to style annotations.
+ 	 * @param {(String|Array)} options.annotations The URL of the annotation data (JSON file or HTTP GET Request to an annotation server) or an array of annotations.
+	 */
 	constructor(options) {
 		options = Object.assign({
 			// geometry: null,  //unused, might want to store here the quads/shapes for opengl rendering
@@ -130,7 +133,11 @@ class LayerAnnotation extends Layer {
 			</a>`;
 	}
 
-	/** @ignore */
+	/**
+	 * Gets an annotation by its `id`
+	 * @param {String} id 
+	 * @returns {Annotation} The annotation.
+	 */
 	getAnnotationById(id) {
 		for(const anno of this.annotations)
 			if(anno.id == id)
@@ -144,8 +151,11 @@ class LayerAnnotation extends Layer {
 		this.selected.clear();
 	}
 
-	//set selected class for annotation
-	/** @ignore */
+	/**
+	 * Selects/deselects an annotation
+	 * @param {Annotation} anno The annotation.
+	 * @param {bool} on=true Wether to select the annotation.
+	 */
 	setSelected(anno, on = true) {
 		this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.toggle('selected', on);
 		if(on)

@@ -8,18 +8,22 @@ import { LayerAnnotation } from './LayerAnnotation.js';
  * Here you will find a tutorial to learn how to build a client-server architecture to manage annotations in OpenLIME. //FIXME
  * 
  * Extends {@link LayerAnnotation}.
- * @param {Object} [options] An object literal with options that inherits from {@link LayerAnnotation}.
- * @param {Object} options.classes An object literal definying colors and labels of the annotation classes.
- * @param {Function} options.onClick The callback to fire when the an annotation is clicked on the canvas. The callback is passed an object containing the selected annotation.
  */
 class LayerSvgAnnotation extends LayerAnnotation {
-
+	/**
+	 * Instantiates a LayerSvgAnnotation object.
+	 * @param {Object} [options] An object literal with options that inherits from {@link LayerAnnotation}.
+ 	 * @param {Object} options.classes An object literal definying colors and labels of the annotation classes.
+ 	 * @param {Function} options.onClick The callback to fire when the an annotation is clicked on the canvas. The callback is passed an object containing the selected annotation.
+	 * @param {bool} options.shadow=true Whether to insert SVG elements in a shadow DOM.
+	 */
 	constructor(options) {
 		options = Object.assign({
-			overlayElement: null,    //reference to canvas overlayElement. TODO: check if really needed.
-			shadow: true,            //svg attached as shadow node (so style apply
-			svgElement: null, //the svg layer
+			overlayElement: null,   //reference to canvas overlayElement. TODO: check if really needed.
+			shadow: true,           //svg attached as shadow node (so style apply only the svg layer)
+			svgElement: null, 		//the svg layer
 			svgGroup: null,
+			onClick: null,			//callback function
 			classes: {
 				'': { stroke: '#000', label: '' },
 			}
@@ -80,7 +84,11 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		super.clearSelected();
 	}
 
-	/** @ignore */
+	/**
+	 * Selects/deselects an annotation
+	 * @param {Annotation} anno The annotation.
+	 * @param {bool} on=true Wether to select the annotation.
+	 */
 	setSelected(anno, on = true) {
 		for (let a of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))
 			a.classList.toggle('selected', on);

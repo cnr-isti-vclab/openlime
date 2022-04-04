@@ -26,9 +26,9 @@
                 // Instatiates the shader
                 const shader = new OpenLIME.Shader({
                     'label': 'Rgb',
-                    'samplers': [{ id: 0, name: 'kd', type: 'vec4' }]
+                    'samplers': [{ id: 0, name: 'kd' }]
                 });
-                // The fragment shader with a float uniform for color factor control
+                // The fragment shader script. A float uniform for color factor control is defined.
                 shader.fragShaderSrc = function (gl) {
                     let gl2 = !(gl instanceof WebGLRenderingContext);
                     let str = `${gl2 ? '#version 300 es' : ''}

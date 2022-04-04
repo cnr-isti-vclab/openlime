@@ -8,7 +8,7 @@ import { PointerManager } from './PointerManager.js'
  * The class creates the canvas, enables the WebGL context and takes care of the content redrawing when needed.
  * Viewer is the main class of the OpenLIME framework. It allows access to all the internal structures that make up the system.
  * 
- * @param {(element|string)} div A DOM element or a selector (es. '#openlime' or '.openlime').
+ * @param {(element|String)} div A DOM element or a selector (es. '#openlime' or '.openlime').
  * @param {Object} [options]  An object literal describing the viewer content.
  * @param {color} options.background CSS style for background (it overwrites CSS if present).
  * 
@@ -82,7 +82,7 @@ class Viewer {
     }
 
     /** Adds the given layer to the Viewer.
-    * @param {string} id A label to identify the layer.
+    * @param {String} id A label to identify the layer.
     * @param {Layer} layer An OpenLIME Layer object.
     */
     addLayer(id, layer) {
@@ -91,7 +91,7 @@ class Viewer {
     }
 
     /** Remove the given layer from the Viewer.
-    * @param {(Layer|string)} layer An OpenLIME Layer or a Layer identifier.
+    * @param {(Layer|String)} layer An OpenLIME Layer or a Layer identifier.
     */
     removeLayer(layer) {
         if (typeof (layer) == 'string')

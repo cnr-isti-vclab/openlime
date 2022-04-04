@@ -19,12 +19,14 @@
     <script>
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.Viewer('.openlime');
+        lime.camera.bounded = false;
 
         // Create an image layer and add it to the canvans
         const layer = new OpenLIME.Layer({
             layout: 'deepzoom',
             type: 'image',
-            url: '../../assets/lime/deepzoom/lime.dzi'
+            //url: '../../assets/lime/deepzoom/lime.dzi'
+            url: '../../assets/test/test.dzi'
         });
         lime.addLayer('Base', layer);
 

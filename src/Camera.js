@@ -13,15 +13,26 @@ import { BoundingBox } from './BoundingBox.js'
  */
 
 /**
- * Creates a scene's camera. An update event is issued when the camera has completed its positioning.
- * Additionally, an object literal with Viewer `options` can be specified.
- * @param {Object} [options]
- * @param {bool} options.bounded=true Weather to limit the translation of the camera to the boundary of the scene.
- * @param {number} options.maxFixedZoom=2 The maximum pixel size.
- * @param {number} options.minScreenFraction=1 The minimum portion of the screen to zoom in.
+ * The class Camera does not have an operational role, but it is rather a container of parameters 
+ * needed by the system to define the viewport, the camera position and to calculate the appropriate view.
+ * 
+ * To enable the animation, a camera contains two view matrices (two {@link Transform} objects): a `source` with the 
+ * current position and a `target` with the position the camera will arrive at in a time `dt`. 
+ * 
+ * The member function `setPosition()` takes care of defining the target, the OpenLIME system automatically animates the 
+ * camera to bring it from source to target, unless the user manually interrupts the current animation.
+ * 
+ * User-generated device events (such as touch events or mouse events) can modify camera parameters via an appropriate {@link Controller}.
  */
 class Camera {
-
+	/**
+	 * Creates a scene's camera. An update event is issued when the camera has completed its positioning.
+ 	 * Additionally, an object literal with Viewer `options` can be specified.
+ 	 * @param {Object} [options]
+ 	 * @param {bool} options.bounded=true Weather to limit the translation of the camera to the boundary of the scene.
+ 	 * @param {number} options.maxFixedZoom=2 The maximum pixel size.
+  	 * @param {number} options.minScreenFraction=1 The minimum portion of the screen to zoom in.
+ 	 */
 	constructor(options) {
 		Object.assign(this, {
 			viewport: null,
@@ -119,7 +130,7 @@ class Camera {
 	}
 
 	/**
-	 * Sets the camera parameters (position, rotation, )
+	 * Sets the camera target parameters (position, rotation, )
 	 * @param {number} dt The animation duration in millisecond.
 	 * @param {*} x The x coordinate
 	 * @param {*} y The y coordinate

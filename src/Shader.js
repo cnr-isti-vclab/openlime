@@ -1,16 +1,23 @@
+/**
+ * A reference to a 2D texture.
+ * @typedef {Object} Shader#Sampler
+ * @property {number} id A sampler unique identifier.
+ * @property {String} name The sampler name (the texture reference name in the shader program).
+ */
 
 /**
- * The Shader class allows shader programs to be linked and used.
+ * The `Shader` class allows shader programs to be linked and used.
  * This class supports shader programs written in the OpenGL/ES Shading Language (GLSL/ES) with 2.0 amd 3.0 specifications.
- * Shader keeps the programmer away from the details of compiling and linking vertex and fragment shaders.
+ * 
+ * The `Shader` class keeps the programmer away from the details of compiling and linking vertex and fragment shaders.
  * The following example creates a fragment shader program using the supplied source code. Once compiled and linked, 
  * the shader program is activated in the current WebGLContext.
  * ```
  * const shader = new OpenLIME.Shader({
  *      'label': 'Rgb',
- *      'samplers': [{ id: 0, name: 'kd', type: 'vec4' }]
+ *      'samplers': [{ id: 0, name: 'kd' }]
  * });
- * // The fragment shader source code
+ * // The fragment shader script
  * shader.fragShaderSrc = function (gl) {
  *      let gl2 = !(gl instanceof WebGLRenderingContext);
  *      let str = `${gl2 ? '#version 300 es' : ''}
@@ -35,8 +42,8 @@
 class Shader {
  /** 
  * Instantiates a Shader class. An object literal with Shader `options` can be specified.
- * @param {object} options An object literal describing the shader content.
- * @param {Array<Object>} options.samplers
+ * @param {Object} [options] An object literal describing the shader content.
+ * @param {Array<Shader#Sampler>} options.samplers An array of pointers to 2D textures. 
  * @param {Array<String>} options.modes An optional array of labels that identify different shader behaviors.
  */
   constructor(options) {
@@ -53,7 +60,10 @@ class Shader {
 		});
 		Object.assign(this, options);
 	}
-
+	/**
+	 * Sets the current mode of the shader
+	 * @param {String} mode The mode identifier
+	 */
 	setMode(mode) {
 		if (this.modes.indexOf(mode) == -1)
 			throw Error("Unknown mode: " + mode);
@@ -61,21 +71,41 @@ class Shader {
 		this.needsUpdate = true;
 	}
 
+	/*
+ 	* Adds a Shader Event callback
+ 	* @param {String} event A label to identify the event.
+ 	* @param {Function} callback The event callback function.
+ 	*/
+	 /** @ignore */
 	setEvent(event, callback) {
 		this.signals[event] = [callback];
 	}
 
+	/** @ignore */
 	emit(event) {
 		for(let r of this.signals[event])
 			r(this);
 	}
 
+	/** @ignore */
 	restoreWebGL(gl) {
 		this.createProgram(gl);
 	}
 
+	/**
+	 * Sets the value of a uniform variable.
+	 * @param {String} name The name of the uniform variable.
+	 * @param {*} value The value to assign.
+	 */
 	setUniform(name, value) {
+		/**
+		* The event is fired when a unform shader variable is changed.
+		* @event Camera#update
+		*/
 		let u = this.uniforms[name];
+		if(!u)
+			throw new Error(`Unknown '${name}'. It is not a registered uniform.`);
+
 		if(typeof(value) == "number" && u.value == value) 
 			return;
 		if(Array.isArray(value) && Array.isArray(u.value) && value.length == u.value.length) {
@@ -94,6 +124,7 @@ class Shader {
 		this.emit('update');
 	}
 
+	/** @ignore */
 	createProgram(gl) {
 
 		let vert = gl.createShader(gl.VERTEX_SHADER);
@@ -155,6 +186,7 @@ class Shader {
 		}
 	}
 
+	/** @ignore */
 	updateUniforms(gl, program) {
 		let now = performance.now();
 		for(const [name, uniform] of Object.entries(this.uniforms)) {
@@ -178,6 +210,11 @@ class Shader {
 		}
 	}
 
+	/**
+	 * Gets the vertex shader script. By default it only applies the view matrix and passes the texture coordinates to the fragment shader.
+	 * @param {*} gl Thegl context.
+	 * @returns {String} The vertex shader script.
+	 */
 	vertShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		return `${gl2? '#version 300 es':''}
@@ -197,7 +234,12 @@ void main() {
 }`;
 	}
 
-	fragShaderSrc(gl) {
+	/**
+	 * Gets the fragment shader script. This is a virtual function and MUST be redefined in derived classes.
+	 * @param {*} gl Thegl context.
+	 * @returns {String} The vertex shader script.
+	 */
+	 fragShaderSrc(gl) {
 		throw 'Unimplemented!'
 	}
 }

@@ -1,22 +1,21 @@
-/* Cache holds the images and the tile textures.
- *  Each tile has a priority 0 and above means it is visible, 
- *  negative depends on how far from the border and how more zoomed you need to go
- * 
- * * *capacity*: in bytes, max amount of GPU RAM used.
- * *size*: current size (read only!)
- * *maxRequest*: max number of concurrent HTTP requests
- * *requested*: current number of HTTP requests (read only!)
- * *maxPrefetch*: max number of tile prefetched (each tile might require multiple httprequests)
- * *prefetched*: current number of tiles requested (read only!)
-*/
-
+/*
+ * The singleton class **Cache** implements a cache for faster retrieval of the tiles required by layers.
+ * @class Cache
+ */
+/** @ignore */
 class _Cache {
+	/**
+	 * Instantiates a Cache object. Tiles to be fetched are stored in an ordered `queue` in {Layer}.
+	 * @param {Object} [options] An object literal to define cache parameters.
+	 * @param {number} options.capacity=536870912 The total cache capacity (in bytes).
+	 * @param {number} options.maxRequest=6 Max number of concurrent HTTP requests. Most common browsers allow six connections per domain.
+	 */
 	constructor(options) {
 		Object.assign(this, {
 			capacity: 512*(1<<20),  //256 MB total capacity available
 			size: 0,                //amount of GPU ram used
 
-			maxRequest: 4,          //max number of concurrent HTTP requests
+			maxRequest: 6,          //max number of concurrent HTTP requests
 			requested: 0,
 			maxPrefetch: 8*(1<<20), //max amount of prefetched tiles.
 			prefetched: 0           //amount of currently prefetched GPU ram.
@@ -26,16 +25,18 @@ class _Cache {
 		this.layers = [];   //map on layer.
 	}
 
-/*  Queue is an ordered array of tiles needed by a layer.
- */
+	/**
+	 * Determines which tiles of a given `layer` are candidates to be downloaded.
+	 * Cleans up the cache and schedules the web data fetch. 
+	 * @param {Layer} layer A layer.
+	 */
 	setCandidates(layer) {
 		if(!this.layers.includes(layer))
 			this.layers.push(layer);
 		setTimeout(() => { this.update(); }, 0); //ensure all the queues are set before updating.
 	}
 
-/* Look for best tile to load and schedule load from the web.
- */
+	/** @ignore */
 	update() {
 		if(this.requested > this.maxRequest)
 			return;
@@ -56,6 +57,8 @@ class _Cache {
 		this.loadTile(best.layer, best.tile);
 	}
 
+	/* Finds the best tile to be downloaded */
+	/** @ignore */
 	findBestCandidate() {
 		let best = null;
 		for(let layer of this.layers) {
@@ -70,6 +73,8 @@ class _Cache {
 		return best;
 	}
 
+	/* Finds the worst tile to be dropped */
+	/** @ignore */
 	findWorstTile() {
 		let worst = null;
 		for(let layer of this.layers) {
@@ -86,35 +91,57 @@ class _Cache {
 		return worst;
 	}
 
-/* 
- */
+	/** @ignore */
 	loadTile(layer, tile) {
 		this.requested++;
 		(async () =>  { layer.loadTile(tile, (size) => { this.size += size; this.requested--; this.update(); } ); })();
 	}
-/*
- */
+
+	/** @ignore */
 	dropTile(layer, tile) {
 		this.size -= tile.size;
 		layer.dropTile(tile);
 	}
-/* Flush all memory
- */
-	flush() {
-	}
 
-/* Flush all tiles for a layer.
- */
+
+	/**
+	 * Flushes all tiles for a `layer`.
+	 * @param {Layer} layer A layer.
+ 	 */
 	flushLayer(layer) {
 		if(!this.layers.includes(layer))
 			return;
 		for(let tile of layer.tiles.values())
 			this.dropTile(layer, tile);
 	}
-
-/* 
- */
 }
 
+/**
+ * Instantiates a Cache object. Tiles to be fetched are stored in an ordered `queue` in {Layer}.
+ * @classdesc The singleton class **Cache** implements a cache for faster retrieval of the tiles required by layers.
+ * @class Cache
+ * @param {Object} [options] An object literal to define cache parameters.
+ * @param {number} options.capacity=536870912 The total cache capacity (in bytes).
+ * @param {number} options.maxRequest=6 Max number of concurrent HTTP requests. Most common browsers allow six connections per domain.
+ */
 let Cache = new _Cache;
+
+/**
+ * Flushes all tiles for a `layer`.
+ * @function flushLayer
+ * @memberof Cache
+ * @instance
+ * @param {Layer} layer A layer.
+ */
+
+/**
+ * Determines which tiles of a given `layer` are candidates to be downloaded.
+ * Cleans up the cache and schedules the web data fetch.
+ * @function setCandidates
+ * @memberof Cache
+ * @instance
+ * @param {Layer} layer A layer.
+ */
+
+
 export { Cache }
