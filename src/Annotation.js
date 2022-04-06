@@ -11,9 +11,9 @@ class Annotation {
 	 * Instantiates an **Annotation** object. An object literal with Annotation `options` can be specified.
 	 * Note that the developer is free to define additional elements characterizing a custom annotation by adding new options to the constructor.
 	 * @param {Object} [options] An object literal with Annotation options (freely adjustable).
-	 * @param {String} options.label A string containing an annotation label.
-	 * @param {String} option.description A HTML text containg a comprehensive description of the annotation.
-	 * @param {String} option.class A class or category to cluster annotations.
+	 * @param {string} options.label A string containing an annotation label.
+	 * @param {string} option.description A HTML text containg a comprehensive description of the annotation.
+	 * @param {string} option.class A class or category to cluster annotations.
 	 */
 	constructor(options) {
 		Object.assign(
@@ -73,7 +73,7 @@ class Annotation {
 	/* The class also provides functions for importing and exporting from and to files in JSON format. */
 	/*
 	 * Copies an entry of a JSON file into an **Annotation** object.
-	 * @param {String} entry A JSON string representing an annotation.
+	 * @param {string} entry A JSON string representing an annotation.
 	 * @returns {Annotation} The annotation.
 	 */
 	/** @ignore */

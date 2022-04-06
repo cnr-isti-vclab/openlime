@@ -1,16 +1,39 @@
-/**
- * 
- * @param {number} x position
- * @param {number} y position
- * @param {number} z scale
- * @param {number} a rotation in degrees
- * @param {number} t time
- *
- */
-
 import { BoundingBox } from "./BoundingBox";
 
+/**
+ * A [x, y] point.
+ * @typedef Point
+ * @property {number} p.0 The x-coordinate.
+ * @property {number} p.1 The xy-coordinate.
+ */
+
+/**
+ * The class **Transform** implements a 2D affine map to convert coordinates between two systems.
+ * The map is internally represented by four values:
+ * * `x` the x-component of the translation vector
+ * * `y` the y-component of the translation vector
+ * * `a` the rotation angle around the z-axis (in degrees)
+ * * `z` the scale factor
+ * 
+ * A transformation between a point P to P' is defined by
+ * ```
+ * P' = z*rot(a)*P + t
+ * ```
+ * where `z` is the scale factor, `a` is the rotation angle, and `t(x,y)` is the translation vector.
+ * 
+ * The class implements a set of geometric transformations useful to position the camera, create animations, etc... 
+ */
+
 class Transform {
+	/**
+	 * Instantiates a Transform object.
+	 * @param {Object} [options] An object literal with Transform parameters.
+	 * @param {number} options.x=0 The x-component of the translation vector.
+	 * @param {number} options.y=0 The y-component of the translation vector.
+	 * @param {number} options.a=0 The rotation angle (in degrees).
+	 * @param {number} options.z=1 The scale factor.
+	 * @param {time} options.t=0 The current time.
+	 */
 	constructor(options) {
 		Object.assign(this, { x:0, y:0, z:1, a:0, t:0 });
 
@@ -20,12 +43,22 @@ class Transform {
 			Object.assign(this, options);
 	}
 
+	/**
+	 * Gets a copy of `this` Transform.
+	 * @returns {Transform} The copy of the Transform.
+	 */
 	copy() {
 		let transform = new Transform();
 		Object.assign(transform, this);
 		return transform;
 	}
 
+	/**
+	 * Applies `this` Transform to a point P(x,y) to get P'(x',y').
+	 * @param {number} x x-coordinate of the point P.
+	 * @param {number} y y-coordinate of the point P.
+	 * @returns {{x, y}} The point P'.
+	 */
 	apply(x, y) {
 		//TODO! ROTATE
 		let r = Transform.rotate(x, y, this.a);
@@ -35,25 +68,46 @@ class Transform {
 		}
 	}
 
+	/**
+	 * Computes the inverse of `this` Transform.
+	 * @returns {Transform} The inverse Transform.
+	 */
 	inverse() {
 		let r = Transform.rotate(this.x/this.z, this.y/this.z, -this.a);
 		return new Transform({x:-r.x, y:-r.y, z:1/this.z, a:-this.a, t:this.t});
 	}
 
+	/**
+	 * Maps an angle `a` to range from 0 to 360 degrees.
+	 * @param {number} a The angle (in degrees).
+	 * @returns {number} The normalized angle.
+	 */
 	static normalizeAngle(a) {
 		while(a > 360) a -= 360;
 		while(a < 0) a += 360;
 		return a;
 	}
 
-	static rotate(x, y, angle) {
-		angle = Math.PI*(angle/180);
-		let ex =  Math.cos(angle)*x + Math.sin(angle)*y;
-		let ey = -Math.sin(angle)*x + Math.cos(angle)*y;
+	/**
+	 * Computes the rotation of a point P(x,y) by an angle `a` around the z-axis to get P'(x',y').
+	 * @param {*} x x-coordinate of the point P.
+	 * @param {*} y y-coordinate of the point P.
+	 * @param {*} a The rotation angle (in degrees)
+	 * @returns {{x,y}} The point P'.
+	 */
+	static rotate(x, y, a) {
+		a = Math.PI*(a/180);
+		let ex =  Math.cos(a)*x + Math.sin(a)*y;
+		let ey = -Math.sin(a)*x + Math.cos(a)*y;
 		return {x:ex, y:ey};
 	}
 
 	// first get applied this (a) then  transform (b).
+	/**
+	 * Composes (multiplies) `this` Transform with an other `transform`.
+	 * @param {Transform} transform 
+	 * @returns {Transform} The result of the composition.
+	 */
 	compose(transform) {
 		let a = this.copy();
 		let b = transform;
@@ -65,7 +119,11 @@ class Transform {
 		return a;
 	}
 
-	/* transform the box (for example -w/2, -h/2 , w/2, h/2 in scene coords) */
+	/**
+	 * Applyes `this` Transform to a bounding box.
+	 * @param {BoundingBox} lbox 
+	 * @returns {BoundingBox} The result.
+	 */
 	transformBox(lbox) {
 		let box = new BoundingBox();
 		for(let i = 0; i < 4; i++) {
@@ -76,10 +134,12 @@ class Transform {
 		return box;
 	}
 
-/*  get the bounding box (in image coordinate sppace) of the vieport. 
-    the viewport has y -> pointing up
-	the image and screen transform has y pointing down. hence the inversion.
- */
+	/**
+	 * Gets the bounding box (in image coordinate space) of the vieport. The viewport y-axis points up.
+	 * The image and screen transform has y pointing down.
+	 * @param {Viewport} viewport 
+	 * @returns {BoundingBox} The bounding box.
+	 */
 	getInverseBox(viewport) {
 		let inverse = this.inverse();
 		let corners = [
@@ -101,13 +161,21 @@ class Transform {
 	* @typedef {('linear'|'ease-out'|'ease-in-out')} Transform#Easing
 	*/
 
-    interpolate(source, target, time, easing) {
+	/**
+	 * Computes the interpolated transform at time `time` between `source` and `target` 
+	 * @param {Transform} source The source transform.
+	 * @param {Transform} target The target transform.
+	 * @param {time} time The time at which to compute the interpolation.
+	 * @param {Transform#Easing} easing The easing function.
+	 * @returns {Transform} The interpolated transform.
+	 */
+    interpolate(source, target, time, easing) { //FIXME Should be static?
 
 		let t = (target.t - source.t);
 
 		this.t = time;
 		if(time < source.t) 
-			return Object.assign(this, source);
+			return Object.assign(this, source); //FIXME Why return?
 		if(time > target.t || t < 0.0001) 
 			return Object.assign(this, target);		
 
@@ -124,10 +192,16 @@ class Transform {
 
 
 
-/**
+/*
  *  Combines the transform with the viewport to the viewport with the transform
  * @param {Object} transform a {@link Transform} class.
  */
+
+	/**
+	 * Combines `this` Transform with the viewport to get a
+	 * @param {Viewport} viewport The viewport. 
+	 * @returns {number[]} The result.
+	 */
 	projectionMatrix(viewport) {
 		let z = this.z;
 
@@ -166,29 +240,30 @@ class Transform {
 	}
 
     /**
-	 * Transform p from scene (0 at image center) to [0,wh] 
-	 * @param {*} viewport viewport(x,y,dx,dy,w,h)
-	 * @param {*} p point in scene: 0,0 at image center
+	 * Transforms the point `p` from scene (0 at image center) to [0,wh]  .
+	 * @param {Viewport} viewport The viewport.
+	 * @param {Point} p The point in scene (0,0 at image center)
+	 * @returns {Point} The point in range [0..w-1,0..h-1]
 	 */ 
-	sceneToViewportCoords(viewport, p) {
+	sceneToViewportCoords(viewport, p) { //FIXME Point is an array, but in other places it is an Object...
         return [p[0] * this.z  + this.x - viewport.x + viewport.w/2, 
                 p[1] * this.z  - this.y + viewport.y + viewport.h/2 ];
     }
 
 	/**
-     * Transform p from  [0,wh] to scene (0 at image center)
+     * Transforms the point `p` from [0,wh] to scene (0 at image center).
 	 * 
-	 * @param {*} viewport viewport(x,y,dx,dy,w,h)
-	 * @param {*} p point in range [0..w-1,0..h-1]
+	 * @param {Viewport} viewport The viewport.
+	 * @param {Point} p The point in range [0..w-1,0..h-1]
+	 * @returns {Point} The point in scene (0,0 at image center)
 	 */
     viewportToSceneCoords(viewport, p) {
         return [(p[0] + viewport.x - viewport.w/2 - this.x) / this.z,
                 (p[1] - viewport.y - viewport.h/2 + this.y) / this.z];
-
     }
-
 }
 
+/** @ignore */
 function matrixMul(a, b) {
 	let r = new Array(16);
 	for (let i = 0; i < 4; i++) {
@@ -202,6 +277,7 @@ function matrixMul(a, b) {
 	return r;
 }
 
+/** @ignore */ //FIXME Why exported?
 function matMul(a, b) {
 	let r = new Array(16);
 	r[ 0] = a[0]*b[0] + a[4]*b[1] + a[8]*b[2] + a[12]*b[3];

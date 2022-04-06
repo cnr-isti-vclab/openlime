@@ -148,7 +148,6 @@
         // If editorEnable, create a SVG annotation Editor
         if (editorEnable) {
             const editor = new OpenLIME.EditorSvgAnnotation(lime, anno, {
-                lime: lime,
                 classes: classParam
             });
             editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };

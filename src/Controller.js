@@ -10,9 +10,9 @@
  * The event is captured calling `e1.preventDefault()`.
  * * `pinchMove(e1,e2)` receives and handles the pinch event.
  * * `pinchEnd(e1,e2)` intercepts the final pinch event (the user removes one of their two fingers from the screen).
- * * `wheelDelta(e)` receives and handles the mouse wheel event (the user rotates the mouse wheel button).
- * * `singleTap(e)` receives and handles the single-tap event (the user presses a mouse button quickly or touches the screen shortly with a finger).
- * * `doubleTap(e)` receives and handles the double-tap event (the user quickly presses a mouse button twice or shortly touches the screen with a finger twice).
+ * * `mouseWheel(e)` receives and handles the mouse wheel event (the user rotates the mouse wheel button).
+ * * `fingerSingleTap(e)` receives and handles the single-tap event (the user presses a mouse button quickly or touches the screen shortly with a finger).
+ * * `fingerDoubleTap(e)` receives and handles the double-tap event (the user quickly presses a mouse button twice or shortly touches the screen with a finger twice).
  * 
  * `e.preventDefault()` will capture the event and wont be propagated to other controllers.
  * 

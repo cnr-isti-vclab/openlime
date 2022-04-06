@@ -37,7 +37,7 @@ class Layer {
 	* @param {Object} [options]
 	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
 	* @param {string} options.type A string identifier to select the specific derived layer class to instantiate.
-	* @param {string} options.id A label identifying the layer.
+	* @param {string} options.id The layer unique identifier.
 	* @param {string} options.label A string with a more comprehensive definition of the layer. If it exists, it is used in the UI layer menu, otherwise the `id` value is taken.
 	* @param {Transform} options.transform The relative coords from layer to canvas.
 	* @param {bool} options.visible=true Whether to render the layer.
@@ -126,17 +126,18 @@ class Layer {
 
 	/**
  	* Adds a Layer Event
- 	* @param {*} event A label to identify the event.
+ 	* @param {string} event A label to identify the event.
  	* @param {*} callback The event callback function.
 	*/
 	addEvent(event, callback) {
 		this.signals[event].push(callback);
 	}
 
-	/**
+	/*
  	* Emits an event (running all the callbacks referred to it).
  	* @param {*} event The event name
  	*/
+	/** @ignore */ 
 	emit(event, ...parameters) {
 		for (let r of this.signals[event])
 			r(...parameters);

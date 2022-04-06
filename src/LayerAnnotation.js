@@ -14,8 +14,8 @@ class LayerAnnotation extends Layer {
 	/**
 	 * Instantiates a LayerAnnotation object.
 	 * @param {Object} [options] An object literal with options that inherits from {@link Layer}.
-	 * @param {String} options.style Properties to style annotations.
- 	 * @param {(String|Array)} options.annotations The URL of the annotation data (JSON file or HTTP GET Request to an annotation server) or an array of annotations.
+	 * @param {string} options.style Properties to style annotations.
+ 	 * @param {(string|Array)} options.annotations The URL of the annotation data (JSON file or HTTP GET Request to an annotation server) or an array of annotations.
 	 */
 	constructor(options) {
 		options = Object.assign({
@@ -135,7 +135,7 @@ class LayerAnnotation extends Layer {
 
 	/**
 	 * Gets an annotation by its `id`
-	 * @param {String} id 
+	 * @param {string} id 
 	 * @returns {Annotation} The annotation.
 	 */
 	getAnnotationById(id) {
@@ -154,7 +154,7 @@ class LayerAnnotation extends Layer {
 	/**
 	 * Selects/deselects an annotation
 	 * @param {Annotation} anno The annotation.
-	 * @param {bool} on=true Wether to select the annotation.
+	 * @param {bool} on=true Whether to select the annotation.
 	 */
 	setSelected(anno, on = true) {
 		this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.toggle('selected', on);

@@ -3,6 +3,18 @@ import { Annotation } from './Annotation.js';
 import { LayerAnnotation } from './LayerAnnotation.js';
 
 /**
+ * Elements to classify the annotations.
+ * @typedef {Object} AnnotationClass
+ * @property {color} stroke The CSS color of a line, text or outline SVG element.
+ * @property {string} label The class name.
+ */
+/**
+ * Annotation classes.
+ * @typedef {Object.<string, AnnotationClass>} AnnotationClasses
+ */
+
+
+/**
  * An annotation layer that draws SVG elements directly on the canvas (outside the WebGL context).
  * 
  * Here you will find a tutorial to learn how to build a client-server architecture to manage annotations in OpenLIME. //FIXME
@@ -13,7 +25,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	/**
 	 * Instantiates a LayerSvgAnnotation object.
 	 * @param {Object} [options] An object literal with options that inherits from {@link LayerAnnotation}.
- 	 * @param {Object} options.classes An object literal definying colors and labels of the annotation classes.
+ 	 * @param {AnnotationClasses} options.classes An object literal definying colors and labels of the annotation classes.
  	 * @param {Function} options.onClick The callback to fire when the an annotation is clicked on the canvas. The callback is passed an object containing the selected annotation.
 	 * @param {bool} options.shadow=true Whether to insert SVG elements in a shadow DOM.
 	 */
@@ -87,7 +99,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	/**
 	 * Selects/deselects an annotation
 	 * @param {Annotation} anno The annotation.
-	 * @param {bool} on=true Wether to select the annotation.
+	 * @param {bool} on=true Whether to select the annotation.
 	 */
 	setSelected(anno, on = true) {
 		for (let a of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))

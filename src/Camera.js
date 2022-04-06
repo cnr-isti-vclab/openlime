@@ -132,10 +132,10 @@ class Camera {
 	/**
 	 * Sets the camera target parameters (position, rotation, )
 	 * @param {number} dt The animation duration in millisecond.
-	 * @param {*} x The x coordinate
-	 * @param {*} y The y coordinate
-	 * @param {*} z The z coordinate
-	 * @param {*} a The angular rotation (in degrees)
+	 * @param {*} x The x-component of the translation vector.
+	 * @param {*} y The y-component of the translation vector.
+	 * @param {*} z The zoom factor.
+	 * @param {*} a The rotation angle (in degrees).
 	 * @param {Easing} easing The function aimed at making the camera movement less severe or pronounced.
 	 */
 	setPosition(dt, x, y, z, a, easing) {
@@ -184,13 +184,13 @@ class Camera {
 	/**
 	 * Pan the camera (in canvas coords)
 	 * @param {number} dt The animation duration in millisecond.
-	 * @param {number} dx The horizontal amount to pan.
-	 * @param {number} dy The vertical amount to pan. 
+	 * @param {number} dx The horizontal displancement.
+	 * @param {number} dy The vertical displacement. 
 	 */
 	pan(dt, dx, dy) {
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
-		m.dx += dx;
+		m.dx += dx; //FIXME what is m.dx?
 		m.dy += dy;
 		this.setPosition(dt, m.x, m.y, m.z, m.a);
 	}

@@ -60,14 +60,14 @@ class BoundingBox {
 
     /**
      * Returns a text string with the corner coordinates separated by a space.
-     * @returns {String} The string of corners.
+     * @returns {string} The string of corners.
      */
     toString() {
         return this.xLow.toString() + " " + this.yLow.toString() + " " + this.xHigh.toString() + " " + this.yHigh.toString();
     }
 
     /**
-     * Merges a `box` to the current bounding box.
+     * Merges a `box` to `this` BoundingBox.
      * @param {BoundingBox} box The bounding box to be merged. 
      */
     mergeBox(box) {
@@ -82,7 +82,7 @@ class BoundingBox {
     }
 
     /**
-     * Merges a point `p`{x, y} to the current bounding box.
+     * Merges a point `p`{x, y} to `this` BoundingBox.
      * @param {{x, y}} p The point to be merged. 
      */
     mergePoint(p) {

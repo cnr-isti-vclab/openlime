@@ -1,12 +1,54 @@
 import { Skin } from './Skin.js';
 import { simplify, smooth, smoothToPath } from './Simplify.js'
-import { createSVGElement } from './LayerSvgAnnotation.js'
+import { createSVGElement, LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 
+/**
+ * Callback for create/update/delete annotations.
+ * @function crudCallback
+ * @param {Annotation} anno The current annotation entry.
+ */
+
+/**
+ * **EditorSvgAnnotation** enables the {@link UIBasic} interface to edit (create/update/delete) SVG annotations.
+ * This class is a mere utility that acts as an adapter between the annotation database and the OpenLIME system.
+ * 
+ * Here you will find a tutorial to learn how to use the SVG annotation editor. //FIXME
+ * 
+ * For the experienced developer this class can be used as an example to design more complex editors.
+ * 
+ * In the following example an **EditorSvgAnnotation** is instatiated and connected to the annotation database
+ * through three callbacks implementing database operations (create/update/delete).
+ * ``` 
+ * // Creates an annotation layer and add it to the canvans
+ * const anno = new OpenLIME.Layer(aOptions);
+ * lime.addLayer('anno', anno);
+ *
+ * // Creates a SVG annotation Editor
+ * const editor = new OpenLIME.EditorSvgAnnotation(lime, anno, {
+ *          viewer: lime,
+ *          classes: classParam
+ * });
+ * editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
+ * editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); processRequest(anno, 'update'); return true; };
+ * editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
+ * ```
+
+ */
 class EditorSvgAnnotation {
-	constructor(lime, layer, options) {
+	/**
+	 * Instatiates a EditorSvgAnnotation object.
+	 * @param {Viewer} viewer The OpenLIME viewer.
+	 * @param {LayerSvgAnnotation} layer The annotation layer on which to operate.
+	 * @param {Object} [options] An object literal with SVG editor parameters.
+	 * @param {AnnotationClasses} options.classes An object literal definying colors and labels of the annotation classes.
+	 * @param {crudCallback} options.createCallback The callback to implement annotation creation.
+	 * @param {crudCallback} options.updateCallback The callback to implement annotation update.
+	 * @param {crudCallback} options.deleteCallback The callback to implement annotation deletion.
+	 */
+	constructor(viewer, layer, options) {
 		this.layer = layer;
 		Object.assign(this, {
-			lime: lime,
+			viewer: viewer,
 			panning: false,
 			tool: null, //doing nothing, could: ['line', 'polygon', 'point', 'box', 'circle']
 			startPoint: null, //starting point for box and  circle
@@ -70,7 +112,7 @@ class EditorSvgAnnotation {
 
 		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`).join('\n');
 		//at the moment is not really possible to unregister the events registered here.
-		lime.pointerManager.onEvent(this);
+		viewer.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
 		layer.addEvent('selected', (anno) => {
 			if (!anno || anno == this.annotation)
@@ -110,6 +152,7 @@ class EditorSvgAnnotation {
 		}
 	}
 
+	/** @ignore */
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
 		anno.publish = 1;
@@ -124,7 +167,7 @@ class EditorSvgAnnotation {
 		this.layer.setSelected(anno);
 	}
 
-
+	/** @ignore */
 	toggleEditWidget() {
 		if (this.annotation)
 			return this.hideEditWidget();
@@ -137,6 +180,7 @@ class EditorSvgAnnotation {
 		this.showEditWidget(anno);
 	}
 
+	/** @ignore */
 	updateEditWidget() {
 		let anno = this.annotation;
 		let edit = this.editWidget;
@@ -152,6 +196,7 @@ class EditorSvgAnnotation {
 		button.style.background = this.classes[anno.class].stroke;
 	}
 
+	/** @ignore */
 	showEditWidget(anno) {
 		this.annotation = anno;
 		this.setTool(null);
@@ -163,6 +208,7 @@ class EditorSvgAnnotation {
 		})();
 	}
 
+	/** @ignore */
 	hideEditWidget() {
 		this.annotation = null;
 		this.setTool(null);
@@ -170,8 +216,8 @@ class EditorSvgAnnotation {
 		this.layer.annotationsListEntry.element.querySelector('.openlime-edit').classList.remove('active');
 	}
 
-
 	//TODO this should actually be in the html.
+	/** @ignore */
 	async createEditWidget() {
 		if (this.editWidget)
 			return;
@@ -267,7 +313,7 @@ class EditorSvgAnnotation {
 		this.editWidget = edit;
 	}
 
-
+	/** @ignore */
 	saveAnnotation() {
 		let edit = this.editWidget;
 		let anno = this.annotation;
@@ -309,12 +355,14 @@ class EditorSvgAnnotation {
 		this.layer.setSelected(anno);
 	}
 
+	/** @ignore */
 	deleteSelected() {
 		let id = this.layer.selected.values().next().value;
 		if (id)
 			this.deleteAnnotation(id);
 	}
 
+	/** @ignore */
 	deleteAnnotation(id) {
 		let anno = this.layer.getAnnotationById(id);
 		if (this.deleteCallback) {
@@ -338,6 +386,7 @@ class EditorSvgAnnotation {
 		this.hideEditWidget();
 	}
 
+	/** @ignore */
 	exportAnnotations() {
 		let svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		const bBox = this.layer.boundingBox();
@@ -370,7 +419,7 @@ class EditorSvgAnnotation {
 
 		///console.log(svg);
 
-		var e = document.createElement('a');
+		var e = document.createSVGElement('a');
 		e.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(svg));
 		e.setAttribute('download', 'annotations.svg');
 		e.style.display = 'none';
@@ -379,6 +428,7 @@ class EditorSvgAnnotation {
 		document.body.removeChild(e);
 	}
 
+	/** @ignore */
 	setActiveTool(e) {
 		if (!this.editWidget) return;
 		let tools = this.editWidget.querySelector('.openlime-annotation-edit-tools');
@@ -388,6 +438,7 @@ class EditorSvgAnnotation {
 			e.classList.add('active');
 	}
 
+	/** @ignore */
 	setTool(tool) {
 		this.tool = tool;
 		if (this.factory && this.factory.quit)
@@ -404,38 +455,41 @@ class EditorSvgAnnotation {
 		document.querySelector('.openlime-overlay').classList.toggle('crosshair', tool && tool != 'erase');
 	}
 
+
 	// UNDO STUFF	
 
+	/** @ignore */
 	undo() {
 		let anno = this.annotation; //current annotation.
 		if (!anno)
 			return;
 		if (this.factory && this.factory.undo && this.factory.undo()) {
 			anno.needsUpdate = true;
-			this.lime.redraw();
+			this.viewer.redraw();
 			return;
 		}
 
 		if (anno.history && anno.history.length) {
-			//TODO history will be more complicated if it has to manage multiple tools.
+			//FIXME TODO history will be more complicated if it has to manage multiple tools.
 			anno.future.push(this.annoToData(anno));
 
 			let data = anno.history.pop();
 			this.dataToAnno(data, anno);
 
 			anno.needsUpdate = true;
-			this.lime.redraw();
+			this.viewer.redraw();
 			this.updateEditWidget();
 		}
 	}
 
+	/** @ignore */
 	redo() {
 		let anno = this.annotation; //current annotation.
 		if (!anno)
 			return;
 		if (this.factory && this.factory.redo && this.factory.redo()) {
 			anno.needsUpdate = true;
-			this.lime.redraw();
+			this.viewer.redraw();
 			return;
 		}
 		if (anno.future && anno.future.length) {
@@ -445,11 +499,12 @@ class EditorSvgAnnotation {
 			this.dataToAnno(data, anno);
 
 			anno.needsUpdate = true;
-			this.lime.redraw();
+			this.viewer.redraw();
 			this.updateEditWidget();
 		}
 	}
 
+	/** @ignore */
 	saveCurrent() {
 		console.log('save current');
 		let anno = this.annotation; //current annotation.
@@ -460,6 +515,7 @@ class EditorSvgAnnotation {
 		anno.future = [];
 	}
 
+	/** @ignore */
 	annoToData(anno) {
 		let data = {};
 		for (let i of ['id', 'label', 'description', 'class', 'publish'])
@@ -468,14 +524,17 @@ class EditorSvgAnnotation {
 		return data;
 	}
 
+	/** @ignore */
 	dataToAnno(data, anno) {
 		for (let i of ['id', 'label', 'description', 'class', 'publish'])
 			anno[i] = `${data[i]}`;
 		anno.elements = data.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
 	}
 
+
 	// TOOLS STUFF
 
+	/** @ignore */
 	keyUp(e) {
 		if (e.defaultPrevented) return;
 		switch (e.key) {
@@ -502,6 +561,7 @@ class EditorSvgAnnotation {
 		}
 	}
 
+	/** @ignore */
 	panStart(e) {
 		if (e.buttons != 1 || e.ctrlKey || e.altKey || e.shiftKey || e.metaKey)
 			return;
@@ -517,9 +577,10 @@ class EditorSvgAnnotation {
 
 		this.annotation.needsUpdate = true;
 
-		this.lime.redraw();
+		this.viewer.redraw();
 	}
 
+	/** @ignore */
 	panMove(e) {
 		if (!this.panning)
 			return false;
@@ -528,6 +589,7 @@ class EditorSvgAnnotation {
 		this.factory.adjust(pos, e);
 	}
 
+	/** @ignore */
 	panEnd(e) {
 		if (!this.panning)
 			return false;
@@ -540,9 +602,10 @@ class EditorSvgAnnotation {
 		else
 			this.saveAnnotation();
 		this.annotation.needsUpdate = true;
-		this.lime.redraw();
+		this.viewer.redraw();
 	}
 
+	/** @ignore */
 	fingerHover(e) {
 		if (this.tool != 'line')
 			return;
@@ -550,9 +613,10 @@ class EditorSvgAnnotation {
 		const pos = this.mapToSvg(e);
 		let changed = this.factory.hover(pos, e);
 		this.annotation.needsUpdate = true;
-		this.lime.redraw();
+		this.viewer.redraw();
 	}
 
+	/** @ignore */
 	fingerSingleTap(e) {
 		if (!['point', 'line', 'erase'].includes(this.tool))
 			return;
@@ -568,9 +632,10 @@ class EditorSvgAnnotation {
 			this.saveAnnotation();
 		this.annotation.needsUpdate = true;
 
-		this.lime.redraw();
+		this.viewer.redraw();
 	}
 
+	/** @ignore */
 	fingerDoubleTap(e) {
 		if (!['line'].includes(this.tool))
 			return;
@@ -586,12 +651,12 @@ class EditorSvgAnnotation {
 			this.saveAnnotation();
 		this.annotation.needsUpdate = true;
 
-		this.lime.redraw();
+		this.viewer.redraw();
 	}
 
-
+	/** @ignore */
 	mapToSvg(e) {
-		let camera = this.lime.camera;
+		let camera = this.viewer.camera;
 		let transform = camera.getCurrentTransform(performance.now());
 		let pos = camera.mapToScene(e.offsetX, e.offsetY, transform);
 		const topLeft = this.layer.boundingBox().corner(0);
@@ -602,15 +667,18 @@ class EditorSvgAnnotation {
 	}
 }
 
+
+/** @ignore */
 class Point {
 	tap(pos) {
 		//const pos = this.mapToSvg(e);
-		let point = createElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
+		let point = createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
 		//point.classList.add('selected');
 		return point;
 	}
 }
 
+/** @ignore */
 class Pen {
 	constructor() {
 		//TODO Use this.path.points as in line, instead.
@@ -621,7 +689,7 @@ class Pen {
 		if (this.points.length == 1) {
 			saveCurrent
 
-			this.path = createElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
+			this.path = createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 			return this.path;
 		}
 		let p = this.path.getAttribute('d');
@@ -642,7 +710,7 @@ class Pen {
 	}
 }
 
-
+/** @ignore */
 class Box {
 	constructor() {
 		this.origin = null;
@@ -651,7 +719,7 @@ class Box {
 
 	create(pos) {
 		this.origin = pos;
-		this.box = createElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
+		this.box = createSVGElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
 		return this.box;
 	}
 
@@ -669,6 +737,7 @@ class Box {
 	}
 }
 
+/** @ignore */
 class Circle {
 	constructor() {
 		this.origin = null;
@@ -676,7 +745,7 @@ class Circle {
 	}
 	create(pos) {
 		this.origin = pos;
-		this.circle = createElement('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
+		this.circle = createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
 		return this.circle;
 	}
 	adjust(pos) {
@@ -689,8 +758,8 @@ class Circle {
 	}
 }
 
+/** @ignore */
 class Line {
-
 	constructor() {
 		this.history = []
 	}
@@ -717,7 +786,7 @@ class Line {
 				return;
 			}
 		}
-		this.path = createElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
+		this.path = createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 		this.path.points = [pos];
 		this.history = [this.path.points.length];
 		this.annotation.elements.push(this.path);
@@ -749,7 +818,7 @@ class Line {
 			return false;
 		let s = this.path.points[this.path.points.length - 1];
 		if (!this.segment) {
-			this.segment = createElement('path', { class: 'line' });
+			this.segment = createSVGElement('path', { class: 'line' });
 			this.layer.svgGroup.appendChild(this.segment);
 		}
 		pos.x = pos.x - s.x;
@@ -818,6 +887,7 @@ class Line {
 	}
 }
 
+/** @ignore */
 class Erase {
 	create(pos, event) { this.erased = false; this.erase(pos, event); }
 	adjust(pos, event) { this.erase(pos, event); }

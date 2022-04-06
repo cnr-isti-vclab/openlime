@@ -2,17 +2,9 @@ import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
 import { PointerManager } from './PointerManager.js'
 
-/**
- * Instantiates a Viewer object given the `div` element or a DOM selector of a `div` element.
- * Additionally, an object literal with Viewer `options` can be specified.
- * The class creates the canvas, enables the WebGL context and takes care of the content redrawing when needed.
- * Viewer is the main class of the OpenLIME framework. It allows access to all the internal structures that make up the system.
- * 
- * @param {(element|String)} div A DOM element or a selector (es. '#openlime' or '.openlime').
- * @param {Object} [options]  An object literal describing the viewer content.
- * @param {color} options.background CSS style for background (it overwrites CSS if present).
- * 
- * @example
+/** **Viewer** is the central class of the OpenLIME framework. It is used to create a viewer on a web page and manipulate it.
+ * In the following example, after instantiating a Viewer, a LayerImage is added to it.
+ * ```
  * // Create an OpenLIME canvas into .openlime
  * const lime = new OpenLIME.Viewer('.openlime');
  *
@@ -28,9 +20,19 @@ import { PointerManager } from './PointerManager.js'
  * const camera = lime.camera;
  * const canvas = lime.canvas;
  * const layers = canvas.layers;
+ * ```
 */
 class Viewer {
-
+    /**
+     * Instantiates a viewer object given the `div` element or a DOM selector of a `div` element.
+     * Additionally, an object literal with Viewer `options` can be specified.
+     * The class creates the canvas, enables the WebGL context and takes care of the content redrawing when needed.
+     * Viewer is the main class of the OpenLIME framework. It allows access to all the internal structures that make up the system.
+     * 
+     * @param {(HTMLElement|string)} div A DOM element or a selector (es. '#openlime' or '.openlime').
+     * @param {Object} [options]  An object literal describing the viewer content.
+     * @param {color} options.background CSS style for background (it overwrites CSS if present).
+    */
     constructor(div, options) {
 
         Object.assign(this, {
@@ -82,7 +84,7 @@ class Viewer {
     }
 
     /** Adds the given layer to the Viewer.
-    * @param {String} id A label to identify the layer.
+    * @param {string} id A label to identify the layer.
     * @param {Layer} layer An OpenLIME Layer object.
     */
     addLayer(id, layer) {
@@ -91,7 +93,7 @@ class Viewer {
     }
 
     /** Remove the given layer from the Viewer.
-    * @param {(Layer|String)} layer An OpenLIME Layer or a Layer identifier.
+    * @param {(Layer|string)} layer An OpenLIME Layer or a Layer identifier.
     */
     removeLayer(layer) {
         if (typeof (layer) == 'string')

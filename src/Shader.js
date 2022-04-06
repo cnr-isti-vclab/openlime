@@ -2,7 +2,7 @@
  * A reference to a 2D texture.
  * @typedef {Object} Shader#Sampler
  * @property {number} id A sampler unique identifier.
- * @property {String} name The sampler name (the texture reference name in the shader program).
+ * @property {string} name The sampler name (the texture reference name in the shader program).
  */
 
 /**
@@ -44,7 +44,7 @@ class Shader {
  * Instantiates a Shader class. An object literal with Shader `options` can be specified.
  * @param {Object} [options] An object literal describing the shader content.
  * @param {Array<Shader#Sampler>} options.samplers An array of pointers to 2D textures. 
- * @param {Array<String>} options.modes An optional array of labels that identify different shader behaviors.
+ * @param {Array<string>} options.modes An optional array of labels that identify different shader behaviors.
  */
   constructor(options) {
 		Object.assign(this, {
@@ -62,7 +62,7 @@ class Shader {
 	}
 	/**
 	 * Sets the current mode of the shader
-	 * @param {String} mode The mode identifier
+	 * @param {string} mode The mode identifier
 	 */
 	setMode(mode) {
 		if (this.modes.indexOf(mode) == -1)
@@ -73,7 +73,7 @@ class Shader {
 
 	/*
  	* Adds a Shader Event callback
- 	* @param {String} event A label to identify the event.
+ 	* @param {string} event A label to identify the event.
  	* @param {Function} callback The event callback function.
  	*/
 	 /** @ignore */
@@ -94,12 +94,12 @@ class Shader {
 
 	/**
 	 * Sets the value of a uniform variable.
-	 * @param {String} name The name of the uniform variable.
+	 * @param {string} name The name of the uniform variable.
 	 * @param {*} value The value to assign.
 	 */
 	setUniform(name, value) {
 		/**
-		* The event is fired when a unform shader variable is changed.
+		* The event is fired when a uniform shader variable is changed.
 		* @event Camera#update
 		*/
 		let u = this.uniforms[name];
@@ -213,7 +213,7 @@ class Shader {
 	/**
 	 * Gets the vertex shader script. By default it only applies the view matrix and passes the texture coordinates to the fragment shader.
 	 * @param {*} gl Thegl context.
-	 * @returns {String} The vertex shader script.
+	 * @returns {string} The vertex shader script.
 	 */
 	vertShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
@@ -237,7 +237,7 @@ void main() {
 	/**
 	 * Gets the fragment shader script. This is a virtual function and MUST be redefined in derived classes.
 	 * @param {*} gl Thegl context.
-	 * @returns {String} The vertex shader script.
+	 * @returns {string} The vertex shader script.
 	 */
 	 fragShaderSrc(gl) {
 		throw 'Unimplemented!'
