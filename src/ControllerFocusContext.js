@@ -155,7 +155,7 @@ class ControllerFocusContext extends ControllerLens {
         if (dz != 1) {
             const delta = this.getCanvasBorder(focus, context);
             let box = this.getShrinkedBox(delta);
-            const screenP = context.sceneToViewportCoords(this.camera.viewport, focus.position);
+            const screenP = context.sceneToViewportCoords(this.camera.viewport, focus.position); //FIXME convert position from array to object.
             for(let i = 0; i < 2; ++i) {
                 const deltaMin = Math.max(0, (box.min[i] - screenP[i]));
                 const deltaMax = Math.min(0, (box.max[i] - screenP[i]));

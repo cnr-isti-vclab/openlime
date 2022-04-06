@@ -32,7 +32,6 @@ import { createSVGElement, LayerSvgAnnotation } from './LayerSvgAnnotation.js'
  * editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); processRequest(anno, 'update'); return true; };
  * editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
  * ```
-
  */
 class EditorSvgAnnotation {
 	/**

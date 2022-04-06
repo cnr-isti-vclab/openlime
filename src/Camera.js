@@ -267,16 +267,7 @@ class Camera {
 	 * @returns {Transform} The current transform
 	 */
 	getCurrentTransform(time) {
-		let pos = new Transform();
-		if (time < this.source.t)
-			Object.assign(pos, this.source);
-		if (time >= this.target.t)
-			Object.assign(pos, this.target);
-		else
-			pos.interpolate(this.source, this.target, time, this.easing);
-
-		pos.t = time;
-		return pos;
+		return Transform.interpolate(this.source, this.target, time, this.easing);
 	}
 
 	/**
