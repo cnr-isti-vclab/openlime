@@ -206,9 +206,11 @@ class Canvas {
 
 		//NOTICE: camera(pos) must be relative to the WHOLE canvas
 		let done = true;
-		for(let layer of ordered)
+		for(let layer of ordered) {
+			console.log("Layer: ", layer.id);
 			if(layer.visible)
 				done = layer.draw(pos, view) && done;
+		}
 
 		//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
 		return done && pos.t >= this.camera.target.t;

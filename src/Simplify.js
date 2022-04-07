@@ -1,8 +1,23 @@
 /* FROM: https://stackoverflow.com/questions/40650306/how-to-draw-a-smooth-continuous-line-with-mouse-using-html-canvas-and-javascript */
 
+/**
+ * A [x, y, xc, yc] point.
+ * @typedef BezierPoint
+ * @property {number} p.0 The x-coordinate.
+ * @property {number} p.1 The y-coordinate.
+ * @property {number} p.2 The x-coordinate of the control point.
+ * @property {number} p.3 The y-coordinate of the control point.
+ */
 
-function simplify(points, length) {
-	let length2 = Math.pow(length, 2);
+/**
+ * Simplifies a polyline via the Douglas-Peucker algorithm.
+ * @param {Array<Point>} points A polyline.
+ * @param {*} tolerance The tolerance is the maximum distance between the original polyline and the simplified polyline.
+ * It has the same metric as the point coordinates.  
+ * @returns {Array<Point>} The simplified polyline.
+ */
+function simplify(points, tolerance) {
+	let tolerance2 = Math.pow(tolerance, 2);
 
     var simplify1 = function(start, end) { // recursize simplifies points from start to end
         var index, i, xx , yy, dx, dy, ddx, ddy,  t, dist, dist1;
@@ -13,7 +28,7 @@ function simplify(points, length) {
         ddx = p2.x - xx;
         ddy = p2.y - yy;
         dist1 = ddx * ddx + ddy * ddy;
-        let maxDist = length2;
+        let maxDist = tolerance2;
         for (var i = start + 1; i < end; i++) {
             let p = points[i];
             if (ddx !== 0 || ddy !== 0) {
@@ -40,7 +55,7 @@ function simplify(points, length) {
             }
         }
 
-        if (maxDist > length2) { 
+        if (maxDist > tolerance2) { 
             if (index - start > 1){
                 simplify1(start, index);
             }
@@ -57,8 +72,13 @@ function simplify(points, length) {
     return newLine;
 }
 
-
-
+/**
+ *  Uses Bezier Curve to smooth a polyline
+ * @param {Array<Point>} points A polyline.
+ * @param {number} cornerThres The angular threshold (in degrees). Two segments are smoothed if their angle is less then the threshold.
+ * @param {bool} match Whether the smoothed curve should traverse the original points or approximate them.
+ * @returns {Array<BezierPoint>} The smoothed polyline.
+ */
 function smooth(points, cornerThres, match) {
 	cornerThres *= 3.1415/180;
 	let newPoints = []; // array for new points
@@ -153,6 +173,11 @@ function smooth(points, cornerThres, match) {
 	return newPoints;	
 }
 
+/**
+ * Converts a smoothed polyline into an SVG path.
+ * @param {Array<BezierPoint>} smoothed The smoothed polyline.
+ * @returns {Array<String>} The SVG path.
+ */
 function smoothToPath(smoothed) {
 	let p = smoothed[0];
 	let d = [`M${p[0].toFixed(1)} ${p[1].toFixed(1)}`];

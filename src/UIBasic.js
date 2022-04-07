@@ -97,7 +97,7 @@ class UIBasic {
 			viewer: viewer,
 			camera: viewer.camera,
 			skin: 'skin/skin.svg',
-			autoFit: true,
+			autoFit: true, //FIXME to be moved in the viewer?
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
 				home: { title: 'Home', display: true, key: 'Home', task: (event) => { if (camera.boundingBox) camera.fitCameraBox(250); } },

@@ -2,9 +2,16 @@ import { BoundingBox } from "./BoundingBox";
 
 /**
  * A [x, y] point.
- * @typedef Point
+ * @typedef APoint
  * @property {number} p.0 The x-coordinate.
- * @property {number} p.1 The xy-coordinate.
+ * @property {number} p.1 The y-coordinate.
+ */
+
+/**
+ * A {x, y} point.
+ * @typedef {Object} Point
+ * @property {number} x The x-coordinate.
+ * @property {number} y The y-coordinate.
  */
 
 /**
@@ -222,8 +229,8 @@ class Transform { //FIXME Add translation to P?
     /**
 	 * Transforms the point `p` from scene (0 at image center) to [0,wh]  .
 	 * @param {Viewport} viewport The viewport.
-	 * @param {Point} p The point in scene (0,0 at image center)
-	 * @returns {Point} The point in range [0..w-1,0..h-1]
+	 * @param {APoint} p The point in scene (0,0 at image center)
+	 * @returns {APoint} The point in range [0..w-1,0..h-1]
 	 */ 
 	sceneToViewportCoords(viewport, p) { //FIXME Point is an array, but in other places it is an Object...
         return [p[0] * this.z  + this.x - viewport.x + viewport.w/2, 
@@ -234,8 +241,8 @@ class Transform { //FIXME Add translation to P?
      * Transforms the point `p` from [0,wh] to scene (0 at image center).
 	 * 
 	 * @param {Viewport} viewport The viewport.
-	 * @param {Point} p The point in range [0..w-1,0..h-1]
-	 * @returns {Point} The point in scene (0,0 at image center)
+	 * @param {APoint} p The point in range [0..w-1,0..h-1]
+	 * @returns {APoint} The point in scene (0,0 at image center)
 	 */
     viewportToSceneCoords(viewport, p) {
         return [(p[0] + viewport.x - viewport.w/2 - this.x) / this.z,

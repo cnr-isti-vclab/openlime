@@ -1,6 +1,7 @@
 import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
 import { PointerManager } from './PointerManager.js'
+import { Controller } from './Controller.js';
 
 /** **Viewer** is the central class of the OpenLIME framework. It is used to create a viewer on a web page and manipulate it.
  * In the following example, after instantiating a Viewer, a LayerImage is added to it.
@@ -32,11 +33,13 @@ class Viewer {
      * @param {(HTMLElement|string)} div A DOM element or a selector (es. '#openlime' or '.openlime').
      * @param {Object} [options]  An object literal describing the viewer content.
      * @param {color} options.background CSS style for background (it overwrites CSS if present).
+     * @param {bool} options.autofit=true Whether the initial position of the camera is set to fit the scene model.
     */
     constructor(div, options) {
 
         Object.assign(this, {
             background: null,
+            autofit: false,
             canvas: {},
             controllers: [],
             camera: new Camera()
@@ -66,6 +69,9 @@ class Viewer {
         this.canvas = new Canvas(this.canvasElement, this.overlayElement, this.camera, this.canvas);
         this.canvas.addEvent('update', () => { this.redraw(); });
 
+        if (this.autofit)
+            this.canvas.addEvent('updateSize', () => this.camera.fitCameraBox(0));
+
         this.pointerManager = new PointerManager(this.overlayElement);
 
         this.canvasElement.addEventListener('contextmenu', (e) => {
@@ -81,6 +87,14 @@ class Viewer {
         resizeobserver.observe(this.canvasElement);
 
         this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
+    }
+
+    /**
+     * Adds a device event controller to the viewer.
+     * @param {Controller} controller An OpenLIME controller.
+     */
+    addController(controller) {
+        this.pointerManager.onEvent(controller);
     }
 
     /** Adds the given layer to the Viewer.
@@ -112,7 +126,7 @@ class Viewer {
     /**
      * @ignore
     */
-     resize(width, height) {
+    resize(width, height) {
         // Test with retina display!
         this.canvasElement.width = width * window.devicePixelRatio;
         this.canvasElement.height = height * window.devicePixelRatio;
@@ -135,10 +149,10 @@ class Viewer {
      * This method is internal.
      * @param {time} time The current time (a DOMHighResTimeStamp variable, as in `performance.now()`).
     */
-     /**
-     * @ignore
-    */
-      draw(time) {
+    /**
+    * @ignore
+   */
+    draw(time) {
         if (!time) time = performance.now();
         this.animaterequest = null;
 
