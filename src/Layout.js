@@ -1,10 +1,69 @@
 import { BoundingBox } from "./BoundingBox";
 
+// Tile level x y  index ----- tex missing() start/end (tarzoom) ----- time, priority size(byte)
+
 /**
- * @param {string|Object} url URL of the image or the tiled config file, 
- * @param {string} type select one among: <image, {@link https://www.microimages.com/documentation/TechGuides/78googleMapsStruc.pdf google}, {@link https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN deepzoom}, {@link http://www.zoomify.com/ZIFFileFormatSpecification.htm zoomify}, {@link https://iipimage.sourceforge.io/ iip}, {@link https://iiif.io/api/image/3.0/ iiif}>
+ * A tile represents a single element of a regular grid that subdivides an image.
+ * A tile is identified by its position (`x`, `y`) within the grid and the zoom `level` of the image.
+ * @typedef {Object} Tile
+ * @property {number} level The zoom level of the tile.
+ * @property {number} x x position of the tile in the grid.
+ * @property {number} y y position of the tile in the grid.
+ * @property {number} index Unique tile identifier.
+ * @property {number} start The position of the first byte of the tile in the image dataset (used only for tarzoom and itarzoom image formats).
+ * @property {number} end The position of the last byte of the tile in the image dataset (used only for tarzoom and itarzoom image formats).
+ * @property {number} missing In the case of multi-channel formats (RTI, BRDF), the information content of a tile is distributed over several planes (channels). 
+ * `missing` represents the number of pending channel data requests.
+ * @property {Array} tex A array of WebGLTexture (one texture per channel).
+ * @property {time} time Tile creation time (this value is used internally by the cache algorithms).
+ * @property {number} priority The priority of the tile (this value is used internally by the cache algorithms).
+ * @property {number} size The total size of the tile in bytes (this value is used internally by the cache algorithms).
+ */
+
+/**
+* The type of the image. All web single-resolution image types (*jpg*, *png*, *gif*, etc...) are supported
+* as well as the most common multi-resolution image formats (*deepzoom*, *zoomify*, *IIIF*, *google maps*).
+* @typedef {('image'|'deepzoom'|'deepzoom1px'|'google'|'zoomify'|'iiif'|'tarzoom'|'itarzoom')} Layout#Type
+*/
+
+/**
+ * The Layout class is responsible for specifying the data formats (images) managed by OpenLIME.
+ * All web single-resolution image types (*jpg*, *png*, *gif*, etc...) are supported as well as the most common 
+ * tiled image formats (*deepzoom*, *zoomify*, *IIIF*, *google maps*), which are suitable for large images.
+ * #### Single-resolution images
+ * The URL is the address of the file (for instance, 'https://my.example/image.jpg').
+ * #### Tiled images
+ * They can be specified in a variety of ways depending on the format chosen.
+ * * **deepzoom** - The root tile of the image pyramid has a size > 1px (typical value is 254px). It is defined by the URL of the *.dzi* file 
+ * (for instance, 'https://my.example/image.dzi'). See: {@link https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN DeepZoom}
+ * * **deepzoom1px** - The root tile of the image pyramid has a size = 1px. It is defined by the URL of the *.dzi* file 
+ * (for instance, 'https://my.example/image.dzi'). See: {@link https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN DeepZoom}
+ * * **google** - The URL points directly to the directory containing the pyramid of images (for instance, 'https://my.example/image'). 
+ * The standard does not require any configuration file, so it is mandatory to indicate in the `options` the 
+ * width and height in pixels of the original image. See: {@link https://www.microimages.com/documentation/TechGuides/78googleMapsStruc.pdf Google Maps}
+ * * **zoomify** - The URL indicates the location of Zoomify configuration file (for instance, 'https://my.example/image/ImageProperties.xml').
+ * See: {@link http://www.zoomify.com/ZIFFileFormatSpecification.htm Zoomify}
+ * * **iiif** - According to the standard, the URL is the address of a IIIF server (for instance, 'https://myiiifserver.example/').
+ * See: {@link https://iipimage.sourceforge.io/ IIP Server}, {@link https://iiif.io/api/image/3.0/ IIIF }
+ * * **tarzoom** and **itarzoom** - This is a custom format of the OpenLIME framework. It can be described as the TAR of a DeepZoom (all the DeepZoom image pyramid is stored in a single file).
+ * It takes advantage of the fact that current web servers are able to handle partial-content HTTP requests. Tarzoom facilitates
+ * the work of the server, which is not penalised by having to manage a file system with many small files. The URL is the address of the *.tzi* file 
+ * (for instance, 'https://my.example/image.tzi'). Warning: tarzoom|itarzoom may not work on older web servers.
  */
 class Layout {
+	/**
+	* Creates a Layout, a container for a raster image.
+    * A layout is defined by a `url` of the image and a `type`.
+    * Additionally, an object literal with Layout `options` can be specified.
+    * Signals are triggered when the layout is ready to be drawn or its size is modified.
+	* @param {string} url URL of the image.
+ 	* @param {Layout#Type} type The type of the image.
+ 	* @param {Object} [options] An object literal describing the layout content.
+ 	* @param {number} options.width The total width of the original, unsplit image. This parameter must only be specified for the 'google' layout type. 
+ 	* @param {number} options.height The total height of the original, unsplit image. This parameter must only be specified for the 'google' layout type.
+ 	* @param {string} options.suffix='jpg' The filename suffix of the tiles.
+ 	* @param {string} options.subdomains='abc' The ('a'|'b'|'c') *s* subdomain of a Google template URL (for instance: 'https:{s}.my.example//{z}/{x}/{y}.png').
+	*/
 	constructor(url, type, options) {
 		Object.assign(this, {
 			type: type,
@@ -27,12 +86,14 @@ class Layout {
 		if(typeof(url) == 'string')
 			this.setUrls([url]);
 
-		if(typeof(url) == 'object')
-			Object.assign(this, url);
-
 	}
 
+	/** @ignore */
 	setUrls(urls) {
+		/**
+		* The event is fired when a layout is ready to be drawn(the single-resolution image is downloaded or the multi-resolution structure has been initialized).
+		* @event Layout#ready
+		*/
 		this.urls = urls;
 		(async () => {
 			switch(this.type) {
@@ -54,28 +115,30 @@ class Layout {
 		})().catch(e => { console.log(e); this.status = e; });
 	}
 
+	/** @ignore */
 	addEvent(event, callback) {
 		this.signals[event].push(callback);
 	}
 
+	/** @ignore */
 	emit(event) {
 		for(let r of this.signals[event])
 			r(this);
 	}
 
-	isReady() {
-		return this.status == 'ready' && this.width && this.height;
-	}
-
+	/**
+	 * Gets the layout bounding box.
+	 * @returns {BoundingBox} The layout bounding box.
+	 */
 	boundingBox() {
 		if(!this.width) throw "Layout not initialized still";
 		return new BoundingBox({xLow:-this.width/2, yLow: -this.height/2, xHigh: this.width/2, yHigh: this.height/2});
 	}
 
-/**
- *  Each tile is assigned an unique number.
- */
-
+	/**
+ 	*  Each tile is assigned an unique number.
+ 	*/
+	/** @ignore */
 	index(level, x, y) {
 		let startindex = 0;
 		for(let i = 0; i < level; i++)
@@ -83,12 +146,17 @@ class Layout {
 		return startindex + y*this.qbox[level].xHigh + x;
 	}
 
-/*
- * Compute all the bounding boxes (this.bbox and this.qbox).
- * @return number of tiles in the dataset
-*/
-
+	/*
+ 	* Compute all the bounding boxes (this.bbox and this.qbox).
+ 	* @return number of tiles in the dataset
+	*/
+	/** @ignore */
 	initBoxes() {
+		/**
+		* The event is fired when a layout size is modified (and the scene extension must be recomputed at canvas level).
+		* @event Layout#updateSize
+		*/
+
 		this.qbox = []; //by level (0 is the bottom)
 		this.bbox = [];
 		var w = this.width;
@@ -124,9 +192,10 @@ class Layout {
 		this.emit('updateSize');
 	}
 
-/** Return the coordinates of the tile (in [0, 0, w h] image coordinate system) and the texture coords associated. 
- *
- */
+	/**
+	* Returns the coordinates of the tile (in [0, 0, w h] image coordinate system) and the texture coords associated. 
+ 	* @returns the tile coordinates (image coords and texture coords) 
+ 	*/
 	tileCoords(level, x, y) {
 		let w = this.width;
 		let h = this.height;
@@ -187,12 +256,14 @@ class Layout {
 	}
 
 
-/**
- * Given a viewport and a transform computes the tiles needed for each level.
- * @param {array} viewport array with left, bottom, width, height
- * @param {border} border is radius (in tiles units) of prefetch
- * @returns {object} with level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.
- */
+	/**
+ 	* Computes the tiles needed for each level, given a viewport and a transform.
+ 	* @param {Viewport} viewport The viewport.
+	* @param {Transform} transform The current transform.
+ 	* @param {number} border The threshold (in tile units) around the current camera position for which to prefetch tiles.
+	* @param {number} bias The mipmap bias of the texture.
+ 	* @returns {Object} level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.
+ 	*/
 	neededBox(viewport, transform, border, bias) {
 		if(this.type == "image")
 			return { level:0, pyramid: [new BoundingBox({ xLow:0, yLow:0, xHigh:1, yHigh:1 })] };
@@ -223,27 +294,31 @@ class Layout {
 		return { level: minlevel, pyramid: pyramid };
 	}
 
+	/**
+	 * Gets the URL of a specific tile. The function must be implemented for each layout type supported by OpenLIME.
+	 * @param {number} id The channel id.
+	 * @param {Tile} tile The tile.
+	 */
 	getTileURL(id, tile) {
 		throw Error("Layout not defined or ready.");
 	}
 
-
-
-/*
- * Witdh and height can be recovered once the image is downloaded.
-*/
+	/*
+ 	* Witdh and height can be recovered once the image is downloaded.
+	*/
+	/** @ignore */
 	async initImage() {
 		this.getTileURL = (rasterid, tile) => { return this.urls[rasterid]; }
 		this.nlevels = 1;
 		this.tilesize = 0;
 	}
 
-/**
- *  url points to the folder (without /)
-
- *  width and height must be defined
- */
-	async initGoogle(callback) {
+	/*
+ 	*  url points to the folder (without /)
+	*  width and height must be defined
+ 	*/
+	/** @ignore */
+	async initGoogle() {
 		if(!this.width || !this.height)
 			throw "Google rasters require to specify width and height";
 
@@ -265,10 +340,10 @@ class Layout {
 			};
 	}
 
-
-/**
- * Expects the url to point to .dzi config file
- */
+	/*
+ 	* Expects the url to point to .dzi config file
+ 	*/
+	/** @ignore */
 	async initDeepzoom(onepixel) {
 		let url = this.urls[0];
 		var response = await fetch(url);
@@ -303,6 +378,7 @@ class Layout {
 		}; 
 	}
 
+	/** @ignore */
 	async initTarzoom() {
 		this.tarzoom =[];	
 		for (let url of this.urls) {
@@ -325,7 +401,7 @@ class Layout {
 		}; 
 	}
 
-
+	/** @ignore */
 	async initITarzoom() {
 		const url = this.urls[0];		
 		var response = await fetch(url);
@@ -348,11 +424,10 @@ class Layout {
 		}; 
 	}
 
-
-
-/**
- * Expects the url to point to ImageProperties.xml file.
- */
+	/*
+ 	* Expects the url to point to ImageProperties.xml file.
+ 	*/
+	/** @ignore */
 	async initZoomify() {
 		const url = this.urls[0];
 		this.overlap = 0;
@@ -380,6 +455,7 @@ class Layout {
 		};
 	}
 
+	/** @ignore */
 	async initIIIF() {
 		const url = this.urls[0];
 		this.overlap = 0;

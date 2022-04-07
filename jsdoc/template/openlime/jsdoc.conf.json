@@ -3,13 +3,14 @@
     "allowUnknownTags": true
   },
   "plugins": ["plugins/markdown"],
+  "sourceType": "module",
   "templates": {
     "logoFile": "",
     "cleverLinks": false,
     "monospaceLinks": false,
     "dateFormat": "ddd MMM Do YYYY",
     "outputSourceFiles": true,
-    "outputSourcePath": true,
+    "outputSourcePath": false,
     "systemName": "DocStrap",
     "footer": "",
     "copyright": "DocStrap Copyright © 2012-2015 The contributors to the JSDoc3 and DocStrap projects.",

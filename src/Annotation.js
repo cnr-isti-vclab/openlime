@@ -1,7 +1,20 @@
-/** coordinates for annotations are relative to the top left corner!!!!
- */
+import { BoundingBox } from './BoundingBox.js'
 
+/** 
+ * An annotation is a decoration (text, graphics element, glyph) to be drawn in an overlay mode on the canvas.
+ * Its purpose is to provide additional information useful for the interpretation of the underlying drawings. 
+ * This calls defines the content of an annotation which is represented by its unique identifier and additional 
+ * information (such as description, annotation category or class, drawing style, labels, etc.).
+ */
 class Annotation {
+	/**
+	 * Instantiates an **Annotation** object. An object literal with Annotation `options` can be specified.
+	 * Note that the developer is free to define additional elements characterizing a custom annotation by adding new options to the constructor.
+	 * @param {Object} [options] An object literal with Annotation options (freely adjustable).
+	 * @param {string} options.label A string containing an annotation label.
+	 * @param {string} option.description A HTML text containg a comprehensive description of the annotation.
+	 * @param {string} option.class A class or category to cluster annotations.
+	 */
 	constructor(options) {
 		Object.assign(
 			this, 
@@ -28,6 +41,7 @@ class Annotation {
 			this.elements = []; //assign options is not recursive!!!
 	}
 
+	/** @ignore */
 	static UUID() {
 		return 'axxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
 			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -35,6 +49,11 @@ class Annotation {
 		});
 	}
 
+	/**
+	 * Gets the bounding box of the annotation.
+	 * Note that the coordinates for annotations are always relative to the top left corner of the canvas.
+	 * @returns {BoundingBox} The bounding box
+	 */
 	getBBoxFromElements() {
 		let box = { x: 0, y: 0, width: 0, height: 0 }
 		if(!this.elements.length)
@@ -47,9 +66,17 @@ class Annotation {
 				width = Math.max(width + x, sx + swidth) - x; 
 				height = Math.max(height + y, sy + sheight) - y; 
 		}
-		return { x, y, width, height };
+		return new BoundingBox({xLow: x, yLow: y, xHigh: x+width, yHigh: y+width});
 	}
 
+	/////////////////////////////////
+	/* The class also provides functions for importing and exporting from and to files in JSON format. */
+	/*
+	 * Copies an entry of a JSON file into an **Annotation** object.
+	 * @param {string} entry A JSON string representing an annotation.
+	 * @returns {Annotation} The annotation.
+	 */
+	/** @ignore */
 	static fromJsonLd(entry) {
 		if(entry.type != 'Annotation')
 			throw "Not a jsonld annotation.";
@@ -74,6 +101,10 @@ class Annotation {
 		}
 		return new Annotation(options);
 	}
+	/*
+	 * Exports an Annotation to a JSON entry
+	 */
+	/** @ignore */
 	toJsonLd() {
 		let body = [];
 		if(this.code !== null)

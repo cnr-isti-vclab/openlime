@@ -2,23 +2,26 @@ import { Annotation } from './Annotation.js';
 import { Layer } from './Layer.js'
 
 /**
- * SVG or OpenGL polygons/lines/points annotation layer
- * @param {object} options
- * * *svgURL*: url for the svg containing the annotations
- * * *svgXML*: svg string containing the annotatiosn
- * * *geometry*: TODO: should contain the areas/lines/points for OpenGL rendering
- * * *style*: css style for the annotation elements (shadow dom allows css to apply only to this layer)
- * * *annotations*: collection of annotations info: each annotations is id: { label, svg (optional), data (custom data) (TODO)
+ * An annotation layer is a layer used to display decorations (text, graphics elements, glyphs, etc...) on top of other layers.
+ * Its purpose is to provide additional information useful for the interpretation of the underlying layers.
+ * An object literal with `options` can be specified.
+ * 
+ * Here you will find a tutorial to learn how to build a client-server architecture to manage annotations in OpenLIME. //FIXME
+ * 
+ * Extends {@link Layer}.
  */
-
-
 class LayerAnnotation extends Layer {
+	/**
+	 * Instantiates a LayerAnnotation object.
+	 * @param {Object} [options] An object literal with options that inherits from {@link Layer}.
+	 * @param {string} options.style Properties to style annotations.
+ 	 * @param {(string|Array)} options.annotations The URL of the annotation data (JSON file or HTTP GET Request to an annotation server) or an array of annotations.
+	 */
 	constructor(options) {
 		options = Object.assign({
 			// geometry: null,  //unused, might want to store here the quads/shapes for opengl rendering
-			style: null,    //straightforward for svg annotations, to be defined oro opengl rendering
+			style: null,    //straightforward for svg annotations, to be defined or opengl rendering
 			annotations: [],
-			hoverable: false, //display info about annotation on mousehover.
 			selected: new Set,
 			overlay: true,
 			annotationsListEntry: null, //TODO: horrible name for the interface list of annotations
@@ -33,6 +36,7 @@ class LayerAnnotation extends Layer {
 		}
 	}
 
+	/** @ignore */
 	async loadAnnotations(url) {
 		var response = await fetch(url);
 		if(!response.ok) {
@@ -58,7 +62,7 @@ class LayerAnnotation extends Layer {
 		this.emit('loaded');
 	}
 
-
+	/** @ignore */
 	newAnnotation(annotation, selected = true) {
 		if(!annotation)
 			annotation = new Annotation();
@@ -77,7 +81,7 @@ class LayerAnnotation extends Layer {
 		return annotation;
 	}
 
-
+	/** @ignore */
 	annotationsEntry() {
 		return this.annotationsListEntry =  {
 			html: '',
@@ -91,6 +95,7 @@ class LayerAnnotation extends Layer {
 		}
 	}
 
+	/** @ignore */
 	createAnnotationsList() {
 		let html ='';
 		for(let a of this.annotations) {
@@ -120,6 +125,7 @@ class LayerAnnotation extends Layer {
 		});
 	}
 
+	/** @ignore */
 	createAnnotationEntry(a) {
 		return `<a href="#" data-annotation="${a.id}" class="openlime-entry ${a.visible == 0? 'hidden':''}">${a.label || ''}
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="openlime-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -127,6 +133,11 @@ class LayerAnnotation extends Layer {
 			</a>`;
 	}
 
+	/**
+	 * Gets an annotation by its `id`
+	 * @param {string} id 
+	 * @returns {Annotation} The annotation.
+	 */
 	getAnnotationById(id) {
 		for(const anno of this.annotations)
 			if(anno.id == id)
@@ -134,11 +145,17 @@ class LayerAnnotation extends Layer {
 		return null;
 	}
 
+	/** @ignore */
 	clearSelected() {
 		this.annotationsListEntry.element.parentElement.querySelectorAll(`[data-annotation]`).forEach((e) => e.classList.remove('selected'));
 		this.selected.clear();
 	}
-	//set selected class for annotation
+
+	/**
+	 * Selects/deselects an annotation
+	 * @param {Annotation} anno The annotation.
+	 * @param {bool} on=true Whether to select the annotation.
+	 */
 	setSelected(anno, on = true) {
 		this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.toggle('selected', on);
 		if(on)

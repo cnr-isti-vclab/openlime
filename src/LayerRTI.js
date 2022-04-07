@@ -29,9 +29,8 @@ class LayerRTI extends Layer {
 		this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
 		this.setShader('rti');
 
-		let now = performance.now();
-		this.controls['light'] = { source:{ value: [0, 0], t: now }, target:{ value:[0, 0], t:now }, current:{ value:[0, 0], t:now } };
-		this.worldRotation = 0; //if the canvas or the layer rotate, light direction neeeds to be rotated too.
+		this.addControl('light', [0, 0]);
+		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 		if(this.url)
 			this.loadJson(this.url);
 	}
@@ -73,13 +72,13 @@ class LayerRTI extends Layer {
 			for(let p = 0; p < this.shader.njpegs; p++) {
 				let url = this.imageUrl(this.url, 'plane_' + p);
 				urls.push(url);
-				let raster = new Raster({ format: 'vec3', attribute: 'coeff', colorspace: 'linear' });
+				let raster = new Raster({ format: 'vec3'});
 				this.rasters.push(raster);
 			}
 			if(this.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
 				let url = this.imageUrl(this.url, 'normals');
 				urls.push(url);
-				let raster = new Raster({ format: 'vec3', attribute: 'coeff', colorspace: 'linear' });
+				let raster = new Raster({ format: 'vec3'});
 				this.rasters.push(raster);				
 			}			
 			this.layout.setUrls(urls);

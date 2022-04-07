@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Image Viewer with Custom Shader</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../../css/light.css" />
+    <link rel="stylesheet" href="../examples.css" />
+</head>
+
+<body>
+    <h1>OpenLIME - Image Viewer</h1>
+    <div class="openlime"></div>
+
+    <script src="../../js/openlime.js"></script>
+    <script>
+        const colorFactorDefault=1.0;
+
+        // LayerImage with custom shader
+        class LayerCustom extends OpenLIME.LayerImage {
+            constructor(options) {
+                super(options);
+                // Instatiates the shader
+                const shader = new OpenLIME.Shader({
+                    'label': 'Rgb',
+                    'samplers': [{ id: 0, name: 'kd' }]
+                });
+                // The fragment shader script. A float uniform for color factor control is defined.
+                shader.fragShaderSrc = function (gl) {
+                    let gl2 = !(gl instanceof WebGLRenderingContext);
+                    let str = `${gl2 ? '#version 300 es' : ''}
+                    precision highp float;
+                    precision highp int;
+
+                    uniform sampler2D kd;
+                    uniform float u_colorFactor;
+
+                    ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
+                    ${gl2 ? 'out' : ''} vec4 color;
+
+                    void main() {
+	                    vec4 s = texture${gl2 ? '' : '2D'}(kd, v_texcoord);
+                        vec3 lum = vec3(0.21, 0.71, 0.07); 
+                        float grey = dot(s.rgb, lum.rgb);
+                        color = vec4(s.rgb * (1.0 - u_colorFactor) + (grey * u_colorFactor), 1.0);
+	                    ${gl2 ? '' : 'gl_FragColor = color;'}
+                    }`;
+                    return str;
+                }
+                // Declares the uniform to set the color factor.
+                shader.uniforms = {
+                    u_colorFactor: { type: 'float', needsUpdate: true, size: 1, value: colorFactorDefault },
+                };
+                // Adds the shader to the Layer and set it as the current one.
+                this.shaders['bw'] = shader;
+                this.setShader('bw');
+            }
+        };
+
+        // Creates an OpenLIME canvas into .openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+
+        // Creates an image layer with a custom shader that displays the image as B&W. Adds it to the canvas.
+        const layerbw = new LayerCustom({
+            label: 'Black and white',
+            layout: 'image',
+            url: '../../assets/lime/image/lime.jpg'
+        });
+        lime.addLayer('BW', layerbw);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+
+        // Remove light from the toolbar
+        ui.actions.light.display = false;
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+
+        // Gets the menu entry related to the custom layer
+        const bwMenuEntry = ui.getMenuLayerEntry('BW');
+        if (bwMenuEntry) {
+            // Adds a slider to control the color factor.
+            bwMenuEntry.list = [{
+                id: 'colorFactor',
+                slider: '',
+                value: colorFactorDefault*100,
+                oninput: (e) => {
+                    layerbw.shader.setUniform('u_colorFactor', e.target.value/100);
+                }
+            }];
+        }
+        ui.attribution = `Lime, photo image - by <a href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a> from <a href="https://pixabay.com/it/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Pixabay</a>`;
+    </script>
+</body>
+
+</html>

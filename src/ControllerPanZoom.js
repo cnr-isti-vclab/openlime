@@ -1,7 +1,14 @@
 import { Controller } from './Controller.js'
 
+/** **ControllerPanZoom** intercepts pan, zoom, single tap, and wheel events in the canvas and updates the scene camera parameters.
+*/
 class ControllerPanZoom extends Controller {
-
+	/**
+	 * Instantiates a ControllerPanZoom object.
+	 * @param {Camera} camera The scene camera.
+	 * @param {Object} [options] An object literal with controller parameters.
+	 * @param {number} options.zoomAmount=1.2 The incremental value for zoom in/out.
+	 */
 	constructor(camera, options) {
 		super(options);
 
@@ -17,6 +24,7 @@ class ControllerPanZoom extends Controller {
 		this.initialDistance = 0.0;
 	}
 
+	/** @ignore */
 	panStart(e) {
 		if(!this.active || this.panning || !this.activeModifiers.includes(this.modifierState(e)))
 			return;
@@ -30,6 +38,7 @@ class ControllerPanZoom extends Controller {
 		e.preventDefault();
 	}
 
+	/** @ignore */
 	panMove(e) {
 		if (!this.panning)
 			return;
@@ -41,14 +50,17 @@ class ControllerPanZoom extends Controller {
 		this.camera.setPosition(this.panDelay, m.x + dx, m.y + dy, m.z, m.a);
 	}
 
+	/** @ignore */
 	panEnd(e) {
 		this.panning = false;
 	}
 
+	/** @ignore */
 	distance(e1, e2) {
 		return Math.sqrt(Math.pow(e1.x - e2.x, 2) + Math.pow(e1.y - e2.y, 2));
 	}
 
+	/** @ignore */
 	pinchStart(e1, e2) {
 		this.zooming = true;
 		this.initialDistance = Math.max(30, this.distance(e1, e2));
@@ -56,6 +68,7 @@ class ControllerPanZoom extends Controller {
 		//e2.preventDefault(); //TODO this is optional?
 	}
 
+	/** @ignore */
 	pinchMove(e1, e2) {
 		if (!this.zooming)
 			return;
@@ -73,11 +86,13 @@ class ControllerPanZoom extends Controller {
 		e1.preventDefault();
 	}
 
+	/** @ignore */
 	pinchEnd(e, x, y, scale) {
 		this.zooming = false;
 		e.preventDefault();
 	}
 
+	/** @ignore */
 	mouseWheel(e) {
 		let delta = -e.deltaY/53;
 		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
@@ -86,6 +101,7 @@ class ControllerPanZoom extends Controller {
 		e.preventDefault();
 	}
 
+	/** @ignore */
 	fingerDoubleTap(e) {
 		if(!this.active || !this.activeModifiers.includes(this.modifierState(e)))
 			return;

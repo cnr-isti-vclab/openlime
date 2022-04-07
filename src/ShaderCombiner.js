@@ -1,11 +1,21 @@
 import { Shader } from './Shader.js'
 
 /**
- *  @param {object} options
- * *compose*: compose operation: add, subtract, multiply, etc.
+ * The **ShaderCombiner** class specifies a shader that computes an output texture as a combination of two input textures.
+ * It defines four modes (shader behaviors): 
+ * * 'first' assigns the first texture as output (draws the first texture). The color of each fragment is cout=c1
+ * * 'second' assigns the second texture as output (draws the second texture). The color of each fragment is cout=c2
+ * * 'mean' calculates the average color of the two textures. The color of each fragment is cout=(c1+c2)/2.0
+ * * 'diff' calculates the difference between the color of the textures. Color of each fragment is cout=c2.rgb-c1.rgb
+ * 
+ * Extends {@link Shader}.
  */
-
 class ShaderCombiner extends Shader {
+	/**
+	 * Instantiates a **ShaderCombiner** class.
+	 * An object literal with ShaderCombiner `options` can be specified.
+	 * @param {Object} [options] An object literal with options that inherits from {@link Shader}.
+	 */
 	constructor(options) {
 		super(options);
 
@@ -24,14 +34,7 @@ class ShaderCombiner extends Shader {
 		};
 	}
 
-	setMode(mode) {
-//		if(!(mode in this.modes))
-		if(this.modes.indexOf(mode)==-1)
-			throw Error("Unknown mode: " + mode);
-		this.mode = mode;
-		this.needsUpdate = true;
-	}
-
+	/** @ignore */
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let operation = this.operations[this.mode];
@@ -56,6 +59,7 @@ void main() {
 `;
 	}
 
+	/** @ignore */
 	vertShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		return `${gl2? '#version 300 es':''}
@@ -74,6 +78,5 @@ void main() {
 }`;
 	}
 }
-
 
 export { ShaderCombiner }

@@ -1,9 +1,29 @@
-
 import { Layer }  from './Layer.js'
 
 /**
- * Combines other layers (using a framebuffer) using a shader. Lens is an example. Extends {@link Layer}.
- * @param {options} options Same as {@link Layer}, but url and layout are required.
+ * Combines other layers (in the framebuffer) using a custom shader. {@link LayerLens} is an example.
+ * The class LayerImage can also be instantiated via the Layer parent class and `options.type='combiner'`.
+ * 
+ * Extends {@link Layer}.
+ * @param {options} options Same as {@link Layer}, but `options.layers` are required
+ * @example
+ * // Instantiate the LayerCombiner class and set the two inputs (layer0 and layer1)
+ * const combiner = new OpenLIME.Layer({
+ *     type: 'combiner',
+ *     visible: true,
+ *     layers: [layer0, layer1]
+ * });
+ * 
+ * // Instantiate the ShaderCombiner class (a custom shader) and select 'diff' as default mode (for visualization purposes)
+ * const shader = new OpenLIME.ShaderCombiner();
+ * shader.mode = 'diff';
+ *
+ * // Assign the newly created shader to the combiner (labelling it 'standard') and enable it
+ * combiner.shaders = { 'standard': shader };
+ * combiner.setShader('standard');
+ *
+ * // Add the combiner to the canvas
+ * lime.addLayer('combiner', combiner);
  */
 class LayerCombiner extends Layer {
 	constructor(options) {
@@ -27,7 +47,7 @@ class LayerCombiner extends Layer {
 		this.status = 'ready';
 	}
 
-
+	/** @ignore */
 	draw(transform, viewport) {
 		for(let layer of this.layers)
 			if(layer.status != 'ready')
@@ -50,7 +70,6 @@ class LayerCombiner extends Layer {
 		var b = [0, 0, 0, 0];
 		gl.clearColor(b[0], b[1], b[2], b[3]);
 
-
 //TODO optimize: render to texture ONLY if some parameters change!
 //provider di textures... max memory and reference counting.
 
@@ -61,7 +80,6 @@ class LayerCombiner extends Layer {
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		}
 
-
 		this.prepareWebGL();
 
 		for(let i = 0; i < this.layers.length; i++) {
@@ -70,15 +88,13 @@ class LayerCombiner extends Layer {
 			gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
 		}
 
-
-
 		this.updateTileBuffers(
 			new Float32Array([-1, -1, 0,  -1, 1, 0,  1, 1, 0,  1, -1, 0]), 
 			new Float32Array([ 0,  0,      0, 1,     1, 1,     1,  0]));
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
 	}
 
-	
+	/** @ignore */
 	createFramebuffers() {
 		let gl = this.gl;
 		for(let i = 0; i < this.layers.length; i++) {
@@ -108,10 +124,13 @@ class LayerCombiner extends Layer {
 			this.framebuffers[i] = framebuffer;
 		}
 	}
+
 	//TODO release textures and framebuffers
+	/** @ignore */
 	deleteFramebuffers() {
 	}
 
+	/** @ignore */
 	boundingBox() {
 		// Combiner ask the combination of all its children boxes
 		// keeping the hidden, because they could be hidden, but revealed by the combiner
@@ -123,6 +142,7 @@ class LayerCombiner extends Layer {
 		return result;
 	}
 	
+	/** @ignore */
 	scale() {
 		//Combiner ask the scale of all its children
 		//keeping the hidden, because they could be hidden, but revealed by the combiner

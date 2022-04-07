@@ -3,23 +3,41 @@ import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 
 /**
- * Display a simple image. Extends {@link Layer}.
- * @param {options} options Same as {@link Layer}, but url and layout are required.
+ * The class LayerImage is derived from Layer and it is responsible for the rendering of simple images.
+ * 
+ * @example
+ * // Create an image layer and add it to the canvans
+ * const layer = new OpenLIME.Layer({
+ *     layout: 'image',
+ *     type: 'image',
+ *     url: '../../assets/lime/image/lime.jpg'
+ * });
+ * lime.addLayer('Base', layer);
  */
-
 class LayerImage extends Layer {
-	constructor(options) {
+	/**
+ 	* Displays a simple image.
+ 	* An object literal with Layer `options` can be specified.
+	* The class LayerImage can also be instantiated via the Layer parent class and `options.type='image'`.
+ 	*
+	  Extends {@link Layer}.
+ 	* @param {Object} options an object literal with Layer options {@link Layer}, but `options.url` and `options.layout` are required.
+ 	* @param {string} options.url The URL of the image
+ 	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
+ 	*/
+	constructor(options) {	
 		super(options);
 
 		if(Object.keys(this.rasters).length != 0)
 			throw "Rasters options should be empty!";
 
-		if(!this.url)
-			throw "Url option is required";
+		if (this.url)
+			this.layout.setUrls([this.url]);
+		else if (this.layout.urls.length == 0)
+			throw "Missing options.url parameter";	
 
-		this.layout.setUrls([this.url]);
 		const rasterFormat = this.format != null ? this.format : 'vec4';
-		let raster = new Raster({ format: rasterFormat, attribute: 'kd', colorspace: 'sRGB' });
+		let raster = new Raster({ format: rasterFormat });
 
 		this.rasters.push(raster);
 		
