@@ -12,9 +12,9 @@ class LayerLens extends LayerCombiner {
 		}, options);
 		super(options);
 		
-		let shader = new ShaderLens({
-			'samplers': [ { id:0, name: 'source0'} ]
-		});
+		// Shader lens currently handles up to 2 layers
+		let shader = new ShaderLens();
+		if (this.layers.length == 2) shader.setSecondLayerEnabled(true);
 		this.shaders['lens'] = shader;
 		this.setShader('lens');
 
@@ -26,6 +26,17 @@ class LayerLens extends LayerCombiner {
 		this.controls['radius'] = { source:{ value: [0, 0],    t: now }, target:{ value:[0, 0],    t:now }, current:{ value:[0, 0],    t:now } };
 		this.setLens(0,0,this.radius,this.border);
 		this.signals.draw = [];
+	}
+
+	setSecondLayerEnabled(x) {
+		if (this.layers.length == 2) {
+			// With two layers set visible or not the second layer and set the property in the shader
+			this.layers[1].setVisible(x);
+			this.shader.setSecondLayerEnabled(x);
+		} else if (!x) {
+			// With a single layer, just tell the shader to use only the first layer 
+			this.shader.setSecondLayerEnabled(x);
+		}
 
 	}
 
@@ -56,74 +67,13 @@ class LayerLens extends LayerCombiner {
 	}
 
 	draw(transform, viewport) {
-
 		let done = this.interpolateControls();
-		
-		for(let layer of this.layers)
-			if(layer.status != 'ready')
-				return false;
-
-		if(!this.shader)
-			throw "Shader not specified!";
-
+		const vlens = this.getLensInViewportCoords(transform, viewport);
+		this.shader.setLensUniforms(vlens, [viewport.w, viewport.h]);
 		this.emit('draw');
-		let gl = this.gl;
 
-		// Draw on a restricted viewport around the lens
-		let lensViewport = this.getLensViewport(transform, viewport);
-		gl.viewport(lensViewport.x, lensViewport.y, lensViewport.dx, lensViewport.dy);
+		super.draw(transform, viewport);
 
-		// Keep the framwbuffer to the window size in order to avoid changing at each scale event
-	 	if(!this.framebuffers.length || this.layout.width != viewport.w || this.layout.height != viewport.h) {
-			this.deleteFramebuffers();
-			this.layout.width = viewport.w;
-			this.layout.height = viewport.h;
-			this.createFramebuffers();
-		}
-		var b = [0, 0, 0, 0];
-		gl.clearColor(b[0], b[1], b[2], b[3]);
-		
-//TODO optimize: render to texture ONLY if some parameters change!
-//provider di textures... max memory and reference counting.
-
-		// Draw the layers only within the viewport encolsing the lens
-		for(let i = 0; i < this.layers.length; i++) { 
-			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
-			gl.clear(gl.COLOR_BUFFER_BIT);
-			this.layers[i].draw(transform, lensViewport);
-			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-		}
-		
-		var b = [0, 0, 0, 0];
-		gl.clearColor(b[0], b[1], b[2], b[3]);
-		
-		// Set in the lensShader the proper lens position wrt the window viewport
-		const vl = this.getLensInViewportCoords(transform, viewport);
-		this.shader.setLensUniforms(vl, [viewport.w, viewport.h]);
-	   
-		this.prepareWebGL();
-
-		// Bibd all textures and combine them with the shaderLens
-		for(let i = 0; i < this.layers.length; i++) {
-			gl.uniform1i(this.shader.samplers[i].location, i);
-			gl.activeTexture(gl.TEXTURE0 + i);
-			gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
-		}
-
-		// Get texture coords of the lensViewport with respect to the framebuffer sz
-		const lx = lensViewport.x/lensViewport.w;
-		const ly = lensViewport.y/lensViewport.h;
-		const hx = (lensViewport.x+lensViewport.dx)/lensViewport.w;
-		const hy = (lensViewport.y+lensViewport.dy)/lensViewport.h;
-		
-		this.updateTileBuffers(
-			new Float32Array([-1, -1, 0,  -1, 1, 0,  1, 1, 0,  1, -1, 0]), 
-			new Float32Array([ lx, ly,     lx, hy,   hx, hy,   hx, ly]));
-		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
-
-		// Restore old viewport
-		gl.viewport(viewport.x, viewport.x, viewport.dx, viewport.dy);
-		
 		return done;
 	}
 
