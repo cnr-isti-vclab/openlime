@@ -53,6 +53,8 @@ class _Cache {
 			else
 				return; 
 		}
+		console.assert(best != best.layer.queue[0]);
+		best.layer.queue.shift();
 		this.loadTile(best.layer, best.tile);
 	}
 
@@ -61,7 +63,7 @@ class _Cache {
 		for(let layer of this.layers) {
 			if(!layer.queue.length)
 				continue;
-			let tile = layer.queue.shift();
+			let tile = layer.queue[0];
 			if(!best ||
 				tile.time > best.tile.time  + 1.0 ||  //old requests ignored
 				tile.priority > best.tile.priority)
