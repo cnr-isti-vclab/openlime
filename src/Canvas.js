@@ -138,6 +138,8 @@ class Canvas {
 		* @event Canvas#ready
 		*/
 
+		console.assert(!(id in this.layers), "Duplicated layer id");
+
 		layer.id = id;
 		layer.addEvent('ready', () => { 
 			if(Object.values(this.layers).every( l => l.status == 'ready'))
