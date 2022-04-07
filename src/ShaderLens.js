@@ -37,12 +37,13 @@ class ShaderLens extends Shader {
             samplerDeclaration += `uniform sampler2D ` + this.samplers[1].name + `;`;
 
             secondSamplerCode =  
-            `vec4 c1 = texture(source1, v_texcoord);
+            `vec4 c1 = texture${gl2?'':'2D'}(source1, v_texcoord);
             if (centerDist2 > lensR2) {
-                float k = (c1.r + c1.g + c1.b) / 3.0;
+                float k = 0.5;// (c1.r + c1.g + c1.b) / 3.0;
                 c1 = vec4(k, k, k, c1.a);
             }
-            color = color * (1.0 - c1.a) + c1 * c1.a; `
+            color = color * (1.0 - c1.a) + c1 * c1.a;
+            `
         }
 
         console.log("Shader code 0 " + samplerDeclaration);
@@ -68,7 +69,7 @@ class ShaderLens extends Shader {
 
             color = vec4(0.0, 0.0, 0.0, 0.0);
             if (centerDist2 < innerBorderR2) {
-                color = texture(source0, v_texcoord);
+                color = texture${gl2?'':'2D'}(source0, v_texcoord);
             } else if (centerDist2 < lensR2) {
                 const float k = 0.8;
                 color = vec4(k,k,k,1.0);
