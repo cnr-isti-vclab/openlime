@@ -4,7 +4,12 @@ on:
   push:
     tags:
       - 'v*'
-
+  workflow_dispatch:
+    inputs:
+      tagId:
+        description: 'Tag'     
+        required: true
+        default: 'v1.0.0'
 jobs:
 
   build:
@@ -13,12 +18,17 @@ jobs:
 
     - name: Get tag version
       id: get_version
-      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "RELEASE_VERSION=${{ github.event.inputs.tagId }}" >> $GITHUB_ENV
+        else
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+        fi
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
-        fetch-depth: 0
+        ref: ${{ env.RELEASE_VERSION }}
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
