@@ -63,4 +63,5 @@ jobs:
       with:
         artifacts: "openlime-${{ env.RELEASE_VERSION }}.zip"
         bodyFile: "jsdoc/releases/rel-${{ env.RELEASE_VERSION }}.md"
+        tag: ${{ env.RELEASE_VERSION }}
         token: ${{ secrets.GITHUB_TOKEN }}
