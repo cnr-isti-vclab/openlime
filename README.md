@@ -1,7 +1,7 @@
 # OpenLIME (Open Layered IMage Explorer)
 **OpenLIME** (Open Layered IMage Explorer) is an open-source JavaScript library for the efficient display of scalable high-resolution relightable images.
 
-**OpenLime** is jointly developed by ([CRS4 Visual and Data-intensive Computing Group](https://www.crs4.it/research/visual-and-data-intensive-computing/)) and [CNR ISTI - Visual Computing Lab](http://vcg.isti.cnr.it/). 
+**OpenLime** is jointly developed by [CRS4 Visual and Data-intensive Computing Group](https://www.crs4.it/research/visual-and-data-intensive-computing/) and [CNR ISTI - Visual Computing Lab](http://vcg.isti.cnr.it/). 
 
 **OpenLIME** natively supports BRDF and RTI datasets, and can be easily extended for other multi-channel raster datasets, such as hyper spectral imaging or other reflectance modeling. Input data can be combined in a multi-layer visualization system using opacity and blending modes, and interactive lenses.
 
