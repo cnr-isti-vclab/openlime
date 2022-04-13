@@ -111,8 +111,8 @@ class Layer {
 			queue: [],     //queue of tiles to be loaded.
 			requested: {},  //tiles requested.
 		});
-
 		Object.assign(this, options);
+		if(this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
 
 		this.transform = new Transform(this.transform);
 
