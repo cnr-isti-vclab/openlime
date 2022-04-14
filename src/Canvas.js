@@ -209,7 +209,6 @@ class Canvas {
 		//NOTICE: camera(pos) must be relative to the WHOLE canvas
 		let done = true;
 		for(let layer of ordered) {
-			console.log("Layer: ", layer.id);
 			if(layer.visible)
 				done = layer.draw(pos, view) && done;
 		}

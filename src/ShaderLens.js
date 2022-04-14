@@ -33,7 +33,7 @@ class ShaderLens extends Shader {
         let samplerDeclaration = `uniform sampler2D ` + this.samplers[0].name + `;`;
         let secondSamplerCode = "";
 
-        if (this.secondLayerEnabled) {
+        if (this.secondLayerEnabled) { //FIXME two cases with transparence or not.
             samplerDeclaration += `uniform sampler2D ` + this.samplers[1].name + `;`;
 
             secondSamplerCode =  
@@ -68,7 +68,7 @@ class ShaderLens extends Shader {
                 color = texture${gl2?'':'2D'}(source0, v_texcoord);
             } else if (centerDist2 < lensR2) {
                 const float k = 0.8;
-                color = vec4(k,k,k,1.0);
+                color = vec4(k,0,0,1.0);
             }
             ${secondSamplerCode}
             ${gl2?'':'gl_FragColor = color;'}

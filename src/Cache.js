@@ -64,6 +64,9 @@ class _Cache {
 	findBestCandidate() {
 		let best = null;
 		for(let layer of this.layers) {
+			while(layer.queue.length > 0 && layer.tiles.has(layer.queue[0].index)) {
+				layer.queue.shift();
+			}
 			if(!layer.queue.length)
 				continue;
 			let tile = layer.queue[0];

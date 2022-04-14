@@ -45,9 +45,9 @@ class Layer {
 	* @param {bool} options.overlay=false  Whether the layer must be rendered in overlay mode.
 	* @param {number} options.prefetchBorder=1 The threshold (in tile units) around the current camera position for which to prefetch tiles.
 	* @param {number} options.mipmapBias=0.4 The mipmap bias of the texture.
-	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader};
+	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader}.
 	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
-	* @param {Object} options.controls
+	* @param {Layer} options.sourceLayer The layer from which to take the tiles (in order to avoid tile duplication).
 	*/
 	constructor(options) {
 		//create from derived class if type specified
@@ -111,8 +111,8 @@ class Layer {
 			queue: [],     //queue of tiles to be loaded.
 			requested: {},  //tiles requested.
 		});
-
 		Object.assign(this, options);
+		if(this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
 
 		this.transform = new Transform(this.transform);
 
