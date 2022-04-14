@@ -1,14 +1,22 @@
 import { Transform } from "./Transform";
 
+/**
+ * The FocusContext class is responsible for identifying a good Focus and Context situation.
+ * During interaction it distributes user inputs on lens, into camera and lens movement
+ * in order to keep the lens in focus and context situation, within the viewport, with enough
+ * space between the lens and the viewport boundaries, for both panning and zooming actions.
+ * It also computes a good transform given a lens to properly display the lens within
+ * the current viewport (used for stored annotations)
+ */
 class FocusContext {
 
     /**
      *  Subdivide pan amount (delta) between lens (focus) and camera transform (context).
-     * @param {*} viewport {x,y,dx,dy,w,h}
-     * @param {*} focus    lens : {position,radius}
-     * @param {@link Transform} context 
-     * @param {*Number} delta amount of pan
-     * @param {*} imageSize {w,h}
+     * @param {*} viewport {x, y, dx, dy, w, h}
+     * @param {*} focus    lens : {position,radius}. Contain current lens in dataset coords, which will be updated to translated lens
+     * @param {Transform} context Contain current transform, which  will be updated to translated context
+     * @param {Number} delta amount of pan in dataset pixels
+     * @param {*} imageSize {w,h} Size of the dataset width height (to clamp movement on boundaries)
      */
     static pan(viewport, focus, context, delta, imageSize) {
         let txy = this.getAmountOfFocusContext(viewport, focus, context, delta);
@@ -37,11 +45,11 @@ class FocusContext {
     }
 
     /**
-     * Distribute scale between radius and camera scale
-     * @param {@link Camera} camera 
-     * @param {lens} focus position and radius
-     * @param {@link Transform} context 
-     * @param {* Number} dz amount of scale
+     * Distribute scale between radius and camera scale in order to keep focus and context situation
+     * @param {Camera}    camera 
+     * @param {*}         focus    lens : {position,radius}. Contain current lens in dataset coords, which will be updated to translated lens
+     * @param {Transform} context Contain current transform, which  will be updated to translated context
+     * @param {Number} dz amount of scale (which should multiply scale)
      */
     static scale(camera, focus, context, dz) {
         const zoomAmountMax = 1.5;
@@ -82,10 +90,10 @@ class FocusContext {
     }
         
     /**
-     * Fix context scale to make projected lens fit within viewport
-     * @param {*} viewport {x,y,dx,dy,w,h}
-     * @param {*} focus    lens : {position,radius}
-     * @param {@link Transform} context 
+     * Fix context scale to make projected lens fit within viewport.
+     * @param {*} viewport {x, y, dx, dy, w, h}
+     * @param {*} focus    lens : {position,radius}. Contain current lens in dataset coords, which will be updated 
+     * @param {Transform} context Contain current transform, whose scale will be updated to keep lens in focus and context after scale
      */
     static adaptContextScale(viewport, focus, context) {
         const oldZ = context.z;
@@ -102,7 +110,7 @@ class FocusContext {
      * Translate context in order to put lens (focus) in focus and context condition
      * @param {*} viewport {x,y,dx,dy,w,h}
      * @param {*} focus    lens : {position,radius}
-     * @param {@link Transform} context 
+     * @param {Transform} context 
      */
     static adaptContextPosition(viewport, focus, context) {
         const delta = this.getCanvasBorder(focus, context);
@@ -121,16 +129,10 @@ class FocusContext {
     }
 
     /**
-     * Returns a value t which is used to distribute pan between focus and context. 
-     * When it's 0.5 it's equally subdivided. When is 1, it's in focus and context
-     * and only the focus can be moved
-     * @param {*} viewport 
-     * @param {*} focus 
-     * @param {*} context 
-     * @param {*} panDir 
-     * @returns Return a value t in [0.5] t=0.5 : no focus and context. 1: full focus and context
+     * @ignore
      */
     static getAmountOfFocusContext(viewport, focus, context, panDir) {
+        // Returns a value t which is used to distribute pan between focus and context. 
         // Return a value among 0.5 and 1. 1 is full focus and context,
         // 0.5 is borderline focus and context. 
         const delta = this.getCanvasBorder(focus, context);
@@ -156,12 +158,20 @@ class FocusContext {
         return txy;
     }
 
+    /**
+     * @ignore
+     */
     static getCanvasBorder(focus, context) {
+        // Return the min distance in canvas pixel of the lens center from the boundary.
         const radiusFactorFromBoundary = 1.5;
         return context.z * focus.radius * radiusFactorFromBoundary; // Distance Lens Center Canvas Border
     }
       
+    /**
+     * @ignore
+     */
     static getShrinkedBox(viewport, delta) {
+        // Return the viewport box in canvas pixels, shrinked of delta pixels on the min,max corners
         const box = {
             min: [delta, delta],
             max: [viewport.w - delta, viewport.h - delta]
@@ -169,14 +179,22 @@ class FocusContext {
         return box;
     }
 
+    /**
+     * @ignore
+     */
     static getRadiusRangeCanvas(viewport) {
+        //  Returns the acceptable lens radius range in pixel for a certain viewport
         const maxMinRadiusRatio = 3;
         const minRadius = Math.min(viewport.w,  viewport.h) * 0.1;
         const maxRadius = minRadius * maxMinRadiusRatio;
         return {min:minRadius, max:maxRadius};
     }
 
+    /**
+     * @ignore
+     */
     static smoothstep(x, x0, x1) {
+        // Return the smoothstep interpolation at x, between x0 and x1. 
         if (x < x0) {
             return 0;
         } else if (x > x1) {
