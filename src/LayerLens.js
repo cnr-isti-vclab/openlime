@@ -41,6 +41,14 @@ class LayerLens extends LayerCombiner {
 
 	setSecondLayer(l) {
 		this.layers[1] = l;
+
+		// Regenerate frame buffers
+		const w = this.layout.width;
+		const h = this.layout.height;
+		this.deleteFramebuffers();
+		this.layout.width = w;
+		this.layout.height = h;
+		this.createFramebuffers();
 	}
 
 	setLens(x = 0, y = 0, r = 100, border = 10) {

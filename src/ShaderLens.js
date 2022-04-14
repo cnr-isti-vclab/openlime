@@ -45,10 +45,6 @@ class ShaderLens extends Shader {
             color = color * (1.0 - c1.a) + c1 * c1.a;
             `
         }
-
-        console.log("Shader code 0 " + samplerDeclaration);
-        console.log("Shader code 1 " + secondSamplerCode);
-
 		return `${gl2? '#version 300 es':''}
 
         precision highp float; 
