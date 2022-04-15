@@ -10,37 +10,42 @@ class ShaderLens extends Shader {
         
         this.uniforms = {
             u_lens: { type: 'vec4', needsUpdate: true, size: 4, value: [0,0,100,10] },
-            u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1,1]}
+            u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1,1]},
+            u_border_color: {type: 'vec4', needsUpdate: true, size: 4, value: [0.8, 0.8, 0.8, 1]}
         };
         this.label = "ShaderLens";
         this.needsUpdate = true;
-        this.secondLayerEnabled = false;
+        this.overlayLayerEnabled = false;
     }
 
-    setSecondLayerEnabled(x) {
-        this.secondLayerEnabled = x;
+    setOverlayLayerEnabled(x) {
+        this.overlayLayerEnabled = x;
         this.needsUpdate = true;
     }
 
-    setLensUniforms(lensViewportCoords, windowWH) {
+    setLensUniforms(lensViewportCoords, windowWH, borderColor) {
         this.setUniform('u_lens', lensViewportCoords);
         this.setUniform('u_width_height', windowWH);
+        this.setUniform('u_border_color', borderColor);
     }
-    
+
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 
         let samplerDeclaration = `uniform sampler2D ` + this.samplers[0].name + `;`;
-        let secondSamplerCode = "";
+        let overlaySamplerCode = "";
 
-        if (this.secondLayerEnabled) { //FIXME two cases with transparence or not.
+        if (this.overlayLayerEnabled) { //FIXME two cases with transparence or not.
             samplerDeclaration += `uniform sampler2D ` + this.samplers[1].name + `;`;
 
-            secondSamplerCode =  
+            overlaySamplerCode =  
             `vec4 c1 = texture${gl2?'':'2D'}(source1, v_texcoord);
             if (centerDist2 > lensR2) {
-                float k = 0.5;// (c1.r + c1.g + c1.b) / 3.0;
+                float k = (c1.r + c1.g + c1.b) / 3.0;
                 c1 = vec4(k, k, k, c1.a);
+            } else if (centerDist2 > innerBorderR2) {
+                // Preserve border keeping c1 alpha at zero
+                c1.a = 0.0; 
             }
             color = color * (1.0 - c1.a) + c1 * c1.a;
             `
@@ -53,6 +58,7 @@ class ShaderLens extends Shader {
         ${samplerDeclaration}
         uniform vec4 u_lens;
         uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
+        uniform vec4 u_border_color;
         ${gl2? 'in' : 'varying'} vec2 v_texcoord;
         ${gl2? 'out' : ''} vec4 color;
 
@@ -67,10 +73,9 @@ class ShaderLens extends Shader {
             if (centerDist2 < innerBorderR2) {
                 color = texture${gl2?'':'2D'}(source0, v_texcoord);
             } else if (centerDist2 < lensR2) {
-                const float k = 0.8;
-                color = vec4(k,0,0,1.0);
+                color = u_border_color;
             }
-            ${secondSamplerCode}
+            ${overlaySamplerCode}
             ${gl2?'':'gl_FragColor = color;'}
 
         }

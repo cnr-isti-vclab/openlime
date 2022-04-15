@@ -8,7 +8,7 @@ import { Shader } from './Shader.js'
 class ShaderBRDF extends Shader {
 	constructor(options) {
 		super({});
-		this.modes = ['ward', 'diffuse', 'specular', 'normals'];
+		this.modes = ['ward', 'diffuse', 'specular', 'normals', 'monochrome'];
 		this.mode = 'ward';
 
 		Object.assign(this, options);
@@ -19,6 +19,8 @@ class ShaderBRDF extends Shader {
 		const brightness = options.brightness ? options.brightness : 1.0;
 		const gamma = options.gamma ? options.gamma : 2.2;
 		const alphaLimits = options.alphaLimits ? options.alphaLimits : [0.01, 0.5];
+		const monochromeMaterial = options.monochromeMaterial ? options.monochromeMaterial : [0.80, 0.79, 0.75];
+		const kAmbient = options.kAmbient ? options.kAmbient : 0.1;
 
 		this.uniforms = {
 			uLightInfo:          { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
@@ -26,6 +28,9 @@ class ShaderBRDF extends Shader {
 			uBrightnessGamma:    { type: 'vec2', needsUpdate: true, size: 2, value: [brightness, gamma] },		
 			uInputColorSpaceKd:  { type: 'int', needsUpdate: true, size: 1, value: kdCS },
 			uInputColorSpaceKs:  { type: 'int', needsUpdate: true, size: 1, value: ksCS },
+			uMonochromeMaterial: { type: 'vec3', needsUpdate: true, size: 3, value: monochromeMaterial },
+			uKAmbient:           { type: 'float', needsUpdate: true, size: 1, value: kAmbient },
+			
 		}
 
 		this.innerCode = '';
@@ -58,6 +63,12 @@ class ShaderBRDF extends Shader {
 				`vec3 linearColor = (N+vec3(1.))/2.;
 				applyGamma = false;`
 			break;
+			case 'monochrome':
+                this.innerCode = 
+                `vec3 linearColor = uMonochromeMaterial * NdotL;
+                linearColor += uMonochromeMaterial * uKAmbient;
+                applyGamma=false;`
+            break;
 			default:
 				console.log("ShaderBRDF: Unknown mode: " + mode);
 				throw Error("ShaderBRDF: Unknown mode: " + mode);
@@ -88,6 +99,8 @@ uniform sampler2D uTexGloss;
 uniform vec4 uLightInfo; // [x,y,z,w] (if .w==0 => Directional, if w==1 => Spot)
 uniform vec2 uAlphaLimits;
 uniform vec2 uBrightnessGamma;
+uniform vec3 uMonochromeMaterial;
+uniform float uKAmbient;
 
 uniform int uInputColorSpaceKd; // 0: Linear; 1: sRGB
 uniform int uInputColorSpaceKs; // 0: Linear; 1: sRGB

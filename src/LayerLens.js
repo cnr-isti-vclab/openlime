@@ -8,40 +8,43 @@ import {ShaderLens}     from './ShaderLens.js'
 class LayerLens extends LayerCombiner {
 	constructor(options) {
 		options = Object.assign({
-			overlay: true
+			overlay: true,
+			defaultBorderColor: [0.8, 0.8, 0.8, 1],
 		}, options);
 		super(options);
 		
 		// Shader lens currently handles up to 2 layers
 		let shader = new ShaderLens();
-		if (this.layers.length == 2) shader.setSecondLayerEnabled(true);
+		if (this.layers.length == 2) shader.setOverlayLayerEnabled(true);
 		this.shaders['lens'] = shader;
 		this.setShader('lens');
 
 		this.startPos = [0, 0];
-		this.border = 2;
+		this.border = 4;
 
 		this.addControl('center', [0, 0]);
 		this.addControl('radius', [0, 0]);
 
 		this.setLens(0,0,this.radius,this.border);
 		this.signals.draw = [];
+		const c = this.defaultBorderColor;
+		this.borderColor = [c[0], c[1], c[2], c[3]];
 	}
 
-	setSecondLayerEnabled(x) {
-		if (this.layers.length == 2) {
-			// With two layers set visible or not the second layer and set the property in the shader
-			this.layers[1].setVisible(x);
-			this.shader.setSecondLayerEnabled(x);
-		} else if (!x) {
-			// With a single layer, just tell the shader to use only the first layer 
-			this.shader.setSecondLayerEnabled(x);
-		}
+	removeOverlayLayer() {
+		this.layers.length = 1;
+		this.shader.setOverlayLayerEnabled(false);
 	}
 
-	setSecondLayer(l) {
+	setOverlayLayer(l) {
 		this.layers[1] = l;
+		this.layers[1].setVisible(true);
+		this.shader.setOverlayLayerEnabled(true);
 
+		this.regenerateFrameBuffers();
+	}
+
+	regenerateFrameBuffers() {
 		// Regenerate frame buffers
 		const w = this.layout.width;
 		const h = this.layout.height;
@@ -80,7 +83,7 @@ class LayerLens extends LayerCombiner {
 	draw(transform, viewport) {
 		let done = this.interpolateControls();
 		const vlens = this.getLensInViewportCoords(transform, viewport);
-		this.shader.setLensUniforms(vlens, [viewport.w, viewport.h]);
+		this.shader.setLensUniforms(vlens, [viewport.w, viewport.h], this.borderColor);
 		this.emit('draw');
 
 		super.draw(transform, viewport);

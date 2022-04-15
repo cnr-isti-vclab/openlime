@@ -12,7 +12,9 @@ class LayerBRDF extends Layer {
 		options = Object.assign({
 			brightness: 1.0,
 			gamma: 2.2,
-			alphaLimits: [0.01, 0.5]
+			alphaLimits: [0.01, 0.5],
+			monochromeMaterial: [0.80, 0.79, 0.75],
+			kAmbient: 0.1
 		}, options);
 		super(options);
 
@@ -56,7 +58,9 @@ class LayerBRDF extends Layer {
 			'colorspaces': this.colorspaces,
 			'brightness': this.brightness,
 			'gamma': this.gamma,
-			'alphaLimits': this.alphaLimits
+			'alphaLimits': this.alphaLimits,
+			'monochromeMaterial': this.monochromeMaterial,
+			'kAmbient': this.kAmbient
 		});
 
 		this.shaders['brdf'] = shader;
