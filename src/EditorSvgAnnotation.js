@@ -418,7 +418,7 @@ class EditorSvgAnnotation {
 
 		///console.log(svg);
 
-		var e = document.createSVGElement('a');
+		var e = document.createElement('a');
 		e.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(svg));
 		e.setAttribute('download', 'annotations.svg');
 		e.style.display = 'none';
