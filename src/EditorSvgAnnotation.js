@@ -166,7 +166,7 @@ class EditorSvgAnnotation {
 		this.setAnnotationCurrentState();
 		anno.publish = 1;
 		anno.label = anno.description = anno.class = '';
-		let post = { id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null, publish: anno.publish, camera: anno.camera };
+		let post = { id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null, publish: anno.publish, camera: anno.camera, light: anno.light };
 		if (this.createCallback) {
 			let result = this.createCallback(post);
 			if (!result)
@@ -339,6 +339,19 @@ class EditorSvgAnnotation {
 		let now = performance.now();
 		let m = cam.getCurrentTransform(now);
 		this.annotation.camera = { 'x': m.x, 'y': m.y, 'z': m.z };
+		for (let l of Object.values(this.viewer.canvas.layers)) {
+			if (l) {
+				const c = l.getControl('light');
+				if (c) {
+					const light = c.current.value
+					this.annotation.light = {
+						'x': light[0],
+						'y': light[1]
+					}
+					break;
+				}
+			}	
+		}
 	}
 
 	/** @ignore */
@@ -358,7 +371,7 @@ class EditorSvgAnnotation {
 		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
 
-		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class, publish: anno.publish, camera: anno.camera };
+		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class, publish: anno.publish, camera: anno.camera, light: anno.light };
 		//anno.bbox = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
 		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">

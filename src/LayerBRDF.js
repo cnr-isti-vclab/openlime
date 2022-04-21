@@ -79,19 +79,19 @@ class LayerBRDF extends Layer {
 		this.setControl('light', light, dt);
 	}
 
-	interpolateControls() {
+	interpolateControls() { // FIXME Wrong normalization
 		let done = super.interpolateControls();
 		if(!done) {
 			let light = this.controls['light'].current.value;
 			let r2 =  light[0]*light[0] + light[1]*light[1];
 			if (r2 > 1.0) {
-				light[0] /= r2;
-				light[1] /= r2;
+				let r = Math.sqrt(r2);
+				light[0] /= r;
+				light[1] /= r;
 				r2 = 1.0;
 			}
 			light[2] = Math.sqrt(1-r2);
 	
-
 			//let z = Math.sqrt(1 - light[0]*light[0] - light[1]*light[1]);
 			this.shader.setLight([light[0], light[1], light[2], 0]);
 		}

@@ -306,6 +306,20 @@ class Layer {
 	}
 
 	/**
+	 * Gets the shader parameter control corresponding to `name`
+	 * @param {*} name The name of the control.
+	 * return {*} The control
+	 */
+	 getControl(name) {
+		let control = this.controls[name] ? this.controls[name] : null;
+		if (control) {
+			let now = performance.now();
+			this.interpolateControl(control, now);
+		}
+		return control;
+	}
+
+	/**
 	 * Adds a new shader parameter control.
 	 * @param {string} name The name of the control.
 	 * @param {*} value The value for initialization.

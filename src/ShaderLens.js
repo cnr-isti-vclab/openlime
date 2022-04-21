@@ -56,11 +56,24 @@ class ShaderLens extends Shader {
         precision highp int; 
 
         ${samplerDeclaration}
-        uniform vec4 u_lens;
+        uniform vec4 u_lens; // [cx, cy, radius, border]
         uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
         uniform vec4 u_border_color;
         ${gl2? 'in' : 'varying'} vec2 v_texcoord;
         ${gl2? 'out' : ''} vec4 color;
+
+        vec4 lensColor(in vec4 c_in, in vec4 c_border, in vec4 c_out,
+            float r, float R, float B) {
+            vec4 result;
+            if (r<R) {
+                float t=smoothstep(R-B, R, r);
+                result = mix(c_in, c_border, t);
+            } else {
+                float t=smoothstep(R, R+B, r);
+                result = mix(c_border, c_out, t);
+            }
+            return result;
+        }
 
         void main() {
             float lensR2 = u_lens.z * u_lens.z;
@@ -69,12 +82,18 @@ class ShaderLens extends Shader {
             float dy = v_texcoord.y * u_width_height.y - u_lens.y;
             float centerDist2 = dx*dx+dy*dy;
 
-            color = vec4(0.0, 0.0, 0.0, 0.0);
-            if (centerDist2 < innerBorderR2) {
-                color = texture${gl2?'':'2D'}(source0, v_texcoord);
-            } else if (centerDist2 < lensR2) {
-                color = u_border_color;
-            }
+            //color = vec4(0.0, 0.0, 0.0, 0.0);
+            //if (centerDist2 < innerBorderR2) {
+            //    color = texture${gl2?'':'2D'}(source0, v_texcoord);
+            //} else if (centerDist2 < lensR2) {
+            //    color = u_border_color;
+            //}
+            vec4 c_in = texture${gl2?'':'2D'}(source0, v_texcoord);
+            vec4 c_out = u_border_color; c_out.a=0.0;
+            
+            float r = sqrt(centerDist2);
+            color = lensColor(c_in, u_border_color, c_out, r, u_lens.z, u_lens.w);
+
             ${overlaySamplerCode}
             ${gl2?'':'gl_FragColor = color;'}
 
