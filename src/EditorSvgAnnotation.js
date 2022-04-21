@@ -69,6 +69,15 @@ class EditorSvgAnnotation {
 					tooltip: 'New point',
 					tool: Point,
 				},
+				pin: {
+					template: (x,y) => {
+						const count = this.layer.annotations.length-1;
+						return `<svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='4%' height='4%' 
+						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text id='pin-text' x='7' y='8'>${count}</text></svg>`;
+					}, //pin di alcazar  1. url a svg 2. txt (stringa con svg) 3. funzione(x,y) ritorna svg 4. dom (da skin).
+					tooltip: 'New pin',
+					tool: Pin
+				},
 				pen: {
 					img: '<svg width=24 height=24><circle cx=12 cy=12 r=3 fill="red" stroke="gray"/></svg>',
 					tooltip: 'New polyline',
@@ -154,9 +163,10 @@ class EditorSvgAnnotation {
 	/** @ignore */
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
+		this.setAnnotationCurrentState();
 		anno.publish = 1;
 		anno.label = anno.description = anno.class = '';
-		let post = { id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null, publish: anno.publish };
+		let post = { id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null, publish: anno.publish, camera: anno.camera };
 		if (this.createCallback) {
 			let result = this.createCallback(post);
 			if (!result)
@@ -236,6 +246,7 @@ class EditorSvgAnnotation {
 			`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
+					<span><button class="openlime-state">Set State</button></span>
 					<span><input type="checkbox" name="publish" value=""> Publish</span>
 					<div class="openlime-annotation-edit-tools"></div>
 				</div>`;
@@ -248,6 +259,14 @@ class EditorSvgAnnotation {
 		let ul = edit.querySelector('ul');
 		let options = edit.querySelectorAll('li');
 		let input = edit.querySelector('[name=classes]');
+
+		let state = edit.querySelector('.openlime-state');
+		
+		state.addEventListener('click', (e) => {
+			this.setAnnotationCurrentState()
+			this.saveCurrent();
+			this.saveAnnotation(); 
+		});
 
 		button.addEventListener('click', (e) => {
 			e.stopPropagation();
@@ -276,10 +295,12 @@ class EditorSvgAnnotation {
 
 		let tools = edit.querySelector('.openlime-annotation-edit-tools');
 
-
+		let pin = await Skin.appendIcon(tools, '.openlime-pin');
+		pin.addEventListener('click', (e) => { this.setTool('pin'); this.setActiveTool(pin); });
 
 		let draw = await Skin.appendIcon(tools, '.openlime-draw');
 		draw.addEventListener('click', (e) => { this.setTool('line'); this.setActiveTool(draw); });
+
 
 		//		let pen = await Skin.appendIcon(tools, '.openlime-pen'); 
 		//		pen.addEventListener('click', (e) => { this.setTool('pen'); setActive(pen); });
@@ -313,6 +334,14 @@ class EditorSvgAnnotation {
 	}
 
 	/** @ignore */
+	setAnnotationCurrentState() {
+		const cam = this.viewer.camera;
+		let now = performance.now();
+		let m = cam.getCurrentTransform(now);
+		this.annotation.camera = { 'x': m.x, 'y': m.y, 'z': m.z };
+	}
+
+	/** @ignore */
 	saveAnnotation() {
 		let edit = this.editWidget;
 		let anno = this.annotation;
@@ -329,7 +358,7 @@ class EditorSvgAnnotation {
 		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
 
-		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class, publish: anno.publish };
+		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class, publish: anno.publish, camera: anno.camera };
 		//anno.bbox = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
 		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">
@@ -446,7 +475,7 @@ class EditorSvgAnnotation {
 			if (!tool in this.tools)
 				throw "Unknown editor tool: " + tool;
 
-			this.factory = new this.tools[tool].tool();
+			this.factory = new this.tools[tool].tool(this.tools[tool]);
 			this.factory.annotation = this.annotation;
 			this.factory.layer = this.layer;
 		}
@@ -617,7 +646,7 @@ class EditorSvgAnnotation {
 
 	/** @ignore */
 	fingerSingleTap(e) {
-		if (!['point', 'line', 'erase'].includes(this.tool))
+		if (!['point', 'pin', 'line', 'erase'].includes(this.tool))
 			return;
 		e.preventDefault();
 
@@ -670,10 +699,24 @@ class EditorSvgAnnotation {
 /** @ignore */
 class Point {
 	tap(pos) {
-		//const pos = this.mapToSvg(e);
 		let point = createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
-		//point.classList.add('selected');
-		return point;
+		this.annotation.elements.push(point);
+		return true;
+	}
+}
+
+/** @ignore */
+class Pin {
+	constructor(options) {
+		Object.assign(this, options);
+	}
+	tap(pos) {
+		const str = this.template(pos.x,pos.y);
+		let parser = new DOMParser();
+	    let point = parser.parseFromString(str, "image/svg+xml").documentElement;
+//		this.annotation.elements.push(point);
+		this.annotation.elements[0] = point;
+		return true;
 	}
 }
 

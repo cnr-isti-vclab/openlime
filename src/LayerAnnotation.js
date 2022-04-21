@@ -53,7 +53,7 @@ class LayerAnnotation extends Layer {
 		for(let a of this.annotations)
 			if(a.publish != 1)
 				a.visible = false;
-		this.annotations.sort((a, b) => a.label.localeCompare(b.label));
+		//this.annotations.sort((a, b) => a.label.localeCompare(b.label));
 		if(this.annotationsListEntry)
 			this.createAnnotationsList();
 		

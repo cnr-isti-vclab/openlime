@@ -30,6 +30,7 @@ class Annotation {
 				style: null,
 				bbox: null,
 				visible: true,
+				camera: { 'x': 0, 'y': 0, 'z': 1 },
 
 				ready: false, //already: convertted to svg
 				needsUpdate: true,

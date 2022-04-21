@@ -38,16 +38,17 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			onClick: null,			//callback function
 			classes: {
 				'': { stroke: '#000', label: '' },
-			}
+			},
+			annotationUpdate: null
 		}, options);
 		super(options);
 		this.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`).join('\n');
-		//this.createSVGElement();
+		//this.createOverlaySVGElement();
 		//this.setLayout(this.layout);
 	}
 
 	/** @ignore */
-	createSVGElement() {
+	createOverlaySVGElement() { 
 		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svgElement.classList.add('openlime-svgoverlay');
 		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -90,7 +91,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 
 	/** @ignore */
 	clearSelected() {
-		if (!this.svgElement) this.createSVGElement();
+		if (!this.svgElement) this.createOverlaySVGElement();
 		//		return;
 		this.svgGroup.querySelectorAll('[data-annotation]').forEach((e) => e.classList.remove('selected'));
 		super.clearSelected();
@@ -131,7 +132,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	/** @ignore */
 	prefetch(transform) {
 		if (!this.svgElement)
-			this.createSVGElement();
+			this.createOverlaySVGElement();
 
 		if (!this.visible) return;
 		if (this.status != 'ready')
@@ -158,6 +159,9 @@ class LayerSvgAnnotation extends LayerAnnotation {
 										throw Error(`Could not find element with id: ${id} in svg`);
 								} */
 			}
+
+			if(this.annotationUpdate)
+    				this.annotationUpdate(anno, transform);
 
 			if (!anno.needsUpdate)
 				continue;
