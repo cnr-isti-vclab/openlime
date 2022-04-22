@@ -137,7 +137,7 @@ class ControllerFocusContext extends ControllerLens {
             let focus = this.getFocus();
             if (this.FocusContextEnabled) {
                 FocusContext.pan(this.camera.viewport, focus, context, lensDeltaPosition, this.imageSize);
-                this.camera.setPosition(this.updateDelay, context.x, context.y, context.z, context.a);
+                this.camera.setPosition(this.updateDelay, context.x, context.y, context.z, context.a, 'ease-out');
             } else {
                 focus.position[0] += lensDeltaPosition[0];
                 focus.position[1] += lensDeltaPosition[1];
