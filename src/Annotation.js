@@ -14,6 +14,7 @@ class Annotation {
 	 * @param {string} options.label A string containing an annotation label.
 	 * @param {string} option.description A HTML text containg a comprehensive description of the annotation.
 	 * @param {string} option.class A class or category to cluster annotations.
+	 * @param {Object} option.state=null An object literal with state variables.
 	 */
 	constructor(options) {
 		Object.assign(
@@ -30,9 +31,7 @@ class Annotation {
 				style: null,
 				bbox: null,
 				visible: true,
-				camera: { 'x': 0, 'y': 0, 'z': 1 }, //FIXME State variables to be added to server
-				light: { 'x': 0.5, 'y': 0.5 }, //FIXME State variables to be added to server
-
+				state: null,
 				ready: false, //already: convertted to svg
 				needsUpdate: true,
 				editing: false,
