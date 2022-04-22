@@ -807,7 +807,7 @@ class UIDialog {
 	 */
 	toggle(force) { //FIXME Why not remove force?
 		this.element.classList.toggle('hidden', force);
-		this.visible = !this.visible;
+		this.visible = !this.visible; //FIXME not in sync with 'force'
 	}
 }
 
