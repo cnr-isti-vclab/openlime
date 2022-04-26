@@ -337,10 +337,10 @@ class Layer {
 	 * @param {*} value The value for initialization.
 	 * @param {time} dt Duration of the interpolation (0=no interpolation).
 	 */
-	setControl(name, value, dt) { //When are created?
+	setControl(name, value, dt, easing='linear') { //When are created?
 		let now = performance.now();
 		let control = this.controls[name];
-		this.interpolateControl(control, now);
+		this.interpolateControl(control, now, easing);
 
 		control.source.value = [...control.current.value];
 		control.source.t = now;
@@ -363,7 +363,7 @@ class Layer {
 	}
 
 	/** @ignore */
-	interpolateControl(control, time) {
+	interpolateControl(control, time, easing='linear') {
 		let source = control.source;
 		let target = control.target;
 		let current = control.current;
@@ -380,9 +380,13 @@ class Layer {
 			return done;
 		}
 
-		let t = (target.t - source.t);
-		let tt = (time - source.t) / t;
-		let st = (target.t - time) / t;
+		let dt = (target.t - source.t);
+		let tt = (time - source.t) / dt;
+		switch (easing) {
+			case 'ease-out': tt = 1 - Math.pow(1 - tt, 2); break;
+			case 'ease-in-out': tt = tt < 0.5 ? 2 * tt * tt : 1 - Math.pow(-2 * tt + 2, 2) / 2; break;
+		}
+		let st = 1 - tt;
 
 		current.value = [];
 		for (let i = 0; i < source.value.length; i++)
