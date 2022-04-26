@@ -50,7 +50,7 @@ class LayerBRDF extends Layer {
 		}
 
 		this.layout.setUrls(urls);
-		this.addControl('light', [0, 0]);
+		this.addControl('light', [0, 0, 1]);
 		
 		let shader = new ShaderBRDF({
 			'label': 'Rgb',
@@ -67,7 +67,7 @@ class LayerBRDF extends Layer {
 		this.setShader('brdf');
 	}
 
-	setLight(light, dt) {
+	setLight(light, dt, easing='linear') {
 		let r2 =  light[0]*light[0] + light[1]*light[1];
 		if (r2 > 1.0) {
 			let r = Math.sqrt(r2);
@@ -76,12 +76,12 @@ class LayerBRDF extends Layer {
 			r2 = 1.0;
 		}
 		light[2] = Math.sqrt(1-r2);
-		this.setControl('light', light, dt);
+		this.setControl('light', light, dt, easing);
 	}
 
 	interpolateControls() { // FIXME Wrong normalization
 		let done = super.interpolateControls();
-		if(!done) {
+		//if(!done) {
 			let light = this.controls['light'].current.value;
 			let r2 =  light[0]*light[0] + light[1]*light[1];
 			if (r2 > 1.0) {
@@ -94,7 +94,7 @@ class LayerBRDF extends Layer {
 	
 			//let z = Math.sqrt(1 - light[0]*light[0] - light[1]*light[1]);
 			this.shader.setLight([light[0], light[1], light[2], 0]);
-		}
+		//}
 		return done;
 	}
 }

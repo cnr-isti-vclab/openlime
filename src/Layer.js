@@ -328,7 +328,7 @@ class Layer {
 		if(this.controls[name])
 			throw new Error(`Control "$name" already exist!`);
 		let now = performance.now();
-		this.controls[name] = { 'source':{ 'value': value, 't': now }, 'target':{ 'value': value, 't': now }, 'current':{ 'value': value, 't': now } };
+		this.controls[name] = { 'source':{ 'value': value, 't': now }, 'target':{ 'value': value, 't': now }, 'current':{ 'value': value, 't': now }, 'easing': 'linear' };
 	}
 
 	/**
@@ -340,13 +340,15 @@ class Layer {
 	setControl(name, value, dt, easing='linear') { //When are created?
 		let now = performance.now();
 		let control = this.controls[name];
-		this.interpolateControl(control, now, easing);
+		this.interpolateControl(control, now);
 
 		control.source.value = [...control.current.value];
 		control.source.t = now;
 
 		control.target.value = [...value];
 		control.target.t = now + dt;
+
+		control.easing = easing;
 
 		this.emit('update');
 	}
@@ -363,7 +365,7 @@ class Layer {
 	}
 
 	/** @ignore */
-	interpolateControl(control, time, easing='linear') {
+	interpolateControl(control, time ) {
 		let source = control.source;
 		let target = control.target;
 		let current = control.current;
@@ -382,7 +384,7 @@ class Layer {
 
 		let dt = (target.t - source.t);
 		let tt = (time - source.t) / dt;
-		switch (easing) {
+		switch (control.easing) {
 			case 'ease-out': tt = 1 - Math.pow(1 - tt, 2); break;
 			case 'ease-in-out': tt = tt < 0.5 ? 2 * tt * tt : 1 - Math.pow(-2 * tt + 2, 2) / 2; break;
 		}

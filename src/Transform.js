@@ -178,13 +178,13 @@ class Transform { //FIXME Add translation to P?
 	 */
 	static interpolate(source, target, time, easing) { //FIXME STATIC
 		const pos = new Transform();
-		let t = (target.t - source.t);
+		let dt = (target.t - source.t);
 		if (time < source.t) {
 			Object.assign(pos, source);
-		} else if (time > target.t || t < 0.001) {
+		} else if (time > target.t || dt < 0.001) {
 			Object.assign(pos, target);
 		} else {
-			let tt = (time - source.t) / t;
+			let tt = (time - source.t) / dt;
 			switch (easing) {
 				case 'ease-out': tt = 1 - Math.pow(1 - tt, 2); break;
 				case 'ease-in-out': tt = tt < 0.5 ? 2 * tt * tt : 1 - Math.pow(-2 * tt + 2, 2) / 2; break;
