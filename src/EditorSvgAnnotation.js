@@ -9,6 +9,12 @@ import { createSVGElement, LayerSvgAnnotation } from './LayerSvgAnnotation.js'
  */
 
 /**
+ * Callback implementing custom state annotations.
+ * @function customStateCallback
+ * @param {Annotation} anno The current annotation entry.
+ */
+
+/**
  * **EditorSvgAnnotation** enables the {@link UIBasic} interface to edit (create/update/delete) SVG annotations.
  * This class is a mere utility that acts as an adapter between the annotation database and the OpenLIME system.
  * 
@@ -43,6 +49,8 @@ class EditorSvgAnnotation {
 	 * @param {crudCallback} options.createCallback The callback to implement annotation creation.
 	 * @param {crudCallback} options.updateCallback The callback to implement annotation update.
 	 * @param {crudCallback} options.deleteCallback The callback to implement annotation deletion.
+	 * @param {bool} options.enableState=false Whether to enable custom annotation state. This allows to include some state variables into an annotation item (such as camera, light or lens position).
+	 * @param {customStateCallback} options.customState The callback implementing custom state annotations.
 	 */
 	constructor(viewer, layer, options) {
 		this.layer = layer;
@@ -112,6 +120,8 @@ class EditorSvgAnnotation {
 								} */
 			},
 			annotation: null, //not null only when editWidget is shown.
+			enableState: false,
+			customState: null,
 			editWidget: null,
 			createCallback: null, //callbacks for backend
 			updateCallback: null,
@@ -163,10 +173,16 @@ class EditorSvgAnnotation {
 	/** @ignore */
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
-		this.setAnnotationCurrentState();
+		if(this.enableState) setAnnotationCurrentState();
 		anno.publish = 1;
 		anno.label = anno.description = anno.class = '';
-		let post = { id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null, publish: anno.publish, camera: anno.camera, light: anno.light };
+		let post = {
+			id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null,
+			publish: anno.publish
+		};
+		if (this.enableState) post = { ...post, state: anno.state };
+		// if (anno.light) post = { ...post, light: anno.light }; FIXME
+		// if (anno.lens) post = { ...post, lens: anno.lens };
 		if (this.createCallback) {
 			let result = this.createCallback(post);
 			if (!result)
@@ -263,7 +279,7 @@ class EditorSvgAnnotation {
 		let state = edit.querySelector('.openlime-state');
 		
 		state.addEventListener('click', (e) => {
-			this.setAnnotationCurrentState()
+			if(this.enableState) this.setAnnotationCurrentState();
 			this.saveCurrent();
 			this.saveAnnotation(); 
 		});
@@ -338,20 +354,9 @@ class EditorSvgAnnotation {
 		const cam = this.viewer.camera;
 		let now = performance.now();
 		let m = cam.getCurrentTransform(now);
-		this.annotation.camera = { 'x': m.x, 'y': m.y, 'z': m.z };
-		for (let l of Object.values(this.viewer.canvas.layers)) {
-			if (l) {
-				const c = l.getControl('light');
-				if (c) {
-					const light = c.current.value
-					this.annotation.light = {
-						'x': light[0],
-						'y': light[1]
-					}
-					break;
-				}
-			}	
-		}
+		this.annotation.state = { camera: { 'x': m.x, 'y': m.y, 'z': m.z } };
+		// Callback to add  light/lens params or other data
+		if(this.customState) this.customState(this.annotation);
 	}
 
 	/** @ignore */
@@ -371,7 +376,14 @@ class EditorSvgAnnotation {
 		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
 
-		let post = { id: anno.id, label: anno.label, description: anno.description, class: anno.class, publish: anno.publish, camera: anno.camera, light: anno.light };
+		let post = {
+			id: anno.id, label: anno.label, description: anno.description, class: anno.class,
+			publish: anno.publish
+		};
+		if (this.enableState) post = { ...post, state: anno.state };
+		// if (anno.light) post = { ...post, light: anno.light }; FIXME
+		// if (anno.lens) post = { ...post, lens: anno.lens };
+
 		//anno.bbox = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
 		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">

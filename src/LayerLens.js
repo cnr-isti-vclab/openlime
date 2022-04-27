@@ -60,16 +60,16 @@ class LayerLens extends LayerCombiner {
 		this.setRadius(r);
 	}
 	
-	setRadius(r, delayms = 100) {
-		this.setControl('radius', [r, 0], delayms);
+	setRadius(r, delayms = 100, easing='linear') {
+		this.setControl('radius', [r, 0], delayms, easing);
 	}
 
 	getRadius() {
 		return this.controls['radius'].current.value[0];
 	}
 
-	setCenter(x, y, delayms = 100) {
-		this.setControl('center', [x, y], delayms);
+	setCenter(x, y, delayms = 100, easing='linear') {
+		this.setControl('center', [x, y], delayms, easing);
 	}
 
 	getCurrentCenter() {

@@ -88,7 +88,9 @@ class UIBasic {
 	 * @param {number} options.priority=0 Higher priority controllers are invoked first.
 	 * @param {{UIBasic#Action}} options.actions An Object of {@link UIBasic#Action}. A set of default actions are ready to be used.
 	 * @param {string} options.attribution Some information related to data attribution or credits.
-	 * @param {Array<UIBasic#MenuEntry>} options.menu The interface menu structure. 
+	 * @param {Array<UIBasic#MenuEntry>} options.menu The interface menu structure.
+	 * @param {bool} options.enableTooltip=true Whether to enable tool button tooltip.
+	 * @param {bool} options.showLightDirections=false Whether to draw light direction vectors.
 	 */
 	constructor(viewer, options) {
 		//we need to know the size of the scene but the layers are not ready.
@@ -115,6 +117,8 @@ class UIBasic {
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
 			lightcontroller: null,
+			showLightDirections: false,
+			enableTooltip: true,
 			menu: []
 		});
 
@@ -174,12 +178,10 @@ class UIBasic {
 				active: false, 
     			activeModifiers: [2, 4], 
     			control: 'light', 
-    			onPanStart: this.showLightDirections ? () => { //FIXME What is that?
-    				this.info.fade(true);
+    			onPanStart: this.showLightDirections ? () => {
     				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false) );
     				this.enableLightDirections(true); } : null,
     			onPanEnd: this.showLightDirections ? () => { 
-    				this.info.fade(false);
     				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true) );
     				this.enableLightDirections(false); } : null,
     			relative: true 
@@ -294,7 +296,7 @@ class UIBasic {
 				break;
 			}
 
-			if (this.actions.light.active == true)
+			if (this.actions.light.active == true) //FIXME light control activated only after first use
 				this.toggleLightController();
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
@@ -337,7 +339,12 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
-				await Skin.appendIcon(toolbar, '.openlime-' + name);
+				action.element = await Skin.appendIcon(toolbar, '.openlime-' + name);
+				if (this.enableTooltip) {
+					let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+					title.textContent = action.title;
+					action.element.appendChild(title);
+				}
 			}
 
 		}
@@ -383,7 +390,7 @@ class UIBasic {
 	/** @ignore */
 	setupActions() {
 		for (let [name, action] of Object.entries(this.actions)) {
-			let element = this.viewer.containerElement.querySelector('.openlime-' + name);
+			let element = action.element;
 			if (!element)
 				continue;
 			// let pointerManager = new PointerManager(element);
@@ -691,6 +698,7 @@ class UIDialog {
 			modal: false,
 			signals: { 'closed': [] },
 			class: null,
+			visible: false,
 		}, options);
 		this.create();
 	}
@@ -750,6 +758,7 @@ class UIDialog {
 
 		this.dialog = dialog;
 		this.content = content;
+		this.hide();
 	}
 
 	/**
@@ -768,6 +777,7 @@ class UIDialog {
 	 */
 	show() {
 		this.element.classList.remove('hidden');
+		this.visible=true;
 	}
 	
 	/**
@@ -779,6 +789,7 @@ class UIDialog {
 		 * @event UIDialog#closed
 		 */
 		this.element.classList.add('hidden');
+		this.visible=false;
 		this.emit('closed');
 	}
 	
@@ -796,6 +807,7 @@ class UIDialog {
 	 */
 	toggle(force) { //FIXME Why not remove force?
 		this.element.classList.toggle('hidden', force);
+		this.visible = !this.visible; //FIXME not in sync with 'force'
 	}
 }
 

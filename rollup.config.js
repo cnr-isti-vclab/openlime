@@ -37,7 +37,8 @@ const ui = [
 const lens = [
 	'./src/LayerLens.js',
 	'./src/ControllerLens.js',
-	'./src/ControllerFocusContext.js'
+	'./src/FocusContext.js',
+	'./src/ControllerFocusContext.js',
 ];
 
 const rti = [
