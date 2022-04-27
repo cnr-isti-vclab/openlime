@@ -52,9 +52,6 @@ class FocusContext {
      * @param {Number} dz amount of scale (which should multiply scale)
      */
     static scale(camera, focus, context, dz) {
-        const zoomAmountMax = 1.5;
-        const zoomAmountMin = 1.3;
-
         const viewport = camera.viewport;
         const radiusRange = this.getRadiusRangeCanvas(viewport);
       
@@ -62,11 +59,19 @@ class FocusContext {
 
         // Distribute lens scale between radius scale and context scale
         // When radius is going outside radius boundary, scale of the inverse amounts radius and zoom scale | screen size constant
-        // When radius is changing from boundary condition to a valid one change radius of maxamount, and no change to zoom scale.
-        // In between interpolate.
+        // When radius is changing from boundary condition to a valid one change only radius  and no change to zoom scale.
+        // From 0.5 to boundary condition, zoomScale vary is interpolated between 1 and 1/dz.
+        
         const t = Math.max(0, Math.min(1, (r - radiusRange.min) / (radiusRange.max - radiusRange.min)));
-        let zoomScaleAmount = dz > 1 ? 1 * (1-t) + (1 / zoomAmountMin) * t       : (1-t) * zoomAmountMin + 1 * t;
-        let radiusScaleAmount = dz > 1 ? zoomAmountMax * (1-t) + zoomAmountMin * t : (1-t) / zoomAmountMin + 1 /zoomAmountMax * t;
+        let zoomScaleAmount = 1;
+        if (dz > 1 && t > 0.5) {
+            const t1 = (t - 0.5)*2;
+            zoomScaleAmount = 1 * (1-t1) + t1 / dz;
+        } else if (dz < 1 && t < 0.5) {
+            const t1 = 2 * t;
+            zoomScaleAmount = (1 - t1) / dz + t1 * 1;
+        }
+        let radiusScaleAmount = dz;
         const newR = r * radiusScaleAmount;
 
         // Clamp radius
@@ -81,7 +86,7 @@ class FocusContext {
         } else if (context.z * zoomScaleAmount > camera.maxZoom) {
             zoomScaleAmount = camera.maxZoom / context.z;
         }
-
+    
         // Scale around lens center
         context.x += focus.position[0]*context.z*(1 - zoomScaleAmount);
         context.y -= focus.position[1]*context.z*(1 - zoomScaleAmount);
