@@ -50,7 +50,7 @@ class LayerBRDF extends Layer {
 		}
 
 		this.layout.setUrls(urls);
-		this.addControl('light', [0, 0, 1]);
+		this.addControl('light', [0, 0]); // This is a projection to the z=0 plane.
 		
 		let shader = new ShaderBRDF({
 			'label': 'Rgb',
@@ -67,34 +67,26 @@ class LayerBRDF extends Layer {
 		this.setShader('brdf');
 	}
 
-	setLight(light, dt, easing='linear') {
-		let r2 =  light[0]*light[0] + light[1]*light[1];
+	static projectToSphere(l) {
+		let r2 =  l[0]*l[0] + l[1]*l[1];
 		if (r2 > 1.0) {
 			let r = Math.sqrt(r2);
-			light[0] /= r;
-			light[1] /= r;
+			l[0] /= r;
+			l[1] /= r;
 			r2 = 1.0;
 		}
-		light[2] = Math.sqrt(1-r2);
+		l[2] = Math.sqrt(1-r2);
+		return l;
+	}
+
+	setLight(light, dt, easing='linear') {
 		this.setControl('light', light, dt, easing);
 	}
 
 	interpolateControls() { // FIXME Wrong normalization
 		let done = super.interpolateControls();
-		if(!done) {
-			let light = this.controls['light'].current.value;
-			let r2 =  light[0]*light[0] + light[1]*light[1];
-			if (r2 > 1.0) {
-				let r = Math.sqrt(r2);
-				light[0] /= r;
-				light[1] /= r;
-				r2 = 1.0;
-			}
-			light[2] = Math.sqrt(1-r2);
-	
-			//let z = Math.sqrt(1 - light[0]*light[0] - light[1]*light[1]);
-			this.shader.setLight([light[0], light[1], light[2], 0]);
-		}
+		let light = LayerBRDF.projectToSphere(this.controls['light'].current.value);
+		this.shader.setLight([light[0], light[1], light[2], 0]);
 		return done;
 	}
 }

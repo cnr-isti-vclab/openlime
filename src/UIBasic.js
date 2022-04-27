@@ -173,7 +173,6 @@ class UIBasic {
 				layer.setLight([x, y], 0);
 			if(this.showLightDirections)
 				this.updateLightDirections(x, y);
-
 			}, { 
 				active: false, 
     			activeModifiers: [2, 4], 
