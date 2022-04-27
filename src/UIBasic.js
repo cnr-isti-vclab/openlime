@@ -90,6 +90,7 @@ class UIBasic {
 	 * @param {string} options.attribution Some information related to data attribution or credits.
 	 * @param {Array<UIBasic#MenuEntry>} options.menu The interface menu structure.
 	 * @param {bool} options.enableTooltip=true Whether to enable tool button tooltip.
+	 * @param {bool} options.showLightDirections=false Whether to draw light direction vectors.
 	 */
 	constructor(viewer, options) {
 		//we need to know the size of the scene but the layers are not ready.
@@ -116,6 +117,7 @@ class UIBasic {
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
 			lightcontroller: null,
+			showLightDirections: false,
 			enableTooltip: true,
 			menu: []
 		});
@@ -176,12 +178,10 @@ class UIBasic {
 				active: false, 
     			activeModifiers: [2, 4], 
     			control: 'light', 
-    			onPanStart: this.showLightDirections ? () => { //FIXME What is that?
-    				this.info.fade(true);
+    			onPanStart: this.showLightDirections ? () => {
     				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false) );
     				this.enableLightDirections(true); } : null,
     			onPanEnd: this.showLightDirections ? () => { 
-    				this.info.fade(false);
     				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true) );
     				this.enableLightDirections(false); } : null,
     			relative: true 
@@ -296,7 +296,7 @@ class UIBasic {
 				break;
 			}
 
-			if (this.actions.light.active == true)
+			if (this.actions.light.active == true) //FIXME light control activated only after first use
 				this.toggleLightController();
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });

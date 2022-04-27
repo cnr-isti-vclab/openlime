@@ -28,7 +28,16 @@ class Controller2D extends Controller {
 	 */
 	constructor(callback, options) {
 		super(options);
-		Object.assign(this, { relative: false, speed: 2.0, start_x: 0, start_y: 0, current_x: 0, current_y: 0 }, options);
+		Object.assign(this, { 
+			relative: false, 
+			speed: 2.0, 
+			start_x: 0, 
+			start_y: 0, 
+			current_x: 0, 
+			current_y: 0,
+			onPanStart: null,
+			onPanEnd: null
+		}, options);
 
 		//By default the controller is active only with no modifiers.
 		//you can select which subsets of the modifiers are active.
@@ -65,38 +74,49 @@ class Controller2D extends Controller {
 		return [x, y]
 	}
 
-	/** @ignore */ 
-	update(e) {
+	/** @ignore */
+	rangeCoords(e) {
 		let [x, y] = this.project(e);
+
 		if(this.relative) {
 			x = clamp(this.speed*(x - this.start_x) + this.current_x, -1, 1);
 			y = clamp(this.speed*(y - this.start_y) + this.current_y, -1, 1);
 		}
-		this.callback(x, y);
+		return [x, y];
 	}
 
-	/** @ignore */
+	// /** @ignore */ 
+	// update(e) {
+	// 	let [x, y] = this.project(e);
+	// 	if(this.relative) {
+	// 		x = clamp(this.speed*(x - this.start_x) + this.current_x, -1, 1);
+	// 		y = clamp(this.speed*(y - this.start_y) + this.current_y, -1, 1);
+	// 	}
+	// 	this.callback(x, y);
+	// }
+
 	panStart(e) {
 		if(!this.active || !this.activeModifiers.includes(this.modifierState(e)))
 			return;
+
 		if(this.relative) {
 			let [x, y] = this.project(e);
 			this.start_x = x;
 			this.start_y = y;
 		}
-		this.update(e);
+		if(this.onPanStart)
+			this.onPanStart(...this.rangeCoords(e));
+		this.callback(...this.rangeCoords(e));
 		this.panning = true;
 		e.preventDefault();
 	}
 
-	/** @ignore */
 	panMove(e) {
 		if(!this.panning)
 			return false;
-		this.update(e);
+		this.callback(...this.rangeCoords(e));
 	}
 
-	/** @ignore */
 	panEnd(e) {
 		if(!this.panning)
 			return false;
@@ -106,7 +126,42 @@ class Controller2D extends Controller {
 			this.current_x = clamp(this.speed*(x - this.start_x) + this.current_x, -1, 1);
 			this.current_y = clamp(this.speed*(y - this.start_y) + this.current_y, -1, 1);
 		}
+		if(this.onPanEnd)
+			this.onPanEnd(...this.rangeCoords(e));
 	}
+
+	/** @ignore */
+	// panStart(e) {
+	// 	if(!this.active || !this.activeModifiers.includes(this.modifierState(e)))
+	// 		return;
+	// 	if(this.relative) {
+	// 		let [x, y] = this.project(e);
+	// 		this.start_x = x;
+	// 		this.start_y = y;
+	// 	}
+	// 	this.update(e);
+	// 	this.panning = true;
+	// 	e.preventDefault();
+	// }
+
+	// /** @ignore */
+	// panMove(e) {
+	// 	if(!this.panning)
+	// 		return false;
+	// 	this.update(e);
+	// }
+
+	// /** @ignore */
+	// panEnd(e) {
+	// 	if(!this.panning)
+	// 		return false;
+	// 	this.panning = false;
+	// 	if(this.relative) {
+	// 		let [x, y] = this.project(e);
+	// 		this.current_x = clamp(this.speed*(x - this.start_x) + this.current_x, -1, 1);
+	// 		this.current_y = clamp(this.speed*(y - this.start_y) + this.current_y, -1, 1);
+	// 	}
+	// }
 
 	/** @ignore */
 	fingerSingleTap(e) {
