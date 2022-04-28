@@ -50,7 +50,7 @@ class LayerBRDF extends Layer {
 		}
 
 		this.layout.setUrls(urls);
-		this.addControl('light', [0, 0, 1]);
+		this.addControl('light', [0, 0]); // This is a projection to the z=0 plane.
 		
 		let shader = new ShaderBRDF({
 			'label': 'Rgb',
@@ -67,34 +67,54 @@ class LayerBRDF extends Layer {
 		this.setShader('brdf');
 	}
 
-	setLight(light, dt, easing='linear') {
-		let r2 =  light[0]*light[0] + light[1]*light[1];
+	static projectToSphere(p) {
+		let px = p[0];
+		let py = p[1];
+
+		let r2 = px * px + py * py;
 		if (r2 > 1.0) {
 			let r = Math.sqrt(r2);
-			light[0] /= r;
-			light[1] /= r;
+			px /= r;
+			py /= r;
 			r2 = 1.0;
 		}
-		light[2] = Math.sqrt(1-r2);
+		let z = Math.sqrt(1 - r2);
+		return [px, py, z];
+	}
+
+	// Idea from SGI trackball, siggraph 1988 (e.g., http://gxsm.sourceforge.net/gxsmsrcdoxy/html/d2/db2/gxsm_2trackball_8C-source.html)
+	// The point is projected to a sphere in the center, and deformed to a
+	// hyperbolic sheet of rotation away from it in order to avoid
+	// the acceleration due to projection on an increasingly vertical 
+	// surface
+	static projectToFlattenedSphere(p) {
+		const R = 0.8; const R2 = R * R;
+		const RR = R * Math.SQRT1_2; const RR2 = RR * RR;
+
+		let px = Math.min(Math.max(p[0], -1.0), 1.0);
+		let py = Math.min(Math.max(p[1], -1.0), 1.0);
+		let z = 0.0;
+		let d2 = px * px + py * py;
+		if (d2 < RR2) {
+			// Inside sphere
+			z = Math.sqrt(R2 - d2);
+		} else {
+			// On hyperbola
+			z = RR2 / Math.sqrt(d2);
+		}
+		let r = Math.sqrt(d2 + z * z);
+		return [px / r, py / r, z / r];
+	}
+
+	setLight(light, dt, easing='linear') {
 		this.setControl('light', light, dt, easing);
 	}
 
 	interpolateControls() { // FIXME Wrong normalization
 		let done = super.interpolateControls();
-		if(!done) {
-			let light = this.controls['light'].current.value;
-			let r2 =  light[0]*light[0] + light[1]*light[1];
-			if (r2 > 1.0) {
-				let r = Math.sqrt(r2);
-				light[0] /= r;
-				light[1] /= r;
-				r2 = 1.0;
-			}
-			light[2] = Math.sqrt(1-r2);
-	
-			//let z = Math.sqrt(1 - light[0]*light[0] - light[1]*light[1]);
-			this.shader.setLight([light[0], light[1], light[2], 0]);
-		}
+//		let light = LayerBRDF.projectToSphere(this.controls['light'].current.value);
+		let light = LayerBRDF.projectToFlattenedSphere(this.controls['light'].current.value);
+		this.shader.setLight([light[0], light[1], light[2], 0]);
 		return done;
 	}
 }

@@ -33,8 +33,8 @@ class ControllerFocusContext extends ControllerLens {
         this.canvas.addEvent('updateSize', callback);
 
         this.updateTimeInterval = 10;
-        this.updateDelay = 200; 
-        this.zoomDelay = 200;
+        this.updateDelay = 150; 
+        this.zoomDelay = 150;
         this.zoomAmount = 1.2;
         this.imageSize = { w: 1, h: 1 };
         this.FocusContextEnabled = true;
