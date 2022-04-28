@@ -116,12 +116,14 @@ class UIBasic {
 			scale: null,
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
+			info: new UIDialog(lime.containerElement, { class: 'openlime-info'}),
 			lightcontroller: null,
 			showLightDirections: false,
 			enableTooltip: true,
 			menu: []
 		});
-
+		this.info.hide();
+		
 		Object.assign(this, options);
 		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
 			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
