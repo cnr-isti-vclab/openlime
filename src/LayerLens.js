@@ -82,12 +82,77 @@ class LayerLens extends LayerCombiner {
 
 	draw(transform, viewport) {
 		let done = this.interpolateControls();
-		const vlens = this.getLensInViewportCoords(transform, viewport);
-		this.shader.setLensUniforms(vlens, [viewport.w, viewport.h], this.borderColor);
+		// const vlens = this.getLensInViewportCoords(transform, viewport);
+		// this.shader.setLensUniforms(vlens, [viewport.w, viewport.h], this.borderColor);
+		// this.emit('draw');
+		// super.draw(transform, viewport);
+
+		for(let layer of this.layers)
+			if(layer.status != 'ready')
+				return false;
+
+		if(!this.shader)
+			throw "Shader not specified!";
+
 		this.emit('draw');
+		let gl = this.gl;
 
-		super.draw(transform, viewport);
+		// Draw on a restricted viewport around the lens, to lower down the number of required tiles
+		let lensViewport = this.getLensViewport(transform, viewport);
 
+		// If an overlay is present, merge its viewport with the lens one
+		let overlayViewport = this.getOverlayLayerViewport(transform, viewport);
+		if (overlayViewport != null) {
+			lensViewport = this.joinViewports(lensViewport, overlayViewport);
+		}
+
+		gl.viewport(lensViewport.x, lensViewport.y, lensViewport.dx, lensViewport.dy);
+
+		// Keep the framwbuffer to the window size in order to avoid changing at each scale event
+		if(!this.framebuffers.length || this.layout.width != viewport.w || this.layout.height != viewport.h) {
+			this.deleteFramebuffers();
+			this.layout.width = viewport.w;
+			this.layout.height = viewport.h;
+			this.createFramebuffers();
+		}
+		var b = [0, 0, 0, 0];
+		gl.clearColor(b[0], b[1], b[2], b[3]);
+
+		// Draw the layers only within the viewport enclosing the lens
+		for(let i = 0; i < this.layers.length; i++) { 
+			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
+			gl.clear(gl.COLOR_BUFFER_BIT);
+			this.layers[i].draw(transform, lensViewport);
+			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+		}
+		
+		// Set in the lensShader the proper lens position wrt the window viewport
+		const vl = this.getLensInViewportCoords(transform, viewport);
+		this.shader.setLensUniforms(vl, [viewport.w, viewport.h], this.borderColor);
+	
+		this.prepareWebGL();
+
+		// Bind all textures and combine them with the shaderLens
+		for(let i = 0; i < this.layers.length; i++) {
+			gl.uniform1i(this.shader.samplers[i].location, i);
+			gl.activeTexture(gl.TEXTURE0 + i);
+			gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
+		}
+
+		// Get texture coords of the lensViewport with respect to the framebuffer sz
+		const lx = lensViewport.x/lensViewport.w;
+		const ly = lensViewport.y/lensViewport.h;
+		const hx = (lensViewport.x+lensViewport.dx)/lensViewport.w;
+		const hy = (lensViewport.y+lensViewport.dy)/lensViewport.h;
+		
+		this.updateTileBuffers(
+			new Float32Array([-1, -1, 0,  -1, 1, 0,  1, 1, 0,  1, -1, 0]), 
+			new Float32Array([ lx, ly,     lx, hy,   hx, hy,   hx, ly]));
+		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
+
+		// Restore old viewport
+		gl.viewport(viewport.x, viewport.x, viewport.dx, viewport.dy);
+		
 		return done;
 	}
 
@@ -95,7 +160,41 @@ class LayerLens extends LayerCombiner {
 		const lensC = this.getCurrentCenter();
 		const l = transform.sceneToViewportCoords(viewport, lensC);
 		const r = this.getRadius() * transform.z;
-		return {x: Math.floor(l[0]-r), y: Math.floor(l[1]-r), dx: Math.ceil(2*r), dy: Math.ceil(2*r), w:viewport.w, h:viewport.h};
+		return {x: Math.floor(l[0]-r)-1, y: Math.floor(l[1]-r)-1, dx: Math.ceil(2*r)+2, dy: Math.ceil(2*r)+2, w:viewport.w, h:viewport.h};
+	}
+
+	getOverlayLayerViewport(transform, viewport) {
+		let result = null;
+		if (this.layers.length == 2) {
+			// Get overlay projected viewport
+			const overlayT = this.layers[1].transform.copy();
+			overlayT.y *= -1;
+			const p0 = overlayT.apply(-this.layers[1].layout.width/2, -this.layers[1].layout.height/2);
+			const p1 = overlayT.apply( this.layers[1].layout.width/2,  this.layers[1].layout.height/2);
+			const p0v = transform.sceneToViewportCoords(viewport, [p0.x, p0.y]);
+			const p1v = transform.sceneToViewportCoords(viewport, [p1.x, p1.y]);
+
+			// Intersect with window viewport
+			const x0 = Math.min(Math.max(0, Math.floor(p0v[0])), viewport.w);
+			const y0 = Math.min(Math.max(0, Math.floor(p0v[1])), viewport.h);
+			const x1 = Math.min(Math.max(0, Math.ceil(p1v[0])), viewport.w);
+			const y1 = Math.min(Math.max(0, Math.ceil(p1v[1])), viewport.h);
+			const width = x1 - x0;
+			const height = y1 - y0;
+			result = {x: x0, y: y0, dx:width, dy: height, w:viewport.w, h:viewport.h};
+		} 
+		return result;
+	}
+
+	joinViewports(v0, v1) {
+		const xm = Math.min(v0.x, v1.x);
+		const xM = Math.max(v0.x+v0.dx, v1.x+v1.dx);
+		const ym = Math.min(v0.y, v1.y);
+		const yM = Math.max(v0.y+v0.dy, v1.y+v1.dy);
+		const width = xM - xm;
+		const height = yM - ym;
+		
+		return {x:xm, y:ym, dx:width, dy:height, w: v0.w, h: v0.h };
 	}
 
 	getLensInViewportCoords(transform, viewport) {

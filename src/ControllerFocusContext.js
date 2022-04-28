@@ -32,7 +32,6 @@ class ControllerFocusContext extends ControllerLens {
 		};
         this.canvas.addEvent('updateSize', callback);
 
-       
         this.updateTimeInterval = 10;
         this.updateDelay = 200; 
         this.zoomDelay = 200;
@@ -47,6 +46,13 @@ class ControllerFocusContext extends ControllerLens {
         this.insideLens = false;
         this.panning = false;
         this.zooming = false;
+        this.panningCamera = false;
+
+        // Handle only camera panning
+        this.startPos = [0, 0];
+        this.initialTransform = this.camera.getCurrentTransform(performance.now());
+        
+        // Handle pinchZoom
         this.initialPinchDistance = 1;
         this.initialPinchRadius = 1;
         this.initialPinchPos = [0,0];
@@ -62,25 +68,36 @@ class ControllerFocusContext extends ControllerLens {
         this.insideLens = this.isInsideLens(p);
 
         if (this.insideLens) {
-            e.preventDefault();
             const startPos = this.getPixelPosition(e); 
-            this.panning = true;
 
             const lc = this.getScreenPosition(this.getFocus().position, t);
             this.centerToClickOffset = [startPos[0] - lc[0], startPos[1] - lc[1]];
             this.currentClickPos = [startPos[0], startPos[1]];
-        } 
+            this.panning = true;
+        } else {
+            this.startPos = { x: e.offsetX, y: e.offsetY };
+            this.initialTransform = t;
+            this.camera.target = this.initialTransform.copy(); //stop animation.
+            this.panningCamera = true;
+        }
+        e.preventDefault();
 
         // Activate a timeout to call update() in order to update position also when mouse is clicked but steady
         // Stop the time out on panEnd
-        this.timeOut = setInterval(this.update.bind(this), 20);
+        this.timeOut = setInterval(this.update.bind(this), 50);
 	}
 
     panMove(e) {
         if (Math.abs(e.offsetX) > 64000 || Math.abs(e.offsetY) > 64000) return;
         if(this.panning) {
             this.currentClickPos = this.getPixelPosition(e);
-        }  
+        } else if (this.panningCamera) {
+            let m = this.initialTransform;
+            let dx = (e.offsetX - this.startPos.x);
+            let dy = (e.offsetY - this.startPos.y);
+
+            this.camera.setPosition(this.updateDelay, m.x + dx, m.y + dy, m.z, m.a);
+        }
     }
 
 	pinchStart(e1, e2) {
@@ -169,6 +186,7 @@ class ControllerFocusContext extends ControllerLens {
 
     panEnd() {
         this.panning = false;
+        this.panningCamera = false;
         this.zooming = false;
         clearTimeout(this.timeOut);
     }
