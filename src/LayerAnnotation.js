@@ -10,7 +10,7 @@ import { Layer } from './Layer.js'
  * 
  * Extends {@link Layer}.
  */
-class LayerAnnotation extends Layer {
+class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: { label: defaultValue: type:number,enum,string,boolean min: max: enum:[] }}
 	/**
 	 * Instantiates a LayerAnnotation object.
 	 * @param {Object} [options] An object literal with options that inherits from {@link Layer}.

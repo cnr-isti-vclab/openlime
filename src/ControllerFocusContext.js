@@ -8,6 +8,13 @@ class ControllerFocusContext extends ControllerLens {
     
     constructor(options) {
         super(options);
+        Object.assign(this, { 
+			updateTimeInterval: 50,
+            updateDelay: 150,
+            zoomDelay: 150,
+            zoomAmount: 1.2
+		}, options);
+
         if (!options.lensLayer) {
             console.log("ControllerFocusContext lensLayer option required");
             throw "ControllerFocusContext lensLayer option required";
@@ -32,10 +39,6 @@ class ControllerFocusContext extends ControllerLens {
 		};
         this.canvas.addEvent('updateSize', callback);
 
-        this.updateTimeInterval = 10;
-        this.updateDelay = 150; 
-        this.zoomDelay = 150;
-        this.zoomAmount = 1.2;
         this.imageSize = { w: 1, h: 1 };
         this.FocusContextEnabled = true;
 
