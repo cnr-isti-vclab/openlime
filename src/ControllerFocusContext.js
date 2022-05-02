@@ -12,7 +12,8 @@ class ControllerFocusContext extends ControllerLens {
 			updateTimeInterval: 50,
             updateDelay: 150,
             zoomDelay: 150,
-            zoomAmount: 1.2
+            zoomAmount: 1.2,
+            priority: -100
 		}, options);
 
         if (!options.lensLayer) {
