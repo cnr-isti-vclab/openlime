@@ -15,8 +15,14 @@ import { createSVGElement, LayerSvgAnnotation } from './LayerSvgAnnotation.js'
  */
 
 /**
- * Callback to customize the annotation data object..
+ * Callback to customize the annotation data object.
  * @function customDataCallback
+ * @param {Annotation} anno The current annotation entry.
+ */
+
+/**
+ * Callback executed when an annotation is selcted on the user interface.
+ * @function selectedCallback
  * @param {Annotation} anno The current annotation entry.
  */
 
@@ -58,6 +64,7 @@ class EditorSvgAnnotation {
 	 * @param {bool} options.enableState=false Whether to enable custom annotation state. This allows to include some state variables into an annotation item (such as camera, light or lens position).
 	 * @param {customStateCallback} options.customState The callback implementing custom state annotations.
 	 * @param {customDataCallback} options.customData The callback to customize the annotation data object.
+	 * @param {selectedCallback} options.selectedCallback The callback executed when an annotation is selcted on the user interface.
 	 */
 	constructor(viewer, layer, options) {
 		this.layer = layer;
@@ -131,6 +138,7 @@ class EditorSvgAnnotation {
 			customState: null,
 			customData: null,
 			editWidget: null,
+			selectedCallback: null,
 			createCallback: null, //callbacks for backend
 			updateCallback: null,
 			deleteCallback: null
@@ -143,6 +151,7 @@ class EditorSvgAnnotation {
 		layer.addEvent('selected', (anno) => {
 			if (!anno || anno == this.annotation)
 				return;
+			if(this.selectedCallback) this.selectedCallback(anno);
 			this.showEditWidget(anno);
 		});
 
