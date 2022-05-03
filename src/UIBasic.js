@@ -116,19 +116,22 @@ class UIBasic {
 			scale: null,
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
-			info: new UIDialog(lime.containerElement, { class: 'openlime-info'}),
 			lightcontroller: null,
 			showLightDirections: false,
 			enableTooltip: true,
 			menu: []
 		});
-		this.info.hide();
 		
 		Object.assign(this, options);
 		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
 			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
 
-		this.panzoom = new ControllerPanZoom(this.viewer.camera, { priority: -1000 });
+		this.panzoom = new ControllerPanZoom(this.viewer.camera, {
+			priority: -1000,
+			activeModifiers: [0, 1]
+		});
+		this.viewer.pointerManager.onEvent(this.panzoom); //register wheel, doubleclick, pan and pinch
+		// this.viewer.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
 
 		/*let element = entry.element;
 		let group = element.getAttribute('data-group');
@@ -259,13 +262,6 @@ class UIBasic {
 
 			document.addEventListener('keydown', (e) => this.keyDown(e), false);
 			document.addEventListener('keyup', (e) => this.keyUp(e), false);
-
-			let panzoom = this.panzoom = new ControllerPanZoom(this.viewer.camera, {
-				priority: -1000,
-				activeModifiers: [0, 1]
-			});
-			this.viewer.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
-			// this.viewer.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
 
 			this.createMenu();
 			this.updateMenu();
@@ -684,7 +680,7 @@ class UIBasic {
  * The content of the dialog can be either an HTML text or a pre-built DOM element.
  * When hidden, a dialog emits a 'closed' event.
  */
-class UIDialog {
+class UIDialog { //FIXME standalone class
 	/**
 	 * Instatiates a UIDialog object.
 	 * @param {HTMLElement} container The HTMLElement on which the dialog is focused
@@ -700,6 +696,7 @@ class UIDialog {
 			signals: { 'closed': [] },
 			class: null,
 			visible: false,
+			backdropEvents: true
 		}, options);
 		this.create();
 	}
@@ -745,14 +742,12 @@ class UIDialog {
 		content.classList.add('openlime-dialog-content');
 		dialog.append(content);
 
-		if (this.modal) {
-			background.addEventListener('click', (e) => { if (e.target == background) this.hide(); });
+		if (this.modal) { //FIXME backdrown => backdrop
+			if(this.backdropEvents) background.addEventListener('click', (e) => { if (e.target == background) this.hide(); });
 			background.appendChild(dialog);
 			this.container.appendChild(background);
 			this.element = background;
-
 		} else {
-
 			this.container.appendChild(dialog);
 			this.element = dialog;
 		}

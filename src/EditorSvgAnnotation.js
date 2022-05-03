@@ -15,6 +15,18 @@ import { createSVGElement, LayerSvgAnnotation } from './LayerSvgAnnotation.js'
  */
 
 /**
+ * Callback to customize the annotation data object.
+ * @function customDataCallback
+ * @param {Annotation} anno The current annotation entry.
+ */
+
+/**
+ * Callback executed when an annotation is selcted on the user interface.
+ * @function selectedCallback
+ * @param {Annotation} anno The current annotation entry.
+ */
+
+/**
  * **EditorSvgAnnotation** enables the {@link UIBasic} interface to edit (create/update/delete) SVG annotations.
  * This class is a mere utility that acts as an adapter between the annotation database and the OpenLIME system.
  * 
@@ -51,6 +63,8 @@ class EditorSvgAnnotation {
 	 * @param {crudCallback} options.deleteCallback The callback to implement annotation deletion.
 	 * @param {bool} options.enableState=false Whether to enable custom annotation state. This allows to include some state variables into an annotation item (such as camera, light or lens position).
 	 * @param {customStateCallback} options.customState The callback implementing custom state annotations.
+	 * @param {customDataCallback} options.customData The callback to customize the annotation data object.
+	 * @param {selectedCallback} options.selectedCallback The callback executed when an annotation is selcted on the user interface.
 	 */
 	constructor(viewer, layer, options) {
 		this.layer = layer;
@@ -122,7 +136,9 @@ class EditorSvgAnnotation {
 			annotation: null, //not null only when editWidget is shown.
 			enableState: false,
 			customState: null,
+			customData: null,
 			editWidget: null,
+			selectedCallback: null,
 			createCallback: null, //callbacks for backend
 			updateCallback: null,
 			deleteCallback: null
@@ -135,6 +151,7 @@ class EditorSvgAnnotation {
 		layer.addEvent('selected', (anno) => {
 			if (!anno || anno == this.annotation)
 				return;
+			if(this.selectedCallback) this.selectedCallback(anno);
 			this.showEditWidget(anno);
 		});
 
@@ -173,12 +190,13 @@ class EditorSvgAnnotation {
 	/** @ignore */
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
-		if(this.enableState) setAnnotationCurrentState();
+		if(this.customData) this.customData(anno);
+		if(this.enableState) this.setAnnotationCurrentState();
 		anno.publish = 1;
 		anno.label = anno.description = anno.class = '';
 		let post = {
 			id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null,
-			publish: anno.publish
+			publish: anno.publish, data: anno.data
 		};
 		if (this.enableState) post = { ...post, state: anno.state };
 		// if (anno.light) post = { ...post, light: anno.light }; FIXME
@@ -213,6 +231,11 @@ class EditorSvgAnnotation {
 			anno.class = '';
 		edit.querySelector('[name=label]').value = anno.label || '';
 		edit.querySelector('[name=description]').value = anno.description || '';
+
+		Object.entries(anno.data).map(k => {
+			edit.querySelector(`[name=data-data-${k[0]}]`).value = k[1] || '';
+		});
+
 		edit.querySelector('[name=classes]').value = anno.class;
 		edit.querySelector('[name=publish]').checked = anno.publish == 1;
 		edit.classList.remove('hidden');
@@ -228,6 +251,7 @@ class EditorSvgAnnotation {
 		this.setActiveTool();
 		this.layer.annotationsListEntry.element.querySelector('.openlime-edit').classList.add('active');
 		(async () => {
+			console.log(this.annotation); //FIXME create
 			await this.createEditWidget();
 			this.updateEditWidget();
 		})();
@@ -246,13 +270,19 @@ class EditorSvgAnnotation {
 	async createEditWidget() {
 		if (this.editWidget)
 			return;
-
+		console.log('ANNO', this.annotation);
 		let html = `
 				<div class="openlime-annotation-edit">
 					<span>Title:</span> <input name="label" type="text">
 					<span>Description:</span> <input name="description" type="text">
-					
 
+					${Object.entries(this.annotation.data).map(k => {
+						let label = k[0];
+						let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text">`
+						return str;
+					}).join('\n')}
+					
+					<br/>
 					<span>Class:</span> 
 					<div class="openlime-select">
 						<input type="hidden" name="classes" value=""/>
@@ -339,6 +369,11 @@ class EditorSvgAnnotation {
 		let descr = edit.querySelector('[name=description]');
 		descr.addEventListener('blur', (e) => { if (this.annotation.description != descr.value) this.saveCurrent(); this.saveAnnotation(); });
 
+		Object.entries(this.annotation.data).map(k => {
+			let dataElm = edit.querySelector(`[name=data-data-${k[0]}]`);
+			dataElm.addEventListener('blur', (e) => { if (this.annotation.data[k[0]] != dataElm.value) this.saveCurrent(); this.saveAnnotation(); });
+		});
+
 		let classes = edit.querySelector('[name=classes]');
 		classes.addEventListener('change', (e) => { if (this.annotation.class != classes.value) this.saveCurrent(); this.saveAnnotation(); });
 
@@ -354,7 +389,7 @@ class EditorSvgAnnotation {
 		const cam = this.viewer.camera;
 		let now = performance.now();
 		let m = cam.getCurrentTransform(now);
-		this.annotation.state = { camera: { 'x': m.x, 'y': m.y, 'z': m.z } };
+		this.annotation.state = { camera: { 'x': m.x, 'y': m.y, 'z': m.z } }; //FIXME active layers  + active controls 
 		// Callback to add  light/lens params or other data
 		if(this.customState) this.customState(this.annotation);
 	}
@@ -366,6 +401,9 @@ class EditorSvgAnnotation {
 
 		anno.label = edit.querySelector('[name=label]').value || '';
 		anno.description = edit.querySelector('[name=description]').value || '';
+		Object.entries(anno.data).map(k => {
+			anno.data[k[0]] = edit.querySelector(`[name=data-data-${k[0]}]`).value || '';
+		});		
 		anno.publish = edit.querySelector('[name=publish]').checked ? 1 : 0;
 		let select = edit.querySelector('[name=classes]');
 		anno.class = select.value || '';
@@ -378,7 +416,7 @@ class EditorSvgAnnotation {
 
 		let post = {
 			id: anno.id, label: anno.label, description: anno.description, class: anno.class,
-			publish: anno.publish
+			publish: anno.publish, data: anno.data
 		};
 		if (this.enableState) post = { ...post, state: anno.state };
 		// if (anno.light) post = { ...post, light: anno.light }; FIXME
@@ -571,7 +609,7 @@ class EditorSvgAnnotation {
 	/** @ignore */
 	annoToData(anno) {
 		let data = {};
-		for (let i of ['id', 'label', 'description', 'class', 'publish'])
+		for (let i of ['id', 'label', 'description', 'class', 'publish', 'data'])
 			data[i] = `${anno[i] || ''}`;
 		data.elements = anno.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
 		return data;
@@ -579,7 +617,7 @@ class EditorSvgAnnotation {
 
 	/** @ignore */
 	dataToAnno(data, anno) {
-		for (let i of ['id', 'label', 'description', 'class', 'publish'])
+		for (let i of ['id', 'label', 'description', 'class', 'publish', 'data'])
 			anno[i] = `${data[i]}`;
 		anno.elements = data.elements.map(e => { let n = e.cloneNode(); n.points = e.points; return n; });
 	}

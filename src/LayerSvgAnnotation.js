@@ -138,6 +138,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		if (this.status != 'ready')
 			return;
 
+		if (typeof (this.annotations) == "string") return; //FIXME Is it right? Should we use this.status?
+
 		const bBox = this.boundingBox();
 		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh - bBox.xLow} ${bBox.yHigh - bBox.yLow}`);
 
