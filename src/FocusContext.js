@@ -95,20 +95,53 @@ class FocusContext {
     }
         
     /**
+     * Adapt context in order to have focus & context condition satisfied for the requested focus
+     * @param {*}         viewport {x, y, dx, dy, w, h}
+     * @param {*}         focus    lens : {position,radius}. Contain current lens in dataset coords
+     * @param {Transform} context Contain current transform, which  will be updated to translated context
+     * @param {Number}    desiredScale context desired scale (which will be clamped within min max scale)
+     */
+    static adaptContext(viewport, focus, context, desiredScale) {
+        // Get current projected annotation center position
+        const pOld = context.sceneToViewportCoords(viewport, focus.position);
+        context.z = desiredScale;
+
+        FocusContext.adaptContextScale(viewport, focus, context);
+        
+        // After scale, restore projected annotation position, in order to avoid
+        // moving the annotation center outside the boundaries
+        const pNew = context.sceneToViewportCoords(viewport, focus.position);
+        const delta = [pNew[0] - pOld[0], pNew[1] - pOld[1]];
+        context.x -= delta[0];
+        context.y += delta[1];
+
+        // Force annotation inside the viewport
+        FocusContext.adaptContextPosition(viewport, focus, context);
+    }
+
+    /**
      * Fix context scale to make projected lens fit within viewport.
      * @param {*} viewport {x, y, dx, dy, w, h}
-     * @param {*} focus    lens : {position,radius}. Contain current lens in dataset coords, which will be updated 
+     * @param {*} focus    lens : {position,radius}. Contain current lens in dataset coords
      * @param {Transform} context Contain current transform, whose scale will be updated to keep lens in focus and context after scale
      */
     static adaptContextScale(viewport, focus, context) {
         const oldZ = context.z;
         const radiusRange = this.getRadiusRangeCanvas(viewport);
         const focusRadiusCanvas = focus.radius * context.z;
+        let zoomScaleAmount = 1;
         if (focusRadiusCanvas < radiusRange.min) {
             context.z = radiusRange.min / focus.radius;
+            // zoomScaleAmount = (radiusRange.min / focus.radius) / context.z;
         } else if (focusRadiusCanvas > radiusRange.max) {
             context.z = radiusRange.max / focus.radius;
+            // zoomScaleAmount = (radiusRange.max / focus.radius) / context.z;
         }
+     
+        // Scale around focus center
+        // context.x += focus.position[0]*context.z*(1 - zoomScaleAmount);
+        // context.y -= focus.position[1]*context.z*(1 - zoomScaleAmount);
+        // context.z = context.z * zoomScaleAmount; 
     }
 
     /**
