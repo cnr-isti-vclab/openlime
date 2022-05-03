@@ -20,7 +20,7 @@ module.exports = {
 
   devServer: {
     static: {
-      directory: path.join(__dirname, '/dist/examples/dstretch-viewer'),
+      directory: path.join(__dirname, '/dist/examples'),
     },
     compress: false,
     port: 8080,

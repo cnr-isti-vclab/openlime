@@ -14,9 +14,8 @@ import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
-dstretchTest();
 //combinerTest();
-//imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
+imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
 //rtiTest('rbf');
@@ -30,19 +29,6 @@ dstretchTest();
 //testMedicalAnnotations();
 
 //testAnnotationEditor();
-
-function dstretchTest() {
-	console.log("Dstretching");
-
-	let dstretch = new Layer({
-		type: 'dstretch',
-		layout: 'image',
-		url: 'assets/dstretch'
-	});
-
-	lime.canvas.addLayer('dstretch', dstretch);
-	let ui = new UIBasic(lime);
-}
 
 function testAnnotationEditor() {
 	let layer0 = new Layer({ 
