@@ -29,10 +29,19 @@ class ShaderDstretch extends Shader {
         if (this.samples == undefined)
             return;
 
+        /**
+         * - Ruotiamo i punti per una rotazione definita dall'utente
+         * - Li riscaliamo tutti tra 0 e 255, ottengo una trasformazione affine
+         * - Ruoto tutto indietro
+         */
+
         console.log("setting minmax");
         let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         for (let i=0; i<this.samples.length; i++) {
-            let transformedSample = this.transformSample(this.matToArray(this.multiplyMatrices(this.rotationMatrix, this.transform)), this.samples[i].concat(1));
+            let transformedSample = this.transformSample(
+                this.matToArray(this.transpose(this.rotationMatrix)), this.transformSample(
+                        this.matToArray(this.multiplyMatrices(this.rotationMatrix, this.transform)), 
+                        this.samples[i].concat(1)));
 
             for (let j=0; j<3; j++) {
                 if (transformedSample[j] < min[j])
@@ -51,6 +60,19 @@ class ShaderDstretch extends Shader {
 			min: {type: 'vec3', needsUpdate:true, size: 3, value: this.min},
             max: {type: 'vec3', needsUpdate:true, size: 3, value: this.max}
 		}  
+    }
+
+    transpose(mat) {
+        let ret = [];
+
+        for (let i=0; i<4; i++) {
+            let arr = [];
+            for (let j=0; j<4; j++)
+                arr.push(mat[j][i]);
+            ret.push(arr);
+        }
+        
+        return ret;
     }
 
     updateRotationMatrix(eulerRotation) {
@@ -132,7 +154,7 @@ uniform vec3 max;
 uniform sampler2D image;
 
 void main(void) {
-    vec3 ret = (transform * (255.0 * (rotation * texture(image, v_texcoord)))).xyz;
+    vec3 ret = (transpose(rotation) * transform * rotation * (255.0 * (texture(image, v_texcoord)))).xyz;
     ret = (ret - min) / (max - min);
 
     color = vec4(ret, 1);
