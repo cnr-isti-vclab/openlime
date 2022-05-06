@@ -39,12 +39,13 @@ class LayerRTI extends Layer {
  *  Internal function to assemble the url needed to retrieve the image or the image tile.
  */
 	imageUrl(url, plane) {
+		let path = this.url.substring(0, this.url.lastIndexOf('/')+1);
 		switch(this.layout.type) {
 			case 'image':    return path + plane + '.jpg'; break;
 			case 'google':   return path + plane;          break;
 			case 'deepzoom': return path + plane + '.dzi'; break;
 			case 'tarzoom':  return path + plane + '.tzi'; break;
-			case 'itarzoom':  return path + 'planes.tzi'; break;
+			case 'itarzoom': return path + 'planes.tzi'; break;
 			case 'zoomify':  return path + plane + '/ImageProperties.xml'; break;
 			//case 'iip':      return this.plane.throw Error("Unimplemented");
 			case 'iiif': throw Error("Unimplemented");

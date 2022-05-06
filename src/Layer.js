@@ -30,6 +30,8 @@ import { BoundingBox } from './BoundingBox.js'
  *      });
  *      viewer.addLayer('coin1', layer1);
  */
+
+//FIXME: prefetchborder and mipmapbias should probably go into layout
 class Layer {
 	/**
 	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
@@ -438,18 +440,15 @@ class Layer {
 
 		//		find which quads to draw and in case request for them
 		transform = this.transform.compose(transform);
-		let needed = this.layout.neededBox(viewport, transform, 0, this.mipmapBias);
-		let torender = this.toRender(needed);
+		let available = this.layout.available(viewport, transform, 0, this.mipmapBias, this.tiles);
 
 		let matrix = transform.projectionMatrix(viewport);
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
-		for (let index in torender) {
+		for(let tile of Object.values(available)) {
 			//			if(tile.complete)
-			this.drawTile(torender[index]);
+			this.drawTile(tile);
 		}
-
-		//		gl.uniform1f(t.opacitylocation, t.opacity);
 		return done;
 	}
 
@@ -482,7 +481,7 @@ class Layer {
 	 *  drawing incomplete tiles enhance the resolution early at the cost of some overdrawing and problems with opacity.
 	 */
 	/** @ignore */
-	toRender(needed) {
+	/*toRender(needed) {
 
 		let torender = {}; //array of minlevel, actual level, x, y (referred to minlevel)
 		let brothers = {};
@@ -516,7 +515,7 @@ class Layer {
 				torender[index].complete = false;
 		}
 		return torender;
-	}
+	}*/
 
 	/** @ignore */
 	updateTileBuffers(coords, tcoords) {
@@ -543,18 +542,8 @@ class Layer {
 		if (!this.shader || !this.layout || this.layout.status != 'ready')
 			return;
 
-		// if(!this.tiles.size) {
-		// 	 this.tiles = JSON.parse(JSON.stringify(this.layout.tiles));
-		// 	 for(let tile of this.tiles) {
-		// 	 	tile.tex = new Array(this.shader.samplers.length);
-		// 	 	tile.missing = this.shader.samplers.length;
-		//  		tile.size = 0;
-		//  	}
-		//  	return;
-		// }
-
 		for (let tile of this.tiles) {
-			tile.missing = this.shader.samplers.length;;
+			tile.missing = this.shader.samplers.length;
 			for (let sampler of this.shader.samplers) {
 				if (tile.tex[sampler.id])
 					tile.missing--;
@@ -618,7 +607,7 @@ class Layer {
 		if (typeof (this.layout) != 'object')
 			throw "AH!";
 
-		let needed = this.layout.needed(viewport, transform, this.prefetchBorder, this.mipmapBias, this.tiles);
+		/*let needed = this.layout.needed(viewport, transform, this.prefetchBorder, this.mipmapBias, this.tiles);
 
 
 		this.queue = [];
@@ -631,7 +620,8 @@ class Layer {
 				tile.missing = missing;
 			if (tile.missing != 0 && !this.requested[index])
 				tmp.push(tile);
-		}
+		} */
+		this.queue = this.layout.needed(viewport, transform, this.prefetchBorder, this.mipmapBias, this.tiles);
 /*		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 		if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
 			return;
@@ -704,7 +694,7 @@ class Layer {
 			if (callback) callback(tile.size);
 			return;
 		}
-
+		tile.missing = this.shader.samplers.length;
 		for (let sampler of this.shader.samplers) {
 
 			let raster = this.rasters[sampler.id];

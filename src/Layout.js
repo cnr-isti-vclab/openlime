@@ -1,4 +1,5 @@
 import { BoundingBox } from "./BoundingBox";
+import { Tile } from "./Tile"
 
 // Tile level x y  index ----- tex missing() start/end (tarzoom) ----- time, priority size(byte)
 
@@ -151,7 +152,7 @@ class Layout {
 		let level = 0;
 		for(let i = 0; i < this.qbox.length; i++) {
 			let size = this.qbox[i].xHigh*this.qbox[i].yHigh;
-			if(index - size < 0);
+			if(index - size < 0)
 				break;
 			index -= size;
 			level++;
@@ -276,15 +277,16 @@ class Layout {
 		let tile = new Tile();
 		tile.index = index;
 		Object.assign(tile, this.reverseIndex(index));
+		return tile;
 	}
 
 	/** returns the list of tiles required for a rendering, sorted by priority, max */
 	needed(viewport, transform, border, bias, tiles, maxtiles = 8) {
-		let neededBox = this.layout.neededBox(viewport, transform, 0, this.mipmapBias);
+		let neededBox = this.neededBox(viewport, transform, 0, bias);
 		
-		if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, neededBox))
-			return;
-		this.previouslyNeeded = neededBox;
+		//if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, neededBox))
+	    //		return;
+		//this.previouslyNeeded = neededBox;
 
 		let needed = [];
 		let now = performance.now();
@@ -292,11 +294,13 @@ class Layout {
 		//let missing = this.shader.samplers.length;
 
 		for (let level = 0; level <= neededBox.level; level++) {
+			if(needed.length > maxtiles)
+				break;
 			let box = neededBox.pyramid[level];
 			let tmp = [];
 			for (let y = box.yLow; y < box.yHigh; y++) {
 				for (let x = box.xLow; x < box.xHigh; x++) {
-					let index = this.layout.index(level, x, y);
+					let index = this.index(level, x, y);
 					let tile = tiles.get(index) || this.newTile(index); //{ index, x, y, missing, tex: [], level };
 					tile.time = now;
 					tile.priority = neededBox.level - level;
@@ -307,14 +311,14 @@ class Layout {
 			let c = box.center();
 			//sort tiles by distance to the center TODO: check it's correct!
 			tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
-			needed = needed.e.concat(tmp);
+			needed = needed.concat(tmp);
 		}
 		return needed;
 	}
 
 	/** returns the list of tiles available for a rendering */
 	available(viewport, transform, border, bias, tiles) {
-		let needed = this.layout.neededBox(viewport, transform, 0, this.mipmapBias);
+		let needed = this.neededBox(viewport, transform, 0, bias);
 		let torender = {}; //array of minlevel, actual level, x, y (referred to minlevel)
 		let brothers = {};
 
