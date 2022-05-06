@@ -97,17 +97,18 @@ class Layout {
 		this.urls = urls;
 		(async () => {
 			switch(this.type) {
-				case 'image':    await this.initImage(); break; // No Url needed
-				case 'google':   await this.initGoogle(); break; // No Url needed
+				case 'image':       await this.initImage(); break; // No Url needed
+
+				case 'google':      await this.initGoogle(); break; // No Url needed
 
 				case 'deepzoom1px': await this.initDeepzoom(true); break; // urls[0] only needed
-				case 'deepzoom': await this.initDeepzoom(false); break; // urls[0] only needed
-				case 'zoomify':  await this.initZoomify(); break; // urls[0] only needed
-				case 'iiif':     await this.initIIIF(); break; // urls[0] only needed
+				case 'deepzoom':    await this.initDeepzoom(false); break; // urls[0] only needed
+				case 'zoomify':     await this.initZoomify(); break; // urls[0] only needed
+				case 'iiif':        await this.initIIIF(); break; // urls[0] only needed
 
-				case 'tarzoom':  await this.initTarzoom(); break; // all urls needed
+				case 'tarzoom':     await this.initTarzoom(); break; // all urls needed
 
-				case 'itarzoom':  await this.initITarzoom(); break; // actually it has just one url
+				case 'itarzoom':    await this.initITarzoom(); break; // actually it has just one url
 			}
 			this.initBoxes();
 			this.status = 'ready';
@@ -144,6 +145,22 @@ class Layout {
 		for(let i = 0; i < level; i++)
 			startindex += this.qbox[i].xHigh*this.qbox[i].yHigh;
 		return startindex + y*this.qbox[level].xHigh + x;
+	}
+	reverseIndex(index) {
+		let originalindex = index;
+		let level = 0;
+		for(let i = 0; i < this.qbox.length; i++) {
+			let size = this.qbox[i].xHigh*this.qbox[i].yHigh;
+			if(index - size < 0);
+				break;
+			index -= size;
+			level++;
+		}
+		let width = this.qbox[level].xHigh;
+		let y = Math.floor(index/width)
+		let x = index % width;
+		console.assert(this.index(level, x, y) == originalindex);
+		return {level, x, y };
 	}
 
 	/*
@@ -255,6 +272,82 @@ class Layout {
 		return { coords: coords, tcoords: tcoords }
 	}
 
+	newTile(index) {
+		let tile = new Tile();
+		tile.index = index;
+		Object.assign(tile, this.reverseIndex(index));
+	}
+
+	/** returns the list of tiles required for a rendering, sorted by priority, max */
+	needed(viewport, transform, border, bias, tiles, maxtiles = 8) {
+		let neededBox = this.layout.neededBox(viewport, transform, 0, this.mipmapBias);
+		
+		if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, neededBox))
+			return;
+		this.previouslyNeeded = neededBox;
+
+		let needed = [];
+		let now = performance.now();
+		//look for needed nodes and prefetched nodes (on the pos destination
+		//let missing = this.shader.samplers.length;
+
+		for (let level = 0; level <= neededBox.level; level++) {
+			let box = neededBox.pyramid[level];
+			let tmp = [];
+			for (let y = box.yLow; y < box.yHigh; y++) {
+				for (let x = box.xLow; x < box.xHigh; x++) {
+					let index = this.layout.index(level, x, y);
+					let tile = tiles.get(index) || this.newTile(index); //{ index, x, y, missing, tex: [], level };
+					tile.time = now;
+					tile.priority = neededBox.level - level;
+					if (tile.missing === null) // || tile.missing != 0 && !this.requested[index])
+						tmp.push(tile);
+				}
+			}
+			let c = box.center();
+			//sort tiles by distance to the center TODO: check it's correct!
+			tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
+			needed = needed.e.concat(tmp);
+		}
+		return needed;
+	}
+
+	/** returns the list of tiles available for a rendering */
+	available(viewport, transform, border, bias, tiles) {
+		let needed = this.layout.neededBox(viewport, transform, 0, this.mipmapBias);
+		let torender = {}; //array of minlevel, actual level, x, y (referred to minlevel)
+		let brothers = {};
+
+		let minlevel = needed.level;
+		let box = needed.pyramid[minlevel];
+
+		for (let y = box.yLow; y < box.yHigh; y++) {
+			for (let x = box.xLow; x < box.xHigh; x++) {
+				let level = minlevel;
+				while (level >= 0) {
+					let d = minlevel - level;
+					let index = this.index(level, x >> d, y >> d);
+					if (tiles.has(index) && tiles.get(index).missing == 0) {
+						torender[index] = tiles.get(index); //{ index: index, level: level, x: x >> d, y: y >> d, complete: true };
+						break;
+					} else {
+						let sx = (x >> (d + 1)) << 1;
+						let sy = (y >> (d + 1)) << 1;
+						brothers[this.index(level, sx, sy)] = 1;
+						brothers[this.index(level, sx + 1, sy)] = 1;
+						brothers[this.index(level, sx + 1, sy + 1)] = 1;
+						brothers[this.index(level, sx, sy + 1)] = 1;
+					}
+					level--;
+				}
+			}
+		}
+		for (let index in brothers) {
+			if (index in torender)
+				torender[index].complete = false;
+		}
+		return torender;
+	}
 
 	/**
  	* Computes the tiles needed for each level, given a viewport and a transform.
@@ -293,6 +386,8 @@ class Layout {
 		}
 		return { level: minlevel, pyramid: pyramid };
 	}
+
+	
 
 	/**
 	 * Gets the URL of a specific tile. The function must be implemented for each layout type supported by OpenLIME.

@@ -445,7 +445,6 @@ class Layer {
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
 		for (let index in torender) {
-			let tile = torender[index];
 			//			if(tile.complete)
 			this.drawTile(torender[index]);
 		}
@@ -456,8 +455,8 @@ class Layer {
 
 	/** @ignore */
 	drawTile(tile) {
-		let tiledata = this.tiles.get(tile.index);
-		if (tiledata.missing != 0)
+		//let tiledata = this.tiles.get(tile.index);
+		if (tile.missing != 0)
 			throw "Attempt to draw tile still missing textures"
 
 		//TODO might want to change the function to oaccept tile as argument
@@ -472,7 +471,7 @@ class Layer {
 			let id = this.shader.samplers[i].id;
 			gl.uniform1i(this.shader.samplers[i].location, i);
 			gl.activeTexture(gl.TEXTURE0 + i);
-			gl.bindTexture(gl.TEXTURE_2D, tiledata.tex[id]);
+			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
 	}
@@ -498,7 +497,7 @@ class Layer {
 					let d = minlevel - level;
 					let index = this.layout.index(level, x >> d, y >> d);
 					if (this.tiles.has(index) && this.tiles.get(index).missing == 0) {
-						torender[index] = { index: index, level: level, x: x >> d, y: y >> d, complete: true };
+						torender[index] = this.tiles.get(index); //{ index: index, level: level, x: x >> d, y: y >> d, complete: true };
 						break;
 					} else {
 						let sx = (x >> (d + 1)) << 1;
@@ -619,7 +618,21 @@ class Layer {
 		if (typeof (this.layout) != 'object')
 			throw "AH!";
 
-		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
+		let needed = this.layout.needed(viewport, transform, this.prefetchBorder, this.mipmapBias, this.tiles);
+
+
+		this.queue = [];
+		let now = performance.now();
+		let missing = this.shader.samplers.length;
+
+
+		for(let tile of needed) {
+			if(tile.missing === null)
+				tile.missing = missing;
+			if (tile.missing != 0 && !this.requested[index])
+				tmp.push(tile);
+		}
+/*		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 		if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
 			return;
 		this.previouslyNeeded = needed;
@@ -646,7 +659,7 @@ class Layer {
 			//sort tiles by distance to the center TODO: check it's correct!
 			tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
 			this.queue = this.queue.concat(tmp);
-		}
+		}*/
 		Cache.setCandidates(this);
 	}
 
