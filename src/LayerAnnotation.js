@@ -63,7 +63,7 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	}
 
 	/** @ignore */
-	newAnnotation(annotation, selected = true) {
+	newAnnotation(annotation) {
 		if(!annotation)
 			annotation = new Annotation();
 
@@ -77,7 +77,6 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 		
 		this.clearSelected();
 		this.setSelected(annotation);
-
 		return annotation;
 	}
 

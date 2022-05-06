@@ -41,7 +41,6 @@ class Viewer {
             background: null,
             autofit: false,
             canvas: {},
-            controllers: [],
             camera: new Camera()
         });
 
