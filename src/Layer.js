@@ -520,12 +520,13 @@ class Layer {
 	}
 
 	/** @ignore */
+	//FIXME: optimize by updating a buffer with ALL the tile coords and just render the appropriate one.
 	updateTileBuffers(coords, tcoords) {
 		let gl = this.gl;
 		//TODO to reduce the number of calls (probably not needed) we can join buffers, and just make one call per draw! (except the bufferData, which is per node)
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
-
+		//FIXME this is not needed every time.
 		gl.vertexAttribPointer(this.shader.coordattrib, 3, gl.FLOAT, false, 0, 0);
 		gl.enableVertexAttribArray(this.shader.coordattrib);
 
