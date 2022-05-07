@@ -49,7 +49,7 @@
 			<li class="dropdown">
 				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li>
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li>
 				</ul>
 			</li>
 			
@@ -467,7 +467,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 		<ul class="dummy">
 			<li>
 				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-53">line 53</a>
+				 <a href="Layout.js.html#sunlight-1-line-54">line 54</a>
 			</li>
 		</ul>
 	</dd>
@@ -515,6 +515,94 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
         <h3 class="subsection-title">Methods</h3>
 
         <dl>
+            
+<hr>
+<dt>
+    <h4 class="name" id="available"><span class="type-signature"></span>available()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>returns the list of tiles available for a rendering</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Layout.js.html">Layout.js</a>,
+				 <a href="Layout.js.html#sunlight-1-line-180">line 180</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
             
 <hr>
 <dt>
@@ -573,7 +661,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 		<ul class="dummy">
 			<li>
 				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-133">line 133</a>
+				 <a href="Layout.js.html#sunlight-1-line-140">line 140</a>
 			</li>
 		</ul>
 	</dd>
@@ -759,7 +847,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 		<ul class="dummy">
 			<li>
 				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-302">line 302</a>
+				 <a href="Layout.js.html#sunlight-1-line-120">line 120</a>
 			</li>
 		</ul>
 	</dd>
@@ -792,7 +880,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
             
 <hr>
 <dt>
-    <h4 class="name" id="neededBox"><span class="type-signature"></span>neededBox(viewport, transform, border, bias)</h4>
+    <h4 class="name" id="needed"><span class="type-signature"></span>needed()</h4>
     
     
 </dt>
@@ -800,7 +888,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 
     
     <div class="description">
-        <p>Computes the tiles needed for each level, given a viewport and a transform.</p>
+        <p>returns the list of tiles required for a rendering, sorted by priority, max</p>
     </div>
     
 
@@ -809,128 +897,6 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
     
 
     
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>viewport</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="global.html#Viewport">Viewport</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The viewport.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>transform</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Transform.html">Transform</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The current transform.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>border</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The threshold (in tile units) around the current camera position for which to prefetch tiles.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>bias</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The mipmap bias of the texture.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
     
 
     
@@ -969,7 +935,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 		<ul class="dummy">
 			<li>
 				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-267">line 267</a>
+				 <a href="Layout.js.html#sunlight-1-line-168">line 168</a>
 			</li>
 		</ul>
 	</dd>
@@ -994,30 +960,6 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
     
 
     
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
 
     
 </dd>
@@ -1081,7 +1023,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 		<ul class="dummy">
 			<li>
 				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-199">line 199</a>
+				 <a href="Layout.js.html#sunlight-1-line-149">line 149</a>
 			</li>
 		</ul>
 	</dd>
@@ -1213,7 +1155,7 @@ as well as the most common multi-resolution image formats (<em>deepzoom</em>, <e
 		<ul class="dummy">
 			<li>
 				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-23">line 23</a>
+				 <a href="Layout.js.html#sunlight-1-line-24">line 24</a>
 			</li>
 		</ul>
 	</dd>
@@ -1295,95 +1237,7 @@ as well as the most common multi-resolution image formats (<em>deepzoom</em>, <e
 		<ul class="dummy">
 			<li>
 				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-93">line 93</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="event:updateSize">updateSize</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>The event is fired when a layout size is modified (and the scene extension must be recomputed at canvas level).</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-155">line 155</a>
+				 <a href="Layout.js.html#sunlight-1-line-105">line 105</a>
 			</li>
 		</ul>
 	</dd>
@@ -1464,7 +1318,7 @@ as well as the most common multi-resolution image formats (<em>deepzoom</em>, <e
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
 	
-		on Fri May 6th 2022
+		on Sat May 7th 2022
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
