@@ -39,7 +39,7 @@ class Viewer {
 
         Object.assign(this, {
             background: null,
-            autofit: false,
+            autofit: true,
             canvas: {},
             camera: new Camera()
         });

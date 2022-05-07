@@ -30,6 +30,8 @@ import { BoundingBox } from './BoundingBox.js'
  *      });
  *      viewer.addLayer('coin1', layer1);
  */
+
+//FIXME: prefetchborder and mipmapbias should probably go into layout
 class Layer {
 	/**
 	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
@@ -438,30 +440,26 @@ class Layer {
 
 		//		find which quads to draw and in case request for them
 		transform = this.transform.compose(transform);
-		let needed = this.layout.neededBox(viewport, transform, 0, this.mipmapBias);
-		let torender = this.toRender(needed);
+		let available = this.layout.available(viewport, transform, 0, this.mipmapBias, this.tiles);
 
 		let matrix = transform.projectionMatrix(viewport);
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
-		for (let index in torender) {
-			let tile = torender[index];
+		for(let tile of Object.values(available)) {
 			//			if(tile.complete)
-			this.drawTile(torender[index]);
+			this.drawTile(tile);
 		}
-
-		//		gl.uniform1f(t.opacitylocation, t.opacity);
 		return done;
 	}
 
 	/** @ignore */
 	drawTile(tile) {
-		let tiledata = this.tiles.get(tile.index);
-		if (tiledata.missing != 0)
+		//let tiledata = this.tiles.get(tile.index);
+		if (tile.missing != 0)
 			throw "Attempt to draw tile still missing textures"
 
 		//TODO might want to change the function to oaccept tile as argument
-		let c = this.layout.tileCoords(tile.level, tile.x, tile.y);
+		let c = this.layout.tileCoords(tile);
 
 		//update coords and texture buffers
 		this.updateTileBuffers(c.coords, c.tcoords);
@@ -472,7 +470,7 @@ class Layer {
 			let id = this.shader.samplers[i].id;
 			gl.uniform1i(this.shader.samplers[i].location, i);
 			gl.activeTexture(gl.TEXTURE0 + i);
-			gl.bindTexture(gl.TEXTURE_2D, tiledata.tex[id]);
+			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
 	}
@@ -483,7 +481,7 @@ class Layer {
 	 *  drawing incomplete tiles enhance the resolution early at the cost of some overdrawing and problems with opacity.
 	 */
 	/** @ignore */
-	toRender(needed) {
+	/*toRender(needed) {
 
 		let torender = {}; //array of minlevel, actual level, x, y (referred to minlevel)
 		let brothers = {};
@@ -498,7 +496,7 @@ class Layer {
 					let d = minlevel - level;
 					let index = this.layout.index(level, x >> d, y >> d);
 					if (this.tiles.has(index) && this.tiles.get(index).missing == 0) {
-						torender[index] = { index: index, level: level, x: x >> d, y: y >> d, complete: true };
+						torender[index] = this.tiles.get(index); //{ index: index, level: level, x: x >> d, y: y >> d, complete: true };
 						break;
 					} else {
 						let sx = (x >> (d + 1)) << 1;
@@ -517,7 +515,7 @@ class Layer {
 				torender[index].complete = false;
 		}
 		return torender;
-	}
+	}*/
 
 	/** @ignore */
 	//FIXME: optimize by updating a buffer with ALL the tile coords and just render the appropriate one.
@@ -545,18 +543,8 @@ class Layer {
 		if (!this.shader || !this.layout || this.layout.status != 'ready')
 			return;
 
-		// if(!this.tiles.size) {
-		// 	 this.tiles = JSON.parse(JSON.stringify(this.layout.tiles));
-		// 	 for(let tile of this.tiles) {
-		// 	 	tile.tex = new Array(this.shader.samplers.length);
-		// 	 	tile.missing = this.shader.samplers.length;
-		//  		tile.size = 0;
-		//  	}
-		//  	return;
-		// }
-
 		for (let tile of this.tiles) {
-			tile.missing = this.shader.samplers.length;;
+			tile.missing = this.shader.samplers.length;
 			for (let sampler of this.shader.samplers) {
 				if (tile.tex[sampler.id])
 					tile.missing--;
@@ -620,7 +608,22 @@ class Layer {
 		if (typeof (this.layout) != 'object')
 			throw "AH!";
 
-		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
+		/*let needed = this.layout.needed(viewport, transform, this.prefetchBorder, this.mipmapBias, this.tiles);
+
+
+		this.queue = [];
+		let now = performance.now();
+		let missing = this.shader.samplers.length;
+
+
+		for(let tile of needed) {
+			if(tile.missing === null)
+				tile.missing = missing;
+			if (tile.missing != 0 && !this.requested[index])
+				tmp.push(tile);
+		} */
+		this.queue = this.layout.needed(viewport, transform, this.prefetchBorder, this.mipmapBias, this.tiles);
+/*		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 		if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
 			return;
 		this.previouslyNeeded = needed;
@@ -647,7 +650,7 @@ class Layer {
 			//sort tiles by distance to the center TODO: check it's correct!
 			tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
 			this.queue = this.queue.concat(tmp);
-		}
+		}*/
 		Cache.setCandidates(this);
 	}
 
@@ -692,7 +695,7 @@ class Layer {
 			if (callback) callback(tile.size);
 			return;
 		}
-
+		tile.missing = this.shader.samplers.length;
 		for (let sampler of this.shader.samplers) {
 
 			let raster = this.rasters[sampler.id];
@@ -701,7 +704,7 @@ class Layer {
 			if (this.layout.type == "image") {
 				this.layout.width = raster.width;
 				this.layout.height = raster.height;
-				this.layout.initBoxes();
+				this.layout.emit('updateSize');
 			}
 			tile.size += size;
 			tile.tex[sampler.id] = tex;
@@ -713,7 +716,6 @@ class Layer {
 			}
 		}
 	}
-
 }
 
 Layer.prototype.types = {}
