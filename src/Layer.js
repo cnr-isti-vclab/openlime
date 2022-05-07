@@ -459,7 +459,7 @@ class Layer {
 			throw "Attempt to draw tile still missing textures"
 
 		//TODO might want to change the function to oaccept tile as argument
-		let c = this.layout.tileCoords(tile.level, tile.x, tile.y);
+		let c = this.layout.tileCoords(tile);
 
 		//update coords and texture buffers
 		this.updateTileBuffers(c.coords, c.tcoords);
@@ -703,7 +703,7 @@ class Layer {
 			if (this.layout.type == "image") {
 				this.layout.width = raster.width;
 				this.layout.height = raster.height;
-				this.layout.initBoxes();
+				this.layout.emit('updateSize');
 			}
 			tile.size += size;
 			tile.tex[sampler.id] = tex;
@@ -715,7 +715,6 @@ class Layer {
 			}
 		}
 	}
-
 }
 
 Layer.prototype.types = {}
