@@ -2,6 +2,11 @@ import { Camera } from './Camera.js'
 import { Layer  } from './Layer.js'
 import { Cache } from './Cache.js'
 
+//// HELPERS
+
+window.structuredClone = structuredClone  || function (value) { return  JSON.parse(JSON.stringify(value)); };
+
+
 /**
  * Creates the WebGL context for the `canvas`. It stores information related to the `overlay` DOM element and the `camera` of the scene.
  * Signals are triggered in case of scene modifications.
@@ -103,6 +108,26 @@ class Canvas {
 		canvas.addEventListener("webglcontextlost", (event) => { console.log("Context lost."); event.preventDefault(); }, false);
 		canvas.addEventListener("webglcontextrestored", ()  => { this.restoreWebGL(); }, false);
 		document.addEventListener("visibilitychange", (event) => { if(this.gl.isContextLost()) { this.restoreWebGL(); }});
+	}
+
+	/**
+	 * Gets the state variables of all the system as described in the stateMask
+	 * @return {Object} An object with state variables.
+	 */
+	getState(stateMask=null) {
+		let state = {};
+		if (!stateMask || stateMask.camera) {
+			let now = performance.now();
+			let m = this.camera.getCurrentTransform(now);
+			state.camera = { 'x': m.x, 'y': m.y, 'z': m.z };
+		}
+		state.layers = {};
+		for (let layer of Object.values(this.layers)) {
+			const layerMask = window.structuredClone(stateMask);
+			if (stateMask && stateMask.layers) Object.assign(layerMask, stateMask.layers[layer.id]);
+			Object.assign(state.layers, layer.getState(layerMask));
+		}
+		return state;
 	}
 
 	/** @ignore */

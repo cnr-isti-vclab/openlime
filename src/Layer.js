@@ -143,6 +143,30 @@ class Layer {
 			r(...parameters);
 	}
 
+	/**
+	 * Sets the state of the layer 
+	 */
+	setState() {
+		// TBD
+	}
+
+	/**
+	 * Gets the state variables of the layer.
+	 * @return {Object} An object with state variables 
+	 */
+	getState(stateMask=null) {
+		const state = {};
+		state[this.id] = {};
+		state[this.id].controls = {};
+		for (const [key, v] of Object.entries(this.controls)) {
+			if(!stateMask || stateMask.controls[key]) 
+				state[this.id].controls[key] = v.current.value;
+		}
+		if(!stateMask || stateMask.mode)
+			state[this.id].mode = this.getMode();
+		return state;
+	}
+
 	/** @ignore */
 	setLayout(layout) {
 		/**
