@@ -4,10 +4,17 @@ import { ShaderRTI } from './ShaderRTI.js'
 import { Transform } from './Transform.js'
 
 /**
- * Extends {@link Layer}.
+ * Extends {@link Layer}, and can display a relightable images (RTI) using the 'relight' data format (see:
+ * [relight on github]{@link https://github.com/cnr-isti-vclab/relight} for details).
+ * This web-friendly format is composed of a info.json with RTI parametets and a set of images 
+ * (plane_0.jpg, plane_1.jpg etc.) with encoded coefficients.
+ * As with all other layers Deepzoom and other {@link Layout}s can be used.
+ * 
+ * The ligh direction can be changed programmatically using setLight.
+ * 
  * @param {options} options Same as {@link Layer}, but url and layout are required.
- * **url**: points to a relight format .json
- * **plane**: url for the first coefficient (plane_0), needed for IIIF and IIP (without /info.json)
+ * **url**: points to a relight .json
+ * **layout**: one of image, deepzoom, google, iiif, zoomify, tarzoom, itarzoom
  */
 
 class LayerRTI extends Layer {
@@ -20,21 +27,17 @@ class LayerRTI extends Layer {
 		if(!this.url)
 			throw "Url option is required";
 
-		// if(!this.layout)
-		// 	this.layout = 'image';
-
-		// this.layout.setUrl(this.url);
-		// this.setLayout(this.layout);
-
 		this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
 		this.setShader('rti');
 
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
-		if(this.url)
-			this.loadJson(this.url);
+		
+		this.loadJson(this.url);
 	}
-
+/*
+ *  Internal function to assemble the url needed to retrieve the image or the image tile.
+ */
 	imageUrl(url, plane) {
 		let path = this.url.substring(0, this.url.lastIndexOf('/')+1);
 		switch(this.layout.type) {
@@ -42,7 +45,7 @@ class LayerRTI extends Layer {
 			case 'google':   return path + plane;          break;
 			case 'deepzoom': return path + plane + '.dzi'; break;
 			case 'tarzoom':  return path + plane + '.tzi'; break;
-			case 'itarzoom':  return path + 'planes.tzi'; break;
+			case 'itarzoom': return path + 'planes.tzi'; break;
 			case 'zoomify':  return path + plane + '/ImageProperties.xml'; break;
 			//case 'iip':      return this.plane.throw Error("Unimplemented");
 			case 'iiif': throw Error("Unimplemented");
@@ -51,9 +54,9 @@ class LayerRTI extends Layer {
 	}
 
 /*
- * Alias for setControl
+ * Alias for setControl, changes light direction.
  * @param {Array} light light direction as an array [x, y]
- * @param {number} dt delay
+ * @param {number} dt in ms, interpolation duration.
  */
 	setLight(light, dt) {
 		this.setControl('light', light, dt);
