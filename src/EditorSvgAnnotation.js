@@ -191,7 +191,7 @@ class EditorSvgAnnotation {
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
 		if(this.customData) this.customData(anno);
-		if(this.enableState) this.setAnnotationCurrentState();
+		if(this.enableState) this.setAnnotationCurrentState(anno);
 		anno.publish = 1;
 		anno.label = anno.description = anno.class = '';
 		let post = {
@@ -199,14 +199,11 @@ class EditorSvgAnnotation {
 			publish: anno.publish, data: anno.data
 		};
 		if (this.enableState) post = { ...post, state: anno.state };
-		// if (anno.light) post = { ...post, light: anno.light }; FIXME
-		// if (anno.lens) post = { ...post, lens: anno.lens };
 		if (this.createCallback) {
 			let result = this.createCallback(post);
 			if (!result)
 				alert("Failed to create annotation!");
 		}
-		this.showEditWidget(anno);
 		this.layer.setSelected(anno);
 	}
 
@@ -271,16 +268,19 @@ class EditorSvgAnnotation {
 		if (this.editWidget)
 			return;
 		console.log('ANNO', this.annotation);
+		
+		let customDataStr = Object.entries(this.annotation.data).map(k => {
+			let label = k[0];
+			let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text">`
+			return str;
+		}).join('\n');
+
 		let html = `
 				<div class="openlime-annotation-edit">
 					<span>Title:</span> <input name="label" type="text">
 					<span>Description:</span> <input name="description" type="text">
 
-					${Object.entries(this.annotation.data).map(k => {
-						let label = k[0];
-						let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text">`
-						return str;
-					}).join('\n')}
+					${customDataStr}
 					
 					<br/>
 					<span>Class:</span> 
@@ -309,7 +309,7 @@ class EditorSvgAnnotation {
 		let state = edit.querySelector('.openlime-state');
 		
 		state.addEventListener('click', (e) => {
-			if(this.enableState) this.setAnnotationCurrentState();
+			if(this.enableState) this.setAnnotationCurrentState(this.annotation);
 			this.saveCurrent();
 			this.saveAnnotation(); 
 		});
@@ -385,13 +385,13 @@ class EditorSvgAnnotation {
 	}
 
 	/** @ignore */
-	setAnnotationCurrentState() {
+	setAnnotationCurrentState(anno) {
 		const cam = this.viewer.camera;
 		let now = performance.now();
 		let m = cam.getCurrentTransform(now);
-		this.annotation.state = { camera: { 'x': m.x, 'y': m.y, 'z': m.z } }; //FIXME active layers  + active controls 
+		anno.state = { camera: { 'x': m.x, 'y': m.y, 'z': m.z } }; //FIXME active layers  + active controls 
 		// Callback to add  light/lens params or other data
-		if(this.customState) this.customState(this.annotation);
+		if(this.customState) this.customState(anno);
 	}
 
 	/** @ignore */

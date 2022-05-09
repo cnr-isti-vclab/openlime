@@ -288,13 +288,15 @@ class UIBasic {
 
 			
 
-			for (let l of Object.values(this.viewer.canvas.layers)) {
+			for(let l of Object.values(this.viewer.canvas.layers)) {
 				this.setLayer(l);
 				break;
 			}
 
-			if (this.actions.light.active == true) //FIXME light control activated only after first use
+			if(this.actions.light.active)
 				this.toggleLightController();
+			if(this.actions.layers.active)
+				this.toggleLayers();
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}

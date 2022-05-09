@@ -1,6 +1,18 @@
 import { Shader } from './Shader.js'
 
 /**
+ * Extends {@link Shader}, initialized with a relight .json (see:
+ * [relight on github]{@link https://github.com/cnr-isti-vclab/relight} for details).
+ * 
+ * Supported modes are
+ * light: relightable images depending on light direction
+ * normals: shows a normal map
+ * diffuse: remove albedo and display only the geometry with a white material.
+ * specular: specular enhancement
+ * 
+ * From the .json configuration the type of basis used: ('ptm', 'hsh', rbf', 'bln'), 
+ * and the colorspace ('lrgb', 'rgb', 'mrgb', 'mycc') along with all the other parameters.
+ * 
  *  @param {object} options
  * *compose*: compose operation: add, subtract, multiply, etc.
  */
@@ -37,6 +49,11 @@ class ShaderRTI extends Shader {
 		this.setMode('light');
 	}
 
+	/*
+ * Set current rendering mode
+ * @param {string} mode one of 'light', 'normals', 'diffuse', 'specular'
+ * @param {number} dt in ms, interpolation duration.
+ */
 	setMode(mode) {
 		if(!(this.modes.includes(mode)))
 			throw Error("Unknown mode: " + mode);
