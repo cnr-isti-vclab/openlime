@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: Layout</title>
+	<title>OpenLIME Class: LayoutTiles</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -95,13 +95,13 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: Layout</h1>
+	<h1 class="page-title">Class: LayoutTiles</h1>
 <section>
 
 <header>
     
         <h2>
-        Layout
+        LayoutTiles
         </h2>
         
             <div class="class-description"><p>The Layout class is responsible for specifying the data formats (images) managed by OpenLIME.
@@ -139,7 +139,7 @@ the work of the server, which is not penalised by having to manage a file system
         
 <hr>
 <dt>
-    <h4 class="name" id="Layout"><span class="type-signature"></span>new Layout(url, type [, options])</h4>
+    <h4 class="name" id="LayoutTiles"><span class="type-signature"></span>new LayoutTiles(url, type [, options])</h4>
     
     
 </dt>
@@ -466,8 +466,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-54">line 54</a>
+				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
+				 <a href="LayoutTiles.js.html#sunlight-1-line-54">line 54</a>
 			</li>
 		</ul>
 	</dd>
@@ -572,8 +572,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-180">line 180</a>
+				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
+				 <a href="LayoutTiles.js.html#sunlight-1-line-274">line 274</a>
 			</li>
 		</ul>
 	</dd>
@@ -598,118 +598,6 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
     
 
     
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="boundingBox"><span class="type-signature"></span>boundingBox()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Gets the layout bounding box.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-140">line 140</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>The layout bounding box.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="BoundingBox.html">BoundingBox</a></span>
-
-
-
-    </dd>
-</dl>
-
-
-        
 
     
 </dd>
@@ -846,8 +734,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-120">line 120</a>
+				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
+				 <a href="LayoutTiles.js.html#sunlight-1-line-355">line 355</a>
 			</li>
 		</ul>
 	</dd>
@@ -934,8 +822,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-168">line 168</a>
+				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
+				 <a href="LayoutTiles.js.html#sunlight-1-line-240">line 240</a>
 			</li>
 		</ul>
 	</dd>
@@ -960,6 +848,240 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
     
 
     
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="neededBox"><span class="type-signature"></span>neededBox(viewport, transform, border, bias)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Computes the tiles needed for each level, given a viewport and a transform.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>viewport</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#Viewport">Viewport</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The viewport.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>transform</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Transform.html">Transform</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The current transform.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>border</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The threshold (in tile units) around the current camera position for which to prefetch tiles.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>bias</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The mipmap bias of the texture.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
+				 <a href="LayoutTiles.js.html#sunlight-1-line-318">line 318</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
 
     
 </dd>
@@ -1022,8 +1144,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-149">line 149</a>
+				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
+				 <a href="LayoutTiles.js.html#sunlight-1-line-180">line 180</a>
 			</li>
 		</ul>
 	</dd>
@@ -1067,485 +1189,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
     
 
     
-        <h3 class="subsection-title">Type Definitions</h3>
 
-        <dl>
-                
-<hr>
-<dt class="name" id="Type">
-    <h4 id="Type">Type</h4>
-
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        <p>The type of the image. All web single-resolution image types (<em>jpg</em>, <em>png</em>, <em>gif</em>, etc...) are supported
-as well as the most common multi-resolution image formats (<em>deepzoom</em>, <em>zoomify</em>, <em>IIIF</em>, <em>google maps</em>).</p>
-    </div>
-    
-
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">'image'</span>
-|
-
-<span class="param-type">'deepzoom'</span>
-|
-
-<span class="param-type">'deepzoom1px'</span>
-|
-
-<span class="param-type">'google'</span>
-|
-
-<span class="param-type">'zoomify'</span>
-|
-
-<span class="param-type">'iiif'</span>
-|
-
-<span class="param-type">'tarzoom'</span>
-|
-
-<span class="param-type">'itarzoom'</span>
-
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-24">line 24</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-</dd>
-
-            
-                
-<hr>
-<dt class="name" id="Type">
-    <h4 id="Type">Type</h4>
-
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        <p>The type of the image. All web single-resolution image types (<em>jpg</em>, <em>png</em>, <em>gif</em>, etc...) are supported
-as well as the most common multi-resolution image formats (<em>deepzoom</em>, <em>zoomify</em>, <em>IIIF</em>, <em>google maps</em>).</p>
-    </div>
-    
-
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">'image'</span>
-|
-
-<span class="param-type">'deepzoom'</span>
-|
-
-<span class="param-type">'deepzoom1px'</span>
-|
-
-<span class="param-type">'google'</span>
-|
-
-<span class="param-type">'zoomify'</span>
-|
-
-<span class="param-type">'iiif'</span>
-|
-
-<span class="param-type">'tarzoom'</span>
-|
-
-<span class="param-type">'itarzoom'</span>
-
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
-				 <a href="LayoutTiles.js.html#sunlight-1-line-24">line 24</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-</dd>
-
-            </dl>
-    
-
-    
-        <h3 class="subsection-title">Events</h3>
-
-        <dl>
-            
-<hr>
-<dt>
-    <h4 class="name" id="event:ready">ready</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>The event is fired when a layout is ready to be drawn(the single-resolution image is downloaded or the multi-resolution structure has been initialized).</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Layout.js.html">Layout.js</a>,
-				 <a href="Layout.js.html#sunlight-1-line-105">line 105</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="event:ready">ready</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>The event is fired when a layout is ready to be drawn(the single-resolution image is downloaded or the multi-resolution structure has been initialized).</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
-				 <a href="LayoutTiles.js.html#sunlight-1-line-87">line 87</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="event:updateSize">updateSize</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>The event is fired when a layout size is modified (and the scene extension must be recomputed at canvas level).</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
-				 <a href="LayoutTiles.js.html#sunlight-1-line-144">line 144</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        </dl>
     
 </article>
 
