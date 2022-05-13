@@ -248,7 +248,6 @@ class EditorSvgAnnotation {
 		this.setActiveTool();
 		this.layer.annotationsListEntry.element.querySelector('.openlime-edit').classList.add('active');
 		(async () => {
-			console.log(this.annotation); //FIXME create
 			await this.createEditWidget();
 			this.updateEditWidget();
 		})();
@@ -266,21 +265,17 @@ class EditorSvgAnnotation {
 	/** @ignore */
 	async createEditWidget() {
 		if (this.editWidget)
-			return;
-		console.log('ANNO', this.annotation);
-		
-		let customDataStr = Object.entries(this.annotation.data).map(k => {
-			let label = k[0];
-			let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text">`
-			return str;
-		}).join('\n');
-
+			return;		
 		let html = `
 				<div class="openlime-annotation-edit">
 					<span>Title:</span> <input name="label" type="text">
 					<span>Description:</span> <input name="description" type="text">
 
-					${customDataStr}
+					${Object.entries(this.annotation.data).map(k => {
+						let label = k[0];
+						let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text">`
+						return str;
+					}).join('\n')}
 					
 					<br/>
 					<span>Class:</span> 
@@ -386,10 +381,7 @@ class EditorSvgAnnotation {
 
 	/** @ignore */
 	setAnnotationCurrentState(anno) {
-		const cam = this.viewer.camera;
-		let now = performance.now();
-		let m = cam.getCurrentTransform(now);
-		anno.state = { camera: { 'x': m.x, 'y': m.y, 'z': m.z } }; //FIXME active layers  + active controls 
+		anno.state = window.structuredClone(this.viewer.canvas.getState());
 		// Callback to add  light/lens params or other data
 		if(this.customState) this.customState(anno);
 	}
@@ -597,7 +589,6 @@ class EditorSvgAnnotation {
 
 	/** @ignore */
 	saveCurrent() {
-		console.log('save current');
 		let anno = this.annotation; //current annotation.
 		if (!anno.history)
 			anno.history = [];

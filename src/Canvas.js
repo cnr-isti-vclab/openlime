@@ -111,6 +111,25 @@ class Canvas {
 	}
 
 	/**
+	 * Sets the state variables of all the system
+	 * @param {Object} state An object with state variables.
+	 * @param {number} dt The animation duration in millisecond.
+	 * @param {Easing} easing The function aimed at making the camera movement or control adjustments less severe or pronounced.
+	 */
+	setState(state, dt, easing = 'linear') {
+		if ('camera' in state) {
+			const m = state.camera;
+			this.camera.setPosition(dt, m.x, m.y, m.z, m.a, easing);
+		}
+		if ('layers' in state)
+			for (const [k, layerState] of Object.entries(state.layers))
+				if (k in this.layers) {
+					const layer = this.layers[k];
+					layer.setState(layerState, dt, easing);
+				}
+	}
+
+	/**
 	 * Gets the state variables of all the system as described in the stateMask
 	 * @return {Object} An object with state variables.
 	 */
@@ -119,13 +138,13 @@ class Canvas {
 		if (!stateMask || stateMask.camera) {
 			let now = performance.now();
 			let m = this.camera.getCurrentTransform(now);
-			state.camera = { 'x': m.x, 'y': m.y, 'z': m.z };
+			state.camera = { 'x': m.x, 'y': m.y, 'z': m.z, 'a': m.a };
 		}
 		state.layers = {};
 		for (let layer of Object.values(this.layers)) {
 			const layerMask = window.structuredClone(stateMask);
 			if (stateMask && stateMask.layers) Object.assign(layerMask, stateMask.layers[layer.id]);
-			Object.assign(state.layers, layer.getState(layerMask));
+			state.layers[layer.id] = layer.getState(layerMask);
 		}
 		return state;
 	}

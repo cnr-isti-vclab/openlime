@@ -35,7 +35,7 @@ import { BoundingBox } from './BoundingBox.js'
 class Layer {
 	/**
 	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
-    * Signals are triggered when the layer is ready (i.e. completely initialized) or if its state variables have been updated (a redraw is needed).
+	* Signals are triggered when the layer is ready (i.e. completely initialized) or if its state variables have been updated (a redraw is needed).
 	* @param {Object} [options]
 	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
 	* @param {string} options.type A string identifier to select the specific derived layer class to instantiate.
@@ -114,7 +114,7 @@ class Layer {
 			requested: {},  //tiles requested.
 		});
 		Object.assign(this, options);
-		if(this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
+		if (this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
 
 		this.transform = new Transform(this.transform);
 
@@ -127,19 +127,19 @@ class Layer {
 	}
 
 	/**
- 	* Adds a Layer Event
- 	* @param {string} event A label to identify the event.
- 	* @param {*} callback The event callback function.
+	  * Adds a Layer Event
+	  * @param {string} event A label to identify the event.
+	  * @param {*} callback The event callback function.
 	*/
 	addEvent(event, callback) {
 		this.signals[event].push(callback);
 	}
 
 	/*
- 	* Emits an event (running all the callbacks referred to it).
- 	* @param {*} event The event name
- 	*/
-	/** @ignore */ 
+	  * Emits an event (running all the callbacks referred to it).
+	  * @param {*} event The event name
+	  */
+	/** @ignore */
 	emit(event, ...parameters) {
 		for (let r of this.signals[event])
 			r(...parameters);
@@ -148,24 +148,30 @@ class Layer {
 	/**
 	 * Sets the state of the layer 
 	 */
-	setState() {
-		// TBD
+	setState(state, dt, easing = 'linear') {
+		if ('controls' in state)
+			for (const [key, v] of Object.entries(state.controls)) {
+				this.setControl(key, v, dt, easing);
+			}
+		if ('mode' in state && state.mode) {
+			this.setMode(state.mode);
+		}
 	}
 
 	/**
 	 * Gets the state variables of the layer.
 	 * @return {Object} An object with state variables 
 	 */
-	getState(stateMask=null) {
+	getState(stateMask = null) {
 		const state = {};
-		state[this.id] = {};
-		state[this.id].controls = {};
+		state.controls = {};
 		for (const [key, v] of Object.entries(this.controls)) {
-			if(!stateMask || stateMask.controls[key]) 
-				state[this.id].controls[key] = v.current.value;
+			if (!stateMask || ('controls' in stateMask && key in stateMask.controls))
+				state.controls[key] = v.current.value;
 		}
-		if(!stateMask || stateMask.mode)
-			state[this.id].mode = this.getMode();
+		if (!stateMask || 'mode' in stateMask)
+			if (this.getMode())
+				state.mode = this.getMode();
 		return state;
 	}
 
@@ -219,8 +225,10 @@ class Layer {
 	 * @returns {string} the shader mode
 	 */
 	getMode() {
-		return this.shader.mode;
-	}
+		if (this.shader)
+			return this.shader.mode;
+		return null;
+	}	
 
 	/**
 	 * Gets an arrays of all the modes implemented in the current shader.
@@ -309,12 +317,12 @@ class Layer {
 	}
 
 	/**
- 	* Computes the merge bounding box of all the 'layers`
- 	* @param {Layer[]} layers 
- 	* @param {bool} discardHidden Whether hidden layers are not to be included in the computation.
- 	* @returns {BoundingBox} The bounding box 
+	  * Computes the merge bounding box of all the 'layers`
+	  * @param {Layer[]} layers 
+	  * @param {bool} discardHidden Whether hidden layers are not to be included in the computation.
+	  * @returns {BoundingBox} The bounding box 
 	* @static 
- 	*/
+	  */
 	static computeLayersBBox(layers, discardHidden) {
 		if (layers == undefined || layers == null) {
 			console.log("ASKING BBOX INFO ON NO LAYERS");
@@ -336,7 +344,7 @@ class Layer {
 	 * @param {*} name The name of the control.
 	 * return {*} The control
 	 */
-	 getControl(name) {
+	getControl(name) {
 		let control = this.controls[name] ? this.controls[name] : null;
 		if (control) {
 			let now = performance.now();
@@ -351,10 +359,10 @@ class Layer {
 	 * @param {*} value The value for initialization.
 	 */
 	addControl(name, value) {
-		if(this.controls[name])
+		if (this.controls[name])
 			throw new Error(`Control "$name" already exist!`);
 		let now = performance.now();
-		this.controls[name] = { 'source':{ 'value': value, 't': now }, 'target':{ 'value': value, 't': now }, 'current':{ 'value': value, 't': now }, 'easing': 'linear' };
+		this.controls[name] = { 'source': { 'value': value, 't': now }, 'target': { 'value': value, 't': now }, 'current': { 'value': value, 't': now }, 'easing': 'linear' };
 	}
 
 	/**
@@ -363,7 +371,7 @@ class Layer {
 	 * @param {*} value The value for initialization.
 	 * @param {time} dt Duration of the interpolation (0=no interpolation).
 	 */
-	setControl(name, value, dt, easing='linear') { //When are created?
+	setControl(name, value, dt, easing = 'linear') { //When are created?
 		let now = performance.now();
 		let control = this.controls[name];
 		this.interpolateControl(control, now);
@@ -391,7 +399,7 @@ class Layer {
 	}
 
 	/** @ignore */
-	interpolateControl(control, time ) {
+	interpolateControl(control, time) {
 		let source = control.source;
 		let target = control.target;
 		let current = control.current;
@@ -469,7 +477,7 @@ class Layer {
 		let matrix = transform.projectionMatrix(viewport);
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
-		for(let tile of Object.values(available)) {
+		for (let tile of Object.values(available)) {
 			//			if(tile.complete)
 			this.drawTile(tile);
 		}
@@ -647,34 +655,34 @@ class Layer {
 				tmp.push(tile);
 		} */
 		this.queue = this.layout.needed(viewport, transform, this.prefetchBorder, this.mipmapBias, this.tiles);
-/*		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
-		if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
-			return;
-		this.previouslyNeeded = needed;
-
-		this.queue = [];
-		let now = performance.now();
-		//look for needed nodes and prefetched nodes (on the pos destination
-		let missing = this.shader.samplers.length;
-
-		for (let level = 0; level <= needed.level; level++) {
-			let box = needed.pyramid[level];
-			let tmp = [];
-			for (let y = box.yLow; y < box.yHigh; y++) {
-				for (let x = box.xLow; x < box.xHigh; x++) {
-					let index = this.layout.index(level, x, y);
-					let tile = this.tiles.get(index) || { index, x, y, missing, tex: [], level };
-					tile.time = now;
-					tile.priority = needed.level - level;
-					if (tile.missing != 0 && !this.requested[index])
-						tmp.push(tile);
-				}
-			}
-			let c = box.center();
-			//sort tiles by distance to the center TODO: check it's correct!
-			tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
-			this.queue = this.queue.concat(tmp);
-		}*/
+		/*		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
+				if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
+					return;
+				this.previouslyNeeded = needed;
+		
+				this.queue = [];
+				let now = performance.now();
+				//look for needed nodes and prefetched nodes (on the pos destination
+				let missing = this.shader.samplers.length;
+		
+				for (let level = 0; level <= needed.level; level++) {
+					let box = needed.pyramid[level];
+					let tmp = [];
+					for (let y = box.yLow; y < box.yHigh; y++) {
+						for (let x = box.xLow; x < box.xHigh; x++) {
+							let index = this.layout.index(level, x, y);
+							let tile = this.tiles.get(index) || { index, x, y, missing, tex: [], level };
+							tile.time = now;
+							tile.priority = needed.level - level;
+							if (tile.missing != 0 && !this.requested[index])
+								tmp.push(tile);
+						}
+					}
+					let c = box.center();
+					//sort tiles by distance to the center TODO: check it's correct!
+					tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
+					this.queue = this.queue.concat(tmp);
+				}*/
 		Cache.setCandidates(this);
 	}
 
