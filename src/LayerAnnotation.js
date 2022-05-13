@@ -76,7 +76,7 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 		list.appendChild(template.content.firstChild);
 		
 		this.clearSelected();
-		this.setSelected(annotation);
+		//this.setSelected(annotation);
 		return annotation;
 	}
 

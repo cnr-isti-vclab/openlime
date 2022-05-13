@@ -9,26 +9,25 @@ class LayerLens extends LayerCombiner {
 	constructor(options) {
 		options = Object.assign({
 			overlay: true,
-			defaultBorderColor: [0.8, 0.8, 0.8, 1],
+			borderColor: [0.8, 0.8, 0.8, 1],
+			borderWidth: 4,
 		}, options);
 		super(options);
 		
 		// Shader lens currently handles up to 2 layers
 		let shader = new ShaderLens();
-		if (this.layers.length == 2) shader.setOverlayLayerEnabled(true);
+		if (this.layers.length == 2) shader.setOverlayLayerEnabled(true); //FIXME Is it a mode?
 		this.shaders['lens'] = shader;
 		this.setShader('lens');
 
 		this.startPos = [0, 0];
-		this.border = 4;
+		this.border = this.borderWidth; //FIXME Change border with borderWidth
 
 		this.addControl('center', [0, 0]);
 		this.addControl('radius', [0, 0]);
 
-		this.setLens(0,0,this.radius,this.border);
+		this.setLens(0, 0, 100, this.border); //FIXME Is it right?
 		this.signals.draw = [];
-		const c = this.defaultBorderColor;
-		this.borderColor = [c[0], c[1], c[2], c[3]];
 	}
 
 	removeOverlayLayer() {

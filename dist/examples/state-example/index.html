@@ -5,14 +5,15 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLIME - Lens Viewer</title>
+    <title>OpenLIME - State Example</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <link rel="stylesheet" href="../examples.css" />
 
 </head>
 
 <body>
-    <h1>OpenLIME - Lens Viewer</h1>
+    <h1>OpenLIME - State Example</h1>
+    <button id="btn">GET & SET STATE</button>
     <div class="openlime"></div>
     <script src="../../js/openlime.js"></script>
      <script>
@@ -89,6 +90,37 @@
         ui.actions.zoomout.display = true;
 
         ui.attribution = `Cape Spartivento Lighthouse, oil on canvas, 14x18 cm, 2004 - by Fabio Marton`;
+
+        // On button click the state variable are get, modified and set.
+        const btn = document.getElementById('btn');
+        btn.addEventListener('click', (e) => {
+            // Set a mask to get the state variables: camera, mode, lens center, but not lens radius
+            let mask = {
+                camera: true,
+                mode: true,
+                layers: {
+                    lens: {
+                        controls: {
+                            center: true,
+                            radius: false
+                        }
+                    }
+                }
+            };
+            // Acquire the state variables.
+            const s = lime.canvas.getState(mask);
+            console.log(JSON.parse(JSON.stringify(s)));
+            // Modified the state variables
+            s.camera.x = 300;
+            s.camera.y = 0;
+            s.camera.z = 0.5;
+            s.layers.lens.controls.center = [200,200];
+            s.layers.lens.controls.radius = [200,0];
+            console.log(JSON.stringify(mask));
+            console.log(JSON.stringify(s));
+            // Set the new state
+            lime.canvas.setState(s, 2000, 'ease-in-out');
+        });
 
     </script>
 </body>
