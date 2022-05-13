@@ -27,6 +27,8 @@ class Tile {
             level: null, //used only in LayoutTiles
             x: null,
             y: null,
+            w: null, // used only in LayoutImages
+            h: null, // used only in LayoutImages
 
             start:null,
             end:null,
