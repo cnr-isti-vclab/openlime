@@ -8,19 +8,19 @@ class LayoutTileImages extends Layout {
 		super(url, null, options);
 		this.setDefaults(type);
         this.init(url, type, options);
-        this.locations = []; // x,y,w,h for each tile
+        this.regions = []; // x,y,w,h for each tile
 		this.activeTiles = [];
 	}
 
-    setTileLocations(locations) {
-        this.locations = locations;
+    setTileRegions(regions) {
+        this.regions = regions;
 
 		// Compute width height of the all images
 		// let xLow = 100000;
 		// let yLow = 100000;
 		// let xHigh = -10000;
 		// let yHigh = -10000;
-		// for(let l of this.locations) {
+		// for(let l of this.regions) {
 		// 	xLow = Math.min(xLow, l.x);
 		// 	yLow = Math.min(yLow, l.y);
 		// 	xHigh = Math.max(xHigh, l.x+l.w);
@@ -49,7 +49,7 @@ class LayoutTileImages extends Layout {
 	}
     
     tileCoords(tile) {
-		const l = this.locations[tile.index];
+		const l = this.regions[tile.index];
         const x0 = l.x;
         const y0 = l.y
         const x1 = x0 + l.w;
@@ -72,13 +72,13 @@ class LayoutTileImages extends Layout {
 		let now = performance.now();
 
 		// Linear scan of all the potential tiles
-		const N = this.locations.length;
+		const N = this.regions.length;
 		const flipY = true;
 		for (let x = 0; x < N; x++) {
 			let index = this.index(0, x, 0);
 			let tile = tiles.get(index) || this.newTile(index); 
 
-			if (this.intersect(box, this.locations[index], flipY)) {
+			if (this.intersect(box, this.regions[index], flipY)) {
 				tile.time = now;
 				tile.priority = this.activeTiles[index] ? 10 : 1;
 				if (tile.missing === null) 
@@ -101,13 +101,13 @@ class LayoutTileImages extends Layout {
 		let torender = [];
 
 		// Linear scan of all the potential tiles
-		const N = this.locations.length;
+		const N = this.regions.length;
 		const flipY = true;
 		for (let x = 0; x < N; x++) {
 			let index = this.index(0, x, 0);
 
 			const active = this.activeTiles[index];
-			const intersect = this.intersect(box, this.locations[index], flipY);
+			const intersect = this.intersect(box, this.regions[index], flipY);
 			if (active && intersect) {
 				if (tiles.has(index)) {
 					let tile = tiles.get(index); 
@@ -124,7 +124,7 @@ class LayoutTileImages extends Layout {
 	newTile(index) {
 		let tile = new Tile();
 		tile.index = index;
-		const l = this.locations[index];
+		const l = this.regions[index];
 		tile.x = l.x;
 		tile.y = l.y;
 		tile.w = l.w;
@@ -132,11 +132,11 @@ class LayoutTileImages extends Layout {
 		return tile;
 	}
 	
-	intersect(box, tileLocation, flipY = true) {
-		const xLow = tileLocation.x;
-        const yLow = tileLocation.y;
-        const xHigh = xLow + tileLocation.w;
-        const yHigh = yLow + tileLocation.h;
+	intersect(box, tileRegion, flipY = true) {
+		const xLow = tileRegion.x;
+        const yLow = tileRegion.y;
+        const xHigh = xLow + tileRegion.w;
+        const yHigh = yLow + tileRegion.h;
 		const boxYLow = flipY ? -box.yHigh : box.yLow;
 		const boxYHigh = flipY ? -box.yLow : box.yHigh;
 		
@@ -148,13 +148,13 @@ class LayoutTileImages extends Layout {
 	 * @returns {BoundingBox} The layout bounding box.
 	 */
 	boundingBox() {
-		const N = this.locations.length;
+		const N = this.regions.length;
 		if(N == 0) throw "Layout not initialized still";
 
 		let bbox = new BoundingBox();
 		for(let i = 0; i < N; ++i) {
 			if (this.activeTiles[i]) {
-				const l = this.locations[i];
+				const l = this.regions[i];
 				const x0 = l.x;
 				const y0 = l.y
 				const x1 = x0 + l.w;

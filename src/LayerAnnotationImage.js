@@ -19,23 +19,23 @@ class LayerAnnotationImage extends LayerAnnotation {
         const rasterFormat = this.format != null ? this.format : 'vec4';
 
         let initCallback = () => {
-            // Set in layout urls, and annotation locations (x,y,w,h)
+            // Set in layout urls, and annotation regions (x,y,w,h)
             let urls = [];
-            let locations = [];
+            let regions = [];
             for(let a of this.annotations) {
                 // if(a.publish != 1)
-                const url = options.path + "/" + a.imageUrl;
+                const url = options.path + "/" + a.image;
                 urls.push(url);
-                locations.push(a.state.location);
+                regions.push(a.region);
                 let raster = new Raster({ format: rasterFormat });
                 this.rasters.push(raster);
             }
             
             this.layout.setUrls(urls);
-            this.layout.setTileLocations(locations);
+            this.layout.setTileRegions(regions);
             console.log("URLS: " + urls);
-            console.log("LOCATIONS: ");
-            console.log(locations);
+            console.log("regionS: ");
+            console.log(regions);
 
             this.setupShader(rasterFormat);
         }
