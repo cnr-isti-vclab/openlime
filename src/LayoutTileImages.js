@@ -81,7 +81,7 @@ class LayoutTileImages extends Layout {
 			if (this.intersect(box, this.locations[index], flipY)) {
 				tile.time = now;
 				tile.priority = this.activeTiles[index] ? 10 : 1;
-				if (tile.missing === null) // || tile.missing != 0 && !this.requested[index])
+				if (tile.missing === null) 
 					needed.push(tile);
 			}
 		}
@@ -106,15 +106,16 @@ class LayoutTileImages extends Layout {
 		for (let x = 0; x < N; x++) {
 			let index = this.index(0, x, 0);
 
-			if (this.activeTiles[index] && this.intersect(box, this.locations[index], flipY)) {
+			const active = this.activeTiles[index];
+			const intersect = this.intersect(box, this.locations[index], flipY);
+			if (active && intersect) {
 				if (tiles.has(index)) {
 					let tile = tiles.get(index); 
-
 					if (tile.missing == 0) {
 						torender[index] = tile;
 					}
 				}
-			}	
+			}
 		}
 
 		return torender;
@@ -136,14 +137,10 @@ class LayoutTileImages extends Layout {
         const yLow = tileLocation.y;
         const xHigh = xLow + tileLocation.w;
         const yHigh = yLow + tileLocation.h;
-
-		if (flipY) {
-			const tmp = box.yHigh;
-			box.yHigh = -box.yLow;
-			box.yLow = -tmp;
-		}
-
-		return xLow < box.xHigh  && yLow < box.yHigh && xHigh > box.xLow && yHigh > box.yLow;
+		const boxYLow = flipY ? -box.yHigh : box.yLow;
+		const boxYHigh = flipY ? -box.yLow : box.yHigh;
+		
+		return xLow < box.xHigh  && yLow < boxYHigh && xHigh > box.xLow && yHigh > boxYLow;
 	}
 
     /**
