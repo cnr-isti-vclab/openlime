@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Source: ShaderBRDF.js</title>
+	<title>OpenLIME Source: LayerAnnotationImage.js</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -95,216 +95,138 @@
 		<div id="main">
 			
 
-		<h1 class="page-title">Source: ShaderBRDF.js</h1>
+		<h1 class="page-title">Source: LayerAnnotationImage.js</h1>
     
 <section>
     <article>
         <pre
-            class="sunlight-highlight-javascript linenums">import { Shader } from './Shader.js'
+            class="sunlight-highlight-javascript linenums">import { LayerAnnotation } from './LayerAnnotation.js'
+import { Layer } from './Layer.js'
+import { Raster } from './Raster.js'
+import { Shader } from './Shader.js'
+import { LayoutTileImages } from './LayoutTileImages.js';
 
 /**
- *  @param {object} options
- *   mode: default is ward, can be [ward, diffuse, specular, normals]
+ * Class which extend LayerAnnotation. Support Image Annotations.
+ * Each annotation corresponds to a tile (currently single resolution)
  */
 
-class ShaderBRDF extends Shader {
-	constructor(options) {
-		super({});
-		this.modes = ['ward', 'diffuse', 'specular', 'normals', 'monochrome'];
-		this.mode = 'ward';
+class LayerAnnotationImage extends LayerAnnotation {
+    constructor(options) {
+        if (options.path == null) {
+            console.log("WARNING MISSING ANNOTATION PATH, SET TO ./annot/");
+        }
+        super(options);
+        const path = options.path != null ? options.path : "./annot";
+        const rasterFormat = this.format != null ? this.format : 'vec4';
 
-		Object.assign(this, options);
+        let initCallback = () => {
+            // Set in layout urls, and annotation locations (x,y,w,h)
+            let urls = [];
+            let locations = [];
+            for(let a of this.annotations) {
+                // if(a.publish != 1)
+                const url = options.path + "/" + a.imageUrl;
+                urls.push(url);
+                locations.push(a.state.location);
+                let raster = new Raster({ format: rasterFormat });
+                this.rasters.push(raster);
+            }
+            
+            this.layout.setUrls(urls);
+            this.layout.setTileLocations(locations);
+            console.log("URLS: " + urls);
+            console.log("LOCATIONS: ");
+            console.log(locations);
+
+            this.setupShader(rasterFormat);
+        }
+        this.addEvent('loaded', initCallback);
+        
+        let updateCallback = () => {
+            const N = this.annotations.length;
+            for(let i = 0; i &lt; N; ++i) {
+                let a = this.annotations[i];
+                this.layout.setActiveTile(i, a.visible);
+            }
+        }
+        this.addEvent('update', updateCallback);
+
+    }
+
+    length() {
+        return this.annotations.length;
+    }
+
+    setActiveTile(index) {
+        console.log("Set Active tile " + index);
+        this.layout.setActiveAllTiles(false);
+        this.layout.setActiveTile(index, true);
+        this.emit('update');
+    }
+
+    drawTile(tile) {
+		if (tile.missing != 0)
+			throw "Attempt to draw tile still missing textures"
+
+        const idx = tile.index;
+		let c = this.layout.tileCoords(tile);
+
+		//update coords and texture buffers
+		this.updateTileBuffers(c.coords, c.tcoords);
+
+		//bind texture of this tile only (each tile corresponds to an image)
+		let gl = this.gl;
+		let id = this.shader.samplers[idx].id;
+		gl.uniform1i(this.shader.samplers[idx].location, idx);
+		gl.activeTexture(gl.TEXTURE0 + idx);
+		gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+	}
+
+    setupShader(rasterFormat) {
+        let samplers = [];
+        let N = this.rasters.length;
+        for(let i = 0; i &lt; N; ++i) {
+            samplers.push({id:i, name: 'kd', type: rasterFormat});
+        }
+		let shader = new Shader({
+			'label': 'Rgb',
+			'samplers': samplers //[{ id:0, name:'kd', type: rasterFormat }]
+		});
 		
-		const kdCS = this.colorspaces['kd'] == 'linear' ? 0 : 1;
-		const ksCS = this.colorspaces['ks'] == 'linear' ? 0 : 1;
+		shader.fragShaderSrc = function(gl) {
 
-		const brightness = options.brightness ? options.brightness : 1.0;
-		const gamma = options.gamma ? options.gamma : 2.2;
-		const alphaLimits = options.alphaLimits ? options.alphaLimits : [0.01, 0.5];
-		const monochromeMaterial = options.monochromeMaterial ? options.monochromeMaterial : [0.80, 0.79, 0.75];
-		const kAmbient = options.kAmbient ? options.kAmbient : 0.1;
+			let gl2 = !(gl instanceof WebGLRenderingContext);
+			let str = `${gl2? '#version 300 es' : ''}
 
-		this.uniforms = {
-			uLightInfo:          { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
-			uAlphaLimits:        { type: 'vec2', needsUpdate: true, size: 2, value: alphaLimits },
-			uBrightnessGamma:    { type: 'vec2', needsUpdate: true, size: 2, value: [brightness, gamma] },		
-			uInputColorSpaceKd:  { type: 'int', needsUpdate: true, size: 1, value: kdCS },
-			uInputColorSpaceKs:  { type: 'int', needsUpdate: true, size: 1, value: ksCS },
-			uMonochromeMaterial: { type: 'vec3', needsUpdate: true, size: 3, value: monochromeMaterial },
-			uKAmbient:           { type: 'float', needsUpdate: true, size: 1, value: kAmbient },
-			
-		}
+precision highp float;
+precision highp int;
 
-		this.innerCode = '';
-		this.setMode(this.mode);
-	}
-
-	setLight(light) {
-		// Light with 4 components (Spot: 4th==1, Dir: 4th==0)
-		this.setUniform('uLightInfo', light);
-	}
-
-	setMode(mode) {
-		this.mode = mode;
-		switch(mode) {
-			case 'ward':
-				this.innerCode = 
-				`vec3 linearColor = (kd + ks * spec) * NdotL;
-				linearColor += kd * 0.02; // HACK! adding just a bit of ambient`
-			break;
-			case 'diffuse':
-				this.innerCode = 
-				`vec3 linearColor = kd;`
-			break;
-			case 'specular':
-				this.innerCode = 
-				`vec3 linearColor = clamp((ks * spec) * NdotL, 0.0, 1.0);`
-			break;
-			case 'normals':
-				this.innerCode = 
-				`vec3 linearColor = (N+vec3(1.))/2.;
-				applyGamma = false;`
-			break;
-			case 'monochrome':
-                this.innerCode = 
-                `vec3 linearColor = uMonochromeMaterial * NdotL;
-                linearColor += uMonochromeMaterial * uKAmbient;
-                applyGamma=false;`
-            break;
-			default:
-				console.log("ShaderBRDF: Unknown mode: " + mode);
-				throw Error("ShaderBRDF: Unknown mode: " + mode);
-			break;
-		}
-		this.needsUpdate = true;
-	}
-
-	fragShaderSrc(gl) {
-		let gl2 = !(gl instanceof WebGLRenderingContext);
-		let hasGloss = this.samplers.findIndex( s => s.name == 'uTexGloss') != -1;
-		let hasKs = this.samplers.findIndex( s => s.name == 'uTexKs') != -1;	
-		let str = `${gl2? '#version 300 es' : ''}
-precision highp float; 
-precision highp int; 
-
-#define NULL_NORMAL vec3(0,0,0)
-#define SQR(x) ((x)*(x))
-#define PI (3.14159265359)
-#define ISO_WARD_EXPONENT (4.0)
+uniform sampler2D kd;
 
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
-uniform sampler2D uTexKd;
-uniform sampler2D uTexKs;
-uniform sampler2D uTexNormals;
-uniform sampler2D uTexGloss;
-
-uniform vec4 uLightInfo; // [x,y,z,w] (if .w==0 => Directional, if w==1 => Spot)
-uniform vec2 uAlphaLimits;
-uniform vec2 uBrightnessGamma;
-uniform vec3 uMonochromeMaterial;
-uniform float uKAmbient;
-
-uniform int uInputColorSpaceKd; // 0: Linear; 1: sRGB
-uniform int uInputColorSpaceKs; // 0: Linear; 1: sRGB
-
-${gl2? 'out' : ''}  vec4 color;
-
-vec3 getNormal(const in vec2 texCoord) {
-	vec3 n = texture(uTexNormals, texCoord).xyz;
-	n = 2. * n - vec3(1.);
-	float norm = length(n);
-	if(norm &lt; 0.5) return NULL_NORMAL;
-	else return n/norm;
-}
-
-vec3 linear2sRGB(vec3 linearRGB) {
-    bvec3 cutoff = lessThan(linearRGB, vec3(0.0031308));
-    vec3 higher = vec3(1.055)*pow(linearRGB, vec3(1.0/2.4)) - vec3(0.055);
-    vec3 lower = linearRGB * vec3(12.92);
-    return mix(higher, lower, cutoff);
-}
-
-vec3 sRGB2Linear(vec3 sRGB) {
-    bvec3 cutoff = lessThan(sRGB, vec3(0.04045));
-    vec3 higher = pow((sRGB + vec3(0.055))/vec3(1.055), vec3(2.4));
-    vec3 lower = sRGB/vec3(12.92);
-    return mix(higher, lower, cutoff);
-}
-
-float ward(in vec3 V, in vec3 L, in vec3 N, in vec3 X, in vec3 Y, in float alpha) {
-
-	vec3 H = normalize(V + L);
-
-	float H_dot_N = dot(H, N);
-	float sqr_alpha_H_dot_N = SQR(alpha * H_dot_N);
-
-	if(sqr_alpha_H_dot_N &lt; 0.00001) return 0.0;
-
-	float L_dot_N_mult_N_dot_V = dot(L,N) * dot(N,V);
-	if(L_dot_N_mult_N_dot_V &lt;= 0.0) return 0.0;
-
-	float spec = 1.0 / (4.0 * PI * alpha * alpha * sqrt(L_dot_N_mult_N_dot_V));
-	
-	//float exponent = -(SQR(dot(H,X)) + SQR(dot(H,Y))) / sqr_alpha_H_dot_N; // Anisotropic
-	float exponent = -SQR(tan(acos(H_dot_N))) / SQR(alpha); // Isotropic
-	
-	spec *= exp( exponent );
-
-	return spec;
-}
+${gl2? 'out' : ''} vec4 color;
 
 
 void main() {
-	vec3 N = getNormal(v_texcoord);
-	if(N == NULL_NORMAL) {
-		color = vec4(0.0);
-		return;
-	}
-
-	vec3 L = (uLightInfo.w == 0.0) ? normalize(uLightInfo.xyz) : normalize(uLightInfo.xyz - gl_FragCoord.xyz);
-	vec3 V = vec3(0.0,0.0,1.0);
-    vec3 H = normalize(L + V);
-	float NdotL = max(dot(N,L),0.0);
-
-	vec3 kd = texture(uTexKd, v_texcoord).xyz;
-	vec3 ks = ${hasKs ? 'texture(uTexKs, v_texcoord).xyz' : 'vec3(0.0, 0.0, 0.0)'};
-	if(uInputColorSpaceKd == 1) {
-		kd = sRGB2Linear(kd);
-	}
-	if(uInputColorSpaceKs == 1) {
-		ks = sRGB2Linear(ks);
-	}
-	kd /= PI;
-
-	float gloss = ${hasGloss ? 'texture(uTexGloss, v_texcoord).x' : '0.0'};
-	float minGloss = 1.0 - pow(uAlphaLimits[1], 1.0 / ISO_WARD_EXPONENT);
-	float maxGloss = 1.0 - pow(uAlphaLimits[0], 1.0 / ISO_WARD_EXPONENT);
-
-	float alpha = pow(1.0 - gloss * (maxGloss - minGloss) - minGloss, ISO_WARD_EXPONENT);
-	
-	
-	vec3 e = vec3(0.0,0.0,1.0);
-	vec3 T = normalize(cross(N,e));
-	vec3 B = normalize(cross(N,T));
-	float spec = ward(V, L, N, T, B, alpha);
-	
-	bool applyGamma = true;
-
-	${this.innerCode}
-
-	vec3 finalColor = applyGamma ? pow(linearColor * uBrightnessGamma[0], vec3(1.0/uBrightnessGamma[1])) : linearColor;
-	color = vec4(finalColor, 1.0);
-	${gl2?'':'gl_FragColor = color;'}
+	color = texture${gl2?'':'2D'}(kd, v_texcoord);
+	${gl2? '':'gl_FragColor = color;'}
 }
 `;
-	return str;
-	}
+			return str;
+
+		};
+
+		this.shaders = {'standard': shader };
+		this.setShader('standard');
+    }
 
 }
 
+Layer.prototype.types['annotation_image'] = (options) => { return new LayerAnnotationImage(options); }
 
-export { ShaderBRDF }
-</pre>
+export { LayerAnnotationImage }</pre>
     </article>
 </section>
 
