@@ -16,17 +16,15 @@ class LayerLens extends LayerCombiner {
 		
 		// Shader lens currently handles up to 2 layers
 		let shader = new ShaderLens();
-		if (this.layers.length == 2) shader.setOverlayLayerEnabled(true); //FIXME Is it a mode?
+		if (this.layers.length == 2) shader.setOverlayLayerEnabled(true); //FIXME Is it a mode? Control?
 		this.shaders['lens'] = shader;
 		this.setShader('lens');
 
-		this.startPos = [0, 0];
-		this.border = this.borderWidth; //FIXME Change border with borderWidth
-
 		this.addControl('center', [0, 0]);
-		this.addControl('radius', [0, 0]);
+		this.addControl('radius', [100, 0]);
+		this.addControl('borderColor', this.borderColor);
+		this.addControl('borderWidth', [this.borderWidth]);
 
-		this.setLens(0, 0, 100, this.border); //FIXME Is it right?
 		this.signals.draw = [];
 	}
 
@@ -52,12 +50,6 @@ class LayerLens extends LayerCombiner {
 		this.layout.height = h;
 		this.createFramebuffers();
 	}
-
-	setLens(x = 0, y = 0, r = 100, border = 10) {
-		this.border = border;
-		this.setCenter(x, y);
-		this.setRadius(r);
-	}
 	
 	setRadius(r, delayms = 100, easing='linear') {
 		this.setControl('radius', [r, 0], delayms, easing);
@@ -77,6 +69,14 @@ class LayerLens extends LayerCombiner {
 
 	getTargetCenter() {
 		return this.controls['center'].target.value;
+	}
+
+	getBorderColor() {
+		return this.controls['borderColor'].current.value;
+	}
+
+	getBorderWidth() {
+		return this.controls['borderWidth'].current.value[0];
 	}
 
 	draw(transform, viewport) {
@@ -127,7 +127,7 @@ class LayerLens extends LayerCombiner {
 		
 		// Set in the lensShader the proper lens position wrt the window viewport
 		const vl = this.getLensInViewportCoords(transform, viewport);
-		this.shader.setLensUniforms(vl, [viewport.w, viewport.h], this.borderColor);
+		this.shader.setLensUniforms(vl, [viewport.w, viewport.h], this.getBorderColor());
 	
 		this.prepareWebGL();
 
@@ -200,7 +200,7 @@ class LayerLens extends LayerCombiner {
 		const lensC = this.getCurrentCenter();
 		const c = transform.sceneToViewportCoords(viewport, lensC);
 		const r = this.getRadius();
-		return [c[0],  c[1], r * transform.z, this.border];
+		return [c[0],  c[1], r * transform.z, this.getBorderWidth()];
 	}
 
 }
