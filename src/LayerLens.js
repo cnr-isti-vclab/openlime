@@ -166,18 +166,16 @@ class LayerLens extends LayerCombiner {
 		let result = null;
 		if (this.layers.length == 2) {
 			// Get overlay projected viewport
-			const overlayT = this.layers[1].transform.copy();
-			overlayT.y *= -1;
-			const p0 = overlayT.apply(-this.layers[1].layout.width/2, -this.layers[1].layout.height/2);
-			const p1 = overlayT.apply( this.layers[1].layout.width/2,  this.layers[1].layout.height/2);
-			const p0v = transform.sceneToViewportCoords(viewport, [p0.x, p0.y]);
-			const p1v = transform.sceneToViewportCoords(viewport, [p1.x, p1.y]);
-
+			let bbox = this.layers[1].boundingBox();
+			const p0v = transform.sceneToViewportCoords(viewport, [bbox.xLow, bbox.yLow]);
+			const p1v = transform.sceneToViewportCoords(viewport, [bbox.xHigh, bbox.yHigh]);
+		
 			// Intersect with window viewport
 			const x0 = Math.min(Math.max(0, Math.floor(p0v[0])), viewport.w);
 			const y0 = Math.min(Math.max(0, Math.floor(p0v[1])), viewport.h);
 			const x1 = Math.min(Math.max(0, Math.ceil(p1v[0])), viewport.w);
 			const y1 = Math.min(Math.max(0, Math.ceil(p1v[1])), viewport.h);
+
 			const width = x1 - x0;
 			const height = y1 - y0;
 			result = {x: x0, y: y0, dx:width, dy: height, w:viewport.w, h:viewport.h};

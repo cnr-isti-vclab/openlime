@@ -27,12 +27,14 @@ class Annotation {
 				class: null,
 				target: null,
 				svg: null,
+				imageUrl: null,
+				location: null,
 				data: {},
 				style: null,
 				bbox: null,
 				visible: true,
 				state: null,
-				ready: false, //already: convertted to svg
+				ready: false, //already: converted to svg
 				needsUpdate: true,
 				editing: false,
 			}, 
@@ -56,18 +58,26 @@ class Annotation {
 	 * @returns {BoundingBox} The bounding box
 	 */
 	getBBoxFromElements() {
-		let box = { x: 0, y: 0, width: 0, height: 0 }
-		if(!this.elements.length)
-			return box;
-		let { x, y, width, height } = this.elements[0].getBBox();
-		for(let shape of this.elements) {
-				const { sx, sy, swidth, sheight } = shape.getBBox();
-				x = Math.min(x, sx);
-				y = Math.min(x, sy);
-				width = Math.max(width + x, sx + swidth) - x; 
-				height = Math.max(height + y, sy + sheight) - y; 
+		let box = null;
+		if(!this.elements.length) {
+			if (this.location == null) {
+				box = new BoundingBox();
+			} else {
+				const l = this.location;
+				box = new BoundingBox({xLow: l.x, yLow: l.y, xHigh: l.x+l.w, yHigh: l.y+l.h});
+			}
+		} else {
+			let { x, y, width, height } = this.elements[0].getBBox();
+			for(let shape of this.elements) {
+					const { sx, sy, swidth, sheight } = shape.getBBox();
+					x = Math.min(x, sx);
+					y = Math.min(x, sy);
+					width = Math.max(width + x, sx + swidth) - x; 
+					height = Math.max(height + y, sy + sheight) - y; 
+			}
+			box = new BoundingBox({xLow: x, yLow: y, xHigh: x+width, yHigh: y+width});
 		}
-		return new BoundingBox({xLow: x, yLow: y, xHigh: x+width, yHigh: y+width});
+		return box;
 	}
 
 	/////////////////////////////////
