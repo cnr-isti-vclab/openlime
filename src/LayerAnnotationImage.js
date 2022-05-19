@@ -11,56 +11,49 @@ import { LayoutTileImages } from './LayoutTileImages.js';
 
 class LayerAnnotationImage extends LayerAnnotation {
     constructor(options) {
+        const url = options.url;
         if (options.path == null) {
             console.log("WARNING MISSING ANNOTATION PATH, SET TO ./annot/");
         }
         super(options);
-        const path = options.path != null ? options.path : "./annot";
         const rasterFormat = this.format != null ? this.format : 'vec4';
 
         let initCallback = () => {
-            // Set in layout urls, and annotation locations (x,y,w,h)
-            let urls = [];
-            let locations = [];
+            // Set Annotation Urls path
+            if (options.path) {
+                this.layout.path = options.path;
+            } else if (url != null) {
+                // Extract path from annotation.json path
+                this.layout.setPathFromUrl(path);
+            }
+
             for(let a of this.annotations) {
-                // if(a.publish != 1)
-                const url = options.path + "/" + a.imageUrl;
-                urls.push(url);
-                locations.push(a.state.location);
                 let raster = new Raster({ format: rasterFormat });
                 this.rasters.push(raster);
             }
-            
-            this.layout.setUrls(urls);
-            this.layout.setTileLocations(locations);
-            console.log("URLS: " + urls);
-            console.log("LOCATIONS: ");
-            console.log(locations);
-
+            console.log("Set " + this.annotations.length + " annotations into layout");
             this.setupShader(rasterFormat);
+            this.layout.setTileDescriptors(this.annotations);
         }
         this.addEvent('loaded', initCallback);
-        
-        let updateCallback = () => {
-            const N = this.annotations.length;
-            for(let i = 0; i < N; ++i) {
-                let a = this.annotations[i];
-                this.layout.setActiveTile(i, a.visible);
-            }
-        }
-        this.addEvent('update', updateCallback);
-
     }
 
     length() {
         return this.annotations.length;
     }
 
-    setActiveTile(index) {
-        console.log("Set Active tile " + index);
-        this.layout.setActiveAllTiles(false);
-        this.layout.setActiveTile(index, true);
-        this.emit('update');
+    setTileVisible(index, visible) {
+        this.layout.setTileVisible(index, visible);
+        //this.annotations[index].needsUpdate = true;
+        //this.emit('update');
+    }
+
+    setAllTilesVisible(visible) {
+        this.layout.setAllTilesVisible(visible);
+        // for(let a of this.annotations) {
+        //     a.needsUpdate = true;
+        // }
+        //this.emit('update');
     }
 
     drawTile(tile) {

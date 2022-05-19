@@ -8,38 +8,80 @@ class LayoutTileImages extends Layout {
 		super(url, null, options);
 		this.setDefaults(type);
         this.init(url, type, options);
-        this.locations = []; // x,y,w,h for each tile
-		this.activeTiles = [];
+
+		// Contain array of records with at least visible,region,image (url of the image). 
+		// Can be also a pointer to annotation array set from outside with setTileDescriptors()
+        this.tileDescriptors = []; 
+		
+		if (url != null) {
+			// Read data from annotation file
+			this.loadDescriptors(url);
+		}
 	}
 
-    setTileLocations(locations) {
-        this.locations = locations;
+	async loadDescriptors(url) {
+		// Load tile descriptors from annotation file
+		let response = await fetch(url);
+		if(!response.ok) {
+			this.status = "Failed loading " + url + ": " + response.statusText;
+			return;
+		}
+		this.tileDescriptors = await response.json();
+		if(this.tileDescriptors.status == 'error') {
+			alert("Failed to load annotations: " + this.tileDescriptors.msg);
+			return;
+		}
+		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
+		this.tileDescriptors = this.tileDescriptors.map(a => new Annotation(a));
+		for(let a of this.tileDescriptors)
+			if(a.publish != 1)
+				a.visible = false;
 
-		// Compute width height of the all images
-		// let xLow = 100000;
-		// let yLow = 100000;
-		// let xHigh = -10000;
-		// let yHigh = -10000;
-		// for(let l of this.locations) {
-		// 	xLow = Math.min(xLow, l.x);
-		// 	yLow = Math.min(yLow, l.y);
-		// 	xHigh = Math.max(xHigh, l.x+l.w);
-		// 	yHigh = Math.max(yHigh, l.y+l.h);
+		if (this.path == null) {
+			this.setPathFromUrl(url);
+		}
 
-		// 	this.activeTile[counter] = false;
-		// }
-		// this.width = xHigh - xLow;
-		// this.height = yHigh - yLow;
+		this.status = 'ready';
+		this.emit('ready');
+	}
+
+	setPathFromUrl(url) {
+		// Assume annotations in dir of annotation.json + /annot/
+		const myArray = url.split("/");
+		const N = myArray.length;
+		this.path="";
+		for(let i = 0; i < N-1; ++i) {
+			this.path += myArray[i] + "/";
+		}
+		this.path += "/annot/";
+	}
+
+    setTileDescriptors(tileDescriptors) {
+        this.tileDescriptors = tileDescriptors;
+		
+		this.status = 'ready';
+		this.emit('ready');
     }
 
-	setActiveTile(index, active) {
-		this.activeTiles[index] = active;
+	/**
+	 * Gets the URL of a specific tile. The function must be implemented for each layout type supported by OpenLIME.
+	 * @param {number} id The channel id.
+	 * @param {Tile} tile The tile.
+	 */
+	getTileURL(id, tile) {
+		const url = this.path + '/' + this.tileDescriptors[id].image;
+		return url;
 	}
 
-	setActiveAllTiles(active) {
-		const N = this.activeTiles.length;
+	setTileVisible(index, visible) {
+		this.tileDescriptors[index].visible = visible;
+	}
+
+	setAllTilesVisible(visible) {
+		const N = this.tileCount();
+
 		for(let i = 0; i < N; ++i) {
-			this.activeTiles[i] = active;
+			this.tileDescriptors[i].visible = visible;
 		}
 	}
 
@@ -49,11 +91,11 @@ class LayoutTileImages extends Layout {
 	}
     
     tileCoords(tile) {
-		const l = this.locations[tile.index];
-        const x0 = l.x;
-        const y0 = l.y
-        const x1 = x0 + l.w;
-        const y1 = y0 + l.h;
+		const r = this.tileDescriptors[tile.index].region;
+        const x0 = r.x;
+        const y0 = r.y
+        const x1 = x0 + r.w;
+        const y1 = y0 + r.h;
 
 		return { 
 			coords: new Float32Array([x0, y0, 0,  x0, y1, 0,  x1, y1, 0,  x1, y0, 0]),
@@ -72,15 +114,15 @@ class LayoutTileImages extends Layout {
 		let now = performance.now();
 
 		// Linear scan of all the potential tiles
-		const N = this.locations.length;
+		const N = this.tileCount();
 		const flipY = true;
 		for (let x = 0; x < N; x++) {
 			let index = this.index(0, x, 0);
 			let tile = tiles.get(index) || this.newTile(index); 
 
-			if (this.intersect(box, this.locations[index], flipY)) {
+			if (this.intersect(box, index, flipY)) {
 				tile.time = now;
-				tile.priority = this.activeTiles[index] ? 10 : 1;
+				tile.priority = this.tileDescriptors[index].visible ? 10 : 1;
 				if (tile.missing === null) 
 					needed.push(tile);
 			}
@@ -101,14 +143,12 @@ class LayoutTileImages extends Layout {
 		let torender = [];
 
 		// Linear scan of all the potential tiles
-		const N = this.locations.length;
+		const N = this.tileCount();
 		const flipY = true;
 		for (let x = 0; x < N; x++) {
 			let index = this.index(0, x, 0);
 
-			const active = this.activeTiles[index];
-			const intersect = this.intersect(box, this.locations[index], flipY);
-			if (active && intersect) {
+			if (this.tileDescriptors[index].visible && this.intersect(box, index, flipY)) {
 				if (tiles.has(index)) {
 					let tile = tiles.get(index); 
 					if (tile.missing == 0) {
@@ -124,19 +164,20 @@ class LayoutTileImages extends Layout {
 	newTile(index) {
 		let tile = new Tile();
 		tile.index = index;
-		const l = this.locations[index];
-		tile.x = l.x;
-		tile.y = l.y;
-		tile.w = l.w;
-		tile.h = l.h;
+		const r = this.tileDescriptors[index].region;
+		tile.x = r.x;
+		tile.y = r.y;
+		tile.w = r.w;
+		tile.h = r.h;
 		return tile;
 	}
 	
-	intersect(box, tileLocation, flipY = true) {
-		const xLow = tileLocation.x;
-        const yLow = tileLocation.y;
-        const xHigh = xLow + tileLocation.w;
-        const yHigh = yLow + tileLocation.h;
+	intersect(box, index, flipY = true) {
+		const r = this.tileDescriptors[index].region
+		const xLow = r.x;
+        const yLow = r.y;
+        const xHigh = xLow + r.w;
+        const yHigh = yLow + r.h;
 		const boxYLow = flipY ? -box.yHigh : box.yLow;
 		const boxYHigh = flipY ? -box.yLow : box.yHigh;
 		
@@ -148,17 +189,13 @@ class LayoutTileImages extends Layout {
 	 * @returns {BoundingBox} The layout bounding box.
 	 */
 	boundingBox() {
-		const N = this.locations.length;
-		if(N == 0) throw "Layout not initialized still";
-
 		let bbox = new BoundingBox();
-		for(let i = 0; i < N; ++i) {
-			if (this.activeTiles[i]) {
-				const l = this.locations[i];
-				const x0 = l.x;
-				const y0 = l.y
-				const x1 = x0 + l.w;
-				const y1 = y0 + l.h;
+		for(let t of this.tileDescriptors) {
+			if (t.visible) {
+				const x0 = t.region.x;
+				const y0 = t.region.y
+				const x1 = x0 + t.region.w;
+				const y1 = y0 + t.region.h;
 				const tbox = new BoundingBox({xLow: x0, yLow: y0, xHigh: x1, yHigh: y1});
 				bbox.mergeBox(tbox);
 			}
@@ -166,6 +203,9 @@ class LayoutTileImages extends Layout {
 		return bbox;
 	}
 
+	tileCount() {
+		return this.tileDescriptors.length;
+	}
 
 }
 

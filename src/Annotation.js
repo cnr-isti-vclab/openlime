@@ -27,8 +27,8 @@ class Annotation {
 				class: null,
 				target: null,
 				svg: null,
-				imageUrl: null,
-				location: null,
+				image: null,
+				region: null,
 				data: {},
 				style: null,
 				bbox: null,
@@ -60,11 +60,11 @@ class Annotation {
 	getBBoxFromElements() {
 		let box = null;
 		if(!this.elements.length) {
-			if (this.location == null) {
+			if (this.region == null) {
 				box = new BoundingBox();
 			} else {
-				const l = this.location;
-				box = new BoundingBox({xLow: l.x, yLow: l.y, xHigh: l.x+l.w, yHigh: l.y+l.h});
+				const r = this.region;
+				box = new BoundingBox({xLow: r.x, yLow: r.y, xHigh: r.x+r.w, yHigh: r.y+r.h});
 			}
 		} else {
 			let { x, y, width, height } = this.elements[0].getBBox();
