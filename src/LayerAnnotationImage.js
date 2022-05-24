@@ -56,23 +56,24 @@ class LayerAnnotationImage extends LayerAnnotation {
         //this.emit('update');
     }
 
-    drawTile(tile) {
+    drawTile(tile, index) {
 		if (tile.missing != 0)
 			throw "Attempt to draw tile still missing textures"
 
         const idx = tile.index;
 		let c = this.layout.tileCoords(tile);
 
-		//update coords and texture buffers
-		this.updateTileBuffers(c.coords, c.tcoords);
-
+		//coords and texture buffers updated once for all tiles from main draw() call
+	
 		//bind texture of this tile only (each tile corresponds to an image)
 		let gl = this.gl;
 		let id = this.shader.samplers[idx].id;
 		gl.uniform1i(this.shader.samplers[idx].location, idx);
 		gl.activeTexture(gl.TEXTURE0 + idx);
 		gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
-		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+		
+        const byteOffset = this.getTileByteOffset(index);
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, byteOffset);
 	}
 
     setupShader(rasterFormat) {
