@@ -579,11 +579,10 @@ class Layer {
 	updateAllTileBuffers(tiles) {
 		let gl = this.gl;
 
-		let N = 0;
-		for(let t of  Object.values(tiles)) {
-			++N;
-		}
+		//use this.tiles instead.
+		let N = Object.values(tiles).length;
 		if (N == 0) return;
+		
 		const szV = 12;
 		const szT = 8;
 		const szI = 6;
@@ -597,6 +596,7 @@ class Layer {
 			tBuffer.set(c.tcoords, i * szT);
 			
 			const off = i * 4;
+			tile.indexBufferByteOffset = 2*i*szI;
 			iBuffer.set([off+3, off+2, off+1, off+3, off+1, off+0], i * szI);
 			++i;
 		}

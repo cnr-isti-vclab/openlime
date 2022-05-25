@@ -61,7 +61,6 @@ class LayerAnnotationImage extends LayerAnnotation {
 			throw "Attempt to draw tile still missing textures"
 
         const idx = tile.index;
-		let c = this.layout.tileCoords(tile);
 
 		//coords and texture buffers updated once for all tiles from main draw() call
 	
