@@ -37,11 +37,12 @@ function dstretchTest() {
 	let dstretch = new Layer({
 		type: 'dstretch',
 		layout: 'image',
-		url: 'assets/dstretch'
+		url: 'assets/dstretch/coin'
 	});
 
 	lime.canvas.addLayer('dstretch', dstretch);
 	let ui = new UIBasic(lime);
+	ui.actions.light.active = true;
 }
 
 function testAnnotationEditor() {

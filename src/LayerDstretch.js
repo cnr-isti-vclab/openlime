@@ -16,13 +16,26 @@ class LayerDstretch extends Layer{
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 		if(this.url)
 			this.loadJson(this.url);
+		this.addControl('light', [0, 0]);
+	}
 
-		this.addSliders();
+	setLight(value, dt) {
+		this.setControl('light', value, dt);
+
+		this.eulerRotation[0] = Math.PI * this.getControl('light').current.value[0];//this.controls['light'].current[0];
+		this.eulerRotation[1] = Math.PI * this.getControl('light').current.value[1];//this.controls['light'].current[1];
+
+		this.shader.updateRotationMatrix(this.eulerRotation);
+		this.emit('update');
+
+		console.log(this.eulerRotation);
 	}
 
 	addSliders() {
 		let sliders = [document.createElement("input"), document.createElement("input"), document.createElement("input")];
 		let labels = [document.createElement("label"), document.createElement("label"), document.createElement("label")];
+		let inputs = [document.createElement("input"), document.createElement("input"), document.createElement("input")];
+
 		let axis = ["X", "Y", "Z"];
 		
 		for (let i=0; i<sliders.length; i++) {
@@ -32,19 +45,61 @@ class LayerDstretch extends Layer{
 			sliders[i].setAttribute("max", 360);
 			sliders[i].value = 0;
 			sliders[i].oninput = this.updateSliders.bind(this);
-			sliders[i].style = "width:400px;"
+			sliders[i].style = "width:300px;"
 
 			labels[i].setAttribute("for", sliders[i].id);
-			labels[i].innerHTML = axis[i] + " rotation";
+			labels[i].innerHTML = axis[i] + ":";
 			labels[i].id = sliders[i].id + "-label";
+			labels[i].style = "width:100px;";
+
+			inputs[i].setAttribute("type", "number");
+			inputs[i].setAttribute("min", 0);
+			inputs[i].setAttribute("max", 360);
+			inputs[i].id = axis[i] + "-rot-input";
+			inputs[i].value = 0;
+			inputs[i].oninput = this.updateInputs.bind(this);
 			
 			document.body.appendChild(labels[i]);
 			document.body.appendChild(sliders[i]);
+			document.body.appendChild(inputs[i]);
 		}		
 	}
 
 	updateSliders(event) {
-		switch (event.target.id[0]) {
+		if (event == null) {
+			document.getElementById("X-rot").value = this.eulerRotation[0] / (Math.PI / 180);
+			document.getElementById("Y-rot").value = this.eulerRotation[1] / (Math.PI / 180);
+			document.getElementById("Z-rot").value = this.eulerRotation[2] / (Math.PI / 180);
+		}
+		else {
+			switch (event.target.id[0]) {
+				case 'X':
+					this.eulerRotation[0] = parseFloat(event.target.value) * (Math.PI / 180);
+					break;
+				case 'Y':
+					this.eulerRotation[1] = parseFloat(event.target.value) * (Math.PI / 180);
+					break;
+				case 'Z':
+					this.eulerRotation[2] = parseFloat(event.target.value) * (Math.PI / 180);
+					break;
+			}
+			
+			this.updateInputs(null);
+		}
+
+		this.shader.updateRotationMatrix(this.eulerRotation);
+		this.emit('update');
+	}
+
+	updateInputs(event) {
+		if (event == null) {
+			document.getElementById("X-rot-input").value = this.eulerRotation[0] / (Math.PI / 180);
+			document.getElementById("Y-rot-input").value = this.eulerRotation[1] / (Math.PI / 180);
+			document.getElementById("Z-rot-input").value = this.eulerRotation[2] / (Math.PI / 180);
+			return;
+		}
+
+		switch(event.target.id[0]) {
 			case 'X':
 				this.eulerRotation[0] = parseFloat(event.target.value) * (Math.PI / 180);
 				break;
@@ -55,9 +110,8 @@ class LayerDstretch extends Layer{
 				this.eulerRotation[2] = parseFloat(event.target.value) * (Math.PI / 180);
 				break;
 		}
-
-		this.shader.updateRotationMatrix(this.eulerRotation);
-		this.emit('update');
+			
+		this.updateSliders(null);
 	}
 	
 	loadJson(url) {

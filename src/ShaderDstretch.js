@@ -35,13 +35,12 @@ class ShaderDstretch extends Shader {
          * - Ruoto tutto indietro
          */
 
-        console.log("setting minmax");
         let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         for (let i=0; i<this.samples.length; i++) {
             let transformedSample = this.transformSample(
-                this.matToArray(this.transpose(this.rotationMatrix)), this.transformSample(
-                        this.matToArray(this.multiplyMatrices(this.rotationMatrix, this.transform)), 
-                        this.samples[i].concat(1)));
+                this.matToArray(this.rotationMatrix), /*this.transformSample(
+                        this.matToArray(this.multiplyMatrices(this.rotationMatrix, this.transform)), */
+                        this.samples[i].concat(1));
 
             for (let j=0; j<3; j++) {
                 if (transformedSample[j] < min[j])
@@ -59,7 +58,7 @@ class ShaderDstretch extends Shader {
             rotation: { type: 'mat4', needsUpdate: true, size: 16, value: this.matToArray(this.rotationMatrix)},
 			min: {type: 'vec3', needsUpdate:true, size: 3, value: this.min},
             max: {type: 'vec3', needsUpdate:true, size: 3, value: this.max}
-		}  
+		} 
     }
 
     transpose(mat) {
@@ -96,6 +95,7 @@ class ShaderDstretch extends Shader {
 		mat = this.multiplyMatrices(z, mat);
 
 		this.rotationMatrix = mat;
+        this.setMinMax();
 	}	
 
     multiplyMatrices(mat1, mat2) {
@@ -126,14 +126,14 @@ class ShaderDstretch extends Shader {
         let c0r2 = matrix[ 8], c1r2 = matrix[ 9], c2r2 = matrix[10], c3r2 = matrix[11];
         let c0r3 = matrix[12], c1r3 = matrix[13], c2r3 = matrix[14], c3r3 = matrix[15];
       
-        let x = point[0], y = point[1], z = point[2], w = point[3];
+        let x = point[0] -  127, y = point[1] - 127, z = point[2] - 127, w = point[3];
       
         let resultX = (x * c0r0) + (y * c0r1) + (z * c0r2) + (w * c0r3);
         let resultY = (x * c1r0) + (y * c1r1) + (z * c1r2) + (w * c1r3);
         let resultZ = (x * c2r0) + (y * c2r1) + (z * c2r2) + (w * c2r3);
         let resultW = (x * c3r0) + (y * c3r1) + (z * c3r2) + (w * c3r3);
       
-        return [resultX, resultY, resultZ, resultW];
+        return [resultX + 127, resultY + 127, resultZ + 127, resultW];
       }
 
 	fragShaderSrc(gl) {
@@ -154,7 +154,7 @@ uniform vec3 max;
 uniform sampler2D image;
 
 void main(void) {
-    vec3 ret = (transpose(rotation) * transform * rotation * (255.0 * (texture(image, v_texcoord)))).xyz;
+    vec3 ret = vec3(127.0, 127.0, 127.0) + (rotation * 255.0 * (texture(image, v_texcoord) - vec4(0.5, 0.5, 0.5, 0.0))).xyz;
     ret = (ret - min) / (max - min);
 
     color = vec4(ret, 1);
