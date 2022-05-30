@@ -477,24 +477,24 @@ class Layer {
 		let matrix = transform.projectionMatrix(viewport);
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
+		this.updateAllTileBuffers(available);
+
+		let i = 0;
 		for (let tile of Object.values(available)) {
 			//			if(tile.complete)
-			this.drawTile(tile);
+			this.drawTile(tile, i);
+			++i;
 		}
 		return done;
 	}
-
+	
 	/** @ignore */
-	drawTile(tile) {
+	drawTile(tile, index) {
 		//let tiledata = this.tiles.get(tile.index);
 		if (tile.missing != 0)
 			throw "Attempt to draw tile still missing textures"
 
-		//TODO might want to change the function to oaccept tile as argument
-		let c = this.layout.tileCoords(tile);
-
-		//update coords and texture buffers
-		this.updateTileBuffers(c.coords, c.tcoords);
+		//coords and texture buffers updated once for all tiles from main draw() call
 
 		//bind textures
 		let gl = this.gl;
@@ -504,7 +504,12 @@ class Layer {
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
-		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+        const byteOffset = this.getTileByteOffset(index);
+		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, byteOffset);
+	}
+
+	getTileByteOffset(index) {
+		return index * 6 * 2;
 	}
 
 	/* given the full pyramid of needed tiles for a certain bounding box, 
@@ -550,7 +555,8 @@ class Layer {
 	}*/
 
 	/** @ignore */
-	//FIXME: optimize by updating a buffer with ALL the tile coords and just render the appropriate one.
+	// Update tile vertex and texture coords.
+	// Currently called by derived classes 
 	updateTileBuffers(coords, tcoords) {
 		let gl = this.gl;
 		//TODO to reduce the number of calls (probably not needed) we can join buffers, and just make one call per draw! (except the bufferData, which is per node)
@@ -565,6 +571,50 @@ class Layer {
 
 		gl.vertexAttribPointer(this.shader.texattrib, 2, gl.FLOAT, false, 0, 0);
 		gl.enableVertexAttribArray(this.shader.texattrib);
+	}
+
+	
+	/** @ignore */
+	// Update tile vertex and texture coords of all the tiles in a single VBO
+	updateAllTileBuffers(tiles) {
+		let gl = this.gl;
+
+		//use this.tiles instead.
+		let N = Object.values(tiles).length;
+		if (N == 0) return;
+		
+		const szV = 12;
+		const szT = 8;
+		const szI = 6;
+		const iBuffer = new Uint16Array(szI * N);
+		const vBuffer = new Float32Array(szV * N);
+		const tBuffer = new Float32Array(szT * N);
+		let i = 0;
+		for (let tile of Object.values(tiles)) {
+			let c = this.layout.tileCoords(tile);
+			vBuffer.set(c.coords, i * szV);
+			tBuffer.set(c.tcoords, i * szT);
+			
+			const off = i * 4;
+			tile.indexBufferByteOffset = 2*i*szI;
+			iBuffer.set([off+3, off+2, off+1, off+3, off+1, off+0], i * szI);
+			++i;
+		}
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, iBuffer, gl.STATIC_DRAW);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, vBuffer, gl.STATIC_DRAW);
+
+		gl.vertexAttribPointer(this.shader.coordattrib, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.shader.coordattrib);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, tBuffer, gl.STATIC_DRAW);
+
+		gl.vertexAttribPointer(this.shader.texattrib, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.shader.texattrib);
+		
 	}
 
 	/*
