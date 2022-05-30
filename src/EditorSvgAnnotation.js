@@ -366,7 +366,19 @@ class EditorSvgAnnotation {
 		descr.addEventListener('blur', (e) => { if (this.annotation.description != descr.value) this.saveCurrent(); this.saveAnnotation(); });
 
 		let idx = edit.querySelector('[name=idx]');
-		idx.addEventListener('blur', (e) => { if (this.annotation.idx != idx.value) this.saveCurrent(); this.saveAnnotation(); });
+		idx.addEventListener('blur', (e) => { 
+			if (this.annotation.idx != idx.value) {
+				const svgPinIdx = this.annotation.elements[0];
+				if(svgPinIdx) {
+					const txt = svgPinIdx.querySelector("#pin-text");
+					if(txt) {
+						txt.textContent = idx.value;
+					}
+				}
+				this.saveCurrent();
+			} 
+			this.saveAnnotation(); 
+		});
 
 		Object.entries(this.annotation.data).map(k => {
 			let dataElm = edit.querySelector(`[name=data-data-${k[0]}]`);

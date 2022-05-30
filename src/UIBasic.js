@@ -293,9 +293,9 @@ class UIBasic {
 				break;
 			}
 
-			if(this.actions.light.active)
+			if(this.actions.light && this.actions.light.active)
 				this.toggleLightController();
-			if(this.actions.layers.active)
+			if(this.actions.layers && this.actions.layers.active)
 				this.toggleLayers();
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
