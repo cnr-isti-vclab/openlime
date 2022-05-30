@@ -9,6 +9,7 @@ class LayerLens extends LayerCombiner {
 	constructor(options) {
 		options = Object.assign({
 			overlay: true,
+			radius: 100,
 			borderColor: [0.8, 0.8, 0.8, 1],
 			borderWidth: 4,
 		}, options);
@@ -21,7 +22,7 @@ class LayerLens extends LayerCombiner {
 		this.setShader('lens');
 
 		this.addControl('center', [0, 0]);
-		this.addControl('radius', [100, 0]);
+		this.addControl('radius', [this.radius, 0]);
 		this.addControl('borderColor', this.borderColor);
 		this.addControl('borderWidth', [this.borderWidth]);
 
