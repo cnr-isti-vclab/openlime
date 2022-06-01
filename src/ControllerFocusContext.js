@@ -10,9 +10,9 @@ class ControllerFocusContext extends ControllerLens {
         super(options);
         Object.assign(this, { 
 			updateTimeInterval: 50,
-            updateDelay: 150,
+            updateDelay: 100,
             zoomDelay: 150,
-            zoomAmount: 1.2,
+            zoomAmount: 1.5,
             priority: -100
 		}, options);
 

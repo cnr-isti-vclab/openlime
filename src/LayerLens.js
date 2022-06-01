@@ -34,6 +34,11 @@ class LayerLens extends LayerCombiner {
 		this.shader.setOverlayLayerEnabled(false);
 	}
 
+	setBaseLayer(l) {
+		this.layers[0] = l;
+		this.emit('update');
+	}
+
 	setOverlayLayer(l) {
 		this.layers[1] = l;
 		this.layers[1].setVisible(true);
