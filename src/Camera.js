@@ -124,8 +124,8 @@ class Camera {
 		y = r.y * transform.z;
 		x += transform.x;
 		y += transform.y;
-		x += this.viewport / 2;
-		y += this.viewport / 2;
+		x += this.viewport.w / 2;
+		y += this.viewport.h / 2;
 		return { x: x, y: y };
 	}
 

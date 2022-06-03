@@ -12,6 +12,8 @@ class LayerLens extends LayerCombiner {
 			radius: 100,
 			borderColor: [0.8, 0.8, 0.8, 1],
 			borderWidth: 4,
+			dashboardBorder: 30,
+			dashboardElements: []
 		}, options);
 		super(options);
 		
@@ -27,6 +29,35 @@ class LayerLens extends LayerCombiner {
 		this.addControl('borderWidth', [this.borderWidth]);
 
 		this.signals.draw = [];
+
+		this.dashboard = document.createElement('div');
+		this.dashboard.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); z-index:${this.zindex}; 
+		pointer-events: none; overflow: hidden`;
+		const limeElm = document.querySelector('.openlime');
+		this.dashboard.classList.add('openlime-lens-dashboard');		
+		limeElm.appendChild(this.dashboard);
+	}
+
+	appendToDashboard(elm) {
+		this.dashboard.appendChild(elm);
+	}
+
+	setDashboard(x, y, r) {
+		const now = performance.now();
+		let cameraT = this.camera.getCurrentTransform(now);
+       // const p = this.camera.sceneToCanvas(x, y, cameraT);
+	   const pa = cameraT.sceneToViewportCoords(this.camera.viewport, [x, y]);
+	   const size = r * cameraT.z + this.dashboardBorder;
+	   const size2 = 2 * size;
+	   let p = {
+			x: pa[0] - size,
+			y: pa[1] + size
+		}
+		p.y = this.camera.viewport.h - p.y;
+		this.dashboard.style.left = `${p.x}px`;
+		this.dashboard.style.top = `${p.y}px`;
+		this.dashboard.style.width = `${size2}px`;
+		this.dashboard.style.height = `${size2}px`;
 	}
 
 	removeOverlayLayer() {
@@ -82,6 +113,12 @@ class LayerLens extends LayerCombiner {
 
 	draw(transform, viewport) {
 		let done = this.interpolateControls();
+
+		// Update dashboard size & pos
+		const c = this.getCurrentCenter();
+		const r = this.getRadius();
+		this.setDashboard(c[0], c[1], r);
+
 		// const vlens = this.getLensInViewportCoords(transform, viewport);
 		// this.shader.setLensUniforms(vlens, [viewport.w, viewport.h], this.borderColor);
 		// this.emit('draw');
