@@ -120,12 +120,8 @@ class Camera {
 	 */
 	sceneToCanvas(x, y, transform) {
 		let r = Transform.rotate(x, y, transform.a);
-		x = r.x * transform.z;
-		y = r.y * transform.z;
-		x += transform.x;
-		y += transform.y;
-		x += this.viewport.w / 2;
-		y += this.viewport.h / 2;
+		x = r.x * transform.z + transform.x - this.viewport.x + this.viewport.w/2;
+		y = r.y * transform.z - transform.y + this.viewport.y + this.viewport.h/2;
 		return { x: x, y: y };
 	}
 
