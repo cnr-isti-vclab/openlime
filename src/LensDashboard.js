@@ -1,4 +1,10 @@
 /**
+ * Callback function fired by a 'click' event on a lens dashboard element.
+ * @function taskCallback
+ * @param {Event} e The DOM event.
+ */
+
+/**
  * The LensDashboard class is an optional element that can be embedded in an instance of {@link LayerLens}.
  * It represents a square HTML container of sufficient size to hold the lens that is positioned solidly against it.
  * Its main use is to allow the creation of a dashboard of HTML elements positioned around the lens.
@@ -75,6 +81,33 @@ class LensDashboard {
 		this.container.style.width = `${size2}px`;
 		this.container.style.height = `${size2}px`;
 	}
+
+	/**
+	 * Utility function to create a simple SVG element (icon) from an inline description
+	 * @param {Object} icon An object literal describing the SVG element.
+	 * @param {string} icon.id A unique id for the SVG element.
+	 * @param {string} icon.path The SVG path describing the shape of the icon.
+	 * @param {string} icon.style The CSS style of the icon.
+	 * @param {string} icon.class An optional class useful as HTML selector.
+	 * @param {taskCallback} icon.task A callback function fired by a 'click' event on a lens dashboard element.
+	 * @returns {SVGElement} A SVG element
+	 * @static
+	 */
+	static createSVG(icon) {
+
+		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+		svg.setAttribute('id', icon.id);
+		svg.setAttribute('class', icon.class);
+		svg.setAttribute('style', icon.style);
+
+		svg.setAttribute('viewBox', '0 0 64 64');
+		path.setAttribute('d', icon.path);
+		svg.appendChild(path);
+		svg.addEventListener('click', (e) => icon.task(e));
+		return svg;
+	};
 }
 
 export {LensDashboard}
