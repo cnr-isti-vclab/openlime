@@ -45,15 +45,13 @@ class LensDashboard {
  	*/
 	constructor(viewer, options) {
 		options = Object.assign({
-			borderWidth: 30
+			borderWidth: 38
 		}, options);
 		Object.assign(this, options);
         this.viewer = viewer;
 		this.elements = [];
-
         this.container = document.createElement('div');
-		this.container.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); 
-		pointer-events: none`;
+		this.container.style = `display: flex; position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none`;
 		this.container.classList.add('openlime-lens-dashboard');		
 		this.viewer.containerElement.appendChild(this.container);
     }
@@ -94,20 +92,37 @@ class LensDashboard {
 	 * @static
 	 */
 	static createSVG(icon) {
-
-		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		const svgns = 'http://www.w3.org/2000/svg';
+		const svg = document.createElementNS(svgns, 'svg');
 
 		svg.setAttribute('id', icon.id);
 		svg.setAttribute('class', icon.class);
 		svg.setAttribute('style', icon.style);
 
 		svg.setAttribute('viewBox', '0 0 64 64');
+
+		// const circle = document.createElementNS(svgns, 'circle');
+        // circle.setAttributeNS(null, 'cx', 32);
+        // circle.setAttributeNS(null, 'cy', 32);
+        // circle.setAttributeNS(null, 'r', 24);
+        // circle.setAttributeNS(null, 'style', 'fill: #999; stroke: red; stroke-width: 1px;' );
+        // svg.appendChild(circle);
+
+		const path = document.createElementNS(svgns, 'path');
 		path.setAttribute('d', icon.path);
 		svg.appendChild(path);
+
+		console.log(path);
+
 		svg.addEventListener('click', (e) => icon.task(e));
 		return svg;
 	};
+
+	static svgFromString(text) {
+		const parser = new DOMParser();
+		return parser.parseFromString(text, "image/svg+xml").documentElement;
+	}
+
 }
 
 export {LensDashboard}

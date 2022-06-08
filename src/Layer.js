@@ -100,7 +100,8 @@ class Layer {
 			layout: 'image',
 			shader: null, //current shader.
 			gl: null,
-
+			width: 0,
+			height: 0,
 			prefetchBorder: 1,
 			mipmapBias: 0.4,
 
@@ -119,8 +120,8 @@ class Layer {
 		this.transform = new Transform(this.transform);
 
 		if (typeof (this.layout) == 'string') {
-			let size = { width: this.width || 0, height: this.height || 0 };
-			this.setLayout(new Layout(null, this.layout, size));
+			let size = { width: this.width, height: this.height };
+			this.setLayout(new Layout(null, this.layout, size)); //FIXME new Layout not have size, but options.width options.height
 		} else {
 			this.setLayout(this.layout);
 		}

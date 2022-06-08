@@ -43,7 +43,8 @@ const lens = [
 	'./src/ControllerLens.js',
 	'./src/FocusContext.js',
 	'./src/ControllerFocusContext.js',
-	'./src/LensDashboard.js'
+	'./src/LensDashboard.js',
+	'./src/LensDashboardNavigator.js'
 ];
 
 const rti = [
