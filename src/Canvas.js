@@ -4,7 +4,7 @@ import { Cache } from './Cache.js'
 
 //// HELPERS
 
-window.structuredClone = structuredClone  || function (value) { return  JSON.parse(JSON.stringify(value)); };
+window.structuredClone = typeof(structuredClone) == "function" ? structuredClone : function (value) { return  JSON.parse(JSON.stringify(value)); };
 
 
 /**
