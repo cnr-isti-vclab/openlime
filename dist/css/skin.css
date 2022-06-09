@@ -571,19 +571,14 @@ g.openlime-expand {
 	}
 }
 
-.openlime-lens-dashboard-button {
+.openlime-lens-dashboard-button, .openlime-lens-dashboard-button path[style] {
 	stroke: #aaa !important;
 	fill: #aaa !important
 }
 
-.openlime-lens-dashboard-button:hover {
+.openlime-lens-dashboard-button:hover,  .openlime-lens-dashboard-button:hover path[style]{
 	stroke: white !important;
 	fill: white !important
-}
-
-.openlime-lens-dashboard-button .active {
-	stroke: green !important;
-	fill: green !important
 }
 
 .openlime-lens-dashboard-button .pb-play {
@@ -602,3 +597,6 @@ g.openlime-expand {
 	visibility: visible;
 }
 
+.openlime-lens-dashboard-button-light.active path[style] {
+	fill: #ffcc00 !important;
+}

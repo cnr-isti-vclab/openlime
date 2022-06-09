@@ -52,7 +52,8 @@ const rti = [
 ];
 
 const brdf = [
-	'./src/LayerBRDF.js'
+	'./src/LayerBRDF.js',
+	'./src/ShaderBRDF.js'
 ];
 
 const annotation = [
