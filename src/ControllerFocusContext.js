@@ -13,7 +13,8 @@ class ControllerFocusContext extends ControllerLens {
             updateDelay: 100,
             zoomDelay: 150,
             zoomAmount: 1.5,
-            priority: -100
+            priority: -100,
+            enableDirectContextControl: true
 		}, options);
 
         if (!options.lensLayer) {
@@ -79,10 +80,12 @@ class ControllerFocusContext extends ControllerLens {
             this.currentClickPos = [startPos[0], startPos[1]];
             this.panning = true;
         } else {
-            this.startPos = { x: e.offsetX, y: e.offsetY };
-            this.initialTransform = t;
-            this.camera.target = this.initialTransform.copy(); //stop animation.
-            this.panningCamera = true;
+            if (this.enableDirectContextControl) {
+                this.startPos = { x: e.offsetX, y: e.offsetY };
+                this.initialTransform = t;
+                this.camera.target = this.initialTransform.copy(); //stop animation.
+                this.panningCamera = true;
+            }
         }
         e.preventDefault();
 
@@ -136,8 +139,10 @@ class ControllerFocusContext extends ControllerLens {
                 this.updateRadiusAndScale(dz);
                 //this.initialPinchDistance = d;
             } else {
-                this.updateScale(this.initialPinchPos[0], this.initialPinchPos[1], scale);
-                this.initialPinchDistance = d;
+                if (this.enableDirectContextControl) {
+                    this.updateScale(this.initialPinchPos[0], this.initialPinchPos[1], scale);
+                    this.initialPinchDistance = d;
+                }
             }
         }
     }
@@ -153,8 +158,10 @@ class ControllerFocusContext extends ControllerLens {
         if (this.insideLens) {
             this.updateRadiusAndScale(dz);
         } else {
-            // Invert scale when updating scale instead of lens radius, to obtain the same zoom direction
-            this.updateScale(e.offsetX, e.offsetY, 1/dz);
+            if (this.enableDirectContextControl) {
+                // Invert scale when updating scale instead of lens radius, to obtain the same zoom direction
+                this.updateScale(e.offsetX, e.offsetY, 1 / dz);
+            }
         }
         e.preventDefault();
     }
