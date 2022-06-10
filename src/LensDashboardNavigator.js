@@ -13,28 +13,59 @@ class LensDashboardNavigator extends LensDashboard {
         options = Object.assign({
             toolboxHeight: 25,
             actions: {
-                camera: { title: 'Camera', clickable: true, display: true, task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
-                light: { title: 'Light', clickable: true, display: true, task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
-                label: { title: 'Label', clickable: false, display: true, task: (event) => { } },
-                down: { title: 'Down', clickable: true, display: true, task: (event) => { } },
-                next: { title: 'Next', clickable: true, display: true, task: (event) => { } },
+                camera: { label: 'camera', task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
+                light: { label: 'light', task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
+                down: { label: 'down', task: (event) => { } },
+                next: { label: 'next', task: (event) => { } },
             },
         }, options);
         Object.assign(this, options);
 
         this.moving = false;
         this.pos = [0, 0];
-        this.delay = 1000;
+        this.delay = 400;
         this.timeout = null; // Timeout for moving
 
-        this.container.style.flexDirection = "column-reverse";
-        this.container.style.alignItems = "center";
+        this.angleToolbar = 30.0 * (Math.PI/180.0);
 
-        this.toolbox = document.createElement('div');
-        this.toolbox.style = `display: flex; padding: 4px; justify-content: center; height: ${this.toolboxHeight}px;
-        background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
-		this.toolbox.classList.add('openlime-lens-dashboard-toolbox');		
-		this.container.appendChild(this.toolbox);
+        this.container.style.display = 'block';
+        // this.container.style.gridTemplateColumns = '1fr 1fr';
+        // this.container.style.gridAutoRows = `${this.toolboxHeight}px`;
+        // this.container.style.alignItems = "center";
+        // this.container.style.justifyItems = "center";
+        this.container.style.margin = '0';
+
+        const h1 = document.createElement('div');
+        h1.style = `text-align: center; color: #fff`;
+        h1.classList.add('openlime-lens-dashboard-toolbox-header');
+        h1.innerHTML = 'MOVE';
+
+        const h2 = document.createElement('div');
+        h2.style = `text-align: center; color: #fff`;
+        h2.classList.add('openlime-lens-dashboard-toolbox-header');
+        h2.innerHTML = 'INFO';
+      
+        this.toolbox1 = document.createElement('div');
+        this.toolbox1.style = `position: absolute; padding: 4px; left: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
+        this.toolbox1.classList.add('openlime-lens-dashboard-toolbox');		
+		this.container.appendChild(this.toolbox1);
+        this.toolbox1.appendChild(h1);
+
+        this.toolbox2 = document.createElement('div');
+        this.toolbox2.style = `position: absolute; padding: 4px; right: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
+        this.toolbox2.classList.add('openlime-lens-dashboard-toolbox');		
+		this.container.appendChild(this.toolbox2);
+        this.toolbox2.appendChild(h2);
+
+        this.tools1 = document.createElement('div');
+        this.tools1.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
+		this.tools1.classList.add('openlime-lens-dashboard-toolbox-tools');		
+        this.toolbox1.appendChild(this.tools1);
+
+        this.tools2 = document.createElement('div');
+        this.tools2.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
+		this.tools2.classList.add('openlime-lens-dashboard-toolbox-tools');		
+        this.toolbox2.appendChild(this.tools2);
 
         // TOOLBOX ITEMS
 
@@ -185,36 +216,6 @@ class LensDashboardNavigator extends LensDashboard {
           </g>
         </svg>`;
 
-        this.actions.label.svg =`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-        <!-- Created with Inkscape (http://www.inkscape.org/) -->
-        
-        <svg
-           viewBox="0 0 22.007614 80.026932"
-           version="1.1"
-           id="svg7411"
-           xmlns="http://www.w3.org/2000/svg"
-           xmlns:svg="http://www.w3.org/2000/svg">
-          <defs
-             id="defs7408" />
-          <g
-             id="layer1"
-             transform="translate(-5.356358,-56.889074)">
-            <g
-               id="g2481"
-               transform="matrix(0.35277777,0,0,0.35277777,-268.6194,-106.5571)"
-               class="openlime-lens-dashboard-label">
-              <path
-                 d="m 837.234,540.332 -57.132,7.176 -2.036,9.476 11.204,2.082 c 7.308,1.727 8.769,4.383 7.175,11.692 l -18.379,86.496 c -4.828,22.367 2.614,32.906 20.153,32.906 13.593,0 29.363,-6.289 36.539,-14.879 l 2.168,-10.363 c -5.004,4.383 -12.27,6.156 -17.094,6.156 -6.867,0 -9.348,-4.828 -7.574,-13.289 z"
-                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
-                 id="path108" />
-              <path
-                 d="m 839.008,488.246 c 0,13.774 -11.164,24.938 -24.934,24.938 -13.773,0 -24.937,-11.164 -24.937,-24.938 0,-13.769 11.164,-24.934 24.937,-24.934 13.77,0 24.934,11.165 24.934,24.934 z"
-                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
-                 id="path110" />
-            </g>
-          </g>
-        </svg>`;
-
         this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
@@ -282,12 +283,7 @@ class LensDashboardNavigator extends LensDashboard {
         for (let [name, action] of Object.entries(this.actions)) {
             action.element = LensDashboardNavigator.svgFromString(action.svg);
             action.element.style = `height: 100%; margin: 0 5px`;
-            if(action.clickable) {
-                action.element.style.pointerEvents = 'auto';
-                action.element.style.cursor = 'pointer';
-            }
             action.element.classList.add('openlime-lens-dashboard-button');
-            this.toolbox.appendChild(action.element);
 
             action.element.addEventListener('click', (e) => {
 				action.task(e);
@@ -295,12 +291,29 @@ class LensDashboardNavigator extends LensDashboard {
 			});
         }
 
+        this.tools1.appendChild(this.actions.camera.element);
+        this.tools1.appendChild(this.actions.light.element);
+        this.tools2.appendChild(this.actions.down.element);
+        this.tools2.appendChild(this.actions.next.element);
+
         // Set Camera movement active
 		this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
         this.actions.light.active = false;
 
-        // Set left margin to label
-        this.actions.label.element.style.marginLeft = '40px';
+        console.log('NEXT: ', this.getAction('next'));
+    }
+
+    getAction(label) {
+        console.log(Object.entries(this.actions));
+        const result = Object.entries(this.actions).find(([k, a]) => {
+            console.log(a.label, label);
+            if (a.label === label) console.log('FOUND!!!');
+            return a.label === label;
+        });
+    }
+
+    setActionEnabled(label) {
+
     }
 
     toggleLightController() {
@@ -316,40 +329,7 @@ class LensDashboardNavigator extends LensDashboard {
 				}
 	}
 
-
-    lightCb = (e) => {
-        this.lightButtonActive = !this.lightButtonActive;
-        this.lightButton.classList.toggle('active'); // If active then light up
-        if(this.lightButtonTask) this.lightButtonTask(e);
-    }
-
-    upCb = (e) => {
-        if(this.upButtonTask) this.upButtonTask(e);
-    }
-
-    leftCb = (e) => {
-        if(this.leftButtonTask) this.leftButtonTask(e);
-    }
-
-    playCb = (e) => {
-        this.playButtonActive = !this.playButtonActive;
-        this.playButton.classList.toggle('active'); // If active then show 'pause'
-        if(this.playButtonTask) this.playButtonTask(e, this.playButtonActive);
-    }
-
-    rightCb = (e) => {
-        if(this.rightButtonTask) this.rightButtonTask(e);
-    }
-
-    downCb = (e) => {
-        if(this.downButtonTask) this.downButtonTask(e);
-    }
-
-    hide() {
-        this.container.classList.toggle('closed');
-    }
-
-    show() {
+    toggle() {
         this.container.classList.toggle('closed');
     }
 
@@ -368,18 +348,35 @@ class LensDashboardNavigator extends LensDashboard {
 		this.container.style.top = `${p.y}px`;
 		this.container.style.width = `${sizew}px`;
 		this.container.style.height = `${sizeh}px`;
+
+        // Set toolbox position
+        const tbw1 = this.toolbox1.clientWidth;
+        const tbh1 = this.toolbox1.clientHeight;
+        const tbw2 = this.toolbox2.clientWidth;
+        const tbh2 = this.toolbox2.clientHeight;
+        let cbx = size*Math.sin(this.angleToolbar);
+        let cby = size*Math.cos(this.angleToolbar);
+
+        let bx1 = size - cbx - tbw1/2;
+        let by1 = size + cby - tbh1/2;
+        this.toolbox1.style.left = `${bx1}px`;
+        this.toolbox1.style.top = `${by1}px`;
+    
+        let bx2 = size + cbx - tbw2/2;
+        let by2 = size + cby - tbh2/2;
+        this.toolbox2.style.left = `${bx2}px`;
+        this.toolbox2.style.top = `${by2}px`;
+
         if( x == this.pos[0] && y == this.pos[1]) return;
         if(!this.moving) {
-            this.hide();
+            this.toggle();
             this.moving = true;
         }
         if(this.timeout) clearTimeout(this.timeout);
         this.timeout = setTimeout( () => {
-            this.show();
+            this.toggle();
             this.moving = false;
-        },
-        this.delay
-        );
+        }, this.delay);
 	}
 }
 

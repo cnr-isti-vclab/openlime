@@ -539,7 +539,6 @@ g.openlime-expand {
 	/* -webkit-animation: fadein 1s linear forwards;
 	animation: fadein 1s linear forwards; */
 	visibility: visible !important;
-	display: flex;
 	/* background-color: rgb(200, 0, 0, 0.8) !important; */
 }
 
@@ -547,7 +546,6 @@ g.openlime-expand {
 	/* -webkit-animation: fadeout 1s linear forwards;
 	animation: fadeout 1s linear forwards; */
 	visibility: hidden !important;
-	display: none !important;
 }
 
 @keyframes fadout {
@@ -569,11 +567,18 @@ g.openlime-expand {
 }
 
 .openlime-lens-dashboard-button-bkg {
+	fill: #555 !important;
+	pointer-events: none;
+}
+
+.openlime-lens-dashboard-button-bkg.enabled {
 	fill: #aaa !important;
+	pointer-events: auto;
+	cursor: pointer;
 }
 
 .openlime-lens-dashboard-button:hover .openlime-lens-dashboard-button-bkg {
-	fill: #fff !important;
+	fill: #ccc !important;
 }
 
 .openlime-lens-dashboard-camera-active .openlime-lens-dashboard-button-bkg {

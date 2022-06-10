@@ -51,7 +51,7 @@ class LensDashboard {
         this.viewer = viewer;
 		this.elements = [];
         this.container = document.createElement('div');
-		this.container.style = `display: flex; position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none`;
+		this.container.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none`;
 		this.container.classList.add('openlime-lens-dashboard');		
 		this.viewer.containerElement.appendChild(this.container);
     }
