@@ -8,20 +8,20 @@ class LensDashboardNavigator extends LensDashboard {
  	* @param {Object} options An object literal with Lensdashboard parameters.
  	* @param {number} options.borderWidth=30 The extra border thickness (in pixels) around the square including the lens.
  	*/
-	constructor(viewer, options) {
+    constructor(viewer, options) {
         super(viewer, options);
         options = Object.assign({
-			toolboxHeight: 25,
-            lightButtonTask: null,
-            upButtonTask: null,
-            leftButtonTask: null,
-            playButtonTask: null,
-            rightButtonTask: null,
-            downButtonTask: null
-		}, options);
-		Object.assign(this, options);
- 
-        
+            toolboxHeight: 25,
+            actions: {
+                camera: { title: 'Camera', clickable: true, display: true, task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
+                light: { title: 'Light', clickable: true, display: true, task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
+                label: { title: 'Label', clickable: false, display: true, task: (event) => { } },
+                down: { title: 'Down', clickable: true, display: true, task: (event) => { } },
+                next: { title: 'Next', clickable: true, display: true, task: (event) => { } },
+            },
+        }, options);
+        Object.assign(this, options);
+
         this.moving = false;
         this.pos = [0, 0];
         this.delay = 1000;
@@ -32,105 +32,290 @@ class LensDashboardNavigator extends LensDashboard {
 
         this.toolbox = document.createElement('div');
         this.toolbox.style = `display: flex; padding: 4px; justify-content: center; height: ${this.toolboxHeight}px;
-        background-color: rgb(80, 80, 80, 0.7); border-radius: 10px; gap: 10px`;
+        background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
 		this.toolbox.classList.add('openlime-lens-dashboard-toolbox');		
 		this.container.appendChild(this.toolbox);
 
         // TOOLBOX ITEMS
-        this.lightButton = LensDashboardNavigator.svgFromString(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   shape-rendering="geometricPrecision"
-   text-rendering="geometricPrecision"
-   image-rendering="optimizeQuality"
-   fill-rule="evenodd"
-   clip-rule="evenodd"
-   viewBox="0 0 336 511.46"
-   version="1.1"
-   id="svg6"
-   xml:space="preserve"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><defs
-     id="defs10" /><g
-     id="g49"
-     class="openlime-bulb"
-     style="fill:#808080;fill-opacity:1;stroke:#808080;stroke-width:2.61123;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     transform="matrix(7.4587888,0,0,6.6572812,-204.74938,-6416.8159)"><path
-       transform="translate(0,952.36218)"
-       id="path2996-8"
-       d="m 39.648487,59.34136 c 0,0 -1.036148,-0.300339 -1.767767,0.126269 -0.731619,0.426608 -0.378807,4.924494 -0.378807,4.924494 l 7.828682,-0.126269 c 0,0 -6.755395,2.020305 -7.386741,3.535533 -0.631345,1.515229 0.802927,3.806644 2.08344,4.16688 1.0262,0.288692 21.987982,-7.535079 22.475894,-8.207489 0.422762,-0.582624 0.69448,-3.788072 0.252538,-4.293149 -0.441942,-0.505077 -2.209708,-0.441942 -2.209708,-0.441942 0,0 -0.69448,0.06314 -0.06313,-2.209708 0.631346,-2.272843 7.323606,-11.301081 8.965104,-16.983189 1.581288,-5.473689 0.665757,-12.644985 -1.136422,-16.099307 -1.903797,-3.649098 -4.608821,-5.99778 -8.333758,-7.702413 -3.739948,-1.711502 -10.654066,-2.679189 -16.162441,-0.883883 -5.486132,1.788057 -9.75716,5.043644 -12.248099,9.343911 -2.235581,3.859425 -2.146574,11.616754 -1.38896,14.647212 0.757615,3.030457 8.460028,14.268404 9.217642,16.541247 0.757614,2.272844 0.252538,3.661803 0.252533,3.661803 z"
-       style="fill:#ffcc00;fill-opacity:1;stroke:#666666;stroke-width:3.91684;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /><path
-       transform="translate(0,952.36218)"
-       id="path2998-7"
-       d="m 38.385797,77.082164 c 0.189403,2.08344 7.197336,8.333759 10.03839,8.649431 2.841054,0.315673 2.462247,0.505077 4.482552,-0.252538 2.020305,-0.757614 8.460028,-5.177031 8.7757,-5.934646 0.807187,-1.937252 1.325826,-3.914341 0.631346,-5.113897 -0.696638,-1.203284 -1.894036,-0.315673 -3.156727,0.126269 -1.262691,0.441942 -6.629126,3.219861 -8.396893,3.851206 -1.388024,0.495723 -4.419417,-0.315672 -4.419417,-0.315672 0,0 15.371589,-5.937284 15.973037,-7.260471 0.631346,-1.388961 0.126269,-3.914342 -1.325825,-4.230015 -0.925404,-0.201174 -21.0238,7.51301 -21.528876,8.460028 -0.505077,0.947018 -1.073287,2.020305 -1.073287,2.020305 z"
-       style="fill:#ffcc00;fill-opacity:1;stroke:#666666;stroke-width:3.91684;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></g><g
-     style="clip-rule:evenodd;fill-rule:evenodd;image-rendering:optimizeQuality;shape-rendering:geometricPrecision;text-rendering:geometricPrecision"
-     id="g257"
-     transform="translate(-967.69751,-327.24886)" /></svg>`);
-        this.lightButton.style = `height: 100%; margin: 0 5px; pointer-events: auto; cursor: pointer`;
-        this.lightButton.classList.add('openlime-lens-dashboard-button', 'openlime-lens-dashboard-button-light');
-        this.appendToolbox(this.lightButton, this.lightCb);
-        this.lightButtonActive = false;
 
-
-        this.upButton = LensDashboardNavigator.svgFromString(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        this.actions.camera.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <!-- Created with Inkscape (http://www.inkscape.org/) -->
+        
         <svg
-           shape-rendering="geometricPrecision"
-           text-rendering="geometricPrecision"
-           image-rendering="optimizeQuality"
-           fill-rule="evenodd"
-           clip-rule="evenodd"
-           viewBox="0 0 336 511.46"
+           viewBox="0 0 83.319054 83.319054"
            version="1.1"
-           id="svg6"
-           xml:space="preserve"
+           id="svg2495"
            xmlns="http://www.w3.org/2000/svg"
-           xmlns:svg="http://www.w3.org/2000/svg"><defs
-             id="defs10" /><path
-             d="m 334.31628,271.50728 q 0,-18.15271 -7.92107,-30.82538 L 187.02714,17.369266 Q 178.6779,4.6965956 167.5456,4.6965956 q -11.34643,0 -19.2675,12.6726704 L 8.9100882,240.6819 q -8.1351595,12.33017 -8.1351595,30.82538 0,18.1527 8.1351595,31.16787 l 15.8421388,25.68781 q 8.349242,12.67264 19.481585,12.67264 11.346365,0 19.267435,-12.67264 l 62.940403,-100.6962 v 241.12287 q 0,17.81021 8.13516,30.82536 8.13515,13.01515 19.2675,13.01515 h 27.4026 q 11.13231,0 19.26747,-13.01515 8.13515,-13.01515 8.13515,-30.82536 V 227.66676 l 62.94041,100.6962 q 7.92107,12.67264 19.26747,12.67264 11.13232,0 19.48155,-12.67264 l 16.05625,-25.68781 q 7.92107,-13.35765 7.92107,-31.16787 z"
-             id="path2993"/></svg>`);
-        this.upButton.style = `height: 100%; margin: 0 5px; pointer-events: auto; cursor: pointer`;
-        this.upButton.classList.add('openlime-lens-dashboard-button');
-        this.appendToolbox(this.upButton, this.upCb);
+           xmlns:svg="http://www.w3.org/2000/svg">
+          <defs
+             id="defs2492" />
+          <g
+             id="layer1"
+             transform="translate(-69.000668,-98.39946)">
+            <g
+               id="g2458"
+               transform="matrix(0.35277777,0,0,0.35277777,46.261671,-65.803422)"
+               class="openlime-lens-dashboard-camera">
+              <path class="openlime-lens-dashboard-button-bkg"
+                 d="m 300.637,583.547 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.219,0 -118.09,-52.871 -118.09,-118.09 0,-65.219 52.871,-118.09 118.09,-118.09 65.219,0 118.09,52.871 118.09,118.09 z"
+                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+                 id="path50" />
+              <g
+                 id="g52">
+                <path
+                   d="M 123.445,524.445 H 241.652 V 642.648 H 123.445 Z"
+                   style="fill:#ffffff;fill-opacity:0;fill-rule:nonzero;stroke:#000000;stroke-width:16.7936;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                   id="path54" />
+              </g>
+              <g
+                 id="g56"
+                 transform="scale(1,0.946694)">
+                <path
+                   d="m 190.449,581.031 h -15.793 c -0.011,7.563 0,27.472 0,27.472 0,0 -17.133,0 -25.609,0.025 v 15.779 c 8.476,-0.009 25.609,-0.009 25.609,-0.009 0,0 0,19.881 -0.011,27.485 h 15.793 c 0.011,-7.604 0.011,-27.485 0.011,-27.485 0,0 17.125,0 25.598,0 v -15.795 c -8.473,0 -25.598,0 -25.598,0 0,0 -0.023,-19.904 0,-27.472"
+                   style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.52673;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                   id="path58" />
+              </g>
+              <path
+                 d="m 269.254,557.93 22.332,21.437 c 2.098,2.071 2.195,5.344 0,7.504 l -22.332,21.008 c -1.25,1.25 -5.004,1.25 -6.254,-2.504 v -46.273 c 1.25,-3.672 5.004,-2.422 6.254,-1.172 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path60" />
+              <path
+                 d="M 95.844,607.395 73.508,585.957 c -2.094,-2.07 -2.192,-5.34 0,-7.504 l 22.336,-21.008 c 1.25,-1.25 5,-1.25 6.254,2.504 v 46.274 c -1.254,3.672 -5.004,2.422 -6.254,1.172 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path62" />
+              <path
+                 d="m 157.59,494.32 21.437,-22.332 c 2.071,-2.097 5.344,-2.191 7.504,0 l 21.008,22.332 c 1.25,1.254 1.25,5.004 -2.504,6.254 h -46.273 c -3.672,-1.25 -2.422,-5 -1.172,-6.254 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path64" />
+              <path
+                 d="m 207.055,671.785 -21.438,22.336 c -2.07,2.094 -5.344,2.191 -7.504,0 l -21.008,-22.336 c -1.25,-1.25 -1.25,-5 2.504,-6.25 h 46.274 c 3.672,1.25 2.422,5 1.172,6.25 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path66" />
+            </g>
+          </g>
+        </svg>`;
 
-        // this.leftButton = LensDashboardNavigator.svgFromString('<?xml version="1.0" encoding="utf-8"?><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 120.64 122.88" style="enable-background:new 0 0 120.64 122.88" xml:space="preserve"><g><path d="M66.6,108.91c1.55,1.63,2.31,3.74,2.28,5.85c-0.03,2.11-0.84,4.2-2.44,5.79l-0.12,0.12c-1.58,1.5-3.6,2.23-5.61,2.2 c-2.01-0.03-4.02-0.82-5.55-2.37C37.5,102.85,20.03,84.9,2.48,67.11c-0.07-0.05-0.13-0.1-0.19-0.16C0.73,65.32-0.03,63.19,0,61.08 c0.03-2.11,0.85-4.21,2.45-5.8l0.27-0.26C20.21,37.47,37.65,19.87,55.17,2.36C56.71,0.82,58.7,0.03,60.71,0 c2.01-0.03,4.03,0.7,5.61,2.21l0.15,0.15c1.57,1.58,2.38,3.66,2.41,5.76c0.03,2.1-0.73,4.22-2.28,5.85L19.38,61.23L66.6,108.91 L66.6,108.91z M118.37,106.91c1.54,1.62,2.29,3.73,2.26,5.83c-0.03,2.11-0.84,4.2-2.44,5.79l-0.12,0.12 c-1.57,1.5-3.6,2.23-5.61,2.21c-2.01-0.03-4.02-0.82-5.55-2.37C89.63,101.2,71.76,84.2,54.24,67.12c-0.07-0.05-0.14-0.11-0.21-0.17 c-1.55-1.63-2.31-3.76-2.28-5.87c0.03-2.11,0.85-4.21,2.45-5.8C71.7,38.33,89.27,21.44,106.8,4.51l0.12-0.13 c1.53-1.54,3.53-2.32,5.54-2.35c2.01-0.03,4.03,0.7,5.61,2.21l0.15,0.15c1.57,1.58,2.38,3.66,2.41,5.76 c0.03,2.1-0.73,4.22-2.28,5.85L71.17,61.23L118.37,106.91L118.37,106.91z"/></g></svg>');
-        // this.leftButton.style = `height: 100%; margin: 0 5px; pointer-events: auto; cursor: pointer`;
-        // this.leftButton.classList.add('openlime-lens-dashboard-button');
-        // this.appendToolbox(this.leftButton, this.leftCb);
-
-        this.playButton = LensDashboardNavigator.svgFromString(`<?xml version="1.0" encoding="utf-8"?><svg xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" 
-        image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 336 511.46">
-        <path class="pb-play" fill-rule="nonzero" d="M0 469V42.42c.02-9.89 3.46-19.81 10.45-27.85 15.39-17.66 42.2-19.53 59.86-4.15L321.46 229.2c1.69 1.51 3.32 3.17 4.81 4.97 14.92 18.04 12.4 44.78-5.64 59.7L71.14 500.3c-7.56 6.93-17.62 11.16-28.68 11.16C19.02 511.46 0 492.44 0 469z"/>
-        <path class="pb-pause" d="M -0.12778469,1.48305 H 137.14373 V 518.30226 H -0.12778469 Z m 201.54270469,0 H 338.68643 V 518.30226 H 201.41492 Z"/></svg>`);
-        this.playButton.style = `height: 100%; margin: 0 5px; pointer-events: auto; cursor: pointer`;
-        this.playButton.classList.add('openlime-lens-dashboard-button');
-        this.appendToolbox(this.playButton, this.playCb);
-        this.playButtonActive = false;
-
-        this.rightButton = LensDashboardNavigator.svgFromString('<?xml version="1.0" encoding="utf-8"?><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 120.64 122.88" style="enable-background:new 0 0 120.64 122.88" xml:space="preserve"><g><path d="M54.03,108.91c-1.55,1.63-2.31,3.74-2.28,5.85c0.03,2.11,0.84,4.2,2.44,5.79l0.12,0.12c1.58,1.5,3.6,2.23,5.61,2.2 c2.01-0.03,4.01-0.82,5.55-2.37c17.66-17.66,35.13-35.61,52.68-53.4c0.07-0.05,0.13-0.1,0.19-0.16c1.55-1.63,2.31-3.76,2.28-5.87 c-0.03-2.11-0.85-4.21-2.45-5.8l-0.27-0.26C100.43,37.47,82.98,19.87,65.46,2.36C63.93,0.82,61.93,0.03,59.92,0 c-2.01-0.03-4.03,0.7-5.61,2.21l-0.15,0.15c-1.57,1.58-2.38,3.66-2.41,5.76c-0.03,2.1,0.73,4.22,2.28,5.85l47.22,47.27 L54.03,108.91L54.03,108.91z M2.26,106.91c-1.54,1.62-2.29,3.73-2.26,5.83c0.03,2.11,0.84,4.2,2.44,5.79l0.12,0.12 c1.57,1.5,3.6,2.23,5.61,2.21c2.01-0.03,4.02-0.82,5.55-2.37C31.01,101.2,48.87,84.2,66.39,67.12c0.07-0.05,0.14-0.11,0.21-0.17 c1.55-1.63,2.31-3.76,2.28-5.87c-0.03-2.11-0.85-4.21-2.45-5.8C48.94,38.33,31.36,21.44,13.83,4.51l-0.12-0.13 c-1.53-1.54-3.53-2.32-5.54-2.35C6.16,2,4.14,2.73,2.56,4.23L2.41,4.38C0.84,5.96,0.03,8.05,0,10.14c-0.03,2.1,0.73,4.22,2.28,5.85 l47.18,45.24L2.26,106.91L2.26,106.91z"/></g></svg>');
-        this.rightButton.style = `height: 100%; margin: 0 5px; pointer-events: auto; cursor: pointer`;
-        this.rightButton.classList.add('openlime-lens-dashboard-button');
-        this.appendToolbox(this.rightButton, this.rightCb);
-
-        this.downButton = LensDashboardNavigator.svgFromString(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        this.actions.light.svg =`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <!-- Created with Inkscape (http://www.inkscape.org/) -->
+        
         <svg
-           shape-rendering="geometricPrecision"
-           text-rendering="geometricPrecision"
-           image-rendering="optimizeQuality"
-           fill-rule="evenodd"
-           clip-rule="evenodd"
-           viewBox="0 0 336 511.46"
+           viewBox="0 0 83.319054 83.320114"
            version="1.1"
-           id="svg6"
-           xml:space="preserve"
+           id="svg5698"
            xmlns="http://www.w3.org/2000/svg"
-           xmlns:svg="http://www.w3.org/2000/svg"><defs
-             id="defs10" /><path
-             d="m 334.31628,245.81946 q 0,18.15271 -7.92107,30.82538 L 187.02714,499.95747 q -8.34924,12.67267 -19.48154,12.67267 -11.34643,0 -19.2675,-12.67267 L 8.9100882,276.64484 q -8.1351595,-12.33017 -8.1351595,-30.82538 0,-18.1527 8.1351595,-31.16787 L 24.752227,188.96378 q 8.349242,-12.67264 19.481585,-12.67264 11.346365,0 19.267435,12.67264 l 62.940403,100.6962 V 48.537106 q 0,-17.810211 8.13516,-30.825361 8.13515,-13.0151494 19.2675,-13.0151494 h 27.4026 q 11.13231,0 19.26747,13.0151494 8.13515,13.01515 8.13515,30.825361 V 289.65998 l 62.94041,-100.6962 q 7.92107,-12.67264 19.26747,-12.67264 11.13232,0 19.48155,12.67264 l 16.05625,25.68781 q 7.92107,13.35765 7.92107,31.16787 z"
-             id="path2993"/></svg>`);
-        this.downButton.style = `height: 100%; margin: 0 5px; pointer-events: auto; cursor: pointer`;
-        this.downButton.classList.add('openlime-lens-dashboard-button');
-        this.appendToolbox(this.downButton, this.downCb);
+           xmlns:svg="http://www.w3.org/2000/svg">
+          <defs
+             id="defs5695" />
+          <g
+             id="layer1"
+             transform="translate(-104.32352,-59.017909)">
+            <g
+               id="g2477"
+               transform="matrix(0.35277777,0,0,0.35277777,-16.220287,-105.16169)"
+               class="openlime-lens-dashboard-light">
+              <path class="openlime-lens-dashboard-button-bkg"
+                 d="m 577.879,583.484 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.219,0 -118.09,-52.871 -118.09,-118.09 0,-65.222 52.871,-118.093 118.09,-118.093 65.219,0 118.09,52.871 118.09,118.093 z"
+                 style="fill:#fbfbfb;fill-opacity:1;fill-rule:nonzero;stroke:none"
+                 id="path74" />
+              <path
+                 d="m 546.496,558.359 22.332,21.438 c 2.098,2.066 2.192,5.34 0,7.504 l -22.332,21.004 c -1.25,1.254 -5.004,1.254 -6.254,-2.5 v -46.274 c 1.25,-3.672 5.004,-2.422 6.254,-1.172 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path76" />
+              <path
+                 d="M 373.082,607.82 350.75,586.383 c -2.094,-2.067 -2.191,-5.34 0,-7.504 l 22.332,-21.004 c 1.254,-1.25 5.004,-1.25 6.254,2.5 v 46.277 c -1.25,3.672 -5,2.422 -6.254,1.168 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path78" />
+              <path
+                 d="m 434.832,494.75 21.438,-22.332 c 2.07,-2.098 5.339,-2.195 7.503,0 l 21.008,22.332 c 1.25,1.25 1.25,5.004 -2.504,6.254 h -46.273 c -3.672,-1.25 -2.422,-5.004 -1.172,-6.254 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path80" />
+              <path
+                 d="m 484.297,672.215 -21.438,22.332 c -2.07,2.098 -5.343,2.195 -7.507,0 l -21.004,-22.332 c -1.25,-1.25 -1.25,-5.004 2.504,-6.254 h 46.273 c 3.672,1.25 2.422,5.004 1.172,6.254 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path82" />
+              <path
+                 d="m 438.223,599.988 c 0,0 -2.161,-0.535 -3.684,0.227 -1.523,0.762 -0.789,8.773 -0.789,8.773 l 16.305,-0.222 c 0,0 -14.071,3.597 -15.383,6.296 -1.317,2.7 1.672,6.786 4.34,7.426 2.136,0.516 45.793,-13.426 46.808,-14.625 0.883,-1.039 1.446,-6.75 0.528,-7.648 -0.922,-0.899 -4.602,-0.789 -4.602,-0.789 0,0 -1.449,0.113 -0.133,-3.934 1.317,-4.051 15.254,-20.137 18.672,-30.262 3.293,-9.753 1.387,-22.531 -2.367,-28.683 -3.965,-6.504 -9.598,-10.688 -17.356,-13.723 -7.789,-3.051 -22.191,-4.773 -33.664,-1.578 -11.425,3.188 -20.32,8.988 -25.507,16.649 -4.657,6.878 -4.473,20.699 -2.895,26.097 1.578,5.403 17.621,25.426 19.199,29.473 1.578,4.051 0.528,6.523 0.528,6.523 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path84" />
+              <g
+                 id="g86"
+                 transform="scale(1,0.855493)">
+                <path
+                   d="m 438.223,701.337 c 0,0 -2.161,-0.626 -3.684,0.265 -1.523,0.89 -0.789,10.255 -0.789,10.255 l 16.305,-0.26 c 0,0 -14.071,4.205 -15.383,7.36 -1.317,3.155 1.672,7.931 4.34,8.68 2.136,0.603 45.793,-15.693 46.808,-17.095 0.883,-1.215 1.446,-7.89 0.528,-8.94 -0.922,-1.051 -4.602,-0.923 -4.602,-0.923 0,0 -1.449,0.133 -0.133,-4.598 1.317,-4.735 15.254,-23.538 18.672,-35.373 3.293,-11.402 1.387,-26.337 -2.367,-33.529 -3.965,-7.603 -9.598,-12.493 -17.356,-16.041 -7.789,-3.566 -22.191,-5.579 -33.664,-1.844 -11.425,3.725 -20.32,10.506 -25.507,19.46 -4.657,8.041 -4.473,24.196 -2.895,30.506 1.578,6.315 17.621,29.721 19.199,34.451 1.578,4.735 0.528,7.626 0.528,7.626 z"
+                   style="fill:none;stroke:#f8f8f8;stroke-width:8.1576;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.00677317"
+                   id="path88" />
+              </g>
+              <path
+                 d="m 435.59,631.598 c 0.394,3.714 14.992,14.851 20.91,15.414 5.914,0.562 5.125,0.898 9.336,-0.453 4.207,-1.348 17.617,-9.223 18.277,-10.571 1.68,-3.453 2.758,-6.976 1.313,-9.113 -1.449,-2.145 -3.946,-0.563 -6.574,0.227 -2.629,0.785 -13.805,5.734 -17.489,6.859 -2.89,0.883 -9.203,-0.563 -9.203,-0.563 0,0 32.012,-10.578 33.266,-12.933 1.316,-2.477 0.262,-6.977 -2.762,-7.539 -1.926,-0.36 -43.785,13.386 -44.836,15.074 -1.055,1.688 -2.238,3.598 -2.238,3.598 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path90" />
+              <g
+                 id="g92"
+                 transform="scale(1,0.855493)">
+                <path
+                   d="m 435.59,738.285 c 0.394,4.343 14.992,17.361 20.91,18.018 5.914,0.658 5.125,1.05 9.336,-0.529 4.207,-1.576 17.617,-10.781 18.277,-12.356 1.68,-4.037 2.758,-8.155 1.313,-10.653 -1.449,-2.507 -3.946,-0.657 -6.574,0.265 -2.629,0.918 -13.805,6.703 -17.489,8.018 -2.89,1.032 -9.203,-0.658 -9.203,-0.658 0,0 32.012,-12.365 33.266,-15.118 1.316,-2.895 0.262,-8.155 -2.762,-8.812 -1.926,-0.421 -43.785,15.648 -44.836,17.62 -1.055,1.973 -2.238,4.205 -2.238,4.205 z"
+                   style="fill:none;stroke:#f8f8f8;stroke-width:8.1576;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.00677317"
+                   id="path94" />
+              </g>
+              <path
+                 d="m 438.223,599.988 c 0,0 -2.161,-0.535 -3.684,0.227 -1.523,0.762 -0.789,8.773 -0.789,8.773 l 16.305,-0.222 c 0,0 -14.071,3.597 -15.383,6.296 -1.317,2.7 1.672,6.786 4.34,7.426 2.136,0.516 45.793,-13.426 46.808,-14.625 0.883,-1.039 1.446,-6.75 0.528,-7.648 -0.922,-0.899 -4.602,-0.789 -4.602,-0.789 0,0 -1.449,0.113 -0.133,-3.934 1.317,-4.051 15.254,-20.137 18.672,-30.262 3.293,-9.753 1.387,-22.531 -2.367,-28.683 -3.965,-6.504 -9.598,-10.688 -17.356,-13.723 -7.789,-3.051 -22.191,-4.773 -33.664,-1.578 -11.425,3.188 -20.32,8.988 -25.507,16.649 -4.657,6.878 -4.473,20.699 -2.895,26.097 1.578,5.403 17.621,25.426 19.199,29.473 1.578,4.051 0.528,6.523 0.528,6.523 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path96" />
+              <g
+                 id="g98"
+                 transform="scale(1,0.855493)">
+                <path
+                   d="m 438.223,701.337 c 0,0 -2.161,-0.626 -3.684,0.265 -1.523,0.89 -0.789,10.255 -0.789,10.255 l 16.305,-0.26 c 0,0 -14.071,4.205 -15.383,7.36 -1.317,3.155 1.672,7.931 4.34,8.68 2.136,0.603 45.793,-15.693 46.808,-17.095 0.883,-1.215 1.446,-7.89 0.528,-8.94 -0.922,-1.051 -4.602,-0.923 -4.602,-0.923 0,0 -1.449,0.133 -0.133,-4.598 1.317,-4.735 15.254,-23.538 18.672,-35.373 3.293,-11.402 1.387,-26.337 -2.367,-33.529 -3.965,-7.603 -9.598,-12.493 -17.356,-16.041 -7.789,-3.566 -22.191,-5.579 -33.664,-1.844 -11.425,3.725 -20.32,10.506 -25.507,19.46 -4.657,8.041 -4.473,24.196 -2.895,30.506 1.578,6.315 17.621,29.721 19.199,34.451 1.578,4.735 0.528,7.626 0.528,7.626 z"
+                   style="fill:none;stroke:#f8f8f8;stroke-width:8.1576;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.00677317"
+                   id="path100" />
+              </g>
+              <path
+                 d="m 435.59,631.598 c 0.394,3.714 14.992,14.851 20.91,15.414 5.914,0.562 5.125,0.898 9.336,-0.453 4.207,-1.348 17.617,-9.223 18.277,-10.571 1.68,-3.453 2.758,-6.976 1.313,-9.113 -1.449,-2.145 -3.946,-0.563 -6.574,0.227 -2.629,0.785 -13.805,5.734 -17.489,6.859 -2.89,0.883 -9.203,-0.563 -9.203,-0.563 0,0 32.012,-10.578 33.266,-12.933 1.316,-2.477 0.262,-6.977 -2.762,-7.539 -1.926,-0.36 -43.785,13.386 -44.836,15.074 -1.055,1.688 -2.238,3.598 -2.238,3.598 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path102" />
+              <g
+                 id="g104"
+                 transform="scale(1,0.855493)">
+                <path
+                   d="m 435.59,738.285 c 0.394,4.343 14.992,17.361 20.91,18.018 5.914,0.658 5.125,1.05 9.336,-0.529 4.207,-1.576 17.617,-10.781 18.277,-12.356 1.68,-4.037 2.758,-8.155 1.313,-10.653 -1.449,-2.507 -3.946,-0.657 -6.574,0.265 -2.629,0.918 -13.805,6.703 -17.489,8.018 -2.89,1.032 -9.203,-0.658 -9.203,-0.658 0,0 32.012,-12.365 33.266,-15.118 1.316,-2.895 0.262,-8.155 -2.762,-8.812 -1.926,-0.421 -43.785,15.648 -44.836,17.62 -1.055,1.973 -2.238,4.205 -2.238,4.205 z"
+                   style="fill:none;stroke:#f8f8f8;stroke-width:8.1576;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.00677317"
+                   id="path106" />
+              </g>
+            </g>
+          </g>
+        </svg>`;
+
+        this.actions.label.svg =`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <!-- Created with Inkscape (http://www.inkscape.org/) -->
+        
+        <svg
+           viewBox="0 0 22.007614 80.026932"
+           version="1.1"
+           id="svg7411"
+           xmlns="http://www.w3.org/2000/svg"
+           xmlns:svg="http://www.w3.org/2000/svg">
+          <defs
+             id="defs7408" />
+          <g
+             id="layer1"
+             transform="translate(-5.356358,-56.889074)">
+            <g
+               id="g2481"
+               transform="matrix(0.35277777,0,0,0.35277777,-268.6194,-106.5571)"
+               class="openlime-lens-dashboard-label">
+              <path
+                 d="m 837.234,540.332 -57.132,7.176 -2.036,9.476 11.204,2.082 c 7.308,1.727 8.769,4.383 7.175,11.692 l -18.379,86.496 c -4.828,22.367 2.614,32.906 20.153,32.906 13.593,0 29.363,-6.289 36.539,-14.879 l 2.168,-10.363 c -5.004,4.383 -12.27,6.156 -17.094,6.156 -6.867,0 -9.348,-4.828 -7.574,-13.289 z"
+                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+                 id="path108" />
+              <path
+                 d="m 839.008,488.246 c 0,13.774 -11.164,24.938 -24.934,24.938 -13.773,0 -24.937,-11.164 -24.937,-24.938 0,-13.769 11.164,-24.934 24.937,-24.934 13.77,0 24.934,11.165 24.934,24.934 z"
+                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+                 id="path110" />
+            </g>
+          </g>
+        </svg>`;
+
+        this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <!-- Created with Inkscape (http://www.inkscape.org/) -->
+        
+        <svg
+           viewBox="0 0 83.320465 83.320465"
+           version="1.1"
+           id="svg9049"
+           xmlns="http://www.w3.org/2000/svg"
+           xmlns:svg="http://www.w3.org/2000/svg">
+          <defs
+             id="defs9046" />
+          <g
+             id="layer1"
+             transform="translate(-64.051635,-126.97536)">
+            <g
+               id="g2485"
+               transform="matrix(0.35277777,0,0,0.35277777,-244.81765,-40.328086)"
+               class="openlime-lens-dashboard-down">
+              <path class="openlime-lens-dashboard-button-bkg"
+                 d="m 1111.719,592.34 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.223,0 -118.094,-52.871 -118.094,-118.09 0,-65.223 52.871,-118.094 118.094,-118.094 65.219,0 118.09,52.871 118.09,118.094 z"
+                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+                 id="path46" />
+              <path
+                 d="m 1012.227,509.07 h -37.172 c -0.028,17.813 0,64.668 0,64.668 0,0 -40.332,0 -60.282,0.055 v 37.148 c 19.95,-0.027 60.282,-0.027 60.282,-0.027 0,0 0,46.801 -0.028,64.691 h 37.172 c 0.028,-17.89 0.028,-64.691 0.028,-64.691 0,0 40.304,0 60.253,0 v -37.176 c -19.949,0 -60.253,0 -60.253,0 0,0 -0.051,-46.851 0,-64.668"
+                 style="fill:#020202;fill-opacity:1;fill-rule:nonzero;stroke:none"
+                 id="path48" />
+            </g>
+          </g>
+        </svg>`;
+
+        this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <!-- Created with Inkscape (http://www.inkscape.org/) -->
+        
+        <svg
+           viewBox="0 0 83.319054 83.320114"
+           version="1.1"
+           id="svg11415"
+           xmlns="http://www.w3.org/2000/svg"
+           xmlns:svg="http://www.w3.org/2000/svg">
+          <defs
+             id="defs11412" />
+          <g
+             id="layer1"
+             transform="translate(-49.789728,-119.49443)">
+            <g
+               id="g2490"
+               transform="matrix(0.35277777,0,0,0.35277777,-349.02413,-45.919887)"
+               class="openlime-lens-dashboard-next">
+              <path class="openlime-lens-dashboard-button-bkg"
+                 d="m 1366.676,586.984 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.219,0 -118.09,-52.871 -118.09,-118.09 0,-65.222 52.871,-118.093 118.09,-118.093 65.219,0 118.09,52.871 118.09,118.093 z"
+                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+                 id="path68" />
+              <path
+                 d="m 1193.945,519.488 60.985,58.539 c 5.722,5.649 5.988,14.586 0,20.493 l -60.985,57.355 c -3.418,3.418 -13.66,3.418 -17.078,-6.828 V 522.684 c 3.418,-10.024 13.66,-6.61 17.078,-3.196 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path70" />
+              <path
+                 d="m 1305.789,515.266 h -18.781 c -8.043,0 -14.516,6.769 -14.516,15.183 v 113.067 c 0,8.414 6.473,15.187 14.516,15.187 h 18.781 c 8.043,0 14.516,-6.773 14.516,-15.187 V 530.449 c 0,-8.414 -6.473,-15.183 -14.516,-15.183 z"
+                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+                 id="path72" />
+            </g>
+          </g>
+        </svg>`;
+
+        for (let [name, action] of Object.entries(this.actions)) {
+            action.element = LensDashboardNavigator.svgFromString(action.svg);
+            action.element.style = `height: 100%; margin: 0 5px`;
+            if(action.clickable) {
+                action.element.style.pointerEvents = 'auto';
+                action.element.style.cursor = 'pointer';
+            }
+            action.element.classList.add('openlime-lens-dashboard-button');
+            this.toolbox.appendChild(action.element);
+
+            action.element.addEventListener('click', (e) => {
+				action.task(e);
+				e.preventDefault();
+			});
+        }
+
+        // Set Camera movement active
+		this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
+        this.actions.light.active = false;
+
+        // Set left margin to label
+        this.actions.label.element.style.marginLeft = '40px';
     }
+
+    toggleLightController() {
+		let active = this.actions.light.element.classList.toggle('openlime-lens-dashboard-light-active');
+		this.actions.light.active = active;
+        this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
+
+		for (let layer of Object.values(this.viewer.canvas.layers))
+			for (let c of layer.controllers)
+				if (c.control == 'light') {
+					c.active = true;
+					c.activeModifiers = active ? [0, 2, 4] : [2, 4];  //nothing, shift and alt
+				}
+	}
+
 
     lightCb = (e) => {
         this.lightButtonActive = !this.lightButtonActive;
@@ -166,11 +351,6 @@ class LensDashboardNavigator extends LensDashboard {
 
     show() {
         this.container.classList.toggle('closed');
-    }
-
-    appendToolbox(elm, task) {
-        this.toolbox.appendChild(elm);
-        elm.addEventListener('click', (e) => task(e));
     }
 
 	/** @ignore */

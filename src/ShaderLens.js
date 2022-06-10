@@ -65,11 +65,14 @@ class ShaderLens extends Shader {
         vec4 lensColor(in vec4 c_in, in vec4 c_border, in vec4 c_out,
             float r, float R, float B) {
             vec4 result;
-            if (r<R) {
-                float t=smoothstep(R-B, R, r);
+            float B_SMOOTH = B < 8.0 ? B/8.0 : 1.0;
+            if (r<R-B+B_SMOOTH) {
+                float t=smoothstep(R-B, R-B+B_SMOOTH, r);
                 result = mix(c_in, c_border, t);
+            } else if (r<R-B_SMOOTH) {
+                result = c_border;  
             } else {
-                float t=smoothstep(R, R+B, r);
+                float t=smoothstep(R-B_SMOOTH, R, r);
                 result = mix(c_border, c_out, t);
             }
             return result;
@@ -82,12 +85,6 @@ class ShaderLens extends Shader {
             float dy = v_texcoord.y * u_width_height.y - u_lens.y;
             float centerDist2 = dx*dx+dy*dy;
 
-            //color = vec4(0.0, 0.0, 0.0, 0.0);
-            //if (centerDist2 < innerBorderR2) {
-            //    color = texture${gl2?'':'2D'}(source0, v_texcoord);
-            //} else if (centerDist2 < lensR2) {
-            //    color = u_border_color;
-            //}
             vec4 c_in = texture${gl2?'':'2D'}(source0, v_texcoord);
             vec4 c_out = u_border_color; c_out.a=0.0;
             

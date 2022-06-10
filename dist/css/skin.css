@@ -531,12 +531,9 @@ g.openlime-expand {
 	border: 1px #aaa;
 }
 
+
+/*****************************************************/
 /* LensDashboard */
-
-/* .openlime-lens-dashboard-toolbox {
-	width: 150px;
-} */
-
 
 .openlime-lens-dashboard {
 	/* -webkit-animation: fadein 1s linear forwards;
@@ -571,32 +568,19 @@ g.openlime-expand {
 	}
 }
 
-.openlime-lens-dashboard-button, .openlime-lens-dashboard-button path[style] {
-	stroke: #aaa !important;
-	fill: #aaa !important
+.openlime-lens-dashboard-button-bkg {
+	fill: #aaa !important;
 }
 
-.openlime-lens-dashboard-button:hover,  .openlime-lens-dashboard-button:hover path[style]{
-	stroke: white !important;
-	fill: white !important
+.openlime-lens-dashboard-button:hover .openlime-lens-dashboard-button-bkg {
+	fill: #fff !important;
 }
 
-.openlime-lens-dashboard-button .pb-play {
-	visibility: visible;
+.openlime-lens-dashboard-camera-active .openlime-lens-dashboard-button-bkg {
+	fill: #fff !important;
 }
 
-.openlime-lens-dashboard-button .pb-pause {
-	visibility: hidden;
+.openlime-lens-dashboard-light-active .openlime-lens-dashboard-button-bkg {
+	fill: #fff !important;
 }
 
-.openlime-lens-dashboard-button.active .pb-play {
-	visibility: hidden;
-}
-
-.openlime-lens-dashboard-button.active .pb-pause {
-	visibility: visible;
-}
-
-.openlime-lens-dashboard-button-light.active path[style] {
-	fill: #ffcc00 !important;
-}
