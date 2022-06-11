@@ -379,10 +379,11 @@ class LensDashboardNavigator extends LensDashboard {
       if(this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
          this.updateCb(center.x, this.viewer.camera.viewport.h-center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
-      }
+      }  
+
       if (!this.moving) {
          this.toggle();
-         this.moving = true;
+         this.moving = true; 
       }
       if (this.timeout) clearTimeout(this.timeout);
       this.timeout = setTimeout(() => {
