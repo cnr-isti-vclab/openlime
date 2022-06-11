@@ -1,75 +1,75 @@
 import { LensDashboard } from "./LensDashboard";
 
 class LensDashboardNavigator extends LensDashboard {
-	/**
- 	* Manages creation and update of a lens dashboard.
- 	* An object literal with Layer `options` can be specified.
-	* This class instatiates an optional element of {@link LayerLens}
- 	* @param {Object} options An object literal with Lensdashboard parameters.
- 	* @param {number} options.borderWidth=30 The extra border thickness (in pixels) around the square including the lens.
- 	*/
-    constructor(viewer, options) {
-        super(viewer, options);
-        options = Object.assign({
-            toolboxHeight: 25,
-            actions: {
-                camera: { label: 'camera', task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
-                light: { label: 'light', task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
-                down: { label: 'down', task: (event) => { } },
-                next: { label: 'next', task: (event) => { } },
-            },
-        }, options);
-        Object.assign(this, options);
+   /**
+     * Manages creation and update of a lens dashboard.
+     * An object literal with Layer `options` can be specified.
+   * This class instatiates an optional element of {@link LayerLens}
+     * @param {Object} options An object literal with Lensdashboard parameters.
+     * @param {number} options.toolboxHeight=25 The extra border thickness (in pixels) around the square including the lens.
+     */
+   constructor(viewer, options) {
+      super(viewer, options);
+      options = Object.assign({
+         toolboxHeight: 25,
+         actions: {
+            camera: { label: 'camera', task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
+            light: { label: 'light', task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
+            down: { label: 'down', task: (event) => { } },
+            next: { label: 'next', task: (event) => { } },
+         },
+         updateCb: null
+      }, options);
+      Object.assign(this, options);
 
-        this.moving = false;
-        this.pos = [0, 0];
-        this.delay = 400;
-        this.timeout = null; // Timeout for moving
+      this.moving = false;
+      this.delay = 400;
+      this.timeout = null; // Timeout for moving
 
-        this.angleToolbar = 30.0 * (Math.PI/180.0);
+      this.angleToolbar = 30.0 * (Math.PI / 180.0);
 
-        this.container.style.display = 'block';
-        // this.container.style.gridTemplateColumns = '1fr 1fr';
-        // this.container.style.gridAutoRows = `${this.toolboxHeight}px`;
-        // this.container.style.alignItems = "center";
-        // this.container.style.justifyItems = "center";
-        this.container.style.margin = '0';
+      this.container.style.display = 'block';
+      // this.container.style.gridTemplateColumns = '1fr 1fr';
+      // this.container.style.gridAutoRows = `${this.toolboxHeight}px`;
+      // this.container.style.alignItems = "center";
+      // this.container.style.justifyItems = "center";
+      this.container.style.margin = '0';
 
-        const h1 = document.createElement('div');
-        h1.style = `text-align: center; color: #fff`;
-        h1.classList.add('openlime-lens-dashboard-toolbox-header');
-        h1.innerHTML = 'MOVE';
+      const h1 = document.createElement('div');
+      h1.style = `text-align: center; color: #fff`;
+      h1.classList.add('openlime-lens-dashboard-toolbox-header');
+      h1.innerHTML = 'MOVE';
 
-        const h2 = document.createElement('div');
-        h2.style = `text-align: center; color: #fff`;
-        h2.classList.add('openlime-lens-dashboard-toolbox-header');
-        h2.innerHTML = 'INFO';
-      
-        this.toolbox1 = document.createElement('div');
-        this.toolbox1.style = `position: absolute; padding: 4px; left: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
-        this.toolbox1.classList.add('openlime-lens-dashboard-toolbox');		
-		this.container.appendChild(this.toolbox1);
-        this.toolbox1.appendChild(h1);
+      const h2 = document.createElement('div');
+      h2.style = `text-align: center; color: #fff`;
+      h2.classList.add('openlime-lens-dashboard-toolbox-header');
+      h2.innerHTML = 'INFO';
 
-        this.toolbox2 = document.createElement('div');
-        this.toolbox2.style = `position: absolute; padding: 4px; right: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
-        this.toolbox2.classList.add('openlime-lens-dashboard-toolbox');		
-		this.container.appendChild(this.toolbox2);
-        this.toolbox2.appendChild(h2);
+      this.toolbox1 = document.createElement('div');
+      this.toolbox1.style = `position: absolute; padding: 4px; left: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
+      this.toolbox1.classList.add('openlime-lens-dashboard-toolbox');
+      this.container.appendChild(this.toolbox1);
+      this.toolbox1.appendChild(h1);
 
-        this.tools1 = document.createElement('div');
-        this.tools1.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
-		this.tools1.classList.add('openlime-lens-dashboard-toolbox-tools');		
-        this.toolbox1.appendChild(this.tools1);
+      this.toolbox2 = document.createElement('div');
+      this.toolbox2.style = `position: absolute; padding: 4px; right: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
+      this.toolbox2.classList.add('openlime-lens-dashboard-toolbox');
+      this.container.appendChild(this.toolbox2);
+      this.toolbox2.appendChild(h2);
 
-        this.tools2 = document.createElement('div');
-        this.tools2.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
-		this.tools2.classList.add('openlime-lens-dashboard-toolbox-tools');		
-        this.toolbox2.appendChild(this.tools2);
+      this.tools1 = document.createElement('div');
+      this.tools1.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
+      this.tools1.classList.add('openlime-lens-dashboard-toolbox-tools');
+      this.toolbox1.appendChild(this.tools1);
 
-        // TOOLBOX ITEMS
+      this.tools2 = document.createElement('div');
+      this.tools2.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
+      this.tools2.classList.add('openlime-lens-dashboard-toolbox-tools');
+      this.toolbox2.appendChild(this.tools2);
 
-        this.actions.camera.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      // TOOLBOX ITEMS
+
+      this.actions.camera.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
         <svg
@@ -126,7 +126,7 @@ class LensDashboardNavigator extends LensDashboard {
           </g>
         </svg>`;
 
-        this.actions.light.svg =`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      this.actions.light.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
         <svg
@@ -216,7 +216,7 @@ class LensDashboardNavigator extends LensDashboard {
           </g>
         </svg>`;
 
-        this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
         <svg
@@ -246,7 +246,7 @@ class LensDashboardNavigator extends LensDashboard {
           </g>
         </svg>`;
 
-        this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
         <svg
@@ -280,104 +280,116 @@ class LensDashboardNavigator extends LensDashboard {
           </g>
         </svg>`;
 
-        for (let [name, action] of Object.entries(this.actions)) {
-            action.element = LensDashboardNavigator.svgFromString(action.svg);
-            action.element.style = `height: 100%; margin: 0 5px`;
-            action.element.classList.add('openlime-lens-dashboard-button');
+      for (let [name, action] of Object.entries(this.actions)) {
+         action.element = LensDashboardNavigator.svgFromString(action.svg);
+         action.element.style = `height: 100%; margin: 0 5px`;
+         action.element.classList.add('openlime-lens-dashboard-button');
 
-            action.element.addEventListener('click', (e) => {
-				action.task(e);
-				e.preventDefault();
-			});
-        }
+         action.element.addEventListener('click', (e) => {
+            action.task(e);
+            e.preventDefault();
+         });
+      }
 
-        this.tools1.appendChild(this.actions.camera.element);
-        this.tools1.appendChild(this.actions.light.element);
-        this.tools2.appendChild(this.actions.down.element);
-        this.tools2.appendChild(this.actions.next.element);
+      this.tools1.appendChild(this.actions.camera.element);
+      this.tools1.appendChild(this.actions.light.element);
+      this.tools2.appendChild(this.actions.down.element);
+      this.tools2.appendChild(this.actions.next.element);
 
-        // Set Camera movement active
-		this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
-        this.actions.light.active = false;
+      // Set Camera movement active
+      this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
+      this.actions.light.active = false;
 
-        console.log('NEXT: ', this.getAction('next'));
-    }
+      // Enable camera, light, next buttons
+      this.setActionEnabled('camera');
+      this.setActionEnabled('light');
+      this.setActionEnabled('next');
+   }
 
-    getAction(label) {
-        console.log(Object.entries(this.actions));
-        const result = Object.entries(this.actions).find(([k, a]) => {
-            console.log(a.label, label);
-            if (a.label === label) console.log('FOUND!!!');
-            return a.label === label;
-        });
-    }
+   getAction(label) {
+      let result = null;
+      for (let [name, action] of Object.entries(this.actions)) {
+         if (action.label === label) {
+            result = action;
+            break;
+         }
+      }
+      return result;
+   }
 
-    setActionEnabled(label) {
+   setActionEnabled(label, enable=true) {
+      const action = this.getAction(label);
+      if (action) {
+         action.element.classList.toggle('enabled', enable);
+      }
+   }
 
-    }
+   toggleLightController() {
+      let active = this.actions.light.element.classList.toggle('openlime-lens-dashboard-light-active');
+      this.actions.light.active = active;
+      this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
 
-    toggleLightController() {
-		let active = this.actions.light.element.classList.toggle('openlime-lens-dashboard-light-active');
-		this.actions.light.active = active;
-        this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
+      for (let layer of Object.values(this.viewer.canvas.layers))
+         for (let c of layer.controllers)
+            if (c.control == 'light') {
+               c.active = true;
+               c.activeModifiers = active ? [0, 2, 4] : [2, 4];  //nothing, shift and alt
+            }
+   }
 
-		for (let layer of Object.values(this.viewer.canvas.layers))
-			for (let c of layer.controllers)
-				if (c.control == 'light') {
-					c.active = true;
-					c.activeModifiers = active ? [0, 2, 4] : [2, 4];  //nothing, shift and alt
-				}
-	}
+   toggle() {
+      this.container.classList.toggle('closed');
+   }
 
-    toggle() {
-        this.container.classList.toggle('closed');
-    }
+   /** @ignore */
+   update(x, y, r) {
+      const now = performance.now();
+      let cameraT = this.viewer.camera.getCurrentTransform(now);
+      const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
+      const radius = r * cameraT.z;
+      const sizew = 2 * radius;
+      const sizeh = 2 * radius + this.borderWidth;
+      const p = {x: 0, y: 0};
+      p.x = center.x - radius;
+      p.y = center.y + radius;
+      p.y = this.viewer.camera.viewport.h - p.y;
+      this.container.style.left = `${p.x}px`;
+      this.container.style.top = `${p.y}px`;
+      this.container.style.width = `${sizew}px`;
+      this.container.style.height = `${sizeh}px`;
 
-	/** @ignore */
-    update(x, y, r) {
-		const now = performance.now();
-		let cameraT = this.viewer.camera.getCurrentTransform(now);
-		const p = this.viewer.camera.sceneToCanvas(x, y, cameraT);
-		const size = r * cameraT.z;
-		const sizew = 2 * size;
-        const sizeh = 2 * size + this.borderWidth;
-		p.x -= size;
-		p.y += size;
-		p.y = this.viewer.camera.viewport.h - p.y;
-		this.container.style.left = `${p.x}px`;
-		this.container.style.top = `${p.y}px`;
-		this.container.style.width = `${sizew}px`;
-		this.container.style.height = `${sizeh}px`;
+      // Set toolbox position
+      const tbw1 = this.toolbox1.clientWidth;
+      const tbh1 = this.toolbox1.clientHeight;
+      const tbw2 = this.toolbox2.clientWidth;
+      const tbh2 = this.toolbox2.clientHeight;
+      let cbx = radius * Math.sin(this.angleToolbar);
+      let cby = radius * Math.cos(this.angleToolbar);
 
-        // Set toolbox position
-        const tbw1 = this.toolbox1.clientWidth;
-        const tbh1 = this.toolbox1.clientHeight;
-        const tbw2 = this.toolbox2.clientWidth;
-        const tbh2 = this.toolbox2.clientHeight;
-        let cbx = size*Math.sin(this.angleToolbar);
-        let cby = size*Math.cos(this.angleToolbar);
+      let bx1 = radius - cbx - tbw1 / 2;
+      let by1 = radius + cby - tbh1 / 2;
+      this.toolbox1.style.left = `${bx1}px`;
+      this.toolbox1.style.top = `${by1}px`;
 
-        let bx1 = size - cbx - tbw1/2;
-        let by1 = size + cby - tbh1/2;
-        this.toolbox1.style.left = `${bx1}px`;
-        this.toolbox1.style.top = `${by1}px`;
-    
-        let bx2 = size + cbx - tbw2/2;
-        let by2 = size + cby - tbh2/2;
-        this.toolbox2.style.left = `${bx2}px`;
-        this.toolbox2.style.top = `${by2}px`;
+      let bx2 = radius + cbx - tbw2 / 2;
+      let by2 = radius + cby - tbh2 / 2;
+      this.toolbox2.style.left = `${bx2}px`;
+      this.toolbox2.style.top = `${by2}px`;
 
-        if( x == this.pos[0] && y == this.pos[1]) return;
-        if(!this.moving) {
-            this.toggle();
-            this.moving = true;
-        }
-        if(this.timeout) clearTimeout(this.timeout);
-        this.timeout = setTimeout( () => {
-            this.toggle();
-            this.moving = false;
-        }, this.delay);
-	}
+      if(this.updateCb) {
+         // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
+         this.updateCb(center.x, this.viewer.camera.viewport.h-center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
+      }
+      if (!this.moving) {
+         this.toggle();
+         this.moving = true;
+      }
+      if (this.timeout) clearTimeout(this.timeout);
+      this.timeout = setTimeout(() => {
+         this.toggle();
+         this.moving = false;
+      }, this.delay);
+   }
 }
 
-export {LensDashboardNavigator}
+export { LensDashboardNavigator }

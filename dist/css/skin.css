@@ -567,14 +567,17 @@ g.openlime-expand {
 }
 
 .openlime-lens-dashboard-button-bkg {
-	fill: #555 !important;
+	fill: #333 !important;
 	pointer-events: none;
 }
 
-.openlime-lens-dashboard-button-bkg.enabled {
-	fill: #aaa !important;
+.openlime-lens-dashboard-button.enabled {
 	pointer-events: auto;
 	cursor: pointer;
+}
+
+.enabled .openlime-lens-dashboard-button-bkg {
+	fill: #aaa !important;
 }
 
 .openlime-lens-dashboard-button:hover .openlime-lens-dashboard-button-bkg {
