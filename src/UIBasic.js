@@ -439,7 +439,7 @@ class UIBasic {
 		this.lastScaleZoom = zoom;
 		let s = this.bestScaleLength(100, 200, this.scale, zoom);
 		//let line = document.querySelector('.openlime-scale > line');
-		let margin = 200 - 10 - s.length;
+		let margin = 200 - s.length;
 		line.setAttribute('x1', margin / 2);
 		line.setAttribute('x2', 200 - margin / 2);
 		//let text = document.querySelector('.openlime-scale > text');
@@ -456,7 +456,7 @@ class UIBasic {
 
 
 		let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		svg.setAttribute('viewBox', `0 0 200 40`);
+		svg.setAttribute('viewBox', `0 0 200 30`);
 		svg.classList.add('openlime-scale');
 		let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
 		line.setAttribute('x1', 5);
