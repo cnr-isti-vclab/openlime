@@ -94,7 +94,7 @@ class EditorSvgAnnotation {
 				pin: {
 					template: (x,y) => {
 						return `<svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='4%' height='4%' class='pin'
-						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='7' y='10'>${this.annotation.idx}</text></svg>`;
+						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='7' y='8'>${this.annotation.idx}</text></svg>`;
 					}, //pin di alcazar  1. url a svg 2. txt (stringa con svg) 3. funzione(x,y) ritorna svg 4. dom (da skin).
 					tooltip: 'New pin',
 					tool: Pin
@@ -143,7 +143,7 @@ class EditorSvgAnnotation {
 			deleteCallback: null
 		}, options);
 
-		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`).join('\n');
+		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].style.stroke}; }`).join('\n');
 		//at the moment is not really possible to unregister the events registered here.
 		viewer.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
@@ -238,7 +238,7 @@ class EditorSvgAnnotation {
 		edit.classList.remove('hidden');
 		let button = edit.querySelector('.openlime-select-button');
 		button.textContent = this.classes[anno.class].label;
-		button.style.background = this.classes[anno.class].stroke;
+		button.style.background = this.classes[anno.class].style.stroke;
 	}
 
 	/** @ignore */
@@ -284,7 +284,7 @@ class EditorSvgAnnotation {
 						<div class="openlime-select-button"></div>
 						<ul class="openlime-select-menu">
 						${Object.entries(this.classes).map((c) =>
-			`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
+			`<li data-class="${c[0]}" style="background:${c[1].style.stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
 					<span><button class="openlime-state">SAVE</button></span>
@@ -322,7 +322,7 @@ class EditorSvgAnnotation {
 
 			input.value = e.srcElement.getAttribute('data-class');
 			input.dispatchEvent(new Event('change'));
-			button.style.background = this.classes[input.value].stroke;
+			button.style.background = this.classes[input.value].style.stroke;
 			button.textContent = e.srcElement.textContent;
 
 			select.classList.toggle('active');
@@ -417,7 +417,7 @@ class EditorSvgAnnotation {
 		anno.class = select.value || '';
 
 		let button = edit.querySelector('.openlime-select-button');
-		button.style.background = this.classes[anno.class].stroke;
+		button.style.background = this.classes[anno.class].style.stroke;
 
 		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
