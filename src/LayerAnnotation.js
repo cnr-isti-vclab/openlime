@@ -41,11 +41,10 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 		const headers = new Headers();
 		headers.append('pragma', 'no-cache');
 		headers.append('cache-control', 'no-cache');
-		const init = {
-  			method: 'GET',
-  			headers: headers,
-		};
-		var response = await fetch(url, init);
+		var response = await fetch(url, {
+			method: 'GET',
+			headers: headers,
+	  	});
 		if(!response.ok) {
 			this.status = "Failed loading " + this.url + ": " + response.statusText;
 			return;
