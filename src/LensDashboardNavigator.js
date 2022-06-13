@@ -246,39 +246,60 @@ class LensDashboardNavigator extends LensDashboard {
           </g>
         </svg>`;
 
-      this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      // this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      //   <!-- Created with Inkscape (http://www.inkscape.org/) -->
+        
+      //   <svg
+      //      viewBox="0 0 83.319054 83.320114"
+      //      version="1.1"
+      //      id="svg11415"
+      //      xmlns="http://www.w3.org/2000/svg"
+      //      xmlns:svg="http://www.w3.org/2000/svg">
+      //     <defs
+      //        id="defs11412" />
+      //     <g
+      //        id="layer1"
+      //        transform="translate(-49.789728,-119.49443)">
+      //       <g
+      //          id="g2490"
+      //          transform="matrix(0.35277777,0,0,0.35277777,-349.02413,-45.919887)"
+      //          class="openlime-lens-dashboard-next">
+      //         <path class="openlime-lens-dashboard-button-bkg"
+      //            d="m 1366.676,586.984 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.219,0 -118.09,-52.871 -118.09,-118.09 0,-65.222 52.871,-118.093 118.09,-118.093 65.219,0 118.09,52.871 118.09,118.093 z"
+      //            style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+      //            id="path68" />
+      //         <path
+      //            d="m 1193.945,519.488 60.985,58.539 c 5.722,5.649 5.988,14.586 0,20.493 l -60.985,57.355 c -3.418,3.418 -13.66,3.418 -17.078,-6.828 V 522.684 c 3.418,-10.024 13.66,-6.61 17.078,-3.196 z"
+      //            style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+      //            id="path70" />
+      //         <path
+      //            d="m 1305.789,515.266 h -18.781 c -8.043,0 -14.516,6.769 -14.516,15.183 v 113.067 c 0,8.414 6.473,15.187 14.516,15.187 h 18.781 c 8.043,0 14.516,-6.773 14.516,-15.187 V 530.449 c 0,-8.414 -6.473,-15.183 -14.516,-15.183 z"
+      //            style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+      //            id="path72" />
+      //       </g>
+      //     </g>
+      //   </svg>`;
+
+        this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
         <svg
            viewBox="0 0 83.319054 83.320114"
            version="1.1"
            id="svg11415"
+           xml:space="preserve"
            xmlns="http://www.w3.org/2000/svg"
-           xmlns:svg="http://www.w3.org/2000/svg">
-          <defs
-             id="defs11412" />
-          <g
-             id="layer1"
-             transform="translate(-49.789728,-119.49443)">
-            <g
-               id="g2490"
-               transform="matrix(0.35277777,0,0,0.35277777,-349.02413,-45.919887)"
-               class="openlime-lens-dashboard-next">
-              <path class="openlime-lens-dashboard-button-bkg"
-                 d="m 1366.676,586.984 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.219,0 -118.09,-52.871 -118.09,-118.09 0,-65.222 52.871,-118.093 118.09,-118.093 65.219,0 118.09,52.871 118.09,118.093 z"
-                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
-                 id="path68" />
-              <path
-                 d="m 1193.945,519.488 60.985,58.539 c 5.722,5.649 5.988,14.586 0,20.493 l -60.985,57.355 c -3.418,3.418 -13.66,3.418 -17.078,-6.828 V 522.684 c 3.418,-10.024 13.66,-6.61 17.078,-3.196 z"
-                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
-                 id="path70" />
-              <path
-                 d="m 1305.789,515.266 h -18.781 c -8.043,0 -14.516,6.769 -14.516,15.183 v 113.067 c 0,8.414 6.473,15.187 14.516,15.187 h 18.781 c 8.043,0 14.516,-6.773 14.516,-15.187 V 530.449 c 0,-8.414 -6.473,-15.183 -14.516,-15.183 z"
-                 style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
-                 id="path72" />
-            </g>
-          </g>
-        </svg>`;
+           xmlns:svg="http://www.w3.org/2000/svg"><defs
+             id="defs11412" /><g
+             id="g2706"
+             transform="translate(-83.319054,1.7740688)"><path
+               d="m 166.63811,39.886517 c 0,23.007813 -18.65172,41.659526 -41.65953,41.659526 -23.00782,0 -41.659526,-18.651713 -41.659526,-41.659526 0,-23.008872 18.651706,-41.6605858 41.659526,-41.6605858 23.00781,0 41.65953,18.6517138 41.65953,41.6605858 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+               id="path68"
+               class="openlime-lens-dashboard-button-bkg" /><path
+               d="m 113.68535,10.361214 -6.93831,6.938331 22.53725,22.586442 -22.53725,22.586464 6.93831,6.93831 29.52478,-29.524774 z"
+               id="path2332"
+               style="stroke-width:4.92078" /></g></svg>`;
 
       for (let [name, action] of Object.entries(this.actions)) {
          action.element = LensDashboardNavigator.svgFromString(action.svg);
