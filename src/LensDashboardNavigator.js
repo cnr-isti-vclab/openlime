@@ -11,7 +11,7 @@ class LensDashboardNavigator extends LensDashboard {
    constructor(viewer, options) {
       super(viewer, options);
       options = Object.assign({
-         toolboxHeight: 25,
+         toolboxHeight: 22,
          actions: {
             camera: { label: 'camera', task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
             light: { label: 'light', task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
