@@ -28,6 +28,9 @@ class LayerLens extends LayerCombiner {
 		this.addControl('borderWidth', [this.borderWidth]);
 
 		this.signals.draw = [];
+
+		this.oldRadius = -9999;
+		this.oldCenter = [-9999, -9999];
 	}
 
 	
@@ -95,7 +98,11 @@ class LayerLens extends LayerCombiner {
 		if (this.dashboard) {
 			const c = this.getCurrentCenter();
 			const r = this.getRadius();
-			this.dashboard.update(c[0], c[1], r);
+			if( c[0] != this.oldCenter[0] || c[1] != this.oldCenter[1] || r != this.oldRadius) {
+				this.dashboard.update(c[0], c[1], r);
+				this.oldCenter = c;
+				this.oldRadius = r;
+			}
 		}
 		// const vlens = this.getLensInViewportCoords(transform, viewport);
 		// this.shader.setLensUniforms(vlens, [viewport.w, viewport.h], this.borderColor);
