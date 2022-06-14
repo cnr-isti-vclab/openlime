@@ -35,7 +35,10 @@ const core = [
 
 const ui = [
 	'./src/Skin.js',
-	'./src/UIBasic.js'
+	'./src/UIBasic.js',
+	'./src/Ruler.js',
+	'./src/ScaleBar.js'
+
 ];
 
 const lens = [
