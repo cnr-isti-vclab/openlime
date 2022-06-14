@@ -18,7 +18,8 @@ class LensDashboardNavigator extends LensDashboard {
             down: { label: 'down', task: (event) => { } },
             next: { label: 'next', task: (event) => { } },
          },
-         updateCb: null
+         updateCb: null,
+         finishUpdateCb: null
       }, options);
       Object.assign(this, options);
 
@@ -216,35 +217,108 @@ class LensDashboardNavigator extends LensDashboard {
           </g>
         </svg>`;
 
-      this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      // this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      //   <!-- Created with Inkscape (http://www.inkscape.org/) -->
+        
+      //   <svg
+      //      viewBox="0 0 83.320465 83.320465"
+      //      version="1.1"
+      //      id="svg9049"
+      //      xmlns="http://www.w3.org/2000/svg"
+      //      xmlns:svg="http://www.w3.org/2000/svg">
+      //     <defs
+      //        id="defs9046" />
+      //     <g
+      //        id="layer1"
+      //        transform="translate(-64.051635,-126.97536)">
+      //       <g
+      //          id="g2485"
+      //          transform="matrix(0.35277777,0,0,0.35277777,-244.81765,-40.328086)"
+      //          class="openlime-lens-dashboard-down">
+      //         <path class="openlime-lens-dashboard-button-bkg"
+      //            d="m 1111.719,592.34 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.223,0 -118.094,-52.871 -118.094,-118.09 0,-65.223 52.871,-118.094 118.094,-118.094 65.219,0 118.09,52.871 118.09,118.094 z"
+      //            style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+      //            id="path46" />
+      //         <path
+      //            d="m 1012.227,509.07 h -37.172 c -0.028,17.813 0,64.668 0,64.668 0,0 -40.332,0 -60.282,0.055 v 37.148 c 19.95,-0.027 60.282,-0.027 60.282,-0.027 0,0 0,46.801 -0.028,64.691 h 37.172 c 0.028,-17.89 0.028,-64.691 0.028,-64.691 0,0 40.304,0 60.253,0 v -37.176 c -19.949,0 -60.253,0 -60.253,0 0,0 -0.051,-46.851 0,-64.668"
+      //            style="fill:#020202;fill-opacity:1;fill-rule:nonzero;stroke:none"
+      //            id="path48" />
+      //       </g>
+      //     </g>
+      //   </svg>`;
+
+        this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
         <svg
-           viewBox="0 0 83.320465 83.320465"
+           viewBox="0 0 83.319054 83.320114"
            version="1.1"
-           id="svg9049"
+           id="svg11415"
+           xml:space="preserve"
            xmlns="http://www.w3.org/2000/svg"
-           xmlns:svg="http://www.w3.org/2000/svg">
-          <defs
-             id="defs9046" />
-          <g
-             id="layer1"
-             transform="translate(-64.051635,-126.97536)">
-            <g
-               id="g2485"
-               transform="matrix(0.35277777,0,0,0.35277777,-244.81765,-40.328086)"
-               class="openlime-lens-dashboard-down">
-              <path class="openlime-lens-dashboard-button-bkg"
-                 d="m 1111.719,592.34 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.223,0 -118.094,-52.871 -118.094,-118.09 0,-65.223 52.871,-118.094 118.094,-118.094 65.219,0 118.09,52.871 118.09,118.094 z"
-                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
-                 id="path46" />
-              <path
-                 d="m 1012.227,509.07 h -37.172 c -0.028,17.813 0,64.668 0,64.668 0,0 -40.332,0 -60.282,0.055 v 37.148 c 19.95,-0.027 60.282,-0.027 60.282,-0.027 0,0 0,46.801 -0.028,64.691 h 37.172 c 0.028,-17.89 0.028,-64.691 0.028,-64.691 0,0 40.304,0 60.253,0 v -37.176 c -19.949,0 -60.253,0 -60.253,0 0,0 -0.051,-46.851 0,-64.668"
-                 style="fill:#020202;fill-opacity:1;fill-rule:nonzero;stroke:none"
-                 id="path48" />
-            </g>
-          </g>
-        </svg>`;
+           xmlns:svg="http://www.w3.org/2000/svg"><defs
+             id="defs11412"><marker
+               style="overflow:visible"
+               id="TriangleStart"
+               refX="0"
+               refY="0"
+               orient="auto-start-reverse"
+               markerWidth="5.3244081"
+               markerHeight="6.155385"
+               viewBox="0 0 5.3244081 6.1553851"
+               preserveAspectRatio="xMidYMid"><path
+                 transform="scale(0.5)"
+                 style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+                 d="M 5.77,0 -2.88,5 V -5 Z"
+                 id="path135" /></marker><marker
+               style="overflow:visible"
+               id="TriangleStart-5"
+               refX="0"
+               refY="0"
+               orient="auto-start-reverse"
+               markerWidth="5.3244081"
+               markerHeight="6.155385"
+               viewBox="0 0 5.3244081 6.1553851"
+               preserveAspectRatio="xMidYMid"><path
+                 transform="scale(0.5)"
+                 style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+                 d="M 5.77,0 -2.88,5 V -5 Z"
+                 id="path135-3" /></marker></defs><g
+             id="g4652"
+             transform="translate(145.46385,95.197966)"><g
+               id="g4846"
+               transform="translate(-126.60931,52.756264)"><path
+                 d="m 64.464511,-106.29364 c 0,23.007813 -18.65172,41.659526 -41.65953,41.659526 -23.0078196,0 -41.659526,-18.651713 -41.659526,-41.659526 0,-23.00887 18.6517064,-41.66059 41.659526,-41.66059 23.00781,0 41.65953,18.65172 41.65953,41.66059 z"
+                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+                 id="path68"
+                 class="openlime-lens-dashboard-button-bkg" /><g
+                 id="g2392-5"
+                 transform="matrix(0.26458333,0,0,0.26458333,-283.58108,-263.57207)"><path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:40;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1072.4033,509.27736 h 171.1826"
+                   id="path351-6" /><path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:30;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1185.0215,568.3701 h 59.6026"
+                   id="path351-3-2" /><path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:30;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1184.2167,621.15576 h 59.6026"
+                   id="path351-3-2-0" /><path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:40;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1072.4033,679.59496 h 171.1826"
+                   id="path351-3-6-7-1" /><path
+                   style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:11.4448;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart-5)"
+                   d="m 1074.9115,570.87447 54.1203,-0.0275"
+                   id="path1366-2" /><path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:14;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1080.0425,521.28147 v 54.87857"
+                   id="path1402-7" /><path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   d="m 1150.8866,623.00688 0.3956,-5.02729"
+                   id="path2545" /><path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:30;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1185.0215,567.71656 h 59.6026"
+                   id="path2720" /></g></g></g></svg>`;
+
 
       // this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
       //   <!-- Created with Inkscape (http://www.inkscape.org/) -->
@@ -280,26 +354,77 @@ class LensDashboardNavigator extends LensDashboard {
       //     </g>
       //   </svg>`;
 
-        this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-        <!-- Created with Inkscape (http://www.inkscape.org/) -->
+      // this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      //   <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
-        <svg
-           viewBox="0 0 83.319054 83.320114"
-           version="1.1"
-           id="svg11415"
-           xml:space="preserve"
-           xmlns="http://www.w3.org/2000/svg"
-           xmlns:svg="http://www.w3.org/2000/svg"><defs
-             id="defs11412" /><g
-             id="g2706"
-             transform="translate(-83.319054,1.7740688)"><path
-               d="m 166.63811,39.886517 c 0,23.007813 -18.65172,41.659526 -41.65953,41.659526 -23.00782,0 -41.659526,-18.651713 -41.659526,-41.659526 0,-23.008872 18.651706,-41.6605858 41.659526,-41.6605858 23.00781,0 41.65953,18.6517138 41.65953,41.6605858 z"
-               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
-               id="path68"
-               class="openlime-lens-dashboard-button-bkg" /><path
-               d="m 113.68535,10.361214 -6.93831,6.938331 22.53725,22.586442 -22.53725,22.586464 6.93831,6.93831 29.52478,-29.524774 z"
-               id="path2332"
-               style="stroke-width:4.92078" /></g></svg>`;
+      //   <svg
+      //      viewBox="0 0 83.319054 83.320114"
+      //      version="1.1"
+      //      id="svg11415"
+      //      xml:space="preserve"
+      //      xmlns="http://www.w3.org/2000/svg"
+      //      xmlns:svg="http://www.w3.org/2000/svg"><defs
+      //        id="defs11412" /><g
+      //        id="g2706"
+      //        transform="translate(-83.319054,1.7740688)"><path
+      //          d="m 166.63811,39.886517 c 0,23.007813 -18.65172,41.659526 -41.65953,41.659526 -23.00782,0 -41.659526,-18.651713 -41.659526,-41.659526 0,-23.008872 18.651706,-41.6605858 41.659526,-41.6605858 23.00781,0 41.65953,18.6517138 41.65953,41.6605858 z"
+      //          style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+      //          id="path68"
+      //          class="openlime-lens-dashboard-button-bkg" /><path
+      //          d="m 113.68535,10.361214 -6.93831,6.938331 22.53725,22.586442 -22.53725,22.586464 6.93831,6.93831 29.52478,-29.524774 z"
+      //          id="path2332"
+      //          style="stroke-width:4.92078" /></g></svg>`;
+
+      this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      <!-- Created with Inkscape (http://www.inkscape.org/) -->
+      
+      <svg
+         viewBox="0 0 83.319054 83.320114"
+         version="1.1"
+         id="svg11415"
+         xml:space="preserve"
+         xmlns="http://www.w3.org/2000/svg"
+         xmlns:svg="http://www.w3.org/2000/svg"><defs
+           id="defs11412"><marker
+             style="overflow:visible"
+             id="TriangleStart"
+             refX="0"
+             refY="0"
+             orient="auto-start-reverse"
+             markerWidth="5.3244081"
+             markerHeight="6.155385"
+             viewBox="0 0 5.3244081 6.1553851"
+             preserveAspectRatio="xMidYMid"><path
+               transform="scale(0.5)"
+               style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+               d="M 5.77,0 -2.88,5 V -5 Z"
+               id="path135" /></marker></defs><g
+           id="g4652"
+           transform="translate(-12.647874,74.762541)"><path
+             d="m 95.96693,-33.101955 c 0,23.007813 -18.65172,41.6595258 -41.65953,41.6595258 -23.00782,0 -41.659526,-18.6517128 -41.659526,-41.6595258 0,-23.008872 18.651706,-41.660586 41.659526,-41.660586 23.00781,0 41.65953,18.651714 41.65953,41.660586 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+             id="path68"
+             class="openlime-lens-dashboard-button-bkg" /><g
+             id="g4636"
+             transform="translate(173.74831,-50.897484)"><path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:10.5833;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="m -142.08694,-4.7366002 h 45.292059"
+               id="path351" /><path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:10.5833;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="m -142.08694,40.326598 h 45.292059"
+               id="path351-3-6-7" /><path
+               style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3.20746;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart)"
+               d="m -136.09942,8.7192481 0.008,14.9721889"
+               id="path1366" /><path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3.70417;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="M -136.07283,-1.5605128 V 24.204958"
+               id="path1402" /><path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:7.9375;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="m -111.69142,24.864565 h 15.76985"
+               id="path351-3-2-0-3" /><path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:7.9375;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="m -111.37623,10.725444 h 15.76986"
+               id="path2720-9" /></g></g></svg>`;
 
       for (let [name, action] of Object.entries(this.actions)) {
          action.element = LensDashboardNavigator.svgFromString(action.svg);
@@ -410,6 +535,7 @@ class LensDashboardNavigator extends LensDashboard {
       this.timeout = setTimeout(() => {
          this.toggle();
          this.moving = false;
+         if(this.finishUpdateCb) this.finishUpdateCb(center.x, this.viewer.camera.viewport.h-center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
       }, this.delay);
    }
 }
