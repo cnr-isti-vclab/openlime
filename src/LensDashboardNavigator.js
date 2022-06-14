@@ -19,7 +19,7 @@ class LensDashboardNavigator extends LensDashboard {
             next: { label: 'next', task: (event) => { } },
          },
          updateCb: null,
-         finishUpdateCb: null
+         updateEndCb: null
       }, options);
       Object.assign(this, options);
 
@@ -535,7 +535,7 @@ class LensDashboardNavigator extends LensDashboard {
       this.timeout = setTimeout(() => {
          this.toggle();
          this.moving = false;
-         if(this.finishUpdateCb) this.finishUpdateCb(center.x, this.viewer.camera.viewport.h-center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
+         if(this.updateEndCb) this.updateEndCb(center.x, this.viewer.camera.viewport.h-center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
       }, this.delay);
    }
 }
