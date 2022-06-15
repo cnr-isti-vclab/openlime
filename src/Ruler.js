@@ -167,7 +167,7 @@ class Ruler extends Units {
 			return false;
 
 		let transform = this.camera.getCurrentTransform(performance.now())
-		let {x, y}  = this.camera.mapToScene(e.offsetX, e.offsetY, transform);
+		let {x, y}  = this.camera.mapToScene(e.layerX, e.layerY, transform);
 
 		
 		if(!this.measure) {
@@ -187,7 +187,7 @@ class Ruler extends Units {
 			return false;
 
 		let transform = this.camera.getCurrentTransform(performance.now())
-		let {x, y}  = this.camera.mapToScene(e.offsetX, e.offsetY, transform);
+		let {x, y}  = this.camera.mapToScene(e.layerX, e.layerY, transform);
 		this.measure.x2 = x;
 		this.measure.y2 = y;
 		this.update();	
