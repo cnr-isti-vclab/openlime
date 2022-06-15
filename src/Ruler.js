@@ -1,7 +1,7 @@
 import { Units } from './ScaleBar.js'
 
 
-/* color is specified in the css under the .openlime-ruler selector */this
+/* color is specified in the css under the .openlime-ruler selector */
 
 class Ruler extends Units {
 	constructor(viewer, pixelSize, options) {

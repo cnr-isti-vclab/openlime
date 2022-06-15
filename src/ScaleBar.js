@@ -104,4 +104,5 @@ function createSVGElement(tag, attributes) {
 }
 
 
-export { Units, ScaleBar, createSVGElement }
+//export { Units, ScaleBar, createSVGElement }
+export { Units, ScaleBar }
