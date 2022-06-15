@@ -1,6 +1,7 @@
 import { Camera } from './Camera.js'
 import { Layer  } from './Layer.js'
 import { Cache } from './Cache.js'
+import { addSignals } from './Signals.js'
 
 //// HELPERS
 
@@ -33,6 +34,7 @@ class Canvas {
 			layers: {},
 			signals: {'update':[], 'updateSize':[], 'ready': []}
 		});
+		addSignals(Canvas, 'update', 'updateSize', 'ready');
 		Object.assign(this, options);
 
 		this.init(canvas, overlay);
@@ -47,20 +49,8 @@ class Canvas {
  	* @param {*} event A label to identify the event.
  	* @param {*} callback The event callback function.
  	*/
-	/** @ignore */
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
 
-	/*
- 	* Emits an event (running all the callbacks referred to it).
- 	* @param {*} event The event name
- 	*/
-	/** @ignore */ 	
-	emit(event) {
-		for(let r of this.signals[event])
-			r(this);
-	}
+
 
 	/** @ignore */
 	init(canvas, overlay) {

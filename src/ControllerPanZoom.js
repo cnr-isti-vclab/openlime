@@ -1,4 +1,6 @@
 import { Controller } from './Controller.js'
+import { addSignals } from './Signals.js'
+
 
 /** **ControllerPanZoom** intercepts pan, zoom, single tap, and wheel events in the canvas and updates the scene camera parameters.
 */
@@ -14,7 +16,7 @@ class ControllerPanZoom extends Controller {
 
 		this.camera = camera;
 		this.zoomAmount = 1.2;          //for wheel or double tap event
-		
+		this.controlZoom = false;       //require control+wheel to zoom
 		
 		this.panning = false;           //true if in the middle of a pan
 		this.initialTransform = null;
@@ -22,6 +24,10 @@ class ControllerPanZoom extends Controller {
 
 		this.zooming = false;           //true if in the middle of a pinch
 		this.initialDistance = 0.0;
+
+		if(options)
+			Object.assign(this, options);
+		addSignals(ControllerPanZoom, 'nowheel');
 	}
 
 	/** @ignore */
@@ -94,6 +100,10 @@ class ControllerPanZoom extends Controller {
 
 	/** @ignore */
 	mouseWheel(e) {
+		if(this.controlZoom && !e.ctrlKey) {
+			this.emit('nowheel');
+			return;
+		}
 		let delta = -e.deltaY/53;
 		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
 		const dz = Math.pow(this.zoomAmount, delta);		

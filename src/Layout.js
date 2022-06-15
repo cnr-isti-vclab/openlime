@@ -1,4 +1,5 @@
 import { BoundingBox } from "./BoundingBox";
+import { addSignals } from "./Signals";
 import { Tile } from "./Tile";
 
 // Tile level x y  index ----- tex missing() start/end (tarzoom) ----- time, priority size(byte)
@@ -86,10 +87,10 @@ class Layout {
 			height: 0,
 			suffix: 'jpg',
 			urls: [],
-			signals: { ready: [], updateSize: [] },          //callbacks when the layout is ready.
 			status: null,
 			subdomains: 'abc'
 		});
+		addSignals(Layout, 'ready', 'updateSize');
 	}
 
 	init(url, type, options) {
@@ -119,18 +120,6 @@ class Layout {
 	 */
 	 getTileURL(id, tile) {
 		throw Error("Layout not defined or ready.");
-	}
-	
-
-	/** @ignore */
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
-
-	/** @ignore */
-	emit(event) {
-		for(let r of this.signals[event])
-			r(this);
 	}
 
 	/**

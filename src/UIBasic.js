@@ -3,6 +3,7 @@ import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { Ruler } from "./Ruler.js"
 import { ScaleBar } from './ScaleBar.js';
+import { addSignals }  from './Signals.js'
 /**
  * An Action describes the behaviour of a tool button.
  * @typedef {Object} UIBasic#Action
@@ -120,6 +121,7 @@ class UIBasic {
 			lightcontroller: null,
 			showLightDirections: false,
 			enableTooltip: true,
+			controlZoomMessage: "Use Ctrl + Wheel to zoom instead of scrolling" ,
 			menu: []
 		});
 		
@@ -129,8 +131,11 @@ class UIBasic {
 
 		this.panzoom = new ControllerPanZoom(this.viewer.camera, {
 			priority: -1000,
-			activeModifiers: [0, 1]
+			activeModifiers: [0, 1],
+			controlZoom: this.controlZoomMessage != null
 		});
+		if(this.controlZoomMessage)
+			this.panzoom.addEvent('nowheel', () => { this.showOverlayMessage(this.controlZoomMessage); });
 		this.viewer.pointerManager.onEvent(this.panzoom); //register wheel, doubleclick, pan and pinch
 		// this.viewer.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
 
@@ -212,6 +217,29 @@ class UIBasic {
 
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
+	}
+
+	showOverlayMessage(msg, duration = 2000) {
+		if(this.overlayMessage) {
+			clearTimeout(this.overlayMessage.timeout);
+			this.overlayMessage.timeout = setTimeout(() => this.destroyOverlayMessage(), duration);
+			return;
+		}
+		
+		
+		let background = document.createElement('div');
+		background.classList.add('openlime-overlaymsg');
+		background.innerHTML = `<p>${msg}</p>`;
+		this.viewer.containerElement.appendChild(background);
+
+		this.overlayMessage = {
+			background,
+			timeout: setTimeout(() => this.destroyOverlayMessage(), duration)
+		}
+	}
+	destroyOverlayMessage() {
+		this.overlayMessage.background.remove();
+		this.overlayMessage = null;
 	}
 
 	/** @ignore */
@@ -633,27 +661,12 @@ class UIDialog { //FIXME standalone class
 			content: null,
 			container: container,
 			modal: false,
-			signals: { 'closed': [] },
 			class: null,
 			visible: false,
 			backdropEvents: true
 		}, options);
+		addSignals(UIDialog, 'closed');
 		this.create();
-	}
-
-	/**
- 	 * Adds a 'closed' event callback.
- 	 * @param {string} event A label to identify the event.
- 	 * @param {Function} callback The event callback function.
- 	 */
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
-	
-	/** @ignore */
-	emit(event, ...parameters) {
-		for (let r of this.signals[event])
-			r(...parameters);
 	}
 
 	/** @ignore */

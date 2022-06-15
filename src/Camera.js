@@ -1,5 +1,6 @@
 import { Transform } from './Transform.js'
 import { BoundingBox } from './BoundingBox.js'
+import { addSignals } from './Signals.js'
 
 /**
  * The type Viewport defines a rectangular viewing region inside a (wxh) area
@@ -42,8 +43,8 @@ class Camera {
 			maxZoom: 2,
 			minZoom: 1,
 			boundingBox: new BoundingBox,
-			signals: { 'update': [] }
 		});
+		addSignals(Camera, 'update');
 		Object.assign(this, options);
 		this.target = new Transform(this.target);
 		this.source = this.target.copy();
@@ -58,17 +59,6 @@ class Camera {
 		let camera = new Camera();
 		Object.assign(camera, this);
 		return camera;
-	}
-
-	/** @ignore */
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
-
-	/** @ignore */
-	emit(event) {
-		for (let r of this.signals[event])
-			r(this);
 	}
 
 	/**
