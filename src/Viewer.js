@@ -132,6 +132,7 @@ class Viewer {
         this.canvasElement.height = height * window.devicePixelRatio;
 
         this.camera.setViewport({ x: 0, y: 0, dx: width, dy: height, w: width, h: height });
+    
         this.canvas.prefetch();
         this.redraw();
     }
