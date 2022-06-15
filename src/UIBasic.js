@@ -1,7 +1,8 @@
 import { Skin } from './Skin.js'
 import { Controller2D } from './Controller2D.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
-
+import { Ruler } from "./Ruler.js"
+import { ScaleBar } from './ScaleBar.js';
 /**
  * An Action describes the behaviour of a tool button.
  * @typedef {Object} UIBasic#Action
@@ -109,11 +110,11 @@ class UIBasic {
 				zoomout: { title: 'Zoom out', display: false, key: '-', task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
 				rotate: { title: 'Rotate', display: false, key: 'r', task: (event) => { camera.rotate(250, -45); } },
 				light: { title: 'Light', display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
-				ruler: { title: 'Ruler', display: false, task: (event) => { this.startRuler(); } },
+				ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 			},
-			scale: null,
+			pixelSize: null,
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
 			lightcontroller: null,
@@ -278,7 +279,9 @@ class UIBasic {
 			*/
 
 			this.setupActions();
-			this.setupScale();
+			if(this.pixelSize) 
+				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+
 			if(this.attribution) {
 				var p = document.createElement('p');
 				p.classList.add('openlime-attribution');
@@ -409,76 +412,6 @@ class UIBasic {
 		}
 	}
 
-	//find best length for scale from min -> max
-	//zoom 2 means a pixel in image is now 2 pixel on screen, scale is
-	/** @ignore */
-	bestScaleLength(min, max, scale, zoom) {
-		scale /= zoom;
-		//closest power of 10:
-		let label10 = Math.pow(10, Math.floor(Math.log(max * scale) / Math.log(10)));
-		let length10 = label10 / scale;
-		if (length10 > min) return { length: length10, label: label10 };
-
-		let label20 = label10 * 2;
-		let length20 = length10 * 2;
-		if (length20 > min) return { length: length20, label: label20 };
-
-		let label50 = label10 * 5;
-		let length50 = length10 * 5;
-
-		if (length50 > min) return { length: length50, label: label50 };
-		return { length: 0, label: 0 }
-	}
-
-	/** @ignore */
-	updateScale(line, text) {
-		//let zoom = this.viewer.camera.getCurrentTransform(performance.now()).z;
-		let zoom = this.viewer.camera.target.z;
-		if (zoom == this.lastScaleZoom)
-			return;
-		this.lastScaleZoom = zoom;
-		let s = this.bestScaleLength(100, 200, this.scale, zoom);
-		//let line = document.querySelector('.openlime-scale > line');
-		let margin = 200 - 10 - s.length;
-		line.setAttribute('x1', margin / 2);
-		line.setAttribute('x2', 200 - margin / 2);
-		//let text = document.querySelector('.openlime-scale > text');
-		text.textContent = s.label + "mm";
-
-
-	}
-
-	//scale is length of a pixel in mm
-	/** @ignore */
-	setupScale() {
-		if (!this.scale) return;
-		this.scales = { 'mm': 1, 'cm': 10, 'm': 1000, 'km': 1000000 };
-
-
-		let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		svg.setAttribute('viewBox', `0 0 200 40`);
-		svg.classList.add('openlime-scale');
-		let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-		line.setAttribute('x1', 5);
-		line.setAttribute('y1', 26.5);
-		line.setAttribute('x2', 195);
-		line.setAttribute('y2', 26.5);
-		let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-		text.setAttribute('x', '50%');
-		text.setAttribute('y', '16px');
-		text.setAttribute('dominant-baseline', 'middle');
-		text.setAttribute('text-anchor', 'middle');
-		text.textContent = "10mm";
-		//var label = document.createTextNode("10mm");
-		//text.appendChild(label);
-
-
-		svg.appendChild(line);
-		svg.appendChild(text);
-		this.viewer.containerElement.appendChild(svg);
-		this.viewer.camera.addEvent('update', () => { this.updateScale(line, text); });
-	}
-
 	//we need the concept of active layer! so we an turn on and off light.
 	/** @ignore */
 	toggleLightController() {
@@ -515,11 +448,16 @@ class UIBasic {
 	}
 
 	/** @ignore */
-	startRuler() {
-	}
-
-	/** @ignore */
-	endRuler() {
+	toggleRuler() {
+		if(!this.ruler) {
+			this.ruler = new Ruler(this.viewer, this.pixelSize);
+			this.viewer.pointerManager.onEvent(this.ruler);
+		}
+		
+		if(!this.ruler.enabled)
+			this.ruler.start();
+		else
+			this.ruler.end();
 	}
 
 	/** @ignore */

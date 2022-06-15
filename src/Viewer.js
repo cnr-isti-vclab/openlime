@@ -41,7 +41,8 @@ class Viewer {
             background: null,
             autofit: true,
             canvas: {},
-            camera: new Camera()
+            camera: new Camera(),
+            signals: {'draw':[] }
         });
 
         if (typeof (div) == 'string')
@@ -161,7 +162,28 @@ class Viewer {
         let done = this.canvas.draw(time);
         if (!done)
             this.redraw();
+        this.emit('draw');
     }
+	/*
+ 	* Adds a Canvas Event
+ 	* @param {*} event A label to identify the event.
+ 	* @param {*} callback The event callback function.
+ 	*/
+	/** @ignore */
+	addEvent(event, callback) {
+		this.signals[event].push(callback);
+	}
+
+	/*
+ 	* Emits an event (running all the callbacks referred to it).
+ 	* @param {*} event The event name
+ 	*/
+	/** @ignore */ 	
+	emit(event) {
+		for(let r of this.signals[event])
+			r(this);
+	}
+
 
 }
 

@@ -28,12 +28,13 @@
 }
 
 .openlime-scale {
-	position: absolute;
-	bottom: 25px;
-	left: 0px;
-	width: 200px;
-	height: 30px;
-	fill: white;
+	position:absolute;
+	bottom:25px;
+	left:0px;
+	width:200px;
+	height:30px;
+	padding:15px;
+	fill:white;
 }
 
 .openlime-scale>text {
@@ -531,6 +532,7 @@ g.openlime-expand {
 	border: 1px #aaa;
 }
 
+<<<<<<< HEAD
 
 /*****************************************************/
 /* LensDashboard */
@@ -592,3 +594,18 @@ g.openlime-expand {
 	fill: #fff !important;
 }
 
+=======
+.openlime-ruler {
+	width:100%;
+	height:100%;
+}
+
+.openlime-ruler path, .openlime-ruler line {
+	stroke:yellow;
+	stroke-width:2px;
+	vector-effect:non-scaling-stroke;
+}
+.openlime-ruler text {
+	fill: yellow;
+} 
+>>>>>>> origin
