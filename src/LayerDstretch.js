@@ -1,8 +1,9 @@
 import {Layer} from './Layer.js';
+import {LayerImage} from './LayerImage.js'
 import {ShaderDstretch} from './ShaderDstretch.js';
 import { Raster } from './Raster.js';
 
-class LayerDstretch extends Layer{
+class LayerDstretch extends LayerImage {
     constructor(options) {
 		super(options);
 
@@ -15,7 +16,7 @@ class LayerDstretch extends Layer{
 
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 		if(this.url)
-			this.loadJson(this.url);
+			this.loadJson();
 		this.addControl('light', [0, 0]);
 	}
 
@@ -27,115 +28,74 @@ class LayerDstretch extends Layer{
 
 		this.shader.updateRotationMatrix(this.eulerRotation);
 		this.emit('update');
-
-		console.log(this.eulerRotation);
-	}
-
-	addSliders() {
-		let sliders = [document.createElement("input"), document.createElement("input"), document.createElement("input")];
-		let labels = [document.createElement("label"), document.createElement("label"), document.createElement("label")];
-		let inputs = [document.createElement("input"), document.createElement("input"), document.createElement("input")];
-
-		let axis = ["X", "Y", "Z"];
-		
-		for (let i=0; i<sliders.length; i++) {
-			sliders[i].id = axis[i] + "-rot";
-			sliders[i].setAttribute("type", "range");
-			sliders[i].setAttribute("min", 0);
-			sliders[i].setAttribute("max", 360);
-			sliders[i].value = 0;
-			sliders[i].oninput = this.updateSliders.bind(this);
-			sliders[i].style = "width:300px;"
-
-			labels[i].setAttribute("for", sliders[i].id);
-			labels[i].innerHTML = axis[i] + ":";
-			labels[i].id = sliders[i].id + "-label";
-			labels[i].style = "width:100px;";
-
-			inputs[i].setAttribute("type", "number");
-			inputs[i].setAttribute("min", 0);
-			inputs[i].setAttribute("max", 360);
-			inputs[i].id = axis[i] + "-rot-input";
-			inputs[i].value = 0;
-			inputs[i].oninput = this.updateInputs.bind(this);
-			
-			document.body.appendChild(labels[i]);
-			document.body.appendChild(sliders[i]);
-			document.body.appendChild(inputs[i]);
-		}		
-	}
-
-	updateSliders(event) {
-		if (event == null) {
-			document.getElementById("X-rot").value = this.eulerRotation[0] / (Math.PI / 180);
-			document.getElementById("Y-rot").value = this.eulerRotation[1] / (Math.PI / 180);
-			document.getElementById("Z-rot").value = this.eulerRotation[2] / (Math.PI / 180);
-		}
-		else {
-			switch (event.target.id[0]) {
-				case 'X':
-					this.eulerRotation[0] = parseFloat(event.target.value) * (Math.PI / 180);
-					break;
-				case 'Y':
-					this.eulerRotation[1] = parseFloat(event.target.value) * (Math.PI / 180);
-					break;
-				case 'Z':
-					this.eulerRotation[2] = parseFloat(event.target.value) * (Math.PI / 180);
-					break;
-			}
-			
-			this.updateInputs(null);
-		}
-
-		this.shader.updateRotationMatrix(this.eulerRotation);
-		this.emit('update');
-	}
-
-	updateInputs(event) {
-		if (event == null) {
-			document.getElementById("X-rot-input").value = this.eulerRotation[0] / (Math.PI / 180);
-			document.getElementById("Y-rot-input").value = this.eulerRotation[1] / (Math.PI / 180);
-			document.getElementById("Z-rot-input").value = this.eulerRotation[2] / (Math.PI / 180);
-			return;
-		}
-
-		switch(event.target.id[0]) {
-			case 'X':
-				this.eulerRotation[0] = parseFloat(event.target.value) * (Math.PI / 180);
-				break;
-			case 'Y':
-				this.eulerRotation[1] = parseFloat(event.target.value) * (Math.PI / 180);
-				break;
-			case 'Z':
-				this.eulerRotation[2] = parseFloat(event.target.value) * (Math.PI / 180);
-				break;
-		}
-			
-		this.updateSliders(null);
 	}
 	
-	loadJson(url) {
+	loadJson() {
 		(async () => {
-			var response = await fetch(this.url + "/dstretch_info.json");
-			if(!response.ok) {
-				this.status = "Failed loading " + this.url + "/dstretch_info.json: " + response.statusText;
-				return;
+			let json
+			try {
+				let dstretchUrl = this.url.substring(0, this.url.lastIndexOf(".")) + ".dstretch";
+				let response = await fetch(dstretchUrl);
+				console.log(response.ok);
+				json = await response.json();
 			}
-			let json = await response.json();
+			catch (error) {
+				json = {
+					transformation: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+					samples: []
+				};
+				this.rasters[0].loadTexture = this.loadAndSampleTexture.bind(this);
+			}
+
+			this.layout.setUrls([this.url]);
 			this.shader.init(json);
-
-			let urls = [url + "/" + json["image_name"]];
-            let raster = new Raster({format : 'vec3'});
-
-            this.rasters.push(raster);
-			this.layout.setUrls(urls);
-
-		})().catch(e => { console.log(e); this.status = e; });
+		})();
 	} 
 
 	draw(transform, viewport) {
 		this.shader.setMinMax();
 		return super.draw(transform, viewport);
+	}
+
+	loadAndSampleTexture(gl, img) {
+		this.rasters[0].width = img.width;
+		this.rasters[0].height = img.height;
+		let tex = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, tex);
+		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); //_MIPMAP_LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+		// Sample the texture
+		// Temporarily print the texture on a canvas
+		let canvas = document.createElement("canvas");
+		let context = canvas.getContext("2d");
+
+		canvas.setAttribute("width", img.width);
+		canvas.setAttribute("height", img.height);
+		context.drawImage(img, 0, 0, img.width, img.height);
+
+		// Get the data and sample the texture
+		let imageData = context.getImageData(0, 0, img.width, img.height).data;
+		let samples = [];
+		let rowSkip = Math.floor(img.height / 32);
+		let colSkip = Math.floor(img.width / 32);
+
+		console.log(rowSkip, colSkip);
+
+		for (let i=0; i<imageData.length; i+=4) {
+			let row = Math.floor((i / 4) / img.width);
+			let col = Math.floor(i / 4) % img.width;
+
+			if (row % rowSkip == 0 && col % colSkip == 0)
+				samples.push([imageData[i], imageData[i+1], imageData[i+2]]);
+		}
+
+		this.shader.samples = samples;
+		this.shader.setMinMax();
+		return tex;
 	}
 }
 

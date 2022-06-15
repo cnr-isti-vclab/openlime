@@ -6,17 +6,7 @@ class ShaderDstretch extends Shader {
 	}
 
 	init(json) {
-        // Setup transform matrix
-        this.transform = [];
         this.rotationMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
-
-        for (let i=0; i<4; i++) {
-            let toAdd = [];
-            for (let j=0; j<4; j++) {
-                toAdd.push(json["transformation"][i*4 + j]);
-            }
-            this.transform.push(toAdd);
-        }
 
         // Store samples, compute min / max on the fly
         this.samples = json["samples"];
@@ -28,19 +18,13 @@ class ShaderDstretch extends Shader {
     setMinMax() {
         if (this.samples == undefined)
             return;
-
-        /**
-         * - Ruotiamo i punti per una rotazione definita dall'utente
-         * - Li riscaliamo tutti tra 0 e 255, ottengo una trasformazione affine
-         * - Ruoto tutto indietro
-         */
-
+            
         let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         for (let i=0; i<this.samples.length; i++) {
-            let transformedSample = this.transformSample(
-                this.matToArray(this.rotationMatrix), /*this.transformSample(
-                        this.matToArray(this.multiplyMatrices(this.rotationMatrix, this.transform)), */
-                        this.samples[i].concat(1));
+            let transformedSample = this.transformSample(this.matToArray(this.transpose(this.rotationMatrix)),
+             this.transformSample(
+                this.matToArray(this.rotationMatrix), 
+                        this.samples[i].concat(1)));
 
             for (let j=0; j<3; j++) {
                 if (transformedSample[j] < min[j])
@@ -54,11 +38,10 @@ class ShaderDstretch extends Shader {
         this.max = max;
 
         this.uniforms = {
-			transform: { type: 'mat4', needsUpdate: true, size: 16, value: this.matToArray(this.transform)},
             rotation: { type: 'mat4', needsUpdate: true, size: 16, value: this.matToArray(this.rotationMatrix)},
 			min: {type: 'vec3', needsUpdate:true, size: 3, value: this.min},
             max: {type: 'vec3', needsUpdate:true, size: 3, value: this.max}
-		} 
+		}
     }
 
     transpose(mat) {
@@ -147,19 +130,17 @@ precision highp int;
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
 ${gl2? 'out' : ''} vec4 color;
 
-uniform mat4 transform;
 uniform mat4 rotation;
 uniform vec3 min;
 uniform vec3 max;
 uniform sampler2D image;
 
 void main(void) {
-    vec3 ret = vec3(127.0, 127.0, 127.0) + (rotation * 255.0 * (texture(image, v_texcoord) - vec4(0.5, 0.5, 0.5, 0.0))).xyz;
+    vec3 ret = vec3(127.0, 127.0, 127.0) + (transpose(rotation) * (rotation * 255.0 * (texture(image, v_texcoord) - vec4(0.5, 0.5, 0.5, 0.0)))).xyz;
     ret = (ret - min) / (max - min);
 
-    color = vec4(ret, 1);
+    color = vec4(ret, 1.0);
 }`;
-console.log(str);
 		return str;
 	}
 }
