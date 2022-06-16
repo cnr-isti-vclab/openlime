@@ -1,8 +1,12 @@
 
 function addSignals(proto, ...signals) {
 
+	if(!proto.prototype.allSignals)
+		proto.prototype.allSignals = [];
+	proto.prototype.allSignals = [...proto.prototype.allSignals, ...signals];
+
 	proto.prototype.initSignals = function() {
-		this.signals = Object.fromEntries(signals.map( s => [s, []]));
+		this.signals = Object.fromEntries(this.allSignals.map( s => [s, []]));
 	}
      
      
