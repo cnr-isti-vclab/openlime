@@ -271,13 +271,6 @@ class EditorSvgAnnotation {
 					<label for="label">Title:</label> <input name="label" type="text"><br>
 					<label for="description">Description:</label><br>
 					<textarea name="description" cols="30" rows="5"></textarea><br>
-					<label for="idx">Index:</label> <input name="idx" type="text"><br>	
-					${Object.entries(this.annotation.data).map(k => {
-						let label = k[0];
-						let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text"><br>`
-						return str;
-					}).join('\n')}
-					<br>
 					<span>Class:</span> 
 					<div class="openlime-select">
 						<input type="hidden" name="classes" value=""/>
@@ -287,6 +280,13 @@ class EditorSvgAnnotation {
 			`<li data-class="${c[0]}" style="background:${c[1].style.stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
+					<label for="idx">Index:</label> <input name="idx" type="text"><br>	
+					${Object.entries(this.annotation.data).map(k => {
+						let label = k[0];
+						let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text"><br>`
+						return str;
+					}).join('\n')}
+					<br>
 					<span><button class="openlime-state">SAVE</button></span>
 					<span><input type="checkbox" name="publish" value=""> Publish</span><br>
 					<div class="openlime-annotation-edit-tools"></div>
