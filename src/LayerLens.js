@@ -26,11 +26,6 @@ class LayerLens extends LayerCombiner {
 		this.addControl('radius', [this.radius, 0]);
 		this.addControl('borderColor', this.borderColor);
 		this.addControl('borderWidth', [this.borderWidth]);
-
-		this.signals.draw = [];
-
-		this.oldRadius = -9999;
-		this.oldCenter = [-9999, -9999];
 	}
 
 	
@@ -116,7 +111,6 @@ class LayerLens extends LayerCombiner {
 		if(!this.shader)
 			throw "Shader not specified!";
 
-		this.emit('draw');
 		let gl = this.gl;
 
 		// Draw on a restricted viewport around the lens, to lower down the number of required tiles
