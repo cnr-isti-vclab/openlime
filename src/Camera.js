@@ -1,6 +1,6 @@
 import { Transform } from './Transform.js'
 import { BoundingBox } from './BoundingBox.js'
-import { addSignals } from './Signals.js'
+import { addSignals } from './Signals.js' 
 
 /**
  * The type Viewport defines a rectangular viewing region inside a (wxh) area
@@ -25,6 +25,8 @@ import { addSignals } from './Signals.js'
  * 
  * User-generated device events (such as touch events or mouse events) can modify camera parameters via an appropriate {@link Controller}.
  */
+
+ 
 class Camera {
 	/**
 	 * Creates a scene's camera. An update event is issued when the camera has completed its positioning.
@@ -44,7 +46,6 @@ class Camera {
 			minZoom: 1,
 			boundingBox: new BoundingBox,
 		});
-		addSignals(Camera, 'update');
 		Object.assign(this, options);
 		this.target = new Transform(this.target);
 		this.source = this.target.copy();
@@ -317,5 +318,7 @@ class Camera {
 		this.maxZoom = Math.max(this.minZoom, this.maxZoom);
 	}
 }
+
+addSignals(Camera, 'update');
 
 export { Camera }

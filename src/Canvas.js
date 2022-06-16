@@ -34,7 +34,6 @@ class Canvas {
 			layers: {},
 			signals: {'update':[], 'updateSize':[], 'ready': []}
 		});
-		addSignals(Canvas, 'update', 'updateSize', 'ready');
 		Object.assign(this, options);
 
 		this.init(canvas, overlay);
@@ -269,5 +268,7 @@ class Canvas {
 		}
 	}
 }
+
+addSignals(Canvas, 'update', 'updateSize', 'ready');
 
 export { Canvas }

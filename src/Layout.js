@@ -90,7 +90,6 @@ class Layout {
 			status: null,
 			subdomains: 'abc'
 		});
-		addSignals(Layout, 'ready', 'updateSize');
 	}
 
 	init(url, type, options) {
@@ -177,5 +176,7 @@ class Layout {
 }
 
 Layout.prototype.types = {}
+
+addSignals(Layout, 'ready', 'updateSize');
 
 export { Layout }

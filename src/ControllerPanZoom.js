@@ -4,6 +4,7 @@ import { addSignals } from './Signals.js'
 
 /** **ControllerPanZoom** intercepts pan, zoom, single tap, and wheel events in the canvas and updates the scene camera parameters.
 */
+
 class ControllerPanZoom extends Controller {
 	/**
 	 * Instantiates a ControllerPanZoom object.
@@ -27,7 +28,6 @@ class ControllerPanZoom extends Controller {
 
 		if(options)
 			Object.assign(this, options);
-		addSignals(ControllerPanZoom, 'nowheel');
 	}
 
 	/** @ignore */
@@ -121,5 +121,6 @@ class ControllerPanZoom extends Controller {
 	}
 
 }
+addSignals(ControllerPanZoom, 'nowheel');
 
 export { ControllerPanZoom }

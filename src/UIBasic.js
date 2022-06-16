@@ -4,6 +4,7 @@ import { ControllerPanZoom } from './ControllerPanZoom.js'
 import { Ruler } from "./Ruler.js"
 import { ScaleBar } from './ScaleBar.js';
 import { addSignals }  from './Signals.js'
+
 /**
  * An Action describes the behaviour of a tool button.
  * @typedef {Object} UIBasic#Action
@@ -121,7 +122,7 @@ class UIBasic {
 			lightcontroller: null,
 			showLightDirections: false,
 			enableTooltip: true,
-			controlZoomMessage: "Use Ctrl + Wheel to zoom instead of scrolling" ,
+			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
 			menu: []
 		});
 		
@@ -665,7 +666,6 @@ class UIDialog { //FIXME standalone class
 			visible: false,
 			backdropEvents: true
 		}, options);
-		addSignals(UIDialog, 'closed');
 		this.create();
 	}
 
@@ -759,5 +759,7 @@ class UIDialog { //FIXME standalone class
 		this.visible = !this.visible; //FIXME not in sync with 'force'
 	}
 }
+
+addSignals(UIDialog, 'closed');
 
 export { UIBasic, UIDialog }

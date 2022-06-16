@@ -1,9 +1,10 @@
 
-
 function addSignals(proto, ...signals) {
 
-    
-     proto.prototype.signals = Object.fromEntries(signals.map( s => [s, []]));
+	proto.prototype.initSignals = function() {
+		this.signals = Object.fromEntries(signals.map( s => [s, []]));
+	}
+     
      
 	/**
 	  * Adds a Layer Event
@@ -11,6 +12,8 @@ function addSignals(proto, ...signals) {
 	  * @param {*} callback The event callback function.
 	*/
 	proto.prototype.addEvent = function(event, callback) {
+		if(!this.signals)
+			this.initSignals();
 		this.signals[event].push(callback);
 	}
 
@@ -20,6 +23,8 @@ function addSignals(proto, ...signals) {
 	  */
 	/** @ignore */
 	proto.prototype.emit = function(event, ...parameters) {
+		if(!this.signals)
+			this.initSignals();
 		for (let r of this.signals[event])
 			r(...parameters);
 	}

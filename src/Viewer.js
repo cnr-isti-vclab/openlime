@@ -4,6 +4,7 @@ import { PointerManager } from './PointerManager.js'
 import { Controller } from './Controller.js';
 import { addSignals } from './Signals.js'
 
+
 /** **Viewer** is the central class of the OpenLIME framework. It is used to create a viewer on a web page and manipulate it.
  * In the following example, after instantiating a Viewer, a LayerImage is added to it.
  * ```
@@ -44,7 +45,6 @@ class Viewer {
             canvas: {},
             camera: new Camera(),
         });
-        addSignals(Viewer, 'draw');
         if (typeof (div) == 'string')
             div = document.querySelector(div);
 
@@ -166,5 +166,7 @@ class Viewer {
         this.emit('draw');
     }
 }
+
+addSignals(Viewer, 'draw');
 
 export { Viewer };

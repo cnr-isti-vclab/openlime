@@ -4,6 +4,7 @@ import { Cache } from './Cache.js'
 import { BoundingBox } from './BoundingBox.js'
 import { addSignals } from './Signals.js'
 
+
 /**
  * The Layer class is responsible for drawing slides in the OpenLIME viewer. 
  * Layers can directly draw their contents on the viewer or be combined with each other to obtain more complex visualizations.
@@ -114,7 +115,7 @@ class Layer {
 			queue: [],     //queue of tiles to be loaded.
 			requested: {},  //tiles requested.
 		});
-		addSignals(Layer, 'update', 'ready', 'updateSize');
+
 		Object.assign(this, options);
 		if (this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
 
@@ -784,5 +785,6 @@ class Layer {
 }
 
 Layer.prototype.types = {}
+addSignals(Layer, 'update', 'ready', 'updateSize');
 
 export { Layer }
