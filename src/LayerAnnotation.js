@@ -1,5 +1,6 @@
 import { Annotation } from './Annotation.js';
 import { Layer } from './Layer.js'
+import { addSignals } from './Signals.js';
 
 /**
  * An annotation layer is a layer used to display decorations (text, graphics elements, glyphs, etc...) on top of other layers.
@@ -27,9 +28,6 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 			annotationsListEntry: null, //TODO: horrible name for the interface list of annotations
 		}, options);
 		super(options);
-
-		this.signals.selected = [];
-		this.signals.loaded = [];
 
 		if (typeof (this.annotations) == "string") { //assumes it is an URL
 			(async () => { await this.loadAnnotations(this.annotations); })();
@@ -165,4 +163,5 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	}
 }
 
+addSignals(LayerAnnotation, 'selected', 'loaded');
 export { LayerAnnotation }
