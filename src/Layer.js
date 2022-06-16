@@ -2,6 +2,8 @@ import { Transform } from './Transform.js'
 import { Layout } from './Layout.js'
 import { Cache } from './Cache.js'
 import { BoundingBox } from './BoundingBox.js'
+import { addSignals } from './Signals.js'
+
 
 /**
  * The Layer class is responsible for drawing slides in the OpenLIME viewer. 
@@ -105,7 +107,7 @@ class Layer {
 			prefetchBorder: 1,
 			mipmapBias: 0.4,
 
-			signals: { update: [], ready: [], updateSize: [] },  //update callbacks for a redraw, ready once layout is known.
+			//signals: { update: [], ready: [], updateSize: [] },  //update callbacks for a redraw, ready once layout is known.
 
 			//internal stuff, should not be passed as options.
 			tiles: new Map(),      //keep references to each texture (and status) indexed by level, x and y.
@@ -114,6 +116,7 @@ class Layer {
 			queue: [],     //queue of tiles to be loaded.
 			requested: {},  //tiles requested.
 		});
+
 		Object.assign(this, options);
 		if (this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
 
@@ -125,25 +128,6 @@ class Layer {
 		} else {
 			this.setLayout(this.layout);
 		}
-	}
-
-	/**
-	  * Adds a Layer Event
-	  * @param {string} event A label to identify the event.
-	  * @param {*} callback The event callback function.
-	*/
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
-
-	/*
-	  * Emits an event (running all the callbacks referred to it).
-	  * @param {*} event The event name
-	  */
-	/** @ignore */
-	emit(event, ...parameters) {
-		for (let r of this.signals[event])
-			r(...parameters);
 	}
 
 	/**
@@ -218,7 +202,7 @@ class Layer {
 			throw "Unknown shader: " + id;
 		this.shader = this.shaders[id];
 		this.setupTiles();
-		this.shader.setEvent('update', () => { this.emit('update'); });
+		this.shader.addEvent('update', () => { this.emit('update'); });
 	}
 
 	/**
@@ -802,5 +786,6 @@ class Layer {
 }
 
 Layer.prototype.types = {}
+addSignals(Layer, 'update', 'ready', 'updateSize');
 
 export { Layer }

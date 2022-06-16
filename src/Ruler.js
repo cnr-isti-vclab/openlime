@@ -74,7 +74,7 @@ class Ruler extends Units {
 		if(!this.history.length)
 			return;
 		//if not enabled skip
-		let t = this.camera.getCurrentTransform(performance.now());
+		let t = this.camera.getGlCurrentTransform(performance.now());
 		let viewport = this.camera.glViewport();
 		this.svg.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
 		let c = [0, 0]; //this.boundingBox().corner(0);
@@ -149,13 +149,13 @@ class Ruler extends Units {
 
 	/** @ignore */
 	updateMeasure(measure, transform) {
-		let markersize = this.markerSize/transform.z;
+		let markersize = window.devicePixelRatio*this.markerSize/transform.z;
 
 		this.updateMarker(measure.marker1, measure.x1, measure.y1, markersize);
 
 		this.updateMarker(measure.marker2, measure.x2, measure.y2, markersize);
 
-		let fontsize = this.fontSize/transform.z;
+		let fontsize = window.devicePixelRatio*this.fontSize/transform.z;
 		this.updateText(measure, fontsize);
 
 		for(let p of ['x1', 'y1', 'x2', 'y2'])
@@ -168,7 +168,7 @@ class Ruler extends Units {
 			return false;
 
 		let transform = this.camera.getCurrentTransform(performance.now())
-		let {x, y}  = this.camera.mapToScene(e.offsetX, e.offsetY, transform);
+		let {x, y}  = this.camera.mapToScene(e.layerX, e.layerY, transform);
 
 		
 		if(!this.measure) {
@@ -188,7 +188,7 @@ class Ruler extends Units {
 			return false;
 
 		let transform = this.camera.getCurrentTransform(performance.now())
-		let {x, y}  = this.camera.mapToScene(e.offsetX, e.offsetY, transform);
+		let {x, y}  = this.camera.mapToScene(e.layerX, e.layerY, transform);
 		this.measure.x2 = x;
 		this.measure.y2 = y;
 		this.update();	

@@ -1,3 +1,4 @@
+import { addSignals } from './Signals.js'
 /**
  * A reference to a 2D texture.
  * @typedef {Object} Shader#Sampler
@@ -56,8 +57,8 @@ class Shader {
 			modes: [],
 			mode: null, // The current mode
 			needsUpdate: true,
-			signals: { 'update':[] }
 		});
+		addSignals(Shader, 'update');
 		Object.assign(this, options);
 	}
 	/**
@@ -69,22 +70,6 @@ class Shader {
 			throw Error("Unknown mode: " + mode);
 		this.mode = mode;
 		this.needsUpdate = true;
-	}
-
-	/*
- 	* Adds a Shader Event callback
- 	* @param {string} event A label to identify the event.
- 	* @param {Function} callback The event callback function.
- 	*/
-	 /** @ignore */
-	setEvent(event, callback) {
-		this.signals[event] = [callback];
-	}
-
-	/** @ignore */
-	emit(event) {
-		for(let r of this.signals[event])
-			r(this);
 	}
 
 	/** @ignore */

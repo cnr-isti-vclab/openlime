@@ -2,6 +2,12 @@ import { Util } from './Util'
 import { Camera } from './Camera'
 import { Layer  } from './Layer'
 import { Cache } from './Cache'
+import { addSignals } from './Signals'
+
+//// HELPERS
+
+window.structuredClone = typeof(structuredClone) == "function" ? structuredClone : function (value) { return  JSON.parse(JSON.stringify(value)); };
+
 
 /**
  * Creates the WebGL context for the `canvas`. It stores information related to the `overlay` DOM element and the `camera` of the scene.
@@ -43,20 +49,8 @@ class Canvas {
  	* @param {*} event A label to identify the event.
  	* @param {*} callback The event callback function.
  	*/
-	/** @ignore */
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
 
-	/*
- 	* Emits an event (running all the callbacks referred to it).
- 	* @param {*} event The event name
- 	*/
-	/** @ignore */ 	
-	emit(event) {
-		for(let r of this.signals[event])
-			r(this);
-	}
+
 
 	/** @ignore */
 	init(canvas, overlay) {
@@ -275,5 +269,7 @@ class Canvas {
 		}
 	}
 }
+
+addSignals(Canvas, 'update', 'updateSize', 'ready');
 
 export { Canvas }

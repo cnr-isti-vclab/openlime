@@ -2,6 +2,8 @@ import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
 import { PointerManager } from './PointerManager.js'
 import { Controller } from './Controller.js';
+import { addSignals } from './Signals.js'
+
 
 /** **Viewer** is the central class of the OpenLIME framework. It is used to create a viewer on a web page and manipulate it.
  * In the following example, after instantiating a Viewer, a LayerImage is added to it.
@@ -42,9 +44,7 @@ class Viewer {
             autofit: true,
             canvas: {},
             camera: new Camera(),
-            signals: {'draw':[] }
         });
-
         if (typeof (div) == 'string')
             div = document.querySelector(div);
 
@@ -132,6 +132,7 @@ class Viewer {
         this.canvasElement.height = height * window.devicePixelRatio;
 
         this.camera.setViewport({ x: 0, y: 0, dx: width, dy: height, w: width, h: height });
+    
         this.canvas.prefetch();
         this.redraw();
     }
@@ -164,27 +165,8 @@ class Viewer {
             this.redraw();
         this.emit('draw');
     }
-	/*
- 	* Adds a Canvas Event
- 	* @param {*} event A label to identify the event.
- 	* @param {*} callback The event callback function.
- 	*/
-	/** @ignore */
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
-
-	/*
- 	* Emits an event (running all the callbacks referred to it).
- 	* @param {*} event The event name
- 	*/
-	/** @ignore */ 	
-	emit(event) {
-		for(let r of this.signals[event])
-			r(this);
-	}
-
-
 }
+
+addSignals(Viewer, 'draw');
 
 export { Viewer };
