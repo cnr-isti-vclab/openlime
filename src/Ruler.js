@@ -1,4 +1,5 @@
-import { Units } from './ScaleBar.js'
+import { Util } from './Util'
+import { Units } from './ScaleBar'
 
 
 /* color is specified in the css under the .openlime-ruler selector */
@@ -27,14 +28,13 @@ class Ruler extends Units {
 			Object.assign(this, options);
 	}
 	
-
 	start() {
 		this.enabled = true;
 		this.previousCursor = this.overlay.style.cursor;
 		this.overlay.style.cursor = this.cursor;
 
 		if(!this.svg) {
-			this.svg = createSVGElement('svg', { class: 'openlime-ruler'} );
+			this.svg = Util.createSvgElement('svg', { class: 'openlime-ruler'} );
 			this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 			this.svg.append(this.svgGroup);
 			this.overlay.appendChild(this.svg);
@@ -49,20 +49,18 @@ class Ruler extends Units {
 		this.clear();
 	}
 	
-
 	clear() {
 		this.svgGroup.replaceChildren([]);
 		this.measure = null;
 		this.history = [];
 	}
 
-
 	/*finish() {
 		let m = this.measure;
-		m.line = createSVGElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
+		m.line = Util.createSvgElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
 		this.svgGroup.appendChild(m.line);
 
-		m.text = createSVGElement('text');
+		m.text = Util.createSvgElement('text');
 		m.text.textContent = this.format(this.length(m));
 		this.svgGroup.appendChild(m.text);
 
@@ -86,17 +84,20 @@ class Ruler extends Units {
 		for(let m of this.history) 
 			this.updateMeasure(m, t);
 	}
+
 	/** @ignore */
 	createMarker(x, y) {
-		let m = createSVGElement("path");
+		let m = Util.createSvgElement("path");
 		this.svgGroup.appendChild(m);
 		return m;
 	}
+
 	/** @ignore */
 	updateMarker(marker, x, y, size) {
 		let d = `M ${x-size} ${y} L ${x+size} ${y} M ${x} ${y-size} L ${x} ${y+size}`;
 		marker.setAttribute('d', d);
 	}
+
 	/** @ignore */
 	updateText(measure, fontsize) {
 		measure.text.setAttribute('font-size', fontsize + "px");
@@ -127,6 +128,7 @@ class Ruler extends Units {
 		measure.text.setAttribute('y', my);
 		measure.text.textContent = this.format(length*this.pixelSize);
 	}
+
 	/** @ignore */
 	createMeasure(x, y) {
 		let m = {
@@ -135,15 +137,16 @@ class Ruler extends Units {
 			marker2: this.createMarker(x, y), 
 			x2: x, y2: y
 		};
-		m.line = createSVGElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
+		m.line = Util.createSvgElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
 		this.svgGroup.appendChild(m.line);
 
-		m.text = createSVGElement('text');
+		m.text = Util.createSvgElement('text');
 		m.text.textContent = '';
 		this.svgGroup.appendChild(m.text);
 
 		return m;
 	}
+
 	/** @ignore */
 	updateMeasure(measure, transform) {
 		let markersize = this.markerSize/transform.z;
@@ -158,8 +161,6 @@ class Ruler extends Units {
 		for(let p of ['x1', 'y1', 'x2', 'y2'])
 			measure.line.setAttribute(p, measure[p]);
 	}
-
-
 
 	/** @ignore */
 	fingerSingleTap(e) { 
@@ -194,14 +195,5 @@ class Ruler extends Units {
 		e.preventDefault();
 	}
 };
-
-function createSVGElement(tag, attributes) {
-	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-	if (attributes)
-		for (const [key, value] of Object.entries(attributes))
-			e.setAttribute(key, value);
-	return e;
-}
-
 
 export { Ruler }

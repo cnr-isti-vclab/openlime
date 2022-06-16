@@ -80,49 +80,6 @@ class LensDashboard {
 		this.container.style.height = `${size2}px`;
 	}
 
-	/**
-	 * Utility function to create a simple SVG element (icon) from an inline description
-	 * @param {Object} icon An object literal describing the SVG element.
-	 * @param {string} icon.id A unique id for the SVG element.
-	 * @param {string} icon.path The SVG path describing the shape of the icon.
-	 * @param {string} icon.style The CSS style of the icon.
-	 * @param {string} icon.class An optional class useful as HTML selector.
-	 * @param {taskCallback} icon.task A callback function fired by a 'click' event on a lens dashboard element.
-	 * @returns {SVGElement} A SVG element
-	 * @static
-	 */
-	static createSVG(icon) {
-		const svgns = 'http://www.w3.org/2000/svg';
-		const svg = document.createElementNS(svgns, 'svg');
-
-		svg.setAttribute('id', icon.id);
-		svg.setAttribute('class', icon.class);
-		svg.setAttribute('style', icon.style);
-
-		svg.setAttribute('viewBox', '0 0 64 64');
-
-		// const circle = document.createElementNS(svgns, 'circle');
-        // circle.setAttributeNS(null, 'cx', 32);
-        // circle.setAttributeNS(null, 'cy', 32);
-        // circle.setAttributeNS(null, 'r', 24);
-        // circle.setAttributeNS(null, 'style', 'fill: #999; stroke: red; stroke-width: 1px;' );
-        // svg.appendChild(circle);
-
-		const path = document.createElementNS(svgns, 'path');
-		path.setAttribute('d', icon.path);
-		svg.appendChild(path);
-
-		console.log(path);
-
-		svg.addEventListener('click', (e) => icon.task(e));
-		return svg;
-	};
-
-	static svgFromString(text) {
-		const parser = new DOMParser();
-		return parser.parseFromString(text, "image/svg+xml").documentElement;
-	}
-
 }
 
 export {LensDashboard}

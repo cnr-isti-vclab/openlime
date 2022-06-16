@@ -12,6 +12,7 @@ function header() {
 }
 
 const core = [
+	'./src/Util.js',
 	'./src/Canvas.js', 
 	'./src/Camera.js',
 	'./src/Transform.js',

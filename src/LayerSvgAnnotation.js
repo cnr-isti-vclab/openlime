@@ -1,6 +1,7 @@
-import { Layer } from './Layer.js';
-import { Annotation } from './Annotation.js';
-import { LayerAnnotation } from './LayerAnnotation.js';
+import { Util } from './Util'
+import { Layer } from './Layer'
+import { Annotation } from './Annotation'
+import { LayerAnnotation } from './LayerAnnotation'
 
 /**
  * Elements to classify the annotations.
@@ -113,7 +114,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 
 	/** @ignore */
 	newAnnotation(annotation) {
-		let svg = createSVGElement('svg');
+		let svg = Util.createSvgElement('svg');
 		if (!annotation)
 			annotation = new Annotation({ element: svg, selector_type: 'SvgSelector' });
 		return super.newAnnotation(annotation)
@@ -215,16 +216,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	}
 }
 
-/** @ignore */ 
-function createSVGElement(tag, attributes) {
-	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-	if (attributes)
-		for (const [key, value] of Object.entries(attributes))
-			e.setAttribute(key, value);
-	return e;
-}
-
 Layer.prototype.types['svg_annotations'] = (options) => { return new LayerSvgAnnotation(options); }
 
-export { LayerSvgAnnotation, createSVGElement }
+export { LayerSvgAnnotation }
 

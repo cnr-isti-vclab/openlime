@@ -341,6 +341,12 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
+				if(action.has(icon)) {
+					if(typeof action.icon == 'string') {
+						
+					}
+				}
+
 				action.element = await Skin.appendIcon(toolbar, '.openlime-' + name);
 				if (this.enableTooltip) {
 					let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');

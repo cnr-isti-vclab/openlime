@@ -1,3 +1,5 @@
+import { Util } from './Util'
+
 /* units are those in use, scale and ruler will pick the appropriate unit 
    allUnits contains all of the known units */
 
@@ -43,12 +45,12 @@ class ScaleBar extends Units {
 		if(options)
 			Object.assign(this, options);
 
-		this.svg = createSVGElement('svg', { viewBox: `0 0 ${this.width} 30` });
+		this.svg = Util.createSvgElement('svg', { viewBox: `0 0 ${this.width} 30` });
 		this.svg.classList.add('openlime-scale');
 
-		this.line = createSVGElement('line', { x1: 5, y1: 26.5, x2:this.width - 5, y2: 26.5 });
+		this.line = Util.createSvgElement('line', { x1: 5, y1: 26.5, x2:this.width - 5, y2: 26.5 });
 
-		this.text = createSVGElement('text', { x: '50%', y: '16px', 'dominant-basiline': 'middle', 'text-anchor': 'middle' });
+		this.text = Util.createSvgElement('text', { x: '50%', y: '16px', 'dominant-basiline': 'middle', 'text-anchor': 'middle' });
 		this.text.textContent = "";
 		
 		this.svg.appendChild(this.line);
@@ -95,14 +97,4 @@ class ScaleBar extends Units {
 	}
 }
 
-function createSVGElement(tag, attributes) {
-	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-	if (attributes)
-		for (const [key, value] of Object.entries(attributes))
-			e.setAttribute(key, value);
-	return e;
-}
-
-
-//export { Units, ScaleBar, createSVGElement }
 export { Units, ScaleBar }
