@@ -126,7 +126,7 @@ class Layout {
 	 * @returns {BoundingBox} The layout bounding box.
 	 */
 	boundingBox() {
-		if(!this.width) throw "Layout not initialized still";
+		//if(!this.width) throw "Layout not initialized still";
 		return new BoundingBox({xLow:-this.width/2, yLow: -this.height/2, xHigh: this.width/2, yHigh: this.height/2});
 	}
 
