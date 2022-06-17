@@ -26,6 +26,9 @@ class LayerLens extends LayerCombiner {
 		this.addControl('radius', [this.radius, 0]);
 		this.addControl('borderColor', this.borderColor);
 		this.addControl('borderWidth', [this.borderWidth]);
+
+		this.oldRadius = -9999;
+		this.oldCenter = [-9999, -9999];
 	}
 
 	

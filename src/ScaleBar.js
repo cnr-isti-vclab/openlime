@@ -35,22 +35,21 @@ class Units {
 class ScaleBar extends Units {
     constructor(pixelSize, viewer, options) {
 		super(options)
-        Object.assign(this, {
+        options = Object.assign(this, {
             pixelSize: pixelSize,
             viewer: viewer,
             width: 200,
             fontSize: 24,
 			precision: 0
-        });
-		if(options)
-			Object.assign(this, options);
+        }, options);
+		Object.assign(this, options);
 
-		this.svg = Util.createSvgElement('svg', { viewBox: `0 0 ${this.width} 30` });
+		this.svg = Util.createSVGElement('svg', { viewBox: `0 0 ${this.width} 30` });
 		this.svg.classList.add('openlime-scale');
 
-		this.line = Util.createSvgElement('line', { x1: 5, y1: 26.5, x2:this.width - 5, y2: 26.5 });
+		this.line = Util.createSVGElement('line', { x1: 5, y1: 26.5, x2:this.width - 5, y2: 26.5 });
 
-		this.text = Util.createSvgElement('text', { x: '50%', y: '16px', 'dominant-basiline': 'middle', 'text-anchor': 'middle' });
+		this.text = Util.createSVGElement('text', { x: '50%', y: '16px', 'dominant-basiline': 'middle', 'text-anchor': 'middle' });
 		this.text.textContent = "";
 		
 		this.svg.appendChild(this.line);

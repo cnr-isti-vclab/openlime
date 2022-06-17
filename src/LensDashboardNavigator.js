@@ -428,7 +428,7 @@ class LensDashboardNavigator extends LensDashboard {
                id="path2720-9" /></g></g></svg>`;
 
       for (let [name, action] of Object.entries(this.actions)) {
-         action.element = Util.svgFromString(action.svg);
+         action.element = Util.SVGFromString(action.svg);
          action.element.style = `height: 100%; margin: 0 5px`;
          action.element.classList.add('openlime-lens-dashboard-button');
 

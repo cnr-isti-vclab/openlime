@@ -34,7 +34,7 @@ class Ruler extends Units {
 		this.overlay.style.cursor = this.cursor;
 
 		if(!this.svg) {
-			this.svg = Util.createSvgElement('svg', { class: 'openlime-ruler'} );
+			this.svg = Util.createSVGElement('svg', { class: 'openlime-ruler'} );
 			this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 			this.svg.append(this.svgGroup);
 			this.overlay.appendChild(this.svg);
@@ -57,10 +57,10 @@ class Ruler extends Units {
 
 	/*finish() {
 		let m = this.measure;
-		m.line = Util.createSvgElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
+		m.line = Util.createSVGElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
 		this.svgGroup.appendChild(m.line);
 
-		m.text = Util.createSvgElement('text');
+		m.text = Util.createSVGElement('text');
 		m.text.textContent = this.format(this.length(m));
 		this.svgGroup.appendChild(m.text);
 
@@ -87,7 +87,7 @@ class Ruler extends Units {
 
 	/** @ignore */
 	createMarker(x, y) {
-		let m = Util.createSvgElement("path");
+		let m = Util.createSVGElement("path");
 		this.svgGroup.appendChild(m);
 		return m;
 	}
@@ -137,10 +137,10 @@ class Ruler extends Units {
 			marker2: this.createMarker(x, y), 
 			x2: x, y2: y
 		};
-		m.line = Util.createSvgElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
+		m.line = Util.createSVGElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
 		this.svgGroup.appendChild(m.line);
 
-		m.text = Util.createSvgElement('text');
+		m.text = Util.createSVGElement('text');
 		m.text.textContent = '';
 		this.svgGroup.appendChild(m.text);
 

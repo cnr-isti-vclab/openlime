@@ -98,7 +98,7 @@
 	opacity: 0.0;
 }
 
-.openlime-dialog.hidden, .openlime-dialog-background.hidden {fad
+.openlime-dialog.hidden, .openlime-dialog-background.hidden {
 	visibility:hidden;
 	opacity:0.0;
 }
@@ -531,8 +531,6 @@ g.openlime-expand {
 	border: 1px #aaa;
 }
 
-<<<<<<< HEAD
-
 /*****************************************************/
 /* LensDashboard */
 
@@ -547,24 +545,6 @@ g.openlime-expand {
 	/* -webkit-animation: fadeout 1s linear forwards;
 	animation: fadeout 1s linear forwards; */
 	visibility: hidden !important;
-}
-
-@keyframes fadout {
-	100% {
-		opacity: 0;
-		visibility: hidden!important;
-		display: none!important;
-	}
-}
-
-@keyframes fadin {
-	0% {
-		opacity: 0;
-	}
-
-	100% {
-		opacity: 1;
-	}
 }
 
 .openlime-lens-dashboard-button-bkg {
@@ -593,7 +573,6 @@ g.openlime-expand {
 	fill: #fff !important;
 }
 
-=======
 .openlime-ruler {
 	width:100%;
 	height:100%;
@@ -607,9 +586,6 @@ g.openlime-expand {
 .openlime-ruler text {
 	fill: yellow;
 } 
-<<<<<<< HEAD
->>>>>>> origin
-=======
 
 .openlime-overlaymsg {
 	background:white;
@@ -631,4 +607,3 @@ g.openlime-expand {
 	66% { opacity: 0; }
 	100% { opacity: 0; }
   }
->>>>>>> origin

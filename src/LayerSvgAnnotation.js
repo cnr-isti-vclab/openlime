@@ -114,7 +114,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 
 	/** @ignore */
 	newAnnotation(annotation) {
-		let svg = Util.createSvgElement('svg');
+		let svg = Util.createSVGElement('svg');
 		if (!annotation)
 			annotation = new Annotation({ element: svg, selector_type: 'SvgSelector' });
 		return super.newAnnotation(annotation)

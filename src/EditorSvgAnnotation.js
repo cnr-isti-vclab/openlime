@@ -491,7 +491,7 @@ class EditorSvgAnnotation {
 		let svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		const bBox = this.layer.boundingBox();
 		svgElement.setAttribute('viewBox', `0 0 ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
-		let style = Util.createSvgElement('style');
+		let style = Util.createSVGElement('style');
 		style.textContent = this.layer.style;
 		svgElement.appendChild(style);
 		let serializer = new XMLSerializer();
@@ -770,7 +770,7 @@ class EditorSvgAnnotation {
 /** @ignore */
 class Point {
 	tap(pos) {
-		let point = Util.createSvgElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
+		let point = Util.createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
 		this.annotation.elements.push(point);
 		return true;
 	}
@@ -802,7 +802,7 @@ class Pen {
 		if (this.points.length == 1) {
 			saveCurrent
 
-			this.path = Util.createSvgElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
+			this.path = Util.createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 			return this.path;
 		}
 		let p = this.path.getAttribute('d');
@@ -832,7 +832,7 @@ class Box {
 
 	create(pos) {
 		this.origin = pos;
-		this.box = Util.createSvgElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
+		this.box = Util.createSVGElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
 		return this.box;
 	}
 
@@ -858,7 +858,7 @@ class Circle {
 	}
 	create(pos) {
 		this.origin = pos;
-		this.circle = Util.createSvgElement('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
+		this.circle = Util.createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
 		return this.circle;
 	}
 	adjust(pos) {
@@ -899,7 +899,7 @@ class Line {
 				return;
 			}
 		}
-		this.path = Util.createSvgElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
+		this.path = Util.createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 		this.path.points = [pos];
 		this.history = [this.path.points.length];
 		this.annotation.elements.push(this.path);
@@ -931,7 +931,7 @@ class Line {
 			return false;
 		let s = this.path.points[this.path.points.length - 1];
 		if (!this.segment) {
-			this.segment = Util.createSvgElement('path', { class: 'line' });
+			this.segment = Util.createSVGElement('path', { class: 'line' });
 			this.layer.svgGroup.appendChild(this.segment);
 		}
 		pos.x = pos.x - s.x;

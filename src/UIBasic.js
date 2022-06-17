@@ -1,9 +1,10 @@
-import { Skin } from './Skin.js'
-import { Controller2D } from './Controller2D.js'
-import { ControllerPanZoom } from './ControllerPanZoom.js'
-import { Ruler } from "./Ruler.js"
-import { ScaleBar } from './ScaleBar.js';
-import { addSignals }  from './Signals.js'
+import { Skin } from './Skin'
+import { Util } from './Util'
+import { Controller2D } from './Controller2D'
+import { ControllerPanZoom } from './ControllerPanZoom'
+import { Ruler } from "./Ruler"
+import { ScaleBar } from './ScaleBar'
+import { addSignals }  from './Signals'
 
 /**
  * An Action describes the behaviour of a tool button.
@@ -370,13 +371,20 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
-				if(action.has(icon)) {
+				if('icon' in action) {
 					if(typeof action.icon == 'string') {
-						
+						if(Util.isSVGString(action.icon)) {
+							action.icon = Util.SVGFromString(action.icon);
+						} else {
+							action.icon = await Util.loadSVG(action.icon);
+						}
+						action.icon.classList.add('openlime-button');
 					}
+				} else {
+					action.icon = '.openlime-' + name;
 				}
 
-				action.element = await Skin.appendIcon(toolbar, '.openlime-' + name);
+				action.element = await Skin.appendIcon(toolbar, action.icon);
 				if (this.enableTooltip) {
 					let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
 					title.textContent = action.title;
