@@ -156,7 +156,7 @@ class UIBasic {
 					button: m,
 					mode: m,
 					layer: id,
-					onclick: () => { layer.setMode(m); this.updateMenu(); },
+					onclick: () => { layer.setMode(m); },
 					status: () => layer.getMode() == m ? 'active' : '',
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
@@ -295,6 +295,7 @@ class UIBasic {
 
 			this.createMenu();
 			this.updateMenu();
+			this.viewer.canvas.addEvent('update', () => this.updateMenu());
 
 			if (this.actions.light && this.actions.light.display === 'auto')
 				this.actions.light.display = true;
