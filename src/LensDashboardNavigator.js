@@ -525,7 +525,7 @@ class LensDashboardNavigator extends LensDashboard {
 
       if(this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
-         this.updateCb(center.x, this.viewer.camera.viewport.h-center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
+         this.updateCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
       }  
 
       if (!this.moving) {
@@ -536,7 +536,7 @@ class LensDashboardNavigator extends LensDashboard {
       this.timeout = setTimeout(() => {
          this.toggle();
          this.moving = false;
-         if(this.updateEndCb) this.updateEndCb(center.x, this.viewer.camera.viewport.h-center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
+         if(this.updateEndCb) this.updateEndCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
       }, this.delay);
    }
 }
