@@ -73,7 +73,58 @@
 
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display = true;
-        ui.actions.zoomout.display = true;       
+        ui.actions.zoomout.display = true;
+        ui.actions.light.active = true;
+        
+
+        class LightSpin {
+            constructor(layer, secondsPerTurn = 20, height = 0.7) {
+                this.layer = layer;
+                this.setHeight(height);
+                this.startTime = Date.now();
+                this.secondsPerTurn = secondsPerTurn;
+                this.spinning = true;
+                this.angle = 0.0;
+                this.startAngle = 0.0;
+            }
+            setHeight(height) {
+                this.w = Math.sqrt(1 + height*height);
+            }
+            update() {
+                let seconds = (Date.now() - this.startTime) / 1000;
+                
+                this.angle = 2*Math.PI*(seconds/this.secondsPerTurn) + this.startAngle;
+
+                let x = Math.cos(this.angle)/this.w;
+                let y = Math.sin(this.angle)/this.w;
+                this.layer.setLight([x, y], 100);
+                if(this.spinning)
+                    requestAnimationFrame(() => this.update());
+            }
+            start() {
+                this.startTime = Date.now();
+                this.spinning = true;
+                this.update();
+            }
+            stop() {
+                this.startTime = Date.now();
+                this.startAngle = this.angle;
+                this.spinning = false;
+            }
+        }
+
+
+        let spinner = new LightSpin(layer0, 20);
+        spinner.start();
+        lime.pointerManager.idleTime = 60;
+        lime.pointerManager.onEvent( { 
+            priority: 0,
+            wentIdle: () => { spinner.start() }, 
+            activeAgain: () => { spinner.stop()}
+        });
+        
+        //ui.toggleLightController(true);
+ 
     </script>
 </body>
 

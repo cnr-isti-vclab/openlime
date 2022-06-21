@@ -443,9 +443,9 @@ class UIBasic {
 
 	//we need the concept of active layer! so we an turn on and off light.
 	/** @ignore */
-	toggleLightController() {
+	toggleLightController(on) {
 		let div = this.viewer.containerElement;
-		let active = div.classList.toggle('openlime-light-active');
+		let active = div.classList.toggle('openlime-light-active', on);
 		this.lightActive = active;
 
 		for (let layer of Object.values(this.viewer.canvas.layers))
