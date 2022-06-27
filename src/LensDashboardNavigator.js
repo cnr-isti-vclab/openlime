@@ -16,6 +16,7 @@ class LensDashboardNavigator extends LensDashboard {
          actions: {
             camera: { label: 'camera', task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
             light: { label: 'light', task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
+            annoswitch: { label: 'annoswitch', type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
             down: { label: 'down', task: (event) => { } },
             next: { label: 'next', task: (event) => { } },
          },
@@ -218,37 +219,63 @@ class LensDashboardNavigator extends LensDashboard {
           </g>
         </svg>`;
 
-      // this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-      //   <!-- Created with Inkscape (http://www.inkscape.org/) -->
-        
-      //   <svg
-      //      viewBox="0 0 83.320465 83.320465"
-      //      version="1.1"
-      //      id="svg9049"
-      //      xmlns="http://www.w3.org/2000/svg"
-      //      xmlns:svg="http://www.w3.org/2000/svg">
-      //     <defs
-      //        id="defs9046" />
-      //     <g
-      //        id="layer1"
-      //        transform="translate(-64.051635,-126.97536)">
-      //       <g
-      //          id="g2485"
-      //          transform="matrix(0.35277777,0,0,0.35277777,-244.81765,-40.328086)"
-      //          class="openlime-lens-dashboard-down">
-      //         <path class="openlime-lens-dashboard-button-bkg"
-      //            d="m 1111.719,592.34 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.223,0 -118.094,-52.871 -118.094,-118.09 0,-65.223 52.871,-118.094 118.094,-118.094 65.219,0 118.09,52.871 118.09,118.094 z"
-      //            style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
-      //            id="path46" />
-      //         <path
-      //            d="m 1012.227,509.07 h -37.172 c -0.028,17.813 0,64.668 0,64.668 0,0 -40.332,0 -60.282,0.055 v 37.148 c 19.95,-0.027 60.282,-0.027 60.282,-0.027 0,0 0,46.801 -0.028,64.691 h 37.172 c 0.028,-17.89 0.028,-64.691 0.028,-64.691 0,0 40.304,0 60.253,0 v -37.176 c -19.949,0 -60.253,0 -60.253,0 0,0 -0.051,-46.851 0,-64.668"
-      //            style="fill:#020202;fill-opacity:1;fill-rule:nonzero;stroke:none"
-      //            id="path48" />
-      //       </g>
-      //     </g>
-      //   </svg>`;
+      this.actions.annoswitch.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      <!-- Created with Inkscape (http://www.inkscape.org/) -->
+      
+      <svg
+         viewBox="0 0 83.319054 83.320114"
+         version="1.1"
+         id="svg11415"
+         xml:space="preserve"
+         xmlns="http://www.w3.org/2000/svg"
+         xmlns:svg="http://www.w3.org/2000/svg"><defs
+           id="defs11412"><marker
+             style="overflow:visible"
+             id="TriangleStart"
+             refX="0"
+             refY="0"
+             orient="auto-start-reverse"
+             markerWidth="5.3244081"
+             markerHeight="6.155385"
+             viewBox="0 0 5.3244081 6.1553851"
+             preserveAspectRatio="xMidYMid"><path
+               transform="scale(0.5)"
+               style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+               d="M 5.77,0 -2.88,5 V -5 Z"
+               id="path135" /></marker><marker
+             style="overflow:visible"
+             id="TriangleStart-5"
+             refX="0"
+             refY="0"
+             orient="auto-start-reverse"
+             markerWidth="5.3244081"
+             markerHeight="6.155385"
+             viewBox="0 0 5.3244081 6.1553851"
+             preserveAspectRatio="xMidYMid"><path
+               transform="scale(0.5)"
+               style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+               d="M 5.77,0 -2.88,5 V -5 Z"
+               id="path135-3" /></marker></defs><g
+           id="g327"
+           transform="translate(129.83427,13.264356)"><g
+             id="g346"><path
+               d="m -46.51522,28.396234 c 0,23.007813 -18.65172,41.659526 -41.65953,41.659526 -23.00782,0 -41.65952,-18.651713 -41.65952,-41.659526 0,-23.00887 18.6517,-41.66059 41.65952,-41.66059 23.00781,0 41.65953,18.65172 41.65953,41.66059 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+               id="path68"
+               class="openlime-lens-dashboard-button-bkg" /><g
+               aria-label="i"
+               id="text430"
+               style="font-size:50.8px;line-height:1.25;font-family:'Palace Script MT';-inkscape-font-specification:'Palace Script MT';font-variant-ligatures:none;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+               transform="matrix(1.9896002,0,0,1.9896002,-378.32178,-41.782121)"><path
+                 d="m 149.74343,19.295724 c -1.4224,1.1176 -2.5908,2.032 -3.5052,2.6416 0.3556,1.0668 0.8128,1.9304 1.9304,3.556 1.4224,-1.27 1.5748,-1.4224 3.302,-2.7432 -0.1524,-0.3048 -0.254,-0.508 -0.6604,-1.1684 -0.3048,-0.6096 -0.3556,-0.6096 -0.762,-1.6256 z m 1.9304,25.4 -0.8636,0.4572 c -3.5052,1.9304 -4.1148,2.1844 -4.7244,2.1844 -0.5588,0 -0.9144,-0.5588 -0.9144,-1.4224 0,-0.8636 0,-0.8636 1.6764,-7.5692 1.8796,-7.7216 1.8796,-7.7216 1.8796,-8.128 0,-0.3048 -0.254,-0.508 -0.6096,-0.508 -0.8636,0 -3.8608,1.6764 -8.0264,4.4704 l -0.1016,1.4224 c 3.0988,-1.6764 3.2512,-1.7272 3.7084,-1.7272 0.4064,0 0.6096,0.3048 0.6096,0.8636 0,0.7112 -0.1524,1.4224 -0.9144,4.318 -2.3876,8.8392 -2.3876,8.8392 -2.3876,10.16 0,1.2192 0.4572,2.032 1.2192,2.032 0.8636,0 2.2352,-0.6604 4.9276,-2.3876 0.9652,-0.6096 1.9304,-1.2192 2.8956,-1.8796 0.4572,-0.254 0.8128,-0.508 1.4224,-0.8636 z"
+                 style="font-weight:bold;font-family:Z003;-inkscape-font-specification:'Z003 Bold'"
+                 id="path495" /></g><path
+               style="fill:none;stroke:#000000;stroke-width:17.09477;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="M -66.121922,49.608737 -110.22757,7.1826674"
+               id="path465"
+               class="openlime-lens-dashboard-annoswitch-bar" /></g></g></svg>`;
 
-        this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
         <svg
@@ -320,62 +347,6 @@ class LensDashboardNavigator extends LensDashboard {
                    d="m 1185.0215,567.71656 h 59.6026"
                    id="path2720" /></g></g></g></svg>`;
 
-
-      // this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-      //   <!-- Created with Inkscape (http://www.inkscape.org/) -->
-        
-      //   <svg
-      //      viewBox="0 0 83.319054 83.320114"
-      //      version="1.1"
-      //      id="svg11415"
-      //      xmlns="http://www.w3.org/2000/svg"
-      //      xmlns:svg="http://www.w3.org/2000/svg">
-      //     <defs
-      //        id="defs11412" />
-      //     <g
-      //        id="layer1"
-      //        transform="translate(-49.789728,-119.49443)">
-      //       <g
-      //          id="g2490"
-      //          transform="matrix(0.35277777,0,0,0.35277777,-349.02413,-45.919887)"
-      //          class="openlime-lens-dashboard-next">
-      //         <path class="openlime-lens-dashboard-button-bkg"
-      //            d="m 1366.676,586.984 c 0,65.219 -52.871,118.09 -118.09,118.09 -65.219,0 -118.09,-52.871 -118.09,-118.09 0,-65.222 52.871,-118.093 118.09,-118.093 65.219,0 118.09,52.871 118.09,118.093 z"
-      //            style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
-      //            id="path68" />
-      //         <path
-      //            d="m 1193.945,519.488 60.985,58.539 c 5.722,5.649 5.988,14.586 0,20.493 l -60.985,57.355 c -3.418,3.418 -13.66,3.418 -17.078,-6.828 V 522.684 c 3.418,-10.024 13.66,-6.61 17.078,-3.196 z"
-      //            style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
-      //            id="path70" />
-      //         <path
-      //            d="m 1305.789,515.266 h -18.781 c -8.043,0 -14.516,6.769 -14.516,15.183 v 113.067 c 0,8.414 6.473,15.187 14.516,15.187 h 18.781 c 8.043,0 14.516,-6.773 14.516,-15.187 V 530.449 c 0,-8.414 -6.473,-15.183 -14.516,-15.183 z"
-      //            style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
-      //            id="path72" />
-      //       </g>
-      //     </g>
-      //   </svg>`;
-
-      // this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-      //   <!-- Created with Inkscape (http://www.inkscape.org/) -->
-        
-      //   <svg
-      //      viewBox="0 0 83.319054 83.320114"
-      //      version="1.1"
-      //      id="svg11415"
-      //      xml:space="preserve"
-      //      xmlns="http://www.w3.org/2000/svg"
-      //      xmlns:svg="http://www.w3.org/2000/svg"><defs
-      //        id="defs11412" /><g
-      //        id="g2706"
-      //        transform="translate(-83.319054,1.7740688)"><path
-      //          d="m 166.63811,39.886517 c 0,23.007813 -18.65172,41.659526 -41.65953,41.659526 -23.00782,0 -41.659526,-18.651713 -41.659526,-41.659526 0,-23.008872 18.651706,-41.6605858 41.659526,-41.6605858 23.00781,0 41.65953,18.6517138 41.65953,41.6605858 z"
-      //          style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
-      //          id="path68"
-      //          class="openlime-lens-dashboard-button-bkg" /><path
-      //          d="m 113.68535,10.361214 -6.93831,6.938331 22.53725,22.586442 -22.53725,22.586464 6.93831,6.93831 29.52478,-29.524774 z"
-      //          id="path2332"
-      //          style="stroke-width:4.92078" /></g></svg>`;
-
       this.actions.next.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
       <!-- Created with Inkscape (http://www.inkscape.org/) -->
       
@@ -431,8 +402,21 @@ class LensDashboardNavigator extends LensDashboard {
          action.element = Util.SVGFromString(action.svg);
          action.element.style = `height: 100%; margin: 0 5px`;
          action.element.classList.add('openlime-lens-dashboard-button');
-
+         if (action.type == 'toggle') {
+            const toggleElm = action.element.querySelector(action.toggleClass);
+            toggleElm.style.visibility = `hidden`;
+            action.active = false;
+         }
          action.element.addEventListener('click', (e) => {
+            if (action.type == 'toggle') {
+               action.active = !action.active;
+               const toggleElm = action.element.querySelector(action.toggleClass);
+               if(action.active) {
+                  toggleElm.style.visibility = `visible`;
+               } else {
+                  toggleElm.style.visibility = `hidden`;
+               }
+            }
             action.task(e);
             e.preventDefault();
          });
@@ -440,6 +424,7 @@ class LensDashboardNavigator extends LensDashboard {
 
       this.tools1.appendChild(this.actions.camera.element);
       this.tools1.appendChild(this.actions.light.element);
+      this.tools2.appendChild(this.actions.annoswitch.element);
       this.tools2.appendChild(this.actions.down.element);
       this.tools2.appendChild(this.actions.next.element);
 
@@ -450,6 +435,7 @@ class LensDashboardNavigator extends LensDashboard {
       // Enable camera, light, next buttons
       this.setActionEnabled('camera');
       this.setActionEnabled('light');
+      this.setActionEnabled('annoswitch');
       this.setActionEnabled('next');
    }
 
@@ -464,7 +450,7 @@ class LensDashboardNavigator extends LensDashboard {
       return result;
    }
 
-   setActionEnabled(label, enable=true) {
+   setActionEnabled(label, enable = true) {
       const action = this.getAction(label);
       if (action) {
          action.element.classList.toggle('enabled', enable);
@@ -496,7 +482,7 @@ class LensDashboardNavigator extends LensDashboard {
       const radius = r * cameraT.z;
       const sizew = 2 * radius;
       const sizeh = 2 * radius + this.borderWidth;
-      const p = {x: 0, y: 0};
+      const p = { x: 0, y: 0 };
       p.x = center.x - radius;
       p.y = center.y + radius;
       p.y = this.viewer.camera.viewport.h - p.y;
@@ -523,20 +509,20 @@ class LensDashboardNavigator extends LensDashboard {
       this.toolbox2.style.left = `${bx2}px`;
       this.toolbox2.style.top = `${by2}px`;
 
-      if(this.updateCb) {
+      if (this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
          this.updateCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
-      }  
+      }
 
       if (!this.moving) {
          this.toggle();
-         this.moving = true; 
+         this.moving = true;
       }
       if (this.timeout) clearTimeout(this.timeout);
       this.timeout = setTimeout(() => {
          this.toggle();
          this.moving = false;
-         if(this.updateEndCb) this.updateEndCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
+         if (this.updateEndCb) this.updateEndCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
       }, this.delay);
    }
 }
