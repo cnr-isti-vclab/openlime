@@ -150,6 +150,9 @@ class BoundingBox {
         return [ v[0 + (i&0x1)<<1],  v[1 + (i&0x2)] ];
     }
 
+    intersects(box) {
+        return xLow <= box.xHigh && xHigh >= box.xLow && yLow <= box.yHigh && yHigh >= box.yLow;
+    }
     /**
      * Prints out the bounding box corners in the console.
      */
