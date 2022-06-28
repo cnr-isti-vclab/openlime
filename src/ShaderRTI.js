@@ -129,7 +129,7 @@ class ShaderRTI extends Shader {
 		this.scale = this.material.scale;
 		this.bias = this.material.bias;
 
-
+		console.log(this.scale, this.bias);
 		if(['mrgb', 'mycc'].includes(this.colorspace))
 			this.loadBasis(this.basis);
 
@@ -232,9 +232,10 @@ const int ny1 = ${this.yccplanes[1]};
 `
 
 		switch(this.colorspace) {
-			case 'rgb':  str +=  RGB.render(this.njpegs, gl2); break;
-			case 'mrgb': str += MRGB.render(this.njpegs, gl2); break;
-			case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0], gl2); break;
+			case 'lrgb':  str += LRGB.render(this.njpegs, gl2); break;
+			case 'rgb' :  str +=  RGB.render(this.njpegs, gl2); break;
+			case 'mrgb':  str += MRGB.render(this.njpegs, gl2); break;
+			case 'mycc':  str += MYCC.render(this.njpegs, this.yccplanes[0], gl2); break;
 		}
 
 		str += `
@@ -289,6 +290,32 @@ void main(void) {
 	}
 }
 
+
+class LRGB {
+	static render(njpegs, gl2) {
+		let str = `
+vec4 render(vec3 base[np1]) {
+	float l = 0.0;
+`
+		for(let j = 1, k = 0; j < njpegs; j++, k+=3) {
+			str += `
+	{
+		vec4 c = texture${gl2?'':'2D'}(plane${j}, v_texcoord);
+		l += base[${k}].x*(c.x - bias[${j}].x)*scale[${j}].x;
+		l += base[${k+1}].x*(c.y - bias[${j}].y)*scale[${j}].y;
+		l += base[${k+2}].x*(c.z - bias[${j}].z)*scale[${j}].z;
+	}
+`;
+		}
+		str += `
+	vec3 basecolor = (texture${gl2?'':'2D'}(plane0, v_texcoord).xyz - bias[0])*scale[0];
+
+	return l*vec4(basecolor, 1);
+}
+`;
+		return str;
+	}
+}
 
 
 class RGB {
