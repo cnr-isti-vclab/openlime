@@ -32,25 +32,6 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.delay = 400;
       this.timeout = null; // Timeout for moving
 
-      this.lensContainer = document.createElement('div');
-      this.lensContainer.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none; display: block; margin: 0`;
-      this.lensContainer.classList.add('openlime-lens-dashboard-lens-container');
-      this.viewer.containerElement.appendChild(this.lensContainer);
-
-      const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
-      this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
-      const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50 });
-      circle.setAttributeNS(null, 'style', `fill: none; stroke: rgb(${col[0]},${col[1]},${col[2]},${col[3]}); stroke-width: ${this.borderWidth}px;`);
-      this.lensElm.appendChild(circle);
-      this.lensContainer.appendChild(this.lensElm);
-      circle.style.pointerEvents = 'auto';
-      circle.addEventListener('click', (e) => {
-         console.log("CLICK CIRCLE");
-      });
-
-      this.container.style.display = 'block';
-      this.container.style.margin = '0';
-
       // TOOLBOX ITEMS
 
       this.actions.camera.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -378,6 +359,32 @@ class LensDashboardNavigatorRadial extends LensDashboard {
                style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:7.9375;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
                d="m -111.37623,10.725444 h 15.76986"
                id="path2720-9" /></g></g></svg>`;
+
+
+      if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
+      else setTimeout(() => { this.init(); }, 0);
+
+   }
+
+   init() {
+      this.lensContainer = document.createElement('div');
+      this.lensContainer.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none; display: block; margin: 0`;
+      this.lensContainer.classList.add('openlime-lens-dashboard-lens-container');
+      this.viewer.containerElement.appendChild(this.lensContainer);
+
+      const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
+      this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
+      const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50 });
+      circle.setAttributeNS(null, 'style', `fill: none; stroke: rgb(${col[0]},${col[1]},${col[2]},${col[3]}); stroke-width: ${this.borderWidth}px;`);
+      this.lensElm.appendChild(circle);
+      this.lensContainer.appendChild(this.lensElm);
+      circle.style.pointerEvents = 'auto';
+      circle.addEventListener('click', (e) => {
+         console.log("CLICK CIRCLE");
+      });
+
+      this.container.style.display = 'block';
+      this.container.style.margin = '0';
 
       for (let [name, action] of Object.entries(this.actions)) {
          this.addAction(action);
