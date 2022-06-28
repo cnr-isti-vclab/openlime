@@ -1,7 +1,7 @@
 import { Util } from "./Util"
 import { LensDashboard } from "./LensDashboard"
 
-class LensDashboardNavigator extends LensDashboard {
+class LensDashboardNavigatorRadial extends LensDashboard {
    /**
      * Manages creation and update of a lens dashboard.
      * An object literal with Layer `options` can be specified.
@@ -12,13 +12,16 @@ class LensDashboardNavigator extends LensDashboard {
    constructor(viewer, options) {
       super(viewer, options);
       options = Object.assign({
-         toolboxHeight: 22,
+         containerSpace: 50,
+         borderColor: [0.5, 0.0, 0.0, 1],
+         borderWidth: 7,
+         toolSize: 30,
          actions: {
-            camera: { label: 'camera', task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
-            light: { label: 'light', task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
-            annoswitch: { label: 'annoswitch', type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
-            down: { label: 'down', task: (event) => { } },
-            next: { label: 'next', task: (event) => { } },
+            camera: { label: 'camera', angle: -50, task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
+            light: { label: 'light', angle: -25, task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
+            annoswitch: { label: 'annoswitch', angle: 25, type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
+            down: { label: 'down', angle: 50, task: (event) => { } },
+            next: { label: 'next', angle: 75, task: (event) => { } },
          },
          updateCb: null,
          updateEndCb: null
@@ -29,59 +32,24 @@ class LensDashboardNavigator extends LensDashboard {
       this.delay = 400;
       this.timeout = null; // Timeout for moving
 
-      this.angleToolbar = 30.0 * (Math.PI / 180.0);
+      this.lensContainer = document.createElement('div');
+      this.lensContainer.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none; display: block; margin: 0`;
+      this.lensContainer.classList.add('openlime-lens-dashboard-lens-container');
+      this.viewer.containerElement.appendChild(this.lensContainer);
+
+      const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
+      this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
+      const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50 });
+      circle.setAttributeNS(null, 'style', `fill: none; stroke: rgb(${col[0]},${col[1]},${col[2]},${col[3]}); stroke-width: ${this.borderWidth}px;`);
+      this.lensElm.appendChild(circle);
+      this.lensContainer.appendChild(this.lensElm);
+      circle.style.pointerEvents = 'auto';
+      circle.addEventListener('click', (e) => {
+         console.log("CLICK CIRCLE");
+      });
 
       this.container.style.display = 'block';
-      // this.container.style.gridTemplateColumns = '1fr 1fr';
-      // this.container.style.gridAutoRows = `${this.toolboxHeight}px`;
-      // this.container.style.alignItems = "center";
-      // this.container.style.justifyItems = "center";
       this.container.style.margin = '0';
-
-
-      this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
-      const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50});
-      circle.setAttributeNS(null, 'style', 'fill: none; stroke: blue; stroke-width: 7px;');
-      this.lensElm.appendChild(circle);
-
-      // this.lensElm = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      // this.lensElm.setAttributeNS(null, 'cx', 100);
-      // this.lensElm.setAttributeNS(null, 'cy', 100);
-      // this.lensElm.setAttributeNS(null, 'r', 100);
-      // this.lensElm.setAttributeNS(null, 'style', 'fill: none; stroke: blue; stroke-width: 7px;');
-      this.container.appendChild(this.lensElm);
-
-      const h1 = document.createElement('div');
-      h1.style = `text-align: center; color: #fff`;
-      h1.classList.add('openlime-lens-dashboard-toolbox-header');
-      h1.innerHTML = 'MOVE';
-
-      const h2 = document.createElement('div');
-      h2.style = `text-align: center; color: #fff`;
-      h2.classList.add('openlime-lens-dashboard-toolbox-header');
-      h2.innerHTML = 'INFO';
-
-      this.toolbox1 = document.createElement('div');
-      this.toolbox1.style = `position: absolute; padding: 4px; left: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
-      this.toolbox1.classList.add('openlime-lens-dashboard-toolbox');
-      this.container.appendChild(this.toolbox1);
-      this.toolbox1.appendChild(h1);
-
-      this.toolbox2 = document.createElement('div');
-      this.toolbox2.style = `position: absolute; padding: 4px; right: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
-      this.toolbox2.classList.add('openlime-lens-dashboard-toolbox');
-      this.container.appendChild(this.toolbox2);
-      this.toolbox2.appendChild(h2);
-
-      this.tools1 = document.createElement('div');
-      this.tools1.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
-      this.tools1.classList.add('openlime-lens-dashboard-toolbox-tools');
-      this.toolbox1.appendChild(this.tools1);
-
-      this.tools2 = document.createElement('div');
-      this.tools2.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
-      this.tools2.classList.add('openlime-lens-dashboard-toolbox-tools');
-      this.toolbox2.appendChild(this.tools2);
 
       // TOOLBOX ITEMS
 
@@ -412,34 +380,8 @@ class LensDashboardNavigator extends LensDashboard {
                id="path2720-9" /></g></g></svg>`;
 
       for (let [name, action] of Object.entries(this.actions)) {
-         action.element = Util.SVGFromString(action.svg);
-         action.element.style = `height: 100%; margin: 0 5px`;
-         action.element.classList.add('openlime-lens-dashboard-button');
-         if (action.type == 'toggle') {
-            const toggleElm = action.element.querySelector(action.toggleClass);
-            toggleElm.style.visibility = `hidden`;
-            action.active = false;
-         }
-         action.element.addEventListener('click', (e) => {
-            if (action.type == 'toggle') {
-               action.active = !action.active;
-               const toggleElm = action.element.querySelector(action.toggleClass);
-               if(action.active) {
-                  toggleElm.style.visibility = `visible`;
-               } else {
-                  toggleElm.style.visibility = `hidden`;
-               }
-            }
-            action.task(e);
-            e.preventDefault();
-         });
+         this.addAction(action);
       }
-
-      this.tools1.appendChild(this.actions.camera.element);
-      this.tools1.appendChild(this.actions.light.element);
-      this.tools2.appendChild(this.actions.annoswitch.element);
-      this.tools2.appendChild(this.actions.down.element);
-      this.tools2.appendChild(this.actions.next.element);
 
       // Set Camera movement active
       this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
@@ -450,6 +392,35 @@ class LensDashboardNavigator extends LensDashboard {
       this.setActionEnabled('light');
       this.setActionEnabled('annoswitch');
       this.setActionEnabled('next');
+   }
+
+   static degToRadians(angle) {
+      return angle * (Math.PI / 180.0);
+   }
+
+   addAction(action) {
+      action.element = Util.SVGFromString(action.svg);
+      action.element.style = `position:absolute; height: ${this.toolSize}px; margin: 0`;
+      action.element.classList.add('openlime-lens-dashboard-button');
+      if (action.type == 'toggle') {
+         const toggleElm = action.element.querySelector(action.toggleClass);
+         toggleElm.style.visibility = `hidden`;
+         action.active = false;
+      }
+      action.element.addEventListener('click', (e) => {
+         if (action.type == 'toggle') {
+            action.active = !action.active;
+            const toggleElm = action.element.querySelector(action.toggleClass);
+            if (action.active) {
+               toggleElm.style.visibility = `visible`;
+            } else {
+               toggleElm.style.visibility = `hidden`;
+            }
+         }
+         action.task(e);
+         e.preventDefault();
+      });
+      this.container.appendChild(action.element);
    }
 
    getAction(label) {
@@ -493,43 +464,42 @@ class LensDashboardNavigator extends LensDashboard {
       let cameraT = this.viewer.camera.getCurrentTransform(now);
       const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
       const radius = r * cameraT.z;
-      const sizew = 2 * radius;
-      const sizeh = 2 * radius + this.borderWidth;
+      const sizew = 2 * radius + 2 * this.containerSpace;
+      const sizeh = 2 * radius + 2 * this.containerSpace;
       const p = { x: 0, y: 0 };
-      p.x = center.x - radius;
-      p.y = center.y + radius;
+      p.x = center.x - radius - this.containerSpace;
+      p.y = center.y + radius + this.containerSpace;
       p.y = this.viewer.camera.viewport.h - 1 - p.y;
       this.container.style.left = `${p.x}px`;
       this.container.style.top = `${p.y}px`;
       this.container.style.width = `${sizew}px`;
       this.container.style.height = `${sizeh}px`;
+      this.lensContainer.style.left = `${p.x}px`;
+      this.lensContainer.style.top = `${p.y}px`;
+      this.lensContainer.style.width = `${sizew}px`;
+      this.lensContainer.style.height = `${sizeh}px`;
 
       // Lens circle
-      const cx = Math.round(2*radius*0.5)+1;
-      const cy = Math.round(2*radius*0.5)+1;
+      const cx = Math.round(sizew * 0.5);
+      const cy = Math.round(sizeh * 0.5);
       this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
       const circle = this.lensElm.querySelector('circle');
       circle.setAttributeNS(null, 'cx', cx);
       circle.setAttributeNS(null, 'cy', cy);
-      circle.setAttributeNS(null, 'r', radius-7);
+      circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
 
-      // Set toolbox position
-      const tbw1 = this.toolbox1.clientWidth;
-      const tbh1 = this.toolbox1.clientHeight;
-      const tbw2 = this.toolbox2.clientWidth;
-      const tbh2 = this.toolbox2.clientHeight;
-      let cbx = radius * Math.sin(this.angleToolbar);
-      let cby = radius * Math.cos(this.angleToolbar);
-
-      let bx1 = radius - cbx - tbw1 / 2;
-      let by1 = radius + cby - tbh1 / 2;
-      this.toolbox1.style.left = `${bx1}px`;
-      this.toolbox1.style.top = `${by1}px`;
-
-      let bx2 = radius + cbx - tbw2 / 2;
-      let by2 = radius + cby - tbh2 / 2;
-      this.toolbox2.style.left = `${bx2}px`;
-      this.toolbox2.style.top = `${by2}px`;
+      // Set tool position
+      for (let [name, action] of Object.entries(this.actions)) {
+         const tw = action.element.clientWidth;
+         const th = action.element.clientHeight;
+         const rad = LensDashboardNavigatorRadial.degToRadians(action.angle);
+         let cbx = (radius + this.toolSize * 0.5) * Math.sin(rad);
+         let cby = (radius + this.toolSize * 0.5) * Math.cos(rad);
+         let bx = sizew * 0.5 + cbx - tw / 2;
+         let by = sizeh * 0.5 + cby - th / 2;
+         action.element.style.left = `${bx}px`;
+         action.element.style.top = `${by}px`;
+      }
 
       if (this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
@@ -549,4 +519,4 @@ class LensDashboardNavigator extends LensDashboard {
    }
 }
 
-export { LensDashboardNavigator }
+export { LensDashboardNavigatorRadial }
