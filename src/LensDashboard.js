@@ -1,3 +1,5 @@
+import { Util } from "./Util"
+
 /**
  * Callback function fired by a 'click' event on a lens dashboard element.
  * @function taskCallback
@@ -45,15 +47,34 @@ class LensDashboard {
  	*/
 	constructor(viewer, options) {
 		options = Object.assign({
-			borderWidth: 38
+			containerSpace: 50,
+			borderColor: [0.5, 0.0, 0.0, 1],
+			borderWidth: 7   
 		}, options);
 		Object.assign(this, options);
+
         this.viewer = viewer;
 		this.elements = [];
         this.container = document.createElement('div');
 		this.container.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none`;
 		this.container.classList.add('openlime-lens-dashboard');		
 		this.viewer.containerElement.appendChild(this.container);
+
+		this.lensContainer = document.createElement('div');
+		this.lensContainer.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none; display: block; margin: 0`;
+		this.lensContainer.classList.add('openlime-lens-dashboard-lens-container');
+		this.viewer.containerElement.appendChild(this.lensContainer);
+  
+		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
+		this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
+		const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50 });
+		circle.setAttributeNS(null, 'style', `fill: none; stroke: rgb(${col[0]},${col[1]},${col[2]},${col[3]}); stroke-width: ${this.borderWidth}px;`);
+		this.lensElm.appendChild(circle);
+		this.lensContainer.appendChild(this.lensElm);
+		// circle.style.pointerEvents = 'auto';
+		// circle.addEventListener('click', (e) => {
+		//    console.log("CLICK CIRCLE");
+		// });
     }
 
 	/**
@@ -66,18 +87,33 @@ class LensDashboard {
 
 	/** @ignore */
     update(x, y, r) {
-		const now = performance.now();
-		let cameraT = this.viewer.camera.getCurrentTransform(now);
-		const p = this.viewer.camera.sceneToCanvas(x, y, cameraT);
-		const size = r * cameraT.z + this.borderWidth;
-		const size2 = 2 * size;
-		p.x -= size;
-		p.y += size;
-		p.y = this.viewer.camera.viewport.h - p.y;
-		this.container.style.left = `${p.x}px`;
-		this.container.style.top = `${p.y}px`;
-		this.container.style.width = `${size2}px`;
-		this.container.style.height = `${size2}px`;
+      const now = performance.now();
+      let cameraT = this.viewer.camera.getCurrentTransform(now);
+      const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
+      const radius = r * cameraT.z;
+      const sizew = 2 * radius + 2 * this.containerSpace;
+      const sizeh = 2 * radius + 2 * this.containerSpace;
+      const p = { x: 0, y: 0 };
+      p.x = center.x - radius - this.containerSpace;
+      p.y = center.y + radius + this.containerSpace;
+      p.y = this.viewer.camera.viewport.h - 1 - p.y;
+      this.container.style.left = `${p.x}px`;
+      this.container.style.top = `${p.y}px`;
+      this.container.style.width = `${sizew}px`;
+      this.container.style.height = `${sizeh}px`;
+      this.lensContainer.style.left = `${p.x}px`;
+      this.lensContainer.style.top = `${p.y}px`;
+      this.lensContainer.style.width = `${sizew}px`;
+      this.lensContainer.style.height = `${sizeh}px`;
+
+      // Lens circle
+      const cx = Math.round(sizew * 0.5);
+      const cy = Math.round(sizeh * 0.5);
+      this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
+      const circle = this.lensElm.querySelector('circle');
+      circle.setAttributeNS(null, 'cx', cx);
+      circle.setAttributeNS(null, 'cy', cy);
+      circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
 	}
 
 }

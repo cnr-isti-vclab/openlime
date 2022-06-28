@@ -12,9 +12,6 @@ class LensDashboardNavigatorRadial extends LensDashboard {
    constructor(viewer, options) {
       super(viewer, options);
       options = Object.assign({
-         containerSpace: 50,
-         borderColor: [0.5, 0.0, 0.0, 1],
-         borderWidth: 7,
          toolSize: 30,
          toolPadding: 2,
          group: [-40, 20],
@@ -369,21 +366,6 @@ class LensDashboardNavigatorRadial extends LensDashboard {
    }
 
    init() {
-      this.lensContainer = document.createElement('div');
-      this.lensContainer.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none; display: block; margin: 0`;
-      this.lensContainer.classList.add('openlime-lens-dashboard-lens-container');
-      this.viewer.containerElement.appendChild(this.lensContainer);
-
-      const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
-      this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
-      const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50 });
-      circle.setAttributeNS(null, 'style', `fill: none; stroke: rgb(${col[0]},${col[1]},${col[2]},${col[3]}); stroke-width: ${this.borderWidth}px;`);
-      this.lensElm.appendChild(circle);
-      this.lensContainer.appendChild(this.lensElm);
-      circle.style.pointerEvents = 'auto';
-      circle.addEventListener('click', (e) => {
-         console.log("CLICK CIRCLE");
-      });
 
       this.container.style.display = 'block';
       this.container.style.margin = '0';
