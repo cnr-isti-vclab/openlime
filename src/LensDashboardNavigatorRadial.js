@@ -16,12 +16,14 @@ class LensDashboardNavigatorRadial extends LensDashboard {
          borderColor: [0.5, 0.0, 0.0, 1],
          borderWidth: 7,
          toolSize: 30,
+         toolPadding: 2,
+         group: [-40, 20],
          actions: {
-            camera: { label: 'camera', angle: -50, task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
-            light: { label: 'light', angle: -25, task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
-            annoswitch: { label: 'annoswitch', angle: 25, type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
-            down: { label: 'down', angle: 50, task: (event) => { } },
-            next: { label: 'next', angle: 75, task: (event) => { } },
+            camera: { label: 'camera', group: 0, angle: -50, task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
+            light: { label: 'light', group: 0, angle: -25, task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
+            annoswitch: { label: 'annoswitch', group: 1, angle: 25, type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
+            down: { label: 'down', group: 1, angle: 50, task: (event) => { } },
+            next: { label: 'next', group: 1, angle: 75, task: (event) => { } },
          },
          updateCb: null,
          updateEndCb: null
@@ -496,17 +498,36 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
 
       // Set tool position
-      for (let [name, action] of Object.entries(this.actions)) {
-         const tw = action.element.clientWidth;
-         const th = action.element.clientHeight;
-         const rad = LensDashboardNavigatorRadial.degToRadians(action.angle);
-         let cbx = (radius + this.toolSize * 0.5) * Math.sin(rad);
-         let cby = (radius + this.toolSize * 0.5) * Math.cos(rad);
-         let bx = sizew * 0.5 + cbx - tw / 2;
-         let by = sizeh * 0.5 + cby - th / 2;
-         action.element.style.left = `${bx}px`;
-         action.element.style.top = `${by}px`;
+      const alphaDelta = 2.0*Math.asin((this.toolSize*0.5+this.toolPadding)/(radius));
+      for (let i = 0; i < this.group.length; i++) {
+         const gArr = Object.entries(this.actions).filter( ([key, value]) => value.group == i);
+         if(Math.abs(this.group[i]) > 90) gArr.reverse();
+         let idx = 0;
+         for (let [name, action] of gArr) {
+            const tw = action.element.clientWidth;
+            const th = action.element.clientHeight;
+            const rad = LensDashboardNavigatorRadial.degToRadians(this.group[i]) + idx * alphaDelta;
+            let cbx = (radius+this.toolSize*0.5) * Math.sin(rad);
+            let cby = (radius+this.toolSize*0.5) * Math.cos(rad);
+            let bx = sizew * 0.5 + cbx - tw / 2;
+            let by = sizeh * 0.5 - cby - th / 2;
+            action.element.style.left = `${bx}px`;
+            action.element.style.top = `${by}px`;
+            idx++;
+         }
       }
+
+      // for (let [name, action] of Object.entries(this.actions)) {
+      //    const tw = action.element.clientWidth;
+      //    const th = action.element.clientHeight;
+      //    const rad = LensDashboardNavigatorRadial.degToRadians(action.angle);
+      //    let cbx = (radius + this.toolSize * 0.5) * Math.sin(rad);
+      //    let cby = (radius + this.toolSize * 0.5) * Math.cos(rad);
+      //    let bx = sizew * 0.5 + cbx - tw / 2;
+      //    let by = sizeh * 0.5 + cby - th / 2;
+      //    action.element.style.left = `${bx}px`;
+      //    action.element.style.top = `${by}px`;
+      // }
 
       if (this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
