@@ -44,32 +44,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
             id="svg11"
             xmlns="http://www.w3.org/2000/svg"
             xmlns:svg="http://www.w3.org/2000/svg">
-           <defs
-              id="defs7">
-             <mask
-                id="mask-cut">
-               <rect
-                  id="mask-rect"
-                  x="0"
-                  y="0"
-                  width="200"
-                  height="100"
-                  fill="#ffffff"/>
-               <circle
-                  id="mask-inner-circle"
-                  cx="100"
-                  cy="100"
-                  r="60"
-                  fill="#000000"/>
-             </mask>
-           </defs>
-           <circle
-              id="outer-circle"
-              cx="100"
-              cy="100"
-              r="90"
-              fill="rgb(${col[0]},${col[1]},${col[2]},${col[3]})"
-              mask="url(#mask-cut)"/>
+           <path id="shape-dashboard-bkg" d="" stroke="none" fill="rgb(${col[0]},${col[1]},${col[2]},${col[3]})"/>
          </svg>`;
       this.toolboxBkg.element = Util.SVGFromString(this.toolboxBkg.svg);
       this.container.appendChild(this.toolboxBkg.element);
@@ -435,23 +410,11 @@ class LensDashboardNavigatorRadial extends LensDashboard {
 
    setToolboxBkg(r, sizew, sizeh) {
       const e = this.toolboxBkg.element;
-
       e.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
- 
-      const maskRect = e.querySelector('#mask-rect');
-      maskRect.setAttributeNS(null, 'width', sizew);
-      maskRect.setAttributeNS(null, 'height', sizeh*0.5);
-
-      const innerCircle = e.querySelector('#mask-inner-circle');
-      innerCircle.setAttributeNS(null, "cx", sizew*0.5);
-      innerCircle.setAttributeNS(null, "cy", sizeh*0.5);
-      innerCircle.setAttributeNS(null, "r", r);
- 
-      const outerCircle = e.querySelector('#outer-circle');
-      outerCircle.setAttributeNS(null, "cx", sizew*0.5);
-      outerCircle.setAttributeNS(null, "cy", sizeh*0.5);
-      outerCircle.setAttributeNS(null, "r", r+this.toolboxBkgSize);
-
+      const shape = e.querySelector('#shape-dashboard-bkg');
+      const cs = this.containerSpace;
+      const b =  this.toolboxBkgSize;
+      shape.setAttributeNS(null, 'd', `M ${sizew*0.5-r-b},${sizeh*0.5} a1,1 0 0,1 ${2*(r+b)},0 h ${-b} a1,1 0 1,0 ${-2*r},0 Z`);
    }
 
    addAction(action) {
