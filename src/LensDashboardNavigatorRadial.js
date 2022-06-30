@@ -14,7 +14,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       options = Object.assign({
          toolSize: 30,
          toolPadding: 2,
-         group: [-40, 20],
+         group: [-45, 30],
          actions: {
             camera: { label: 'camera', group: 0, angle: -50, task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
             light: { label: 'light', group: 0, angle: -25, task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
@@ -22,7 +22,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
             down: { label: 'down', group: 1, angle: 50, task: (event) => { } },
             next: { label: 'next', group: 1, angle: 75, task: (event) => { } },
          },
-         updateCb: null,
+          updateCb: null,
          updateEndCb: null
       }, options);
       Object.assign(this, options);
@@ -30,6 +30,25 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.moving = false;
       this.delay = 400;
       this.timeout = null; // Timeout for moving
+
+      // TOOLBOX BKG
+ 		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
+      col[3]=0.4;
+      this.toolboxBkgSize = 48;
+      this.toolboxBkg = new Object();
+      this.toolboxBkg.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+         <svg
+            viewBox="0 0 200 200"
+            fill="none"
+            version="1.1"
+            id="svg11"
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:svg="http://www.w3.org/2000/svg">
+           <path id="shape-dashboard-bkg" d="" stroke="none" fill="rgb(${col[0]},${col[1]},${col[2]},${col[3]})"/>
+         </svg>`;
+      this.toolboxBkg.element = Util.SVGFromString(this.toolboxBkg.svg);
+      this.container.appendChild(this.toolboxBkg.element);
+
 
       // TOOLBOX ITEMS
 
@@ -389,6 +408,15 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       return angle * (Math.PI / 180.0);
    }
 
+   setToolboxBkg(r, sizew, sizeh) {
+      const e = this.toolboxBkg.element;
+      e.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
+      const shape = e.querySelector('#shape-dashboard-bkg');
+      const cs = this.containerSpace;
+      const b =  this.toolboxBkgSize;
+      shape.setAttributeNS(null, 'd', `M ${sizew*0.5-r-b},${sizeh*0.5} a1,1 0 0,1 ${2*(r+b)},0 h ${-b} a1,1 0 1,0 ${-2*r},0 Z`);
+   }
+
    addAction(action) {
       action.element = Util.SVGFromString(action.svg);
       action.element.style = `position:absolute; height: ${this.toolSize}px; margin: 0`;
@@ -478,6 +506,10 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       circle.setAttributeNS(null, 'cx', cx);
       circle.setAttributeNS(null, 'cy', cy);
       circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+
+      // Toolbox Background
+      this.setToolboxBkg(radius - this.borderWidth - 2, sizew, sizeh);
+      this.first = false;
 
       // Set tool position
       const alphaDelta = 2.0*Math.asin((this.toolSize*0.5+this.toolPadding)/(radius));
