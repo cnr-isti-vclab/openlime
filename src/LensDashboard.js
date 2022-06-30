@@ -47,7 +47,7 @@ class LensDashboard {
  	*/
 	constructor(viewer, options) {
 		options = Object.assign({
-			containerSpace: 50,
+			containerSpace: 80,
 			borderColor: [0.5, 0.0, 0.0, 1],
 			borderWidth: 7   
 		}, options);

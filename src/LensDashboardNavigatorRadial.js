@@ -14,7 +14,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       options = Object.assign({
          toolSize: 30,
          toolPadding: 2,
-         group: [-40, 20],
+         group: [-45, 30],
          actions: {
             camera: { label: 'camera', group: 0, angle: -50, task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
             light: { label: 'light', group: 0, angle: -25, task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
@@ -22,7 +22,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
             down: { label: 'down', group: 1, angle: 50, task: (event) => { } },
             next: { label: 'next', group: 1, angle: 75, task: (event) => { } },
          },
-         updateCb: null,
+          updateCb: null,
          updateEndCb: null
       }, options);
       Object.assign(this, options);
@@ -30,6 +30,50 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.moving = false;
       this.delay = 400;
       this.timeout = null; // Timeout for moving
+
+      // TOOLBOX BKG
+		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
+      col[3]=0.4;
+      this.toolboxBkgSize = 48;
+      this.toolboxBkg = new Object();
+      this.toolboxBkg.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+         <svg
+            viewBox="0 0 200 160"
+            fill="none"
+            version="1.1"
+            id="svg11"
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:svg="http://www.w3.org/2000/svg">
+           <defs
+              id="defs7">
+             <mask
+                id="mask-cut">
+               <rect
+                  id="mask-rect"
+                  x="0"
+                  y="0"
+                  width="200"
+                  height="100"
+                  fill="#ffffff"/>
+               <circle
+                  id="mask-inner-circle"
+                  cx="100"
+                  cy="100"
+                  r="60"
+                  fill="#000000"/>
+             </mask>
+           </defs>
+           <circle
+              id="outer-circle"
+              cx="100"
+              cy="100"
+              r="90"
+              fill="rgb(${col[0]},${col[1]},${col[2]},${col[3]})"
+              mask="url(#mask-cut)"/>
+         </svg>`;
+      this.toolboxBkg.element = Util.SVGFromString(this.toolboxBkg.svg);
+      this.container.appendChild(this.toolboxBkg.element);
+
 
       // TOOLBOX ITEMS
 
@@ -389,6 +433,27 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       return angle * (Math.PI / 180.0);
    }
 
+   setToolboxBkg(r, sizew, sizeh) {
+      const e = this.toolboxBkg.element;
+
+      e.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
+ 
+      const maskRect = e.querySelector('#mask-rect');
+      maskRect.setAttributeNS(null, 'width', sizew);
+      maskRect.setAttributeNS(null, 'height', sizeh*0.5);
+
+      const innerCircle = e.querySelector('#mask-inner-circle');
+      innerCircle.setAttributeNS(null, "cx", sizew*0.5);
+      innerCircle.setAttributeNS(null, "cy", sizeh*0.5);
+      innerCircle.setAttributeNS(null, "r", r);
+ 
+      const outerCircle = e.querySelector('#outer-circle');
+      outerCircle.setAttributeNS(null, "cx", sizew*0.5);
+      outerCircle.setAttributeNS(null, "cy", sizeh*0.5);
+      outerCircle.setAttributeNS(null, "r", r+this.toolboxBkgSize);
+
+   }
+
    addAction(action) {
       action.element = Util.SVGFromString(action.svg);
       action.element.style = `position:absolute; height: ${this.toolSize}px; margin: 0`;
@@ -478,6 +543,9 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       circle.setAttributeNS(null, 'cx', cx);
       circle.setAttributeNS(null, 'cy', cy);
       circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+
+      // Toolbox Background
+      this.setToolboxBkg(radius - this.borderWidth - 2, sizew, sizeh);
 
       // Set tool position
       const alphaDelta = 2.0*Math.asin((this.toolSize*0.5+this.toolPadding)/(radius));
