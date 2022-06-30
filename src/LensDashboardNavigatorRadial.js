@@ -32,13 +32,13 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.timeout = null; // Timeout for moving
 
       // TOOLBOX BKG
-		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
+ 		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
       col[3]=0.4;
       this.toolboxBkgSize = 48;
       this.toolboxBkg = new Object();
       this.toolboxBkg.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
          <svg
-            viewBox="0 0 200 160"
+            viewBox="0 0 200 200"
             fill="none"
             version="1.1"
             id="svg11"
@@ -546,6 +546,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
 
       // Toolbox Background
       this.setToolboxBkg(radius - this.borderWidth - 2, sizew, sizeh);
+      this.first = false;
 
       // Set tool position
       const alphaDelta = 2.0*Math.asin((this.toolSize*0.5+this.toolPadding)/(radius));
