@@ -124,12 +124,25 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	draw(transform, viewport) {
 		if (!this.svgElement)
 			return true;
-		let t = this.transform.compose(transform);
 		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
-		let c = this.boundingBox().corner(0);
-		this.svgGroup.setAttribute("transform",
-			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`);
+
+		const svgTransform = this.getSvgGroupTransform(transform);
+		this.svgGroup.setAttribute("transform",	svgTransform);
 		return true;
+	}
+
+	/**
+	 * Return the string containing the transform for drawing the svg group in the proper position
+	 * @param {Transform} transform current transform parameter of the draw function
+	 * @param {bool} inverse when its false return the transform needed to draw the svgGroup
+	 * @returns string with svgroup transform 
+	 */
+	getSvgGroupTransform(transform, inverse=false) {
+		let t = this.transform.compose(transform);
+		let c = this.boundingBox().corner(0);
+		return inverse ?
+		 `translate(${-c[0]} ${-c[1]})  scale(${1/t.z} ${1/t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
+		 `translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`;
 	}
 
 	/** @ignore */

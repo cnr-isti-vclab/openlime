@@ -1,6 +1,14 @@
 import { Util } from "./Util"
 
 /**
+ * RenderingMode for lens and background. Currently implemented only draw and hide.
+ */
+const RenderingMode = {
+    draw: "fill:white;",
+    hide: "fill:black;"
+};
+
+/**
  * Callback function fired by a 'click' event on a lens dashboard element.
  * @function taskCallback
  * @param {Event} e The DOM event.
@@ -38,6 +46,7 @@ import { Util } from "./Util"
  * lensDashboard.append(btn);
  */
 class LensDashboard {
+
 	/**
  	* Manages creation and update of a lens dashboard.
  	* An object literal with Layer `options` can be specified.
@@ -49,7 +58,8 @@ class LensDashboard {
 		options = Object.assign({
 			containerSpace: 50,
 			borderColor: [0.5, 0.0, 0.0, 1],
-			borderWidth: 7   
+			borderWidth: 7,
+			layerSvgAnnotation: null   
 		}, options);
 		Object.assign(this, options);
 
@@ -75,7 +85,88 @@ class LensDashboard {
 		// circle.addEventListener('click', (e) => {
 		//    console.log("CLICK CIRCLE");
 		// });
+		this.lensBox = {
+			x: 0,
+			y: 0,
+			r: 0,
+			w: 0,
+			h: 0
+		  };
+		  
+		this.svgElement = null;
+		this.svgMaskId = 'openlime-image-mask';
+		this.svgMaskUrl = `url(#${this.svgMaskId})`;
     }
+
+	/**
+	 * Call this to set the corresponding LayerSvgAnnotation
+	 * @param {LayerSvgAnnotation} l 
+	 */
+	setLayerSvgAnnotation(l) {
+		console.log("Set Annotation Layer");
+		this.layerSvgAnnotation = l;
+		this.svgElement = this.layerSvgAnnotation.svgElement;
+	}
+
+	createSvgLensMask() {
+		if (this.svgElement == null) this.setupSvgElement();
+		if (this.svgElement == null) return;
+	
+		// Create a mask made of a rectangle (it will be set to the full viewport) for the background
+		// And a circle, corresponding to the lens. 
+        const w = 100; // The real size will be set at each frame by the update function
+        this.svgMask = Util.createSVGElement("mask", {id: this.svgMaskId});
+		this.svgGroup = Util.createSVGElement("g");
+        this.outMask = Util.createSVGElement("rect", {id:'outside-lens-mask', x:-w/2, y:-w/2, width: w, height:w,  style:"fill:black;"});
+        this.inMask = Util.createSVGElement("circle", {id:'inside-lens-mask', cx:0, cy:0, r: w/2, style:"fill:white;"});
+        this.svgGroup.appendChild(this.outMask);
+        this.svgGroup.appendChild(this.inMask);
+        this.svgMask.appendChild(this.svgGroup);
+		this.svgElement.appendChild(this.svgMask);
+
+        // FIXME Remove svgCheck. It's a Check, just to have an SVG element to mask
+		// this.svgCheck = Util.createSVGElement('rect', {x:-w/2, y:-w/2, width:w/2, height:w/2, style:'fill:orange; stroke:blue; stroke-width:5px;'}); //  
+		// this.svgCheck.setAttribute('mask', this.svgMaskUrl);
+		// this.svgElement.appendChild(this.svgCheck);
+		// console.log(this.svgCheck);
+	}
+
+	setupSvgElement() {
+		if (this.layerSvgAnnotation) {
+			// AnnotationLayer available, get its root svgElement
+			if (this.svgElement == null) {
+				//console.log("NULL SVG ELEMENT, take it from layerSvgAnnotation");
+				this.svgElement = this.layerSvgAnnotation.svgElement;
+			}
+		} else {
+			// No annotationLayer, search for an svgElement
+		
+			// First: get shadowRoot to attach the svgElement
+			let shadowRoot = this.viewer.canvas.overlayElement.shadowRoot; 
+			if (shadowRoot == null) {
+				//console.log("WARNING: null ShadowRoot, create a new one");
+				shadowRoot = this.viewer.canvas.overlayElement.attachShadow({ mode: "open" });
+			}
+		
+			//console.log("WARNING: no svg element, create a new one");
+			this.svgElement = shadowRoot.querySelector('svg');
+			if (this.svgElement == null) {
+				// Not availale svg element: build a new one and attach to the tree
+				this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				this.svgElement.classList.add('openlime-svgoverlay-mask');
+				this.svgElement.setAttributeNS(null, 'style', 'pointer-events: none;');
+				shadowRoot.appendChild(this.svgElement);
+			}
+		}
+	}
+
+	/**
+	 * Set mask property on the svg element which need to be displayed with the lens
+	 * @param {*} svg element which need to be displayed within the lens
+	 */
+	setMaskOnSvgLayer(svg) {
+		svg.setAttributeNS(null, 'mask', this.svgMaskUrl);
+	}
 
 	/**
 	 * Appends a HTML element to the dashboard. The element must be positioned in 'absolute' mode.
@@ -84,10 +175,28 @@ class LensDashboard {
     append(elm) {
 		this.container.appendChild(elm);
 	}
+	
+	/**
+	 * Set rendering mode within the lens.
+	 * @param {RenderingMode} mode RenderingMode.draw or RenderingMode.hide
+	 */
+    setLensRenderingMode(mode) {
+        this.inMask.setAttributeNS(null, 'style', mode);
+    }
+
+	/**
+	 * Set the background rendering mode within the lens.
+	 * @param {RenderingMode} mode RenderingMode.draw or RenderingMode.hide
+	 */
+    setBackgroundRenderingMode(mode) {
+        this.outMask.setAttributeNS(null, 'style', mode);
+    }
 
 	/** @ignore */
     update(x, y, r) {
-      const now = performance.now();
+	  if (this.svgElement == null) { this.createSvgLensMask(); }
+	  
+ 	  const now = performance.now();
       let cameraT = this.viewer.camera.getCurrentTransform(now);
       const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
       const radius = r * cameraT.z;
@@ -106,6 +215,14 @@ class LensDashboard {
       this.lensContainer.style.width = `${sizew}px`;
       this.lensContainer.style.height = `${sizeh}px`;
 
+	  this.lensBox = {
+		x: center.x,
+		y: center.y,
+		r: radius,
+		w: sizew,
+		h: sizeh
+	  }
+
       // Lens circle
       const cx = Math.round(sizew * 0.5);
       const cy = Math.round(sizeh * 0.5);
@@ -114,8 +231,30 @@ class LensDashboard {
       circle.setAttributeNS(null, 'cx', cx);
       circle.setAttributeNS(null, 'cy', cy);
       circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+
+	  // Lens Mask
+	  if (this.layerSvgAnnotation != null) {
+		// Compensate the mask with the inverse of the annotation svgGroup transformation
+		const inverse = true;
+		const invTransfStr = this.layerSvgAnnotation.getSvgGroupTransform(cameraT, inverse);
+		this.svgGroup.setAttribute("transform", invTransfStr);
+	 } 
+
+	  // Set the full viewport for outer mask rectangle
+	  const viewport = this.viewer.camera.viewport;
+	  this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
+	  this.outMask.setAttribute( 'x', -viewport.w / 2);
+	  this.outMask.setAttribute( 'y', -viewport.h / 2);
+	  this.outMask.setAttribute( 'width', viewport.w);
+	  this.outMask.setAttribute( 'height', viewport.h);
+
+	  // Set lens parameter for inner lens
+	  this.inMask.setAttributeNS(null, 'cx', center.x  - viewport.w / 2);
+	  this.inMask.setAttributeNS(null, 'cy', -(center.y - viewport.h / 2));
+	  this.inMask.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
 	}
 
 }
 
 export {LensDashboard}
+export {RenderingMode}

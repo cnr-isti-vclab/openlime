@@ -531,6 +531,31 @@ class LensDashboardNavigator extends LensDashboard {
       this.toolbox2.style.left = `${bx2}px`;
       this.toolbox2.style.top = `${by2}px`;
 
+            // Lens Mask
+      if (this.svgElement != null) {
+         // Set the full viewport for outer mask rectangle
+         const viewport = this.viewer.camera.viewport;
+         this.outMask.setAttribute( 'x', -viewport.w / 2);
+         this.outMask.setAttribute( 'y', -viewport.h / 2);
+         this.outMask.setAttribute( 'width', viewport.w);
+         this.outMask.setAttribute( 'height', viewport.h);
+
+         // Set lens parameter for inner lens
+         this.inMask.setAttributeNS(null, 'cx', center.x  - viewport.w / 2);
+         this.inMask.setAttributeNS(null, 'cy', -(center.y - viewport.h / 2));
+         this.inMask.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+
+         
+         if (this.layerSvgAnnotation != null) {
+            // Compensate the mask with the inverse of the annotation svgGroup transformation
+            const inverse = true;
+            const invTransfStr = this.layerSvgAnnotation.getSvgGroupTransform(cameraT, inverse);
+            this.svgGroup.setAttribute("transform", invTransfStr);
+         } else {
+            console.log("WARNING layerSvgAnnot not set");
+         }
+      } 
+         
       if (this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
          this.updateCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
