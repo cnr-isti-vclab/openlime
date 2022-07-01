@@ -103,11 +103,11 @@ class LensDashboard {
 	 * @param {LayerSvgAnnotation} l 
 	 */
 	setLayerSvgAnnotation(l) {
-		console.log("Set Annotation Layer");
 		this.layerSvgAnnotation = l;
 		this.svgElement = this.layerSvgAnnotation.svgElement;
 	}
 
+	/** @ignore */
 	createSvgLensMask() {
 		if (this.svgElement == null) this.setupSvgElement();
 		if (this.svgElement == null) return;
@@ -131,6 +131,7 @@ class LensDashboard {
 		// console.log(this.svgCheck);
 	}
 
+	/** @ignore */
 	setupSvgElement() {
 		if (this.layerSvgAnnotation) {
 			// AnnotationLayer available, get its root svgElement
@@ -169,6 +170,14 @@ class LensDashboard {
 	}
 
 	/**
+	 * Remove mask attribute from svg element
+	 * @param {*} svg element from which remove the mask attribute
+	 */
+	removeMaskFromSvgLayer(svg) {
+		svg.removeAttribute('mask');
+	}
+
+	/**
 	 * Appends a HTML element to the dashboard. The element must be positioned in 'absolute' mode.
 	 * @param {*} elm A HTML element
 	 */
@@ -194,7 +203,6 @@ class LensDashboard {
 
 	/** @ignore */
     update(x, y, r) {
-	  if (this.svgElement == null) { this.createSvgLensMask(); }
 	  
  	  const now = performance.now();
       let cameraT = this.viewer.camera.getCurrentTransform(now);
@@ -232,17 +240,26 @@ class LensDashboard {
       circle.setAttributeNS(null, 'cy', cy);
       circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
 
+	  this.updateMask(cameraT, center, radius);
+	}
+
+	updateMask(cameraT, center, radius) {
+	   if (this.svgElement == null) { this.createSvgLensMask(); }
+	   if (this.svgElement == null) return;
+
 	  // Lens Mask
+	  const viewport = this.viewer.camera.viewport;
 	  if (this.layerSvgAnnotation != null) {
-		// Compensate the mask with the inverse of the annotation svgGroup transformation
+		// Compensate the mask transform with the inverse of the annotation svgGroup transform
 		const inverse = true;
 		const invTransfStr = this.layerSvgAnnotation.getSvgGroupTransform(cameraT, inverse);
 		this.svgGroup.setAttribute("transform", invTransfStr);
-	 } 
+	 } else {
+		 // Set the viewbox.  (in the other branch it is set by the layerSvgAnnotation)
+		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
+	 }
 
 	  // Set the full viewport for outer mask rectangle
-	  const viewport = this.viewer.camera.viewport;
-	  this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
 	  this.outMask.setAttribute( 'x', -viewport.w / 2);
 	  this.outMask.setAttribute( 'y', -viewport.h / 2);
 	  this.outMask.setAttribute( 'width', viewport.w);

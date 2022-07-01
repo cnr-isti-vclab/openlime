@@ -385,7 +385,6 @@ class LensDashboardNavigatorRadial extends LensDashboard {
    }
 
    init() {
-
       this.container.style.display = 'block';
       this.container.style.margin = '0';
 
@@ -507,7 +506,9 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       circle.setAttributeNS(null, 'cy', cy);
       circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
 
-      // Toolbox Background
+      this.updateMask(cameraT, center, radius);
+
+        // Toolbox Background
       this.setToolboxBkg(radius - this.borderWidth - 2, sizew, sizeh);
       this.first = false;
 
@@ -542,7 +543,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       //    action.element.style.left = `${bx}px`;
       //    action.element.style.top = `${by}px`;
       // }
-
+    
       if (this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
          this.updateCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
