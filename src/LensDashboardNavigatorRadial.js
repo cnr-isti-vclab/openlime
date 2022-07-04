@@ -14,11 +14,12 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       options = Object.assign({
          toolSize: 30,
          toolPadding: 2,
-         group: [-45, 30],
+         group: [-65, 0],
          actions: {
-            camera: { label: 'camera', group: 0, angle: -50, task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
-            light: { label: 'light', group: 0, angle: -25, task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
-            annoswitch: { label: 'annoswitch', group: 1, angle: 25, type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
+            camera: { label: 'camera', group: 0, angle: -25, task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
+            light: { label: 'light', group: 0, angle: 0, task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
+            annoswitch: { label: 'annoswitch', group: 1, angle: 0, type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
+            prev: { label: 'prev', group: 1, angle: 25, task: (event) => { } },
             down: { label: 'down', group: 1, angle: 50, task: (event) => { } },
             next: { label: 'next', group: 1, angle: 75, task: (event) => { } },
          },
@@ -49,9 +50,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.toolboxBkg.element = Util.SVGFromString(this.toolboxBkg.svg);
       this.container.appendChild(this.toolboxBkg.element);
 
-
       // TOOLBOX ITEMS
-
       this.actions.camera.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
@@ -255,6 +254,52 @@ class LensDashboardNavigatorRadial extends LensDashboard {
                id="path465"
                class="openlime-lens-dashboard-annoswitch-bar" /></g></g></svg>`;
 
+      this.actions.prev.svg = `<svg
+      viewBox="0 0 83.319054 83.320114"
+      version="1.1"
+      id="svg11415"
+      xml:space="preserve"
+      xmlns="http://www.w3.org/2000/svg"
+      xmlns:svg="http://www.w3.org/2000/svg"><defs
+        id="defs11412"><marker
+          style="overflow:visible"
+          id="TriangleStart"
+          refX="0"
+          refY="0"
+          orient="auto-start-reverse"
+          markerWidth="5.3244081"
+          markerHeight="6.155385"
+          viewBox="0 0 5.3244081 6.1553851"
+          preserveAspectRatio="xMidYMid"><path
+            transform="scale(0.5)"
+            style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+            d="M 5.77,0 -2.88,5 V -5 Z"
+            id="path135" /></marker><marker
+          style="overflow:visible"
+          id="TriangleStart-5"
+          refX="0"
+          refY="0"
+          orient="auto-start-reverse"
+          markerWidth="5.3244081"
+          markerHeight="6.155385"
+          viewBox="0 0 5.3244081 6.1553851"
+          preserveAspectRatio="xMidYMid"><path
+            transform="scale(0.5)"
+            style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+            d="M 5.77,0 -2.88,5 V -5 Z"
+            id="path135-3" /></marker></defs><g
+        id="g417"
+        transform="matrix(3.3565779,0,0,3.3565779,129.92814,-51.220758)"><g
+          id="g335"><path
+            d="m -172.71351,100.60243 c 0,23.00781 -18.65172,41.65952 -41.65953,41.65952 -23.00782,0 -41.65952,-18.65171 -41.65952,-41.65952 0,-23.00887 18.6517,-41.66059 41.65952,-41.66059 23.00781,0 41.65953,18.65172 41.65953,41.66059 z"
+            style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+            id="path68"
+            class="openlime-lens-dashboard-button-bkg"
+            transform="matrix(0.29792248,0,0,0.29792248,37.569341,-2.3002842)" /><path
+            style="fill:#030104"
+            d="m -35.494703,28.624414 c 0,-0.264 0.213,-0.474 0.475,-0.474 h 2.421 c 0.262,0 0.475,0.21 0.475,0.474 0,3.211 2.615,5.826 5.827,5.826 3.212,0 5.827,-2.615 5.827,-5.826 0,-3.214 -2.614,-5.826 -5.827,-5.826 -0.34,0 -0.68,0.028 -1.016,0.089 v 1.647 c 0,0.193 -0.116,0.367 -0.291,0.439 -0.181,0.073 -0.383,0.031 -0.521,-0.104 l -4.832,-3.273 c -0.184,-0.185 -0.184,-0.482 0,-0.667 l 4.833,-3.268 c 0.136,-0.136 0.338,-0.176 0.519,-0.104 0.175,0.074 0.291,0.246 0.291,0.438 v 1.487 c 0.34,-0.038 0.68,-0.057 1.016,-0.057 5.071,0 9.198,4.127 9.198,9.198 0,5.07 -4.127,9.197 -9.198,9.197 -5.07,10e-4 -9.197,-4.126 -9.197,-9.196 z"
+            id="path415" /></g></g></svg>`;
+
       this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
@@ -378,7 +423,6 @@ class LensDashboardNavigatorRadial extends LensDashboard {
                d="m -111.37623,10.725444 h 15.76986"
                id="path2720-9" /></g></g></svg>`;
 
-
       if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
       else setTimeout(() => { this.init(); }, 0);
 
@@ -472,42 +516,26 @@ class LensDashboardNavigatorRadial extends LensDashboard {
             }
    }
 
-   toggle() {
-      this.container.classList.toggle('closed');
+   setToggleClassVisibility(t) {
+      for (let [name, action] of Object.entries(this.actions)) {
+         if (action.type == 'toggle' && action.active) {
+            const toggleElm = action.element.querySelector(action.toggleClass);
+            if (t) {
+               toggleElm.style.visibility = `visible`;
+            } else {
+               toggleElm.style.visibility = `hidden`;
+            }
+         }
+      }
    }
 
-   /** @ignore */
-   update(x, y, r) {
-      const now = performance.now();
-      let cameraT = this.viewer.camera.getCurrentTransform(now);
-      const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
-      const radius = r * cameraT.z;
-      const sizew = 2 * radius + 2 * this.containerSpace;
-      const sizeh = 2 * radius + 2 * this.containerSpace;
-      const p = { x: 0, y: 0 };
-      p.x = center.x - radius - this.containerSpace;
-      p.y = center.y + radius + this.containerSpace;
-      p.y = this.viewer.camera.viewport.h - 1 - p.y;
-      this.container.style.left = `${p.x}px`;
-      this.container.style.top = `${p.y}px`;
-      this.container.style.width = `${sizew}px`;
-      this.container.style.height = `${sizeh}px`;
-      this.lensContainer.style.left = `${p.x}px`;
-      this.lensContainer.style.top = `${p.y}px`;
-      this.lensContainer.style.width = `${sizew}px`;
-      this.lensContainer.style.height = `${sizeh}px`;
+   toggle() {
+      const t = this.container.classList.toggle('closed');
+      this.setToggleClassVisibility(!t);
+   }
 
-      // Lens circle
-      const cx = Math.round(sizew * 0.5);
-      const cy = Math.round(sizeh * 0.5);
-      this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
-      const circle = this.lensElm.querySelector('circle');
-      circle.setAttributeNS(null, 'cx', cx);
-      circle.setAttributeNS(null, 'cy', cy);
-      circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
-
-      this.updateMask(cameraT, center, radius);
-
+   setToolboxElm(radius, sizew, sizeh) {
+      
         // Toolbox Background
       this.setToolboxBkg(radius - this.borderWidth - 2, sizew, sizeh);
       this.first = false;
@@ -531,19 +559,24 @@ class LensDashboardNavigatorRadial extends LensDashboard {
             idx++;
          }
       }
+   }
 
-      // for (let [name, action] of Object.entries(this.actions)) {
-      //    const tw = action.element.clientWidth;
-      //    const th = action.element.clientHeight;
-      //    const rad = LensDashboardNavigatorRadial.degToRadians(action.angle);
-      //    let cbx = (radius + this.toolSize * 0.5) * Math.sin(rad);
-      //    let cby = (radius + this.toolSize * 0.5) * Math.cos(rad);
-      //    let bx = sizew * 0.5 + cbx - tw / 2;
-      //    let by = sizeh * 0.5 + cby - th / 2;
-      //    action.element.style.left = `${bx}px`;
-      //    action.element.style.top = `${by}px`;
-      // }
-    
+   /** @ignore */
+   update(x, y, r) {
+      super.update(x,y,r);
+      const center = {
+         x: this.lensBox.x,
+         y: this.lensBox.y
+      }
+      const radius = this.lensBox.r;
+      const sizew = this.lensBox.w;
+      const sizeh = this.lensBox.h;
+      const cameraT = this.lensBox.cameraT;
+     
+      this.updateMask(cameraT, center, radius);
+
+      this.setToolboxElm(radius, sizew, sizeh);
+
       if (this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
          this.updateCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
@@ -557,6 +590,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.timeout = setTimeout(() => {
          this.toggle();
          this.moving = false;
+         //this.setToolboxElm(radius, sizew, sizeh);
          if (this.updateEndCb) this.updateEndCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
       }, this.delay);
    }

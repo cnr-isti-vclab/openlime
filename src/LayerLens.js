@@ -10,8 +10,8 @@ class LayerLens extends LayerCombiner {
 		options = Object.assign({
 			overlay: true,
 			radius: 100,
-			borderColor: [0.8, 0.8, 0.8, 1],
-			borderWidth: 4,
+			borderColor: [0.078, 0.078, 0.078, 1],
+			borderWidth: 12,
 			dashboard: null,
 		}, options);
 		super(options);

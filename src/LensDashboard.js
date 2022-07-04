@@ -57,8 +57,8 @@ class LensDashboard {
 	constructor(viewer, options) {
 		options = Object.assign({
 			containerSpace: 80,
-			borderColor: [0.5, 0.0, 0.0, 1],
-			borderWidth: 7,
+			borderColor: [0.078, 0.078, 0.078, 1],
+			borderWidth: 12,
 			layerSvgAnnotation: null   
 		}, options);
 		Object.assign(this, options);
@@ -224,6 +224,7 @@ class LensDashboard {
       this.lensContainer.style.height = `${sizeh}px`;
 
 	  this.lensBox = {
+		cameraT: cameraT,
 		x: center.x,
 		y: center.y,
 		r: radius,

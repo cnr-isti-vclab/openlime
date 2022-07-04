@@ -17,6 +17,7 @@ class LensDashboardNavigator extends LensDashboard {
             camera: { label: 'camera', task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
             light: { label: 'light', task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
             annoswitch: { label: 'annoswitch', type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
+            prev: { label: 'prev', task: (event) => { } },
             down: { label: 'down', task: (event) => { } },
             next: { label: 'next', task: (event) => { } },
          },
@@ -32,24 +33,7 @@ class LensDashboardNavigator extends LensDashboard {
       this.angleToolbar = 30.0 * (Math.PI / 180.0);
 
       this.container.style.display = 'block';
-      // this.container.style.gridTemplateColumns = '1fr 1fr';
-      // this.container.style.gridAutoRows = `${this.toolboxHeight}px`;
-      // this.container.style.alignItems = "center";
-      // this.container.style.justifyItems = "center";
       this.container.style.margin = '0';
-
-
-      this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
-      const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50});
-      circle.setAttributeNS(null, 'style', 'fill: none; stroke: blue; stroke-width: 7px;');
-      this.lensElm.appendChild(circle);
-
-      // this.lensElm = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      // this.lensElm.setAttributeNS(null, 'cx', 100);
-      // this.lensElm.setAttributeNS(null, 'cy', 100);
-      // this.lensElm.setAttributeNS(null, 'r', 100);
-      // this.lensElm.setAttributeNS(null, 'style', 'fill: none; stroke: blue; stroke-width: 7px;');
-      this.container.appendChild(this.lensElm);
 
       const h1 = document.createElement('div');
       h1.style = `text-align: center; color: #fff`;
@@ -62,13 +46,13 @@ class LensDashboardNavigator extends LensDashboard {
       h2.innerHTML = 'INFO';
 
       this.toolbox1 = document.createElement('div');
-      this.toolbox1.style = `position: absolute; padding: 4px; left: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
+      this.toolbox1.style = `z-index: 10; position: absolute; padding: 4px; left: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
       this.toolbox1.classList.add('openlime-lens-dashboard-toolbox');
       this.container.appendChild(this.toolbox1);
       this.toolbox1.appendChild(h1);
 
       this.toolbox2 = document.createElement('div');
-      this.toolbox2.style = `position: absolute; padding: 4px; right: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
+      this.toolbox2.style = `z-index: 10; position: absolute; padding: 4px; right: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
       this.toolbox2.classList.add('openlime-lens-dashboard-toolbox');
       this.container.appendChild(this.toolbox2);
       this.toolbox2.appendChild(h2);
@@ -288,6 +272,52 @@ class LensDashboardNavigator extends LensDashboard {
                id="path465"
                class="openlime-lens-dashboard-annoswitch-bar" /></g></g></svg>`;
 
+      this.actions.prev.svg = `<svg
+               viewBox="0 0 83.319054 83.320114"
+               version="1.1"
+               id="svg11415"
+               xml:space="preserve"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg"><defs
+                 id="defs11412"><marker
+                   style="overflow:visible"
+                   id="TriangleStart"
+                   refX="0"
+                   refY="0"
+                   orient="auto-start-reverse"
+                   markerWidth="5.3244081"
+                   markerHeight="6.155385"
+                   viewBox="0 0 5.3244081 6.1553851"
+                   preserveAspectRatio="xMidYMid"><path
+                     transform="scale(0.5)"
+                     style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+                     d="M 5.77,0 -2.88,5 V -5 Z"
+                     id="path135" /></marker><marker
+                   style="overflow:visible"
+                   id="TriangleStart-5"
+                   refX="0"
+                   refY="0"
+                   orient="auto-start-reverse"
+                   markerWidth="5.3244081"
+                   markerHeight="6.155385"
+                   viewBox="0 0 5.3244081 6.1553851"
+                   preserveAspectRatio="xMidYMid"><path
+                     transform="scale(0.5)"
+                     style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+                     d="M 5.77,0 -2.88,5 V -5 Z"
+                     id="path135-3" /></marker></defs><g
+                 id="g417"
+                 transform="matrix(3.3565779,0,0,3.3565779,129.92814,-51.220758)"><g
+                   id="g335"><path
+                     d="m -172.71351,100.60243 c 0,23.00781 -18.65172,41.65952 -41.65953,41.65952 -23.00782,0 -41.65952,-18.65171 -41.65952,-41.65952 0,-23.00887 18.6517,-41.66059 41.65952,-41.66059 23.00781,0 41.65953,18.65172 41.65953,41.66059 z"
+                     style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+                     id="path68"
+                     class="openlime-lens-dashboard-button-bkg"
+                     transform="matrix(0.29792248,0,0,0.29792248,37.569341,-2.3002842)" /><path
+                     style="fill:#030104"
+                     d="m -35.494703,28.624414 c 0,-0.264 0.213,-0.474 0.475,-0.474 h 2.421 c 0.262,0 0.475,0.21 0.475,0.474 0,3.211 2.615,5.826 5.827,5.826 3.212,0 5.827,-2.615 5.827,-5.826 0,-3.214 -2.614,-5.826 -5.827,-5.826 -0.34,0 -0.68,0.028 -1.016,0.089 v 1.647 c 0,0.193 -0.116,0.367 -0.291,0.439 -0.181,0.073 -0.383,0.031 -0.521,-0.104 l -4.832,-3.273 c -0.184,-0.185 -0.184,-0.482 0,-0.667 l 4.833,-3.268 c 0.136,-0.136 0.338,-0.176 0.519,-0.104 0.175,0.074 0.291,0.246 0.291,0.438 v 1.487 c 0.34,-0.038 0.68,-0.057 1.016,-0.057 5.071,0 9.198,4.127 9.198,9.198 0,5.07 -4.127,9.197 -9.198,9.197 -5.07,10e-4 -9.197,-4.126 -9.197,-9.196 z"
+                     id="path415" /></g></g></svg>`;
+
       this.actions.down.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!-- Created with Inkscape (http://www.inkscape.org/) -->
         
@@ -424,7 +454,7 @@ class LensDashboardNavigator extends LensDashboard {
             if (action.type == 'toggle') {
                action.active = !action.active;
                const toggleElm = action.element.querySelector(action.toggleClass);
-               if(action.active) {
+               if (action.active) {
                   toggleElm.style.visibility = `visible`;
                } else {
                   toggleElm.style.visibility = `hidden`;
@@ -438,6 +468,7 @@ class LensDashboardNavigator extends LensDashboard {
       this.tools1.appendChild(this.actions.camera.element);
       this.tools1.appendChild(this.actions.light.element);
       this.tools2.appendChild(this.actions.annoswitch.element);
+      this.tools2.appendChild(this.actions.prev.element);
       this.tools2.appendChild(this.actions.down.element);
       this.tools2.appendChild(this.actions.next.element);
 
@@ -488,33 +519,18 @@ class LensDashboardNavigator extends LensDashboard {
    }
 
    /** @ignore */
-   update(x, y, r) {
-      const now = performance.now();
-      let cameraT = this.viewer.camera.getCurrentTransform(now);
-      const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
-      const radius = r * cameraT.z;
-      const sizew = 2 * radius;
-      const sizeh = 2 * radius + this.borderWidth;
-      const p = { x: 0, y: 0 };
-      p.x = center.x - radius;
-      p.y = center.y + radius;
-      p.y = this.viewer.camera.viewport.h - 1 - p.y;
-      this.container.style.left = `${p.x}px`;
-      this.container.style.top = `${p.y}px`;
-      this.container.style.width = `${sizew}px`;
-      this.container.style.height = `${sizeh}px`;
-
-      // Lens circle
-      const cx = Math.round(2*radius*0.5)+1;
-      const cy = Math.round(2*radius*0.5)+1;
-      this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
-      const circle = this.lensElm.querySelector('circle');
-      circle.setAttributeNS(null, 'cx', cx);
-      circle.setAttributeNS(null, 'cy', cy);
-      circle.setAttributeNS(null, 'r', radius-7);
+   update(x, y, r) { 
+      super.update(x,y,r);
+      const center = {
+         x: this.lensBox.x,
+         y: this.lensBox.y
+      }
+      const radius = this.lensBox.r;
+      const sizew = this.lensBox.w;
+      const sizeh = this.lensBox.h;
+      const cameraT = this.lensBox.cameraT;
 
       this.updateMask(cameraT, center, radius);
-
 
       // Set toolbox position
       const tbw1 = this.toolbox1.clientWidth;
@@ -524,16 +540,16 @@ class LensDashboardNavigator extends LensDashboard {
       let cbx = radius * Math.sin(this.angleToolbar);
       let cby = radius * Math.cos(this.angleToolbar);
 
-      let bx1 = radius - cbx - tbw1 / 2;
-      let by1 = radius + cby - tbh1 / 2;
+      let bx1 = this.containerSpace + radius - cbx - tbw1 / 2;
+      let by1 = this.containerSpace + radius + cby - tbh1 / 2;
       this.toolbox1.style.left = `${bx1}px`;
       this.toolbox1.style.top = `${by1}px`;
 
-      let bx2 = radius + cbx - tbw2 / 2;
-      let by2 = radius + cby - tbh2 / 2;
+      let bx2 = this.containerSpace + radius + cbx - tbw2 / 2;
+      let by2 = this.containerSpace + radius + cby - tbh2 / 2;
       this.toolbox2.style.left = `${bx2}px`;
       this.toolbox2.style.top = `${by2}px`;
-         
+
       if (this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
          this.updateCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
