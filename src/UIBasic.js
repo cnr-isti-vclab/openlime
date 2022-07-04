@@ -186,6 +186,7 @@ class UIBasic {
 			if(this.showLightDirections)
 				this.updateLightDirections(x, y);
 			}, { 
+				// TODO: IS THIS OK? It was false before
 				active: false, 
     			activeModifiers: [2, 4], 
     			control: 'light', 

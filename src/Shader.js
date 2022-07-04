@@ -189,6 +189,8 @@ class Shader {
 					case 'vec2':  gl.uniform2fv(uniform.location, value); break;
 					case 'float': gl.uniform1f(uniform.location, value); break;
 					case 'int':   gl.uniform1i (uniform.location, value); break;
+					case 'mat3':  gl.uniformMatrix3fv (uniform.location, false, value); break;
+					case 'mat4':  gl.uniformMatrix4fv (uniform.location, false, value); break;
 					default: throw Error('Unknown uniform type: ' + u.type);
 				}
 			}
