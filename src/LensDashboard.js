@@ -224,7 +224,6 @@ class LensDashboard {
       this.lensContainer.style.height = `${sizeh}px`;
 
 	  this.lensBox = {
-		cameraT: cameraT,
 		x: center.x,
 		y: center.y,
 		r: radius,

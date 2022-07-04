@@ -528,9 +528,6 @@ class LensDashboardNavigator extends LensDashboard {
       const radius = this.lensBox.r;
       const sizew = this.lensBox.w;
       const sizeh = this.lensBox.h;
-      const cameraT = this.lensBox.cameraT;
-
-      this.updateMask(cameraT, center, radius);
 
       // Set toolbox position
       const tbw1 = this.toolbox1.clientWidth;
