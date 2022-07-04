@@ -14,13 +14,13 @@ module.exports = {
   },
 
   output: {
-    path: path.resolve(__dirname + '/dist/examples/dstretch-viewer'),
+    path: path.resolve(__dirname + '/dist/examples/npm-demo'),
     filename: 'main.js',
   },
 
   devServer: {
     static: {
-      directory: path.join(__dirname, '/dist/examples/dstretch-viewer'),
+      directory: path.join(__dirname, '/dist/examples/npm-demo'),
     },
     compress: false,
     port: 8080,
