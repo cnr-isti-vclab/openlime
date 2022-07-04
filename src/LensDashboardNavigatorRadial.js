@@ -548,8 +548,10 @@ class LensDashboardNavigatorRadial extends LensDashboard {
          if(Math.abs(this.group[i]) > 90) gArr.reverse();
          let idx = 0;
          for (let [name, action] of gArr) {
-            const tw = action.element.clientWidth;
-            const th = action.element.clientHeight;
+            // const tw = action.element.clientWidth;
+            // const th = action.element.clientHeight;
+            const th = this.toolSize;
+            const tw = this.toolSize;
             const rad = LensDashboardNavigatorRadial.degToRadians(this.group[i]) + idx * alphaDelta;
             let cbx = (radius+this.toolSize*0.5) * Math.sin(rad);
             let cby = (radius+this.toolSize*0.5) * Math.cos(rad);
@@ -577,7 +579,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       const sizew = this.lensBox.w;
       const sizeh = this.lensBox.h;
      
-      this.setToolboxElm(radius, sizew, sizeh);
+      //this.setToolboxElm(radius, sizew, sizeh);
 
       if (this.updateCb) {
          // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
@@ -592,7 +594,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.timeout = setTimeout(() => {
          this.toggle();
          this.moving = false;
-         //this.setToolboxElm(radius, sizew, sizeh);
+         this.setToolboxElm(radius, sizew, sizeh);
          if (this.updateEndCb) this.updateEndCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
       }, this.delay);
    }

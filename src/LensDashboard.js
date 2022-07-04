@@ -204,44 +204,48 @@ class LensDashboard {
     }
 
 	/** @ignore */
-    update(x, y, r) {
- 	  const now = performance.now();
-      let cameraT = this.viewer.camera.getCurrentTransform(now);
-      const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
-      const radius = r * cameraT.z;
-      const sizew = 2 * radius + 2 * this.containerSpace;
-      const sizeh = 2 * radius + 2 * this.containerSpace;
-      const p = { x: 0, y: 0 };
-      p.x = center.x - radius - this.containerSpace;
-      p.y = center.y + radius + this.containerSpace;
-      p.y = this.viewer.camera.viewport.h - 1 - p.y;
-      this.container.style.left = `${p.x}px`;
-      this.container.style.top = `${p.y}px`;
-      this.container.style.width = `${sizew}px`;
-      this.container.style.height = `${sizeh}px`;
-      this.lensContainer.style.left = `${p.x}px`;
-      this.lensContainer.style.top = `${p.y}px`;
-      this.lensContainer.style.width = `${sizew}px`;
-      this.lensContainer.style.height = `${sizeh}px`;
+	update(x, y, r) {
+		const now = performance.now();
+		let cameraT = this.viewer.camera.getCurrentTransform(now);
+		const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
+		const radius = r * cameraT.z;
+		const sizew = 2 * radius + 2 * this.containerSpace;
+		const sizeh = 2 * radius + 2 * this.containerSpace;
+		const p = { x: 0, y: 0 };
+		p.x = center.x - radius - this.containerSpace;
+		p.y = center.y + radius + this.containerSpace;
+		p.y = this.viewer.camera.viewport.h - 1 - p.y;
+		this.container.style.left = `${p.x}px`;
+		this.container.style.top = `${p.y}px`;
+		this.container.style.width = `${sizew}px`;
+		this.container.style.height = `${sizeh}px`;
+		this.lensContainer.style.left = `${p.x}px`;
+		this.lensContainer.style.top = `${p.y}px`;
+		this.lensContainer.style.width = `${sizew}px`;
+		this.lensContainer.style.height = `${sizeh}px`;
 
-	  this.lensBox = {
-		x: center.x,
-		y: center.y,
-		r: radius,
-		w: sizew,
-		h: sizeh
-	  }
 
-      // Lens circle
-      const cx = Math.round(sizew * 0.5);
-      const cy = Math.round(sizeh * 0.5);
-      this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
-      const circle = this.lensElm.querySelector('circle');
-      circle.setAttributeNS(null, 'cx', cx);
-      circle.setAttributeNS(null, 'cy', cy);
-      circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+		// Lens circle
+		if (sizew != this.lensBox.w || sizeh != this.lensBox.h) {
+			const cx = Math.round(sizew * 0.5);
+			const cy = Math.round(sizeh * 0.5);
+			this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
+			const circle = this.lensElm.querySelector('circle');
+			circle.setAttributeNS(null, 'cx', cx);
+			circle.setAttributeNS(null, 'cy', cy);
+			circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+		}
 
-	  this.updateMask(cameraT, center, radius);
+		this.updateMask(cameraT, center, radius);
+
+		this.lensBox = {
+			x: center.x,
+			y: center.y,
+			r: radius,
+			w: sizew,
+			h: sizeh
+		}
+
 	}
 
 	updateMask(cameraT, center, radius) {
