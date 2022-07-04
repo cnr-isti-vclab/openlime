@@ -459,6 +459,7 @@ class LensDashboardNavigator extends LensDashboard {
                } else {
                   toggleElm.style.visibility = `hidden`;
                }
+               this.noupdate=true;
             }
             action.task(e);
             e.preventDefault();
@@ -520,6 +521,10 @@ class LensDashboardNavigator extends LensDashboard {
 
    /** @ignore */
    update(x, y, r) { 
+      if(this.noupdate) {
+         this.noupdate = false;
+         return;
+      }
       super.update(x,y,r);
       const center = {
          x: this.lensBox.x,

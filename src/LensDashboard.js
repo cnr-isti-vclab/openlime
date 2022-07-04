@@ -96,6 +96,8 @@ class LensDashboard {
 		this.svgElement = null;
 		this.svgMaskId = 'openlime-image-mask';
 		this.svgMaskUrl = `url(#${this.svgMaskId})`;
+
+		this.noupdate=false;
     }
 
 	/**
@@ -203,7 +205,6 @@ class LensDashboard {
 
 	/** @ignore */
     update(x, y, r) {
-	  
  	  const now = performance.now();
       let cameraT = this.viewer.camera.getCurrentTransform(now);
       const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
