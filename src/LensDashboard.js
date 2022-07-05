@@ -224,7 +224,6 @@ class LensDashboard {
 		this.lensContainer.style.width = `${sizew}px`;
 		this.lensContainer.style.height = `${sizeh}px`;
 
-
 		// Lens circle
 		if (sizew != this.lensBox.w || sizeh != this.lensBox.h) {
 			const cx = Math.round(sizew * 0.5);

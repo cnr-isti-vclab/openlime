@@ -254,6 +254,7 @@ class Camera {
 	 * @returns {Transform} The current transform
 	 */
 	getCurrentTransform(time) {
+		if(time > this.target.t) this.easing = 'linear';
 		return Transform.interpolate(this.source, this.target, time, this.easing);
 	}
 
