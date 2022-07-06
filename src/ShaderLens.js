@@ -41,10 +41,10 @@ class ShaderLens extends Shader {
 
             overlaySamplerCode =  
             `vec4 c1 = texture${gl2?'':'2D'}(source1, v_texcoord);
-            if (centerDist2 > lensR2) {
+            if (r > u_lens.z) {
                 float k = (c1.r + c1.g + c1.b) / 3.0;
                 c1 = vec4(k, k, k, c1.a);
-            } else if (centerDist2 > innerBorderR2 && u_border_enable) {
+            } else if (u_border_enable && r > innerBorderRadius) {
                 // Preserve border keeping c1 alpha at zero
                 c1.a = 0.0; 
             }
@@ -67,8 +67,8 @@ class ShaderLens extends Shader {
         vec4 lensColor(in vec4 c_in, in vec4 c_border, in vec4 c_out,
             float r, float R, float B) {
             vec4 result;
-            float B_SMOOTH = B < 8.0 ? B/8.0 : 1.0;
             if (u_border_enable) {
+                float B_SMOOTH = B < 8.0 ? B/8.0 : 1.0;
                 if (r<R-B+B_SMOOTH) {
                     float t=smoothstep(R-B, R-B+B_SMOOTH, r);
                     result = mix(c_in, c_border, t);
@@ -85,21 +85,18 @@ class ShaderLens extends Shader {
         }
 
         void main() {
-            float lensR2 = u_lens.z * u_lens.z;
-            float innerBorderR2 = (u_lens.z - u_lens.w) * (u_lens.z - u_lens.w);
+            float innerBorderRadius = (u_lens.z - u_lens.w);
             float dx = v_texcoord.x * u_width_height.x - u_lens.x;
             float dy = v_texcoord.y * u_width_height.y - u_lens.y;
-            float centerDist2 = dx*dx+dy*dy;
+            float r = sqrt(dx*dx + dy*dy);
 
             vec4 c_in = texture${gl2?'':'2D'}(source0, v_texcoord);
             vec4 c_out = u_border_color; c_out.a=0.0;
             
-            float r = sqrt(centerDist2);
             color = lensColor(c_in, u_border_color, c_out, r, u_lens.z, u_lens.w);
 
             ${overlaySamplerCode}
             ${gl2?'':'gl_FragColor = color;'}
-
         }
         `
     }
