@@ -1,6 +1,7 @@
 import { Viewer } from './Viewer.js'
 import { Layer } from './Layer.js'
 import { LayerImage } from './LayerImage.js'
+import { LayerDstretch } from './LayerDstretch.js'
 import { LayerCombiner } from './LayerCombiner.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
@@ -13,8 +14,9 @@ import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
+dstretchTest();
 //combinerTest();
-imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
+//imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
 //rtiTest('rbf');
@@ -28,6 +30,20 @@ imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon i
 //testMedicalAnnotations();
 
 //testAnnotationEditor();
+
+function dstretchTest() {
+	console.log("Dstretching");
+
+	let dstretch = new Layer({
+		type: 'dstretch',
+		layout: 'image',
+		url: 'assets/dstretch/coin/plane_0.jpg'
+	});
+
+	lime.canvas.addLayer('dstretch', dstretch);
+	let ui = new UIBasic(lime);
+	ui.actions.light.active = true;
+}
 
 function testAnnotationEditor() {
 	let layer0 = new Layer({ 
