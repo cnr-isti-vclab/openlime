@@ -79,6 +79,7 @@ class LensDashboard {
 		this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
 		const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50 });
 		circle.setAttributeNS(null, 'style', `fill: none; stroke: rgb(${col[0]},${col[1]},${col[2]},${col[3]}); stroke-width: ${this.borderWidth}px;`);
+		circle.setAttributeNS(null, 'shape-rendering', 'geometricPrecision');
 		this.lensElm.appendChild(circle);
 		this.lensContainer.appendChild(this.lensElm);
 		// circle.style.pointerEvents = 'auto';
@@ -226,13 +227,15 @@ class LensDashboard {
 
 		// Lens circle
 		if (sizew != this.lensBox.w || sizeh != this.lensBox.h) {
-			const cx = Math.round(sizew * 0.5);
-			const cy = Math.round(sizeh * 0.5);
+			const cx = Math.ceil(sizew * 0.5);
+			const cy = Math.ceil(sizeh * 0.5);
+			// const cx = sizew * 0.5;
+			// const cy = sizeh * 0.5;
 			this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
 			const circle = this.lensElm.querySelector('circle');
 			circle.setAttributeNS(null, 'cx', cx);
 			circle.setAttributeNS(null, 'cy', cy);
-			circle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+			circle.setAttributeNS(null, 'r', radius - 0.5*this.borderWidth);
 		}
 
 		this.updateMask(cameraT, center, radius);

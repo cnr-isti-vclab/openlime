@@ -11,8 +11,8 @@ class ShaderLens extends Shader {
         this.uniforms = {
             u_lens: { type: 'vec4', needsUpdate: true, size: 4, value: [0,0,100,10] },
             u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1,1]},
-            u_border_color: {type: 'vec4', needsUpdate: true, size: 4, value: [0.8, 0.8, 0.8, 1]}
-        };
+            u_border_color: {type: 'vec4', needsUpdate: true, size: 4, value: [0.8, 0.8, 0.8, 1]},
+            u_border_enable: {type: 'bool', needsUpdate: true, size: 1, value: false}        };
         this.label = "ShaderLens";
         this.needsUpdate = true;
         this.overlayLayerEnabled = false;
@@ -23,10 +23,11 @@ class ShaderLens extends Shader {
         this.needsUpdate = true;
     }
 
-    setLensUniforms(lensViewportCoords, windowWH, borderColor) {
+    setLensUniforms(lensViewportCoords, windowWH, borderColor, borderEnable) {
         this.setUniform('u_lens', lensViewportCoords);
         this.setUniform('u_width_height', windowWH);
         this.setUniform('u_border_color', borderColor);
+        this.setUniform('u_border_enable', borderEnable);
     }
 
 	fragShaderSrc(gl) {
@@ -43,7 +44,7 @@ class ShaderLens extends Shader {
             if (centerDist2 > lensR2) {
                 float k = (c1.r + c1.g + c1.b) / 3.0;
                 c1 = vec4(k, k, k, c1.a);
-            } else if (centerDist2 > innerBorderR2) {
+            } else if (centerDist2 > innerBorderR2 && u_border_enable) {
                 // Preserve border keeping c1 alpha at zero
                 c1.a = 0.0; 
             }
@@ -59,6 +60,7 @@ class ShaderLens extends Shader {
         uniform vec4 u_lens; // [cx, cy, radius, border]
         uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
         uniform vec4 u_border_color;
+        uniform bool u_border_enable;
         ${gl2? 'in' : 'varying'} vec2 v_texcoord;
         ${gl2? 'out' : ''} vec4 color;
 
@@ -66,14 +68,18 @@ class ShaderLens extends Shader {
             float r, float R, float B) {
             vec4 result;
             float B_SMOOTH = B < 8.0 ? B/8.0 : 1.0;
-            if (r<R-B+B_SMOOTH) {
-                float t=smoothstep(R-B, R-B+B_SMOOTH, r);
-                result = mix(c_in, c_border, t);
-            } else if (r<R-B_SMOOTH) {
-                result = c_border;  
+            if (u_border_enable) {
+                if (r<R-B+B_SMOOTH) {
+                    float t=smoothstep(R-B, R-B+B_SMOOTH, r);
+                    result = mix(c_in, c_border, t);
+                } else if (r<R-B_SMOOTH) {
+                    result = c_border;  
+                } else {
+                    float t=smoothstep(R-B_SMOOTH, R, r);
+                    result = mix(c_border, c_out, t);
+                }
             } else {
-                float t=smoothstep(R-B_SMOOTH, R, r);
-                result = mix(c_border, c_out, t);
+                result = (r<R) ? c_in : c_out;
             }
             return result;
         }

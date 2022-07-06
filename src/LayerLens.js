@@ -12,6 +12,7 @@ class LayerLens extends LayerCombiner {
 			radius: 100,
 			borderColor: [0.078, 0.078, 0.078, 1],
 			borderWidth: 12,
+			borderEnable: false,
 			dashboard: null,
 		}, options);
 		super(options);
@@ -145,7 +146,7 @@ class LayerLens extends LayerCombiner {
 		
 		// Set in the lensShader the proper lens position wrt the window viewport
 		const vl = this.getLensInViewportCoords(transform, viewport);
-		this.shader.setLensUniforms(vl, [viewport.w, viewport.h], this.getBorderColor());
+		this.shader.setLensUniforms(vl, [viewport.w, viewport.h], this.getBorderColor(), this.borderEnable);
 	
 		this.prepareWebGL();
 

@@ -90,8 +90,7 @@ class Shader {
 		let u = this.uniforms[name];
 		if(!u)
 			throw new Error(`Unknown '${name}'. It is not a registered uniform.`);
-
-		if(typeof(value) == "number" && u.value == value) 
+		if ((typeof (value) == "number" || typeof (value) == "boolean") && u.value == value) 
 			return;
 		if(Array.isArray(value) && Array.isArray(u.value) && value.length == u.value.length) {
 			let equal = true;
@@ -189,6 +188,7 @@ class Shader {
 					case 'vec2':  gl.uniform2fv(uniform.location, value); break;
 					case 'float': gl.uniform1f(uniform.location, value); break;
 					case 'int':   gl.uniform1i (uniform.location, value); break;
+					case 'bool':  gl.uniform1i (uniform.location, value); break;
 					default: throw Error('Unknown uniform type: ' + u.type);
 				}
 			}

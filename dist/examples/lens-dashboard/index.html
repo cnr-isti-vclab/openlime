@@ -51,7 +51,10 @@
 
         // LENS LAYER
 
-        const lensDashboard = new OpenLIME.LensDashboardNavigatorRadial(lime, {});
+        const lensDashboard = new OpenLIME.LensDashboardNavigator(lime, {
+            borderColor: [0, 0.7, 0, 1],
+            borderWidth: 12
+        });
         //const lensDashboard = new OpenLIME.LensDashboardNavigator(lime, {});
 
         //const lensDashboard = new OpenLIME.LensDashboard(lime, {});
@@ -63,8 +66,9 @@
             layers: [layerIn],
             camera: lime.camera,
             radius: 350,
-            borderWidth: 10,
-            borderColor: [0.078, 0.078, 0.078, 0],
+            borderWidth: 12,
+            borderColor: [0.7, 0, 0, 1],
+            borderEnable: false,
             dashboard: lensDashboard,
             visible: true,
         });

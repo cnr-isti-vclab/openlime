@@ -29,6 +29,7 @@ class LensDashboardNavigator extends LensDashboard {
       this.moving = false;
       this.delay = 400;
       this.timeout = null; // Timeout for moving
+      this.noupdate = false;
 
       this.angleToolbar = 30.0 * (Math.PI / 180.0);
 

@@ -31,6 +31,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.moving = false;
       this.delay = 400;
       this.timeout = null; // Timeout for moving
+      this.noupdate = false;
 
       // TOOLBOX BKG
  		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
