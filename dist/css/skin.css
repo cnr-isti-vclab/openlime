@@ -5,7 +5,7 @@
 }
 
 .openlime > canvas {
-	width: 100%;
+	width: 100%; /* leave this at 100%, it's needed to align annotations correctly */
 	height: 100%;
 	overflow: hidden; /* this is important, it would cause firefox flickering! */
 	padding: 0px;	
