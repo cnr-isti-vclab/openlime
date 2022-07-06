@@ -285,7 +285,7 @@ class Layer {
 	}
 
 	/**
-	 * Gets the layer bounding box
+	 * Gets the layer bounding box (<FIXME> Change name: box is in scene coordinates)
 	 * @returns {BoundingBox} The bounding box 
 	 */
 	boundingBox() {
