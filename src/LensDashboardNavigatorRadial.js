@@ -50,6 +50,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
            <path id="shape-dashboard-bkg" d="" stroke="none" fill="rgb(${col[0]},${col[1]},${col[2]},${col[3]})"/>
          </svg>`;
       this.toolboxBkg.element = Util.SVGFromString(this.toolboxBkg.svg);
+      this.toolboxBkg.element.setAttributeNS(null, 'style', 'position: absolute; top: 0px; left:0px;');
       this.container.appendChild(this.toolboxBkg.element);
 
       // TOOLBOX ITEMS

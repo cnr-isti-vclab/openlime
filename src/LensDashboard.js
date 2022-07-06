@@ -69,19 +69,14 @@ class LensDashboard {
 		this.container.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none`;
 		this.container.classList.add('openlime-lens-dashboard');		
 		this.viewer.containerElement.appendChild(this.container);
-
-		this.lensContainer = document.createElement('div');
-		this.lensContainer.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none; display: block; margin: 0`;
-		this.lensContainer.classList.add('openlime-lens-dashboard-lens-container');
-		this.viewer.containerElement.appendChild(this.lensContainer);
   
 		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
 		this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
 		const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50 });
-		circle.setAttributeNS(null, 'style', `fill: none; stroke: rgb(${col[0]},${col[1]},${col[2]},${col[3]}); stroke-width: ${this.borderWidth}px;`);
+		circle.setAttributeNS(null, 'style', `position:absolute; visibility: visible; fill: none; stroke: rgb(${col[0]},${col[1]},${col[2]},${col[3]}); stroke-width: ${this.borderWidth}px;`);
 		circle.setAttributeNS(null, 'shape-rendering', 'geometricPrecision');
 		this.lensElm.appendChild(circle);
-		this.lensContainer.appendChild(this.lensElm);
+		this.container.appendChild(this.lensElm);
 		// circle.style.pointerEvents = 'auto';
 		// circle.addEventListener('click', (e) => {
 		//    console.log("CLICK CIRCLE");
@@ -220,10 +215,6 @@ class LensDashboard {
 		this.container.style.top = `${p.y}px`;
 		this.container.style.width = `${sizew}px`;
 		this.container.style.height = `${sizeh}px`;
-		this.lensContainer.style.left = `${p.x}px`;
-		this.lensContainer.style.top = `${p.y}px`;
-		this.lensContainer.style.width = `${sizew}px`;
-		this.lensContainer.style.height = `${sizeh}px`;
 
 		// Lens circle
 		if (sizew != this.lensBox.w || sizeh != this.lensBox.h) {
