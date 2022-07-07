@@ -63,6 +63,7 @@ class LensDashboard {
 		}, options);
 		Object.assign(this, options);
 
+		this.lensLayer = null;
         this.viewer = viewer;
 		this.elements = [];
         this.container = document.createElement('div');
@@ -77,17 +78,12 @@ class LensDashboard {
 		circle.setAttributeNS(null, 'shape-rendering', 'geometricPrecision');
 		this.lensElm.appendChild(circle);
 		this.container.appendChild(this.lensElm);
-		// circle.style.pointerEvents = 'auto';
-		// circle.addEventListener('click', (e) => {
-		//    console.log("CLICK CIRCLE");
-		// });
-		this.lensBox = {
-			x: 0,
-			y: 0,
-			r: 0,
-			w: 0,
-			h: 0
-		  };
+		circle.style.pointerEvents = 'auto';
+		circle.addEventListener('click', (e) => {
+		   console.log("CLICK CIRCLE");
+		});
+
+		this.lensBox = { x: 0, y: 0, r: 0, w: 0, h: 0 };
 		  
 		this.svgElement = null;
 		this.svgMaskId = 'openlime-image-mask';

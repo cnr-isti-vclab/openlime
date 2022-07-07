@@ -63,7 +63,7 @@ class Camera {
 	}
 
 	/**
-	 * Sets the viewport and updates the camera position as close as possible to the.
+	 * Sets the viewport and updates the camera position as close as possible to the previuos one.
 	 * @param {Viewport} view The new viewport (in CSS coordinates). 
 	 */
 	setViewport(view) {
@@ -177,8 +177,8 @@ class Camera {
 	pan(dt, dx, dy) {
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
-		m.dx += dx; //FIXME what is m.dx?
-		m.dy += dy;
+		m.x += dx;
+		m.y += dy;
 		this.setPosition(dt, m.x, m.y, m.z, m.a);
 	}
 

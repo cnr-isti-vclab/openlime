@@ -30,6 +30,8 @@ class LayerLens extends LayerCombiner {
 
 		this.oldRadius = -9999;
 		this.oldCenter = [-9999, -9999];
+
+		if(this.dashboard) this.dashboard.lensLayer = this;
 	}
 
 	
