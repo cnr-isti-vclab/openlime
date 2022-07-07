@@ -13,7 +13,7 @@
     "rollup": "rollup -c rollup.config.js --extend",
     "nodemon": "nodemon --watch ./src --exec npm run rollup",
     "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md",
-    "examples": "http-server -c-1 -p 8081"
+    "examples": "http-server -c-1 -p 8081 -o ./dist/examples"
   },
   "repository": {
     "type": "git",

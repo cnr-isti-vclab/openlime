@@ -53,7 +53,9 @@ class SvgLayerUI {
 		})();
 	}
 	importAnnotations() {
-		
+		let input = document.getElementById("download");
+		input.click();
+
 	}
 }
 
