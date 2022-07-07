@@ -1,0 +1,63 @@
+
+/* Annotations menu */
+
+.row {
+	display:flex;
+	align-items:center;
+}
+
+.layer-panel {
+	position:absolute;
+	top:0px;
+	bottom:0px;
+	background-color:white;
+}
+
+.collapsed .collapse {
+	display:none !important;
+}
+
+.layer-panel svg rect {
+	fill:transparent !important;
+	stroke:none !important;
+}
+
+.layer-panel svg {
+	width:6vh;
+	filter: invert(100%);
+	cursor: pointer;
+}
+
+.toolbar {
+	align-items:center;
+	justify-content:space-around;
+	margin-right:6px;
+}
+
+.layer-panel .toolbar svg {
+	width:4vh;
+}
+
+.layer-panel .button {
+	margin-right:12px;
+	width:100%;
+	border-radius: 6px;
+	background-color: #babdb6; 
+	border: none;
+	color: black;
+	padding: 4px 12px;
+	height: 24px;
+	text-align: center;
+/* 	text-decoration: none; */
+	display: inline-block;
+	font-size: 16px;
+	cursor:pointer;
+   user-select: none;       
+
+}
+
+.annotation-list {
+	height:40vh;
+	border:1px solid #aaa;
+	margin:10px;
+}
