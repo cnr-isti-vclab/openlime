@@ -12,7 +12,8 @@
     "build": "webpack -c webpack.config.js --mode development",
     "rollup": "rollup -c rollup.config.js --extend",
     "nodemon": "nodemon --watch ./src --exec npm run rollup",
-    "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md"
+    "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md",
+    "examples": "http-server -c-1 -p 8081"
   },
   "repository": {
     "type": "git",
@@ -38,5 +39,8 @@
     "package.json",
     "README.md",
     "src"
-  ]
+  ],
+  "dependencies": {
+    "http-server": "^14.1.1"
+  }
 }
