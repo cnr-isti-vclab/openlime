@@ -1,0 +1,72 @@
+html, body { 
+	width:100%;
+	height:100%;
+	margin:0px;
+	padding:0px;
+	overflow:hidden;
+}
+
+.openlime canvas {
+	display:block;
+
+}
+
+.openlime-toolbar {
+	flex-direction:column;
+	bottom:auto;
+	top:0px;
+}
+
+.openlime-toolbar svg:not(:root) {
+	height:10vh;
+}
+
+.openlime-tool.active, .openlime-tool.active * { fill:#fff !important; }
+
+
+.openlime-toolbar rect[style] {
+	fill:rgb(255, 255, 255, 0) !important;
+	stroke:none !important;
+}
+
+.openlime-toolbar path[style] {
+	stroke:none !important;
+	fill:white !important
+}
+
+.openlime-toolbar text {
+	stroke:none !important;
+	fill:white !important
+}
+
+
+.openlime-layers-quickmenu {
+	position:absolute;
+	bottom:0px;
+	right:0px;
+	margin:10px;
+	display:flex;
+}
+
+.openlime-layers-quickmenu svg {
+	width:15vh;
+	height:15vh;
+	margin:10px;
+	display:none;
+	border-radius: 10px;
+	border: 2px solid #aaa;
+	filter:  contrast(100%) saturate(100%);
+
+}
+.openlime-layers-quickmenu svg.selected {
+	display:block;
+	border: 2px solid #a3AD21;
+}
+
+.openlime-layers-quickmenu svg.selecting {
+	display:block;
+}
+
+
+
+

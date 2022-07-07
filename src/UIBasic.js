@@ -123,10 +123,24 @@ class UIBasic {
 			showLightDirections: false,
 			enableTooltip: true,
 			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
-			menu: []
+			menu: []  //set false for avoiding the menu init and build
 		});
 		
 		Object.assign(this, options);
+		// this.viewer.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
+
+		/*let element = entry.element;
+		let group = element.getAttribute('data-group');
+		let layer = element.getAttribute('data-layer');
+		let mode = element.getAttribute('data-mode');
+		let active = (layer && this.viewer.canvas.layers[layer].visible) &&
+			(!mode || this.viewer.canvas.layers[layer].getMode() == mode);
+		entry.element.classList.toggle('active', active); */
+
+		if(this.menu)
+			this.initMenu();		
+
+
 		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
 			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
 
@@ -138,48 +152,8 @@ class UIBasic {
 		if(this.controlZoomMessage)
 			this.panzoom.addEvent('nowheel', () => { this.showOverlayMessage(this.controlZoomMessage); });
 		this.viewer.pointerManager.onEvent(this.panzoom); //register wheel, doubleclick, pan and pinch
-		// this.viewer.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
-
-		/*let element = entry.element;
-		let group = element.getAttribute('data-group');
-		let layer = element.getAttribute('data-layer');
-		let mode = element.getAttribute('data-mode');
-		let active = (layer && this.viewer.canvas.layers[layer].visible) &&
-			(!mode || this.viewer.canvas.layers[layer].getMode() == mode);
-		entry.element.classList.toggle('active', active); */
-
-		this.menu.push({ section: "Layers" });
-		for (let [id, layer] of Object.entries(this.viewer.canvas.layers)) {
-			let modes = []
-			for (let m of layer.getModes()) {
-				let mode = {
-					button: m,
-					mode: m,
-					layer: id,
-					onclick: () => { layer.setMode(m); },
-					status: () => layer.getMode() == m ? 'active' : '',
-				};
-				if (m == 'specular' && layer.shader.setSpecularExp)
-					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
-				modes.push(mode);
-			}
-			let layerEntry = {
-				button: layer.label || id,
-				onclick: () => { this.setLayer(layer); },
-				status: () => layer.visible ? 'active' : '',
-				list: modes,
-				layer: id
-			};
-			if (layer.annotations) {
-				layerEntry.list.push(layer.annotationsEntry());
-				//TODO: this could be a convenience, creating an editor which can be
-				//customized later using layer.editor.
-				//if(layer.editable) 
-				//	layer.editor = this.editor;
-			}
-			this.menu.push(layerEntry);
-		}
-
+		
+		
 		let controller = new Controller2D((x, y) => {
 			for (let layer of lightLayers)
 				layer.setLight([x, y], 0);
@@ -219,6 +193,8 @@ class UIBasic {
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
 	}
+
+	
 
 	showOverlayMessage(msg, duration = 2000) {
 		if(this.overlayMessage) {
@@ -293,9 +269,12 @@ class UIBasic {
 			document.addEventListener('keydown', (e) => this.keyDown(e), false);
 			document.addEventListener('keyup', (e) => this.keyUp(e), false);
 
-			this.createMenu();
-			this.updateMenu();
-			this.viewer.canvas.addEvent('update', () => this.updateMenu());
+			if(this.menu) {
+				this.createMenu();
+				this.updateMenu();
+				this.viewer.canvas.addEvent('update', () => this.updateMenu());
+			}
+
 
 			if (this.actions.light && this.actions.light.display === 'auto')
 				this.actions.light.display = true;
@@ -579,6 +558,41 @@ class UIBasic {
 	}
 
 	/** @ignore */
+	initMenu() {
+		this.menu.push({ section: "Layers" });
+		for (let [id, layer] of Object.entries(this.viewer.canvas.layers)) {
+			let modes = []
+			for (let m of layer.getModes()) {
+				let mode = {
+					button: m,
+					mode: m,
+					layer: id,
+					onclick: () => { layer.setMode(m); },
+					status: () => layer.getMode() == m ? 'active' : '',
+				};
+				if (m == 'specular' && layer.shader.setSpecularExp)
+					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
+				modes.push(mode);
+			}
+			let layerEntry = {
+				button: layer.label || id,
+				onclick: () => { this.setLayer(layer); },
+				status: () => layer.visible ? 'active' : '',
+				list: modes,
+				layer: id
+			};
+			if (layer.annotations) {
+				layerEntry.list.push(layer.annotationsEntry());
+				//TODO: this could be a convenience, creating an editor which can be
+				//customized later using layer.editor.
+				//if(layer.editable) 
+				//	layer.editor = this.editor;
+			}
+			this.menu.push(layerEntry);
+		}
+	}
+
+	/** @ignore */
 	updateMenu() {
 		for (let entry of this.menu)
 			this.updateEntry(entry);
@@ -602,12 +616,6 @@ class UIBasic {
 		for (let entry of this.menu) {
 			this.addEntryCallbacks(entry);
 		}
-
-
-		/*		for(let li of document.querySelectorAll('[data-layer]'))
-					li.addEventListener('click', (e) => {
-						this.setLayer(this.viewer.canvas.layers[li.getAttribute('data-layer')]);
-					}); */
 	}
 
 	/** @ignore */
@@ -635,7 +643,8 @@ class UIBasic {
 				}
 			}
 		}
-		this.updateMenu();
+		if(this.menu)
+			this.updateMenu();
 		this.viewer.redraw();
 	}
 

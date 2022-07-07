@@ -40,7 +40,10 @@ class Skin {
 	static async getElement(selector) {
 		if (!svg)
 			await Skin.loadSvg();
-		return svg.querySelector(selector).cloneNode(true);
+		let element = svg.querySelector(selector);
+		if(!element)
+			throw("Missing element in svg, selector: " + selector);
+		return element.cloneNode(true);
 	}
 
 	/**
@@ -50,12 +53,25 @@ class Skin {
 	 * @returns {SVGElement} A pointer to the SVG icon referenced by the selector.
 	 */
 	static async appendIcon(container, selector) {
-		let element = await Skin.getElement(selector);
-
 		let icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		icon.style.visibility = 'hidden';
 		container.appendChild(icon);
-		icon.appendChild(element);
 		
+		
+		this.setIcon(icon, selector);		
+		icon.style.visibility = 'visible';
+		return icon;
+	}
+	static async setIcon(icon, selector) {
+		//we need to make sure the icon display is not none (or some parent) in order to get the bbox
+		let placeholder = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		let parent = icon.parentElement;
+		parent.replaceChild(placeholder, icon);
+		document.body.appendChild(icon);
+		
+		let element = await Skin.getElement(selector);
+		icon.appendChild(element);
+
 		let box = element.getBBox();
 
 		let tlist = element.transform.baseVal;
@@ -65,8 +81,10 @@ class Skin {
 
 		icon.setAttribute('viewBox', `${-pad} ${-pad} ${box.width + 2*pad} ${box.height + 2*pad}`);
 		icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-		return icon;
-	}	
+
+		parent.replaceChild(icon, placeholder);
+		
+	}
 }
 
 export { Skin }

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Annotation Editor</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="stele.css" />
+    <style>
+    </style>
+</head>
+
+<body>
+    <!-- Web page -->
+   <div class="openlime"></div>
+
+    <script src="../../js/openlime.js"></script>
+    <script>
+
+const lime = new OpenLIME.Viewer('.openlime');
+OpenLIME.Skin.setUrl('icons/openlime-ui-icons.svg');
+
+let openlime = document.querySelector('.openlime');
+let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
+infoDialog.hide();
+
+const stele = new OpenLIME.Layer({
+    type: 'brdf',
+    channels: {
+        'kd': 'assets/diffuse.jpg',
+        'ks': 'assets/specular.png',
+        'normals': 'assets/normals.jpg',
+        'gloss': 'assets/gloss.png'
+    },
+    colorspaces: {
+        'kd': 'linear',
+        'ks': 'linear'
+    },
+    layout: 'image',
+    alphaLimits: [0.05, 0.6],
+    brightness: 3.14,
+    gamma: 2.0
+});
+
+lime.addLayer('Base', stele);
+
+let annotationServer = 'json.php'
+
+let options = {
+    label: 'Annotations',
+    layout: stele.layout,
+    type: 'svg_annotations',
+    style: ` 
+    .openlime-annotation { pointer-events:stroke; opacity: 0.7; }
+    .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+
+    :focus { fill:yellow; }
+    path { fill:none; stroke-width:2; stroke:#000; vector-effect:non-scaling-stroke; pointer-events:all; }
+    path:hover { cursor:pointer; stroke:#f00; }
+    .selected { stroke-width:3; }
+    `,
+    onClick: (anno) => {
+        infoDialog.setContent(`<h4>${anno.label}</h4><p>${anno.description}</p>`);
+        infoDialog.show();
+    },
+    annotations: annotationServer
+}
+
+
+// Create an annotation layer and add it to the canvans
+const anno = new OpenLIME.Layer(options);
+lime.addLayer('anno', anno);
+
+// Create an User Interface 
+const ui = new OpenLIME.UIBasic(lime, { menu: false });
+
+
+// Get a subset of pre-defined actions to work on it
+let { home, fullscreen, zoomin, zoomout, light, help } = ui.actions
+
+// Add help, zoomin and zoomout to the toolbar
+help.display = true;
+zoomin.display = true;
+zoomout.display = true;
+
+// Add configured actions to the toolbar
+ui.actions = { home, fullscreen, zoomin, zoomout, light, help };
+
+
+//let editor = new OpenLIME.SvgLayerUI(stele, openlime);
+
+
+
+//Layers custom button.
+let layersdiv = document.createElement('div');
+layersdiv.classList.add('openlime-layers-quickmenu');
+let startMode = 'diffuse';
+
+for(let l of ['diffuse', 'normals', 'monochrome']) {
+	let layer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	layer.setAttribute('viewBox', '0 0 100 100');
+	layer.classList.toggle('selected', startMode == l);
+	layer.innerHTML = `<image href="icons/${l}.jpg" height="100" width="100"/>`;
+	layer.onclick = (e) => {
+		let selecting = layer.classList.contains('selecting');
+		let all = layersdiv.querySelectorAll('svg');
+		all.forEach(s => s.classList.toggle('selecting', !selecting));
+		if(selecting) {
+			all.forEach(s => s.classList.toggle('selected', s == layer));
+			stele.setMode(l);
+		}
+	}
+	layersdiv.appendChild(layer);
+}
+
+openlime.append(layersdiv);
+
+
+
+
+
+
+
+    </script>
+</body>
+
+</html>
