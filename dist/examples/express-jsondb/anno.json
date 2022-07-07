@@ -1,1 +1,18 @@
-[{"label":"test-rechanged","description":"This is a test, Fabio!","svg":"<svg></svg>","class":"TEST","publish":1,"id":"1"},{"id":"2","label":"test","description":"This is a test!","svg":"<svg></svg>","class":"TEST","publish":1}]
+[
+    {
+        "label": "test-rechanged",
+        "description": "This is a test, Fabio!",
+        "svg": "<svg></svg>",
+        "class": "TEST",
+        "publish": 1,
+        "id": "1"
+    },
+    {
+        "id": "2",
+        "label": "test",
+        "description": "This is a test!",
+        "svg": "<svg></svg>",
+        "class": "TEST",
+        "publish": 1
+    }
+]
