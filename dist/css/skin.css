@@ -2,6 +2,7 @@
 	position: relative;
 	background-color: #000;
 	height: 100%;
+	touch-action: none; /* Remove default behavior of the user agent */
 }
 
 .openlime > canvas {
