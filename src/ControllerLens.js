@@ -30,6 +30,8 @@ class ControllerLens extends Controller {
 
         if (this.isInsideLens(p)) {
             this.panning = true;
+            this.startPos = p;
+
             e.preventDefault();
         }
 	}
@@ -67,6 +69,7 @@ class ControllerLens extends Controller {
             this.zooming = true;
             this.initialDistance = this.distance(e1, e2);
             this.initialRadius = this.lensLayer.getRadius();
+            this.startPos = pc;
 
             e1.preventDefault();
         } 
@@ -93,6 +96,7 @@ class ControllerLens extends Controller {
             const factor = delta > 0 ? 1.2 : 1/1.2;
             const r = this.lensLayer.getRadius();
             this.lensLayer.setRadius(r*factor);
+            this.startPos = p;
 
             result = true;
             e.preventDefault();
@@ -120,6 +124,67 @@ class ControllerLens extends Controller {
 		return Math.sqrt(Math.pow(e1.x - e2.x, 2) + Math.pow(e1.y - e2.y, 2));
 	}
 
+    
+    /**
+     * Start zoom operation. Call it at start of pointerdown event on lens border
+     * @param {*} e pointerdown event
+     */
+     zoomStart(e) {
+        this.zooming = true;
+        const t = this.camera.getCurrentTransform(performance.now());
+        const p = t.viewportToSceneCoords(this.camera.viewport, this.getPixelPosition(e)); 
+        const lens = this.getFocus();
+        const r = lens.radius;
+        const c = lens.position;
+        const v = [p[0]-c[0], p[1]-c[1]];
+        const d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+  
+        // Difference between radius and |Click-LensCenter| will be used by zoomMove
+        this.deltaR = d - r;
+    }
+
+    /**
+     * Start zoom operation. Call it during pointermove event on lens border
+     * @param {*} e pointermove event
+     */
+     zoomMove(e) {
+        if (this.zooming) {
+            let t = this.camera.getCurrentTransform(performance.now()); 
+            const p = t.viewportToSceneCoords(this.camera.viewport, this.getPixelPosition(e)); 
+
+            const lens = this.getFocus();
+            const c = lens.position;
+            const v = [p[0]-c[0], p[1]-c[1]];
+            const d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+
+            // Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
+            const newRadius = d - this.deltaR;
+            this.lensLayer.setRadius(newRadius, this.zoomDelay);
+            
+        }
+    }
+
+    /**
+     * End of zoom operation
+     * @param {*} e pointerup event
+     */
+    zoomEnd(e) {
+        this.zooming = false;
+    }
+
+    getPixelPosition(e) {
+        let x = e.clientX;
+        let y = e.clientY;
+        const h = this.camera.viewport.h;
+        return [x, h - y];
+    }
+
+    getFocus() {
+        const p = this.lensLayer.getCurrentCenter();
+        const r = this.lensLayer.getRadius();
+        return  {position: p, radius: r}
+    }
+
     isInsideLens(p) {
         const c = this.lensLayer.getCurrentCenter();
         const dx = p[0] - c[0];
@@ -127,9 +192,10 @@ class ControllerLens extends Controller {
         const d2 = dx*dx + dy*dy;
         const r = this.lensLayer.getRadius();
         const res = d2 < r * r;
-        if (res) { this.startPos = p;}
+
         return res;
     }
+
 }
 
 export { ControllerLens }

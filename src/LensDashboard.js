@@ -78,11 +78,7 @@ class LensDashboard {
 		circle.setAttributeNS(null, 'shape-rendering', 'geometricPrecision');
 		this.lensElm.appendChild(circle);
 		this.container.appendChild(this.lensElm);
-		circle.style.pointerEvents = 'auto';
-		circle.addEventListener('click', (e) => {
-		   console.log("CLICK CIRCLE");
-		});
-
+		this.setupCircleInteraction(circle);
 		this.lensBox = { x: 0, y: 0, r: 0, w: 0, h: 0 };
 		  
 		this.svgElement = null;
@@ -91,6 +87,39 @@ class LensDashboard {
 
 		this.noupdate=false;
     }
+
+	setupCircleInteraction(circle) {
+		circle.style.pointerEvents = 'auto';
+		this.isCircleSelected = false;
+
+        this.viewer.containerElement.addEventListener('pointerdown', (e) => {
+            if(circle == e.target) {
+                this.isCircleSelected = true;		
+				if (this.lensLayer.controllers[0]) {
+					this.lensLayer.controllers[0].zoomStart(e);
+				}
+				e.preventDefault();
+			}
+		 });
+
+		 this.viewer.containerElement.addEventListener('pointermove', (e) => {
+			 if (this.isCircleSelected) {
+				if (this.lensLayer.controllers[0]) {
+					this.lensLayer.controllers[0].zoomMove(e);
+				}
+				e.stopPropagation();
+			}
+		 });
+
+		 this.viewer.containerElement.addEventListener('pointerup', (e) => {
+			if (this.isCircleSelected) {
+				if (this.lensLayer.controllers[0]) {
+					this.lensLayer.controllers[0].zoomEnd(e);
+				}
+				this.isCircleSelected = false;
+			}
+		 });
+	}
 
 	/**
 	 * Call this to set the corresponding LayerSvgAnnotation

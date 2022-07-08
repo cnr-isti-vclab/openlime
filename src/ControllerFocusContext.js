@@ -104,7 +104,7 @@ class ControllerFocusContext extends ControllerLens {
             let dy = (e.offsetY - this.startPos.y);
 
             this.camera.setPosition(this.updateDelay, m.x + dx, m.y + dy, m.z, m.a);
-        }
+        } 
     }
 
 	pinchStart(e1, e2) {
@@ -151,6 +151,31 @@ class ControllerFocusContext extends ControllerLens {
 		this.zooming = false;
     }
 
+    /**
+     * Start zoom operation. Call it during pointermove event on lens border
+     * @param {*} e pointermove event
+     */
+     zoomMove(e) {
+        if (this.zooming) {
+            let t = this.camera.getCurrentTransform(performance.now()); 
+            const p = t.viewportToSceneCoords(this.camera.viewport, this.getPixelPosition(e)); 
+
+            const lens = this.getFocus();
+            const c = lens.position;
+            const v = [p[0]-c[0], p[1]-c[1]];
+            const d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+
+            // Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
+            const newRadius = d - this.deltaR;
+            
+            // Same as in base class ControllerLens, but apply changes alsto to camera
+
+            // Ask for incremental update of radius (this updates also the camera scale)
+            const dz = newRadius / lens.radius;
+            this.updateRadiusAndScale(dz);
+        }
+    }
+    
     mouseWheel(e) {
         const p = this.getScenePosition(e);
         this.insideLens = this.isInsideLens(p);
@@ -242,12 +267,6 @@ class ControllerFocusContext extends ControllerLens {
       
         return result;
     }
-
-    getFocus() {
-        const p = this.lensLayer.getCurrentCenter();
-        const r = this.lensLayer.getRadius();
-        return  {position: p, radius: r}
-    }
     
     setDatasetDimensions(width, height) {
         this.imageSize = {w: width, h:height};
@@ -260,29 +279,11 @@ class ControllerFocusContext extends ControllerLens {
         this.lensLayer.setCenter(this.imageSize.w * 0.5, this.imageSize.h*0.5);
     }
     
-    getPixelPosition(e) {
-        let x = e.offsetX;
-        let y = e.offsetY;
-        let rect = e.target.getBoundingClientRect();
-        return [x, rect.height - y];
-    }
-
     getScreenPosition(p, t) {
         // Transform from p expressed wrt world center (at dataset center is 0,0)
         // to Viewport coords 0,w 0,h
         const c = t.sceneToViewportCoords(this.camera.viewport, p);
         return c;
-    }
-
-    isInsideLens(p) {
-        const c = this.lensLayer.getTargetCenter();
-        const dx = p[0] - c[0];
-        const dy = p[1] - c[1];
-        const d = Math.sqrt(dx*dx + dy*dy);
-        const r = this.lensLayer.getRadius();
-        const within = d < r;
-        //const onBorder = within && d >= r-this.lensLayer.border;
-        return within;
     }
 
 }
