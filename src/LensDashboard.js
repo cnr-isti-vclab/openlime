@@ -99,6 +99,7 @@ class LensDashboard {
 					this.lensLayer.controllers[0].zoomStart(e);
 				}
 				e.preventDefault();
+				e.stopPropagation();
 			}
 		 });
 
@@ -107,6 +108,7 @@ class LensDashboard {
 				if (this.lensLayer.controllers[0]) {
 					this.lensLayer.controllers[0].zoomMove(e);
 				}
+				e.preventDefault();
 				e.stopPropagation();
 			}
 		 });
@@ -117,6 +119,8 @@ class LensDashboard {
 					this.lensLayer.controllers[0].zoomEnd(e);
 				}
 				this.isCircleSelected = false;
+				e.preventDefault();
+				e.stopPropagation();
 			}
 		 });
 	}
