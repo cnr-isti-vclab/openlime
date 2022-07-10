@@ -71,9 +71,12 @@ class BoundingBox {
      * @param {BoundingBox} box The bounding box to be merged. 
      */
     mergeBox(box) {
-		if (box == null) {
+		if (box == null)
             return;
-        } else {
+
+        if(this.isEmpty())
+            Object.assign(this, box);
+        else {
             this.xLow = Math.min(this.xLow,  box.xLow);
             this.yLow = Math.min(this.yLow,  box.yLow);
             this.xHigh = Math.max(this.xHigh, box.xHigh);

@@ -1,6 +1,7 @@
 import { Layout } from './Layout.js';
 import { BoundingBox } from './BoundingBox.js';
 import { Tile } from './Tile.js';
+import { Annotation } from './Annotation.js';
 
 class LayoutTileImages extends Layout {
     
@@ -12,6 +13,7 @@ class LayoutTileImages extends Layout {
 		// Contain array of records with at least visible,region,image (url of the image). 
 		// Can be also a pointer to annotation array set from outside with setTileDescriptors()
         this.tileDescriptors = []; 
+		this.box = new BoundingBox();
 		
 		if (url != null) {
 			// Read data from annotation file
@@ -33,9 +35,12 @@ class LayoutTileImages extends Layout {
 		}
 		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
 		this.tileDescriptors = this.tileDescriptors.map(a => new Annotation(a));
-		for(let a of this.tileDescriptors)
+		for(let a of this.tileDescriptors) {
 			if(a.publish != 1)
 				a.visible = false;
+		}
+		this.computeBoundingBox();
+		this.emit('updateSize');
 
 		if (this.path == null) {
 			this.setPathFromUrl(url);
@@ -43,6 +48,22 @@ class LayoutTileImages extends Layout {
 
 		this.status = 'ready';
 		this.emit('ready');
+	}
+	    /**
+	 * Gets the layout bounding box.
+	 * @returns {BoundingBox} The layout bounding box.
+	 */
+	computeBoundingBox() {
+		this.box = new BoundingBox();
+		for(let a of this.tileDescriptors) {
+			let r = a.region;
+			let b = new BoundingBox( { xLow:r.x, yLow: r.y, xHigh: r.x + r.w, yHigh: r.y + r.h});
+			this.box.mergeBox(b);
+		}
+	}
+
+	boundingBox() {
+		return this.box;
 	}
 
 	setPathFromUrl(url) {
@@ -53,7 +74,11 @@ class LayoutTileImages extends Layout {
 		for(let i = 0; i < N-1; ++i) {
 			this.path += myArray[i] + "/";
 		}
-		this.path += "/annot/";
+		this.getTileURL = (id, tile) => {		
+			const url = this.path + '/' + this.tileDescriptors[tile.index].image;
+			return url;
+		}
+		//this.path += "/annot/";
 	}
 
     setTileDescriptors(tileDescriptors) {
@@ -108,7 +133,7 @@ class LayoutTileImages extends Layout {
     needed(viewport, transform, border, bias, tiles, maxtiles = 8) {
 		//look for needed nodes and prefetched nodes (on the pos destination
 		let box = transform.getInverseBox(viewport);
-		box.shift(this.width/2, this.height/2);
+		//box.shift(this.width/2, this.height/2);
 
 		let needed = [];
 		let now = performance.now();
@@ -120,7 +145,7 @@ class LayoutTileImages extends Layout {
 			let index = this.index(0, x, 0);
 			let tile = tiles.get(index) || this.newTile(index); 
 
-			if (this.intersect(box, index, flipY)) {
+			if (this.intersects(box, index, flipY)) {
 				tile.time = now;
 				tile.priority = this.tileDescriptors[index].visible ? 10 : 1;
 				if (tile.missing === null) 
@@ -138,7 +163,7 @@ class LayoutTileImages extends Layout {
 	available(viewport, transform, border, bias, tiles) {
 		//find box in image coordinates where (0, 0) is in the upper left corner.
 		let box = transform.getInverseBox(viewport);
-		box.shift(this.width/2, this.height/2);
+		//box.shift(this.width/2, this.height/2);
 
 		let torender = [];
 
@@ -148,7 +173,7 @@ class LayoutTileImages extends Layout {
 		for (let x = 0; x < N; x++) {
 			let index = this.index(0, x, 0);
 
-			if (this.tileDescriptors[index].visible && this.intersect(box, index, flipY)) {
+			if (this.tileDescriptors[index].visible && this.intersects(box, index, flipY)) {
 				if (tiles.has(index)) {
 					let tile = tiles.get(index); 
 					if (tile.missing == 0) {
@@ -164,16 +189,15 @@ class LayoutTileImages extends Layout {
 	newTile(index) {
 		let tile = new Tile();
 		tile.index = index;
-		const r = this.tileDescriptors[index].region;
-		tile.x = r.x;
-		tile.y = r.y;
-		tile.w = r.w;
-		tile.h = r.h;
+
+		let descriptor = this.tileDescriptors[index];
+		tile.image = descriptor.image;		
+		Object.assign(tile, descriptor.region);
 		return tile;
 	}
 	
-	intersect(box, index, flipY = true) {
-		const r = this.tileDescriptors[index].region
+	intersects(box, index, flipY = true) {
+		const r = this.tileDescriptors[index].region;
 		const xLow = r.x;
         const yLow = r.y;
         const xHigh = xLow + r.w;
@@ -184,24 +208,7 @@ class LayoutTileImages extends Layout {
 		return xLow < box.xHigh  && yLow < boxYHigh && xHigh > box.xLow && yHigh > boxYLow;
 	}
 
-    /**
-	 * Gets the layout bounding box.
-	 * @returns {BoundingBox} The layout bounding box.
-	 */
-	boundingBox() {
-		let bbox = new BoundingBox();
-		for(let t of this.tileDescriptors) {
-			if (t.visible) {
-				const x0 = t.region.x;
-				const y0 = t.region.y
-				const x1 = x0 + t.region.w;
-				const y1 = y0 + t.region.h;
-				const tbox = new BoundingBox({xLow: x0, yLow: y0, xHigh: x1, yHigh: y1});
-				bbox.mergeBox(tbox);
-			}
-		}
-		return bbox;
-	}
+
 
 	tileCount() {
 		return this.tileDescriptors.length;
