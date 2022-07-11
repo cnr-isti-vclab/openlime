@@ -76,11 +76,15 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 		let template = document.createElement('template');
 		template.innerHTML = html.trim();
 		
-		let list =  this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
-		list.appendChild(template.content.firstChild);
+		//FIXME this is horribly wrong: the interface should be managed totally somewhere else.
+		if(this.annotationsListEntry) {
+			let list =  this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+			list.appendChild(template.content.firstChild);
+		}
 		
 		this.clearSelected();
 		//this.setSelected(annotation);
+		this.emit('update');
 		return annotation;
 	}
 
@@ -94,6 +98,7 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	
 		this.annotations = this.annotations.filter(a => a !== anno);
 		this.clearSelected();
+		this.emit('update');
 	}
 
 	/** @ignore */
@@ -162,7 +167,8 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 
 	/** @ignore */
 	clearSelected() {
-		this.annotationsListEntry.element.parentElement.querySelectorAll(`[data-annotation]`).forEach((e) => e.classList.remove('selected'));
+		if(this.annotationsListEntry)
+			this.annotationsListEntry.element.parentElement.querySelectorAll(`[data-annotation]`).forEach((e) => e.classList.remove('selected'));
 		this.selected.clear();
 	}
 
@@ -172,7 +178,8 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	 * @param {bool} on=true Whether to select the annotation.
 	 */
 	setSelected(anno, on = true) {
-		this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.toggle('selected', on);
+		if(this.annotationsListEntry)
+			this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.toggle('selected', on);
 		if(on)
 			this.selected.add(anno.id);
 		else

@@ -1,44 +1,58 @@
 
 /* Annotations menu */
 
-.row {
+.openlime-row {
 	display:flex;
 	align-items:center;
 }
 
-.layer-panel {
+#openlime-layer-panel {
 	position:absolute;
+	display:flex;
+	flex-direction:column;
 	top:0px;
 	bottom:0px;
 	background-color:white;
+	min-width:200px;
+	width:16vw;
 }
 
-.collapsed .collapse {
+#openlime-layer-panel.openlime-collapsed {
+	width:auto;
+	min-width:auto;
+}
+
+.openlime-collapsed .openlime-collapse {
 	display:none !important;
 }
 
-.layer-panel svg rect {
+#openlime-layer-panel svg rect {
 	fill:transparent !important;
 	stroke:none !important;
 }
 
-.layer-panel svg {
+#openlime-layer-panel svg {
 	width:6vh;
 	filter: invert(100%);
 	cursor: pointer;
 }
 
-.toolbar {
+#openlime-layer-panel .openlime-layer-toolbar, 
+#openlime-layer-panel .openlime-annotation-toolbar {
+	width:100%;
+	display:flex;
 	align-items:center;
 	justify-content:space-around;
-	margin-right:6px;
+	box-sizing:border-box;
+	padding:10px 6px;
 }
 
-.layer-panel .toolbar svg {
+#openlime-layer-panel .openlime-layer-toolbar svg,
+#openlime-layer-panel .openlime-annotation-toolbar svg {
 	width:4vh;
 }
 
-.layer-panel .button {
+#openlime-layer-panel .openlime-button {
 	margin-right:12px;
 	width:100%;
 	border-radius: 6px;
@@ -56,8 +70,80 @@
 
 }
 
-.annotation-list {
+#openlime-layer-panel .openlime-annotation-list {
 	height:40vh;
 	border:1px solid #aaa;
 	margin:10px;
+	overflow-x:hidden;
+	overflow-y:auto;
+}
+
+
+
+
+/* SVGannotationUI */
+
+#openlime-layer-panel .openlime-annotation-panel {
+	display:flex;
+	flex-direction:column;
+	flex-grow:1
+}
+
+#openlime-layer-panel .openlime-input {
+	width:100%;
+    padding: 0px 10px;
+	box-sizing:border-box;
+}
+#openlime-layer-panel .openlime-text-input {
+    width: 100%;
+    margin: 0;
+    padding:2px;
+    box-sizing: border-box;   
+}
+
+
+#openlime-layer-panel .openlime-svg-tools-panel {
+	display:flex;
+	flex-direction:row;
+	flex-grow:1;
+}
+
+#openlime-layer-panel .openlime-svg-tools {
+	display:flex;
+	flex-direction:column;
+}
+
+#openlime-layer-panel .openlime-svg-tools .selected {
+	background-color:#222; /* it's inverted */
+}
+
+
+#openlime-layer-panel .openlime-svg-tools svg {
+	width: 3vw;
+}
+
+#openlime-layer-panel .openlime-svg-properties {
+	flex-grow:1;
+	padding:0px 20px;
+}
+
+#openlime-layer-panel .openlime-svg-properties .selected{
+	background:#ddd;
+}
+
+#openlime-layer-panel .openlime-svg-properties p {
+	font-family: 'Montserrat', sans-serif;
+	width:100%;
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+}
+
+#openlime-layer-panel .openlime-svg-properties input {
+	width:50px;
+	box-sizing:border-box;
+}
+
+#openlime-layer-panel .openlime-svg-properties input[type=color] {
+	padding: 0px 2px;
 }

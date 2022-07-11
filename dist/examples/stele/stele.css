@@ -14,11 +14,14 @@ html, body {
 .openlime-toolbar {
 	flex-direction:column;
 	bottom:auto;
-	top:0px;
+	top:40px;
+	right:10px;
+	width:128px;
+	align-items:center;
 }
 
 .openlime-toolbar svg:not(:root) {
-	height:10vh;
+	height:8vh;
 }
 
 .openlime-tool.active, .openlime-tool.active * { fill:#fff !important; }
