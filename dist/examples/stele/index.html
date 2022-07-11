@@ -7,14 +7,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenLIME - Annotation Editor</title>
     <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../../css/svglayerui.css" />
     <link rel="stylesheet" href="stele.css" />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
+h1 {
+	position:absolute;
+	color:#aaa;
+	top:10px;
+	right:10px;
+	z-index:1;
+	font-weight:normal;
+	font-size:16px;
+	font-family:'Montserrat', sans-serif;
+	width:128px;
+	text-align:center;
+}
+h1 b { color:#ddd; }
     </style>
 </head>
 
 <body>
     <!-- Web page -->
-   <div class="openlime"></div>
+   <div class="openlime">
+      <h1>STELE DI <b>NORA</b></h1>
+   </div>
 
     <script src="../../js/openlime.js"></script>
     <script>
@@ -53,7 +72,7 @@ let options = {
     layout: stele.layout,
     type: 'svg_annotations',
     style: ` 
-    .openlime-annotation { pointer-events:stroke; opacity: 0.7; }
+    .openlime-annotation { pointer-events:fill; opacity: 0.7; }
     .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
 
     :focus { fill:yellow; }
@@ -73,6 +92,8 @@ let options = {
 const anno = new OpenLIME.Layer(options);
 lime.addLayer('anno', anno);
 
+
+
 // Create an User Interface 
 const ui = new OpenLIME.UIBasic(lime, { menu: false });
 
@@ -89,7 +110,7 @@ zoomout.display = true;
 ui.actions = { home, fullscreen, zoomin, zoomout, light, help };
 
 
-//let editor = new OpenLIME.SvgLayerUI(stele, openlime);
+
 
 
 
@@ -118,7 +139,7 @@ for(let l of ['diffuse', 'normals', 'monochrome']) {
 openlime.append(layersdiv);
 
 
-
+let editor = new OpenLIME.SvgLayerUI(anno, openlime);
 
 
 
