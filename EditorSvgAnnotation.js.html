@@ -35,7 +35,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="Annotation.html">Annotation</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
 				</ul>
 			</li>
 			
@@ -56,7 +56,7 @@
 			<li class="dropdown">
 				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="global.html#crudCallback">crudCallback</a></li><li><a href="global.html#customDataCallback">customDataCallback</a></li><li><a href="global.html#customStateCallback">customStateCallback</a></li><li><a href="global.html#selectedCallback">selectedCallback</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li>
+					<li><a href="global.html#crudCallback">crudCallback</a></li><li><a href="global.html#customDataCallback">customDataCallback</a></li><li><a href="global.html#customStateCallback">customStateCallback</a></li><li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#selectedCallback">selectedCallback</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
 				</ul>
 			</li>
 			
@@ -94,8 +94,9 @@
     <article>
         <pre
             class="sunlight-highlight-javascript linenums">import { Skin } from './Skin.js';
+import { Util } from './Util.js';
 import { simplify, smooth, smoothToPath } from './Simplify.js'
-import { createSVGElement, LayerSvgAnnotation } from './LayerSvgAnnotation.js'
+import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 
 /**
  * Callback for create/update/delete annotations.
@@ -188,9 +189,8 @@ class EditorSvgAnnotation {
 				},
 				pin: {
 					template: (x,y) => {
-						console.log("idx= ", this.annotation.idx);
-						return `&lt;svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='4%' height='4%' 
-						viewBox='0 0 18 18'>&lt;path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/>&lt;text id='pin-text' x='7' y='8'>${this.annotation.idx}&lt;/text>&lt;/svg>`;
+						return `&lt;svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='4%' height='4%' class='pin'
+						viewBox='0 0 18 18'>&lt;path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/>&lt;text class='pin-text' x='7' y='8'>${this.annotation.idx}&lt;/text>&lt;/svg>`;
 					}, //pin di alcazar  1. url a svg 2. txt (stringa con svg) 3. funzione(x,y) ritorna svg 4. dom (da skin).
 					tooltip: 'New pin',
 					tool: Pin
@@ -239,7 +239,7 @@ class EditorSvgAnnotation {
 			deleteCallback: null
 		}, options);
 
-		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`).join('\n');
+		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].style.stroke}; }`).join('\n');
 		//at the moment is not really possible to unregister the events registered here.
 		viewer.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
@@ -334,7 +334,7 @@ class EditorSvgAnnotation {
 		edit.classList.remove('hidden');
 		let button = edit.querySelector('.openlime-select-button');
 		button.textContent = this.classes[anno.class].label;
-		button.style.background = this.classes[anno.class].stroke;
+		button.style.background = this.classes[anno.class].style.stroke;
 	}
 
 	/** @ignore */
@@ -367,6 +367,15 @@ class EditorSvgAnnotation {
 					&lt;label for="label">Title:&lt;/label> &lt;input name="label" type="text">&lt;br>
 					&lt;label for="description">Description:&lt;/label>&lt;br>
 					&lt;textarea name="description" cols="30" rows="5">&lt;/textarea>&lt;br>
+					&lt;span>Class:&lt;/span> 
+					&lt;div class="openlime-select">
+						&lt;input type="hidden" name="classes" value=""/>
+						&lt;div class="openlime-select-button">&lt;/div>
+						&lt;ul class="openlime-select-menu">
+						${Object.entries(this.classes).map((c) =>
+			`&lt;li data-class="${c[0]}" style="background:${c[1].style.stroke};">${c[1].label}&lt;/li>`).join('\n')}
+						&lt;/ul>
+					&lt;/div>
 					&lt;label for="idx">Index:&lt;/label> &lt;input name="idx" type="text">&lt;br>	
 					${Object.entries(this.annotation.data).map(k => {
 						let label = k[0];
@@ -374,15 +383,6 @@ class EditorSvgAnnotation {
 						return str;
 					}).join('\n')}
 					&lt;br>
-					&lt;span>Class:&lt;/span> 
-					&lt;div class="openlime-select">
-						&lt;input type="hidden" name="classes" value=""/>
-						&lt;div class="openlime-select-button">&lt;/div>
-						&lt;ul class="openlime-select-menu">
-						${Object.entries(this.classes).map((c) =>
-			`&lt;li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}&lt;/li>`).join('\n')}
-						&lt;/ul>
-					&lt;/div>
 					&lt;span>&lt;button class="openlime-state">SAVE&lt;/button>&lt;/span>
 					&lt;span>&lt;input type="checkbox" name="publish" value=""> Publish&lt;/span>&lt;br>
 					&lt;div class="openlime-annotation-edit-tools">&lt;/div>
@@ -418,7 +418,7 @@ class EditorSvgAnnotation {
 
 			input.value = e.srcElement.getAttribute('data-class');
 			input.dispatchEvent(new Event('change'));
-			button.style.background = this.classes[input.value].stroke;
+			button.style.background = this.classes[input.value].style.stroke;
 			button.textContent = e.srcElement.textContent;
 
 			select.classList.toggle('active');
@@ -465,7 +465,7 @@ class EditorSvgAnnotation {
 			if (this.annotation.idx != idx.value) {
 				const svgPinIdx = this.annotation.elements[0];
 				if(svgPinIdx) {
-					const txt = svgPinIdx.querySelector("#pin-text");
+					const txt = svgPinIdx.querySelector(".pin-text");
 					if(txt) {
 						txt.textContent = idx.value;
 					}
@@ -513,7 +513,7 @@ class EditorSvgAnnotation {
 		anno.class = select.value || '';
 
 		let button = edit.querySelector('.openlime-select-button');
-		button.style.background = this.classes[anno.class].stroke;
+		button.style.background = this.classes[anno.class].style.stroke;
 
 		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
@@ -586,7 +586,7 @@ class EditorSvgAnnotation {
 		let svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		const bBox = this.layer.boundingBox();
 		svgElement.setAttribute('viewBox', `0 0 ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
-		let style = createSVGElement('style');
+		let style = Util.createSVGElement('style');
 		style.textContent = this.layer.style;
 		svgElement.appendChild(style);
 		let serializer = new XMLSerializer();
@@ -865,7 +865,7 @@ class EditorSvgAnnotation {
 /** @ignore */
 class Point {
 	tap(pos) {
-		let point = createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
+		let point = Util.createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
 		this.annotation.elements.push(point);
 		return true;
 	}
@@ -897,7 +897,7 @@ class Pen {
 		if (this.points.length == 1) {
 			saveCurrent
 
-			this.path = createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
+			this.path = Util.createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 			return this.path;
 		}
 		let p = this.path.getAttribute('d');
@@ -927,7 +927,7 @@ class Box {
 
 	create(pos) {
 		this.origin = pos;
-		this.box = createSVGElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
+		this.box = Util.createSVGElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
 		return this.box;
 	}
 
@@ -953,7 +953,7 @@ class Circle {
 	}
 	create(pos) {
 		this.origin = pos;
-		this.circle = createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
+		this.circle = Util.createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
 		return this.circle;
 	}
 	adjust(pos) {
@@ -994,7 +994,7 @@ class Line {
 				return;
 			}
 		}
-		this.path = createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
+		this.path = Util.createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 		this.path.points = [pos];
 		this.history = [this.path.points.length];
 		this.annotation.elements.push(this.path);
@@ -1026,7 +1026,7 @@ class Line {
 			return false;
 		let s = this.path.points[this.path.points.length - 1];
 		if (!this.segment) {
-			this.segment = createSVGElement('path', { class: 'line' });
+			this.segment = Util.createSVGElement('path', { class: 'line' });
 			this.layer.svgGroup.appendChild(this.segment);
 		}
 		pos.x = pos.x - s.x;
@@ -1182,7 +1182,7 @@ export { EditorSvgAnnotation }</pre>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
 	
-		on Wed Jul 6th 2022
+		on Tue Jul 12th 2022
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

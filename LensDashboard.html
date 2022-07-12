@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: Canvas</title>
+	<title>OpenLIME Class: LensDashboard</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,18 +88,19 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: Canvas</h1>
+	<h1 class="page-title">Class: LensDashboard</h1>
 <section>
 
 <header>
     
         <h2>
-        Canvas
+        LensDashboard
         </h2>
         
-            <div class="class-description"><p>Creates the WebGL context for the <code>canvas</code>. It stores information related to the <code>overlay</code> DOM element and the <code>camera</code> of the scene.
-Signals are triggered in case of scene modifications.
-Additionally, an object literal with Canvas <code>options</code> can be specified.</p></div>
+            <div class="class-description"><p>The LensDashboard class is an optional element that can be embedded in an instance of <a href="LayerLens.html">LayerLens</a>.
+It represents a square HTML container of sufficient size to hold the lens that is positioned solidly against it.
+Its main use is to allow the creation of a dashboard of HTML elements positioned around the lens.</p>
+<p>In the example below a simple HTML button is positioned close to the top-left corner of the dashboard:</p></div>
         
     
 </header>
@@ -111,12 +112,18 @@ Additionally, an object literal with Canvas <code>options</code> can be specifie
         
 <hr>
 <dt>
-    <h4 class="name" id="Canvas"><span class="type-signature"></span>new Canvas(canvas, overlay, camera [, options])</h4>
+    <h4 class="name" id="LensDashboard"><span class="type-signature"></span>new LensDashboard(options)</h4>
     
     
 </dt>
 <dd>
 
+    
+    <div class="description">
+        <p>Manages creation and update of a lens dashboard.
+An object literal with Layer <code>options</code> can be specified.
+This class instatiates an optional element of <a href="LayerLens.html">LayerLens</a></p>
+    </div>
     
 
     
@@ -138,8 +145,6 @@ Additionally, an object literal with Canvas <code>options</code> can be specifie
         <th>Type</th>
 
         
-        <th>Argument</th>
-        
 
         
 
@@ -148,108 +153,6 @@ Additionally, an object literal with Canvas <code>options</code> can be specifie
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>canvas</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">element</span>
-|
-
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>DOM element or selector for a <code>&lt;canvas&gt;</code>.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>overlay</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">element</span>
-|
-
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>DOM element or selector for overlay decorations (i.e. annotations, glyphs, etc...)</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>camera</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Camera.html">Camera</a></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>The scene's camera.</p></td>
-        </tr>
-
     
 
         <tr>
@@ -268,20 +171,10 @@ Additionally, an object literal with Canvas <code>options</code> can be specifie
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last"><p>An object literal.</p>
+            <td class="description last"><p>An object literal with Lensdashboard parameters.</p>
                 <h6 class="method-params-label method-subparams-label">Properties</h6>
                 
 
@@ -309,13 +202,13 @@ Additionally, an object literal with Canvas <code>options</code> can be specifie
 
         <tr>
             
-                <td class="name"><code>layers</code></td>
+                <td class="name"><code>borderWidth</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Object</span>
+<span class="param-type">number</span>
 
 
 
@@ -327,41 +220,12 @@ Additionally, an object literal with Canvas <code>options</code> can be specifie
             
                 <td class="default">
                 
-                </td>
-            
-
-            <td class="description last"><p>Object specifies layers (see. <a href="Layer.html">Layer</a>)</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>preserveDrawingBuffer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">bool</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    false
+                    30
                 
                 </td>
             
 
-            <td class="description last"><p>Whether to preserve the buffers until manually cleared or overwritten. Needed for screenshots
-(otherwise is just a performance penalty).</p></td>
+            <td class="description last"><p>The extra border thickness (in pixels) around the square including the lens.</p></td>
         </tr>
 
     
@@ -412,438 +276,8 @@ Additionally, an object literal with Canvas <code>options</code> can be specifie
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-26">line 26</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-    
-    </div>
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        <dl>
-            
-<hr>
-<dt>
-    <h4 class="name" id="addLayer"><span class="type-signature"></span>addLayer(id, layer)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Adds the given layer to the Canvas and connects the layer's events to it.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>id</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>A label to identify the layer.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>layer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Layer.html">Layer</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>An OpenLIME Layer object.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-164">line 164</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="getState"><span class="type-signature"></span>getState()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Gets the state variables of all the system as described in the stateMask</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-126">line 126</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>An object with state variables.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="removeLayer"><span class="type-signature"></span>removeLayer(layer)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Remove the given layer from the Canvas</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>layer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Layer.html">Layer</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>An OpenLIME Layer object.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-200">line 200</a>
+				<a href="LensDashboard.js.html">LensDashboard.js</a>,
+				 <a href="LensDashboard.js.html#sunlight-1-line-48">line 48</a>
 			</li>
 		</ul>
 	</dd>
@@ -872,20 +306,55 @@ Additionally, an object literal with Canvas <code>options</code> can be specifie
     
         <h5>Example</h5>
         
-    <pre class="sunlight-highlight-javascript">let layer0 = new Layer(options);
-canvas.addLayer(&#x27;kdmap&#x27;, layer0);
-...
-canvas.removeLayer(layer0);</pre>
+    <pre class="sunlight-highlight-javascript">const lensDashboard = new OpenLIME.LensDashboard(lime);
+const lensLayer = new OpenLIME.Layer({
+type: &quot;lens&quot;,
+layers: [layerIn],
+		camera: lime.camera,
+		radius: 200,
+		border: 10,
+		dashboard: lensDashboard,
+		visible: true
+});
+lime.addLayer(&#x27;lens&#x27;, lensLayer);
+ 
+const btn = document.createElement(&#x27;button&#x27;);
+btn.innerHTML = &quot;Click Me&quot;;
+btn.style = &#x60;position: absolute;  
+				left: 0px; 
+				top: 0px;
+				display: inline-block; 
+				cursor: pointer;
+				pointer-events: auto;&#x60;;
+lensDashboard.append(btn);</pre>
 
 
     
 </dd>
 
-        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
             
 <hr>
 <dt>
-    <h4 class="name" id="setState"><span class="type-signature"></span>setState(state, dt, easing)</h4>
+    <h4 class="name" id="append"><span class="type-signature"></span>append(elm)</h4>
     
     
 </dt>
@@ -893,7 +362,7 @@ canvas.removeLayer(layer0);</pre>
 
     
     <div class="description">
-        <p>Sets the state variables of all the system</p>
+        <p>Appends a HTML element to the dashboard. The element must be positioned in 'absolute' mode.</p>
     </div>
     
 
@@ -918,8 +387,6 @@ canvas.removeLayer(layer0);</pre>
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
@@ -930,13 +397,13 @@ canvas.removeLayer(layer0);</pre>
 
         <tr>
             
-                <td class="name"><code>state</code></td>
+                <td class="name"><code>elm</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Object</span>
+<span class="param-type">*</span>
 
 
 
@@ -946,70 +413,8 @@ canvas.removeLayer(layer0);</pre>
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last"><p>An object with state variables.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>dt</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The animation duration in millisecond.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>easing</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Easing</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    linear
-                
-                </td>
-            
-
-            <td class="description last"><p>The function aimed at making the camera movement or control adjustments less severe or pronounced.</p></td>
+            <td class="description last"><p>A HTML element</p></td>
         </tr>
 
     
@@ -1053,8 +458,837 @@ canvas.removeLayer(layer0);</pre>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-109">line 109</a>
+				<a href="LensDashboard.js.html">LensDashboard.js</a>,
+				 <a href="LensDashboard.js.html#sunlight-1-line-226">line 226</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="removeMaskFromSvgLayer"><span class="type-signature"></span>removeMaskFromSvgLayer(svg)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Remove mask attribute from svg element</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>svg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>element from which remove the mask attribute</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LensDashboard.js.html">LensDashboard.js</a>,
+				 <a href="LensDashboard.js.html#sunlight-1-line-218">line 218</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setBackgroundRenderingMode"><span class="type-signature"></span>setBackgroundRenderingMode(mode)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Set the background rendering mode within the lens.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>mode</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#RenderingMode">RenderingMode</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>RenderingMode.draw or RenderingMode.hide</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LensDashboard.js.html">LensDashboard.js</a>,
+				 <a href="LensDashboard.js.html#sunlight-1-line-242">line 242</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setLayerSvgAnnotation"><span class="type-signature"></span>setLayerSvgAnnotation(l)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Call this to set the corresponding LayerSvgAnnotation</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>l</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LensDashboard.js.html">LensDashboard.js</a>,
+				 <a href="LensDashboard.js.html#sunlight-1-line-147">line 147</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setLensRenderingMode"><span class="type-signature"></span>setLensRenderingMode(mode)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Set rendering mode within the lens.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>mode</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#RenderingMode">RenderingMode</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>RenderingMode.draw or RenderingMode.hide</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LensDashboard.js.html">LensDashboard.js</a>,
+				 <a href="LensDashboard.js.html#sunlight-1-line-234">line 234</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setMaskOnSvgLayer"><span class="type-signature"></span>setMaskOnSvgLayer(svg)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Set mask property on the svg element which need to be displayed with the lens</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>svg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>element which need to be displayed within the lens</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LensDashboard.js.html">LensDashboard.js</a>,
+				 <a href="LensDashboard.js.html#sunlight-1-line-210">line 210</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setupCircleInteraction"><span class="type-signature"></span>setupCircleInteraction(circle)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Setup the event listener to update lens radius by dragging lens border.
+Call the lens controller to update lens radius.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>circle</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>lens svg border.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LensDashboard.js.html">LensDashboard.js</a>,
+				 <a href="LensDashboard.js.html#sunlight-1-line-96">line 96</a>
 			</li>
 		</ul>
 	</dd>
@@ -1088,274 +1322,6 @@ canvas.removeLayer(layer0);</pre>
 
     
 
-    
-        <h3 class="subsection-title">Events</h3>
-
-        <dl>
-            
-<hr>
-<dt>
-    <h4 class="name" id="event:ready">ready</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>The event is fired when all the layers are ready (i.e. initialized and with data ready to be displayed).</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-170">line 170</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="event:update">update</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>The event is fired if a layer is updated, added or removed.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-165">line 165</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="event:updateSize">updateSize</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>The event is fired if a layout changes its size or position (the event forces the re-computation of the layer bounding boxes).</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-210">line 210</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        </dl>
     
 </article>
 

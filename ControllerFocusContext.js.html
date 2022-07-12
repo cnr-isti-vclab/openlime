@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: ControllerFocusContext.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#crudCallback">crudCallback</a></li><li><a href="global.html#customDataCallback">customDataCallback</a></li><li><a href="global.html#customStateCallback">customStateCallback</a></li><li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#selectedCallback">selectedCallback</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: ControllerFocusContext.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import {ControllerLens} from './ControllerLens.js'
+import { FocusContext } from './FocusContext.js';
+
+class ControllerFocusContext extends ControllerLens {
+    static callUpdate(param) {
+        param.update();
+    }
+    
+    constructor(options) {
+        super(options);
+        Object.assign(this, { 
+			updateTimeInterval: 50,
+            updateDelay: 100,
+            zoomDelay: 150,
+            zoomAmount: 1.5,
+            priority: -100,
+            enableDirectContextControl: true
+		}, options);
+
+        if (!options.lensLayer) {
+            console.log("ControllerFocusContext lensLayer option required");
+            throw "ControllerFocusContext lensLayer option required";
+        }
+ 
+        if (!options.camera) {
+            console.log("ControllerFocusContext camera option required");
+            throw "ControllerFocusContext camera option required";
+        }
+
+        if (!options.canvas) {
+            console.log("ControllerFocusContext canvas option required");
+            throw "ControllerFocusContext canvas option required";
+        }
+
+        let callback = () => {
+            const discardHidden = true;
+            const bbox = this.camera.boundingBox;
+            this.maxDatasetSize = Math.max(bbox.width(), bbox.height());
+            this.minDatasetSize = Math.min(bbox.width(), bbox.height());
+            this.setDatasetDimensions(bbox.width(), bbox.height());
+		};
+        this.canvas.addEvent('updateSize', callback);
+
+        this.imageSize = { w: 1, h: 1 };
+        this.FocusContextEnabled = true;
+
+        this.centerToClickOffset = [0, 0];
+        this.previousClickPos = [0, 0];
+        this.currentClickPos = [0, 0];
+
+        this.insideLens = {inside:false, border:false};
+        this.panning = false;
+        this.zooming = false;
+        this.panningCamera = false;
+
+        // Handle only camera panning
+        this.startPos = [0, 0];
+        this.initialTransform = this.camera.getCurrentTransform(performance.now());
+        
+        // Handle pinchZoom
+        this.initialPinchDistance = 1;
+        this.initialPinchRadius = 1;
+        this.initialPinchPos = [0,0];
+    }
+
+	panStart(e) {
+        if (!this.active)
+            return;
+            
+        const t = this.camera.getCurrentTransform(performance.now());
+        const p = this.getScenePosition(e, t);
+        this.panning = false;
+        this.insideLens = this.isInsideLens(p);
+
+        if (this.insideLens.inside) {
+            const startPos = this.getPixelPosition(e); 
+
+            const lc = this.getScreenPosition(this.getFocus().position, t);
+            this.centerToClickOffset = [startPos[0] - lc[0], startPos[1] - lc[1]];
+            this.currentClickPos = [startPos[0], startPos[1]];
+            this.panning = true;
+        } else {
+            if (this.enableDirectContextControl) {
+                this.startPos = { x: e.offsetX, y: e.offsetY };
+                this.initialTransform = t;
+                this.camera.target = this.initialTransform.copy(); //stop animation.
+                this.panningCamera = true;
+            }
+        }
+        e.preventDefault();
+
+        // Activate a timeout to call update() in order to update position also when mouse is clicked but steady
+        // Stop the time out on panEnd
+        this.timeOut = setInterval(this.update.bind(this), 50);
+	}
+
+    panMove(e) {
+        if (Math.abs(e.offsetX) > 64000 || Math.abs(e.offsetY) > 64000) return;
+        if(this.panning) {
+            this.currentClickPos = this.getPixelPosition(e);
+        } else if (this.panningCamera) {
+            let m = this.initialTransform;
+            let dx = (e.offsetX - this.startPos.x);
+            let dy = (e.offsetY - this.startPos.y);
+
+            this.camera.setPosition(this.updateDelay, m.x + dx, m.y + dy, m.z, m.a);
+        }
+    }
+
+	pinchStart(e1, e2) {
+        if (!this.active)
+            return;
+
+        const p0 = this.getScenePosition(e1);
+        const p1 = this.getScenePosition(e2);
+        const p = [(p0[0] + p1[0]) * 0.5, (p0[1] + p1[1]) * 0.5];
+        this.initialPinchPos = [(e1.offsetX + e2.offsetX) * 0.5, (e1.offsetY + e2.offsetY) * 0.5];
+        this.insideLens = this.isInsideLens(p);
+        this.zooming = true;
+        this.initialPinchDistance = this.distance(e1, e2);
+        this.initialPinchRadius = this.lensLayer.getRadius();
+
+        e1.preventDefault();
+	}
+
+	pinchMove(e1, e2) {
+        if (this.zooming) {
+            const d = this.distance(e1, e2);
+            const scale = d / (this.initialPinchDistance + 0.00001);
+            if (this.insideLens.inside) {
+                const newRadius = scale * this.initialPinchRadius;
+                const currentRadius = this.lensLayer.getRadius();
+                const dz = newRadius / currentRadius;
+                // Zoom around initial pinch pos, and not current center to avoid unwanted drifts
+                this.updateRadiusAndScale(dz);
+                //this.initialPinchDistance = d;
+            } else {
+                if (this.enableDirectContextControl) {
+                    this.updateScale(this.initialPinchPos[0], this.initialPinchPos[1], scale);
+                    this.initialPinchDistance = d;
+                }
+            }
+        }
+    }
+
+    pinchEnd(e, x, y, scale) {
+		this.zooming = false;
+    }
+
+    /**   
+     * Start zoom operation clicking on lens border. Call it on pointerdown event on lens border
+     * @param {*} p pixel position in 0,wh (y up)
+     */
+    zoomStart(pe) {
+        super.zoomStart(pe);
+
+        // Ask to call zoomUpdate at regular interval during zoommovement
+        this.timeOut = setInterval(this.zoomUpdate.bind(this), 50);
+    }
+
+    /**
+     * Zoom dragging lens border. Call it during pointermove event on lens border
+     * @param {*} p pixel position in 0,wh (y up)
+     */
+     zoomMove(pe) {
+        if (this.zooming) {
+            this.oldCursorPos = pe;
+            let t = this.camera.getCurrentTransform(performance.now()); 
+            let p = t.viewportToSceneCoords(this.camera.viewport, pe); 
+
+            const lens = this.getFocus();
+            const c = lens.position;
+            let v = [p[0]-c[0], p[1]-c[1]];
+            let d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+
+            //Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
+            const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
+            const newRadius = Math.max(radiusRange.min / t.z, d - this.deltaR);
+            const dz = newRadius / lens.radius;
+            this.updateRadiusAndScale(dz);
+        }
+    }
+    
+    /** @ignore  */
+    zoomUpdate() {
+        // Give continuity to zoom  scale also when user is steady.
+        // If lens border is able to reach user pointer zoom stops.
+        // If this is not possible due to camera scale update, 
+        // zoom will continue with a speed proportional to the radius/cursor distance
+        
+        if (this.zooming) {
+            let t = this.camera.getCurrentTransform(performance.now()); 
+            let p = t.viewportToSceneCoords(this.camera.viewport, this.oldCursorPos);
+
+            const lens = this.getFocus();
+            const c = lens.position;
+            let v = [p[0]-c[0], p[1]-c[1]];
+            let d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+
+            //Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
+            const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
+            const newRadius = Math.max(radiusRange.min / t.z, d - this.deltaR);
+            const dz = newRadius / lens.radius;
+            this.updateRadiusAndScale(dz);
+        }
+    }
+
+    /**
+     * Called at end of zoom border drag operation
+     */
+    zoomEnd() {
+        super.zoomEnd();
+        // Stop calling zoomUpdate
+        clearTimeout(this.timeOut);
+        return;
+
+        // Adjust zoomrange if this does not fit Focs&amp;Context (Currently already done by zoommove)
+        const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
+        let t = this.camera.getCurrentTransform(performance.now()); 
+        const r = this.getFocus().radius * t.z;
+        const dz = r &lt; radiusRange.min ? 0.9 : r > radiusRange.max ? 1.1 : 1;
+       
+        if (dz != 1) {
+            const oldDelay = this.zoomDelay;
+            this.zoomDelay = 1000;
+            this.updateRadiusAndScale(dz);
+            this.zoomDelay = oldDelay
+        }
+    }
+    
+    mouseWheel(e) {
+        const p = this.getScenePosition(e);
+        this.insideLens = this.isInsideLens(p);
+        const dz = e.deltaY  > 0 ? this.zoomAmount : 1/this.zoomAmount;
+        if (this.insideLens.inside) {
+            this.updateRadiusAndScale(dz);
+        } else {
+            if (this.enableDirectContextControl) {
+                // Invert scale when updating scale instead of lens radius, to obtain the same zoom direction
+                this.updateScale(e.offsetX, e.offsetY, 1 / dz);
+            }
+        }
+        e.preventDefault();
+    }
+
+    /**
+     * Multiply lens radius of dz. Consequently adjust camera in order to keep Focus &amp; Context condition verified.
+     * At the end of the operation lens radius could be 
+     * @param {*} dz factor to multiply lens radius
+     */
+    updateRadiusAndScale(dz) {
+        let focus = this.getFocus();
+        const now = performance.now();
+        let context = this.camera.getCurrentTransform(now);
+
+        // Subdivide zoom between focus and context
+        FocusContext.scale(this.camera, focus, context, dz);
+        
+        // Bring focus within context constraints
+        FocusContext.adaptContextPosition(this.camera.viewport, focus, context);
+        
+        // Set new focus and context in camera and lens
+        this.camera.setPosition(this.zoomDelay, context.x, context.y, context.z, context.a);
+        this.lensLayer.setRadius(focus.radius, this.zoomDelay);
+    }
+
+    updateScale(x, y, dz) {
+        const now = performance.now();
+        let context = this.camera.getCurrentTransform(now);
+        const pos = this.camera.mapToScene(x, y, context);
+
+        const maxDeltaZoom = this.camera.maxZoom / context.z;
+        const minDeltaZoom = this.camera.minZoom / context.z;
+        dz = Math.min(maxDeltaZoom, Math.max(minDeltaZoom, dz));
+        
+        // Zoom around cursor position
+        this.camera.deltaZoom(this.updateDelay, dz, pos.x, pos.y);
+    }
+
+    panEnd() {
+        this.panning = false;
+        this.panningCamera = false;
+        this.zooming = false;
+        clearTimeout(this.timeOut);
+    }
+
+     update() {
+        if (this.panning) {
+            const t = this.camera.getCurrentTransform(performance.now());
+            let lensDeltaPosition = this.lastInteractionDelta(t);
+            lensDeltaPosition[0] /= t.z;
+            lensDeltaPosition[1] /= t.z;
+
+            let context = this.camera.getCurrentTransform(performance.now());
+            let focus = this.getFocus();
+            if (this.FocusContextEnabled) {
+                FocusContext.pan(this.camera.viewport, focus, context, lensDeltaPosition, this.imageSize);
+                this.camera.setPosition(this.updateDelay, context.x, context.y, context.z, context.a);
+            } else {
+                focus.position[0] += lensDeltaPosition[0];
+                focus.position[1] += lensDeltaPosition[1];
+            }
+
+            this.lensLayer.setCenter(focus.position[0], focus.position[1], this.updateDelay);
+            this.previousClickPos = [this.currentClickPos[0], this.currentClickPos[1]];
+        } 
+    }
+
+    lastInteractionDelta(t) {
+        let result = [0, 0];
+        // Compute delta with respect to previous position
+        if (this.panning &amp;&amp; this.insideLens.inside) {
+            // For lens pan Compute delta wrt previous lens position
+            const lc = this.getScreenPosition(this.getFocus().position, t);
+            result =
+                [this.currentClickPos[0] - lc[0] - this.centerToClickOffset[0],
+                 this.currentClickPos[1] - lc[1] - this.centerToClickOffset[1]];
+        } else {
+            // For camera pan Compute delta wrt previous click position
+            result = 
+                [this.currentClickPos[0] - this.previousClickPos[0],
+                 this.currentClickPos[1] - this.previousClickPos[1]];
+        }
+      
+        return result;
+    }
+    
+    setDatasetDimensions(width, height) {
+        this.imageSize = {w: width, h:height};
+    }
+
+    initLens() {
+        const t = this.camera.getCurrentTransform(performance.now());
+        const imageRadius = 100 / t.z;
+        this.lensLayer.setRadius(imageRadius);
+        this.lensLayer.setCenter(this.imageSize.w * 0.5, this.imageSize.h*0.5);
+    }
+    
+    getScreenPosition(p, t) {
+        // Transform from p expressed wrt world center (at dataset center is 0,0)
+        // to Viewport coords 0,w 0,h
+        const c = t.sceneToViewportCoords(this.camera.viewport, p);
+        return c;
+    }
+
+}
+
+export { ControllerFocusContext }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+	<span class="copyright">
+	DocStrap Copyright © 2012-2015 The contributors to the JSDoc3 and DocStrap projects.
+	</span>
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
+	
+		on Tue Jul 12th 2022
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>
