@@ -88,15 +88,29 @@ class LensDashboard {
 		this.noupdate=false;
     }
 
+	/**
+	 * Setup the event listener to update lens radius by dragging lens border.
+	 * Call the lens controller to update lens radius.
+	 * @param {*} circle lens svg border.
+	 */
 	setupCircleInteraction(circle) {
 		circle.style.pointerEvents = 'auto';
 		this.isCircleSelected = false;
+
+		// OffsetXY are unstable from this point (I don't know why)
+		// Thus get coordinates from clientXY
+		function getXYFromEvent(e, container) {
+			const x = e.clientX -  container.offsetLeft - container.clientLeft;
+			const y = container.clientHeight - (e.clientY - container.offsetTop - container.clientTop);
+			return [x, y];
+		}
 
         this.viewer.containerElement.addEventListener('pointerdown', (e) => {
             if(circle == e.target) {
                 this.isCircleSelected = true;		
 				if (this.lensLayer.controllers[0]) {
-					this.lensLayer.controllers[0].zoomStart(e);
+					const p = getXYFromEvent(e, this.viewer.containerElement);
+					this.lensLayer.controllers[0].zoomStart(p);
 				}
 				e.preventDefault();
 				e.stopPropagation();
@@ -106,7 +120,8 @@ class LensDashboard {
 		 this.viewer.containerElement.addEventListener('pointermove', (e) => {
 			 if (this.isCircleSelected) {
 				if (this.lensLayer.controllers[0]) {
-					this.lensLayer.controllers[0].zoomMove(e);
+					const p = getXYFromEvent(e, this.viewer.containerElement);
+					this.lensLayer.controllers[0].zoomMove(p);
 				}
 				e.preventDefault();
 				e.stopPropagation();
@@ -116,7 +131,7 @@ class LensDashboard {
 		 this.viewer.containerElement.addEventListener('pointerup', (e) => {
 			if (this.isCircleSelected) {
 				if (this.lensLayer.controllers[0]) {
-					this.lensLayer.controllers[0].zoomEnd(e);
+					this.lensLayer.controllers[0].zoomEnd();
 				}
 				this.isCircleSelected = false;
 				e.preventDefault();

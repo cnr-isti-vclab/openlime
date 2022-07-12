@@ -48,7 +48,7 @@ class ControllerFocusContext extends ControllerLens {
         this.previousClickPos = [0, 0];
         this.currentClickPos = [0, 0];
 
-        this.insideLens = false;
+        this.insideLens = {inside:false, border:false};
         this.panning = false;
         this.zooming = false;
         this.panningCamera = false;
@@ -72,7 +72,7 @@ class ControllerFocusContext extends ControllerLens {
         this.panning = false;
         this.insideLens = this.isInsideLens(p);
 
-        if (this.insideLens) {
+        if (this.insideLens.inside) {
             const startPos = this.getPixelPosition(e); 
 
             const lc = this.getScreenPosition(this.getFocus().position, t);
@@ -104,7 +104,7 @@ class ControllerFocusContext extends ControllerLens {
             let dy = (e.offsetY - this.startPos.y);
 
             this.camera.setPosition(this.updateDelay, m.x + dx, m.y + dy, m.z, m.a);
-        } 
+        }
     }
 
 	pinchStart(e1, e2) {
@@ -119,9 +119,6 @@ class ControllerFocusContext extends ControllerLens {
         this.zooming = true;
         this.initialPinchDistance = this.distance(e1, e2);
         this.initialPinchRadius = this.lensLayer.getRadius();
-        this.initialScale = this.camera.getCurrentTransform(performance.now()).z; 
-        
-        console.log("Start pinchZoom inside " + this.insideLens);
 
         e1.preventDefault();
 	}
@@ -130,12 +127,11 @@ class ControllerFocusContext extends ControllerLens {
         if (this.zooming) {
             const d = this.distance(e1, e2);
             const scale = d / (this.initialPinchDistance + 0.00001);
-            if (this.insideLens) {
+            if (this.insideLens.inside) {
                 const newRadius = scale * this.initialPinchRadius;
                 const currentRadius = this.lensLayer.getRadius();
                 const dz = newRadius / currentRadius;
                 // Zoom around initial pinch pos, and not current center to avoid unwanted drifts
-                //console.log("D " + d.toFixed(2) + "/ InitD " + this.initialPinchDistance.toFixed(2) + " =Sc " + scale.toFixed(2));
                 this.updateRadiusAndScale(dz);
                 //this.initialPinchDistance = d;
             } else {
@@ -151,28 +147,84 @@ class ControllerFocusContext extends ControllerLens {
 		this.zooming = false;
     }
 
-    /**
-     * Start zoom operation. Call it during pointermove event on lens border
-     * @param {*} e pointermove event
+    /**   
+     * Start zoom operation clicking on lens border. Call it on pointerdown event on lens border
+     * @param {*} p pixel position in 0,wh (y up)
      */
-     zoomMove(e) {
+    zoomStart(pe) {
+        super.zoomStart(pe);
+
+        // Ask to call zoomUpdate at regular interval during zoommovement
+        this.timeOut = setInterval(this.zoomUpdate.bind(this), 50);
+    }
+
+    /**
+     * Zoom dragging lens border. Call it during pointermove event on lens border
+     * @param {*} p pixel position in 0,wh (y up)
+     */
+     zoomMove(pe) {
         if (this.zooming) {
+            this.oldCursorPos = pe;
             let t = this.camera.getCurrentTransform(performance.now()); 
-            const p = t.viewportToSceneCoords(this.camera.viewport, this.getPixelPosition(e)); 
+            let p = t.viewportToSceneCoords(this.camera.viewport, pe); 
 
             const lens = this.getFocus();
             const c = lens.position;
-            const v = [p[0]-c[0], p[1]-c[1]];
-            const d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+            let v = [p[0]-c[0], p[1]-c[1]];
+            let d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
 
-            // Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
-            const newRadius = d - this.deltaR;
-            
-            // Same as in base class ControllerLens, but apply changes alsto to camera
-
-            // Ask for incremental update of radius (this updates also the camera scale)
+            //Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
+            const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
+            const newRadius = Math.max(radiusRange.min / t.z, d - this.deltaR);
             const dz = newRadius / lens.radius;
             this.updateRadiusAndScale(dz);
+        }
+    }
+    
+    /** @ignore  */
+    zoomUpdate() {
+        // Give continuity to zoom  scale also when user is steady.
+        // If lens border is able to reach user pointer zoom stops.
+        // If this is not possible due to camera scale update, 
+        // zoom will continue with a speed proportional to the radius/cursor distance
+        
+        if (this.zooming) {
+            let t = this.camera.getCurrentTransform(performance.now()); 
+            let p = t.viewportToSceneCoords(this.camera.viewport, this.oldCursorPos);
+
+            const lens = this.getFocus();
+            const c = lens.position;
+            let v = [p[0]-c[0], p[1]-c[1]];
+            let d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+
+            //Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
+            const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
+            const newRadius = Math.max(radiusRange.min / t.z, d - this.deltaR);
+            const dz = newRadius / lens.radius;
+            this.updateRadiusAndScale(dz);
+        }
+    }
+
+    /**
+     * Called at end of zoom border drag operation
+     */
+    zoomEnd() {
+        super.zoomEnd();
+        // Stop calling zoomUpdate
+        clearTimeout(this.timeOut);
+        return;
+
+        // Adjust zoomrange if this does not fit Focs&Context (Currently already done by zoommove)
+        const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
+        let t = this.camera.getCurrentTransform(performance.now()); 
+        const r = this.getFocus().radius * t.z;
+        const dz = r < radiusRange.min ? 0.9 : r > radiusRange.max ? 1.1 : 1;
+       
+        if (dz != 1) {
+            const oldDelay = this.zoomDelay;
+            this.zoomDelay = 1000;
+            this.updateRadiusAndScale(dz);
+            this.zoomDelay = oldDelay
         }
     }
     
@@ -180,7 +232,7 @@ class ControllerFocusContext extends ControllerLens {
         const p = this.getScenePosition(e);
         this.insideLens = this.isInsideLens(p);
         const dz = e.deltaY  > 0 ? this.zoomAmount : 1/this.zoomAmount;
-        if (this.insideLens) {
+        if (this.insideLens.inside) {
             this.updateRadiusAndScale(dz);
         } else {
             if (this.enableDirectContextControl) {
@@ -191,6 +243,11 @@ class ControllerFocusContext extends ControllerLens {
         e.preventDefault();
     }
 
+    /**
+     * Multiply lens radius of dz. Consequently adjust camera in order to keep Focus & Context condition verified.
+     * At the end of the operation lens radius could be 
+     * @param {*} dz factor to multiply lens radius
+     */
     updateRadiusAndScale(dz) {
         let focus = this.getFocus();
         const now = performance.now();
@@ -252,7 +309,7 @@ class ControllerFocusContext extends ControllerLens {
     lastInteractionDelta(t) {
         let result = [0, 0];
         // Compute delta with respect to previous position
-        if (this.panning && this.insideLens) {
+        if (this.panning && this.insideLens.inside) {
             // For lens pan Compute delta wrt previous lens position
             const lc = this.getScreenPosition(this.getFocus().position, t);
             result =
