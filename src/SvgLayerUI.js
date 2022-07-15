@@ -2,9 +2,11 @@ import { Annotation } from './Annotation.js'
 import { SvgAnnotationUI } from './SvgAnnotationUI.js'
 
 class SvgLayerUI {
-	constructor(layer, container) {
-		
+	constructor(viewer, layer, container) {
+		this.viewer = viewer;
 		this.layer = layer;
+		this.container = container;
+
 		let html = `
 		<div id="openlime-layer-panel" class="openlime-collapsed">
 			<div class="openlime-row" style="justify-content:space-between">
@@ -51,7 +53,8 @@ class SvgLayerUI {
 		
 		this.annotationsPanel = this.panel.querySelector('div.openlime-annotations-panel');
 		this.annotationPanel = this.panel.querySelector('div.openlime-annotation-panel');
-		this.svgAnnotationUI = new SvgAnnotationUI(this.annotationPanel);
+
+		this.svgAnnotationUI = new SvgAnnotationUI(viewer, layer, this.annotationPanel);
 		
 		(async () => {
 			for(let svg of this.panel.querySelectorAll('[data-icon]'))
