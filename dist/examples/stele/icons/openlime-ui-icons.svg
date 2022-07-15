@@ -15,7 +15,7 @@
    version="1.0"
    id="svg7153"
    sodipodi:docname="openlime-ui-icons.svg"
-   inkscape:version="0.91 r13725">
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)">
   <metadata
      id="metadata2023">
     <rdf:RDF>
@@ -37,13 +37,13 @@
      inkscape:pagecheckerboard="false"
      inkscape:deskcolor="#000000"
      showgrid="false"
-     inkscape:zoom="0.49513602"
-     inkscape:cx="1325.5858"
-     inkscape:cy="927.30548"
-     inkscape:window-width="1680"
-     inkscape:window-height="1026"
+     inkscape:zoom="0.70022807"
+     inkscape:cx="893.66244"
+     inkscape:cy="641.97207"
+     inkscape:window-width="1920"
+     inkscape:window-height="1016"
      inkscape:window-x="0"
-     inkscape:window-y="24"
+     inkscape:window-y="27"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg7153" />
   <defs
@@ -1571,7 +1571,7 @@
   </g>
   <g
      id="g17570"
-     class="openlime-rect">
+     class="openlime-box">
     <rect
        style="fill:#b3b3b3;fill-rule:evenodd;stroke-width:0.43814799"
        id="rect11249"
@@ -1588,7 +1588,7 @@
          clip-path="url(#id54)"
          id="g3699">
         <path
-           d="m 633.4375,155.64844 0,55.5 55.5,0 0,-55.5 -55.5,0 m 53.73047,53.73437 -52,0 0,-52 52,0 0,52"
+           d="m 633.4375,155.64844 v 55.5 h 55.5 v -55.5 h -55.5 m 53.73047,53.73437 h -52 v -52 h 52 v 52"
            id="path3697"
            inkscape:connector-curvature="0"
            style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero" />

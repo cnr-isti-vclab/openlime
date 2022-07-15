@@ -127,7 +127,7 @@
 	padding:0px 20px;
 }
 
-#openlime-layer-panel .openlime-svg-properties .selected{
+#openlime-layer-panel .openlime-svg-properties.selected{
 	background:#ddd;
 }
 
@@ -147,3 +147,4 @@
 #openlime-layer-panel .openlime-svg-properties input[type=color] {
 	padding: 0px 2px;
 }
+
