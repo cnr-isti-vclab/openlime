@@ -141,8 +141,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		let t = this.transform.compose(transform);
 		let c = this.boundingBox().corner(0);
 		return inverse ?
-		 `translate(${-c[0]} ${-c[1]})  scale(${1/t.z} ${1/t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
-		 `translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`;
+		 `translate(${-c.x} ${-c.y})  scale(${1/t.z} ${1/t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
+		 `translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c.x} ${c.y})`;
 	}
 
 	/** @ignore */

@@ -759,8 +759,8 @@ class EditorSvgAnnotation {
 		let transform = camera.getCurrentTransform(performance.now());
 		let pos = camera.mapToScene(e.offsetX, e.offsetY, transform);
 		const topLeft = this.layer.boundingBox().corner(0);
-		pos.x -= topLeft[0]; 
-		pos.y -= topLeft[1];
+		pos.x -= topLeft.x; 
+		pos.y -= topLeft.y;
 		pos.z = transform.z;
 		return pos;
 	}

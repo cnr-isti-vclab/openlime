@@ -1,4 +1,5 @@
 import { Controller } from './Controller.js'
+import { CoordinateSystem } from './CoordinateSystem.js';
 import { addSignals } from './Signals.js'
 
 
@@ -25,6 +26,7 @@ class ControllerPanZoom extends Controller {
 
 		this.zooming = false;           //true if in the middle of a pinch
 		this.initialDistance = 0.0;
+		this.useGLcoords = false;
 
 		if(options)
 			Object.assign(this, options);
@@ -36,7 +38,7 @@ class ControllerPanZoom extends Controller {
 			return;
 		this.panning = true;
 
-		this.startMouse = { x: e.offsetX, y: e.offsetY };
+		this.startMouse = CoordinateSystem.fromCanvasHtmlToViewport({ x: e.offsetX, y: e.offsetY }, this.camera, this.useGLcoords);
 
 		let now = performance.now();
 		this.initialTransform = this.camera.getCurrentTransform(now);
@@ -50,8 +52,9 @@ class ControllerPanZoom extends Controller {
 			return;
 
 		let m = this.initialTransform;
-		let dx = (e.offsetX - this.startMouse.x);
-		let dy = (e.offsetY - this.startMouse.y);
+		const p = CoordinateSystem.fromCanvasHtmlToViewport({ x: e.offsetX, y: e.offsetY }, this.camera, this.useGLcoords);
+		let dx = (p.x - this.startMouse.x);
+		let dy = (p.y - this.startMouse.y);
 		
 		this.camera.setPosition(this.panDelay, m.x + dx, m.y + dy, m.z, m.a);
 	}
@@ -85,7 +88,10 @@ class ControllerPanZoom extends Controller {
 		let offsetX2 = e2.clientX - rect2.left;
 		let offsetY2 = e2.clientY - rect2.top;
 		const scale = this.distance(e1, e2);
-		const pos = this.camera.mapToScene((offsetX1 + offsetX2)/2, (offsetY1 + offsetY2)/2, this.camera.getCurrentTransform(performance.now()));
+		// FIXME CHECK ON TOUCH SCREEN
+		//const pos = this.camera.mapToScene((offsetX1 + offsetX2)/2, (offsetY1 + offsetY2)/2, this.camera.getCurrentTransform(performance.now()));
+		const pos = CoordinateSystem.fromCanvasHtmlToScene({ x: (offsetX1 + offsetX2)/2, y: (offsetY1 + offsetY2)/2 }, this.camera, this.useGLcoords);
+
 		const dz = scale/this.initialDistance;
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
 		this.initialDistance = scale;
@@ -105,7 +111,8 @@ class ControllerPanZoom extends Controller {
 			return;
 		}
 		let delta = -e.deltaY/53;
-		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
+		//const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
+		const pos = CoordinateSystem.fromCanvasHtmlToScene({ x: e.offsetX, y: e.offsetY }, this.camera, this.useGLcoords);
 		const dz = Math.pow(this.zoomAmount, delta);		
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
 		e.preventDefault();
@@ -115,7 +122,9 @@ class ControllerPanZoom extends Controller {
 	fingerDoubleTap(e) {
 		if(!this.active || !this.activeModifiers.includes(this.modifierState(e)))
 			return;
-		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
+		//const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
+		const pos = CoordinateSystem.fromCanvasHtmlToScene({ x: e.offsetX, y: e.offsetY }, this.camera, this.useGLcoords);
+
 		const dz = this.zoomAmount;
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
 	}
