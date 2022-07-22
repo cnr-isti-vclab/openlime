@@ -73,7 +73,7 @@
         p.style.left = "1%";
         p.style.width = "180px";
         p.style.top = "1%";
-        p.style.bottom = "30%";
+        p.style.height = "60%";
         p.style['font-size'] = "14px";
         p.style['align-items'] = "left";
         p.innerHTML = "Coordinate System info";
@@ -86,6 +86,11 @@
         }
         function isEpsilonEqual(p0, p1, eps) {
             return dist(p0, p1) < eps;
+        }
+        function checkString(str, condition) {
+            let decoratedStr = str;
+            str += condition ? "<font color='lime'><b>true</b></font>" : "<font color='red'><b>false</b></font>";
+            return str;
         }
 
         document.addEventListener('mousedown', function (e) {
@@ -106,6 +111,7 @@
             const pCheckLayer = OpenLIME.CoordinateSystem.fromLayerToViewport(pLayer, lime.camera, layerT, useGL);
             const pCenterFromLayer = OpenLIME.CoordinateSystem.fromLayerToCenter(pLayer, lime.camera, layerT, useGL);
             const pCheckScene = OpenLIME.CoordinateSystem.fromSceneToCanvasHtml(pScene, lime.camera, useGL);
+            const pCheckSceneViewport = OpenLIME.CoordinateSystem.fromSceneToViewport(pScene, lime.camera, useGL);
            // const pCheckImage = OpenLIME.CoordinateSystem.fromImageToCanvasHtml(pImage, lime.camera, layerT, layerSize, useGL);
             const eps = 0.1;
 
@@ -137,15 +143,17 @@
             "Viewport " + pViewport.x.toFixed(0) + ", " + pViewport.y.toFixed(0)  + "<br>" +
             "Center " + pCenter.x.toFixed(0) + ", " + pCenter.y.toFixed(0)  + "<br>" +
             "Scene " + pScene.x.toFixed(0) + ", " + pScene.y.toFixed(0)  + "<br>" +
+            "Sc2Vp " + pCheckSceneViewport.x.toFixed(0) + ", " + pCheckSceneViewport.y.toFixed(0)  + "<br>" +
             "Layer " + pLayer.x.toFixed(0) + ", " + pLayer.y.toFixed(0)  + "<br>" +
             "Image " + pImage.x.toFixed(0) + ", " + pImage.y.toFixed(0)  + "<br>" +
             "<br>" +
-            "CheckHtmlViewport " + isEpsilonEqual(pHtml, pos, eps) + "<br>" +
-            "CheckViewportLayer " + isEpsilonEqual(pViewport, pCheckLayer, eps) + "<br>" +
-            "CheckLayerCenter " + isEpsilonEqual(pCenter, pCenterFromLayer, eps) + "<br>" +
-            "CheckCanvasScene " + isEpsilonEqual(pos, pCheckScene, eps) + "<br>" +
-            "CheckBoxViewLayer " + okBoxViewportLayer + "<br>" +
-            "CheckBoxViewScene " + okBoxViewportScene + "<br>"
+            checkString("CheckHtmlViewport ", isEpsilonEqual(pHtml, pos, eps)) + "<br>" +
+            checkString("CheckViewportLayer ", isEpsilonEqual(pViewport, pCheckLayer, eps)) + "<br>" +
+            checkString("CheckLayerCenter ", isEpsilonEqual(pCenter, pCenterFromLayer, eps)) + "<br>" +
+            checkString("CheckCanvasScene ", isEpsilonEqual(pos, pCheckScene, eps)) + "<br>" +
+            checkString("CheckSceneViewport ", isEpsilonEqual(pViewport, pCheckSceneViewport, eps)) + "<br>" +
+            checkString("CheckBoxViewLayer ", okBoxViewportLayer) + "<br>" +
+            checkString("CheckBoxViewScene ", okBoxViewportScene) + "<br>"
             ;
 
             if ((!okBoxViewportLayer || !okBoxViewportScene) && layerT.a != 0) {

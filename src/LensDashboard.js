@@ -1,3 +1,4 @@
+import { CoordinateSystem } from "./CoordinateSystem";
 import { Util } from "./Util"
 
 /**
@@ -101,8 +102,8 @@ class LensDashboard {
 		// Thus get coordinates from clientXY
 		function getXYFromEvent(e, container) {
 			const x = e.clientX -  container.offsetLeft - container.clientLeft;
-			const y = container.clientHeight - (e.clientY - container.offsetTop - container.clientTop);
-			return [x, y];
+			const y = e.clientY - container.offsetTop - container.clientTop;
+			return {offsetX:x, offsetY:y};
 		}
 
         this.viewer.containerElement.addEventListener('pointerdown', (e) => {
@@ -245,16 +246,17 @@ class LensDashboard {
 
 	/** @ignore */
 	update(x, y, r) {
+		const useGL = false;
+		const center = CoordinateSystem.fromSceneToCanvasHtml({x:x, y:y}, this.viewer.camera, useGL);
+
 		const now = performance.now();
 		let cameraT = this.viewer.camera.getCurrentTransform(now);
-		const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
 		const radius = r * cameraT.z;
 		const sizew = 2 * radius + 2 * this.containerSpace;
 		const sizeh = 2 * radius + 2 * this.containerSpace;
 		const p = { x: 0, y: 0 };
 		p.x = center.x - radius - this.containerSpace;
-		p.y = center.y + radius + this.containerSpace;
-		p.y = this.viewer.camera.viewport.h - 1 - p.y;
+		p.y = center.y - radius - this.containerSpace;
 		this.container.style.left = `${p.x}px`;
 		this.container.style.top = `${p.y}px`;
 		this.container.style.width = `${sizew}px`;
@@ -264,8 +266,6 @@ class LensDashboard {
 		if (sizew != this.lensBox.w || sizeh != this.lensBox.h) {
 			const cx = Math.ceil(sizew * 0.5);
 			const cy = Math.ceil(sizeh * 0.5);
-			// const cx = sizew * 0.5;
-			// const cy = sizeh * 0.5;
 			this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
 			const circle = this.lensElm.querySelector('circle');
 			circle.setAttributeNS(null, 'cx', cx);
@@ -308,8 +308,8 @@ class LensDashboard {
 	  this.outMask.setAttribute( 'height', viewport.h);
 
 	  // Set lens parameter for inner lens
-	  this.inMask.setAttributeNS(null, 'cx', center.x  - viewport.w / 2);
-	  this.inMask.setAttributeNS(null, 'cy', -(center.y - viewport.h / 2));
+	  this.inMask.setAttributeNS(null, 'cx', center.x - viewport.w / 2);
+	  this.inMask.setAttributeNS(null, 'cy', center.y - viewport.h / 2);
 	  this.inMask.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
 	}
 

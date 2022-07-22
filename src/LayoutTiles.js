@@ -1,5 +1,6 @@
 import { BoundingBox } from "./BoundingBox";
 import { Layout } from "./Layout";
+import { Transform } from "./Transform";
 
 // Tile level x y  index ----- tex missing() start/end (tarzoom) ----- time, priority size(byte)
 
@@ -237,8 +238,8 @@ class LayoutTiles extends Layout {
 	}
 
 	/** returns the list of tiles required for a rendering, sorted by priority, max */
-	needed(viewport, transform, border, bias, tiles, maxtiles = 8) {
-		let neededBox = this.neededBox(viewport, transform, 0, bias);
+	needed(viewport, transform, layerTransform, border, bias, tiles, maxtiles = 8) {
+		let neededBox = this.neededBox(viewport, transform, layerTransform, 0, bias);
 		
 		//if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, neededBox))
 	    //		return;
@@ -271,8 +272,8 @@ class LayoutTiles extends Layout {
 	}
 
 	/** returns the list of tiles available for a rendering */
-	available(viewport, transform, border, bias, tiles) {
-		let needed = this.neededBox(viewport, transform, 0, bias);
+	available(viewport, transform, layerTransform, border, bias, tiles) {
+		let needed = this.neededBox(viewport, transform, layerTransform, 0, bias);
 		let torender = {}; //array of minlevel, actual level, x, y (referred to minlevel)
 		let brothers = {};
 
@@ -311,21 +312,20 @@ class LayoutTiles extends Layout {
  	* Computes the tiles needed for each level, given a viewport and a transform.
  	* @param {Viewport} viewport The viewport.
 	* @param {Transform} transform The current transform.
+	* @param {Transform} layerTransform The transform of the calling layer
  	* @param {number} border The threshold (in tile units) around the current camera position for which to prefetch tiles.
 	* @param {number} bias The mipmap bias of the texture.
  	* @returns {Object} level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.
  	*/
-	neededBox(viewport, transform, border, bias) {
+	neededBox(viewport, transform, layerTransform, border, bias) {
 		if(this.type == "image")
 			return { level:0, pyramid: [new BoundingBox({ xLow:0, yLow:0, xHigh:1, yHigh:1 })] };
 
 		//here we are computing with inverse levels; level 0 is the bottom!
 		let iminlevel = Math.max(0, Math.min(Math.floor(-Math.log2(transform.z) + bias), this.nlevels-1));
 		let minlevel = this.nlevels-1-iminlevel;
-		//
-		let bbox = transform.getInverseBox(viewport);
-		//find box in image coordinates where (0, 0) is in the upper left corner.
-		bbox.shift(this.width/2, this.height/2);
+
+		const bbox = this.getViewportBox(viewport, transform, layerTransform);
 
 		let pyramid = [];
 		for(let level = 0; level <= minlevel; level++) {
