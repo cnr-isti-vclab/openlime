@@ -98,9 +98,9 @@ class CoordinateSystem {
      * @returns  Point in Image coordinates (0,0 at left,top, y Down)
      */
      static fromLayerToImage(p, layerSize) {
-        // Tr(Lw/2, Lh/2)
-        let result = {x: p.x + layerSize.w/2, y: p.y + layerSize.h/2};
-        return this.invertY(p, layerSize);
+        // InvertY * Tr(Lw/2, Lh/2)
+        let result  = {x: p.x + layerSize.w/2, y: p.y + layerSize.h/2};
+        return this.invertY(result, layerSize);
     }
     
     /**
@@ -212,7 +212,6 @@ class CoordinateSystem {
         const invLayerT = layerT.inverse();
         result = invLayerT.apply(result.x, result.y);
         result = this.fromLayerToImage(result, layerSize);
-        result = this.invertY(result, layerSize);
 
         return result;
     }
@@ -233,13 +232,11 @@ class CoordinateSystem {
         let S2L = layerT.inverse();
         let L2I = new Transform({x:layerSize.w/2, y:layerSize.h/2});
         let M = V2C.compose(C2S.compose(S2L.compose(L2I)));
-        //let tmpBox = M.transformBox(box);
         let resultBox = new BoundingBox();
 		for(let i = 0; i < 4; ++i) {
             let p = box.corner(i);
             p = M.apply(p.x, p.y);
             p = CoordinateSystem.invertY(p, layerSize);
-			//const p = CoordinateSystem.invertY(tmpBox.corner(i), layerSize);
 			resultBox.mergePoint(p);
 		}
         return resultBox;
@@ -314,10 +311,10 @@ class CoordinateSystem {
 
     /**
      * Return transform with y reflected wrt origin (y=-y)
-     * @param {Transform} t  in GL (with Y pointing UP)
-     * @returns {Transform} in SVG (with Y pointing down)
+     * @param {Transform} t  
+     * @returns {Transform} transform, with y reflected (around 0)
      */
-    static getFromGLToSVGTransform(t) {
+    static reflectY(t) {
         return new Transform({x:t.x, y:-t.y, z:t.z, a:t.a, t:t.t});
     }
 

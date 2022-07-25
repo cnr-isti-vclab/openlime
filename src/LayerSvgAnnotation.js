@@ -141,8 +141,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	getSvgGroupTransform(transform, inverse=false) {
 		let t = this.transform.compose(transform);
 		let c = this.boundingBox().corner(0);
-		// FIXME CHECK IT
-		t = CoordinateSystem.getFromGLToSVGTransform(t);
+		// FIXME CHECK IT: Convert from GL to SVG, but without any scaling. It just needs to reflect around 0,
+		t = CoordinateSystem.reflectY(t);
 		return inverse ?
 		 `translate(${-c.x} ${-c.y})  scale(${1/t.z} ${1/t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
 		 `translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c.x} ${c.y})`;
