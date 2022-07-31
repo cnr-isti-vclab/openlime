@@ -188,7 +188,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 				if (this.selected.has(anno.id))
 					c.classList.add('selected');
 				this.svgGroup.appendChild(c);
-				c.onpointerdown = (e) => {
+				c.onpointerup = (e) => {
 					if (e.button == 0) {
 						e.preventDefault();
 						e.stopPropagation();

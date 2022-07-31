@@ -154,7 +154,6 @@ class Viewer {
     * @ignore
    */
     draw(time) {
-        if (!time) time = performance.now();
         this.animaterequest = null;
 
         let viewport = this.camera.viewport;

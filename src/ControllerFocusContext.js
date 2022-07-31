@@ -54,7 +54,7 @@ class ControllerFocusContext extends ControllerLens {
 
         // Handle only camera panning
         this.startPos = [0, 0];
-        this.initialTransform = this.camera.getCurrentTransform(performance.now());
+        this.initialTransform = this.camera.getCurrentTransform();
         
         // Handle pinchZoom
         this.initialPinchDistance = 1;
@@ -66,7 +66,7 @@ class ControllerFocusContext extends ControllerLens {
         if (!this.active)
             return;
             
-        const t = this.camera.getCurrentTransform(performance.now());
+        const t = this.camera.getCurrentTransform();
         const p = this.getScenePosition(e, t);
         this.panning = false;
         this.insideLens = this.isInsideLens(p);
@@ -116,7 +116,7 @@ class ControllerFocusContext extends ControllerLens {
         this.zooming = true;
         this.initialPinchDistance = this.distance(e1, e2);
         this.initialPinchRadius = this.lensLayer.getRadius();
-        this.initialScale = this.camera.getCurrentTransform(performance.now()).z; 
+        this.initialScale = this.camera.getCurrentTransform().z; 
         
         console.log("Start pinchZoom inside " + this.insideLens);
 
@@ -161,8 +161,7 @@ class ControllerFocusContext extends ControllerLens {
 
     updateRadiusAndScale(dz) {
         let focus = this.getFocus();
-        const now = performance.now();
-        let context = this.camera.getCurrentTransform(now);
+        let context = this.camera.getCurrentTransform();
 
         // Subdivide zoom between focus and context
         FocusContext.scale(this.camera, focus, context, dz);
@@ -176,8 +175,7 @@ class ControllerFocusContext extends ControllerLens {
     }
 
     updateScale(x, y, dz) {
-        const now = performance.now();
-        let context = this.camera.getCurrentTransform(now);
+        let context = this.camera.getCurrentTransform();
         const pos = this.camera.mapToScene(x, y, context);
 
         const maxDeltaZoom = this.camera.maxZoom / context.z;
@@ -197,12 +195,12 @@ class ControllerFocusContext extends ControllerLens {
 
      update() {
         if (this.panning) {
-            const t = this.camera.getCurrentTransform(performance.now());
+            const t = this.camera.getCurrentTransform();
             let lensDeltaPosition = this.lastInteractionDelta(t);
             lensDeltaPosition[0] /= t.z;
             lensDeltaPosition[1] /= t.z;
 
-            let context = this.camera.getCurrentTransform(performance.now());
+            let context = this.camera.getCurrentTransform();
             let focus = this.getFocus();
             if (this.FocusContextEnabled) {
                 FocusContext.pan(this.camera.viewport, focus, context, lensDeltaPosition, this.imageSize);
@@ -247,7 +245,7 @@ class ControllerFocusContext extends ControllerLens {
     }
 
     initLens() {
-        const t = this.camera.getCurrentTransform(performance.now());
+        const t = this.camera.getCurrentTransform();
         const imageRadius = 100 / t.z;
         this.lensLayer.setRadius(imageRadius);
         this.lensLayer.setCenter(this.imageSize.w * 0.5, this.imageSize.h*0.5);

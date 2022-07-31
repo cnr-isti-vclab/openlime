@@ -38,8 +38,7 @@ class ControllerPanZoom extends Controller {
 
 		this.startMouse = { x: e.offsetX, y: e.offsetY };
 
-		let now = performance.now();
-		this.initialTransform = this.camera.getCurrentTransform(now);
+		this.initialTransform = this.camera.getCurrentTransform();
 		this.camera.target = this.initialTransform.copy(); //stop animation.
 		e.preventDefault();
 	}
@@ -85,7 +84,7 @@ class ControllerPanZoom extends Controller {
 		let offsetX2 = e2.clientX - rect2.left;
 		let offsetY2 = e2.clientY - rect2.top;
 		const scale = this.distance(e1, e2);
-		const pos = this.camera.mapToScene((offsetX1 + offsetX2)/2, (offsetY1 + offsetY2)/2, this.camera.getCurrentTransform(performance.now()));
+		const pos = this.camera.mapToScene((offsetX1 + offsetX2)/2, (offsetY1 + offsetY2)/2, this.camera.getCurrentTransform());
 		const dz = scale/this.initialDistance;
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
 		this.initialDistance = scale;
@@ -105,7 +104,7 @@ class ControllerPanZoom extends Controller {
 			return;
 		}
 		let delta = -e.deltaY/53;
-		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
+		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform());
 		const dz = Math.pow(this.zoomAmount, delta);		
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
 		e.preventDefault();
@@ -115,7 +114,7 @@ class ControllerPanZoom extends Controller {
 	fingerDoubleTap(e) {
 		if(!this.active || !this.activeModifiers.includes(this.modifierState(e)))
 			return;
-		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
+		const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform());
 		const dz = this.zoomAmount;
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
 	}

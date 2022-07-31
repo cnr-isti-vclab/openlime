@@ -108,8 +108,7 @@ class ControllerLens extends Controller {
 
         // Transform canvas p to scene coords
         if (t == null) {
-            let now = performance.now();
-            t = this.camera.getCurrentTransform(now);
+            t = this.camera.getCurrentTransform();
         }
         const p = t.viewportToSceneCoords(this.camera.viewport, [x, rect.height- y]);
         

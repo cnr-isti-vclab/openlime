@@ -125,8 +125,7 @@ class Canvas {
 	getState(stateMask=null) {
 		let state = {};
 		if (!stateMask || stateMask.camera) {
-			let now = performance.now();
-			let m = this.camera.getCurrentTransform(now);
+			let m = this.camera.getCurrentTransform();
 			state.camera = { 'x': m.x, 'y': m.y, 'z': m.z, 'a': m.a };
 		}
 		state.layers = {};

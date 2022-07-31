@@ -72,12 +72,12 @@ let options = {
     layout: stele.layout,
     type: 'svg_annotations',
     style: ` 
-    .openlime-annotation { pointer-events:fill; opacity: 0.7; }
+    .openlime-annotation { pointer-events:fill; opacity: 0.7; fill:#dd0; stroke:#cc0}
     .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
 
     :focus { fill:yellow; }
-    path { fill:none; stroke-width:2; stroke:#000; vector-effect:non-scaling-stroke; pointer-events:all; }
-    path:hover { cursor:pointer; stroke:#f00; }
+    path { fill:none; stroke-width:2; stroke:#cc0; vector-effect:non-scaling-stroke; pointer-events:all; }
+    path:hover { cursor:pointer; stroke:#ff0; }
     .selected { stroke-width:3; }
     `,
     onClick: (anno) => {

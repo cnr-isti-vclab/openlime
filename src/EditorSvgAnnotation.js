@@ -768,7 +768,7 @@ class EditorSvgAnnotation {
 	/** @ignore */
 	mapToSvg(e) {
 		let camera = this.viewer.camera;
-		let transform = camera.getCurrentTransform(performance.now());
+		let transform = camera.getCurrentTransform();
 		let pos = camera.mapToScene(e.offsetX, e.offsetY, transform);
 		const topLeft = this.layer.boundingBox().corner(0);
 		pos.x -= topLeft[0]; 
