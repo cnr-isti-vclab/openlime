@@ -203,7 +203,7 @@ class CoordinateSystem {
      * @param {Transform} layerT layer transform 
      * @param {*} layerSize  {w, h} Size in pixel of the Layer
      * @param {bool} applyGLScale if true apply devPixelRatio scale. Keep it false when working with SVG
-     * @returns point {x, y} in Image space (0,0 left,top of the image, y Down)
+     * @returns Point in Image space (0,0 left,top of the image, y Down)
      */
      static fromCanvasHtmlToImage(p, camera, layerT, layerSize, useGL) {
         // Translate(Lw/2, Lh/2) * InvLayerT * InvCameraT *  Translate(-Vw/2, -Vh/2) * invertY * [Scale(devicePixelRatio)]
