@@ -35,7 +35,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="Annotation.html">Annotation</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
 				</ul>
 			</li>
 			
@@ -93,7 +93,8 @@
 <section>
     <article>
         <pre
-            class="sunlight-highlight-javascript linenums">import { Util } from "./Util"
+            class="sunlight-highlight-javascript linenums">import { CoordinateSystem } from "./CoordinateSystem";
+import { Util } from "./Util"
 
 /**
  * RenderingMode for lens and background. Currently implemented only draw and hide.
@@ -196,8 +197,8 @@ class LensDashboard {
 		// Thus get coordinates from clientXY
 		function getXYFromEvent(e, container) {
 			const x = e.clientX -  container.offsetLeft - container.clientLeft;
-			const y = container.clientHeight - (e.clientY - container.offsetTop - container.clientTop);
-			return [x, y];
+			const y = e.clientY - container.offsetTop - container.clientTop;
+			return {offsetX:x, offsetY:y};
 		}
 
         this.viewer.containerElement.addEventListener('pointerdown', (e) => {
@@ -340,16 +341,17 @@ class LensDashboard {
 
 	/** @ignore */
 	update(x, y, r) {
+		const useGL = false;
+		const center = CoordinateSystem.fromSceneToCanvasHtml({x:x, y:y}, this.viewer.camera, useGL);
+
 		const now = performance.now();
 		let cameraT = this.viewer.camera.getCurrentTransform(now);
-		const center = this.viewer.camera.sceneToCanvas(x, y, cameraT);
 		const radius = r * cameraT.z;
 		const sizew = 2 * radius + 2 * this.containerSpace;
 		const sizeh = 2 * radius + 2 * this.containerSpace;
 		const p = { x: 0, y: 0 };
 		p.x = center.x - radius - this.containerSpace;
-		p.y = center.y + radius + this.containerSpace;
-		p.y = this.viewer.camera.viewport.h - 1 - p.y;
+		p.y = center.y - radius - this.containerSpace;
 		this.container.style.left = `${p.x}px`;
 		this.container.style.top = `${p.y}px`;
 		this.container.style.width = `${sizew}px`;
@@ -359,8 +361,6 @@ class LensDashboard {
 		if (sizew != this.lensBox.w || sizeh != this.lensBox.h) {
 			const cx = Math.ceil(sizew * 0.5);
 			const cy = Math.ceil(sizeh * 0.5);
-			// const cx = sizew * 0.5;
-			// const cy = sizeh * 0.5;
 			this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
 			const circle = this.lensElm.querySelector('circle');
 			circle.setAttributeNS(null, 'cx', cx);
@@ -403,8 +403,8 @@ class LensDashboard {
 	  this.outMask.setAttribute( 'height', viewport.h);
 
 	  // Set lens parameter for inner lens
-	  this.inMask.setAttributeNS(null, 'cx', center.x  - viewport.w / 2);
-	  this.inMask.setAttributeNS(null, 'cy', -(center.y - viewport.h / 2));
+	  this.inMask.setAttributeNS(null, 'cx', center.x - viewport.w / 2);
+	  this.inMask.setAttributeNS(null, 'cy', center.y - viewport.h / 2);
 	  this.inMask.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
 	}
 
@@ -458,7 +458,7 @@ export {RenderingMode}</pre>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
 	
-		on Tue Jul 12th 2022
+		on Fri Aug 5th 2022
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
