@@ -32,6 +32,8 @@ const core = [
 	'./src/ControllerPanZoom.js',
 	'./src/PointerManager.js',
 	'./src/Viewer.js',
+	'./src/CoordinateSystem.js',
+	'./src/BoundingBox.js',
 ];
 
 const ui = [

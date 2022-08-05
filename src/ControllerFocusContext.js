@@ -1,4 +1,5 @@
 import {ControllerLens} from './ControllerLens.js'
+import { CoordinateSystem } from './CoordinateSystem.js';
 import { FocusContext } from './FocusContext.js';
 
 class ControllerFocusContext extends ControllerLens {
@@ -44,9 +45,9 @@ class ControllerFocusContext extends ControllerLens {
         this.imageSize = { w: 1, h: 1 };
         this.FocusContextEnabled = true;
 
-        this.centerToClickOffset = [0, 0];
-        this.previousClickPos = [0, 0];
-        this.currentClickPos = [0, 0];
+        this.centerToClickOffset = {x: 0, y: 0};
+        this.previousClickPos = {x: 0, y: 0};
+        this.currentClickPos = {x: 0, y: 0};
 
         this.insideLens = {inside:false, border:false};
         this.panning = false;
@@ -54,35 +55,35 @@ class ControllerFocusContext extends ControllerLens {
         this.panningCamera = false;
 
         // Handle only camera panning
-        this.startPos = [0, 0];
+        this.startPos = {x: 0, y: 0};
         this.initialTransform = this.camera.getCurrentTransform(performance.now());
         
         // Handle pinchZoom
         this.initialPinchDistance = 1;
         this.initialPinchRadius = 1;
-        this.initialPinchPos = [0,0];
+        this.initialPinchPos = {x: 0, y: 0};
     }
 
 	panStart(e) {
         if (!this.active)
             return;
             
-        const t = this.camera.getCurrentTransform(performance.now());
-        const p = this.getScenePosition(e, t);
+        const p = this.getScenePosition(e);
         this.panning = false;
         this.insideLens = this.isInsideLens(p);
+        const startPos = this.getPixelPosition(e); 
 
         if (this.insideLens.inside) {
-            const startPos = this.getPixelPosition(e); 
-
-            const lc = this.getScreenPosition(this.getFocus().position, t);
-            this.centerToClickOffset = [startPos[0] - lc[0], startPos[1] - lc[1]];
-            this.currentClickPos = [startPos[0], startPos[1]];
+            //const lc = this.getScreenPosition(this.getFocus().position, t);
+            const lc = CoordinateSystem.fromSceneToViewport(this.getFocus().position, this.camera, this.useGL);
+            
+            this.centerToClickOffset = {x:startPos.x - lc.x, y: startPos.y - lc.y};
+            this.currentClickPos = {x: startPos.x, y: startPos.y};
             this.panning = true;
         } else {
             if (this.enableDirectContextControl) {
-                this.startPos = { x: e.offsetX, y: e.offsetY };
-                this.initialTransform = t;
+                this.startPos = startPos;
+                this.initialTransform = this.camera.getCurrentTransform(performance.now());
                 this.camera.target = this.initialTransform.copy(); //stop animation.
                 this.panningCamera = true;
             }
@@ -96,12 +97,13 @@ class ControllerFocusContext extends ControllerLens {
 
     panMove(e) {
         if (Math.abs(e.offsetX) > 64000 || Math.abs(e.offsetY) > 64000) return;
+        this.currentClickPos = this.getPixelPosition(e);
         if(this.panning) {
-            this.currentClickPos = this.getPixelPosition(e);
+            // Update is performed within update() function
         } else if (this.panningCamera) {
             let m = this.initialTransform;
-            let dx = (e.offsetX - this.startPos.x);
-            let dy = (e.offsetY - this.startPos.y);
+            let dx = (this.currentClickPos.x - this.startPos.x);
+            let dy = (this.currentClickPos.y - this.startPos.y);
 
             this.camera.setPosition(this.updateDelay, m.x + dx, m.y + dy, m.z, m.a);
         }
@@ -113,8 +115,8 @@ class ControllerFocusContext extends ControllerLens {
 
         const p0 = this.getScenePosition(e1);
         const p1 = this.getScenePosition(e2);
-        const p = [(p0[0] + p1[0]) * 0.5, (p0[1] + p1[1]) * 0.5];
-        this.initialPinchPos = [(e1.offsetX + e2.offsetX) * 0.5, (e1.offsetY + e2.offsetY) * 0.5];
+        const p = {x:(p0.x + p1.x) * 0.5, y: (p0.y + p1.y) * 0.5};
+        this.initialPinchPos = {x: (e1.offsetX + e2.offsetX) * 0.5, y: (e1.offsetY + e2.offsetY) * 0.5};
         this.insideLens = this.isInsideLens(p);
         this.zooming = true;
         this.initialPinchDistance = this.distance(e1, e2);
@@ -136,7 +138,7 @@ class ControllerFocusContext extends ControllerLens {
                 //this.initialPinchDistance = d;
             } else {
                 if (this.enableDirectContextControl) {
-                    this.updateScale(this.initialPinchPos[0], this.initialPinchPos[1], scale);
+                    this.updateScale(this.initialPinchPos.x, this.initialPinchPos.y, scale);
                     this.initialPinchDistance = d;
                 }
             }
@@ -166,12 +168,13 @@ class ControllerFocusContext extends ControllerLens {
         if (this.zooming) {
             this.oldCursorPos = pe;
             let t = this.camera.getCurrentTransform(performance.now()); 
-            let p = t.viewportToSceneCoords(this.camera.viewport, pe); 
-
+            // let p = t.viewportToSceneCoords(this.camera.viewport, pe); 
+            const p = this.getScenePosition(pe);
+            
             const lens = this.getFocus();
             const c = lens.position;
-            let v = [p[0]-c[0], p[1]-c[1]];
-            let d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+            let v = {x: p.x-c.x, y: p.y-c.y};
+            let d = Math.sqrt(v.x*v.x + v.y*v.y);
 
             //Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
             const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
@@ -189,16 +192,16 @@ class ControllerFocusContext extends ControllerLens {
         // zoom will continue with a speed proportional to the radius/cursor distance
         
         if (this.zooming) {
-            let t = this.camera.getCurrentTransform(performance.now()); 
-            let p = t.viewportToSceneCoords(this.camera.viewport, this.oldCursorPos);
+            const p = this.getScenePosition(this.oldCursorPos);
 
             const lens = this.getFocus();
             const c = lens.position;
-            let v = [p[0]-c[0], p[1]-c[1]];
-            let d = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+            let v = {x: p.x-c.x, y: p.y-c.y};
+            let d = Math.sqrt(v.x*v.x + v.y*v.y);
 
             //Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
             const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
+            let t = this.camera.getCurrentTransform(performance.now()); 
             const newRadius = Math.max(radiusRange.min / t.z, d - this.deltaR);
             const dz = newRadius / lens.radius;
             this.updateRadiusAndScale(dz);
@@ -212,20 +215,6 @@ class ControllerFocusContext extends ControllerLens {
         super.zoomEnd();
         // Stop calling zoomUpdate
         clearTimeout(this.timeOut);
-        return;
-
-        // Adjust zoomrange if this does not fit Focs&Context (Currently already done by zoommove)
-        const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
-        let t = this.camera.getCurrentTransform(performance.now()); 
-        const r = this.getFocus().radius * t.z;
-        const dz = r < radiusRange.min ? 0.9 : r > radiusRange.max ? 1.1 : 1;
-       
-        if (dz != 1) {
-            const oldDelay = this.zoomDelay;
-            this.zoomDelay = 1000;
-            this.updateRadiusAndScale(dz);
-            this.zoomDelay = oldDelay
-        }
     }
     
     mouseWheel(e) {
@@ -237,7 +226,8 @@ class ControllerFocusContext extends ControllerLens {
         } else {
             if (this.enableDirectContextControl) {
                 // Invert scale when updating scale instead of lens radius, to obtain the same zoom direction
-                this.updateScale(e.offsetX, e.offsetY, 1 / dz);
+                const p = this.getPixelPosition(e);
+                this.updateScale(p.x, p.y, 1 / dz);
             }
         }
         e.preventDefault();
@@ -286,40 +276,39 @@ class ControllerFocusContext extends ControllerLens {
 
      update() {
         if (this.panning) {
-            const t = this.camera.getCurrentTransform(performance.now());
-            let lensDeltaPosition = this.lastInteractionDelta(t);
-            lensDeltaPosition[0] /= t.z;
-            lensDeltaPosition[1] /= t.z;
-
             let context = this.camera.getCurrentTransform(performance.now());
+            let lensDeltaPosition = this.lastInteractionDelta();
+            lensDeltaPosition.x /= context.z;
+            lensDeltaPosition.y /= context.z;
+
             let focus = this.getFocus();
             if (this.FocusContextEnabled) {
                 FocusContext.pan(this.camera.viewport, focus, context, lensDeltaPosition, this.imageSize);
                 this.camera.setPosition(this.updateDelay, context.x, context.y, context.z, context.a);
             } else {
-                focus.position[0] += lensDeltaPosition[0];
-                focus.position[1] += lensDeltaPosition[1];
+                focus.position.x += lensDeltaPosition.x;
+                focus.position.y += lensDeltaPosition.y;
             }
 
-            this.lensLayer.setCenter(focus.position[0], focus.position[1], this.updateDelay);
-            this.previousClickPos = [this.currentClickPos[0], this.currentClickPos[1]];
+            this.lensLayer.setCenter(focus.position.x, focus.position.y, this.updateDelay);
+            this.previousClickPos = [this.currentClickPos.x, this.currentClickPos.y];
         } 
     }
 
-    lastInteractionDelta(t) {
-        let result = [0, 0];
+    lastInteractionDelta() {
+        let result = {x:0, y:0};
         // Compute delta with respect to previous position
         if (this.panning && this.insideLens.inside) {
             // For lens pan Compute delta wrt previous lens position
-            const lc = this.getScreenPosition(this.getFocus().position, t);
+            const lc = CoordinateSystem.fromSceneToViewport(this.getFocus().position, this.camera, this.useGL);
             result =
-                [this.currentClickPos[0] - lc[0] - this.centerToClickOffset[0],
-                 this.currentClickPos[1] - lc[1] - this.centerToClickOffset[1]];
+                {x: this.currentClickPos.x - lc.x - this.centerToClickOffset.x,
+                 y: this.currentClickPos.y - lc.y - this.centerToClickOffset.y};
         } else {
             // For camera pan Compute delta wrt previous click position
             result = 
-                [this.currentClickPos[0] - this.previousClickPos[0],
-                 this.currentClickPos[1] - this.previousClickPos[1]];
+                {x: this.currentClickPos.x - this.previousClickPos.x,
+                 y: this.currentClickPos.y - this.previousClickPos.y};
         }
       
         return result;
@@ -334,13 +323,6 @@ class ControllerFocusContext extends ControllerLens {
         const imageRadius = 100 / t.z;
         this.lensLayer.setRadius(imageRadius);
         this.lensLayer.setCenter(this.imageSize.w * 0.5, this.imageSize.h*0.5);
-    }
-    
-    getScreenPosition(p, t) {
-        // Transform from p expressed wrt world center (at dataset center is 0,0)
-        // to Viewport coords 0,w 0,h
-        const c = t.sceneToViewportCoords(this.camera.viewport, p);
-        return c;
     }
 
 }

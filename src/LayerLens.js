@@ -1,3 +1,4 @@
+import { CoordinateSystem } from './CoordinateSystem.js';
 import { Layer }  from './Layer.js'
 import {LayerCombiner}  from './LayerCombiner.js'
 import {ShaderLens}     from './ShaderLens.js'
@@ -16,6 +17,11 @@ class LayerLens extends LayerCombiner {
 			dashboard: null,
 		}, options);
 		super(options);
+
+		if (!this.camera) {
+			console.log("Missing camera");
+			throw "Missing Camera"
+		}
 		
 		// Shader lens currently handles up to 2 layers
 		let shader = new ShaderLens();
@@ -30,6 +36,8 @@ class LayerLens extends LayerCombiner {
 
 		this.oldRadius = -9999;
 		this.oldCenter = [-9999, -9999];
+
+		this.useGL = true;
 
 		if(this.dashboard) this.dashboard.lensLayer = this;
 	}
@@ -77,11 +85,13 @@ class LayerLens extends LayerCombiner {
 	}
 
 	getCurrentCenter() {
-		return this.controls['center'].current.value;
+		const p = this.controls['center'].current.value;
+		return {x:p[0], y:p[1]};
 	}
 
 	getTargetCenter() {
-		return this.controls['center'].target.value;
+		const p = this.controls['center'].target.value;
+		return {x:p[0], y:p[1]};
 	}
 
 	getBorderColor() {
@@ -99,7 +109,7 @@ class LayerLens extends LayerCombiner {
 		if (this.dashboard) {
 			const c = this.getCurrentCenter();
 			const r = this.getRadius();
-			this.dashboard.update(c[0], c[1], r);
+			this.dashboard.update(c.x, c.y, r);
 			this.oldCenter = c;
 			this.oldRadius = r;
 		}
@@ -178,9 +188,9 @@ class LayerLens extends LayerCombiner {
 
 	getLensViewport(transform, viewport) {
 		const lensC = this.getCurrentCenter();
-		const l = transform.sceneToViewportCoords(viewport, lensC);
+		const l = CoordinateSystem.fromSceneToViewport(lensC, this.camera, this.useGL);
 		const r = this.getRadius() * transform.z;
-		return {x: Math.floor(l[0]-r)-1, y: Math.floor(l[1]-r)-1, dx: Math.ceil(2*r)+2, dy: Math.ceil(2*r)+2, w:viewport.w, h:viewport.h};
+		return {x: Math.floor(l.x-r)-1, y: Math.floor(l.y-r)-1, dx: Math.ceil(2*r)+2, dy: Math.ceil(2*r)+2, w:viewport.w, h:viewport.h};
 	}
 
 	getOverlayLayerViewport(transform, viewport) {
@@ -188,14 +198,14 @@ class LayerLens extends LayerCombiner {
 		if (this.layers.length == 2) {
 			// Get overlay projected viewport
 			let bbox = this.layers[1].boundingBox();
-			const p0v = transform.sceneToViewportCoords(viewport, [bbox.xLow, bbox.yLow]);
-			const p1v = transform.sceneToViewportCoords(viewport, [bbox.xHigh, bbox.yHigh]);
-		
+			const p0v = CoordinateSystem.fromSceneToViewport({x:bbox.xLow, y:bbox.yLow}, this.camera, this.useGL);
+			const p1v = CoordinateSystem.fromSceneToViewport({x:bbox.xHigh, y:bbox.yHigh}, this.camera, this.useGL);
+	
 			// Intersect with window viewport
-			const x0 = Math.min(Math.max(0, Math.floor(p0v[0])), viewport.w);
-			const y0 = Math.min(Math.max(0, Math.floor(p0v[1])), viewport.h);
-			const x1 = Math.min(Math.max(0, Math.ceil(p1v[0])), viewport.w);
-			const y1 = Math.min(Math.max(0, Math.ceil(p1v[1])), viewport.h);
+			const x0 = Math.min(Math.max(0, Math.floor(p0v.x)), viewport.w);
+			const y0 = Math.min(Math.max(0, Math.floor(p0v.y)), viewport.h);
+			const x1 = Math.min(Math.max(0, Math.ceil(p1v.x)), viewport.w);
+			const y1 = Math.min(Math.max(0, Math.ceil(p1v.y)), viewport.h);
 
 			const width = x1 - x0;
 			const height = y1 - y0;
@@ -217,9 +227,9 @@ class LayerLens extends LayerCombiner {
 
 	getLensInViewportCoords(transform, viewport) {
 		const lensC = this.getCurrentCenter();
-		const c = transform.sceneToViewportCoords(viewport, lensC);
+		const c = CoordinateSystem.fromSceneToViewport(lensC, this.camera, this.useGL);
 		const r = this.getRadius();
-		return [c[0],  c[1], r * transform.z, this.getBorderWidth()];
+		return [c.x, c.y, r * transform.z, this.getBorderWidth()];
 	}
 
 }

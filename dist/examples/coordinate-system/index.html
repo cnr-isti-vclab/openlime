@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Image Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+</head>
+
+<body>
+    <h1>OpenLIME - Coordinate System</h1>
+    <div class="openlime"></div>
+
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into .openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+
+        // Create an image layer and add it to the canvans
+        const layerT = new OpenLIME.Transform({x:0, y:0, z:1, a:0, t:0}); // CanvasHTML coords (yDown)
+        const layer = new OpenLIME.Layer({
+            layout: 'image',
+            type: 'image',
+            url: '../../assets/lime/image/lime.jpg',
+            transform: layerT
+        });
+        lime.addLayer('Base', layer);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+        // Remove light from the toolbar
+        ui.actions.light.display=false;
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display=true;
+        ui.actions.zoomout.display=true;
+        ui.actions.snapshot.display=true;
+		ui.pixelSize = 0.02;
+		ui.actions.ruler.display = true;
+        ui.attribution = `Lime, photo image - by <a href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a> from <a href="https://pixabay.com/it/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Pixabay</a>`;
+        ui.controlZoomMessage = "Use Ctrl + Wheel to zoom instead of scrolling";
+
+        // Draw SVG Overlay
+        const delta = 10;
+        const w = lime.camera.viewport.w;
+        const h = lime.camera.viewport.h;
+        let svgElement = OpenLIME.Util.createSVGElement('svg', { viewBox: `0 0 ${w} ${h}` });
+        // let circle = OpenLIME.Util.createSVGElement('circle', { cx: w/2, cy: h/2, r: delta });
+		// circle.setAttributeNS(null, 'style', `position:absolute; visibility: visible; fill:none; stroke: rgb(255,0,0,1); stroke-width: ${2}px;`);
+		// svgElement.appendChild(circle);
+
+        let lineH = OpenLIME.Util.createSVGElement('line', { x1: 0, y1: h/2, x2: w, y2: h/2, stroke:'rgb(255,0,0,1)'});
+        let lineV = OpenLIME.Util.createSVGElement('line', { x1: w/2, y1: 0, x2: w/2, y2: h, stroke:'rgb(255,0,0,1)'});
+        svgElement.appendChild(lineH);
+        svgElement.appendChild(lineV);
+
+        let shadowRoot = lime.canvas.overlayElement.shadowRoot; 
+        if (shadowRoot == null) {
+            //console.log("WARNING: null ShadowRoot, create a new one");
+            shadowRoot = lime.canvas.overlayElement.attachShadow({ mode: "open" });
+        }
+        shadowRoot.appendChild(svgElement);
+    
+        let p = document.createElement('p');
+        p.id = "coordinateInfo";
+        p.classList.add('openlime-help-content');
+        p.style.left = "1%";
+        p.style.width = "180px";
+        p.style.top = "1%";
+        p.style.height = "60%";
+        p.style['font-size'] = "14px";
+        p.style['align-items'] = "left";
+        p.innerHTML = "Coordinate System info";
+        lime.containerElement.appendChild(p);
+
+        function dist(p0, p1) {
+            const dx = p0.x - p1.x;
+            const dy = p0.y - p1.y;
+            return Math.sqrt(dx*dx+dy*dy);
+        }
+        function isEpsilonEqual(p0, p1, eps) {
+            return dist(p0, p1) < eps;
+        }
+        function checkString(str, condition) {
+            let decoratedStr = str;
+            str += condition ? "<font color='lime'><b>true</b></font>" : "<font color='red'><b>false</b></font>";
+            return str;
+        }
+
+        document.addEventListener('mousedown', function (e) {
+            // Get Mouse position, do some transformation and checks, and print results
+
+            const vp = lime.camera.viewport;
+            const vpGL = lime.camera.glViewport();
+            const pos = {x:e.offsetX, y:e.offsetY};
+            const useGL = true;
+            const layerSize = {w: layer.layout.width, h:layer.layout.height};
+            const t = new OpenLIME.Transform({x:7});
+            const pViewport = OpenLIME.CoordinateSystem.fromCanvasHtmlToViewport(pos, lime.camera, useGL);
+            const pHtml = OpenLIME.CoordinateSystem.fromViewportToCanvasHtml(pViewport, lime.camera, useGL); // Works on controllerPanZoom
+            const pCenter = OpenLIME.CoordinateSystem.getFromViewportToCenterTransform(lime.camera, useGL).apply(pViewport.x, pViewport.y);
+            const pScene = OpenLIME.CoordinateSystem.fromCanvasHtmlToScene(pos, lime.camera, useGL); // Works on controllerPanZoom
+            const pLayer =  OpenLIME.CoordinateSystem.fromViewportToLayer(pViewport, lime.camera, layerT, useGL);
+            const pImage = OpenLIME.CoordinateSystem.fromCanvasHtmlToImage(pos, lime.camera, layerT, layerSize, useGL);
+            const pCheckLayer = OpenLIME.CoordinateSystem.fromLayerToViewport(pLayer, lime.camera, layerT, useGL);
+            const pCenterFromLayer = OpenLIME.CoordinateSystem.fromLayerToCenter(pLayer, lime.camera, layerT, useGL);
+            const pCheckScene = OpenLIME.CoordinateSystem.fromSceneToCanvasHtml(pScene, lime.camera, useGL);
+            const pCheckSceneViewport = OpenLIME.CoordinateSystem.fromSceneToViewport(pScene, lime.camera, useGL);
+           // const pCheckImage = OpenLIME.CoordinateSystem.fromImageToCanvasHtml(pImage, lime.camera, layerT, layerSize, useGL);
+            const eps = 0.1;
+
+            const bw = 100;
+            const boxInLayer = new OpenLIME.BoundingBox({xLow: pLayer.x, yLow:pLayer.y, xHigh:pLayer.x+bw, yHigh:pLayer.y+bw});
+            const boxInViewport = OpenLIME.CoordinateSystem.fromLayerBoxToViewportBox(boxInLayer, lime.camera, layerT, useGL);
+            const boxInScene = OpenLIME.CoordinateSystem.fromLayerBoxToSceneBox(boxInLayer, layerT);
+            const boxCheckVp = OpenLIME.CoordinateSystem.fromViewportBoxToLayerBox(boxInViewport, lime.camera, layerT, useGL);
+            const boxCheckSc = OpenLIME.CoordinateSystem.fromSceneBoxToLayerBox(boxInScene, layerT);
+            let okBoxViewportLayer = true;
+            let okBoxViewportScene = true;
+            for(let i = 0; i < 4; ++i) {
+                const c0 = boxInLayer.corner(i);
+                const cScene = boxInScene.corner(i);
+                const checkCornerVp = boxCheckVp.corner(i);
+                const checkCornerSc = boxCheckSc.corner(i);
+                okBoxViewportLayer = okBoxViewportLayer && isEpsilonEqual(c0, checkCornerVp, eps);
+                okBoxViewportScene = okBoxViewportLayer && isEpsilonEqual(c0, checkCornerSc, eps);
+            }
+
+            let p = document.getElementById("coordinateInfo");
+            p.innerHTML = "Coordinate System info<br><br>" +
+            "Viewport " + vp.w.toFixed(0) + ", " + vp.h.toFixed(0) + "<br>" + 
+            "GLViewport " + vpGL.w.toFixed(0) + ", " + vpGL.h.toFixed(0) + "<br>" +
+            "Coordinates useGL " + useGL +  "<br>" +
+            "LayerT: x:" + layerT.x.toFixed(p) + ", y:" + layerT.y.toFixed(p) + ", z:" + layerT.z.toFixed(p) + ", a:" + layerT.a.toFixed(p) + "<br>" +
+            "<br>" +
+            "CanvasHtml " + pos.x.toFixed(0) + ", " + pos.y.toFixed(0)  + "<br>" +
+            "Viewport " + pViewport.x.toFixed(0) + ", " + pViewport.y.toFixed(0)  + "<br>" +
+            "Center " + pCenter.x.toFixed(0) + ", " + pCenter.y.toFixed(0)  + "<br>" +
+            "Scene " + pScene.x.toFixed(0) + ", " + pScene.y.toFixed(0)  + "<br>" +
+            "Sc2Vp " + pCheckSceneViewport.x.toFixed(0) + ", " + pCheckSceneViewport.y.toFixed(0)  + "<br>" +
+            "Layer " + pLayer.x.toFixed(0) + ", " + pLayer.y.toFixed(0)  + "<br>" +
+            "Image " + pImage.x.toFixed(0) + ", " + pImage.y.toFixed(0)  + "<br>" +
+            "<br>" +
+            checkString("CheckHtmlViewport ", isEpsilonEqual(pHtml, pos, eps)) + "<br>" +
+            checkString("CheckViewportLayer ", isEpsilonEqual(pViewport, pCheckLayer, eps)) + "<br>" +
+            checkString("CheckLayerCenter ", isEpsilonEqual(pCenter, pCenterFromLayer, eps)) + "<br>" +
+            checkString("CheckCanvasScene ", isEpsilonEqual(pos, pCheckScene, eps)) + "<br>" +
+            checkString("CheckSceneViewport ", isEpsilonEqual(pViewport, pCheckSceneViewport, eps)) + "<br>" +
+            checkString("CheckBoxViewLayer ", okBoxViewportLayer) + "<br>" +
+            checkString("CheckBoxViewScene ", okBoxViewportScene) + "<br>"
+            ;
+
+            if ((!okBoxViewportLayer || !okBoxViewportScene) && layerT.a != 0) {
+                p.innerHTML += "BoxTransform not invertible for angles not multiple of 90";
+            }
+           
+        });
+
+    </script>
+</body>
+
+</html>

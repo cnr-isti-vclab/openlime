@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>OpenLIME Annotation coordinate conversion</title>
+</head>
+
+<body>
+    <div id="download"></div>
+    <h1>OpenLIME Annotation coordinate conversion</h1>
+    <p>Convert an annotation file from Scene with y coordinates pointing down<br>
+        to new version based on CoordinateSystem class, with Scene with y coordinates pointing up</p>
+    <p>Select annotation file to convert</p>
+    <input onchange="readFile(this)" type="file"> output file
+    <input type="text" id="outName">
+    <button onclick="convert()">Convert</button>
+
+    <script>
+        let annotations = null;
+        
+        function readFile(input) {
+            let file = input.files[0];
+            let out = document.getElementById("outName");
+            out.value =  "new-"+file.name;
+
+            let reader = new FileReader();
+
+            reader.readAsText(file);
+
+            reader.onload = function() {
+                annotations = JSON.parse(reader.result);
+                console.log("ANNOTATIONS");
+                console.log(annotations);
+            };
+
+            reader.onerror = function() {
+                console.log(reader.error);
+                alert("Unable to read file. Error" + reader.error);
+            };
+        }
+
+        function convert() {
+            // Invert transformation y
+            for(let a of annotations) {
+                a.state.camera.y = -a.state.camera.y;
+            }
+
+            // Save converted file
+            let out = document.getElementById("outName");
+            const outname = out.value;
+            if (confirm("Save new file as " + outname)) {
+                _downloadObjectAsJson(annotations, outname);
+            } 
+        }
+
+        function _downloadObjectAsJson(exportObj, exportName) {
+            let download_div = document.getElementById("download");
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+            let downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", exportName);
+            download_div.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+    </script>
+</body>
+
+</html>
