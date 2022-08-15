@@ -120,8 +120,6 @@ class ControllerLens extends Controller {
         
         return result;
     }
-
-
     
     /**
      * Start zoom operation clicking on lens border. Call it at start of pointerdown event on lens border
@@ -157,7 +155,7 @@ class ControllerLens extends Controller {
             let d = Math.sqrt(v.x*v.x + v.y*v.y);
 
             //  Set as new radius |Click-LensCenter|(now) - |Click-LensCenter|(start)
-            const scale = this.camera.getCurrentTransform(performance.now()).z; 
+            const scale = this.camera.getCurrentTransform().z; 
             const radiusRange = FocusContext.getRadiusRangeCanvas(this.camera.viewport);
             const newRadius = Math.max(radiusRange.min / scale, d - this.deltaR);
 

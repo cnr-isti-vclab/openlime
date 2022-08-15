@@ -56,7 +56,7 @@ class ControllerFocusContext extends ControllerLens {
 
         // Handle only camera panning
         this.startPos = {x: 0, y: 0};
-        this.initialTransform = this.camera.getCurrentTransform(performance.now());
+        this.initialTransform = this.camera.getCurrentTransform();
         
         // Handle pinchZoom
         this.initialPinchDistance = 1;
@@ -121,7 +121,6 @@ class ControllerFocusContext extends ControllerLens {
         this.zooming = true;
         this.initialPinchDistance = this.distance(e1, e2);
         this.initialPinchRadius = this.lensLayer.getRadius();
-
         e1.preventDefault();
 	}
 
@@ -240,8 +239,7 @@ class ControllerFocusContext extends ControllerLens {
      */
     updateRadiusAndScale(dz) {
         let focus = this.getFocus();
-        const now = performance.now();
-        let context = this.camera.getCurrentTransform(now);
+        let context = this.camera.getCurrentTransform();
 
         // Subdivide zoom between focus and context
         FocusContext.scale(this.camera, focus, context, dz);
@@ -255,8 +253,7 @@ class ControllerFocusContext extends ControllerLens {
     }
 
     updateScale(x, y, dz) {
-        const now = performance.now();
-        let context = this.camera.getCurrentTransform(now);
+        let context = this.camera.getCurrentTransform();
         const pos = this.camera.mapToScene(x, y, context);
 
         const maxDeltaZoom = this.camera.maxZoom / context.z;
@@ -276,7 +273,7 @@ class ControllerFocusContext extends ControllerLens {
 
      update() {
         if (this.panning) {
-            let context = this.camera.getCurrentTransform(performance.now());
+            let context = this.camera.getCurrentTransform();
             let lensDeltaPosition = this.lastInteractionDelta();
             lensDeltaPosition.x /= context.z;
             lensDeltaPosition.y /= context.z;
@@ -319,7 +316,7 @@ class ControllerFocusContext extends ControllerLens {
     }
 
     initLens() {
-        const t = this.camera.getCurrentTransform(performance.now());
+        const t = this.camera.getCurrentTransform();
         const imageRadius = 100 / t.z;
         this.lensLayer.setRadius(imageRadius);
         this.lensLayer.setCenter(this.imageSize.w * 0.5, this.imageSize.h*0.5);

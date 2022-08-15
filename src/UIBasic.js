@@ -171,7 +171,7 @@ class UIBasic {
     			onPanEnd: this.showLightDirections ? () => { 
     				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true) );
     				this.enableLightDirections(false); } : null,
-    			relative: true 
+    			relative: true
 			});
 
 		controller.priority = 0;

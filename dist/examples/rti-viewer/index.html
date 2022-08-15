@@ -97,7 +97,7 @@
 
                 let x = Math.cos(this.angle)/this.w;
                 let y = Math.sin(this.angle)/this.w;
-                this.layer.setLight([x, y], 100);
+                this.layer.setLight([x, y], 0);
                 if(this.spinning)
                     requestAnimationFrame(() => this.update());
             }
@@ -114,9 +114,10 @@
         }
 
 
-        let spinner = new LightSpin(layer0, 20);
+        let spinner = new LightSpin(layer0, 15);
         spinner.start();
-        lime.pointerManager.idleTime = 60;
+        lime.pointerManager.idleTime = 2;
+        lime.pointerManager.idling = true; //
         lime.pointerManager.onEvent( { 
             priority: 0,
             wentIdle: () => { spinner.start() }, 

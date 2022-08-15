@@ -175,8 +175,7 @@ class Camera {
 	 * @param {number} dy The vertical displacement. 
 	 */
 	pan(dt, dx, dy) {
-		let now = performance.now();
-		let m = this.getCurrentTransform(now);
+		let m = this.getCurrentTransform();
 		m.x += dx;
 		m.y += dy;
 		this.setPosition(dt, m.x, m.y, m.z, m.a);
@@ -192,8 +191,7 @@ class Camera {
 		if (!x) x = 0;
 		if (!y) y = 0;
 
-		let now = performance.now();
-		let m = this.getCurrentTransform(now);
+		let m = this.getCurrentTransform();
 
 		if (this.bounded) {
 			z = Math.min(Math.max(z, this.minZoom), this.maxZoom);
@@ -213,9 +211,7 @@ class Camera {
 	 */
 	rotate(dt, a) {
 
-		let now = performance.now();
-		let m = this.getCurrentTransform(now);
-
+		let m = this.getCurrentTransform();
 		this.setPosition(dt, m.x, m.y, m.z, this.target.a + a);
 	}
 
@@ -227,8 +223,7 @@ class Camera {
 	 */
 	deltaZoom(dt, dz, x=0, y=0) {
 
-		let now = performance.now();
-		let m = this.getCurrentTransform(now);
+		let m = this.getCurrentTransform();
 
 		//rapid firing wheel event need to compound.
 		//but the x, y in input are relative to the current transform.
@@ -254,7 +249,7 @@ class Camera {
 	 * @returns {Transform} The current transform
 	 */
 	getCurrentTransform(time) {
-		if(time > this.target.t) this.easing = 'linear';
+		if(!time) time = performance.now();
 		return Transform.interpolate(this.source, this.target, time, this.easing);
 	}
 
@@ -264,6 +259,7 @@ class Camera {
 	 * @returns {Transform} The current transform
 	 */
 	 getGlCurrentTransform(time) {
+		if(!time) time = performance.now();
 		const pos = this.getCurrentTransform(time);
 		pos.x *= window.devicePixelRatio;
 		pos.y *= window.devicePixelRatio;

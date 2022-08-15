@@ -771,11 +771,9 @@ class EditorSvgAnnotation {
 		const p = {x:e.offsetX, y: e.offsetY};
 		const layerT = this.layer.transform;
 		const useGL = false;
-		console.log(layerT);
 		const layerbb = this.layer.boundingBox();
 		const layerSize = {w:layerbb.width(), h:layerbb.height()};
 		let pos = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
-		
 		return pos;
 	}
 }

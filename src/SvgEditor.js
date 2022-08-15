@@ -35,6 +35,7 @@ class SvgEditor {
 
 		viewer.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
+		viewer.camera.addEvent('update', () => this.cameraUpdate());
 	}
 
 
@@ -52,10 +53,17 @@ class SvgEditor {
 			throw "Unknown editor tool: " + tool;
 
 		this.tool = this.tools[tool];
+		this.tool.annotation = this.annotation;
+		//this.tool.currentZ = z;
 
 		document.querySelector('.openlime-overlay').classList.toggle('erase', tool == 'erase');
 		document.querySelector('.openlime-overlay').classList.toggle('crosshair', tool && tool != 'erase');
 	}
+	cameraUpdate() {
+		let t = this.viewer.camera.target;
+		this.tool && this.tool.zoomChanged(t.z);		
+	}
+
 
 
 	/** @ignore */
@@ -88,21 +96,28 @@ class SvgEditor {
 	panStart(e) {
 		if (e.buttons != 1 || e.ctrlKey || e.altKey || e.shiftKey || e.metaKey)
 			return;
-		if(!this.tool) return;
-		if(!this.tool.draggable)
+
+		if(e.originSrc.classList.contains('handle')) {
+			
+			e.preventDefault();
+			return;
+		}
+
+		if(!this.tool || !this.tool.draggable)
 			return;
 		
 		this.panning = true;
-		e.preventDefault();
 
 //		this.saveCurrent();
 
+		//FIXME: move this stuff into a prototype tool class?
 		const pos = this.mapToSvg(e);
 		let shape = this.tool.create(pos, e);
 		this.annotation.elements.push(shape);
 		this.annotation.needsUpdate = true;
 
 		this.viewer.redraw();
+		e.preventDefault();
 	}
 
 	/** @ignore */
@@ -136,7 +151,7 @@ class SvgEditor {
 			return;
 		e.preventDefault();
 		const pos = this.mapToSvg(e);
-		let changed = this.factory.hover(pos, e);
+		let changed = this.tool.hover(pos, e);
 		this.annotation.needsUpdate = true;
 		this.viewer.redraw();
 	}
@@ -182,7 +197,7 @@ class SvgEditor {
 		/** @ignore */
 	mapToSvg(e) {
 		let camera = this.viewer.camera;
-		let transform = camera.getCurrentTransform(performance.now());
+		let transform = camera.getCurrentTransform();
 		let pos = camera.mapToScene(e.offsetX, e.offsetY, transform);
 		const topLeft = this.layer.boundingBox().corner(0);
 		pos.x -= topLeft[0]; 
@@ -191,34 +206,97 @@ class SvgEditor {
 		return pos;
 	}
 	
-};
-				
-/** @ignore */
-class Box {
+}; 
+	
+/* We have three different behaviours:
+1) click will place marker then a) repeat true place another, repeat false, will update.
+	sequence: create(pos)
+
+2) click click click until either we get back to the beginning or esc or enter or another item is selected.
+	sequence: create(pos) update update update 
+
+3) mousedown drag mouseup
+	sequence create(pos) update .... update finish() */
+
+class Handle {
+	static handleSize = 12;
+	constructor(pos, z) {
+		let d = Handle.handleSize/z;
+		let element = this.element = createSVGElement('circle', { cx: pos.x, cy: pos.y, r: d, class:'handle' });
+		
+		//this.element.addEventListener(''
+	}
+	setPosition(pos) {
+		this.element.setAttribute('cx', pos.x);
+		this.element.setAttribute('cy', pos.y);
+	}
+	setZoom(z) {
+		this.element.setAttribute('r', Handle.handleSize/z);
+	}
+}
+
+class Tool {
 	constructor() {
+		this.draggable = true;  //use the panStart etc events.
+		this.multiple = false;  //draw another after finish
+		this.current = null;    //current element
+		this.handles = [];
+		this.currentZ = 1;     // current zoom level
+	}
+	create(pos) {}
+	update(pos) {}
+	finish(pos) {}
+	newHandle(pos) {
+		let h = new Handle(pos, this.currentZ);
+		this.handles.push(h);
+		this.annotation.elements.push(h.element);
+		return h;
+	}
+	zoomChanged(z) {
+		if(this.currentZ == z)
+			return;
+
+		this.currentZ = z;
+		for(let h of this.handles)
+			h.setZoom(z);
+	}
+}
+
+/** @ignore */
+class Box extends Tool {
+	constructor() {
+		super();
 		this.origin = null;
 		this.box = null;
-		this.draggable = true;
 	}
 
 	create(pos) {
+		if(!this.multiple)
+			this.annotation.elements = [];
 		this.origin = pos;
 		this.box = createSVGElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
+		this.first = this.newHandle(pos);
+		this.second = this.newHandle(pos);
 		return this.box;
 	}
 
 	adjust(pos) {
 		let p = this.origin;
 
-		this.box.setAttribute('x', Math.min(p.x, pos.x));
-		this.box.setAttribute('width', Math.abs(pos.x - p.x));
-		this.box.setAttribute('y', Math.min(p.y, pos.y));
+		this.first.setPosition(p);
+		this.second.setPosition(pos);
+		this.box.setAttribute('x',      Math.min(p.x, pos.x));
+		this.box.setAttribute('width',  Math.abs(pos.x - p.x));
+		this.box.setAttribute('y',      Math.min(p.y, pos.y));
 		this.box.setAttribute('height', Math.abs(pos.y - p.y));
 	}
 
 	finish(pos) {
 		return this.box;
 	}
+}
+
+class Circle {
 }
 
 class Point {
@@ -231,14 +309,12 @@ class Pen {
 class Line {
 }
 
-class Circle {
-}
-
 class Pin {
 }
 
 class Erase {
 }
+
 //FIXME! Again!
 function createSVGElement(tag, attributes) {
 	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);

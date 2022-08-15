@@ -129,7 +129,6 @@ class ShaderRTI extends Shader {
 		this.scale = this.material.scale;
 		this.bias = this.material.bias;
 
-		console.log(this.scale, this.bias);
 		if(['mrgb', 'mycc'].includes(this.colorspace))
 			this.loadBasis(this.basis);
 

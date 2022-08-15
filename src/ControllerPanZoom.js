@@ -40,8 +40,7 @@ class ControllerPanZoom extends Controller {
 
 		this.startMouse = CoordinateSystem.fromCanvasHtmlToViewport({ x: e.offsetX, y: e.offsetY }, this.camera, this.useGLcoords);
 
-		let now = performance.now();
-		this.initialTransform = this.camera.getCurrentTransform(now);
+		this.initialTransform = this.camera.getCurrentTransform();
 		this.camera.target = this.initialTransform.copy(); //stop animation.
 		e.preventDefault();
 	}
