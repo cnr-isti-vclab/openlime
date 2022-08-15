@@ -1,6 +1,7 @@
 import { BoundingBox } from "./BoundingBox";
 import { addSignals } from "./Signals";
 import { Tile } from "./Tile";
+import { CoordinateSystem } from "./CoordinateSystem";
 
 // Tile level x y  index ----- tex missing() start/end (tarzoom) ----- time, priority size(byte)
 
@@ -153,7 +154,7 @@ class Layout {
 	}
 
 	/** returns the list of tiles required for a rendering, sorted by priority, max */
-	needed(viewport, transform, border, bias, tiles, maxtiles = 8) {
+	needed(viewport, transform, layerTransform, border, bias, tiles, maxtiles = 8) {
 		//FIXME should check if image is withing the viewport (+ border)
 		let tile = tiles.get(0) || this.newTile(0); //{ index, x, y, missing, tex: [], level };
 		tile.time = performance.now();
@@ -165,13 +166,18 @@ class Layout {
 	}
 
 	/** returns the list of tiles available for a rendering */
-	available(viewport, transform, border, bias, tiles) {
+	available(viewport, transform, layerTransform, border, bias, tiles) {
 		//FIXME should check if image is withing the viewport (+ border)
 		let torender = {};
 
 		if (tiles.has(0) && tiles.get(0).missing == 0) 
 			torender[0] = tiles.get(0); //{ index: index, level: level, x: x >> d, y: y >> d, complete: true };
 		return torender;
+	}
+
+	getViewportBox(viewport, transform, layerT) {
+		const boxViewport = new BoundingBox({xLow:viewport.x, yLow:viewport.y, xHigh:viewport.x+viewport.dx, yHigh:viewport.y+viewport.dy});
+		return CoordinateSystem.fromViewportBoxToImageBox(boxViewport, transform, viewport, layerT, {w:this.width, h:this.height});
 	}
 }
 

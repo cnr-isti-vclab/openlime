@@ -150,7 +150,7 @@ class BoundingBox {
     corner(i) {
         // To avoid the switch
         let v = this.toArray();
-        return [ v[0 + (i&0x1)<<1],  v[1 + (i&0x2)] ];
+        return {x: v[0 + (i&0x1)<<1], y: v[1 + (i&0x2)] };
     }
 
     intersects(box) {

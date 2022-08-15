@@ -456,9 +456,9 @@ class Layer {
 		this.prepareWebGL();
 
 		//		find which quads to draw and in case request for them
-		transform = this.transform.compose(transform);
-		let available = this.layout.available(viewport, transform, 0, this.mipmapBias, this.tiles);
+		let available = this.layout.available(viewport, transform, this.transform, 0, this.mipmapBias, this.tiles);
 
+		transform = this.transform.compose(transform);
 		let matrix = transform.projectionMatrix(viewport);
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
@@ -689,7 +689,7 @@ class Layer {
 			if (tile.missing != 0 && !this.requested[index])
 				tmp.push(tile);
 		} */
-		this.queue = this.layout.needed(viewport, transform, this.prefetchBorder, this.mipmapBias, this.tiles);
+		this.queue = this.layout.needed(viewport, transform, this.transform, this.prefetchBorder, this.mipmapBias, this.tiles);
 		/*		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
 				if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
 					return;

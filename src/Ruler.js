@@ -77,9 +77,9 @@ class Ruler extends Units {
 		let t = this.camera.getGlCurrentTransform(performance.now());
 		let viewport = this.camera.glViewport();
 		this.svg.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
-		let c = [0, 0]; //this.boundingBox().corner(0);
+		let c = {x:0, y:0}; //this.boundingBox().corner(0);
 		this.svgGroup.setAttribute("transform",
-			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`);
+			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c.x} ${c.y})`);
 
 		for(let m of this.history) 
 			this.updateMeasure(m, t);

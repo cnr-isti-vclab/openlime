@@ -2,6 +2,7 @@ import { Skin } from './Skin.js';
 import { Util } from './Util.js';
 import { simplify, smooth, smoothToPath } from './Simplify.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
+import { CoordinateSystem } from './CoordinateSystem.js'
 
 /**
  * Callback for create/update/delete annotations.
@@ -755,13 +756,14 @@ class EditorSvgAnnotation {
 
 	/** @ignore */
 	mapToSvg(e) {
-		let camera = this.viewer.camera;
-		let transform = camera.getCurrentTransform(performance.now());
-		let pos = camera.mapToScene(e.offsetX, e.offsetY, transform);
-		const topLeft = this.layer.boundingBox().corner(0);
-		pos.x -= topLeft[0]; 
-		pos.y -= topLeft[1];
-		pos.z = transform.z;
+		const p = {x:e.offsetX, y: e.offsetY};
+		const layerT = this.layer.transform;
+		const useGL = false;
+		console.log(layerT);
+		const layerbb = this.layer.boundingBox();
+		const layerSize = {w:layerbb.width(), h:layerbb.height()};
+		let pos = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
+		
 		return pos;
 	}
 }

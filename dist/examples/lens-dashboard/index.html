@@ -23,6 +23,7 @@
         lime.camera.bounded = false;
 
         // BASE LAYER
+        let baseLayerTransform = new OpenLIME.Transform({x:0, y:0, z:1});
         const options = {
             channels: {
                 'kd': '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
@@ -37,7 +38,8 @@
             layout: 'deepzoom',
             alphaLimits: [0.05, 0.6], //Only used for gloss
             brightness: 3.14,
-            gamma: 1.0 //FIXME to change
+            gamma: 1.0, //FIXME to change
+            transform: baseLayerTransform
         };
 
         const layer = new OpenLIME.LayerBRDF(options);
@@ -79,7 +81,7 @@
             lensLayer: lensLayer,
             camera: lime.camera,
             canvas: lime.canvas,
-            enableDirectContextControl: false
+            enableDirectContextControl: true
         });
         lime.pointerManager.onEvent(controllerLens);
         lensLayer.controllers.push(controllerLens);

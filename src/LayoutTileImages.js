@@ -130,10 +130,9 @@ class LayoutTileImages extends Layout {
 		};
 	}
 
-    needed(viewport, transform, border, bias, tiles, maxtiles = 8) {
+    needed(viewport, transform, layerTransform, border, bias, tiles, maxtiles = 8) {
 		//look for needed nodes and prefetched nodes (on the pos destination
-		let box = transform.getInverseBox(viewport);
-		//box.shift(this.width/2, this.height/2);
+		const box = this.getViewportBox(viewport, transform, layerTransform);
 
 		let needed = [];
 		let now = performance.now();
@@ -160,11 +159,10 @@ class LayoutTileImages extends Layout {
     }
 
 	/** returns the list of tiles available for a rendering */
-	available(viewport, transform, border, bias, tiles) {
+	available(viewport, transform, layerTransform, border, bias, tiles) {
 		//find box in image coordinates where (0, 0) is in the upper left corner.
-		let box = transform.getInverseBox(viewport);
-		//box.shift(this.width/2, this.height/2);
-
+		const box = this.getViewportBox(viewport, transform, layerTransform);
+	
 		let torender = [];
 
 		// Linear scan of all the potential tiles
