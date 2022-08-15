@@ -8,6 +8,7 @@ import { CoordinateSystem } from './CoordinateSystem.js'
  * Callback for create/update/delete annotations.
  * @function crudCallback
  * @param {Annotation} anno The current annotation entry.
+ * @param {string} action Action to be performed: 'create', 'delete', 'update'
  */
 
 /**
@@ -48,9 +49,7 @@ import { CoordinateSystem } from './CoordinateSystem.js'
  *          viewer: lime,
  *          classes: classParam
  * });
- * editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
- * editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); processRequest(anno, 'update'); return true; };
- * editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
+ * editor.crudCallback = (anno) => myProcessRequest(anno, action); 
  * ```
  */
 class EditorSvgAnnotation {
@@ -60,9 +59,7 @@ class EditorSvgAnnotation {
 	 * @param {LayerSvgAnnotation} layer The annotation layer on which to operate.
 	 * @param {Object} [options] An object literal with SVG editor parameters.
 	 * @param {AnnotationClasses} options.classes An object literal definying colors and labels of the annotation classes.
-	 * @param {crudCallback} options.createCallback The callback to implement annotation creation.
-	 * @param {crudCallback} options.updateCallback The callback to implement annotation update.
-	 * @param {crudCallback} options.deleteCallback The callback to implement annotation deletion.
+	 * @param {crudCallback} options.crudCallback The callback to implement annotation creation, update, deletion
 	 * @param {bool} options.enableState=false Whether to enable custom annotation state. This allows to include some state variables into an annotation item (such as camera, light or lens position).
 	 * @param {customStateCallback} options.customState The callback implementing custom state annotations.
 	 * @param {customDataCallback} options.customData The callback to customize the annotation data object.
@@ -140,9 +137,6 @@ class EditorSvgAnnotation {
 			customData: null,
 			editWidget: null,
 			selectedCallback: null,
-			createCallback: null, //callbacks for backend
-			updateCallback: null,
-			deleteCallback: null
 		}, options);
 
 		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].style.stroke}; }`).join('\n');
@@ -188,6 +182,34 @@ class EditorSvgAnnotation {
 		}
 	}
 
+	async crudCallback(anno, action) {
+		anno.action = action;
+
+		let url  = action == 'create' ? annotationServer : `${annotationServer}/${anno.id}`;
+		
+		const response = await fetch(url, {
+			method:{ create: 'POST', update: 'PUT', delete: 'DELETE' }[action],
+			mode: 'cors', // this cannot be 'no-cors'
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json',
+			},
+			body: action == 'delete' ? "" : JSON.stringify(anno)
+		});
+		//TODO we need to have a custom method to handle failures
+		if (!response.ok) {
+			const message = `An error has occured: ${response.status} ${response.statusText} `;
+			alert(message);
+			throw new Error(message);
+		}
+		let json = await response.json();
+		if (json.status == 'error') {
+			alert(json.msg);
+			return false;
+		}
+		return true;
+	}
+
 	/** @ignore */
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
@@ -201,11 +223,9 @@ class EditorSvgAnnotation {
 			publish: anno.publish, data: anno.data
 		};
 		if (this.enableState) post = { ...post, state: anno.state };
-		if (this.createCallback) {
-			let result = this.createCallback(post);
-			if (!result)
-				alert("Failed to create annotation!");
-		}
+		let result = this.crudCallback(post, 'create');
+		if (!result)
+			alert("Failed to create annotation!");
 		this.layer.setSelected(anno);
 	}
 
@@ -439,7 +459,7 @@ class EditorSvgAnnotation {
 				</svg>`;
 
 		if (this.updateCallback) {
-			let result = this.updateCallback(post);
+			let result = this.crudCallback(post, 'update');
 			if (!result) {
 				alert("Failed to update annotation");
 				return;
@@ -466,24 +486,16 @@ class EditorSvgAnnotation {
 	/** @ignore */
 	deleteAnnotation(id) {
 		let anno = this.layer.getAnnotationById(id);
-		if (this.deleteCallback) {
-			if (!confirm(`Deleting annotation ${anno.label}, are you sure?`))
-				return;
-			let result = this.deleteCallback(anno);
-			if (!result) {
-				alert("Failed to delete this annotation.");
-				return;
-			}
+		
+		if (!confirm(`Deleting annotation ${anno.label}, are you sure?`))
+			return;
+		let result = this.crudCallback(anno, 'delete');
+		if (!result) {
+			alert("Failed to delete this annotation.");
+			return;
 		}
-		//remove svg elements from the canvas
-		this.layer.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`).forEach(e => e.remove());
-
-		//remove entry from the list
-		let list = this.layer.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
-		list.querySelectorAll(`[data-annotation="${anno.id}"]`).forEach(e => e.remove());
-
-		this.layer.annotations = this.layer.annotations.filter(a => a !== anno);
-		this.layer.clearSelected();
+		
+		this.layer.deleteAnnotation(anno);
 		this.hideEditWidget();
 	}
 

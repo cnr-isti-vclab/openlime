@@ -1,0 +1,1 @@
+/* here we manage the icons, the events for the annotation svg editor. */

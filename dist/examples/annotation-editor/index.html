@@ -103,7 +103,8 @@
         lime.addLayer('Base', layer);
 
         // Define annotation parameters
-        let annotationServer = 'http://localhost:3000/ol';
+//        let annotationServer = 'http://localhost:3000/ol';
+        let annotationServer = '../php-openlimedb/json.php'
         const classParam = {
             '': { stroke: '#000', label: '' },
             'class1': { stroke: '#770', label: 'A' },
@@ -178,21 +179,24 @@
         // Calback function to send http requests to the Annotation server
         async function processRequest(anno, action) {
             let method = "GET";
-            let url = `${annotationServer}`;
+            let url = annotationServer;
             let body = "";
             switch (action) {
                 case "create":
                     method = "POST";
-                    url = `${annotationServer}`;
+                    url = annotationServer;
+                    anno.action = 'create';
                     body = JSON.stringify(anno);
                     break;
                 case "update":
                     method = "PUT";
                     url = `${annotationServer}/${anno.id}`;
+                    anno.action = 'update';
                     body = JSON.stringify(anno);
                     break;
                 case "delete":
                     method = "DELETE";
+                    anno.action = 'delete';
                     url = `${annotationServer}/${anno.id}`;
                     body = "";
                     break;

@@ -84,6 +84,18 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 		return annotation;
 	}
 
+	deleteAnnotation(annotation) {
+		//remove svg elements from the canvas
+		this.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`).forEach(e => e.remove());
+
+		//remove entry from the list
+		let list = this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+		list.querySelectorAll(`[data-annotation="${anno.id}"]`).forEach(e => e.remove());
+	
+		this.annotations = this.annotations.filter(a => a !== anno);
+		this.clearSelected();
+	}
+
 	/** @ignore */
 	annotationsEntry() {
 		return this.annotationsListEntry =  {
