@@ -78,7 +78,7 @@ let options = {
     :focus { fill:yellow; }
     path { fill:none; stroke-width:2; stroke:#cc0; vector-effect:non-scaling-stroke; pointer-events:all; }
     path:hover { cursor:pointer; stroke:#ff0; }
-    .selected { stroke-width:3; }
+    .selected { fill:red !important; }
     `,
     onClick: (anno) => {
         infoDialog.setContent(`<h4>${anno.label}</h4><p>${anno.description}</p>`);

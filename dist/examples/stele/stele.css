@@ -58,8 +58,8 @@ html, body {
 	display:none;
 	border-radius: 10px;
 	border: 2px solid #aaa;
+	background: black;
 	filter:  contrast(100%) saturate(100%);
-
 }
 .openlime-layers-quickmenu svg.selected {
 	display:block;
