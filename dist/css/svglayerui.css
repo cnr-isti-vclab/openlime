@@ -71,19 +71,25 @@
 }
 
 #openlime-layer-panel .openlime-annotation-list {
-	height:40vh;
+	flex-grow:2;
 	border:1px solid #aaa;
 	margin:10px;
 	overflow-x:hidden;
 	overflow-y:auto;
 }
 
+.openlime-annotation-list div[data-anno] {
+	cursor:pointer;
+}
 
+.openlime-annotation-list div.selected {
+	color:red;
+}
 
 
 /* SVGannotationUI */
 
-#openlime-layer-panel .openlime-annotation-panel {
+#openlime-layer-panel .openlime-annotations-panel, #openlime-layer-panel .openlime-annotation-panel {
 	display:flex;
 	flex-direction:column;
 	flex-grow:1
