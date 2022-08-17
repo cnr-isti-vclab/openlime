@@ -1,6 +1,7 @@
 import { Annotation } from './Annotation.js'
 import { SvgEditor } from './SvgEditor.js'
-
+import { BoundingBox } from './BoundingBox.js'
+import { CoordinateSystem } from './CoordinateSystem'
 class SvgAnnotationUI {
 	constructor(viewer, layer, container) {
 		Object.assign(this, {
@@ -21,6 +22,7 @@ class SvgAnnotationUI {
 		let svgTools = this.svgTools();
 		let svgProperties = this.svgProperties();
 		container.innerHTML = `
+			<input type="file" accept="image/svg+xml" style="display:none">
 			<p class="openlime-input"><input placeholder="Label" name="label" type="text" class="openlime-text-input"/></p>
 			<div class="openlime-svg-tools-panel">
 				<div class="openlime-svg-tools">
@@ -37,9 +39,11 @@ class SvgAnnotationUI {
 			t.addEventListener('click', () => this.setTool(t.getAttribute('data-tool')));
 		}
 
-//        t        str += ['undo', 'redo', 'save-svg', 'import-svg', 'clear-screen'].map( t => 
 		let saveSvg = container.querySelector('.openlime-save-svg');
 		saveSvg.addEventListener('click', (e) => this.saveSvg());
+		
+		let importSvg = container.querySelector('.openlime-import-svg');
+		importSvg.addEventListener('click', (e) => this.importSvg());
 		
 
 		this.svgEditor = new SvgEditor(viewer, layer);
@@ -88,25 +92,23 @@ class SvgAnnotationUI {
 		
 		let viewport = this.viewer.camera.viewport;
 		const viewbox = new BoundingBox({xLow:viewport.x, yLow:viewport.y, xHigh:viewport.x+viewport.dx, yHigh:viewport.y+viewport.dy});
-		let cameraT = this.camera.getCurrentTransform();
+		let cameraT = this.viewer.camera.getCurrentTransform();
 		let layerT = this.layer.transform;
 		let layerSize = { w: this.layer.layout.width, h: this.layer.layout.height };
 
 		//get current viewbox
-		let box = CoordinateSystem.romViewportBoxToImageBox(viewbox, cameraT, viewport, layerT, layerSize);
+		let box = CoordinateSystem.fromViewportBoxToImageBox(viewbox, cameraT, viewport, layerT, layerSize);
 		console.log(box);
 
-		var e = document.createElement('a');
-		e.setAttribute('href', this.viewer.canvas.canvasElement.toDataURL());
-		e.setAttribute('download', 'snapshot.png');
-		e.style.display = 'none';
+		let image = this.viewer.canvas.canvasElement.toDataURL();
+
 		
 		let serializer = new XMLSerializer();
 
 		let annotations = [];
 		for(let a of this.layer.annotations) {
 			if(a != this.anno)
-				return;
+				continue;
 
 			let anno = a.elements.map((e) => serializer.serializeToString(e)).join('\n');
 			if(a.elements.length > 1) { //group all elements othe annotation.
@@ -117,6 +119,7 @@ class SvgAnnotationUI {
 
 		let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
 			<style type="text/css">${this.layer.style}</style>
+			<image xlink:href="${image}" x="${box.xLow}" y="${box.yLow}" width="${box.width()}" height="${box.height()}"/>
 			${annotations.join('\n')}
 		</svg>`;
 
@@ -131,23 +134,60 @@ class SvgAnnotationUI {
 	}
 
 	importSvg() {
+		let input = this.container.querySelector("input[type=file]");
+		input.addEventListener('change', async () => {
+			let file = input.files[0];
+			console.log(input.files);
+			if (!file) return;
+			input.value = null;
 
+			let txt = await file.text();
+			const div = document.createElement('div');
+			div.innerHTML = txt;
+			let svg = div.querySelector('svg');
+			let {width, height } = this.layer.layout;
+			let scale = width/svg.viewBox.baseVal.width;
+			if(Math.abs(scale - 1.0) < 0.001) scale = 1.0;
+			
+			if (!svg) {
+	  			throw Error('<svg> tag not found');
+			}
+			//inscape encapsulates all in a single layer.
+			let layer = svg.querySelector('g[inkscape\\3A groupmode]');
+			if(layer) svg = layer;
+			let parts = svg.querySelectorAll("svg, g, path, rect, circle, text");
 
+			//clean elements for annotations in the import.
+			for(let part of parts) {
+				let id = part.getAttribute('data-annotation');
+				if(!id) continue;
+				let anno = this.layer.getAnnotationById(id);
+				if(anno)
+					anno.elements = [];
+			}
+
+			for(let part of parts) {
+				if(scale != 1.0)
+					part.setAttribute("transform", `scale(${scale} ${scale})`);
+
+				let id = part.getAttribute('data-annotation');
+				let anno;
+				if(!id) {
+					anno = this.layer.newAnnotation();
+					anno.publish = true;
+					anno.label = `Annotation ${this.layer.annotations.length}`;
+					anno.description = anno.class = '';
+				} else
+					anno = this.layer.getAnnotationById(id);
+
+				anno.elements.push(part);
+				anno.needsUpdate = true;
+			}
+
+		})
+		input.click();
 	}
 
-	getDataUrl(origCanvas, mimeType){
-        var canvas = document.createElement( 'canvas' );
-        canvas.width = origCanvas.width;
-        canvas.height = origCanvas.height;
-        var destCtx = canvas.getContext('2d');
-        if(!destCtx) {
-            console.error("Cannot create context")
-            return ""
-        }
-        destCtx?.drawImage(origCanvas, 0, 0);
-
-        return destCtx.canvas.toDataURL(mimeType);
-	}
 }
 
 export { SvgAnnotationUI }

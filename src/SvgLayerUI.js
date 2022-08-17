@@ -148,12 +148,9 @@ class SvgLayerUI {
 			//inscape encapsulates all in a single layer.
 			let layer = svg.querySelector('g[inkscape\\3A groupmode]');
 			if(layer) svg = layer;
-			let parts = svg.querySelectorAll("svg, g, path, rect, circle, text, image");
+			let parts = svg.querySelectorAll("svg, g, path, rect, circle, text");
 			for(let part of parts) {
-<<<<<<< HEAD
 				
-=======
->>>>>>> 1aaa5eb5e836538de40b8a35f78ea145784d1665
 				part.setAttribute("transform", `scale(${scale} ${scale})`);
 				let anno = this.layer.newAnnotation();
 				anno.elements.push(part);

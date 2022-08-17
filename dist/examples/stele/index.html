@@ -38,7 +38,7 @@ h1 b { color:#ddd; }
     <script src="../../js/openlime.js"></script>
     <script>
 
-const lime = new OpenLIME.Viewer('.openlime');
+const lime = new OpenLIME.Viewer('.openlime', { canvas: { preserveDrawingBuffer: true } });
 OpenLIME.Skin.setUrl('icons/openlime-ui-icons.svg');
 
 let openlime = document.querySelector('.openlime');
