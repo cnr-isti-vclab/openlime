@@ -79,6 +79,7 @@ let options = {
     path { fill:none; stroke-width:2; stroke:#cc0; vector-effect:non-scaling-stroke; pointer-events:all; }
     path:hover { cursor:pointer; stroke:#ff0; }
     .selected { fill:red !important; }
+    /*svg { background: black; }*/
     `,
     onClick: (anno) => {
         infoDialog.setContent(`<h4>${anno.label}</h4><p>${anno.description}</p>`);

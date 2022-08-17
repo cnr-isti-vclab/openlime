@@ -44,7 +44,7 @@ class Camera {
 			maxFixedZoom: 2,
 			maxZoom: 2,
 			minZoom: 1,
-			boundingBox: new BoundingBox,
+			boundingBox: new BoundingBox, //usually scene bounding box, used to limit zoom and pan or to fit the camera.
 		});
 		Object.assign(this, options);
 		this.target = new Transform(this.target);

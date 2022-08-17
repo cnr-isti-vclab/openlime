@@ -276,8 +276,8 @@ class CoordinateSystem {
     }
 
     /**
-     * Transform a box from Layer to Viewport coordinates
-     * @param {BoundingBox} box box in Layer coordinates (0,0 at Layer center y Up)
+     * Transform a box from Viewport to Layer coordinates
+     * @param {BoundingBox} box box in Viewport coordinates (0,0 at bottom left)
      * @param {Camera} camera 
      * @param {Transform} layerT layer transform
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale

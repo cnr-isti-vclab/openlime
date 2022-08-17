@@ -81,9 +81,25 @@ class SvgAnnotationUI {
 	width="100" height="100"
 	xlink:href="data:image/png;base64,IMAGE_DATA"
 	/>*/
+	//pick current view!
 	saveSvg() {
 		let w = this.layer.layout.width;
 		let h = this.layer.layout.height;
+		
+		let viewport = this.viewer.camera.viewport;
+		const viewbox = new BoundingBox({xLow:viewport.x, yLow:viewport.y, xHigh:viewport.x+viewport.dx, yHigh:viewport.y+viewport.dy});
+		let cameraT = this.camera.getCurrentTransform();
+		let layerT = this.layer.transform;
+		let layerSize = { w: this.layer.layout.width, h: this.layer.layout.height };
+
+		//get current viewbox
+		let box = CoordinateSystem.romViewportBoxToImageBox(viewbox, cameraT, viewport, layerT, layerSize);
+		console.log(box);
+
+		var e = document.createElement('a');
+		e.setAttribute('href', this.viewer.canvas.canvasElement.toDataURL());
+		e.setAttribute('download', 'snapshot.png');
+		e.style.display = 'none';
 		
 		let serializer = new XMLSerializer();
 
@@ -100,7 +116,7 @@ class SvgAnnotationUI {
 		}
 
 		let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
-			<style>${this.layer.style}</style>
+			<style type="text/css">${this.layer.style}</style>
 			${annotations.join('\n')}
 		</svg>`;
 
