@@ -123,7 +123,6 @@ class ControllerPanZoom extends Controller {
 			return;
 		//const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
 		const pos = CoordinateSystem.fromCanvasHtmlToScene({ x: e.offsetX, y: e.offsetY }, this.camera, this.useGLcoords);
-
 		const dz = this.zoomAmount;
 		this.camera.deltaZoom(this.zoomDelay, dz, pos.x, pos.y);
 	}
