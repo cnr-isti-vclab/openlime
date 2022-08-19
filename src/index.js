@@ -37,7 +37,7 @@ function dstretchTest() {
 	let dstretch = new Layer({
 		type: 'dstretch',
 		layout: 'image',
-		url: 'assets/dstretch/coin/plane_0.jpg'
+		url: 'assets/dstretch/rock/plane_0.jpg'
 	});
 
 	lime.canvas.addLayer('dstretch', dstretch);
