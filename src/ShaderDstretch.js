@@ -22,10 +22,11 @@ class ShaderDstretch extends Shader {
         let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         for (let i=0; i<this.samples.length; i++) {
             let labSample = this.rgb2lab([this.samples[i][0],this.samples[i][1],this.samples[i][2]]);
+            labSample[0] *= 2.0; labSample[2] *= 0.4;
             let transformedSample = this.transformSample(this.matToArray(this.transpose(this.rotationMatrix)),
              this.transformSample(
                 this.matToArray(this.rotationMatrix), 
-                    labSample.concat(1)));
+                labSample.concat(1)));
 
             for (let j=0; j<3; j++) {
                 if (transformedSample[j] < min[j])
@@ -243,13 +244,20 @@ void main(void) {
     vec3 texColor = texture(image, v_texcoord).xyz;
     vec3 labColor = rgb2lab(texColor);
 
-    vec3 ret = (transpose(rotation) * (rotation * 100.0 * (vec4(labColor, 1.0)))).xyz;
-    //ret = vec3(127.0, 127.0, 127.0) + (transpose(rotation) * (rotation * 255.0 * (texture(image, v_texcoord) - vec4(0.5, 0.5, 0.5, 0.0)))).xyz;
-    ret = (ret - min) / (max - min);
+    // Normalize min & max
+    vec3 normMin = min;
+    vec3 normMax = max;
 
-    ret = lab2rgb(ret);
+    labColor.x *= 100.0;
+    labColor.yz = labColor.yz * 256.0 - 127.0;
+
+    labColor.x *= 2.0; 
+    labColor.z *= 0.4;
+
+    vec3 ret = (transpose(rotation) * (rotation * (vec4(labColor, 1.0)))).xyz;
+    ret = ((ret - normMin) / (normMax - normMin));
     
-    color = vec4(ret, 1.0);
+    color = vec4(lab2rgb(ret), 1.0);
 }`;
 		return str;
 	}
