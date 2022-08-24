@@ -73,8 +73,7 @@ class ControllerFocusContext extends ControllerLens {
         this.insideLens = this.isInsideLens(p);
         const startPos = this.getPixelPosition(e); 
 
-        if (this.insideLens.inside) {
-            //const lc = this.getScreenPosition(this.getFocus().position, t);
+        if (this.lensLayer.visible && this.insideLens.inside) {
             const lc = CoordinateSystem.fromSceneToViewport(this.getFocus().position, this.camera, this.useGL);
             
             this.centerToClickOffset = {x:startPos.x - lc.x, y: startPos.y - lc.y};
@@ -129,7 +128,7 @@ class ControllerFocusContext extends ControllerLens {
         if (this.zooming) {
             const d = this.distance(e1, e2);
             const scale = d / (this.initialPinchDistance + 0.00001);
-            if (this.insideLens.inside) {
+            if (this.lensLayer.visible && this.insideLens.inside) {
                 const newRadius = scale * this.initialPinchRadius;
                 const currentRadius = this.lensLayer.getRadius();
                 const dz = newRadius / currentRadius;
@@ -154,10 +153,12 @@ class ControllerFocusContext extends ControllerLens {
      * @param {*} p pixel position in 0,wh (y up)
      */
     zoomStart(pe) {
-        super.zoomStart(pe);
+        if (this.lensLayer.visible) {
+            super.zoomStart(pe);
 
-        // Ask to call zoomUpdate at regular interval during zoommovement
-        this.timeOut = setInterval(this.zoomUpdate.bind(this), 50);
+            // Ask to call zoomUpdate at regular interval during zoommovement
+            this.timeOut = setInterval(this.zoomUpdate.bind(this), 50);
+        }
     }
 
     /**
@@ -212,16 +213,18 @@ class ControllerFocusContext extends ControllerLens {
      * Called at end of zoom border drag operation
      */
     zoomEnd() {
-        super.zoomEnd();
-        // Stop calling zoomUpdate
-        clearTimeout(this.timeOut);
+        if (this.lensLayer.visible) {
+            super.zoomEnd();
+            // Stop calling zoomUpdate
+            clearTimeout(this.timeOut);
+        }
     }
     
     mouseWheel(e) {
         const p = this.getScenePosition(e);
         this.insideLens = this.isInsideLens(p);
         const dz = e.deltaY  > 0 ? this.zoomAmount : 1/this.zoomAmount;
-        if (this.insideLens.inside) {
+        if (this.lensLayer.visible && this.insideLens.inside) {
             this.updateRadiusAndScale(dz);
         } else {
             if (this.enableDirectContextControl) {
@@ -268,10 +271,11 @@ class ControllerFocusContext extends ControllerLens {
     }
 
     panEnd() {
+        if (this.panning) { clearTimeout(this.timeOut); }
+
         this.panning = false;
         this.panningCamera = false;
         this.zooming = false;
-        clearTimeout(this.timeOut);
     }
 
      update() {

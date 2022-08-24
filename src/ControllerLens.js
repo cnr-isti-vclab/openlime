@@ -33,7 +33,7 @@ class ControllerLens extends Controller {
         this.panning = false;
 
         const hit = this.isInsideLens(p);
-        if (hit.inside) {
+        if (this.lensLayer.visible && hit.inside) {
             // if (hit.border) {
             //     this.zooming = true;
             //     const p = this.getPixelPosition(e);
@@ -81,7 +81,7 @@ class ControllerLens extends Controller {
         const p1 = this.getScenePosition(e2);
         const pc = {x:(p0.x+ p1.x) * 0.5, y: (p0.y + p1.y) * 0.5};
 
-        if (this.isInsideLens(pc).inside) {
+        if (this.lensLayer.visible && this.isInsideLens(pc).inside) {
             this.zooming = true;
             this.initialDistance = this.distance(e1, e2);
             this.initialRadius = this.lensLayer.getRadius();
@@ -107,7 +107,7 @@ class ControllerLens extends Controller {
     mouseWheel(e) {
         const p = this.getScenePosition(e);
         let result = false;
-        if (this.isInsideLens(p).inside) {
+        if (this.lensLayer.visible && this.isInsideLens(p).inside) {
             const delta = e.deltaY > 0 ? 1 : -1;
             const factor = delta > 0 ? 1.2 : 1/1.2;
             const r = this.lensLayer.getRadius();
@@ -128,10 +128,10 @@ class ControllerLens extends Controller {
      * @param {*} pe pixel position in CanvasHtml
      */
      zoomStart(pe) {
+         if (!this.lensLayer.visible) return;
+
         this.zooming = true;
         this.oldCursorPos = pe; // Used by derived class
-        // const t = this.camera.getCurrentTransform(performance.now());
-        // p = t.viewportToSceneCoords(this.camera.viewport, p);
         const p = this.getScenePosition(pe);
         const lens = this.getFocus();
         const r = lens.radius;
