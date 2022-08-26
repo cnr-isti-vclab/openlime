@@ -22,25 +22,26 @@ class ShaderDstretch extends Shader {
         let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         for (let i=0; i<this.samples.length; i++) {
             let labSample = this.rgb2lab([this.samples[i][0],this.samples[i][1],this.samples[i][2]]);
-            labSample[0] *= 2.0; labSample[2] *= 0.4;
             let transformedSample = this.transformSample(this.matToArray(this.transpose(this.rotationMatrix)),
              this.transformSample(
                 this.matToArray(this.rotationMatrix), 
                 labSample.concat(1)));
-
             for (let j=0; j<3; j++) {
                 if (transformedSample[j] < min[j])
                     min[j] = transformedSample[j];
                 if (transformedSample[j] > max[j])
                     max[j] = transformedSample[j];
             }
-
-            console.log(max);
-            console.log(min);
         }
 
-        this.min = min;
-        this.max = max;
+        this.min = [min[0], min[1], min[2]];
+        this.max = [max[0], max[1], max[2]];
+
+        console.log("min");
+        console.log(this.min);
+
+        console.log("max");
+        console.log(this.max);
 
         this.uniforms = {
             rotation: { type: 'mat4', needsUpdate: true, size: 16, value: this.matToArray(this.rotationMatrix)},
@@ -245,19 +246,21 @@ void main(void) {
     vec3 labColor = rgb2lab(texColor);
 
     // Normalize min & max
-    vec3 normMin = min;
-    vec3 normMax = max;
+    vec3 normMin = vec3(50.0, -80.0, -10.0);
+    vec3 normMax = vec3(70.0, 60.0, 20.0);
 
     labColor.x *= 100.0;
-    labColor.yz = labColor.yz * 256.0 - 127.0;
-
-    labColor.x *= 2.0; 
-    labColor.z *= 0.4;
+    labColor.yz = labColor.yz * 255.0 - 127.0;
 
     vec3 ret = (transpose(rotation) * (rotation * (vec4(labColor, 1.0)))).xyz;
     ret = ((ret - normMin) / (normMax - normMin));
+
+    ret = lab2rgb(ret);
+
+    // Min: vec3(41.0, -8.0, 0.0)
+    // Max: vec3(76.0, 12.0, 5.0)
     
-    color = vec4(lab2rgb(ret), 1.0);
+    color = vec4(ret, 1.0);
 }`;
 		return str;
 	}
