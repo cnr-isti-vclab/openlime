@@ -7,6 +7,7 @@ class ShaderDstretch extends Shader {
 
 	init(json) {
         this.rotationMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+        this.minMaxMultipliers = [1.0, 1.0, 1.0];
 
         // Store samples, compute min / max on the fly
         this.samples = json["samples"];
@@ -22,26 +23,27 @@ class ShaderDstretch extends Shader {
         let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         for (let i=0; i<this.samples.length; i++) {
             let labSample = this.rgb2lab([this.samples[i][0],this.samples[i][1],this.samples[i][2]]);
-            let transformedSample = this.transformSample(this.matToArray(this.transpose(this.rotationMatrix)),
-             this.transformSample(
-                this.matToArray(this.rotationMatrix), 
-                labSample.concat(1)));
+
             for (let j=0; j<3; j++) {
-                if (transformedSample[j] < min[j])
-                    min[j] = transformedSample[j];
-                if (transformedSample[j] > max[j])
-                    max[j] = transformedSample[j];
+                if (labSample[j] < min[j])
+                    min[j] = labSample[j];
+                if (labSample[j] > max[j])
+                    max[j] = labSample[j];
             }
         }
 
-        this.min = [min[0], min[1], min[2]];
-        this.max = [max[0], max[1], max[2]];
+        this.min = [min[0] * this.minMaxMultipliers[0], min[1] * this.minMaxMultipliers[1], 
+            min[2] * this.minMaxMultipliers[2]];
+        this.max = [max[0] * this.minMaxMultipliers[0], max[1] * this.minMaxMultipliers[1], 
+            max[2] * this.minMaxMultipliers[2]];
 
+            /*
         console.log("min");
         console.log(this.min);
 
         console.log("max");
         console.log(this.max);
+        */
 
         this.uniforms = {
             rotation: { type: 'mat4', needsUpdate: true, size: 16, value: this.matToArray(this.rotationMatrix)},
@@ -64,27 +66,11 @@ class ShaderDstretch extends Shader {
     }
 
     updateRotationMatrix(eulerRotation) {
-        console.log(eulerRotation);
-		let x = [[1,0,0,0],
-			[0,	Math.cos(eulerRotation[0]),	-Math.sin(eulerRotation[0]),0],
-			[0, Math.sin(eulerRotation[0]), Math.cos(eulerRotation[0]),	0],
-			[0,0,0,1]];
-		let y = [
-			[Math.cos(eulerRotation[1]), 0, Math.sin(eulerRotation[1]),0],
-			[0,1,0,0],
-			[Math.sin(eulerRotation[1]), 0, Math.cos(eulerRotation[1]), 0],
-			[0,0,0,1]];
-		let z = [
-			[Math.cos(eulerRotation[2]), -Math.sin(eulerRotation[2]), 0, 0],
-			[Math.sin(eulerRotation[2]), Math.cos(eulerRotation[2]), 0, 0],
-			[0,0,1,0],
-			[0,0,0,1]
-		];
+        if (!eulerRotation)
+            return;
 
-		let mat = this.multiplyMatrices(y, x);
-		mat = this.multiplyMatrices(z, mat);
-
-		this.rotationMatrix = mat;
+        this.minMaxMultipliers = [1.0, eulerRotation[1], eulerRotation[2]];
+        console.log(this.minMaxMultipliers);
         this.setMinMax();
 	}	
 
@@ -246,8 +232,16 @@ void main(void) {
     vec3 labColor = rgb2lab(texColor);
 
     // Normalize min & max
-    vec3 normMin = vec3(50.0, -80.0, -10.0);
-    vec3 normMax = vec3(70.0, 60.0, 20.0);
+    vec3 normMin = vec3(min.x, -5.0, -127.0);
+    vec3 normMax = vec3(max.x, 8.0, 128.0);
+
+    normMin = vec3(40.0, min.y, min.z);
+    normMax = vec3(70.0, max.y, max.z);
+    
+
+    // Per far vedere un colore: spostarsi nell'intervallo giusto e stringerlo
+    // Espandere al massimo il colore che non viene ristretto
+    // Mantenere la L in un intervallo accettabile
 
     labColor.x *= 100.0;
     labColor.yz = labColor.yz * 255.0 - 127.0;
