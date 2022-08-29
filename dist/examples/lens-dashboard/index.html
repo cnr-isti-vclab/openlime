@@ -8,7 +8,11 @@
     <title>OpenLIME - Lens Viewer</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <link rel="stylesheet" href="../examples.css" />
-
+    <style>
+        .openlime {
+            overflow: hidden; /* clip elements outside .openlime */
+        }
+    </style>
 </head>
 
 <body>
@@ -53,7 +57,7 @@
 
         // LENS LAYER
 
-        const lensDashboard = new OpenLIME.LensDashboard(lime, {
+        const lensDashboard = new OpenLIME.LensDashboardNavigatorRadial(lime, {
             borderColor: [0, 0.7, 0, 1],
             borderWidth: 15
         });
