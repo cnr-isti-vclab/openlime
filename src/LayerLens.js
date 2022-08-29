@@ -42,7 +42,16 @@ class LayerLens extends LayerCombiner {
 		if(this.dashboard) this.dashboard.lensLayer = this;
 	}
 
-	
+	setVisible(visible) {
+		if(this.dashboard) {
+			if(visible) {
+				this.dashboard.container.style.display = 'block';
+			} else {
+				this.dashboard.container.style.display = 'none';
+			}
+		}
+		super.setVisible(visible);
+	}
 
 	removeOverlayLayer() {
 		this.layers.length = 1;

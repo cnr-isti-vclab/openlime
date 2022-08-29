@@ -53,7 +53,7 @@
 
         // LENS LAYER
 
-        const lensDashboard = new OpenLIME.LensDashboardNavigatorRadial(lime, {
+        const lensDashboard = new OpenLIME.LensDashboard(lime, {
             borderColor: [0, 0.7, 0, 1],
             borderWidth: 15
         });
@@ -91,15 +91,23 @@
 
         // Create an User Interface 
         const ui = new OpenLIME.UIBasic(lime);
+        const { help, home, fullscreen, layers, light } = ui.actions;
 
-        // Remove light from the toolbar
-        ui.actions.light.display = true;
+        // Add action (lens enable/disable pressing 'i')
+        const lenstoggle = {
+	            title: 'Show/hide Lenss', key: 'i', display: false, task: (event) => {
+		        lensToggle(event);
+	        }
+        };
 
-        // Add zoomin and zoomout to the toolbar
-        ui.actions.zoomin.display = true;
-        ui.actions.zoomout.display = true;
+        ui.actions = { lenstoggle, layers, light };
 
         ui.attribution = `Cape Spartivento Lighthouse, oil on canvas, 14x18 cm, 2004 - by Fabio Marton`;
+
+        //////////////////
+        function lensToggle(e) {
+	        lensLayer.setVisible(!lensLayer.visible);
+        }
 
     </script>
 </body>
