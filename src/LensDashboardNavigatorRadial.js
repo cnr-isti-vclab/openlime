@@ -454,13 +454,44 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       return angle * (Math.PI / 180.0);
    }
 
+   static polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+      const angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+    
+      return {
+        x: centerX + (radius * Math.cos(angleInRadians)),
+        y: centerY + (radius * Math.sin(angleInRadians))
+      };
+    }
+    
+   static describeArc(x, y, radius, border, startAngle, endAngle){
+    
+        const start = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius+border, endAngle);
+        const end = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius+border, startAngle);
+        const startIn = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius, endAngle);
+        const endIn = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius, startAngle);
+    
+        const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+    
+        const d = [
+            "M", start.x, start.y, 
+            "A", radius+border, radius+border, 0, largeArcFlag, 0, end.x, end.y,
+            "L", endIn.x, endIn.y,
+            "A", radius, radius, 1, largeArcFlag, 1, startIn.x, startIn.y,
+        ].join(" ");
+    
+        return d;       
+    }
+
    setToolboxBkg(r, sizew, sizeh) {
       const e = this.toolboxBkg.element;
       e.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
       const shape = e.querySelector('#shape-dashboard-bkg');
       const cs = this.containerSpace;
       const b =  this.toolboxBkgSize;
-      shape.setAttributeNS(null, 'd', `M ${sizew*0.5-r-b},${sizeh*0.5} a1,1 0 0,1 ${2*(r+b)},0 h ${-b} a1,1 0 1,0 ${-2*r},0 Z`);
+      const cx = sizew*0.5;
+      const cy = sizeh*0.5;
+      shape.setAttributeNS(null, 'd', LensDashboardNavigatorRadial.describeArc(cx, cy, r, b, -110, 110));
+      // shape.setAttributeNS(null, 'd', `M ${sizew*0.5-r-b},${sizeh*0.5} a1,1 0 0,1 ${2*(r+b)},0 h ${-b} a1,1 0 1,0 ${-2*r},0 Z`);
    }
 
    addAction(action) {
