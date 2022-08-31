@@ -1,7 +1,7 @@
 // openlimeDB Queries
 
 ///////////// CONFIG
-const dbname = process.env.DBFNAME || 'anno.json';
+const dbname = process.env.DBFNAME || './data/test.json';;
 
 const fs = require('fs');
 class DB {
