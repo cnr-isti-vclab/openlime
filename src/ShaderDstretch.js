@@ -13,6 +13,9 @@ class ShaderDstretch extends Shader {
         this.samples = json["samples"];
         this.samplers.push({ id:0, name:'image', type:'vec3' });
 
+        this.min = [0,0,0];
+        this.max = [0,0,0];
+
         this.setMinMax();
 	}
 
@@ -32,18 +35,37 @@ class ShaderDstretch extends Shader {
             }
         }
 
-        this.min = [min[0] * this.minMaxMultipliers[0], min[1] * this.minMaxMultipliers[1], 
-            min[2] * this.minMaxMultipliers[2]];
-        this.max = [max[0] * this.minMaxMultipliers[0], max[1] * this.minMaxMultipliers[1], 
-            max[2] * this.minMaxMultipliers[2]];
+        this.rawMin = [min[0], min[1] - 10 * this.minMaxMultipliers[1], min[2] - 10 * this.minMaxMultipliers[2]];
+        this.rawMax = [max[0], max[1] + 10 * this.minMaxMultipliers[1], max[2] + 10 * this.minMaxMultipliers[2]];
 
-            /*
+        const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
+        this.min[0] = this.rawMin[0];
+        this.max[0] = this.rawMax[0];
+
+        for (let i=1; i<3; i++) {
+            this.rawMin[i] = clamp(this.rawMin[i], -127, 128);
+            this.rawMax[i] = clamp(this.rawMax[i], -127, 128);
+
+            if (this.rawMin[i] < this.rawMax[i]) {
+                if (this.rawMax[i] - this.rawMin[i] > 8) {
+                    this.min[i] = this.rawMin[i];
+                    this.max[i] = this.rawMax[i];
+                }
+            }
+            else if (this.rawMax[i] < this.rawMin[i]) {
+                if (this.rawMin[i] - this.rawMax[i] > 8) {
+                    this.min[i] = this.rawMin[i];
+                    this.max[i] = this.rawMax[i];
+                }
+            }
+        }
+            
         console.log("min");
         console.log(this.min);
 
         console.log("max");
         console.log(this.max);
-        */
 
         this.uniforms = {
             rotation: { type: 'mat4', needsUpdate: true, size: 16, value: this.matToArray(this.rotationMatrix)},
@@ -232,11 +254,9 @@ void main(void) {
     vec3 labColor = rgb2lab(texColor);
 
     // Normalize min & max
-    vec3 normMin = vec3(min.x, -5.0, -127.0);
-    vec3 normMax = vec3(max.x, 8.0, 128.0);
 
-    normMin = vec3(40.0, min.y, min.z);
-    normMax = vec3(70.0, max.y, max.z);
+    vec3 normMin = min;
+    vec3 normMax = max;
     
 
     // Per far vedere un colore: spostarsi nell'intervallo giusto e stringerlo
@@ -246,8 +266,7 @@ void main(void) {
     labColor.x *= 100.0;
     labColor.yz = labColor.yz * 255.0 - 127.0;
 
-    vec3 ret = (transpose(rotation) * (rotation * (vec4(labColor, 1.0)))).xyz;
-    ret = ((ret - normMin) / (normMax - normMin));
+    vec3 ret = ((labColor - normMin) / (normMax - normMin));
 
     ret = lab2rgb(ret);
 
