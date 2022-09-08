@@ -37,12 +37,16 @@ function dstretchTest() {
 	let dstretch = new Layer({
 		type: 'dstretch',
 		layout: 'image',
-		url: 'assets/dstretch/wiki/download8.jpg'
+		url: 'assets/dstretch/rock/wall_5.jpg'
 	});
 
 	lime.canvas.addLayer('dstretch', dstretch);
 	let ui = new UIBasic(lime);
+	console.log(ui.lightcontroller.relative);
+
+	ui.lightcontroller.relative = false;
 	ui.actions.light.active = true;
+
 }
 
 function testAnnotationEditor() {

@@ -7,7 +7,7 @@ class ShaderDstretch extends Shader {
 
 	init(json) {
         this.rotationMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
-        this.minMaxMultipliers = [1.0, 1.0, 1.0];
+        this.controls = [1.0, 1.0, 1.0];
 
         // Store samples, compute min / max on the fly
         this.samples = json["samples"];
@@ -25,7 +25,7 @@ class ShaderDstretch extends Shader {
             
         let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         for (let i=0; i<this.samples.length; i++) {
-            let labSample = this.rgb2lab([this.samples[i][0],this.samples[i][1],this.samples[i][2]]);
+            let labSample = this.rgb2lab([this.samples[i][0],this.samples[i][1],this.samples[i][2]], this.controls[0]);
 
             for (let j=0; j<3; j++) {
                 if (labSample[j] < min[j])
@@ -35,8 +35,26 @@ class ShaderDstretch extends Shader {
             }
         }
 
-        this.rawMin = [min[0], min[1] - 10 * this.minMaxMultipliers[1], min[2] - 10 * this.minMaxMultipliers[2]];
-        this.rawMax = [max[0], max[1] + 10 * this.minMaxMultipliers[1], max[2] + 10 * this.minMaxMultipliers[2]];
+        console.log("sample min");
+        console.log(min);
+
+        console.log("sample max");
+        console.log(max);
+
+        let t = (this.controls[1] + 1) / 2;
+        let mid = [(max[0] + min[0]) / 2, (max[1] + min[1]) / 2, (max[2] + min[2]) / 2 ]
+
+        //this.rawMin = [min[0], -127 * (1-t) + mid[1] * t, -127 * (1-t) + mid[2] * t];
+        //this.rawMax = [max[0], 128 * (1-t) - mid[1] * t, 128 * (1-t) - mid[2] * t];
+
+        //this.rawMin = [min[0], -127 * (1-t) + mid[1] * t, -127];
+        //this.rawMax = [max[0], 128 * (1-t) - mid[1] * t, 128];
+
+        //this.rawMin = [min[0], -127, -127 * (1-t) + mid[2] * t];
+        //this.rawMax = [max[0], 128, 128 * (1-t) - mid[2] * t];
+        
+        this.rawMin = [min[0], -127, mid[2] + 127 * this.controls[1]];
+        this.rawMax = [max[0], 128, mid[2] - 128 * this.controls[1]];
 
         const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
@@ -44,9 +62,9 @@ class ShaderDstretch extends Shader {
         this.max[0] = this.rawMax[0];
 
         for (let i=1; i<3; i++) {
-            this.rawMin[i] = clamp(this.rawMin[i], -127, 128);
-            this.rawMax[i] = clamp(this.rawMax[i], -127, 128);
-
+            this.min[i] = clamp(this.rawMin[i], -127, 128);
+            this.max[i] = clamp(this.rawMax[i], -127, 128);
+/*
             if (this.rawMin[i] < this.rawMax[i]) {
                 if (this.rawMax[i] - this.rawMin[i] > 8) {
                     this.min[i] = this.rawMin[i];
@@ -58,19 +76,15 @@ class ShaderDstretch extends Shader {
                     this.min[i] = this.rawMin[i];
                     this.max[i] = this.rawMax[i];
                 }
-            }
+            }*/
         }
-            
-        console.log("min");
-        console.log(this.min);
-
-        console.log("max");
-        console.log(this.max);
 
         this.uniforms = {
+            translation: {type: 'float', needsUpdate: true, size: 4, value: this.controls[1] * 128},
             rotation: { type: 'mat4', needsUpdate: true, size: 16, value: this.matToArray(this.rotationMatrix)},
 			min: {type: 'vec3', needsUpdate:true, size: 3, value: this.min},
-            max: {type: 'vec3', needsUpdate:true, size: 3, value: this.max}
+            max: {type: 'vec3', needsUpdate:true, size: 3, value: this.max},
+            hueAngle: {type: 'float', needsUpdate:true, size: 1, value: this.controls[0]}
 		}
     }
 
@@ -87,12 +101,11 @@ class ShaderDstretch extends Shader {
         return ret;
     }
 
-    updateRotationMatrix(eulerRotation) {
-        if (!eulerRotation)
+    updateRotationMatrix(controls) {
+        if (!controls)
             return;
 
-        this.minMaxMultipliers = [1.0, eulerRotation[1], eulerRotation[2]];
-        console.log(this.minMaxMultipliers);
+        this.controls = [controls[0], controls[1], 1.0];
         this.setMinMax();
 	}	
 
@@ -158,8 +171,8 @@ class ShaderDstretch extends Shader {
       }
       
       
-      rgb2lab(rgb){
-        var r = rgb[0] / 255,
+      rgb2lab(rgb, angle){
+        let r = rgb[0] / 255,
             g = rgb[1] / 255,
             b = rgb[2] / 255,
             x, y, z;
@@ -175,8 +188,13 @@ class ShaderDstretch extends Shader {
         x = (x > 0.008856) ? Math.pow(x, 1/3) : (7.787 * x) + 16/116;
         y = (y > 0.008856) ? Math.pow(y, 1/3) : (7.787 * y) + 16/116;
         z = (z > 0.008856) ? Math.pow(z, 1/3) : (7.787 * z) + 16/116;
-      
-        return [(116 * y) - 16, 500 * (x - y), 200 * (y - z)]
+
+        let L = (116 * y) - 16;
+        let A = 500 * (x - y);
+        let B = 200 * (y - z);
+
+        // Rotate color
+        return [L, A * Math.cos(angle) + B * Math.sin(angle), A * -Math.sin(angle) + B * Math.cos(angle)];
       }
 
 	fragShaderSrc(gl) {
@@ -191,6 +209,8 @@ ${gl2? 'in' : 'varying'} vec2 v_texcoord;
 ${gl2? 'out' : ''} vec4 color;
 
 uniform mat4 rotation;
+uniform float hueAngle;
+uniform float translation;
 uniform vec3 min;
 uniform vec3 max;
 uniform sampler2D image;
@@ -201,6 +221,7 @@ vec3 rgb2xyz( vec3 c ) {
     tmp.x = ( c.r > 0.04045 ) ? pow( ( c.r + 0.055 ) / 1.055, 2.4 ) : c.r / 12.92;
     tmp.y = ( c.g > 0.04045 ) ? pow( ( c.g + 0.055 ) / 1.055, 2.4 ) : c.g / 12.92,
     tmp.z = ( c.b > 0.04045 ) ? pow( ( c.b + 0.055 ) / 1.055, 2.4 ) : c.b / 12.92;
+
     return 100.0 * tmp *
         mat3( 0.4124, 0.3576, 0.1805,
               0.2126, 0.7152, 0.0722,
@@ -216,8 +237,13 @@ vec3 xyz2lab( vec3 c ) {
     return vec3(( 116.0 * v.y ) - 16.0, 500.0 * ( v.x - v.y ), 200.0 * ( v.y - v.z ));
 }
 
-vec3 rgb2lab(vec3 c) {
-    vec3 lab = xyz2lab( rgb2xyz( c ) );
+vec3 rgb2lab(vec3 c, float angle) {
+    vec3 xyz = rgb2xyz(c);
+    vec3 lab = xyz2lab( xyz);
+
+    // Rotate color
+    lab = vec3(lab.x, lab.y* cos(angle) + lab.z * sin(angle), lab.y * -sin(angle) + lab.z * cos(angle));
+
     return vec3( lab.x / 100.0, 0.5 + 0.5 * ( lab.y / 127.0 ), 0.5 + 0.5 * ( lab.z / 127.0 ));
 }
 
@@ -245,33 +271,39 @@ vec3 xyz2rgb( vec3 c ) {
     return r;
 }
 
-vec3 lab2rgb(vec3 c) {
-    return xyz2rgb( lab2xyz( vec3(100.0 * c.x, 2.0 * 127.0 * (c.y - 0.5), 2.0 * 127.0 * (c.z - 0.5)) ) );
+vec3 lab2rgb(vec3 c, float angle) {
+    vec3 lab = vec3(100.0 * c.x, 2.0 * 127.0 * (c.y - 0.5), 2.0 * 127.0 * (c.z - 0.5));
+    lab = vec3(lab.x, lab.y * cos(angle) + lab.z * -sin(angle), lab.y * sin(angle) + lab.z * cos(angle));
+    
+    vec3 xyz = lab2xyz(lab);
+    return xyz2rgb( xyz);
 }
 
 void main(void) {
     vec3 texColor = texture(image, v_texcoord).xyz;
-    vec3 labColor = rgb2lab(texColor);
+    vec3 labColor = rgb2lab(texColor, hueAngle);
 
     // Normalize min & max
 
     vec3 normMin = min;
     vec3 normMax = max;
-    
 
-    // Per far vedere un colore: spostarsi nell'intervallo giusto e stringerlo
-    // Espandere al massimo il colore che non viene ristretto
-    // Mantenere la L in un intervallo accettabile
+    normMin.x = 10.0;
+    normMax.x = 90.0;
 
-    labColor.x *= 100.0;
+    // Denormalize color, scale L
+    labColor.x = ((labColor.x * 100.0 - normMin.x) / (normMax.x - normMin.x));
     labColor.yz = labColor.yz * 255.0 - 127.0;
 
-    vec3 ret = ((labColor - normMin) / (normMax - normMin));
+    // Translate color
+    if (labColor.z > 0.0)
+        labColor.z = labColor.z * translation / 16.0;
 
-    ret = lab2rgb(ret);
+    vec3 ret = vec3(labColor.x, labColor.y, labColor.z);
+    // Normalize result
+    ret.yz = (ret.yz + 127.0) / 255.0;
 
-    // Min: vec3(41.0, -8.0, 0.0)
-    // Max: vec3(76.0, 12.0, 5.0)
+    ret = lab2rgb(ret, hueAngle);
     
     color = vec4(ret, 1.0);
 }`;
@@ -280,3 +312,5 @@ void main(void) {
 }
 
 export {ShaderDstretch}
+
+//TODO: controlla traslazione con secondo controllo

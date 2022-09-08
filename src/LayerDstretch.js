@@ -23,13 +23,8 @@ class LayerDstretch extends LayerImage {
 	setLight(value, dt) {
 		this.setControl('light', value, dt);
 
-		this.eulerRotation[1] = Math.PI * this.getControl('light').current.value[0];//this.controls['light'].current[0];
-		this.eulerRotation[2] = Math.PI * this.getControl('light').current.value[1];//this.controls['light'].current[1];
-
-		let piMul = 14;
-
-		this.eulerRotation[1] = this.eulerRotation[1] / (Math.PI / piMul);
-		this.eulerRotation[2] = this.eulerRotation[2] / (Math.PI / piMul);
+		this.eulerRotation[0] = Math.PI * 1.2 * this.getControl('light').current.value[0];//this.controls['light'].current[0];
+		this.eulerRotation[1] = this.getControl('light').current.value[1];//this.controls['light'].current[1];
 
 		this.shader.updateRotationMatrix(this.eulerRotation);
 		this.emit('update');
