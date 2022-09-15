@@ -1,12 +1,14 @@
 import { CoordinateSystem } from "./CoordinateSystem";
+import { Annotation } from "./Annotation";
 import { Util } from "./Util"
 
 /**
  * RenderingMode for lens and background. Currently implemented only draw and hide.
  */
 const RenderingMode = {
-    draw: "fill:white;",
-    hide: "fill:black;"
+    draw: "draw",
+    hide: "hide",
+	monochrome: "monochrome"
 };
 
 /**
@@ -19,11 +21,11 @@ const RenderingMode = {
  * The LensDashboard class is an optional element that can be embedded in an instance of {@link LayerLens}.
  * It represents a square HTML container of sufficient size to hold the lens that is positioned solidly against it.
  * Its main use is to allow the creation of a dashboard of HTML elements positioned around the lens.
- * 
+ *
  * In the example below a simple HTML button is positioned close to the top-left corner of the dashboard:
- * 
+ *
  * @example
- * 
+ *
  * const lensDashboard = new OpenLIME.LensDashboard(lime);
  * const lensLayer = new OpenLIME.Layer({
  * type: "lens",
@@ -35,13 +37,13 @@ const RenderingMode = {
  *		visible: true
  * });
  * lime.addLayer('lens', lensLayer);
- *  
+ *
  * const btn = document.createElement('button');
  * btn.innerHTML = "Click Me";
- * btn.style = `position: absolute;  
- *				left: 0px; 
+ * btn.style = `position: absolute;
+ *				left: 0px;
  *				top: 0px;
- *				display: inline-block; 
+ *				display: inline-block;
  *				cursor: pointer;
  *				pointer-events: auto;`;
  * lensDashboard.append(btn);
@@ -60,7 +62,7 @@ class LensDashboard {
 			containerSpace: 80,
 			borderColor: [0.078, 0.078, 0.078, 1],
 			borderWidth: 12,
-			layerSvgAnnotation: null   
+			layerSvgAnnotation: null
 		}, options);
 		Object.assign(this, options);
 
@@ -69,9 +71,9 @@ class LensDashboard {
 		this.elements = [];
         this.container = document.createElement('div');
 		this.container.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none`;
-		this.container.classList.add('openlime-lens-dashboard');		
+		this.container.classList.add('openlime-lens-dashboard');
 		this.viewer.containerElement.appendChild(this.container);
-  
+
 		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
 		this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
 		const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50 });
@@ -81,10 +83,16 @@ class LensDashboard {
 		this.container.appendChild(this.lensElm);
 		this.setupCircleInteraction(circle);
 		this.lensBox = { x: 0, y: 0, r: 0, w: 0, h: 0 };
-		  
+
 		this.svgElement = null;
-		this.svgMaskId = 'openlime-image-mask';
-		this.svgMaskUrl = `url(#${this.svgMaskId})`;
+		this.svgMonochromeMaskId = 'openlime-image-monochrome-mask';
+		this.svgMonochromeMaskUrl = `url(#${this.svgMonochromeMaskId})`;
+		this.svgPlainMaskId = 'openlime-image-plain-mask';
+		this.svgPlainMaskUrl = `url(#${this.svgPlainMaskId})`;
+
+		this.copySuffix = "-copy";
+
+		this.svgElementMap = new Map();
 
 		this.noupdate=false;
     }
@@ -108,7 +116,7 @@ class LensDashboard {
 
         this.viewer.containerElement.addEventListener('pointerdown', (e) => {
             if(circle == e.target) {
-                this.isCircleSelected = true;		
+                this.isCircleSelected = true;
 				if (this.lensLayer.controllers[0]) {
 					const p = getXYFromEvent(e, this.viewer.containerElement);
 					this.lensLayer.controllers[0].zoomStart(p);
@@ -143,7 +151,7 @@ class LensDashboard {
 
 	/**
 	 * Call this to set the corresponding LayerSvgAnnotation
-	 * @param {LayerSvgAnnotation} l 
+	 * @param {LayerSvgAnnotation} l
 	 */
 	setLayerSvgAnnotation(l) {
 		this.layerSvgAnnotation = l;
@@ -154,25 +162,61 @@ class LensDashboard {
 	createSvgLensMask() {
 		if (this.svgElement == null) this.setupSvgElement();
 		if (this.svgElement == null) return;
-	
-		// Create a mask made of a rectangle (it will be set to the full viewport) for the background
-		// And a circle, corresponding to the lens. 
-        const w = 100; // The real size will be set at each frame by the update function
-        this.svgMask = Util.createSVGElement("mask", {id: this.svgMaskId});
-		this.svgGroup = Util.createSVGElement("g");
-        this.outMask = Util.createSVGElement("rect", {id:'outside-lens-mask', x:-w/2, y:-w/2, width: w, height:w,  style:"fill:black;"});
-        this.inMask = Util.createSVGElement("circle", {id:'inside-lens-mask', cx:0, cy:0, r: w/2, style:"fill:white;"});
-        this.svgGroup.appendChild(this.outMask);
-        this.svgGroup.appendChild(this.inMask);
-        this.svgMask.appendChild(this.svgGroup);
-		this.svgElement.appendChild(this.svgMask);
 
-        // FIXME Remove svgCheck. It's a Check, just to have an SVG element to mask
-		// this.svgCheck = Util.createSVGElement('rect', {x:-w/2, y:-w/2, width:w/2, height:w/2, style:'fill:orange; stroke:blue; stroke-width:5px;'}); //  
-		// this.svgCheck.setAttribute('mask', this.svgMaskUrl);
-		// this.svgElement.appendChild(this.svgCheck);
-		// console.log(this.svgCheck);
+		// Create a filter for monochrome rendering
+		const filterId="greyScale"; 
+		this.svgDefs = Util.createSVGElement("defs");
+		this.svgFilter = Util.createSVGElement("filter", {id:filterId});
+		const m=0.1; // grey color intensity = m(R+G+B) + b
+		const b=0.1;
+		const a=1; // fixed transparency
+		const matrixValues = [	m, m, m, 0, b,
+								m, m, m, 0, b,
+								m, m, m, 0, b,
+								0, 0, 0, a, 0];
+		this.svgFeColorMatrix = Util.createSVGElement("feColorMatrix", {in:"SourceGraphic", 
+			type:"matrix", values:`${matrixValues}`});
+		this.svgFilter.appendChild(this.svgFeColorMatrix);
+		this.svgDefs.appendChild(this.svgFilter);
+		this.svgElement.appendChild(this.svgDefs);
+
+		// This is the Monochrome mask. Define the behaviour for the svgCopyGroup
+		// where objects are copied to perform monochrome rendering.
+		const w = 100; // The real size will be set at each frame by the update function
+		this.svgMonochromeGroup = Util.createSVGElement("g");
+        this.svgMonochromeMask = Util.createSVGElement("mask", {id: this.svgMonochromeMaskId});
+		this.svgMonochromeMaskRect = Util.createSVGElement("rect", {x:-w/2, y:-w/2, width: w, height:w,  style:"fill:white;"});
+        this.svgMonochromeMaskCircle = Util.createSVGElement("circle", {cx:0, cy:0, r: w/2, style:"fill:black;"});
+		this.svgMonochromeGroup.appendChild(this.svgMonochromeMaskRect);
+        this.svgMonochromeGroup.appendChild(this.svgMonochromeMaskCircle);
+        this.svgMonochromeMask.appendChild(this.svgMonochromeGroup);
+		this.svgElement.appendChild(this.svgMonochromeMask);
+
+		// Plain Mask. Define the behaviour of the original group of object which
+		//  can be drawn with plain drawing or hidden.
+		this.svgPlainGroup = Util.createSVGElement("g", );
+		this.svgPlainMask = Util.createSVGElement("mask", {id: this.svgPlainMaskId});
+		this.svgPlainMaskRect = Util.createSVGElement("rect", {x:-w/2, y:-w/2, width: w, height:w,  style:"fill:black;"});
+        this.svgPlainMaskCircle = Util.createSVGElement("circle", {cx:0, cy:0, r: w/2, style:"fill:white;"});
+        this.svgPlainGroup.appendChild(this.svgPlainMaskRect);
+        this.svgPlainGroup.appendChild(this.svgPlainMaskCircle);
+        this.svgPlainMask.appendChild(this.svgPlainGroup);
+		this.svgElement.appendChild(this.svgPlainMask);
+		this.svgPlainGroup.setAttributeNS(null, 'mask', this.svgPlainMaskUrl);
+		
+		// Monochrome rendering requires two instance of each object
+		// This group contain a copy of all the svg elements that need to be drawn, when rendering mode is monochrome
+		this.svgCopyGroup = Util.createSVGElement("g", {id:"copyGroup"});
+		this.svgCopyGroup.setAttributeNS(null, 'mask', this.svgMonochromeMaskUrl);
+		this.filterUrl = 'url(#' + filterId + ')';
+		this.svgCopyGroup.setAttributeNS(null, 'filter', this.filterUrl);
+		this.layerSvgAnnotation.svgGroup.appendChild(this.svgCopyGroup);
+
+		this.setRenderingMode( RenderingMode.draw, RenderingMode.monochrome);
+		this.renderingModeId = 4;
 	}
+
+
 
 	/** @ignore */
 	setupSvgElement() {
@@ -184,14 +228,10 @@ class LensDashboard {
 			}
 		} else {
 			// No annotationLayer, search for an svgElement
-		
+
 			// First: get shadowRoot to attach the svgElement
-			let shadowRoot = this.viewer.canvas.overlayElement.shadowRoot; 
-			if (shadowRoot == null) {
-				//console.log("WARNING: null ShadowRoot, create a new one");
-				shadowRoot = this.viewer.canvas.overlayElement.attachShadow({ mode: "open" });
-			}
-		
+			let shadowRoot = this.getShadowRoot();
+
 			//console.log("WARNING: no svg element, create a new one");
 			this.svgElement = shadowRoot.querySelector('svg');
 			if (this.svgElement == null) {
@@ -204,20 +244,205 @@ class LensDashboard {
 		}
 	}
 
+	getShadowRoot() {
+		let shadowRoot = this.viewer.canvas.overlayElement.shadowRoot;
+		if (shadowRoot == null) {
+			//console.log("WARNING: null ShadowRoot, create a new one");
+			shadowRoot = this.viewer.canvas.overlayElement.attachShadow({ mode: "open" });
+		}
+		return shadowRoot;
+	}
+
+	/**
+	 * Helper function to iterate among all the possible renderingMode combinations 
+	 */
+	iterateRenderingMode() {
+		this.renderingModeId++;
+		if (this.renderingModeId > 8) this.renderingModeId = 0;
+		else if (this.renderingModeId < 0) this.renderingModeId = 8;
+
+		switch(this.renderingModeId) {
+			case 0:
+				this.setRenderingMode( RenderingMode.draw, RenderingMode.draw);
+			break;		
+			case 1:
+				this.setRenderingMode( RenderingMode.draw, RenderingMode.hide);
+			break;		
+			case 2:
+				this.setRenderingMode( RenderingMode.hide, RenderingMode.draw);
+			break;		
+			case 3:
+				this.setRenderingMode( RenderingMode.hide, RenderingMode.hide);
+			break;		
+			case 4:
+				this.setRenderingMode( RenderingMode.draw, RenderingMode.monochrome);
+			break;		
+			case 5:
+				this.setRenderingMode( RenderingMode.monochrome, RenderingMode.draw);
+			break;		
+			case 6:
+				this.setRenderingMode( RenderingMode.hide, RenderingMode.monochrome);
+			break;		
+			case 7:
+				this.setRenderingMode( RenderingMode.monochrome, RenderingMode.hide);
+			break;		
+			case 8:
+				this.setRenderingMode( RenderingMode.monochrome, RenderingMode.monochrome);
+			break;	
+			default:
+				console.log("Not Supported rendering mode id " + this.renderingModeId);
+				break;
+		}
+	}
+
+	/**
+	 * Set renderingMode within and outside the lens
+	 * @param {RenderingMode} lensMode renderingMode inside the lens
+	 * @param {RenderingMode} outMode  renderingMode outside the lens
+	 */
+	setRenderingMode(lensMode, outMode) {
+		console.log("Set Rendering Mode " + lensMode + " " + outMode);
+		this.lensRenderingMode = lensMode;
+		this.outRenderingMode = outMode;
+
+		// Remove from the copygroup all stored svg element copies
+		this.svgCopyGroup.querySelectorAll('*').forEach(n => n.remove());
+
+		// Handle monochrome
+		if (lensMode == RenderingMode.monochrome && outMode == RenderingMode.monochrome) {
+			// No mask needed, draw both side in monochrome
+			this.svgCopyGroup.removeAttribute('mask');
+			this.svgCopyGroup.setAttributeNS(null, 'filter', this.filterUrl);
+			
+			// Activate draw inside and outside lens for monochrome component
+			this.svgMonochromeMaskCircle.setAttributeNS(null, 'style', "fill:white;");
+			this.svgMonochromeMaskRect.setAttributeNS(null, 'style', "fill:white;");
+
+			// Hide draw inside and outside lens for plain component
+			this.svgPlainMaskCircle.setAttributeNS(null, 'style', "fill:black;");
+			this.svgPlainMaskRect.setAttributeNS(null, 'style', "fill:black;");
+		} else if (lensMode == RenderingMode.monochrome) {
+			// Activate monochrome inside lens
+			this.svgCopyGroup.setAttributeNS(null, 'mask', this.svgMonochromeMaskUrl);
+			this.svgCopyGroup.setAttributeNS(null, 'filter', this.filterUrl);
+			this.svgMonochromeMaskCircle.setAttributeNS(null, 'style', "fill:white;");
+			this.svgMonochromeMaskRect.setAttributeNS(null, 'style', "fill:black;");
+
+			// Hide plain draw inside lens
+			this.svgPlainMaskCircle.setAttributeNS(null, 'style', "fill:black;");
+		} else if (outMode == RenderingMode.monochrome) {
+			// Activate monochrome outside lens
+			this.svgCopyGroup.setAttributeNS(null, 'mask', this.svgMonochromeMaskUrl);
+			this.svgCopyGroup.setAttributeNS(null, 'filter', this.filterUrl);
+			this.svgMonochromeMaskCircle.setAttributeNS(null, 'style', "fill:black;");
+			this.svgMonochromeMaskRect.setAttributeNS(null, 'style', "fill:white;");
+
+			// Hide plain draw outside lens
+			this.svgPlainMaskRect.setAttributeNS(null, 'style', "fill:black;");
+		} 
+
+		// Handle plain draw and hide
+		if (lensMode != RenderingMode.monochrome) {
+			// Set lens rendering mode
+			const fillLens = lensMode == RenderingMode.draw ? "fill:white;" : "fill:black;";
+			this.svgPlainMaskCircle.setAttributeNS(null, 'style', fillLens);
+
+			// Hide monochrome draw inside lens
+			this.svgMonochromeMaskCircle.setAttributeNS(null, 'style',  "fill:black;");
+		} 
+
+		if (outMode != RenderingMode.monochrome) {
+			// Set outside rendering mode
+			const fillOut  = outMode == RenderingMode.draw ? "fill:white;" : "fill:black;";
+			this.svgPlainMaskRect.setAttributeNS(null, 'style', fillOut);
+
+			// Hide monochrome draw outside lens
+			this.svgMonochromeMaskRect.setAttributeNS(null, 'style', "fill:black;");
+		} 
+
+		// Update mask on already present svg elements
+		this.svgElementMap.forEach((value, key) => {
+			const updateMap = false;
+			this.removeMaskFromSvgLayer(value, updateMap);
+			this.setMaskOnSvgLayer(value, updateMap);
+		});
+	}
+
 	/**
 	 * Set mask property on the svg element which need to be displayed with the lens
 	 * @param {*} svg element which need to be displayed within the lens
+	 * @param {bool} updateMap leave at default value (true). 
 	 */
-	setMaskOnSvgLayer(svg) {
-		svg.setAttributeNS(null, 'mask', this.svgMaskUrl);
+	setMaskOnSvgLayer(svg, updateMap = true) {
+		if (!svg.classList.contains('pin')) {
+			// Set an id if it is missing 
+			let id = svg.getAttribute('id');
+			if (id == null) {
+				id = Annotation.UUID();
+			
+				// Set the id in the original svg (will be used to recover/delete the copy)
+				svg.setAttributeNS({}, 'id', id);
+			}
+
+			if (updateMap) {
+				// Remember the used svg
+				this.svgElementMap.set(id, svg);
+			}
+
+			// During monochrome rendering, copy all svg elements to perform two draw steps.
+			if (this.lensRenderingMode == RenderingMode.monochrome ||
+				this.outRenderingMode == RenderingMode.monochrome) {
+				
+
+				// Create a copy of this svg within the svgCopyGroup.
+				let clone = svg.cloneNode(true);
+				let idCopy = id+this.copySuffix;
+				clone.setAttribute('id', idCopy);
+			
+				//console.log("Adding node with id " + clone.getAttribute('id'));
+				this.svgCopyGroup.appendChild(clone);
+				// Do not set the monochrome mask on the element, it is already present in the svgCopyGroup
+			}
+
+			// Set on each original tree element the plain mask
+			svg.setAttributeNS(null, 'mask', this.svgPlainMaskUrl);
+		}
 	}
 
 	/**
 	 * Remove mask attribute from svg element
 	 * @param {*} svg element from which remove the mask attribute
+   	 * @param {bool} updateMap leave at default value (true). 
 	 */
-	removeMaskFromSvgLayer(svg) {
+	removeMaskFromSvgLayer(svg, updateMap = true) {
+		// Remove a link to this svg within the svgCopyGroup
+		let id = svg.getAttribute('id');
+		if (id != null && id != "null") {
+
+			if (updateMap) {
+				this.svgElementMap.delete(id);
+			}
+
+			// Remove copied element from svgCopyGroup
+			id = id + this.copySuffix;
+			let idStr = '#'+id;
+			let elm = this.svgCopyGroup.querySelector(idStr);
+			if (elm != null) {
+				elm.remove();
+			} 
+		}
+
 		svg.removeAttribute('mask');
+	}
+
+	/**
+	 * Set colorMatrix used to compute filtered color when using monochrome rendering.
+	 * Color computed as R=m00*r+m01*g+m02*b+m03*a+m04, G=m10*r+...
+	 * See https://developer.mozilla.org/en-US/docs/Web/SVG/Element/feColorMatrix for details
+	 * @param {float} colorMatrix array of (5x4) float
+	 */
+	setFilterColorMatrix(colorMatrix) {
+		this.svgFeColorMatrix.setAttributeNS(null, 'values', colorMatrix);
 	}
 
 	/**
@@ -227,22 +452,6 @@ class LensDashboard {
     append(elm) {
 		this.container.appendChild(elm);
 	}
-	
-	/**
-	 * Set rendering mode within the lens.
-	 * @param {RenderingMode} mode RenderingMode.draw or RenderingMode.hide
-	 */
-    setLensRenderingMode(mode) {
-        this.inMask.setAttributeNS(null, 'style', mode);
-    }
-
-	/**
-	 * Set the background rendering mode within the lens.
-	 * @param {RenderingMode} mode RenderingMode.draw or RenderingMode.hide
-	 */
-    setBackgroundRenderingMode(mode) {
-        this.outMask.setAttributeNS(null, 'style', mode);
-    }
 
 	/** @ignore */
 	update(x, y, r) {
@@ -285,32 +494,44 @@ class LensDashboard {
 
 	}
 
+	/** @ignore */
 	updateMask(cameraT, center, radius) {
-	   if (this.svgElement == null) { this.createSvgLensMask(); }
-	   if (this.svgElement == null) return;
+		if (this.svgElement == null) { this.createSvgLensMask(); }
+		if (this.svgElement == null) return;
 
-	  // Lens Mask
-	  const viewport = this.viewer.camera.viewport;
-	  if (this.layerSvgAnnotation != null) {
-		// Compensate the mask transform with the inverse of the annotation svgGroup transform
-		const inverse = true;
-		const invTransfStr = this.layerSvgAnnotation.getSvgGroupTransform(cameraT, inverse);
-		this.svgGroup.setAttribute("transform", invTransfStr);
-	 } else {
-		 // Set the viewbox.  (in the other branch it is set by the layerSvgAnnotation)
-		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
-	 }
+		// Lens Mask
+		const viewport = this.viewer.camera.viewport;
+		if (this.layerSvgAnnotation != null) {
+			// Compensate the mask transform with the inverse of the annotation svgGroup transform
+			const inverse = true;
+			const invTransfStr = this.layerSvgAnnotation.getSvgGroupTransform(cameraT, inverse);
+			this.svgMonochromeGroup.setAttribute("transform", invTransfStr);
+			this.svgPlainGroup.setAttribute("transform", invTransfStr);
+			//const transfStr = this.layerSvgAnnotation.getSvgGroupTransform(cameraT, true);
+			//this.svgCopyGroup.setAttribute("transform",	transfStr);
+		} else {
+			// Set the viewbox.  (in the other branch it is set by the layerSvgAnnotation)
+			this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
+		}
 
-	  // Set the full viewport for outer mask rectangle
-	  this.outMask.setAttribute( 'x', -viewport.w / 2);
-	  this.outMask.setAttribute( 'y', -viewport.h / 2);
-	  this.outMask.setAttribute( 'width', viewport.w);
-	  this.outMask.setAttribute( 'height', viewport.h);
+		// Update monochrome and plain, rect and circle mask positions
+		this.svgMonochromeMaskRect.setAttributeNS(null, 'x', -viewport.w / 2);
+		this.svgMonochromeMaskRect.setAttributeNS(null, 'y', -viewport.h / 2);
+		this.svgMonochromeMaskRect.setAttributeNS(null, 'width', viewport.w);
+		this.svgMonochromeMaskRect.setAttributeNS(null, 'height', viewport.h);
 
-	  // Set lens parameter for inner lens
-	  this.inMask.setAttributeNS(null, 'cx', center.x - viewport.w / 2);
-	  this.inMask.setAttributeNS(null, 'cy', center.y - viewport.h / 2);
-	  this.inMask.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+		this.svgMonochromeMaskCircle.setAttributeNS(null, 'cx', center.x - viewport.w / 2);
+		this.svgMonochromeMaskCircle.setAttributeNS(null, 'cy', center.y - viewport.h / 2);
+		this.svgMonochromeMaskCircle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+		
+		this.svgPlainMaskRect.setAttributeNS(null, 'x', -viewport.w / 2);
+		this.svgPlainMaskRect.setAttributeNS(null, 'y', -viewport.h / 2);
+		this.svgPlainMaskRect.setAttributeNS(null, 'width', viewport.w);
+		this.svgPlainMaskRect.setAttributeNS(null, 'height', viewport.h);
+
+		this.svgPlainMaskCircle.setAttributeNS(null, 'cx', center.x - viewport.w / 2);
+		this.svgPlainMaskCircle.setAttributeNS(null, 'cy', center.y - viewport.h / 2);
+		this.svgPlainMaskCircle.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
 	}
 
 }
