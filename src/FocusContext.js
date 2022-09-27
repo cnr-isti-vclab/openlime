@@ -116,7 +116,7 @@ class FocusContext {
         //const pNew = context.sceneToViewportCoords(viewport, focus.position);
         const pNew = CoordinateSystem.fromSceneToViewportNoCamera(focus.position, context, viewport, useGL);
 
-        const delta = [pNew.x - pOld.x, pNew.y - pOld.y];
+        const delta = {x:pNew.x - pOld.x, y:pNew.y - pOld.y};
         context.x -= delta.x;
         context.y += delta.y;
 
