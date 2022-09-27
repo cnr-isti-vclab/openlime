@@ -195,7 +195,7 @@ class PointerManager {
             //TODO maybe we should sort by distance instead.
             fingerDownEvents.sort((a, b) => b.timeStamp - a.timeStamp);
             for (let e2 of fingerDownEvents) {
-                if (e1.timeStamp - e2.timeStamp > this.pinchInterval) break; 
+                if (e1.timeStamp - e2.timeStamp > this.pinchMaxInterval) break; 
 
                 handler.pinchStart(e1, e2);
                 if (!e1.defaultPrevented) break;
