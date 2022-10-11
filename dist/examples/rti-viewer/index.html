@@ -30,7 +30,7 @@
         // A RTI layer has many channels. In this example the 4 layers store 
         // channels in 4 different ways: image, deepzoom, tarzoom and itarzoom 
         const layer0 = new OpenLIME.Layer({
-            label: 'coin-image',
+            label: 'coin-image ptm',
             layout: 'image',
             type: 'rti',
             url: '../../assets/rti/ptm/info.json',
@@ -39,7 +39,7 @@
         lime.addLayer('coin0', layer0);
 
         const layer1 = new OpenLIME.Layer({
-            label: 'coin-deepzoom',
+            label: 'coin-deepzoom hsh',
             layout: 'deepzoom',
             type: 'rti',
             url: '../../assets/rti/hsh/info.json',
@@ -48,7 +48,7 @@
         lime.addLayer('coin1', layer1);
 
         const layer2 = new OpenLIME.Layer({
-            label: 'coin-tarzoom',
+            label: 'coin-tarzoom bln',
             layout: 'tarzoom',
             type: 'rti',
             url: '../../assets/rti/bln/info.json',
@@ -57,7 +57,7 @@
         lime.addLayer('coin2', layer2);
 
         const layer3 = new OpenLIME.Layer({
-            label: 'coin-itarzoom',
+            label: 'coin-itarzoom ybln',
             layout: 'itarzoom',
             type: 'rti',
             url: '../../assets/rti/ybln/info.json',
@@ -115,7 +115,7 @@
 
 
         let spinner = new LightSpin(layer0, 20);
-        spinner.start();
+        //spinner.start();
         lime.pointerManager.idleTime = 60;
         lime.pointerManager.onEvent( { 
             priority: 0,
