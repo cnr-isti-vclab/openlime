@@ -604,5 +604,5 @@ class BLN {
 }
 
 
-export { ShaderRTI }
+export { ShaderRTI, HSH }
 

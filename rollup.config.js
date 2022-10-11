@@ -55,7 +55,8 @@ const lens = [
 ];
 
 const rti = [
-	'./src/LayerRTI.js'
+	'./src/LayerRTI.js',
+	'./src/ShaderRTI.js'
 ];
 
 const brdf = [
