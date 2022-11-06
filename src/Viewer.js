@@ -131,8 +131,10 @@ class Viewer {
         this.canvasElement.width = width * window.devicePixelRatio;
         this.canvasElement.height = height * window.devicePixelRatio;
 
-        this.camera.setViewport({ x: 0, y: 0, dx: width, dy: height, w: width, h: height });
-    
+        let view = { x: 0, y: 0, dx: width, dy: height, w: width, h: height };
+        this.camera.setViewport(view);
+        this.emit('resize', view);
+
         this.canvas.prefetch();
         this.redraw();
     }
@@ -168,5 +170,6 @@ class Viewer {
 }
 
 addSignals(Viewer, 'draw');
+addSignals(Viewer, 'resize'); //args: viewport
 
 export { Viewer };

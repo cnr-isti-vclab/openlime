@@ -91,6 +91,7 @@ class Layer {
 	init(options) {
 		Object.assign(this, {
 			transform: new Transform(),
+			viewport: null,
 			visible: true,
 			zindex: 0,
 			overlay: false, //in the GUI it won't affect the visibility of the other layers
@@ -130,6 +131,10 @@ class Layer {
 		}
 	}
 
+	setViewport(view) {
+		this.viewport = view;
+		this.emit('update');
+	}
 	/**
 	 * Sets the state of the layer 
 	 */
@@ -453,6 +458,14 @@ class Layer {
 			throw "Shader not specified!";
 
 		let done = this.interpolateControls();
+
+		let parent_viewport = viewport;
+		if(this.viewport) {
+			viewport = this.viewport;
+			this.gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
+		}
+		
+
 		this.prepareWebGL();
 
 		//		find which quads to draw and in case request for them
@@ -464,12 +477,16 @@ class Layer {
 
 		this.updateAllTileBuffers(available);
 
+		//
 		let i = 0;
 		for (let tile of Object.values(available)) {
 			//			if(tile.complete)
 			this.drawTile(tile, i);
 			++i;
 		}
+		if(this.vieport) 
+			this.gl.viewport(parent_viewport.x, parent_viewport.y, parent_viewport.dx, parent_viewport.dy);
+
 		return done;
 	}
 	
@@ -661,6 +678,9 @@ class Layer {
 
 	/** @ignore */
 	prefetch(transform, viewport) {
+		if(this.viewport)
+			viewport = this.viewport;
+
 		if (this.layers.length != 0) { //combine layers
 			for (let layer of this.layers)
 				layer.prefetch(transform, viewport);
@@ -727,7 +747,7 @@ class Layer {
 			throw "AAARRGGHHH double tile!";
 
 		if (this.requested[tile.index])
-			throw "AAARRGGHHH double request!";
+			console.log("Warning: double request!");
 
 		this.tiles.set(tile.index, tile);
 		this.requested[tile.index] = true;

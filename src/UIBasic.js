@@ -181,11 +181,13 @@ class UIBasic {
 			this.menu.push(layerEntry);
 		}
 
-		let controller = new Controller2D((x, y) => {
-			for (let layer of lightLayers)
-				layer.setLight([x, y], 0);
-			if(this.showLightDirections)
-				this.updateLightDirections(x, y);
+		let controller = new Controller2D(
+			(x, y) => {
+				for (let layer of lightLayers)
+					layer.setLight([x, y], 0);
+				if(this.showLightDirections)
+					this.updateLightDirections(x, y);
+				this.emit('lightdirection', [x, y, Math.sqrt(1 - x*x + y*y)]);
 			}, { 
 				// TODO: IS THIS OK? It was false before
 				active: false, 
@@ -777,5 +779,6 @@ class UIDialog { //FIXME standalone class
 }
 
 addSignals(UIDialog, 'closed');
+addSignals(UIBasic, 'lightdirection');
 
 export { UIBasic, UIDialog }
