@@ -20,6 +20,7 @@ const core = [
 	'./src/LayerImage.js',
 	'./src/LayerCombiner.js',
 	'./src/LayerAnnotationImage.js',
+	'./src/LayerMaskedImage.js',
 	'./src/Tile.js',
 	'./src/Layout.js',
 	'./src/LayoutTiles.js',

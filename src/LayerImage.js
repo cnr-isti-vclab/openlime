@@ -37,7 +37,7 @@ class LayerImage extends Layer {
 			throw "Missing options.url parameter";	
 
 		const rasterFormat = this.format != null ? this.format : 'vec4';
-		let raster = new Raster({ format: rasterFormat });
+		let raster = new Raster({ format: rasterFormat }); //FIXME select format for GEO stuff
 
 		this.rasters.push(raster);
 		
