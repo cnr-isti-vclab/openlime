@@ -60,10 +60,11 @@ class LayerMaskedImage extends Layer {
 			vec2 result_masked_scalar;
 			result_masked_scalar.y = f00*f01*f10*f11;
 			result_masked_scalar.y = result_masked_scalar.y > 0.0 ? 1.0 : 0.0;
-			float x = mix(mix(f00, f10, fuv.x), mix(f01, f11, fuv.x), fuv.y);
-			x = (x*255.0-1.0)/254.0;
-			result_masked_scalar.x = x * result_masked_scalar.y;
-		  
+
+			const float scale = 255.0/254.0;
+			const float bias  = -1.0/254.0;
+			result_masked_scalar.x = mix(mix(f00, f10, fuv.x), mix(f01, f11, fuv.x), fuv.y);
+			result_masked_scalar.x = result_masked_scalar.y * (scale * result_masked_scalar.x + bias);		  
 			return result_masked_scalar;
 		  }
 		  
