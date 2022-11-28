@@ -16,6 +16,7 @@ const core = [
 	'./src/Canvas.js', 
 	'./src/Camera.js',
 	'./src/Transform.js',
+	'./src/Colormap.js',
 	'./src/Layer.js',
 	'./src/LayerImage.js',
 	'./src/LayerCombiner.js',
