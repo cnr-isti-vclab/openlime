@@ -7,7 +7,7 @@ class Spline {
 
 	getNaturalKs(ks) {
 		const n = this.xs.length - 1;
-		const A = zerosMat(n + 1, n + 2);
+		const A = Spline.zerosMat(n + 1, n + 2);
 		for (let i = 1; i < n; i++ // rows
 		) {
 			A[i][i - 1] = 1 / (this.xs[i] - this.xs[i - 1]);
@@ -32,7 +32,7 @@ class Spline {
 		A[n][n + 1] =
 			(3 * (this.ys[n] - this.ys[n - 1])) /
 			((this.xs[n] - this.xs[n - 1]) * (this.xs[n] - this.xs[n - 1]));
-		return solve(A, ks);
+		return Spline.solve(A, ks);
 	}
 	/**
 	 * inspired by https://stackoverflow.com/a/40850313/4417327
@@ -70,65 +70,69 @@ class Spline {
 			t * (1 - t) * (a * (1 - t) + b * t);
 		return q;
 	}
-}
 
-function solve(A, ks) {
-	const m = A.length;
-	let h = 0;
-	let k = 0;
-	while (h < m && k <= m) {
-		let i_max = 0;
-		let max = -Infinity;
-		for (let i = h; i < m; i++) {
-			const v = Math.abs(A[i][k]);
-			if (v > max) {
-				i_max = i;
-				max = v;
+	// Utilities 
+
+	static solve(A, ks) {
+		const m = A.length;
+		let h = 0;
+		let k = 0;
+		while (h < m && k <= m) {
+			let i_max = 0;
+			let max = -Infinity;
+			for (let i = h; i < m; i++) {
+				const v = Math.abs(A[i][k]);
+				if (v > max) {
+					i_max = i;
+					max = v;
+				}
+			}
+			if (A[i_max][k] === 0) {
+				k++;
+			}
+			else {
+				Spline.swapRows(A, h, i_max);
+				for (let i = h + 1; i < m; i++) {
+					const f = A[i][k] / A[h][k];
+					A[i][k] = 0;
+					for (let j = k + 1; j <= m; j++)
+						A[i][j] -= A[h][j] * f;
+				}
+				h++;
+				k++;
 			}
 		}
-		if (A[i_max][k] === 0) {
-			k++;
-		}
-		else {
-			swapRows(A, h, i_max);
-			for (let i = h + 1; i < m; i++) {
-				const f = A[i][k] / A[h][k];
-				A[i][k] = 0;
-				for (let j = k + 1; j <= m; j++)
-					A[i][j] -= A[h][j] * f;
-			}
-			h++;
-			k++;
-		}
-	}
-	for (let i = m - 1; i >= 0; i-- // rows = columns
-	) {
-		var v = 0;
-		if (A[i][i]) {
-			v = A[i][m] / A[i][i];
-		}
-		ks[i] = v;
-		for (let j = i - 1; j >= 0; j-- // rows
+		for (let i = m - 1; i >= 0; i-- // rows = columns
 		) {
-			A[j][m] -= A[j][i] * v;
-			A[j][i] = 0;
+			var v = 0;
+			if (A[i][i]) {
+				v = A[i][m] / A[i][i];
+			}
+			ks[i] = v;
+			for (let j = i - 1; j >= 0; j-- // rows
+			) {
+				A[j][m] -= A[j][i] * v;
+				A[j][i] = 0;
+			}
 		}
+		return ks;
 	}
-	return ks;
+	
+	static zerosMat(r, c) {
+		const A = [];
+		for (let i = 0; i < r; i++)
+			A.push(new Float64Array(c));
+		return A;
+	}
+	
+	static swapRows(m, k, l) {
+		let p = m[k];
+		m[k] = m[l];
+		m[l] = p;
+	}
 }
 
-function zerosMat(r, c) {
-	const A = [];
-	for (let i = 0; i < r; i++)
-		A.push(new Float64Array(c));
-	return A;
-}
 
-function swapRows(m, k, l) {
-	let p = m[k];
-	m[k] = m[l];
-	m[l] = p;
-}
 
 class Color {
 	constructor(r, g = undefined, b = undefined, a = undefined) {
@@ -276,6 +280,23 @@ class Colormap {
 
 	spline(x) {
 		return new Color(this.rspline.at(x), this.gspline.at(x), this.bspline.at(x), this.aspline.at(x));
+	}
+
+	/** Precision as parameter for future dev */
+	sample(maxSteps) {
+		let min = this.xarr[0];
+		let max = this.xarr[this.xarr.length-1];
+		if(this.domain.length == 2) maxSteps = this.xarr.length;
+		let buffer = new Uint8Array(maxSteps*4);
+		let delta = (max-min)/maxSteps;
+		for (let i = 0; i < maxSteps; i++) {
+			let c = this.linear(min+i*delta).toRGBA();
+			buffer[i*4+0] = c[0];
+			buffer[i*4+1] = c[1];
+			buffer[i*4+2] = c[2];
+			buffer[i*4+3] = c[3];
+		}
+		return { min, max, buffer};
 	}
 }
 export { Color, Colormap }
