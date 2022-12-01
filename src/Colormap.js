@@ -143,31 +143,31 @@ class Color {
 					c = [c[0], c[0], c[1], c[1], c[2], c[2]];
 				}
 				c = '0x' + c.join('') + 'FF';
-				r = Color.valFunc(c >> 24);
-				g = Color.valFunc(c >> 16);
-				b = Color.valFunc(c >> 8);
-				a = Color.valFunc(c);
+				r = Color.normalizedRGBA(c >> 24);
+				g = Color.normalizedRGBA(c >> 16);
+				b = Color.normalizedRGBA(c >> 8);
+				a = Color.normalizedRGBA(c);
 			} else if (/^#([A-Fa-f0-9]{4}){1,2}$/.test(r)) {
 				let c = r.substring(1).split('');
 				c = '0x' + c.join('');
-				r = Color.valFunc(c >> 24);
-				g = Color.valFunc(c >> 16);
-				b = Color.valFunc(c >> 8);
-				a = Color.valFunc(c);
+				r = Color.normalizedRGBA(c >> 24);
+				g = Color.normalizedRGBA(c >> 16);
+				b = Color.normalizedRGBA(c >> 8);
+				a = Color.normalizedRGBA(c);
 			} else if (/^rgb\(/.test(r)) {
 				let c = r.split("(")[1].split(")")[0];
 				c = c.split(',');
-				r = Color.clamp(c[0] / 255, 0.0, 1.0);
-				g = Color.clamp(c[1] / 255, 0.0, 1.0);
-				b = Color.clamp(c[2] / 255, 0.0, 1.0);
+				r = Color.clamp(c[0] / 255);
+				g = Color.clamp(c[1] / 255);
+				b = Color.clamp(c[2] / 255);
 				a = 1.0;
 			} else if (/^rgba\(/.test(r)) {
 				let c = r.split("(")[1].split(")")[0];
 				c = c.split(',');
-				r = Color.clamp(c[0] / 255, 0.0, 1.0);
-				g = Color.clamp(c[1] / 255, 0.0, 1.0);
-				b = Color.clamp(c[2] / 255, 0.0, 1.0);
-				a = Color.clamp(c[3] / 255, 0.0, 1.0);
+				r = Color.clamp(c[0] / 255);
+				g = Color.clamp(c[1] / 255);
+				b = Color.clamp(c[2] / 255);
+				a = Color.clamp(c[3] / 255);
 			} else {
 				throw Error("Value is not a color");
 			}
@@ -178,15 +178,15 @@ class Color {
 		this.a = a;
 	}
 
-	static clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+	static clamp = (num, min=0.0, max=1.0) => Math.min(Math.max(num, min), max);
 
-	static hexFunc(c) {
+	static hex(c) {
 		var hex = c.toString(16).toUpperCase();
 		return hex.length == 1 ? "0" + hex : hex;
 	}
 
-	static valFunc(c) {
-		return Color.clamp((c & 255) / 255, 0.0, 1.0);
+	static normalizedRGBA(c) {
+		return Color.clamp((c & 255) / 255);
 	}
 
 	static rgbToHex(r, g, b) {
@@ -195,7 +195,7 @@ class Color {
 	}
 
 	static rgbToHexa(r, g, b, a) {
-		return '#' + Color.hexFunc(r) + Color.hexFunc(g) + Color.hexFunc(b) + Color.hexFunc(a);
+		return '#' + Color.hex(r) + Color.hex(g) + Color.hex(b) + Color.hex(a);
 	}
 
 	value() {
@@ -265,7 +265,7 @@ class Colormap {
 	static clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
 	linear(x) {
-		Colormap.clamp(x, this.xarr[0], this.xarr[this.nval]);
+		x = Colormap.clamp(x, this.xarr[0], this.xarr[this.xarr.length - 1]);
 		const c = new Color(this.rarr[0], this.garr[0], this.barr[0], this.aarr[0]);
 		for (let i = 0; i < this.xarr.length - 1; i++) {
 			if (x > this.xarr[i] && x <= this.xarr[i + 1]) {
@@ -279,6 +279,7 @@ class Colormap {
 	}
 
 	spline(x) {
+		x = Colormap.clamp(x, this.xarr[0], this.xarr[this.xarr.length - 1]);
 		return new Color(this.rspline.at(x), this.gspline.at(x), this.bspline.at(x), this.aspline.at(x));
 	}
 
