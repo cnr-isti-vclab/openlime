@@ -188,7 +188,7 @@ class ShaderRTI extends Shader {
 		
 		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		let str = `${gl2? '#version 300 es' : ''}
+		let str = `
 
 precision highp float; 
 precision highp int; 
@@ -196,7 +196,6 @@ precision highp int;
 #define np1 ${this.nplanes + 1}
 
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
-${gl2? 'out' : ''} vec4 color;
 
 const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
 	-8.1650e-01, 4.7140e-01,  4.7140e-01,
@@ -239,12 +238,12 @@ const int ny1 = ${this.yccplanes[1]};
 
 		str += `
 
-void main(void) {
+vec4 data() {
 
 `;
 		if(this.mode == 'light') {
 			str += `
-	color = render(base);
+	vec4 color = render(base);
 `;
 		} else  {
 			if(this.normals)
@@ -282,8 +281,7 @@ void main(void) {
 			}
 		}
 
-		str += `
-	${gl2?'':'gl_FragColor = color;'}
+		str += `return color;
 }`;
 		return str;
 	}

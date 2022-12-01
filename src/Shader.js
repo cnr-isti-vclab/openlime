@@ -161,6 +161,7 @@ class Shader {
 		gl.compileShader(vert);
 		let compiled = gl.getShaderParameter(vert, gl.COMPILE_STATUS);
 		if (!compiled) {
+			console.log(this.vertShaderSrc(gl))
 			console.log(gl.getShaderInfoLog(vert));
 			throw Error("Failed vertex shader compilation: see console log and ask for support.");
 		}
@@ -177,6 +178,7 @@ class Shader {
 		gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		compiled = gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		if (!compiled) {
+			console.log(this.completeFragShaderSrc(gl));
 			console.log(gl.getShaderInfoLog(frag));
 			throw Error("Failed fragment shader compilation: see console log and ask for support.");
 		}

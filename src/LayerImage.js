@@ -50,20 +50,16 @@ class LayerImage extends Layer {
 		shader.fragShaderSrc = function(gl) {
 
 			let gl2 = !(gl instanceof WebGLRenderingContext);
-			let str = `${gl2? '#version 300 es' : ''}
-
+			let str = `
 precision highp float;
 precision highp int;
 
 uniform sampler2D kd;
 
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
-${gl2? 'out' : ''} vec4 color;
 
-
-void main() {
-	color = texture${gl2?'':'2D'}(kd, v_texcoord);
-	${gl2? '':'gl_FragColor = color;'}
+vec4 data() {
+	return texture${gl2?'':'2D'}(kd, v_texcoord);
 }
 `;
 			return str;

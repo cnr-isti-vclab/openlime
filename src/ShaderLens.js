@@ -51,8 +51,7 @@ class ShaderLens extends Shader {
             color = color * (1.0 - c1.a) + c1 * c1.a;
             `
         }
-		return `${gl2? '#version 300 es':''}
-
+		return `
         precision highp float; 
         precision highp int; 
 
@@ -62,7 +61,6 @@ class ShaderLens extends Shader {
         uniform vec4 u_border_color;
         uniform bool u_border_enable;
         ${gl2? 'in' : 'varying'} vec2 v_texcoord;
-        ${gl2? 'out' : ''} vec4 color;
 
         vec4 lensColor(in vec4 c_in, in vec4 c_border, in vec4 c_out,
             float r, float R, float B) {
@@ -84,7 +82,8 @@ class ShaderLens extends Shader {
             return result;
         }
 
-        void main() {
+        vec4 data() {
+            vec4 color;
             float innerBorderRadius = (u_lens.z - u_lens.w);
             float dx = v_texcoord.x * u_width_height.x - u_lens.x;
             float dy = v_texcoord.y * u_width_height.y - u_lens.y;
@@ -96,7 +95,7 @@ class ShaderLens extends Shader {
             color = lensColor(c_in, u_border_color, c_out, r, u_lens.z, u_lens.w);
 
             ${overlaySamplerCode}
-            ${gl2?'':'gl_FragColor = color;'}
+            return color;
         }
         `
     }
