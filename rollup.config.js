@@ -27,6 +27,7 @@ const core = [
 	'./src/LayoutTiles.js',
 	'./src/LayoutTileImages.js',
 	'./src/Raster.js',
+	'./src/ShaderFilter.js',
 	'./src/Shader.js',
 	'./src/ShaderCombiner.js',
 	'./src/Controller.js',

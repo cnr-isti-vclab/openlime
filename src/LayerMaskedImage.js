@@ -31,8 +31,7 @@ class LayerMaskedImage extends Layer {
 		shader.fragShaderSrc = function (gl) {
 
 			let gl2 = !(gl instanceof WebGLRenderingContext);
-			let str = `${gl2 ? '#version 300 es' : ''}
-
+			let str = `
 		precision highp float;
 		precision highp int;
 
@@ -41,7 +40,6 @@ class LayerMaskedImage extends Layer {
 		uniform sampler2D kd;
 
 		${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
-		${gl2 ? 'out' : ''} vec4 color;
 
 		vec2 bilinear_masked_scalar(sampler2D field, vec2 uv) {
 			vec2 px = uv*u_width_height;
@@ -49,8 +47,8 @@ class LayerMaskedImage extends Layer {
 			vec2 fuv = fract(px);
 			int i0 = iuv.x;
 			int j0 = iuv.y;
-			int i1 = i0+1>int(u_width_height.x) ? i0 : i0+1;
-			int j1 = j0+1>int(u_width_height.y) ? j0 : j0+1;
+			int i1 = i0+1>=int(u_width_height.x) ? i0 : i0+1;
+			int j1 = j0+1>=int(u_width_height.y) ? j0 : j0+1;
 		  
 			float f00 = texelFetch(field, ivec2(i0, j0), 0).r;
 			float f10 = texelFetch(field, ivec2(i1, j0), 0).r;
@@ -68,10 +66,9 @@ class LayerMaskedImage extends Layer {
 			return result_masked_scalar;
 		  }
 		  
-		  void main() { 
+		  vec4 data() { 
 			vec2  masked_scalar = bilinear_masked_scalar(kd, v_texcoord);
-			color = masked_scalar.y > 0.0 ?  vec4(masked_scalar.x, masked_scalar.x, masked_scalar.x, masked_scalar.y) :  vec4(1.0, 0.0, 0.0, masked_scalar.y);
-			${gl2 ? '' : 'gl_FragColor = color;'}
+			return masked_scalar.y > 0.0 ?  vec4(masked_scalar.x, masked_scalar.x, masked_scalar.x, masked_scalar.y) :  vec4(1.0, 0.0, 0.0, masked_scalar.y);
 		  }
 		`;
 			return str;

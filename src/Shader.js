@@ -41,18 +41,18 @@ import { addSignals } from './Signals.js'
  * ```
  */
 class Shader {
- /** 
- * Instantiates a Shader class. An object literal with Shader `options` can be specified.
- * @param {Object} [options] An object literal describing the shader content.
- * @param {Array<Shader#Sampler>} options.samplers An array of pointers to 2D textures. 
- * @param {Array<string>} options.modes An optional array of labels that identify different shader behaviors.
- */
-  constructor(options) {
+	/** 
+	* Instantiates a Shader class. An object literal with Shader `options` can be specified.
+	* @param {Object} [options] An object literal describing the shader content.
+	* @param {Array<Shader#Sampler>} options.samplers An array of pointers to 2D textures. 
+	* @param {Array<string>} options.modes An optional array of labels that identify different shader behaviors.
+	*/
+	constructor(options) {
 		Object.assign(this, {
 			version: 100,   //check for webglversion. 
 			samplers: [],
 			uniforms: {},
-			label: null, 
+			label: null,
 			program: null,      //webgl program
 			modes: [],
 			mode: null, // The current mode
@@ -60,7 +60,29 @@ class Shader {
 		});
 		addSignals(Shader, 'update');
 		Object.assign(this, options);
+		this.filters = [];
 	}
+
+	clearFilters() {
+		this.filters = [];
+		this.needsUpdate = true;
+		this.emit('update');
+	}
+
+	addFilter(f) {
+		this.filters.push(f);
+		this.needsUpdate = true;
+		this.emit('update');
+	}
+
+	removeFilter(name) {
+		this.filters = this.filters.filter((v) => {
+			return v.name != name;
+		});
+		this.needsUpdate = true;
+		this.emit('update');
+	}
+
 	/**
 	 * Sets the current mode of the shader
 	 * @param {string} mode The mode identifier
@@ -87,25 +109,47 @@ class Shader {
 		* The event is fired when a uniform shader variable is changed.
 		* @event Camera#update
 		*/
-		let u = this.uniforms[name];
-		if(!u)
+		let u = this.getUniform(name);
+		if (!u)
 			throw new Error(`Unknown '${name}'. It is not a registered uniform.`);
-		if ((typeof (value) == "number" || typeof (value) == "boolean") && u.value == value) 
+		if ((typeof (value) == "number" || typeof (value) == "boolean") && u.value == value)
 			return;
-		if(Array.isArray(value) && Array.isArray(u.value) && value.length == u.value.length) {
+		if (Array.isArray(value) && Array.isArray(u.value) && value.length == u.value.length) {
 			let equal = true;
-			for(let i = 0; i < value.length; i++)
-				if(value[i] != u.value[i]) {
+			for (let i = 0; i < value.length; i++)
+				if (value[i] != u.value[i]) {
 					equal = false;
 					break;
 				}
-			if(equal)
+			if (equal)
 				return;
 		}
 
 		u.value = value;
 		u.needsUpdate = true;
 		this.emit('update');
+	}
+
+	completeFragShaderSrc(gl) {
+		let gl2 = !(gl instanceof WebGLRenderingContext);
+
+		let src = `${gl2 ? '#version 300 es' : ''}\n` + this.fragShaderSrc() + '\n';
+		for (const f of this.filters) {
+			src += `		// Filter: ${f.name}\n`;
+			src += f.fragUniformSrc() + '\n';
+			src += f.fragDataSrc() + '\n\n';
+		}
+		src += `
+		${gl2 ? 'out' : ''} vec4 color;
+		void main() { 
+			color = data();
+			`;
+		for (const f of this.filters) {
+			src += `color=${f.functionName()}(color);`
+		}
+		src += `${gl2 ? '' : 'gl_FragColor = color;'}
+		}`;
+		return src;
 	}
 
 	/** @ignore */
@@ -116,24 +160,23 @@ class Shader {
 
 		gl.compileShader(vert);
 		let compiled = gl.getShaderParameter(vert, gl.COMPILE_STATUS);
-		if(!compiled) {
+		if (!compiled) {
 			console.log(gl.getShaderInfoLog(vert));
 			throw Error("Failed vertex shader compilation: see console log and ask for support.");
 		}
 
 		let frag = gl.createShader(gl.FRAGMENT_SHADER);
-		gl.shaderSource(frag, this.fragShaderSrc(gl));
+		gl.shaderSource(frag, this.completeFragShaderSrc(gl));
 		gl.compileShader(frag);
 
-		if(this.program)
+		if (this.program)
 			gl.deleteProgram(this.program);
 
 		let program = gl.createProgram();
 
 		gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		compiled = gl.getShaderParameter(frag, gl.COMPILE_STATUS);
-		if(!compiled) {
-			console.log(this.fragShaderSrc())
+		if (!compiled) {
 			console.log(gl.getShaderInfoLog(frag));
 			throw Error("Failed fragment shader compilation: see console log and ask for support.");
 		}
@@ -142,13 +185,13 @@ class Shader {
 		gl.attachShader(program, frag);
 		gl.linkProgram(program);
 
-		if ( !gl.getProgramParameter( program, gl.LINK_STATUS) ) {
+		if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
 			var info = gl.getProgramInfoLog(program);
 			throw new Error('Could not compile WebGL program. \n\n' + info);
 		}
 
 		//sampler units;
-		for(let sampler of this.samplers)
+		for (let sampler of this.samplers)
 			sampler.location = gl.getUniformLocation(program, sampler.name);
 
 		this.coordattrib = gl.getAttribLocation(program, "a_position");
@@ -164,33 +207,51 @@ class Shader {
 		this.program = program;
 		this.needsUpdate = false;
 
-		for(let uniform of Object.values(this.uniforms)) {
+		for (let uniform of Object.values(this.allUniforms())) {
 			uniform.location = null;
 			uniform.needsUpdate = true;
 		}
 	}
 
+	getUniform(name) {
+		let u = this.uniforms[name];
+		if (u) return u;
+		for (const f of this.filters) {
+			u = f.uniforms[name];
+			if (u) return u;
+		}
+		return u;
+	}
+
+	allUniforms() {
+		const result = this.uniforms;
+		for (const f of this.filters) {
+			Object.assign(result, f.uniforms);
+		}
+		return result;
+	}
+
 	/** @ignore */
 	updateUniforms(gl, program) {
 		let now = performance.now();
-		for(const [name, uniform] of Object.entries(this.uniforms)) {
-			if(!uniform.location)
+		for (const [name, uniform] of Object.entries(this.allUniforms())) {
+			if (!uniform.location)
 				uniform.location = gl.getUniformLocation(program, name);
 
-			if(!uniform.location)  //uniform not used in program
-				continue; 
+			if (!uniform.location)  //uniform not used in program
+				continue;
 
-			if(uniform.needsUpdate) {
+			if (uniform.needsUpdate) {
 				let value = uniform.value;
-				switch(uniform.type) {
-					case 'vec4':  gl.uniform4fv(uniform.location, value); break;
-					case 'vec3':  gl.uniform3fv(uniform.location, value); break;
-					case 'vec2':  gl.uniform2fv(uniform.location, value); break;
+				switch (uniform.type) {
+					case 'vec4': gl.uniform4fv(uniform.location, value); break;
+					case 'vec3': gl.uniform3fv(uniform.location, value); break;
+					case 'vec2': gl.uniform2fv(uniform.location, value); break;
 					case 'float': gl.uniform1f(uniform.location, value); break;
-					case 'int':   gl.uniform1i (uniform.location, value); break;
-					case 'bool':  gl.uniform1i (uniform.location, value); break;
-					case 'mat3':  gl.uniformMatrix3fv (uniform.location, false, value); break;
-					case 'mat4':  gl.uniformMatrix4fv (uniform.location, false, value); break;
+					case 'int': gl.uniform1i(uniform.location, value); break;
+					case 'bool': gl.uniform1i(uniform.location, value); break;
+					case 'mat3': gl.uniformMatrix3fv(uniform.location, false, value); break;
+					case 'mat4': gl.uniformMatrix4fv(uniform.location, false, value); break;
 					default: throw Error('Unknown uniform type: ' + u.type);
 				}
 			}
@@ -204,16 +265,16 @@ class Shader {
 	 */
 	vertShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		return `${gl2? '#version 300 es':''}
+		return `${gl2 ? '#version 300 es' : ''}
 
 precision highp float; 
 precision highp int; 
 
 uniform mat4 u_matrix;
-${gl2? 'in' : 'attribute'} vec4 a_position;
-${gl2? 'in' : 'attribute'} vec2 a_texcoord;
+${gl2 ? 'in' : 'attribute'} vec4 a_position;
+${gl2 ? 'in' : 'attribute'} vec2 a_texcoord;
 
-${gl2? 'out' : 'varying'} vec2 v_texcoord;
+${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 
 void main() {
 	gl_Position = u_matrix * a_position;
@@ -226,7 +287,7 @@ void main() {
 	 * @param {*} gl Thegl context.
 	 * @returns {string} The vertex shader script.
 	 */
-	 fragShaderSrc(gl) {
+	fragShaderSrc(gl) {
 		throw 'Unimplemented!'
 	}
 }
