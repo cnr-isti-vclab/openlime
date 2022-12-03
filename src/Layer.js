@@ -491,8 +491,8 @@ class Layer {
 		for (const f of this.shader.filters) {
 			for (let i = 0; i < f.samplers.length; i++) {
 				this.gl.uniform1i(f.samplers[i].location, iSampler);
-				this.gl.activeTexture(gl.TEXTURE0 + iSampler);
-				this.gl.bindTexture(gl.TEXTURE_2D, f.samplers[i].buffer); /// FIXME
+				this.gl.activeTexture(this.gl.TEXTURE0 + iSampler);
+				this.gl.bindTexture(this.gl.TEXTURE_2D, f.samplers[i].buffer); /// FIXME
 				iSampler++;
 			}
 		}
