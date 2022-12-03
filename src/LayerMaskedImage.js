@@ -54,6 +54,8 @@ class LayerMaskedImage extends Layer {
 			float f10 = texelFetch(field, ivec2(i1, j0), 0).r;
 			float f01 = texelFetch(field, ivec2(i0, j1), 0).r;
 			float f11 = texelFetch(field, ivec2(i1, j1), 0).r;
+
+			// FIXME Compute weights of valid
 		  
 			vec2 result_masked_scalar;
 			result_masked_scalar.y = f00*f01*f10*f11;

@@ -117,14 +117,14 @@ class Spline {
 		}
 		return ks;
 	}
-	
+
 	static zerosMat(r, c) {
 		const A = [];
 		for (let i = 0; i < r; i++)
 			A.push(new Float64Array(c));
 		return A;
 	}
-	
+
 	static swapRows(m, k, l) {
 		let p = m[k];
 		m[k] = m[l];
@@ -178,7 +178,7 @@ class Color {
 		this.a = a;
 	}
 
-	static clamp = (num, min=0.0, max=1.0) => Math.min(Math.max(num, min), max);
+	static clamp = (num, min = 0.0, max = 1.0) => Math.min(Math.max(num, min), max);
 
 	static hex(c) {
 		var hex = c.toString(16).toUpperCase();
@@ -232,14 +232,21 @@ class Color {
 class Colormap {
 	constructor(colors = [new Color(0, 0, 0, 1), new Color(1, 1, 1, 1)], options = '') {
 		options = Object.assign({
-			domain: [0.0, 1.0]
+			domain: [0.0, 1.0],
+			lowColor: null,
+			highColor: null
 		}, options);
 		Object.assign(this, options);
 		const nval = colors.length;
+
+		if (!this.lowColor) this.lowColor = colors[0];
+		if (!this.highColor) this.highColor = colors[nval - 1];
+
 		const nd = this.domain.length;
-		if(nval < 2 && nd != 2 && this.nval != nd) {
+		if (nval < 2 && nd != 2 && this.nval != nd) {
 			throw Error("Colormap colors/domain bad format");
 		}
+
 		const delta = (this.domain[nd - 1] - this.domain[0]) / (nval - 1);
 		this.xarr = [];
 		this.rarr = [];
@@ -265,7 +272,8 @@ class Colormap {
 	static clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
 	linear(x) {
-		x = Colormap.clamp(x, this.xarr[0], this.xarr[this.xarr.length - 1]);
+		if (x < this.xarr[0]) return this.lowColor;
+		if (x > this.xarr[this.xarr.length - 1]) return this.highColor;
 		const c = new Color(this.rarr[0], this.garr[0], this.barr[0], this.aarr[0]);
 		for (let i = 0; i < this.xarr.length - 1; i++) {
 			if (x > this.xarr[i] && x <= this.xarr[i + 1]) {
@@ -279,25 +287,26 @@ class Colormap {
 	}
 
 	spline(x) {
-		x = Colormap.clamp(x, this.xarr[0], this.xarr[this.xarr.length - 1]);
+		if (x < this.xarr[0]) return this.lowColor;
+		if (x > this.xarr[this.xarr.length - 1]) return this.highColor;
 		return new Color(this.rspline.at(x), this.gspline.at(x), this.bspline.at(x), this.aspline.at(x));
 	}
 
 	/** Precision as parameter for future dev */
 	sample(maxSteps) {
 		let min = this.xarr[0];
-		let max = this.xarr[this.xarr.length-1];
-		if(this.domain.length == 2) maxSteps = this.xarr.length;
-		let buffer = new Uint8Array(maxSteps*4);
-		let delta = (max-min)/maxSteps;
+		let max = this.xarr[this.xarr.length - 1];
+		if (this.domain.length == 2) maxSteps = this.xarr.length;
+		let buffer = new Uint8Array(maxSteps * 4);
+		let delta = (max - min) / maxSteps;
 		for (let i = 0; i < maxSteps; i++) {
-			let c = this.linear(min+i*delta).toRGBA();
-			buffer[i*4+0] = c[0];
-			buffer[i*4+1] = c[1];
-			buffer[i*4+2] = c[2];
-			buffer[i*4+3] = c[3];
+			let c = this.linear(min + i * delta).toRGBA();
+			buffer[i * 4 + 0] = c[0];
+			buffer[i * 4 + 1] = c[1];
+			buffer[i * 4 + 2] = c[2];
+			buffer[i * 4 + 3] = c[3];
 		}
-		return { min, max, buffer};
+		return { min, max, buffer };
 	}
 }
 export { Color, Colormap }

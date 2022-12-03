@@ -134,8 +134,9 @@ class Shader {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 
 		let src = `${gl2 ? '#version 300 es' : ''}\n` + this.fragShaderSrc() + '\n';
-		for (const f of this.filters) {
+		for (let f of this.filters) {
 			src += `		// Filter: ${f.name}\n`;
+			src += f.fragSamplerSrc() + '\n';
 			src += f.fragUniformSrc() + '\n';
 			src += f.fragDataSrc() + '\n\n';
 		}
@@ -144,7 +145,7 @@ class Shader {
 		void main() { 
 			color = data();
 			`;
-		for (const f of this.filters) {
+		for (let f of this.filters) {
 			src += `color=${f.functionName()}(color);`
 		}
 		src += `${gl2 ? '' : 'gl_FragColor = color;'}
@@ -183,6 +184,8 @@ class Shader {
 			throw Error("Failed fragment shader compilation: see console log and ask for support.");
 		}
 
+		console.log(this.completeFragShaderSrc(gl));
+
 		gl.attachShader(program, vert);
 		gl.attachShader(program, frag);
 		gl.linkProgram(program);
@@ -195,6 +198,11 @@ class Shader {
 		//sampler units;
 		for (let sampler of this.samplers)
 			sampler.location = gl.getUniformLocation(program, sampler.name);
+
+		// filter samplers
+		for (let f of this.filters)
+			for (let sampler of f.samplers)
+				sampler.location = gl.getUniformLocation(program, sampler.name);
 
 		this.coordattrib = gl.getAttribLocation(program, "a_position");
 		gl.vertexAttribPointer(this.coordattrib, 3, gl.FLOAT, false, 0, 0);
@@ -218,7 +226,7 @@ class Shader {
 	getUniform(name) {
 		let u = this.uniforms[name];
 		if (u) return u;
-		for (const f of this.filters) {
+		for (let f of this.filters) {
 			u = f.uniforms[name];
 			if (u) return u;
 		}
@@ -227,7 +235,7 @@ class Shader {
 
 	allUniforms() {
 		const result = this.uniforms;
-		for (const f of this.filters) {
+		for (let f of this.filters) {
 			Object.assign(result, f.uniforms);
 		}
 		return result;

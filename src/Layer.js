@@ -485,6 +485,16 @@ class Layer {
 			this.drawTile(tile, i);
 			++i;
 		}
+
+		// bind filter textures
+		let iSampler = this.shader.samplers.length;
+		for (const f of this.shader.filters) {
+			for (let i = 0; i < f.samplers.length; i++) {
+				this.gl.uniform1i(f.samplers[i].location, i);
+				this.gl.activeTexture(gl.TEXTURE0 + iSampler);
+				this.gl.bindTexture(gl.TEXTURE_2D, f.samplers[i].buffer); /// FIXME
+			}
+		}
 		return done;
 	}
 
@@ -504,6 +514,14 @@ class Layer {
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
+
+		for (var i = 0; i < this.shader.samplers.length; i++) {
+			let id = this.shader.samplers[i].id;
+			gl.uniform1i(this.shader.samplers[i].location, i);
+			gl.activeTexture(gl.TEXTURE0 + i);
+			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+		}
+
 		const byteOffset = this.getTileByteOffset(index);
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, byteOffset);
 	}
@@ -653,8 +671,11 @@ class Layer {
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]), gl.STATIC_DRAW);
 		}
 
-		if (this.shader.needsUpdate)
+		if (this.shader.needsUpdate) {
+			for (let f of this.shader.filters) 
+				f.prepareWebGL(gl);
 			this.shader.createProgram(gl);
+		}
 
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);

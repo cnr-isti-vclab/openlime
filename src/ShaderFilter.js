@@ -5,6 +5,19 @@ class ShaderFilter {
         Object.assign(this, options);
         this.name = this.constructor.name;
         this.uniforms = {};
+        this.samplers = [];
+    }
+
+    prepareWebGL(gl) {
+    }
+
+    fragSamplerSrc() {
+        let src = '';
+        for (let s of this.samplers) {
+            src += `
+            uniform sampler2D ${s.name};`;
+        }
+        return src;
     }
 
     fragUniformSrc() {
@@ -24,6 +37,10 @@ class ShaderFilter {
         return this.name + "_data";
     }
 
+    samplerName(name) {
+        return `${this.name}_${name}`;
+    }
+
     uniformName(name) {
         return `u_${this.name}_${name}`;
     }
@@ -32,6 +49,7 @@ class ShaderFilter {
 class ShaderFilterTest extends ShaderFilter {
     constructor(options) {
         super(options);
+//        this.samplers = [{ name: `${this.samplerName('testmap')}` }];
         this.uniforms[this.uniformName('nodata_col')] = { type: 'vec4', needsUpdate: true, size: 4, value: [1, 1, 0, 1] };
     }
 

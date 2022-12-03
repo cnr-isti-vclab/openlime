@@ -106,11 +106,9 @@ class ShaderRTI extends Shader {
 
 		for(let i = 0; i < this.njpegs; i++)
 			this.samplers.push({ id:i, name:'plane'+i, type:'vec3' });
+		
 		if(this.normals)
-			this.samplers.push({id:this.njpegs, name:'normals', type:'vec3' });
-
-		if(this.normals)
-			this.samplers.push({ id:this.njpegs, name:'normals', type:'vec3'});
+			this.samplers.push({ id:this.njpegs, name:'normals', type:'vec3' });
 
 		this.material = this.materials[0];
 
