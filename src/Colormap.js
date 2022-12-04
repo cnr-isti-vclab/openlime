@@ -199,7 +199,7 @@ class Color {
 	}
 
 	value() {
-		return [r, g, b, a];
+		return [this.r, this.g, this.b, this.a];
 	}
 
 	toRGB() {
@@ -243,7 +243,7 @@ class Colormap {
 		if (!this.highColor) this.highColor = colors[nval - 1];
 
 		const nd = this.domain.length;
-		if (nval < 2 && nd != 2 && this.nval != nd) {
+		if (nval < 2 && nd != 2 && this.nval != nd && this.domain[nd-1] <= this.domain[0]) {
 			throw Error("Colormap colors/domain bad format");
 		}
 
@@ -270,6 +270,10 @@ class Colormap {
 	}
 
 	static clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
+	rangeDomain() {
+		return [this.domain[0], this.domain[this.domain.length-1]];
+	}
 
 	linear(x) {
 		if (x < this.xarr[0]) return this.lowColor;

@@ -146,7 +146,7 @@ class Shader {
 			color = data();
 			`;
 		for (let f of this.filters) {
-			src += `color=${f.functionName()}(color);`
+			src += `color=${f.functionName()}(color);\n`
 		}
 		src += `${gl2 ? '' : 'gl_FragColor = color;'}
 		}`;

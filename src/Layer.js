@@ -492,7 +492,7 @@ class Layer {
 			for (let i = 0; i < f.samplers.length; i++) {
 				this.gl.uniform1i(f.samplers[i].location, iSampler);
 				this.gl.activeTexture(this.gl.TEXTURE0 + iSampler);
-				this.gl.bindTexture(this.gl.TEXTURE_2D, f.samplers[i].buffer); /// FIXME
+				this.gl.bindTexture(this.gl.TEXTURE_2D, f.samplers[i].tex);
 				iSampler++;
 			}
 		}
@@ -516,12 +516,12 @@ class Layer {
 			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
 
-		for (var i = 0; i < this.shader.samplers.length; i++) {
-			let id = this.shader.samplers[i].id;
-			gl.uniform1i(this.shader.samplers[i].location, i);
-			gl.activeTexture(gl.TEXTURE0 + i);
-			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
-		}
+		// for (var i = 0; i < this.shader.samplers.length; i++) {
+		// 	let id = this.shader.samplers[i].id;
+		// 	gl.uniform1i(this.shader.samplers[i].location, i);
+		// 	gl.activeTexture(gl.TEXTURE0 + i);
+		// 	gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+		// } // FIXME - TO BE REMOVED?
 
 		const byteOffset = this.getTileByteOffset(index);
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, byteOffset);
@@ -673,13 +673,15 @@ class Layer {
 		}
 
 		if (this.shader.needsUpdate) {
-			for (let f of this.shader.filters) 
-				f.prepareWebGL(gl);
 			this.shader.createProgram(gl);
+			for (let f of this.shader.filters)
+				f.prepareWebGL(gl);
+
 		}
 
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);
+
 
 
 	}
