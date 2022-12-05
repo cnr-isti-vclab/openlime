@@ -48,6 +48,11 @@ class ShaderFilter {
     uniformName(name) {
         return `u_${this.name}_${name}`;
     }
+
+    getSampler(name) {
+        const samplername = this.samplerName(name);
+        return this.samplers.find(e => e.name == samplername);
+    }
 }
 
 class ShaderFilterTest extends ShaderFilter {
