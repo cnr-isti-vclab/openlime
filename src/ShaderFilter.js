@@ -49,7 +49,6 @@ class ShaderFilter {
 class ShaderFilterTest extends ShaderFilter {
     constructor(options) {
         super(options);
-        this.samplers = [{ name: `${this.samplerName('testmap')}` }];
         this.uniforms[this.uniformName('nodata_col')] = { type: 'vec4', needsUpdate: true, size: 4, value: [1, 1, 0, 1] };
     }
 
