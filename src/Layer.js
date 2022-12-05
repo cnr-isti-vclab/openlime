@@ -672,11 +672,8 @@ class Layer {
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]), gl.STATIC_DRAW);
 		}
 
-		if (this.shader.needsUpdate) {
+		if (this.shader.needsUpdate)
 			this.shader.createProgram(gl);
-			for (let f of this.shader.filters)
-				f.prepareWebGL(gl);
-		}
 
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);

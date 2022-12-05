@@ -222,6 +222,10 @@ class Shader {
 			uniform.location = null;
 			uniform.needsUpdate = true;
 		}
+
+		for (let f of this.filters)
+			f.prepare(gl);
+
 	}
 
 	getUniform(name) {

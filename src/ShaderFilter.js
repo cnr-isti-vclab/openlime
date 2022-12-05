@@ -9,8 +9,8 @@ class ShaderFilter {
         this.needsUpdate = true;
     }
 
-    // Callback in Layer.js
-    prepareWebGL(gl) {
+    // Callback in Shader.js
+    prepare(gl) {
         if(this.needsUpdate)
             this.createTextures(gl);
         this.needsUpdate = false;

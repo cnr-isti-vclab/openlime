@@ -1,5 +1,8 @@
 import { ShaderFilter } from './ShaderFilter.js'
 
+// vector field https://www.shadertoy.com/view/4s23DG
+// isolines https://www.shadertoy.com/view/Ms2XWc
+
 class ShaderFilterColormap extends ShaderFilter {
     constructor(colorscale, options) {
         super(options);
