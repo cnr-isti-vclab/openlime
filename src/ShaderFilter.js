@@ -6,11 +6,14 @@ class ShaderFilter {
         this.name = this.constructor.name;
         this.uniforms = {};
         this.samplers = [];
+        this.needsUpdate = true;
     }
 
+    // Callback in Layer.js
     prepareWebGL(gl) {
     }
 
+    // Sampler declarations in shader program 
     fragSamplerSrc() {
         let src = '';
         for (let s of this.samplers) {
@@ -20,6 +23,7 @@ class ShaderFilter {
         return src;
     }
 
+    // Uniform declarations in shader program 
     fragUniformSrc() {
         let src = '';
         for (const [key, value] of Object.entries(this.uniforms)) {

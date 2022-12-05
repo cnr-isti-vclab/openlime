@@ -72,6 +72,7 @@ class Shader {
 	addFilter(f) {
 		this.filters.push(f);
 		this.needsUpdate = true;
+		f.needsUpdate = true;
 		this.emit('update');
 	}
 

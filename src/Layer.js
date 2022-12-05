@@ -479,13 +479,6 @@ class Layer {
 
 		this.updateAllTileBuffers(available);
 
-		let i = 0;
-		for (let tile of Object.values(available)) {
-			//			if(tile.complete)
-			this.drawTile(tile, i);
-			++i;
-		}
-
 		// bind filter textures
 		let iSampler = this.shader.samplers.length;
 		for (const f of this.shader.filters) {
@@ -495,6 +488,13 @@ class Layer {
 				this.gl.bindTexture(this.gl.TEXTURE_2D, f.samplers[i].tex);
 				iSampler++;
 			}
+		}
+
+		let i = 0;
+		for (let tile of Object.values(available)) {
+			//			if(tile.complete)
+			this.drawTile(tile, i);
+			++i;
 		}
 		return done;
 	}
@@ -675,15 +675,14 @@ class Layer {
 		if (this.shader.needsUpdate) {
 			this.shader.createProgram(gl);
 			for (let f of this.shader.filters)
-				f.prepareWebGL(gl);
-
+				if (f.needsUpdate) {
+					f.prepareWebGL(gl);
+					f.needsUpdate = false;
+				}
 		}
 
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);
-
-
-
 	}
 
 	/** @ignore */
