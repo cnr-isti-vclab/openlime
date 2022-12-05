@@ -675,10 +675,7 @@ class Layer {
 		if (this.shader.needsUpdate) {
 			this.shader.createProgram(gl);
 			for (let f of this.shader.filters)
-				if (f.needsUpdate) {
-					f.prepareWebGL(gl);
-					f.needsUpdate = false;
-				}
+				f.prepareWebGL(gl);
 		}
 
 		gl.useProgram(this.shader.program);

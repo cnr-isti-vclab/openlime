@@ -35,7 +35,7 @@ class ShaderFilterColormap extends ShaderFilter {
 
     }
 
-    prepareWebGL(gl) {       
+    createTextures(gl) {       
         console.log('prepareWebGL filter');
         const colormap = this.colorscale.sample(this.maxSteps);
 		const tex = gl.createTexture();

@@ -11,6 +11,13 @@ class ShaderFilter {
 
     // Callback in Layer.js
     prepareWebGL(gl) {
+        if(this.needsUpdate)
+            this.createTextures(gl);
+        this.needsUpdate = false;
+    }
+
+    // Callback to create textures for samplers
+    createTextures(gl) {
     }
 
     // Sampler declarations in shader program 
