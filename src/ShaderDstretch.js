@@ -20,11 +20,11 @@ class ShaderDstretch extends Shader {
             return;
             
         let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
-        for (let i=0; i<this.samples.length; i++) {
+        for (let sample of this.samples) {
             let transformedSample = this.transformVector(this.matToArray(this.transpose(this.rotationMatrix)),
              this.transformVector(
                 this.matToArray(this.rotationMatrix), 
-                        this.samples[i].concat(1)));
+                    sample.concat(1)));
 
             for (let j=0; j<3; j++) {
                 if (transformedSample[j] < min[j])
