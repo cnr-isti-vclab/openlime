@@ -2,6 +2,7 @@ import { Viewer } from './Viewer.js'
 import { Layer } from './Layer.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerDstretch } from './LayerDstretch.js'
+import { LayerSelectiveStretch } from './LayerSelectiveStretch.js'
 import { LayerCombiner } from './LayerCombiner.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
@@ -15,6 +16,7 @@ import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 dstretchTest();
+//selectiveStretchTest();
 //combinerTest();
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
@@ -31,13 +33,28 @@ dstretchTest();
 
 //testAnnotationEditor();
 
+function selectiveStretchTest() {
+	let stretch = new Layer({
+		type: 'selective-stretch',
+		layout: 'image',
+		url: 'assets/dstretch/selective/soldier.jpg'
+	});
+
+	lime.canvas.addLayer('selective-stretch', stretch);
+	let ui = new UIBasic(lime);
+	console.log(ui.lightcontroller.relative);
+
+	ui.lightcontroller.relative = false;
+	ui.actions.light.active = true;
+}
+
 function dstretchTest() {
 	console.log("Dstretching");
 
 	let dstretch = new Layer({
 		type: 'dstretch',
 		layout: 'image',
-		url: 'assets/dstretch/rock/wall_5.jpg'
+		url: 'assets/dstretch/coin/plane_0.jpg'
 	});
 
 	lime.canvas.addLayer('dstretch', dstretch);

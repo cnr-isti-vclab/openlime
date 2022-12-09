@@ -23,8 +23,8 @@ class LayerDstretch extends LayerImage {
 	setLight(value, dt) {
 		this.setControl('light', value, dt);
 
-		this.eulerRotation[0] = Math.PI * 1.2 * this.getControl('light').current.value[0];//this.controls['light'].current[0];
-		this.eulerRotation[1] = this.getControl('light').current.value[1];//this.controls['light'].current[1];
+		this.eulerRotation[0] = Math.PI * this.getControl('light').current.value[0];//this.controls['light'].current[0];
+		this.eulerRotation[1] = Math.PI * this.getControl('light').current.value[1];//this.controls['light'].current[1];
 
 		this.shader.updateRotationMatrix(this.eulerRotation);
 		this.emit('update');
@@ -80,8 +80,8 @@ class LayerDstretch extends LayerImage {
 		// Get the data and sample the texture
 		let imageData = context.getImageData(0, 0, img.width, img.height).data;
 		let samples = [];
-		let rowSkip = Math.floor(img.height / 16);
-		let colSkip = Math.floor(img.width / 16);
+		let rowSkip = Math.floor(img.height / 32);
+		let colSkip = Math.floor(img.width / 32);
 
 		console.log(rowSkip, colSkip);
 
@@ -91,7 +91,6 @@ class LayerDstretch extends LayerImage {
 
 			if (row % rowSkip == 0 && col % colSkip == 0)
 				samples.push([imageData[i], imageData[i+1], imageData[i+2]]);
-				
 		}
 
 		this.shader.samples = samples;
