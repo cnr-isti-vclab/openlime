@@ -183,8 +183,8 @@ class LayoutTiles extends Layout {
 		let w = this.width;
 		let h = this.height;
 		//careful: here y is inverted due to textures not being flipped on load (Firefox fault!).
-		var tcoords = new Float32Array([0, 1,     0, 0,     1, 0,     1, 1]);
-		let coords = new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]);
+		var tcoords = new Float32Array([0, 1,     0, 0,     1, 0,     1, 1]);   
+		let coords = new Float32Array([0, 0, 0,  0, 1, 0,  1, 1, 0,  1, 0, 0]); // FIXME 32 bit and errors
 
 		let ilevel = this.nlevels - 1 - level;
 		let side =  this.tilesize*(1<<(ilevel)); //tile size in imagespace

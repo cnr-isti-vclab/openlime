@@ -80,7 +80,7 @@ class ShaderBRDF extends Shader {
 		let hasKd = this.samplers.findIndex( s => s.name == 'uTexKd') != -1 && this.mode != 'monochrome';
 		let hasGloss = this.samplers.findIndex( s => s.name == 'uTexGloss') != -1 && this.mode != 'monochrome';
 		let hasKs = this.samplers.findIndex( s => s.name == 'uTexKs') != -1;	
-		let str = `${gl2? '#version 300 es' : ''}
+		let str = `
 precision highp float; 
 precision highp int; 
 
@@ -103,8 +103,6 @@ uniform float uKAmbient;
 
 uniform int uInputColorSpaceKd; // 0: Linear; 1: sRGB
 uniform int uInputColorSpaceKs; // 0: Linear; 1: sRGB
-
-${gl2? 'out' : ''}  vec4 color;
 
 vec3 getNormal(const in vec2 texCoord) {
 	vec3 n = texture(uTexNormals, texCoord).xyz;
@@ -151,11 +149,10 @@ float ward(in vec3 V, in vec3 L, in vec3 N, in vec3 X, in vec3 Y, in float alpha
 }
 
 
-void main() {
+vec4 data() {
 	vec3 N = getNormal(v_texcoord);
 	if(N == NULL_NORMAL) {
-		color = vec4(0.0);
-		return;
+		return vec4(0.0);
 	}
 
 	vec3 L = (uLightInfo.w == 0.0) ? normalize(uLightInfo.xyz) : normalize(uLightInfo.xyz - gl_FragCoord.xyz);
@@ -190,8 +187,7 @@ void main() {
 	${this.innerCode}
 
 	vec3 finalColor = applyGamma ? pow(linearColor * uBrightnessGamma[0], vec3(1.0/uBrightnessGamma[1])) : linearColor;
-	color = vec4(finalColor, 1.0);
-	${gl2?'':'gl_FragColor = color;'}
+	return vec4(finalColor, 1.0);
 }
 `;
 	return str;

@@ -27,7 +27,7 @@ class LayerAnnotationImage extends LayerAnnotation {
                 this.layout.setPathFromUrl(path);
             }
 
-            for(let a of this.annotations) {
+            for (let a of this.annotations) {
                 let raster = new Raster({ format: rasterFormat });
                 this.rasters.push(raster);
             }
@@ -57,60 +57,56 @@ class LayerAnnotationImage extends LayerAnnotation {
     }
 
     drawTile(tile, index) {
-		if (tile.missing != 0)
-			throw "Attempt to draw tile still missing textures"
+        if (tile.missing != 0)
+            throw "Attempt to draw tile still missing textures"
 
         const idx = tile.index;
 
-		//coords and texture buffers updated once for all tiles from main draw() call
-	
-		//bind texture of this tile only (each tile corresponds to an image)
-		let gl = this.gl;
-		let id = this.shader.samplers[idx].id;
-		gl.uniform1i(this.shader.samplers[idx].location, idx);
-		gl.activeTexture(gl.TEXTURE0 + idx);
-		gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
-		
+        //coords and texture buffers updated once for all tiles from main draw() call
+
+        //bind texture of this tile only (each tile corresponds to an image)
+        let gl = this.gl;
+        let id = this.shader.samplers[idx].id;
+        gl.uniform1i(this.shader.samplers[idx].location, idx);
+        gl.activeTexture(gl.TEXTURE0 + idx);
+        gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+
         const byteOffset = this.getTileByteOffset(index);
         gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, byteOffset);
-	}
+    }
 
     setupShader(rasterFormat) {
         let samplers = [];
         let N = this.rasters.length;
-        for(let i = 0; i < N; ++i) {
-            samplers.push({id:i, name: 'kd', type: rasterFormat});
+        for (let i = 0; i < N; ++i) {
+            samplers.push({ id: i, name: 'kd', type: rasterFormat });
         }
-		let shader = new Shader({
-			'label': 'Rgb',
-			'samplers': samplers //[{ id:0, name:'kd', type: rasterFormat }]
-		});
-		
-		shader.fragShaderSrc = function(gl) {
+        let shader = new Shader({
+            'label': 'Rgb',
+            'samplers': samplers //[{ id:0, name:'kd', type: rasterFormat }]
+        });
 
-			let gl2 = !(gl instanceof WebGLRenderingContext);
-			let str = `${gl2? '#version 300 es' : ''}
+        shader.fragShaderSrc = function (gl) {
 
+            let gl2 = !(gl instanceof WebGLRenderingContext);
+            let str = `
 precision highp float;
 precision highp int;
 
 uniform sampler2D kd;
 
-${gl2? 'in' : 'varying'} vec2 v_texcoord;
-${gl2? 'out' : ''} vec4 color;
+${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 
-
-void main() {
-	color = texture${gl2?'':'2D'}(kd, v_texcoord);
-	${gl2? '':'gl_FragColor = color;'}
+vec4 data() {
+	return texture${gl2 ? '' : '2D'}(kd, v_texcoord);
 }
 `;
-			return str;
+            return str;
 
-		};
+        };
 
-		this.shaders = {'standard': shader };
-		this.setShader('standard');
+        this.shaders = { 'standard': shader };
+        this.setShader('standard');
     }
 
 }

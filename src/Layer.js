@@ -131,10 +131,28 @@ class Layer {
 		}
 	}
 
+<<<<<<< HEAD
 	setViewport(view) {
 		this.viewport = view;
 		this.emit('update');
 	}
+=======
+	addShaderFilter(f) {
+		if (!this.shader) throw "Shader not implemented";
+		this.shader.addFilter(f);
+	}
+
+	removeShaderFilter(name) {
+		if (!this.shader) throw "Shader not implemented";
+		this.shader.removeFilter(name);
+	}
+
+	clearShaderFilters() {
+		if (!this.shader) throw "Shader not implemented";
+		this.shader.clearFilters();
+	}
+
+>>>>>>> shaderFilter
 	/**
 	 * Sets the state of the layer 
 	 */
@@ -218,7 +236,7 @@ class Layer {
 		if (this.shader)
 			return this.shader.mode;
 		return null;
-	}	
+	}
 
 	/**
 	 * Gets an arrays of all the modes implemented in the current shader.
@@ -477,7 +495,17 @@ class Layer {
 
 		this.updateAllTileBuffers(available);
 
-		//
+		// bind filter textures
+		let iSampler = this.shader.samplers.length;
+		for (const f of this.shader.filters) {
+			for (let i = 0; i < f.samplers.length; i++) {
+				this.gl.uniform1i(f.samplers[i].location, iSampler);
+				this.gl.activeTexture(this.gl.TEXTURE0 + iSampler);
+				this.gl.bindTexture(this.gl.TEXTURE_2D, f.samplers[i].tex);
+				iSampler++;
+			}
+		}
+
 		let i = 0;
 		for (let tile of Object.values(available)) {
 			//			if(tile.complete)
@@ -489,7 +517,7 @@ class Layer {
 
 		return done;
 	}
-	
+
 	/** @ignore */
 	drawTile(tile, index) {
 		//let tiledata = this.tiles.get(tile.index);
@@ -506,7 +534,15 @@ class Layer {
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
-        const byteOffset = this.getTileByteOffset(index);
+
+		// for (var i = 0; i < this.shader.samplers.length; i++) {
+		// 	let id = this.shader.samplers[i].id;
+		// 	gl.uniform1i(this.shader.samplers[i].location, i);
+		// 	gl.activeTexture(gl.TEXTURE0 + i);
+		// 	gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+		// } // FIXME - TO BE REMOVED?
+
+		const byteOffset = this.getTileByteOffset(index);
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, byteOffset);
 	}
 
@@ -575,7 +611,7 @@ class Layer {
 		gl.enableVertexAttribArray(this.shader.texattrib);
 	}
 
-	
+
 	/** @ignore */
 	// Update tile vertex and texture coords of all the tiles in a single VBO
 	updateAllTileBuffers(tiles) {
@@ -584,7 +620,7 @@ class Layer {
 		//use this.tiles instead.
 		let N = Object.values(tiles).length;
 		if (N == 0) return;
-		
+
 		const szV = 12;
 		const szT = 8;
 		const szI = 6;
@@ -596,10 +632,10 @@ class Layer {
 			let c = this.layout.tileCoords(tile);
 			vBuffer.set(c.coords, i * szV);
 			tBuffer.set(c.tcoords, i * szT);
-			
+
 			const off = i * 4;
-			tile.indexBufferByteOffset = 2*i*szI;
-			iBuffer.set([off+3, off+2, off+1, off+3, off+1, off+0], i * szI);
+			tile.indexBufferByteOffset = 2 * i * szI;
+			iBuffer.set([off + 3, off + 2, off + 1, off + 3, off + 1, off + 0], i * szI);
 			++i;
 		}
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuffer);
@@ -616,7 +652,7 @@ class Layer {
 
 		gl.vertexAttribPointer(this.shader.texattrib, 2, gl.FLOAT, false, 0, 0);
 		gl.enableVertexAttribArray(this.shader.texattrib);
-		
+
 	}
 
 	/*
@@ -660,8 +696,6 @@ class Layer {
 
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);
-
-
 	}
 
 	/** @ignore */
