@@ -6,26 +6,28 @@ class LayerMaskedImage extends Layer {
 	constructor(options) {
 		super(options);
 
-		if(Object.keys(this.rasters).length != 0)
+		if (Object.keys(this.rasters).length != 0)
 			throw "Rasters options should be empty!";
 
-		if (this.url)
+		if (this.url) {
+			// const jsonUrl = this.url.replace(/\.[^/.]+$/, '') + '.json';
+			// this.loadJson(jsonUrl);	
 			this.layout.setUrls([this.url]);
-		else if (this.layout.urls.length == 0)
-			throw "Missing options.url parameter";	
+		} else if (this.layout.urls.length == 0)
+			throw "Missing options.url parameter";
 
 		const rasterFormat = this.format != null ? this.format : 'vec4';
 		let raster = new Raster({ format: rasterFormat }); //FIXME select format for GEO stuff
 
 		this.rasters.push(raster);
-		
+
 		let shader = new Shader({
 			'label': 'Rgb',
 			'samplers': [{ id: 0, name: 'kd', type: rasterFormat }]
 		});
 
 		shader.uniforms = {
-            u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1,1]},
+			u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1, 1] },
 		}
 
 		shader.fragShaderSrc = function (gl) {
@@ -88,6 +90,23 @@ class LayerMaskedImage extends Layer {
 	draw(transform, viewport) {
 		return super.draw(transform, viewport);
 	}
+
+	loadJson(url) {
+		(async () => {
+
+			const response = await fetch(url);
+			if (!response.ok) {
+				this.status = "Failed loading " + url + ": " + response.statusText;
+				return;
+			}
+			const json = await response.json();
+			console.log('Coords: ', json.coords);
+			console.log('Domain: ', json.domain);
+
+		})().catch(e => { console.log(e); this.status = e; });
+	}
+
+
 
 	loadTexture(gl, img) {
 		console.log("LOADING TEXTURE SCALAR...");

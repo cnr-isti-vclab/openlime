@@ -12,13 +12,13 @@ class ShaderFilter {
     // Callback in Shader.js
     prepare(gl) {
         if(this.needsUpdate)
-            this.createTextures(gl);
+            if(this.createTextures) this.createTextures(gl);
         this.needsUpdate = false;
     }
 
     // Callback to create textures for samplers
-    createTextures(gl) {
-    }
+    // createTextures(gl) {
+    // }
 
     // Sampler declarations in shader program 
     fragSamplerSrc() {

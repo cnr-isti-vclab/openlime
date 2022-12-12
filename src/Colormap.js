@@ -243,7 +243,7 @@ class Colormap {
 		if (!this.highColor) this.highColor = colors[nval - 1];
 
 		const nd = this.domain.length;
-		if (nval < 2 && nd != 2 && this.nval != nd && this.domain[nd-1] <= this.domain[0]) {
+		if (nval < 2 && nd != 2 && this.nval != nd && this.domain[nd - 1] <= this.domain[0]) {
 			throw Error("Colormap colors/domain bad format");
 		}
 
@@ -272,7 +272,22 @@ class Colormap {
 	static clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
 	rangeDomain() {
-		return [this.domain[0], this.domain[this.domain.length-1]];
+		return [this.domain[0], this.domain[this.domain.length - 1]];
+	}
+
+	bar(x) {
+		if (x < this.xarr[0]) return this.lowColor;
+		if (x > this.xarr[this.xarr.length - 1]) return this.highColor;
+		const c = new Color(this.rarr[0], this.garr[0], this.barr[0], this.aarr[0]);
+		for (let i = 0; i < this.xarr.length - 1; i++) {
+			if (x > this.xarr[i] && x <= this.xarr[i + 1]) {
+				c.r = this.rarr[i];
+				c.g = this.garr[i];
+				c.b = this.barr[i];
+				c.a = this.aarr[i];
+			}
+		}
+		return c;
 	}
 
 	linear(x) {
@@ -296,15 +311,36 @@ class Colormap {
 		return new Color(this.rspline.at(x), this.gspline.at(x), this.bspline.at(x), this.aspline.at(x));
 	}
 
+	getInterpolant(type) {
+		let result = this.linear.bind(this);
+		type=type.toLowerCase();
+		switch (type) {
+			case 'linear':
+				result = this.linear.bind(this);;
+				break;
+			case 'spline':
+				result = this.spline.bind(this);;
+				break;
+			case 'bar':
+				result = this.bar.bind(this);;
+				break;
+			default:
+				throw Error("Interpolant not exist");
+				break;
+		}
+		return result;
+	}
+
 	/** Precision as parameter for future dev */
-	sample(maxSteps) {
+	sample(maxSteps, type = 'linear') {
+		const interpolant = this.getInterpolant(type);
 		let min = this.xarr[0];
 		let max = this.xarr[this.xarr.length - 1];
 		if (this.domain.length == 2) maxSteps = this.xarr.length;
 		let buffer = new Uint8Array(maxSteps * 4);
 		let delta = (max - min) / maxSteps;
 		for (let i = 0; i < maxSteps; i++) {
-			let c = this.linear(min + i * delta).toRGBA();
+			let c = interpolant(min + i * delta).toRGBA();
 			buffer[i * 4 + 0] = c[0];
 			buffer[i * 4 + 1] = c[1];
 			buffer[i * 4 + 2] = c[2];

@@ -9,7 +9,8 @@ class ShaderFilterColormap extends ShaderFilter {
         options = Object.assign({
             inDomain: [],
             channelWeights: [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
-            maxSteps: 256
+            maxSteps: 256,
+            type: 'Linear'
         }, options);
         Object.assign(this, options);
 
@@ -40,11 +41,13 @@ class ShaderFilterColormap extends ShaderFilter {
 
     createTextures(gl) {       
         console.log('prepareWebGL filter');
-        const colormap = this.colorscale.sample(this.maxSteps);
+        const colormap = this.colorscale.sample(this.maxSteps, this.type);
+        let textureFilter=gl.LINEAR;
+        if(this.type == 'bar') textureFilter=gl.NEAREST;
 		const tex = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, tex);
-		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, textureFilter);
+		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, textureFilter);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.maxSteps, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, colormap.buffer);
