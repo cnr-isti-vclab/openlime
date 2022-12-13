@@ -234,7 +234,8 @@ class Colormap {
 		options = Object.assign({
 			domain: [0.0, 1.0],
 			lowColor: null,
-			highColor: null
+			highColor: null,
+			description: ''
 		}, options);
 		Object.assign(this, options);
 		const nval = colors.length;
@@ -349,4 +350,54 @@ class Colormap {
 		return { min, max, buffer };
 	}
 }
-export { Color, Colormap }
+
+class ColormapLegend {
+	constructor(viewer, colorscale, options) {
+		options = Object.assign({
+			nticks: 6,
+			legendWidth: 25,
+			textColor: '#fff',
+			class: 'openlime-legend'
+		}, options);
+		Object.assign(this, options);
+		this.viewer = viewer;
+		this.colorscale = colorscale;
+		console.log("COLOR: ", this.textColor);
+
+		this.container = document.querySelector(`.${this.class}`);
+		if(!this.container) {
+			this.container = document.createElement('div');
+			this.container.classList.add(this.class);
+		}
+
+		this.scale = document.createElement('div');
+		this.scale.style = `border-radius: 20px; color: ${this.textColor}; font-weight: bold; overflow: hidden; margin: 0px 2px 4px 0px; background-color: #7c7c7c; font-family: Arial,Helvetica,sans-serif; font-size:12px;`;
+		this.container.appendChild(this.scale);
+		this.viewer.containerElement.appendChild(this.container);
+
+		const domain = colorscale.rangeDomain();
+		const legend = document.createElement('span');
+		legend.style = `display: inline-block; background: ${colorscale.linear(domain[0]).toHex()}; width: ${this.legendWidth}%; padding: 4px 0; margin: 0; text-align: center; vertical-align: middle;`;
+		legend.textContent = colorscale.description;
+		this.scale.appendChild(legend);
+
+		const delta = (domain[1]-domain[0]) / this.nticks;
+		const deltaWidth = (100-this.legendWidth)/this.nticks;
+		let vl = domain[0];
+		for( let i=0; i<this.nticks; i++) {
+			let v = domain[0] + delta*i;
+			let vr = i<(this.nticks-1) ? domain[0] + delta*(i+0.5): v;
+			console.log('Values: ', vl, v, vr);
+			const c = colorscale.linear(v);
+			const cl = colorscale.linear(vl);
+			const cr = colorscale.linear(vr);
+			const value = document.createElement('span');
+			value.style = `display: inline-block; background: linear-gradient(to right, ${cl.toHex()}, ${c.toHex()}, ${cr.toHex()}); width: ${deltaWidth}%; padding: 4px 0; margin: 0; text-align: center; vertical-align: middle;`;
+			value.textContent = v.toFixed(1);
+			this.scale.appendChild(value);
+			vl = vr;
+		}
+	}
+}
+
+export { Color, Colormap, ColormapLegend }
