@@ -314,7 +314,7 @@ class Colormap {
 
 	getInterpolant(type) {
 		let result = this.linear.bind(this);
-		type=type.toLowerCase();
+		type = type.toLowerCase();
 		switch (type) {
 			case 'linear':
 				result = this.linear.bind(this);;
@@ -365,34 +365,40 @@ class ColormapLegend {
 		console.log("COLOR: ", this.textColor);
 
 		this.container = document.querySelector(`.${this.class}`);
-		if(!this.container) {
+		if (!this.container) {
 			this.container = document.createElement('div');
 			this.container.classList.add(this.class);
 		}
 
 		this.scale = document.createElement('div');
-		this.scale.style = `border-radius: 20px; color: ${this.textColor}; font-weight: bold; overflow: hidden; margin: 0px 2px 4px 0px; background-color: #7c7c7c; font-family: Arial,Helvetica,sans-serif; font-size:12px;`;
+		this.scale.style = `display: flex; border-radius: 20px; height: 22px; color: ${this.textColor}; 
+		font-weight: bold; overflow: hidden; margin: 0px 2px 4px 0px; background-color: #7c7c7c; 
+		font-family: Arial,Helvetica,sans-serif; font-size:12px;
+		border: 1px solid #000;`;
 		this.container.appendChild(this.scale);
 		this.viewer.containerElement.appendChild(this.container);
 
 		const domain = colorscale.rangeDomain();
-		const legend = document.createElement('span');
-		legend.style = `display: inline-block; background: ${colorscale.linear(domain[0]).toHex()}; width: ${this.legendWidth}%; padding: 4px 0; margin: 0; text-align: center; vertical-align: middle;`;
+		const legend = document.createElement('div');
+		legend.style = `display: flex; align-items: center; justify-content: center; 
+		background: ${colorscale.linear(domain[0]).toHex()}; width: ${this.legendWidth}%; margin: 0`;
 		legend.textContent = colorscale.description;
 		this.scale.appendChild(legend);
 
-		const delta = (domain[1]-domain[0]) / this.nticks;
-		const deltaWidth = (100-this.legendWidth)/this.nticks;
+		const delta = (domain[1] - domain[0]) / this.nticks;
+		const deltaWidth = (100 - this.legendWidth) / this.nticks;
 		let vl = domain[0];
-		for( let i=0; i<this.nticks; i++) {
-			let v = domain[0] + delta*i;
-			let vr = i<(this.nticks-1) ? domain[0] + delta*(i+0.5): v;
+		for (let i = 0; i < this.nticks; i++) {
+			let v = domain[0] + delta * i;
+			let vr = i < (this.nticks - 1) ? domain[0] + delta * (i + 0.5) : v;
 			console.log('Values: ', vl, v, vr);
 			const c = colorscale.linear(v);
 			const cl = colorscale.linear(vl);
 			const cr = colorscale.linear(vr);
-			const value = document.createElement('span');
-			value.style = `display: inline-block; background: linear-gradient(to right, ${cl.toHex()}, ${c.toHex()}, ${cr.toHex()}); width: ${deltaWidth}%; padding: 4px 0; margin: 0; text-align: center; vertical-align: middle;`;
+			const value = document.createElement('div');
+			value.style = `display: flex; align-items: center; justify-content: center; 
+			background: linear-gradient(to right, ${cl.toHex()}, ${c.toHex()}, ${cr.toHex()}); 
+			width: ${deltaWidth}%; margin: 0`;
 			value.textContent = v.toFixed(1);
 			this.scale.appendChild(value);
 			vl = vr;
