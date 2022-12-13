@@ -109,7 +109,6 @@ class LayerMaskedImage extends Layer {
 
 
 	loadTexture(gl, img) {
-		console.log("LOADING TEXTURE SCALAR...");
 		this.rasters[0].width = img.width;
 		this.rasters[0].height = img.height;
 

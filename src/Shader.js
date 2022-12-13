@@ -185,7 +185,7 @@ class Shader {
 			throw Error("Failed fragment shader compilation: see console log and ask for support.");
 		}
 
-		console.log(this.completeFragShaderSrc(gl));
+		//console.log(this.completeFragShaderSrc(gl));
 
 		gl.attachShader(program, vert);
 		gl.attachShader(program, frag);

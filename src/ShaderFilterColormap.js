@@ -24,10 +24,6 @@ class ShaderFilterColormap extends ShaderFilter {
         const cscaleDomain = this.colorscale.rangeDomain();
         const scale = (this.inDomain[1]-this.inDomain[0])/(cscaleDomain[1]-cscaleDomain[0]);
         const bias = (this.inDomain[0]-cscaleDomain[0])/(cscaleDomain[1]-cscaleDomain[0]);
-        console.log('inDomain: ', this.inDomain);        
-        console.log('cDomain: ', cscaleDomain);
-        console.log('scale: ', scale);
-        console.log('bias: ', bias);
         
         this.samplers = [{ name:`${this.samplerName('colormap')}` }];
 
@@ -40,7 +36,6 @@ class ShaderFilterColormap extends ShaderFilter {
     }
 
     createTextures(gl) {       
-        console.log('prepareWebGL filter');
         const colormap = this.colorscale.sample(this.maxSteps, this.type);
         let textureFilter=gl.LINEAR;
         if(this.type == 'bar') textureFilter=gl.NEAREST;
