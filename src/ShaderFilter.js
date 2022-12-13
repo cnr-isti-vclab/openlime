@@ -76,5 +76,19 @@ class ShaderFilterTest extends ShaderFilter {
     }
 }
 
+class ShaderFilterOpacity extends ShaderFilter {
+    constructor(opacity, options) {
+        super(options);
+        this.uniforms[this.uniformName('opacity')] = { type: 'float', needsUpdate: true, size: 1, value: opacity };
+    }
 
-export { ShaderFilter, ShaderFilterTest }
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col){
+                return vec4(col.rgb, col.a * ${this.uniformName('opacity')});
+            }`;
+    }
+}
+
+
+export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity }
