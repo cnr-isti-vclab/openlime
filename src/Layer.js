@@ -131,12 +131,10 @@ class Layer {
 		}
 	}
 
-<<<<<<< HEAD
 	setViewport(view) {
 		this.viewport = view;
 		this.emit('update');
 	}
-=======
 	addShaderFilter(f) {
 		if (!this.shader) throw "Shader not implemented";
 		this.shader.addFilter(f);
@@ -152,7 +150,6 @@ class Layer {
 		this.shader.clearFilters();
 	}
 
->>>>>>> shaderFilter
 	/**
 	 * Sets the state of the layer 
 	 */
