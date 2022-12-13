@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Image Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../../css/light.css" />
+    <link rel="stylesheet" href="../examples.css" />
+</head>
+
+<body>
+    <h1>OpenLIME - Image Viewer</h1>
+    <div class="openlime"></div>
+
+    <script src="../../js/openlime.js"></script>
+    <script>
+
+        // EPSG:4326 (WGS84) to EPSG:3857 (Web Mercatore)
+        function degrees2meters(lon, lat) {
+            var x = lon * 20037508.34 / 180;
+            var y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180);
+            y = y * 20037508.34 / 180;
+            return [x, y]
+        }
+        // EPSG:3857 (Web Mercatore) to EPSG:4326 (WGS84)
+        function meters2degress(x, y) {
+            const lon = x * 180 / 20037508.34;
+            const lat = Math.atan(Math.exp(y * Math.PI / 20037508.34)) * 360 / Math.PI - 90;
+            return [lon, lat]
+        }
+
+        // Create an OpenLIME canvas into .openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+        lime.camera.bounded = false;
+
+        // Create a base layer with a world map
+        // All geo-referenced images must be in the same coordinate system (EPSG:3857)
+
+        const mapMaxlevel = 19;
+        const mapSize = Math.pow(2, mapMaxlevel + 8);
+        const layer = new OpenLIME.Layer({
+            layout: 'google',
+            type: 'image',
+            width: mapSize,
+            height: mapSize,
+            mipmapBias: 0.4,
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            //url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        });
+        lime.addLayer('Base', layer);
+
+        // Create a layer with a geo-referenced image properly positioned onto the base layer.
+        const EarthScale = 20037508.34 * 2 / 134217728.0; // Earth circonference [m] / width [pixel]
+
+        const geoimgCenter = [1144266.572, 5167038.173];
+        const geoimgScale = (1788853.346 - 499679.798) / 432; // Width [m] / Width [pixel]
+
+        const layerTemp = new OpenLIME.Layer({
+            layout: 'image',
+            type: 'maskedimage',
+            transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
+            url: '../../assets/moloch/moloch_2018050103_0011700_meter_temp.png',
+            overlay: true
+        });
+        lime.addLayer('Temp', layerTemp);
+
+        // Add a Colormap filter
+
+        // Create a colormap
+        const colorscaleBar = new OpenLIME.Colormap([
+            new OpenLIME.Color("rgb(0, 0, 255)"),
+            new OpenLIME.Color('rgb(255, 255, 255)'),
+            new OpenLIME.Color('rgb(125, 0, 0)'),
+            new OpenLIME.Color('rgb(200, 0, 0)'),
+            new OpenLIME.Color('rgb(255, 0, 0)'),
+            new OpenLIME.Color('rgb(255, 0, 0)'),
+        ], { domain: [-10, -1, 1, 10, 20, 30] });
+
+        const colorscale = new OpenLIME.Colormap([
+            new OpenLIME.Color("rgb(0, 0, 255)"),
+            new OpenLIME.Color('rgb(255, 255, 255)'),
+            new OpenLIME.Color('rgb(255, 0, 0)'),
+        ], { domain: [-10, 0, 30] });
+
+        // Create the filter
+        const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: [-30, 70], type: 'Linear' });
+        
+        // Add the filter to the shader
+        layerTemp.addShaderFilter(filterColormap);
+
+        // Add Filter Opacity
+        const filterOpacity = new OpenLIME.ShaderFilterOpacity(0.7);
+        layerTemp.addShaderFilter(filterOpacity);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+        // Remove light from the toolbar
+        ui.actions.light.display = false;
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+        ui.actions.snapshot.display = true;
+        ui.pixelSize = null;
+        ui.actions.ruler.display = false;
+        ui.attribution = '';
+        ui.controlZoomMessage = "Use Ctrl + Wheel to zoom instead of scrolling";
+
+    </script>
+</body>
+
+</html>
