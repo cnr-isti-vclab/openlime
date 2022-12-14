@@ -235,7 +235,8 @@ class Colormap {
 			domain: [0.0, 1.0],
 			lowColor: null,
 			highColor: null,
-			description: ''
+			description: '',
+			type: 'linear'
 		}, options);
 		Object.assign(this, options);
 		const nval = colors.length;
@@ -312,21 +313,20 @@ class Colormap {
 		return new Color(this.rspline.at(x), this.gspline.at(x), this.bspline.at(x), this.aspline.at(x));
 	}
 
-	getInterpolant(type) {
-		let result = this.linear.bind(this);
-		type = type.toLowerCase();
-		switch (type) {
+	at(x) {
+		let result = null;
+		switch (this.type) {
 			case 'linear':
-				result = this.linear.bind(this);;
+				result = this.linear(x);
 				break;
 			case 'spline':
-				result = this.spline.bind(this);;
+				result = this.spline(x);
 				break;
 			case 'bar':
-				result = this.bar.bind(this);;
+				result = this.bar(x);
 				break;
 			default:
-				throw Error("Interpolant not exist");
+				throw Error("Interpolant type not exist");
 				break;
 		}
 		return result;
@@ -334,14 +334,13 @@ class Colormap {
 
 	/** Precision as parameter for future dev */
 	sample(maxSteps, type = 'linear') {
-		const interpolant = this.getInterpolant(type);
 		let min = this.xarr[0];
 		let max = this.xarr[this.xarr.length - 1];
 		if (this.domain.length == 2) maxSteps = this.xarr.length;
 		let buffer = new Uint8Array(maxSteps * 4);
 		let delta = (max - min) / maxSteps;
 		for (let i = 0; i < maxSteps; i++) {
-			let c = interpolant(min + i * delta).toRGBA();
+			let c = this.at(min + i * delta).toRGBA();
 			buffer[i * 4 + 0] = c[0];
 			buffer[i * 4 + 1] = c[1];
 			buffer[i * 4 + 2] = c[2];
@@ -362,7 +361,6 @@ class ColormapLegend {
 		Object.assign(this, options);
 		this.viewer = viewer;
 		this.colorscale = colorscale;
-		console.log("COLOR: ", this.textColor);
 
 		this.container = document.querySelector(`.${this.class}`);
 		if (!this.container) {
@@ -385,25 +383,44 @@ class ColormapLegend {
 		legend.textContent = colorscale.description;
 		this.scale.appendChild(legend);
 
+		if(this.colorscale.type == 'linear') this.legendLinear();
+		if(this.colorscale.type == 'bar') this.legendBar();
+	}
+
+	legendLinear() {
+		const domain = this.colorscale.rangeDomain();
 		const delta = (domain[1] - domain[0]) / this.nticks;
 		const deltaWidth = (100 - this.legendWidth) / this.nticks;
 		let vl = domain[0];
 		for (let i = 0; i < this.nticks; i++) {
 			let v = domain[0] + delta * i;
 			let vr = i < (this.nticks - 1) ? domain[0] + delta * (i + 0.5) : v;
-			console.log('Values: ', vl, v, vr);
-			const c = colorscale.linear(v);
-			const cl = colorscale.linear(vl);
-			const cr = colorscale.linear(vr);
+			const c = this.colorscale.at(v);
+			const cl = this.colorscale.at(vl);
+			const cr = this.colorscale.at(vr);
 			const value = document.createElement('div');
+			const bkg = `background: linear-gradient(to right, ${cl.toHex()}, ${c.toHex()}, ${cr.toHex()})`
 			value.style = `display: flex; align-items: center; justify-content: center; 
-			background: linear-gradient(to right, ${cl.toHex()}, ${c.toHex()}, ${cr.toHex()}); 
-			width: ${deltaWidth}%; margin: 0`;
+			${bkg};	width: ${deltaWidth}%; margin: 0`;
 			value.textContent = v.toFixed(1);
 			this.scale.appendChild(value);
 			vl = vr;
 		}
 	}
+
+	legendBar() {
+		const deltaWidth = (100 - this.legendWidth) / this.colorscale.domain.length;
+		for (let v of this.colorscale.domain) {
+			const c = this.colorscale.at(v);
+			const value = document.createElement('div');
+			const bkg = `background: ${c.toHex()}`;
+			value.style = `display: flex; align-items: center; justify-content: center; 
+			${bkg};	width: ${deltaWidth}%; margin: 0`;
+			value.textContent = v.toFixed(1);
+			this.scale.appendChild(value);
+		}
+	}
+
 }
 
 export { Color, Colormap, ColormapLegend }
