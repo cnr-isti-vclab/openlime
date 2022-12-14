@@ -333,7 +333,7 @@ class Colormap {
 	}
 
 	/** Precision as parameter for future dev */
-	sample(maxSteps, type = 'linear') {
+	sample(maxSteps) {
 		let min = this.xarr[0];
 		let max = this.xarr[this.xarr.length - 1];
 		if (this.domain.length == 2) maxSteps = this.xarr.length;
@@ -410,8 +410,12 @@ class ColormapLegend {
 
 	legendBar() {
 		const deltaWidth = (100 - this.legendWidth) / this.colorscale.domain.length;
-		for (let v of this.colorscale.domain) {
-			const c = this.colorscale.at(v);
+		console.log('xarr: ', this.colorscale.xarr);
+		console.log('domain: ', this.colorscale.domain);
+		for (let i=0 ; i<this.colorscale.xarr.length; i++) {
+			const c = new Color(this.colorscale.rarr[i], this.colorscale.garr[i], this.colorscale.barr[i], this.colorscale.aarr[i]);
+			const v = this.colorscale.xarr[i];
+			console.log('v, c: ', v, c.toRGBA());
 			const value = document.createElement('div');
 			const bkg = `background: ${c.toHex()}`;
 			value.style = `display: flex; align-items: center; justify-content: center; 

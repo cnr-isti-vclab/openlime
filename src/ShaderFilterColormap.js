@@ -36,8 +36,12 @@ class ShaderFilterColormap extends ShaderFilter {
 
     createTextures(gl) {       
         const colormap = this.colorscale.sample(this.maxSteps);
+        console.log(colormap);
         let textureFilter=gl.LINEAR;
-        if(this.colorscale.type == 'bar') textureFilter=gl.NEAREST;
+        if(this.colorscale.type == 'bar') {
+            console.log('bar');
+            textureFilter=gl.NEAREST;
+        }
 		const tex = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, tex);
 		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, textureFilter);
