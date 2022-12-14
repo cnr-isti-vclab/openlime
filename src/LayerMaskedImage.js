@@ -10,8 +10,6 @@ class LayerMaskedImage extends Layer {
 			throw "Rasters options should be empty!";
 
 		if (this.url) {
-			// const jsonUrl = this.url.replace(/\.[^/.]+$/, '') + '.json';
-			// this.loadJson(jsonUrl);	
 			this.layout.setUrls([this.url]);
 		} else if (this.layout.urls.length == 0)
 			throw "Missing options.url parameter";
@@ -90,22 +88,6 @@ class LayerMaskedImage extends Layer {
 	draw(transform, viewport) {
 		return super.draw(transform, viewport);
 	}
-
-	loadJson(url) {
-		(async () => {
-
-			const response = await fetch(url);
-			if (!response.ok) {
-				this.status = "Failed loading " + url + ": " + response.statusText;
-				return;
-			}
-			const json = await response.json();
-			console.log('Coords: ', json.coords);
-			console.log('Domain: ', json.domain);
-
-		})().catch(e => { console.log(e); this.status = e; });
-	}
-
 
 
 	loadTexture(gl, img) {

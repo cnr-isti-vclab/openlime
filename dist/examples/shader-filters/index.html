@@ -26,7 +26,8 @@
     <div class="openlime"></div>
 
     <script src="../../js/openlime.js"></script>
-    <script>
+    <script type="module">
+        import config from './config.json' assert {type: 'json'};
 
         // EPSG:4326 (WGS84) to EPSG:3857 (Web Mercatore)
         function degrees2meters(lon, lat) {
@@ -42,7 +43,7 @@
             return [lon, lat]
         }
 
-        // Create an OpenLIME canvas into .openlime
+        // // Create an OpenLIME canvas into .openlime
         const lime = new OpenLIME.Viewer('.openlime');
         lime.camera.bounded = false;
 
@@ -64,16 +65,17 @@
         lime.addLayer('Base', layer);
 
         // Create a layer with a geo-referenced image properly positioned onto the base layer.
-        const EarthScale = 20037508.34 * 2 / 134217728.0; // Earth circonference [m] / width [pixel]
+        const EarthCirconference = degrees2meters(360, 0)[0];
+        const EarthScale = EarthCirconference / mapSize; // Earth circonference [m] / width [pixel]
 
-        const geoimgCenter = [1144266.572, 5167038.173];
-        const geoimgScale = (1788853.346 - 499679.798) / 432; // Width [m] / Width [pixel]
+        const geoimgCenter = config.temperature.center;
+        const geoimgScale = (config.temperature.lowerRight[0] - config.temperature.upperLeft[0]) / config.temperature.width; // Width [m] / Width [pixel]
 
         const layerTemp = new OpenLIME.Layer({
             layout: 'image',
             type: 'maskedimage',
             transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
-            url: '../../assets/moloch/moloch_2018050103_0011700_meter_temp.png',
+            url: config.temperature.url,
             overlay: true
         });
         lime.addLayer('Temp', layerTemp);
@@ -88,9 +90,11 @@
             new OpenLIME.Color('rgb(200, 0, 0)'),
             new OpenLIME.Color('rgb(255, 0, 0)'),
             new OpenLIME.Color('rgb(0, 128, 0)'),
-        ], { domain: [-10, -1, 1, 10, 20, 30], 
-            type: 'bar', 
-            description: 'Temp. [C]' });
+        ], {
+            domain: [-10, -1, 1, 10, 20, 30],
+            type: 'bar',
+            description: 'Temp. [C]'
+        });
 
         const cscaleLinear = new OpenLIME.Colormap([
             new OpenLIME.Color("rgb(0, 0, 255)"),
@@ -101,10 +105,10 @@
             description: 'Temp. [C]'
         });
 
-        const colorscale=cscaleLinear;
+        const colorscale = cscaleLinear;
 
         // Create the filter
-        const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: [-30, 70]});
+        const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: [-30, 70] });
 
         // Add the filter to the shader
         layerTemp.addShaderFilter(filterColormap);
