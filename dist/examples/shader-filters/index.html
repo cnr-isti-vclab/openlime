@@ -9,6 +9,16 @@
     <link rel="stylesheet" href="../../css/skin.css" />
     <link rel="stylesheet" href="../../css/light.css" />
     <link rel="stylesheet" href="../examples.css" />
+    <style>
+        .openlime-legend {
+            display: flex;
+            flex-flow: column-reverse nowrap;
+            position: absolute;
+            bottom: 35px;
+            left: 20px;
+            width: 600px;
+        }
+    </style>
 </head>
 
 <body>
@@ -71,30 +81,40 @@
         // Add a Colormap filter
 
         // Create a colormap
-        const colorscaleBar = new OpenLIME.Colormap([
+        const cscaleBar = new OpenLIME.Colormap([
             new OpenLIME.Color("rgb(0, 0, 255)"),
             new OpenLIME.Color('rgb(255, 255, 255)'),
             new OpenLIME.Color('rgb(125, 0, 0)'),
             new OpenLIME.Color('rgb(200, 0, 0)'),
             new OpenLIME.Color('rgb(255, 0, 0)'),
-            new OpenLIME.Color('rgb(255, 0, 0)'),
-        ], { domain: [-10, -1, 1, 10, 20, 30] });
+            new OpenLIME.Color('rgb(0, 128, 0)'),
+        ], { domain: [-10, -1, 1, 10, 20, 30], 
+            type: 'bar', 
+            description: 'Temp. [C]' });
 
-        const colorscale = new OpenLIME.Colormap([
+        const cscaleLinear = new OpenLIME.Colormap([
             new OpenLIME.Color("rgb(0, 0, 255)"),
             new OpenLIME.Color('rgb(255, 255, 255)'),
             new OpenLIME.Color('rgb(255, 0, 0)'),
-        ], { domain: [-10, 0, 30] });
+        ], {
+            domain: [-10, 0, 30],
+            description: 'Temp. [C]'
+        });
+
+        const colorscale=cscaleLinear;
 
         // Create the filter
-        const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: [-30, 70], type: 'Linear' });
-        
+        const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: [-30, 70]});
+
         // Add the filter to the shader
         layerTemp.addShaderFilter(filterColormap);
 
         // Add Filter Opacity
-        const filterOpacity = new OpenLIME.ShaderFilterOpacity(0.7);
+        const filterOpacity = new OpenLIME.ShaderFilterOpacity(1.0);
         layerTemp.addShaderFilter(filterOpacity);
+
+        // Colormap Legend
+        const legend = new OpenLIME.ColormapLegend(lime, colorscale, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');

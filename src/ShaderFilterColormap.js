@@ -10,7 +10,6 @@ class ShaderFilterColormap extends ShaderFilter {
             inDomain: [],
             channelWeights: [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
             maxSteps: 256,
-            type: 'Linear'
         }, options);
         Object.assign(this, options);
 
@@ -19,7 +18,7 @@ class ShaderFilterColormap extends ShaderFilter {
         }
 
         this.colorscale = colorscale;
-        if (this.inDomain.length == 0) this.domain = this.colorscale.domain;
+        if (this.inDomain.length == 0) this.inDomain = this.colorscale.rangeDomain();
 
         const cscaleDomain = this.colorscale.rangeDomain();
         const scale = (this.inDomain[1]-this.inDomain[0])/(cscaleDomain[1]-cscaleDomain[0]);
@@ -36,9 +35,11 @@ class ShaderFilterColormap extends ShaderFilter {
     }
 
     createTextures(gl) {       
-        const colormap = this.colorscale.sample(this.maxSteps, this.type);
+        const colormap = this.colorscale.sample(this.maxSteps);
         let textureFilter=gl.LINEAR;
-        if(this.type == 'bar') textureFilter=gl.NEAREST;
+        if(this.colorscale.type == 'bar') {
+            textureFilter=gl.NEAREST;
+        }
 		const tex = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, tex);
 		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, textureFilter);
