@@ -410,12 +410,9 @@ class ColormapLegend {
 
 	legendBar() {
 		const deltaWidth = (100 - this.legendWidth) / this.colorscale.domain.length;
-		console.log('xarr: ', this.colorscale.xarr);
-		console.log('domain: ', this.colorscale.domain);
 		for (let i=0 ; i<this.colorscale.xarr.length; i++) {
 			const c = new Color(this.colorscale.rarr[i], this.colorscale.garr[i], this.colorscale.barr[i], this.colorscale.aarr[i]);
 			const v = this.colorscale.xarr[i];
-			console.log('v, c: ', v, c.toRGBA());
 			const value = document.createElement('div');
 			const bkg = `background: ${c.toHex()}`;
 			value.style = `display: flex; align-items: center; justify-content: center; 
