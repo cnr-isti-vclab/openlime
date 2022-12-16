@@ -1,8 +1,6 @@
 import { Viewer } from './Viewer.js'
 import { Layer } from './Layer.js'
 import {Layout} from './Layout.js'
-import {LayoutTiles} from './LayoutTiles.js'
-import {LayoutTileImages} from './LayoutTileImages.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerDstretch } from './LayerDstretch.js'
 import { LayerSelectiveStretch } from './LayerSelectiveStretch.js'
@@ -19,13 +17,7 @@ import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
-/*
-	- Shader data function is not called?
-	- Shader isn't used?
-	- Shader doesn't bind correctly?
-*/
-
-dstretchTest();
+selectiveStretchTest();
 //selectiveStretchTest();
 //filterTest();
 //combinerTest();
@@ -57,6 +49,8 @@ function selectiveStretchTest() {
 
 	ui.lightcontroller.relative = false;
 	ui.actions.light.active = true;
+}
+
 function filterTest() {
 	console.log("Filtering");
 
