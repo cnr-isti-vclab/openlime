@@ -700,7 +700,9 @@ class Layer {
 			if (this.layout.type == "image") {
 				this.layout.width = raster.width;
 				this.layout.height = raster.height;
+				console.assert(this.shader.samplers.length > 0, "Shaders should have an assigned sampler before setting the layer as ready");
 				this.layout.initBoxes();
+				this.layout.emit('updateSize');
 			}
 			tile.size += size;
 			tile.tex[sampler.id] = tex;

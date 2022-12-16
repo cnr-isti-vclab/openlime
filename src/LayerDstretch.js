@@ -32,12 +32,15 @@ class LayerDstretch extends LayerImage {
 	
 	loadJson() {
 		(async () => {
-			let json
+			let json;
 			try {
 				let dstretchUrl = this.url.substring(0, this.url.lastIndexOf(".")) + ".dstretch";
 				let response = await fetch(dstretchUrl);
 				console.log(response.ok);
 				json = await response.json();
+
+				this.layout.setUrls([this.url]);
+				this.shader.init(json);
 			}
 			catch (error) {
 				json = {
@@ -46,9 +49,7 @@ class LayerDstretch extends LayerImage {
 				};
 				this.rasters[0].loadTexture = this.loadAndSampleTexture.bind(this);
 			}
-
-			this.layout.setUrls([this.url]);
-			this.shader.init(json);
+			
 		})();
 	} 
 
@@ -95,6 +96,7 @@ class LayerDstretch extends LayerImage {
 
 		this.shader.samples = samples;
 		this.shader.setMinMax();
+		
 		return tex;
 	}
 }

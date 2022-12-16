@@ -1,8 +1,12 @@
 import { Viewer } from './Viewer.js'
 import { Layer } from './Layer.js'
+import {Layout} from './Layout.js'
+import {LayoutTiles} from './LayoutTiles.js'
+import {LayoutTileImages} from './LayoutTileImages.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerDstretch } from './LayerDstretch.js'
 import { LayerSelectiveStretch } from './LayerSelectiveStretch.js'
+import {LayerRTI} from './LayerRTI.js'
 import { LayerCombiner } from './LayerCombiner.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
@@ -15,8 +19,15 @@ import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
+/*
+	- Shader data function is not called?
+	- Shader isn't used?
+	- Shader doesn't bind correctly?
+*/
+
 dstretchTest();
 //selectiveStretchTest();
+//filterTest();
 //combinerTest();
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
@@ -46,6 +57,18 @@ function selectiveStretchTest() {
 
 	ui.lightcontroller.relative = false;
 	ui.actions.light.active = true;
+function filterTest() {
+	console.log("Filtering");
+
+	let filterLayer = new Layer({
+		type: 'image',
+		layout: 'image',
+		url: 'assets/test/test.jpg'
+	});
+
+	lime.canvas.addLayer('image', filterLayer);
+	let ui = new UIBasic(lime);
+	ui.actions.light.active = false;
 }
 
 function dstretchTest() {
@@ -262,7 +285,7 @@ function rtiTest(dataset) {
 
 	let layer0 = new Layer({ 
 		label: '4',
-		layout: 'image', 
+		layout: 'deepzoom', 
 		type:'rti',
 		url: 'assets/rti/hsh/info.json',
 		normals: false

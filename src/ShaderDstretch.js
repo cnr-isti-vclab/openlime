@@ -3,6 +3,8 @@ import { Shader } from "./Shader";
 class ShaderDstretch extends Shader {
     constructor(options) {
 		super(options);
+        this.samplers.push({ id:0, name:'image', type:'vec3' });
+
 	}
 
 	init(json) {
@@ -10,7 +12,6 @@ class ShaderDstretch extends Shader {
 
         // Store samples, compute min / max on the fly
         this.samples = json["samples"];
-        this.samplers.push({ id:0, name:'image', type:'vec3' });
 
         this.setMinMax();
 	}
