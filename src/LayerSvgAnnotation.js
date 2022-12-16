@@ -1,6 +1,8 @@
-import { Layer } from './Layer.js';
-import { Annotation } from './Annotation.js';
-import { LayerAnnotation } from './LayerAnnotation.js';
+import { Util } from './Util'
+import { Layer } from './Layer'
+import { Annotation } from './Annotation'
+import { LayerAnnotation } from './LayerAnnotation'
+import { CoordinateSystem } from './CoordinateSystem';
 
 /**
  * Elements to classify the annotations.
@@ -37,12 +39,14 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			svgGroup: null,
 			onClick: null,			//callback function
 			classes: {
-				'': { stroke: '#000', label: '' },
+				'': { style: { stroke: '#000' }, label: '' },
 			},
 			annotationUpdate: null
 		}, options);
 		super(options);
-		this.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`).join('\n');
+		for(const [key, value] of Object.entries(this.classes)) {
+			this.style += `[data-class=${key}] { ` + Object.entries(value.style).map( g => `${g[0]}: ${g[1]};`).join('\n') + '}';
+		}
 		//this.createOverlaySVGElement();
 		//this.setLayout(this.layout);
 	}
@@ -110,23 +114,38 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	}
 
 	/** @ignore */
-	newAnnotation(annotation, selected = true) {
-		let svg = createSVGElement('svg');
+	newAnnotation(annotation) {
+		let svg = Util.createSVGElement('svg');
 		if (!annotation)
 			annotation = new Annotation({ element: svg, selector_type: 'SvgSelector' });
-		return super.newAnnotation(annotation, selected)
+		return super.newAnnotation(annotation)
 	}
 
 	/** @ignore */
 	draw(transform, viewport) {
 		if (!this.svgElement)
 			return true;
-		let t = this.transform.compose(transform);
 		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
-		let c = this.boundingBox().corner(0);
-		this.svgGroup.setAttribute("transform",
-			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c[0]} ${c[1]})`);
+
+		const svgTransform = this.getSvgGroupTransform(transform);
+		this.svgGroup.setAttribute("transform",	svgTransform);
 		return true;
+	}
+
+	/**
+	 * Return the string containing the transform for drawing the svg group in the proper position
+	 * @param {Transform} transform current transform parameter of the draw function
+	 * @param {bool} inverse when its false return the transform needed to draw the svgGroup
+	 * @returns string with svgroup transform 
+	 */
+	getSvgGroupTransform(transform, inverse=false) {
+		let t = this.transform.compose(transform);
+		let c = this.boundingBox().corner(0);
+		// FIXME CHECK IT: Convert from GL to SVG, but without any scaling. It just needs to reflect around 0,
+		t = CoordinateSystem.reflectY(t);
+		return inverse ?
+		 `translate(${-c.x} ${-c.y})  scale(${1/t.z} ${1/t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
+		 `translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c.x} ${c.y})`;
 	}
 
 	/** @ignore */
@@ -213,16 +232,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	}
 }
 
-/** @ignore */ 
-function createSVGElement(tag, attributes) {
-	let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-	if (attributes)
-		for (const [key, value] of Object.entries(attributes))
-			e.setAttribute(key, value);
-	return e;
-}
-
 Layer.prototype.types['svg_annotations'] = (options) => { return new LayerSvgAnnotation(options); }
 
-export { LayerSvgAnnotation, createSVGElement }
+export { LayerSvgAnnotation }
 

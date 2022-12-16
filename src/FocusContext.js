@@ -1,4 +1,5 @@
 import { Transform } from "./Transform";
+import { CoordinateSystem } from "./CoordinateSystem";
 
 /**
  * The FocusContext class is responsible for identifying a good Focus and Context situation.
@@ -25,22 +26,22 @@ class FocusContext {
         // When t is 0.5: border situation, move both focus & context to keep the lens steady on screen.
         // In this case the context should be moved of deltaFocus*scale to achieve steadyness.
         // Thus interpolate deltaContext between 0 and deltaFocus*s (with t ranging from 1 to 0.5)
-        const deltaFocus = [delta[0] * txy[0], delta[1] * txy[1]];
-        const deltaContext = [-deltaFocus[0] * context.z * 2 * (1-txy[0]), 
-                               deltaFocus[1] * context.z * 2 * (1-txy[1])];
-        context.x += deltaContext[0];
-        context.y += deltaContext[1];
+        const deltaFocus = {x:delta.x * txy.x, y: delta.y * txy.y};
+        const deltaContext = {x:-deltaFocus.x * context.z * 2 * (1-txy.x), 
+                              y:-deltaFocus.y * context.z * 2 * (1-txy.y)};
+        context.x += deltaContext.x;
+        context.y += deltaContext.y;
 
-        focus.position[0] += deltaFocus[0];
-        focus.position[1] += deltaFocus[1];
+        focus.position.x += deltaFocus.x;
+        focus.position.y += deltaFocus.y;
 
         // Clamp lens position on dataset boundaries
-        if (Math.abs(focus.position[0]) > imageSize.w/2) {
-            focus.position[0] = imageSize.w/2 * Math.sign(focus.position[0]);
+        if (Math.abs(focus.position.x) > imageSize.w/2) {
+            focus.position.x = imageSize.w/2 * Math.sign(focus.position.x);
         }
 
-        if (Math.abs(focus.position[1]) > imageSize.h/2) {
-            focus.position[1] = imageSize.h/2 * Math.sign(focus.position[1]);
+        if (Math.abs(focus.position.y) > imageSize.h/2) {
+            focus.position.y = imageSize.h/2 * Math.sign(focus.position.y);
         } 
     }
 
@@ -88,26 +89,58 @@ class FocusContext {
         }
     
         // Scale around lens center
-        context.x += focus.position[0]*context.z*(1 - zoomScaleAmount);
-        context.y -= focus.position[1]*context.z*(1 - zoomScaleAmount);
+        context.x += focus.position.x*context.z*(1 - zoomScaleAmount);
+        context.y += focus.position.y*context.z*(1 - zoomScaleAmount);
         context.z = context.z * zoomScaleAmount;  
         focus.radius *= radiusScaleAmount;
     }
         
     /**
+     * Adapt context in order to have focus & context condition satisfied for the requested focus
+     * @param {*}         viewport {x, y, dx, dy, w, h}
+     * @param {*}         focus    lens : {position,radius}. Contain current lens in dataset coords
+     * @param {Transform} context Contain current transform, which  will be updated to translated context
+     * @param {Number}    desiredScale context desired scale (which will be clamped within min max scale)
+     */
+    static adaptContext(viewport, focus, context, desiredScale) {
+        // Get current projected annotation center position
+        //const pOld = context.sceneToViewportCoords(viewport, focus.position);
+        const useGL = true;
+        const pOld = CoordinateSystem.fromSceneToViewportNoCamera(focus.position, context, viewport, useGL);
+        context.z = desiredScale;
+
+        FocusContext.adaptContextScale(viewport, focus, context);
+        
+        // After scale, restore projected annotation position, in order to avoid
+        // moving the annotation center outside the boundaries
+        //const pNew = context.sceneToViewportCoords(viewport, focus.position);
+        const pNew = CoordinateSystem.fromSceneToViewportNoCamera(focus.position, context, viewport, useGL);
+
+        const delta = [pNew.x - pOld.x, pNew.y - pOld.y];
+        context.x -= delta.x;
+        context.y += delta.y;
+
+        // Force annotation inside the viewport
+        FocusContext.adaptContextPosition(viewport, focus, context);
+    }
+
+    /**
      * Fix context scale to make projected lens fit within viewport.
      * @param {*} viewport {x, y, dx, dy, w, h}
-     * @param {*} focus    lens : {position,radius}. Contain current lens in dataset coords, which will be updated 
+     * @param {*} focus    lens : {position,radius}. Contain current lens in dataset coords
      * @param {Transform} context Contain current transform, whose scale will be updated to keep lens in focus and context after scale
      */
     static adaptContextScale(viewport, focus, context) {
         const oldZ = context.z;
         const radiusRange = this.getRadiusRangeCanvas(viewport);
         const focusRadiusCanvas = focus.radius * context.z;
+        let zoomScaleAmount = 1;
         if (focusRadiusCanvas < radiusRange.min) {
             context.z = radiusRange.min / focus.radius;
+            // zoomScaleAmount = (radiusRange.min / focus.radius) / context.z;
         } else if (focusRadiusCanvas > radiusRange.max) {
             context.z = radiusRange.max / focus.radius;
+            // zoomScaleAmount = (radiusRange.max / focus.radius) / context.z;
         }
     }
 
@@ -120,17 +153,16 @@ class FocusContext {
     static adaptContextPosition(viewport, focus, context) {
         const delta = this.getCanvasBorder(focus, context);
         let box = this.getShrinkedBox(viewport, delta);
-        const screenP = context.sceneToViewportCoords(viewport, focus.position);
-        for(let i = 0; i < 2; ++i) {
-            const deltaMin = Math.max(0, (box.min[i] - screenP[i]));
-            const deltaMax = Math.min(0, (box.max[i] - screenP[i]));
-            let delta = deltaMin != 0 ? deltaMin : deltaMax;
-            if (i == 0) {
-                context.x += delta;
-            } else {
-                context.y -= delta;
-            }
-        }
+        const useGL = true;
+        const screenP = CoordinateSystem.fromSceneToViewportNoCamera(focus.position, context, viewport, useGL);
+       
+        const deltaMinX = Math.max(0, (box.xLow - screenP.x));
+        const deltaMaxX = Math.min(0, (box.xHigh - screenP.x));
+        context.x += deltaMinX != 0 ? deltaMinX : deltaMaxX;
+        
+        const deltaMinY = Math.max(0, (box.yLow - screenP.y));
+        const deltaMaxY = Math.min(0, (box.yHigh - screenP.y));
+        context.y += deltaMinY != 0 ? deltaMinY : deltaMaxY;
     }
 
     /**
@@ -142,24 +174,27 @@ class FocusContext {
         // 0.5 is borderline focus and context. 
         const delta = this.getCanvasBorder(focus, context);
         const box = this.getShrinkedBox(viewport, delta);
-        const p = context.sceneToViewportCoords(viewport, focus.position); 
+        //  const p = context.sceneToViewportCoords(viewport, focus.position); 
+        const useGL = true;
+        const p = CoordinateSystem.fromSceneToViewportNoCamera(focus.position, context, viewport, useGL);
+        
 
         const halfCanvasW = viewport.w / 2 - delta;
         const halfCanvasH = viewport.h / 2 - delta;
     
-        let xDistance = (panDir[0] > 0 ?
-          Math.max(0, Math.min(halfCanvasW, box.max[0] - p[0])) / (halfCanvasW) :
-          Math.max(0, Math.min(halfCanvasW, p[0] - box.min[0])) / (halfCanvasW));
+        let xDistance = (panDir.x > 0 ?
+          Math.max(0, Math.min(halfCanvasW, box.xHigh - p.x)) / (halfCanvasW) :
+          Math.max(0, Math.min(halfCanvasW, p.x - box.xLow)) / (halfCanvasW));
         xDistance = this.smoothstep(xDistance, 0, 0.75);
     
-        let yDistance = (panDir[1] > 0 ?
-          Math.max(0, Math.min(halfCanvasH, box.max[1] - p[1])) / (halfCanvasH) :
-          Math.max(0, Math.min(halfCanvasH, p[1] - box.min[1])) / (halfCanvasH));
+        let yDistance = (panDir.y > 0 ?
+          Math.max(0, Math.min(halfCanvasH, box.yHigh - p.y)) / (halfCanvasH) :
+          Math.max(0, Math.min(halfCanvasH, p.y - box.yLow)) / (halfCanvasH));
         yDistance = this.smoothstep(yDistance, 0, 0.75);
         
         // Use d/2+05, because when d = 0.5 camera movement = lens movement 
         // with the effect of the lens not moving from its canvas position.
-        const txy =  [xDistance / 2 + 0.5, yDistance / 2 + 0.5];
+        const txy =  {x:xDistance / 2 + 0.5, y: yDistance / 2 + 0.5};
         return txy;
     }
 
@@ -178,8 +213,10 @@ class FocusContext {
     static getShrinkedBox(viewport, delta) {
         // Return the viewport box in canvas pixels, shrinked of delta pixels on the min,max corners
         const box = {
-            min: [delta, delta],
-            max: [viewport.w - delta, viewport.h - delta]
+           xLow:delta, 
+           yLow:delta,
+           xHigh:viewport.w - delta, 
+           yHigh:viewport.h - delta
         };
         return box;
     }

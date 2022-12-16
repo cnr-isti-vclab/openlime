@@ -44,29 +44,33 @@ class Skin {
 	}
 
 	/**
-	 * Appends the selected SVG icons to the `container`.
+	 * Appends the selected SVG element to the `container`.
 	 * @param {HTMLElement} container A HTML DOM node.
-	 * @param {string} selector A CSS selector (e.g. a class name).
-	 * @returns {SVGElement} A pointer to the SVG icon referenced by the selector.
+	 * @param {SVGElement|string} elm An SVGElement or a CSS selector (e.g. a class name).
+	 * @returns {SVGElement} A pointer to the SVG icon referenced by the elm.
 	 */
-	static async appendIcon(container, selector) {
-		let element = await Skin.getElement(selector);
-
-		let icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		container.appendChild(icon);
-		icon.appendChild(element);
-		
-		let box = element.getBBox();
-
-		let tlist = element.transform.baseVal;
-		if (tlist.numberOfItems == 0)
-			tlist.appendItem(icon.createSVGTransform());
-		tlist.getItem(0).setTranslate(-box.x, -box.y);
-
-		icon.setAttribute('viewBox', `${-pad} ${-pad} ${box.width + 2*pad} ${box.height + 2*pad}`);
-		icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+	static async appendIcon(container, icon) {
+		let element = null;
+		if (typeof icon == 'string') {
+			element = await Skin.getElement(icon);
+			icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			icon.appendChild(element);
+			container.appendChild(icon);
+			let box = element.getBBox();
+			let tlist = element.transform.baseVal;
+			if (tlist.numberOfItems == 0)
+				tlist.appendItem(icon.createSVGTransform());
+			tlist.getItem(0).setTranslate(-box.x, -box.y);
+			icon.setAttribute('viewBox', `${-pad} ${-pad} ${box.width + 2 * pad} ${box.height + 2 * pad}`);
+			icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+		} else {
+			container.appendChild(icon);
+			let box = icon.getBBox();
+			icon.setAttribute('viewBox', `${-pad} ${-pad} ${box.width + 2 * pad} ${box.height + 2 * pad}`);
+			icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+		}
 		return icon;
-	}	
+	 }
 }
 
 export { Skin }

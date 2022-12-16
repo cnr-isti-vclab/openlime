@@ -79,7 +79,7 @@
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
         // Create an User Interface 
-        const ui = new OpenLIME.UIBasic(lime);
+        const ui = new OpenLIME.UIBasic(lime, {autofit:false});
 
         // Remove light from the toolbar
         ui.actions.light.display=false;

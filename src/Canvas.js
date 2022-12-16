@@ -1,6 +1,13 @@
-import { Camera } from './Camera.js'
-import { Layer  } from './Layer.js'
-import { Cache } from './Cache.js'
+import { Util } from './Util'
+import { Camera } from './Camera'
+import { Layer  } from './Layer'
+import { Cache } from './Cache'
+import { addSignals } from './Signals'
+
+//// HELPERS
+
+window.structuredClone = typeof(structuredClone) == "function" ? structuredClone : function (value) { return  JSON.parse(JSON.stringify(value)); };
+
 
 /**
  * Creates the WebGL context for the `canvas`. It stores information related to the `overlay` DOM element and the `camera` of the scene.
@@ -42,20 +49,8 @@ class Canvas {
  	* @param {*} event A label to identify the event.
  	* @param {*} callback The event callback function.
  	*/
-	/** @ignore */
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
 
-	/*
- 	* Emits an event (running all the callbacks referred to it).
- 	* @param {*} event The event name
- 	*/
-	/** @ignore */ 	
-	emit(event) {
-		for(let r of this.signals[event])
-			r(this);
-	}
+
 
 	/** @ignore */
 	init(canvas, overlay) {
@@ -103,6 +98,45 @@ class Canvas {
 		canvas.addEventListener("webglcontextlost", (event) => { console.log("Context lost."); event.preventDefault(); }, false);
 		canvas.addEventListener("webglcontextrestored", ()  => { this.restoreWebGL(); }, false);
 		document.addEventListener("visibilitychange", (event) => { if(this.gl.isContextLost()) { this.restoreWebGL(); }});
+	}
+
+	/**
+	 * Sets the state variables of all the system
+	 * @param {Object} state An object with state variables.
+	 * @param {number} dt The animation duration in millisecond.
+	 * @param {Easing} easing The function aimed at making the camera movement or control adjustments less severe or pronounced.
+	 */
+	setState(state, dt, easing = 'linear') {
+		if ('camera' in state) {
+			const m = state.camera;
+			this.camera.setPosition(dt, m.x, m.y, m.z, m.a, easing);
+		}
+		if ('layers' in state)
+			for (const [k, layerState] of Object.entries(state.layers))
+				if (k in this.layers) {
+					const layer = this.layers[k];
+					layer.setState(layerState, dt, easing);
+				}
+	}
+
+	/**
+	 * Gets the state variables of all the system as described in the stateMask
+	 * @return {Object} An object with state variables.
+	 */
+	getState(stateMask=null) {
+		let state = {};
+		if (!stateMask || stateMask.camera) {
+			let now = performance.now();
+			let m = this.camera.getCurrentTransform(now);
+			state.camera = { 'x': m.x, 'y': m.y, 'z': m.z, 'a': m.a };
+		}
+		state.layers = {};
+		for (let layer of Object.values(this.layers)) {
+			const layerMask = window.structuredClone(stateMask);
+			if (stateMask && stateMask.layers) Object.assign(layerMask, stateMask.layers[layer.id]);
+			state.layers[layer.id] = layer.getState(layerMask);
+		}
+		return state;
 	}
 
 	/** @ignore */
@@ -235,5 +269,7 @@ class Canvas {
 		}
 	}
 }
+
+addSignals(Canvas, 'update', 'updateSize', 'ready');
 
 export { Canvas }

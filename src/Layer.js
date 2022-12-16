@@ -2,6 +2,8 @@ import { Transform } from './Transform.js'
 import { Layout } from './Layout.js'
 import { Cache } from './Cache.js'
 import { BoundingBox } from './BoundingBox.js'
+import { addSignals } from './Signals.js'
+
 
 /**
  * The Layer class is responsible for drawing slides in the OpenLIME viewer. 
@@ -30,10 +32,12 @@ import { BoundingBox } from './BoundingBox.js'
  *      });
  *      viewer.addLayer('coin1', layer1);
  */
+
+//FIXME: prefetchborder and mipmapbias should probably go into layout
 class Layer {
 	/**
 	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
-    * Signals are triggered when the layer is ready (i.e. completely initialized) or if its state variables have been updated (a redraw is needed).
+	* Signals are triggered when the layer is ready (i.e. completely initialized) or if its state variables have been updated (a redraw is needed).
 	* @param {Object} [options]
 	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
 	* @param {string} options.type A string identifier to select the specific derived layer class to instantiate.
@@ -87,6 +91,7 @@ class Layer {
 	init(options) {
 		Object.assign(this, {
 			transform: new Transform(),
+			viewport: null,
 			visible: true,
 			zindex: 0,
 			overlay: false, //in the GUI it won't affect the visibility of the other layers
@@ -98,11 +103,12 @@ class Layer {
 			layout: 'image',
 			shader: null, //current shader.
 			gl: null,
-
+			width: 0,
+			height: 0,
 			prefetchBorder: 1,
 			mipmapBias: 0.4,
 
-			signals: { update: [], ready: [], updateSize: [] },  //update callbacks for a redraw, ready once layout is known.
+			//signals: { update: [], ready: [], updateSize: [] },  //update callbacks for a redraw, ready once layout is known.
 
 			//internal stuff, should not be passed as options.
 			tiles: new Map(),      //keep references to each texture (and status) indexed by level, x and y.
@@ -111,36 +117,67 @@ class Layer {
 			queue: [],     //queue of tiles to be loaded.
 			requested: {},  //tiles requested.
 		});
+
 		Object.assign(this, options);
-		if(this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
+		if (this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
 
 		this.transform = new Transform(this.transform);
 
 		if (typeof (this.layout) == 'string') {
-			let size = { width: this.width || 0, height: this.height || 0 };
-			this.setLayout(new Layout(null, this.layout, size));
+			let size = { width: this.width, height: this.height };
+			this.setLayout(new Layout(null, this.layout, size)); //FIXME new Layout not have size, but options.width options.height
 		} else {
 			this.setLayout(this.layout);
 		}
 	}
 
-	/**
- 	* Adds a Layer Event
- 	* @param {string} event A label to identify the event.
- 	* @param {*} callback The event callback function.
-	*/
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
+	setViewport(view) {
+		this.viewport = view;
+		this.emit('update');
+	}
+	addShaderFilter(f) {
+		if (!this.shader) throw "Shader not implemented";
+		this.shader.addFilter(f);
 	}
 
-	/*
- 	* Emits an event (running all the callbacks referred to it).
- 	* @param {*} event The event name
- 	*/
-	/** @ignore */ 
-	emit(event, ...parameters) {
-		for (let r of this.signals[event])
-			r(...parameters);
+	removeShaderFilter(name) {
+		if (!this.shader) throw "Shader not implemented";
+		this.shader.removeFilter(name);
+	}
+
+	clearShaderFilters() {
+		if (!this.shader) throw "Shader not implemented";
+		this.shader.clearFilters();
+	}
+
+	/**
+	 * Sets the state of the layer 
+	 */
+	setState(state, dt, easing = 'linear') {
+		if ('controls' in state)
+			for (const [key, v] of Object.entries(state.controls)) {
+				this.setControl(key, v, dt, easing);
+			}
+		if ('mode' in state && state.mode) {
+			this.setMode(state.mode);
+		}
+	}
+
+	/**
+	 * Gets the state variables of the layer.
+	 * @return {Object} An object with state variables 
+	 */
+	getState(stateMask = null) {
+		const state = {};
+		state.controls = {};
+		for (const [key, v] of Object.entries(this.controls)) {
+			if (!stateMask || ('controls' in stateMask && key in stateMask.controls))
+				state.controls[key] = v.current.value;
+		}
+		if (!stateMask || 'mode' in stateMask)
+			if (this.getMode())
+				state.mode = this.getMode();
+		return state;
 	}
 
 	/** @ignore */
@@ -185,7 +222,7 @@ class Layer {
 			throw "Unknown shader: " + id;
 		this.shader = this.shaders[id];
 		this.setupTiles();
-		this.shader.setEvent('update', () => { this.emit('update'); });
+		this.shader.addEvent('update', () => { this.emit('update'); });
 	}
 
 	/**
@@ -193,7 +230,9 @@ class Layer {
 	 * @returns {string} the shader mode
 	 */
 	getMode() {
-		return this.shader.mode;
+		if (this.shader)
+			return this.shader.mode;
+		return null;
 	}
 
 	/**
@@ -266,7 +305,7 @@ class Layer {
 	}
 
 	/**
-	 * Gets the layer bounding box
+	 * Gets the layer bounding box (<FIXME> Change name: box is in scene coordinates)
 	 * @returns {BoundingBox} The bounding box 
 	 */
 	boundingBox() {
@@ -283,12 +322,12 @@ class Layer {
 	}
 
 	/**
- 	* Computes the merge bounding box of all the 'layers`
- 	* @param {Layer[]} layers 
- 	* @param {bool} discardHidden Whether hidden layers are not to be included in the computation.
- 	* @returns {BoundingBox} The bounding box 
+	  * Computes the merge bounding box of all the 'layers`
+	  * @param {Layer[]} layers 
+	  * @param {bool} discardHidden Whether hidden layers are not to be included in the computation.
+	  * @returns {BoundingBox} The bounding box 
 	* @static 
- 	*/
+	  */
 	static computeLayersBBox(layers, discardHidden) {
 		if (layers == undefined || layers == null) {
 			console.log("ASKING BBOX INFO ON NO LAYERS");
@@ -310,7 +349,7 @@ class Layer {
 	 * @param {*} name The name of the control.
 	 * return {*} The control
 	 */
-	 getControl(name) {
+	getControl(name) {
 		let control = this.controls[name] ? this.controls[name] : null;
 		if (control) {
 			let now = performance.now();
@@ -325,10 +364,10 @@ class Layer {
 	 * @param {*} value The value for initialization.
 	 */
 	addControl(name, value) {
-		if(this.controls[name])
+		if (this.controls[name])
 			throw new Error(`Control "$name" already exist!`);
 		let now = performance.now();
-		this.controls[name] = { 'source':{ 'value': value, 't': now }, 'target':{ 'value': value, 't': now }, 'current':{ 'value': value, 't': now }, 'easing': 'linear' };
+		this.controls[name] = { 'source': { 'value': value, 't': now }, 'target': { 'value': value, 't': now }, 'current': { 'value': value, 't': now }, 'easing': 'linear' };
 	}
 
 	/**
@@ -337,7 +376,7 @@ class Layer {
 	 * @param {*} value The value for initialization.
 	 * @param {time} dt Duration of the interpolation (0=no interpolation).
 	 */
-	setControl(name, value, dt, easing='linear') { //When are created?
+	setControl(name, value, dt, easing = 'linear') { //When are created?
 		let now = performance.now();
 		let control = this.controls[name];
 		this.interpolateControl(control, now);
@@ -365,7 +404,7 @@ class Layer {
 	}
 
 	/** @ignore */
-	interpolateControl(control, time ) {
+	interpolateControl(control, time) {
 		let source = control.source;
 		let target = control.target;
 		let current = control.current;
@@ -434,37 +473,55 @@ class Layer {
 			throw "Shader not specified!";
 
 		let done = this.interpolateControls();
+
+		let parent_viewport = viewport;
+		if(this.viewport) {
+			viewport = this.viewport;
+			this.gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
+		}
+		
+
 		this.prepareWebGL();
 
 		//		find which quads to draw and in case request for them
-		transform = this.transform.compose(transform);
-		let needed = this.layout.neededBox(viewport, transform, 0, this.mipmapBias);
-		let torender = this.toRender(needed);
+		let available = this.layout.available(viewport, transform, this.transform, 0, this.mipmapBias, this.tiles);
 
+		transform = this.transform.compose(transform);
 		let matrix = transform.projectionMatrix(viewport);
 		this.gl.uniformMatrix4fv(this.shader.matrixlocation, this.gl.FALSE, matrix);
 
-		for (let index in torender) {
-			let tile = torender[index];
-			//			if(tile.complete)
-			this.drawTile(torender[index]);
+		this.updateAllTileBuffers(available);
+
+		// bind filter textures
+		let iSampler = this.shader.samplers.length;
+		for (const f of this.shader.filters) {
+			for (let i = 0; i < f.samplers.length; i++) {
+				this.gl.uniform1i(f.samplers[i].location, iSampler);
+				this.gl.activeTexture(this.gl.TEXTURE0 + iSampler);
+				this.gl.bindTexture(this.gl.TEXTURE_2D, f.samplers[i].tex);
+				iSampler++;
+			}
 		}
 
-		//		gl.uniform1f(t.opacitylocation, t.opacity);
+		let i = 0;
+		for (let tile of Object.values(available)) {
+			//			if(tile.complete)
+			this.drawTile(tile, i);
+			++i;
+		}
+		if(this.vieport) 
+			this.gl.viewport(parent_viewport.x, parent_viewport.y, parent_viewport.dx, parent_viewport.dy);
+
 		return done;
 	}
 
 	/** @ignore */
-	drawTile(tile) {
-		let tiledata = this.tiles.get(tile.index);
-		if (tiledata.missing != 0)
+	drawTile(tile, index) {
+		//let tiledata = this.tiles.get(tile.index);
+		if (tile.missing != 0)
 			throw "Attempt to draw tile still missing textures"
 
-		//TODO might want to change the function to oaccept tile as argument
-		let c = this.layout.tileCoords(tile.level, tile.x, tile.y);
-
-		//update coords and texture buffers
-		this.updateTileBuffers(c.coords, c.tcoords);
+		//coords and texture buffers updated once for all tiles from main draw() call
 
 		//bind textures
 		let gl = this.gl;
@@ -472,9 +529,22 @@ class Layer {
 			let id = this.shader.samplers[i].id;
 			gl.uniform1i(this.shader.samplers[i].location, i);
 			gl.activeTexture(gl.TEXTURE0 + i);
-			gl.bindTexture(gl.TEXTURE_2D, tiledata.tex[id]);
+			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
-		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+
+		// for (var i = 0; i < this.shader.samplers.length; i++) {
+		// 	let id = this.shader.samplers[i].id;
+		// 	gl.uniform1i(this.shader.samplers[i].location, i);
+		// 	gl.activeTexture(gl.TEXTURE0 + i);
+		// 	gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+		// } // FIXME - TO BE REMOVED?
+
+		const byteOffset = this.getTileByteOffset(index);
+		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, byteOffset);
+	}
+
+	getTileByteOffset(index) {
+		return index * 6 * 2;
 	}
 
 	/* given the full pyramid of needed tiles for a certain bounding box, 
@@ -483,7 +553,7 @@ class Layer {
 	 *  drawing incomplete tiles enhance the resolution early at the cost of some overdrawing and problems with opacity.
 	 */
 	/** @ignore */
-	toRender(needed) {
+	/*toRender(needed) {
 
 		let torender = {}; //array of minlevel, actual level, x, y (referred to minlevel)
 		let brothers = {};
@@ -498,7 +568,7 @@ class Layer {
 					let d = minlevel - level;
 					let index = this.layout.index(level, x >> d, y >> d);
 					if (this.tiles.has(index) && this.tiles.get(index).missing == 0) {
-						torender[index] = { index: index, level: level, x: x >> d, y: y >> d, complete: true };
+						torender[index] = this.tiles.get(index); //{ index: index, level: level, x: x >> d, y: y >> d, complete: true };
 						break;
 					} else {
 						let sx = (x >> (d + 1)) << 1;
@@ -517,15 +587,17 @@ class Layer {
 				torender[index].complete = false;
 		}
 		return torender;
-	}
+	}*/
 
 	/** @ignore */
+	// Update tile vertex and texture coords.
+	// Currently called by derived classes 
 	updateTileBuffers(coords, tcoords) {
 		let gl = this.gl;
 		//TODO to reduce the number of calls (probably not needed) we can join buffers, and just make one call per draw! (except the bufferData, which is per node)
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
-
+		//FIXME this is not needed every time.
 		gl.vertexAttribPointer(this.shader.coordattrib, 3, gl.FLOAT, false, 0, 0);
 		gl.enableVertexAttribArray(this.shader.coordattrib);
 
@@ -536,6 +608,50 @@ class Layer {
 		gl.enableVertexAttribArray(this.shader.texattrib);
 	}
 
+
+	/** @ignore */
+	// Update tile vertex and texture coords of all the tiles in a single VBO
+	updateAllTileBuffers(tiles) {
+		let gl = this.gl;
+
+		//use this.tiles instead.
+		let N = Object.values(tiles).length;
+		if (N == 0) return;
+
+		const szV = 12;
+		const szT = 8;
+		const szI = 6;
+		const iBuffer = new Uint16Array(szI * N);
+		const vBuffer = new Float32Array(szV * N);
+		const tBuffer = new Float32Array(szT * N);
+		let i = 0;
+		for (let tile of Object.values(tiles)) {
+			let c = this.layout.tileCoords(tile);
+			vBuffer.set(c.coords, i * szV);
+			tBuffer.set(c.tcoords, i * szT);
+
+			const off = i * 4;
+			tile.indexBufferByteOffset = 2 * i * szI;
+			iBuffer.set([off + 3, off + 2, off + 1, off + 3, off + 1, off + 0], i * szI);
+			++i;
+		}
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, iBuffer, gl.STATIC_DRAW);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, vBuffer, gl.STATIC_DRAW);
+
+		gl.vertexAttribPointer(this.shader.coordattrib, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.shader.coordattrib);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.tbuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, tBuffer, gl.STATIC_DRAW);
+
+		gl.vertexAttribPointer(this.shader.texattrib, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.shader.texattrib);
+
+	}
+
 	/*
 	 *  If layout is ready and shader is assigned, creates or update tiles to keep track of what is missing.
 	 */
@@ -544,18 +660,8 @@ class Layer {
 		if (!this.shader || !this.layout || this.layout.status != 'ready')
 			return;
 
-		// if(!this.tiles.size) {
-		// 	 this.tiles = JSON.parse(JSON.stringify(this.layout.tiles));
-		// 	 for(let tile of this.tiles) {
-		// 	 	tile.tex = new Array(this.shader.samplers.length);
-		// 	 	tile.missing = this.shader.samplers.length;
-		//  		tile.size = 0;
-		//  	}
-		//  	return;
-		// }
-
 		for (let tile of this.tiles) {
-			tile.missing = this.shader.samplers.length;;
+			tile.missing = this.shader.samplers.length;
 			for (let sampler of this.shader.samplers) {
 				if (tile.tex[sampler.id])
 					tile.missing--;
@@ -587,8 +693,6 @@ class Layer {
 
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);
-
-
 	}
 
 	/** @ignore */
@@ -605,6 +709,9 @@ class Layer {
 
 	/** @ignore */
 	prefetch(transform, viewport) {
+		if(this.viewport)
+			viewport = this.viewport;
+
 		if (this.layers.length != 0) { //combine layers
 			for (let layer of this.layers)
 				layer.prefetch(transform, viewport);
@@ -619,34 +726,49 @@ class Layer {
 		if (typeof (this.layout) != 'object')
 			throw "AH!";
 
-		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
-		if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
-			return;
-		this.previouslyNeeded = needed;
+		/*let needed = this.layout.needed(viewport, transform, this.prefetchBorder, this.mipmapBias, this.tiles);
+
 
 		this.queue = [];
 		let now = performance.now();
-		//look for needed nodes and prefetched nodes (on the pos destination
 		let missing = this.shader.samplers.length;
 
-		for (let level = 0; level <= needed.level; level++) {
-			let box = needed.pyramid[level];
-			let tmp = [];
-			for (let y = box.yLow; y < box.yHigh; y++) {
-				for (let x = box.xLow; x < box.xHigh; x++) {
-					let index = this.layout.index(level, x, y);
-					let tile = this.tiles.get(index) || { index, x, y, missing, tex: [], level };
-					tile.time = now;
-					tile.priority = needed.level - level;
-					if (tile.missing != 0 && !this.requested[index])
-						tmp.push(tile);
-				}
-			}
-			let c = box.center();
-			//sort tiles by distance to the center TODO: check it's correct!
-			tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
-			this.queue = this.queue.concat(tmp);
-		}
+
+		for(let tile of needed) {
+			if(tile.missing === null)
+				tile.missing = missing;
+			if (tile.missing != 0 && !this.requested[index])
+				tmp.push(tile);
+		} */
+		this.queue = this.layout.needed(viewport, transform, this.transform, this.prefetchBorder, this.mipmapBias, this.tiles);
+		/*		let needed = this.layout.neededBox(viewport, transform, this.prefetchBorder, this.mipmapBias);
+				if (this.previouslyNeeded && this.sameNeeded(this.previouslyNeeded, needed))
+					return;
+				this.previouslyNeeded = needed;
+		
+				this.queue = [];
+				let now = performance.now();
+				//look for needed nodes and prefetched nodes (on the pos destination
+				let missing = this.shader.samplers.length;
+		
+				for (let level = 0; level <= needed.level; level++) {
+					let box = needed.pyramid[level];
+					let tmp = [];
+					for (let y = box.yLow; y < box.yHigh; y++) {
+						for (let x = box.xLow; x < box.xHigh; x++) {
+							let index = this.layout.index(level, x, y);
+							let tile = this.tiles.get(index) || { index, x, y, missing, tex: [], level };
+							tile.time = now;
+							tile.priority = needed.level - level;
+							if (tile.missing != 0 && !this.requested[index])
+								tmp.push(tile);
+						}
+					}
+					let c = box.center();
+					//sort tiles by distance to the center TODO: check it's correct!
+					tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
+					this.queue = this.queue.concat(tmp);
+				}*/
 		Cache.setCandidates(this);
 	}
 
@@ -656,7 +778,7 @@ class Layer {
 			throw "AAARRGGHHH double tile!";
 
 		if (this.requested[tile.index])
-			throw "AAARRGGHHH double request!";
+			console.log("Warning: double request!");
 
 		this.tiles.set(tile.index, tile);
 		this.requested[tile.index] = true;
@@ -691,7 +813,7 @@ class Layer {
 			if (callback) callback(tile.size);
 			return;
 		}
-
+		tile.missing = this.shader.samplers.length;
 		for (let sampler of this.shader.samplers) {
 
 			let raster = this.rasters[sampler.id];
@@ -701,7 +823,6 @@ class Layer {
 				this.layout.width = raster.width;
 				this.layout.height = raster.height;
 				console.assert(this.shader.samplers.length > 0, "Shaders should have an assigned sampler before setting the layer as ready");
-				this.layout.initBoxes();
 				this.layout.emit('updateSize');
 			}
 			tile.size += size;
@@ -714,9 +835,9 @@ class Layer {
 			}
 		}
 	}
-
 }
 
 Layer.prototype.types = {}
+addSignals(Layer, 'update', 'ready', 'updateSize');
 
 export { Layer }

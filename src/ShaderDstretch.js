@@ -123,24 +123,23 @@ class ShaderDstretch extends Shader {
 	fragShaderSrc(gl) {
         
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		let str = `${gl2? '#version 300 es' : ''}
+		let str = `
 
 precision highp float; 
 precision highp int; 
 
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
-${gl2? 'out' : ''} vec4 color;
 
 uniform mat4 rotation;
 uniform vec3 min;
 uniform vec3 max;
 uniform sampler2D image;
 
-void main(void) {
+vec4 data() {
     vec3 ret = vec3(127.0, 127.0, 127.0) + (transpose(rotation) * (rotation * 255.0 * (texture(image, v_texcoord) - vec4(0.5, 0.5, 0.5, 0.0)))).xyz;
     ret = (ret - min) / (max - min);
 
-    color = vec4(ret, 1.0);
+    return vec4(ret, 1.0);
 }`;
 		return str;
 	}

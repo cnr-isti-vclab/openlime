@@ -2,14 +2,15 @@ import { Shader } from './Shader.js'
 
 /**
  *  @param {object} options
- *   mode: default is ward, can be [ward, diffuse, specular, normals]
+ *   mode: default is color, can be [color, diffuse, specular, normals]
+ * 	 color implements ward
  */
 
 class ShaderBRDF extends Shader {
 	constructor(options) {
 		super({});
-		this.modes = ['ward', 'diffuse', 'specular', 'normals', 'monochrome'];
-		this.mode = 'ward';
+		this.modes = ['color', 'diffuse', 'specular', 'normals', 'monochrome'];
+		this.mode = 'color';
 
 		Object.assign(this, options);
 		
@@ -20,7 +21,7 @@ class ShaderBRDF extends Shader {
 		const gamma = options.gamma ? options.gamma : 2.2;
 		const alphaLimits = options.alphaLimits ? options.alphaLimits : [0.01, 0.5];
 		const monochromeMaterial = options.monochromeMaterial ? options.monochromeMaterial : [0.80, 0.79, 0.75];
-		const kAmbient = options.kAmbient ? options.kAmbient : 0.1;
+		const kAmbient = options.kAmbient ? options.kAmbient : 0.02;
 
 		this.uniforms = {
 			uLightInfo:          { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
@@ -45,10 +46,10 @@ class ShaderBRDF extends Shader {
 	setMode(mode) {
 		this.mode = mode;
 		switch(mode) {
-			case 'ward':
+			case 'color':
 				this.innerCode = 
 				`vec3 linearColor = (kd + ks * spec) * NdotL;
-				linearColor += kd * 0.02; // HACK! adding just a bit of ambient`
+				linearColor += kd * uKAmbient; // HACK! adding just a bit of ambient`
 			break;
 			case 'diffuse':
 				this.innerCode = 
@@ -64,11 +65,8 @@ class ShaderBRDF extends Shader {
 				applyGamma = false;`
 			break;
 			case 'monochrome':
-                this.innerCode = 
-                `vec3 linearColor = uMonochromeMaterial * NdotL;
-                linearColor += uMonochromeMaterial * uKAmbient;
-                applyGamma=false;`
-            break;
+                this.innerCode = 'vec3 linearColor = kd * NdotL + kd * uKAmbient;'
+			break;
 			default:
 				console.log("ShaderBRDF: Unknown mode: " + mode);
 				throw Error("ShaderBRDF: Unknown mode: " + mode);
@@ -79,9 +77,10 @@ class ShaderBRDF extends Shader {
 
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		let hasGloss = this.samplers.findIndex( s => s.name == 'uTexGloss') != -1;
+		let hasKd = this.samplers.findIndex( s => s.name == 'uTexKd') != -1 && this.mode != 'monochrome';
+		let hasGloss = this.samplers.findIndex( s => s.name == 'uTexGloss') != -1 && this.mode != 'monochrome';
 		let hasKs = this.samplers.findIndex( s => s.name == 'uTexKs') != -1;	
-		let str = `${gl2? '#version 300 es' : ''}
+		let str = `
 precision highp float; 
 precision highp int; 
 
@@ -104,8 +103,6 @@ uniform float uKAmbient;
 
 uniform int uInputColorSpaceKd; // 0: Linear; 1: sRGB
 uniform int uInputColorSpaceKs; // 0: Linear; 1: sRGB
-
-${gl2? 'out' : ''}  vec4 color;
 
 vec3 getNormal(const in vec2 texCoord) {
 	vec3 n = texture(uTexNormals, texCoord).xyz;
@@ -152,11 +149,10 @@ float ward(in vec3 V, in vec3 L, in vec3 N, in vec3 X, in vec3 Y, in float alpha
 }
 
 
-void main() {
+vec4 data() {
 	vec3 N = getNormal(v_texcoord);
 	if(N == NULL_NORMAL) {
-		color = vec4(0.0);
-		return;
+		return vec4(0.0);
 	}
 
 	vec3 L = (uLightInfo.w == 0.0) ? normalize(uLightInfo.xyz) : normalize(uLightInfo.xyz - gl_FragCoord.xyz);
@@ -164,7 +160,7 @@ void main() {
     vec3 H = normalize(L + V);
 	float NdotL = max(dot(N,L),0.0);
 
-	vec3 kd = texture(uTexKd, v_texcoord).xyz;
+	vec3 kd = ${hasKd ? 'texture(uTexKd, v_texcoord).xyz' : 'uMonochromeMaterial'};
 	vec3 ks = ${hasKs ? 'texture(uTexKs, v_texcoord).xyz' : 'vec3(0.0, 0.0, 0.0)'};
 	if(uInputColorSpaceKd == 1) {
 		kd = sRGB2Linear(kd);
@@ -191,8 +187,7 @@ void main() {
 	${this.innerCode}
 
 	vec3 finalColor = applyGamma ? pow(linearColor * uBrightnessGamma[0], vec3(1.0/uBrightnessGamma[1])) : linearColor;
-	color = vec4(finalColor, 1.0);
-	${gl2?'':'gl_FragColor = color;'}
+	return vec4(finalColor, 1.0);
 }
 `;
 	return str;

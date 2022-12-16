@@ -38,8 +38,7 @@ class ShaderCombiner extends Shader {
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let operation = this.operations[this.mode];
-		return `${gl2? '#version 300 es' : ''}
-
+		return `
 precision highp float; 
 precision highp int; 
 
@@ -48,13 +47,12 @@ ${gl2? 'in' : 'varying'} vec2 v_texcoord;
 uniform sampler2D source1;
 uniform sampler2D source2;
 
-${gl2? 'out' : ''} vec4 color;
-
-void main() {
+vec4 data() {
 	vec4 c1 = texture(source1, v_texcoord);
 	vec4 c2 = texture(source2, v_texcoord);
+	vec4 color;
 	${operation};
-	${gl2?'':'gl_FragColor = color;'}
+	return color;
 }
 `;
 	}

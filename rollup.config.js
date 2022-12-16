@@ -12,14 +12,23 @@ function header() {
 }
 
 const core = [
+	'./src/Util.js',
 	'./src/Canvas.js', 
 	'./src/Camera.js',
 	'./src/Transform.js',
+	'./src/Colormap.js',
 	'./src/Layer.js',
 	'./src/LayerImage.js',
 	'./src/LayerCombiner.js',
+	'./src/LayerAnnotationImage.js',
+	'./src/LayerMaskedImage.js',
+	'./src/Tile.js',
 	'./src/Layout.js',
+	'./src/LayoutTiles.js',
+	'./src/LayoutTileImages.js',
 	'./src/Raster.js',
+	'./src/ShaderFilter.js',
+	'./src/ShaderFilterColormap.js',
 	'./src/Shader.js',
 	'./src/ShaderCombiner.js',
 	'./src/Controller.js',
@@ -27,11 +36,16 @@ const core = [
 	'./src/ControllerPanZoom.js',
 	'./src/PointerManager.js',
 	'./src/Viewer.js',
+	'./src/CoordinateSystem.js',
+	'./src/BoundingBox.js',
 ];
 
 const ui = [
 	'./src/Skin.js',
-	'./src/UIBasic.js'
+	'./src/UIBasic.js',
+	'./src/Ruler.js',
+	'./src/ScaleBar.js'
+
 ];
 
 const lens = [
@@ -39,14 +53,19 @@ const lens = [
 	'./src/ControllerLens.js',
 	'./src/FocusContext.js',
 	'./src/ControllerFocusContext.js',
+	'./src/LensDashboard.js',
+	'./src/LensDashboardNavigator.js',
+	'./src/LensDashboardNavigatorRadial.js',
 ];
 
 const rti = [
-	'./src/LayerRTI.js'
+	'./src/LayerRTI.js',
+	'./src/ShaderRTI.js'
 ];
 
 const brdf = [
-	'./src/LayerBRDF.js'
+	'./src/LayerBRDF.js',
+	'./src/ShaderBRDF.js'
 ];
 
 const annotation = [

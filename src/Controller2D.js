@@ -129,7 +129,8 @@ class Controller2D extends Controller {
 			return;
 		if(this.relative)
 			return;
-		this.update(e);
+			
+		this.callback(...this.rangeCoords(e));
 		e.preventDefault();
 	}
 

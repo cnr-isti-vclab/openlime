@@ -71,9 +71,12 @@ class BoundingBox {
      * @param {BoundingBox} box The bounding box to be merged. 
      */
     mergeBox(box) {
-		if (box == null) {
+		if (box == null)
             return;
-        } else {
+
+        if(this.isEmpty())
+            Object.assign(this, box);
+        else {
             this.xLow = Math.min(this.xLow,  box.xLow);
             this.yLow = Math.min(this.yLow,  box.yLow);
             this.xHigh = Math.max(this.xHigh, box.xHigh);
@@ -147,9 +150,12 @@ class BoundingBox {
     corner(i) {
         // To avoid the switch
         let v = this.toArray();
-        return [ v[0 + (i&0x1)<<1],  v[1 + (i&0x2)] ];
+        return {x: v[0 + (i&0x1)<<1], y: v[1 + (i&0x2)] };
     }
 
+    intersects(box) {
+        return xLow <= box.xHigh && xHigh >= box.xLow && yLow <= box.yHigh && yHigh >= box.yLow;
+    }
     /**
      * Prints out the bounding box corners in the console.
      */

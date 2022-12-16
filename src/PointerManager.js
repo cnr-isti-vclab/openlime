@@ -53,6 +53,10 @@ class PointerManager {
         if (options)
             Object.assign(this, options);
 
+        this.idleTimeout = null;
+        this.idleTime = 60; //in seconds
+        this.idling = false;
+
         this.currentPointers = [];
         this.eventObservers = new Map();
         this.ppmm = PointerManager.getPPMM(this.diagonal);
@@ -124,7 +128,7 @@ class PointerManager {
 
     /* Registers the callbacks */
     onEvent(handler) {
-        const cb_properties = ['fingerHover', 'fingerSingleTap', 'fingerDoubleTap', 'fingerHold', 'mouseWheel'];
+        const cb_properties = ['fingerHover', 'fingerSingleTap', 'fingerDoubleTap', 'fingerHold', 'mouseWheel', 'wentIdle', 'activeAgain'];
         if (!handler.hasOwnProperty('priority'))
             throw new Error("Event handler has not priority property");
 
@@ -191,7 +195,7 @@ class PointerManager {
             //TODO maybe we should sort by distance instead.
             fingerDownEvents.sort((a, b) => b.timeStamp - a.timeStamp);
             for (let e2 of fingerDownEvents) {
-                if (e1.timeStamp - e2.timeStamp > this.pinchInterval) break; 
+                if (e1.timeStamp - e2.timeStamp > this.pinchMaxInterval) break; 
 
                 handler.pinchStart(e1, e2);
                 if (!e1.defaultPrevented) break;
@@ -288,6 +292,21 @@ class PointerManager {
     }
 
     handleEvent(e) {
+        //IDLING MANAGEMENT
+        if(this.idling) {
+            this.broadcast({ fingerType: 'activeAgain' });
+            this.idling = false;
+
+        } else {
+            if(this.idleTimeout)
+                clearTimeout(this.idleTimeout);
+
+            this.idleTimeout = setTimeout(() => {
+                this.broadcast({ fingerType: 'wentIdle'});
+                this.idling = true;
+            }, this.idleTime*1000);
+        }
+
         if (e.type == 'pointerdown') this.target.setPointerCapture(e.pointerId);
         if (e.type == 'pointercancel') console.log(e);
 
