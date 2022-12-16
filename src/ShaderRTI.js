@@ -1,6 +1,18 @@
 import { Shader } from './Shader.js'
 
 /**
+ * Extends {@link Shader}, initialized with a relight .json (see:
+ * [relight on github]{@link https://github.com/cnr-isti-vclab/relight} for details).
+ * 
+ * Supported modes are
+ * light: relightable images depending on light direction
+ * normals: shows a normal map
+ * diffuse: remove albedo and display only the geometry with a white material.
+ * specular: specular enhancement
+ * 
+ * From the .json configuration the type of basis used: ('ptm', 'hsh', rbf', 'bln'), 
+ * and the colorspace ('lrgb', 'rgb', 'mrgb', 'mycc') along with all the other parameters.
+ * 
  *  @param {object} options
  * *compose*: compose operation: add, subtract, multiply, etc.
  */
@@ -37,6 +49,11 @@ class ShaderRTI extends Shader {
 		this.setMode('light');
 	}
 
+	/*
+ * Set current rendering mode
+ * @param {string} mode one of 'light', 'normals', 'diffuse', 'specular'
+ * @param {number} dt in ms, interpolation duration.
+ */
 	setMode(mode) {
 		if(!(this.modes.includes(mode)))
 			throw Error("Unknown mode: " + mode);
@@ -89,11 +106,9 @@ class ShaderRTI extends Shader {
 
 		for(let i = 0; i < this.njpegs; i++)
 			this.samplers.push({ id:i, name:'plane'+i, type:'vec3' });
+		
 		if(this.normals)
-			this.samplers.push({id:this.njpegs, name:'normals', type:'vec3' });
-
-		if(this.normals)
-			this.samplers.push({ id:this.njpegs, name:'normals', type:'vec3'});
+			this.samplers.push({ id:this.njpegs, name:'normals', type:'vec3' });
 
 		this.material = this.materials[0];
 
@@ -111,7 +126,6 @@ class ShaderRTI extends Shader {
 
 		this.scale = this.material.scale;
 		this.bias = this.material.bias;
-
 
 		if(['mrgb', 'mycc'].includes(this.colorspace))
 			this.loadBasis(this.basis);
@@ -172,7 +186,7 @@ class ShaderRTI extends Shader {
 		
 		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		let str = `${gl2? '#version 300 es' : ''}
+		let str = `
 
 precision highp float; 
 precision highp int; 
@@ -180,7 +194,6 @@ precision highp int;
 #define np1 ${this.nplanes + 1}
 
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
-${gl2? 'out' : ''} vec4 color;
 
 const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
 	-8.1650e-01, 4.7140e-01,  4.7140e-01,
@@ -215,19 +228,20 @@ const int ny1 = ${this.yccplanes[1]};
 `
 
 		switch(this.colorspace) {
-			case 'rgb':  str +=  RGB.render(this.njpegs, gl2); break;
-			case 'mrgb': str += MRGB.render(this.njpegs, gl2); break;
-			case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0], gl2); break;
+			case 'lrgb':  str += LRGB.render(this.njpegs, gl2); break;
+			case 'rgb' :  str +=  RGB.render(this.njpegs, gl2); break;
+			case 'mrgb':  str += MRGB.render(this.njpegs, gl2); break;
+			case 'mycc':  str += MYCC.render(this.njpegs, this.yccplanes[0], gl2); break;
 		}
 
 		str += `
 
-void main(void) {
+vec4 data() {
 
 `;
 		if(this.mode == 'light') {
 			str += `
-	color = render(base);
+	vec4 color = render(base);
 `;
 		} else  {
 			if(this.normals)
@@ -265,13 +279,38 @@ void main(void) {
 			}
 		}
 
-		str += `
-	${gl2?'':'gl_FragColor = color;'}
+		str += `return color;
 }`;
 		return str;
 	}
 }
 
+
+class LRGB {
+	static render(njpegs, gl2) {
+		let str = `
+vec4 render(vec3 base[np1]) {
+	float l = 0.0;
+`
+		for(let j = 1, k = 0; j < njpegs; j++, k+=3) {
+			str += `
+	{
+		vec4 c = texture${gl2?'':'2D'}(plane${j}, v_texcoord);
+		l += base[${k}].x*(c.x - bias[${j}].x)*scale[${j}].x;
+		l += base[${k+1}].x*(c.y - bias[${j}].y)*scale[${j}].y;
+		l += base[${k+2}].x*(c.z - bias[${j}].z)*scale[${j}].z;
+	}
+`;
+		}
+		str += `
+	vec3 basecolor = (texture${gl2?'':'2D'}(plane0, v_texcoord).xyz - bias[0])*scale[0];
+
+	return l*vec4(basecolor, 1);
+}
+`;
+		return str;
+	}
+}
 
 
 class RGB {
@@ -392,6 +431,7 @@ class PTM {
 /* HSH utility functions 
  */
 class HSH {
+	static minElevation = 0.15;
 	/* @param {Array} v expects light direction as [x, y, z]
 	*/
 	static lightWeights(v) {
@@ -399,7 +439,7 @@ class HSH {
 		let phi = Math.atan2(v[1], v[0]);
 		if (phi < 0)
 			phi = 2 * PI + phi;
-		let theta = Math.min(Math.acos(v[2]), PI / 2 - 0.1);
+		let theta = Math.min(Math.acos(v[2]), PI / 2 - this.minElevation);
 
 		let cosP = Math.cos(phi);
 		let cosT = Math.cos(theta);
@@ -560,5 +600,5 @@ class BLN {
 }
 
 
-export { ShaderRTI }
+export { ShaderRTI, HSH }
 

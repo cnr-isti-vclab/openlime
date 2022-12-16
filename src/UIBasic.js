@@ -1,6 +1,10 @@
-import { Skin } from './Skin.js'
-import { Controller2D } from './Controller2D.js'
-import { ControllerPanZoom } from './ControllerPanZoom.js'
+import { Skin } from './Skin'
+import { Util } from './Util'
+import { Controller2D } from './Controller2D'
+import { ControllerPanZoom } from './ControllerPanZoom'
+import { Ruler } from "./Ruler"
+import { ScaleBar } from './ScaleBar'
+import { addSignals }  from './Signals'
 
 /**
  * An Action describes the behaviour of a tool button.
@@ -109,16 +113,17 @@ class UIBasic {
 				zoomout: { title: 'Zoom out', display: false, key: '-', task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
 				rotate: { title: 'Rotate', display: false, key: 'r', task: (event) => { camera.rotate(250, -45); } },
 				light: { title: 'Light', display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
-				ruler: { title: 'Ruler', display: false, task: (event) => { this.startRuler(); } },
+				ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 			},
-			scale: null,
+			pixelSize: null,
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
 			lightcontroller: null,
 			showLightDirections: false,
 			enableTooltip: true,
+			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
 			menu: []
 		});
 		
@@ -128,8 +133,11 @@ class UIBasic {
 
 		this.panzoom = new ControllerPanZoom(this.viewer.camera, {
 			priority: -1000,
-			activeModifiers: [0, 1]
+			activeModifiers: [0, 1],
+			controlZoom: this.controlZoomMessage != null
 		});
+		if(this.controlZoomMessage)
+			this.panzoom.addEvent('nowheel', () => { this.showOverlayMessage(this.controlZoomMessage); });
 		this.viewer.pointerManager.onEvent(this.panzoom); //register wheel, doubleclick, pan and pinch
 		// this.viewer.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
 
@@ -149,7 +157,7 @@ class UIBasic {
 					button: m,
 					mode: m,
 					layer: id,
-					onclick: () => { layer.setMode(m); this.updateMenu(); },
+					onclick: () => { layer.setMode(m); },
 					status: () => layer.getMode() == m ? 'active' : '',
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
@@ -173,11 +181,13 @@ class UIBasic {
 			this.menu.push(layerEntry);
 		}
 
-		let controller = new Controller2D((x, y) => {
-			for (let layer of lightLayers)
-				layer.setLight([x, y], 0);
-			if(this.showLightDirections)
-				this.updateLightDirections(x, y);
+		let controller = new Controller2D(
+			(x, y) => {
+				for (let layer of lightLayers)
+					layer.setLight([x, y], 0);
+				if(this.showLightDirections)
+					this.updateLightDirections(x, y);
+				this.emit('lightdirection', [x, y, Math.sqrt(1 - x*x + y*y)]);
 			}, { 
 				// TODO: IS THIS OK? It was false before
 				active: false, 
@@ -212,6 +222,29 @@ class UIBasic {
 
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
+	}
+
+	showOverlayMessage(msg, duration = 2000) {
+		if(this.overlayMessage) {
+			clearTimeout(this.overlayMessage.timeout);
+			this.overlayMessage.timeout = setTimeout(() => this.destroyOverlayMessage(), duration);
+			return;
+		}
+		
+		
+		let background = document.createElement('div');
+		background.classList.add('openlime-overlaymsg');
+		background.innerHTML = `<p>${msg}</p>`;
+		this.viewer.containerElement.appendChild(background);
+
+		this.overlayMessage = {
+			background,
+			timeout: setTimeout(() => this.destroyOverlayMessage(), duration)
+		}
+	}
+	destroyOverlayMessage() {
+		this.overlayMessage.background.remove();
+		this.overlayMessage = null;
 	}
 
 	/** @ignore */
@@ -266,6 +299,7 @@ class UIBasic {
 
 			this.createMenu();
 			this.updateMenu();
+			this.viewer.canvas.addEvent('update', () => this.updateMenu());
 
 			if (this.actions.light && this.actions.light.display === 'auto')
 				this.actions.light.display = true;
@@ -279,7 +313,9 @@ class UIBasic {
 			*/
 
 			this.setupActions();
-			this.setupScale();
+			if(this.pixelSize) 
+				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+
 			if(this.attribution) {
 				var p = document.createElement('p');
 				p.classList.add('openlime-attribution');
@@ -289,13 +325,15 @@ class UIBasic {
 
 			
 
-			for (let l of Object.values(this.viewer.canvas.layers)) {
+			for(let l of Object.values(this.viewer.canvas.layers)) {
 				this.setLayer(l);
 				break;
 			}
 
-			if (this.actions.light.active == true) //FIXME light control activated only after first use
+			if(this.actions.light && this.actions.light.active)
 				this.toggleLightController();
+			if(this.actions.layers && this.actions.layers.active)
+				this.toggleLayers();
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
@@ -337,7 +375,20 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
-				action.element = await Skin.appendIcon(toolbar, '.openlime-' + name);
+				if('icon' in action) {
+					if(typeof action.icon == 'string') {
+						if(Util.isSVGString(action.icon)) {
+							action.icon = Util.SVGFromString(action.icon);
+						} else {
+							action.icon = await Util.loadSVG(action.icon);
+						}
+						action.icon.classList.add('openlime-button');
+					}
+				} else {
+					action.icon = '.openlime-' + name;
+				}
+
+				action.element = await Skin.appendIcon(toolbar, action.icon);
 				if (this.enableTooltip) {
 					let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
 					title.textContent = action.title;
@@ -408,81 +459,11 @@ class UIBasic {
 		}
 	}
 
-	//find best length for scale from min -> max
-	//zoom 2 means a pixel in image is now 2 pixel on screen, scale is
-	/** @ignore */
-	bestScaleLength(min, max, scale, zoom) {
-		scale /= zoom;
-		//closest power of 10:
-		let label10 = Math.pow(10, Math.floor(Math.log(max * scale) / Math.log(10)));
-		let length10 = label10 / scale;
-		if (length10 > min) return { length: length10, label: label10 };
-
-		let label20 = label10 * 2;
-		let length20 = length10 * 2;
-		if (length20 > min) return { length: length20, label: label20 };
-
-		let label50 = label10 * 5;
-		let length50 = length10 * 5;
-
-		if (length50 > min) return { length: length50, label: label50 };
-		return { length: 0, label: 0 }
-	}
-
-	/** @ignore */
-	updateScale(line, text) {
-		//let zoom = this.viewer.camera.getCurrentTransform(performance.now()).z;
-		let zoom = this.viewer.camera.target.z;
-		if (zoom == this.lastScaleZoom)
-			return;
-		this.lastScaleZoom = zoom;
-		let s = this.bestScaleLength(100, 200, this.scale, zoom);
-		//let line = document.querySelector('.openlime-scale > line');
-		let margin = 200 - 10 - s.length;
-		line.setAttribute('x1', margin / 2);
-		line.setAttribute('x2', 200 - margin / 2);
-		//let text = document.querySelector('.openlime-scale > text');
-		text.textContent = s.label + "mm";
-
-
-	}
-
-	//scale is length of a pixel in mm
-	/** @ignore */
-	setupScale() {
-		if (!this.scale) return;
-		this.scales = { 'mm': 1, 'cm': 10, 'm': 1000, 'km': 1000000 };
-
-
-		let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		svg.setAttribute('viewBox', `0 0 200 40`);
-		svg.classList.add('openlime-scale');
-		let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-		line.setAttribute('x1', 5);
-		line.setAttribute('y1', 26.5);
-		line.setAttribute('x2', 195);
-		line.setAttribute('y2', 26.5);
-		let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-		text.setAttribute('x', '50%');
-		text.setAttribute('y', '16px');
-		text.setAttribute('dominant-baseline', 'middle');
-		text.setAttribute('text-anchor', 'middle');
-		text.textContent = "10mm";
-		//var label = document.createTextNode("10mm");
-		//text.appendChild(label);
-
-
-		svg.appendChild(line);
-		svg.appendChild(text);
-		this.viewer.containerElement.appendChild(svg);
-		this.viewer.camera.addEvent('update', () => { this.updateScale(line, text); });
-	}
-
 	//we need the concept of active layer! so we an turn on and off light.
 	/** @ignore */
-	toggleLightController() {
+	toggleLightController(on) {
 		let div = this.viewer.containerElement;
-		let active = div.classList.toggle('openlime-light-active');
+		let active = div.classList.toggle('openlime-light-active', on);
 		this.lightActive = active;
 
 		for (let layer of Object.values(this.viewer.canvas.layers))
@@ -514,11 +495,16 @@ class UIBasic {
 	}
 
 	/** @ignore */
-	startRuler() {
-	}
-
-	/** @ignore */
-	endRuler() {
+	toggleRuler() {
+		if(!this.ruler) {
+			this.ruler = new Ruler(this.viewer, this.pixelSize);
+			this.viewer.pointerManager.onEvent(this.ruler);
+		}
+		
+		if(!this.ruler.enabled)
+			this.ruler.start();
+		else
+			this.ruler.end();
 	}
 
 	/** @ignore */
@@ -694,27 +680,11 @@ class UIDialog { //FIXME standalone class
 			content: null,
 			container: container,
 			modal: false,
-			signals: { 'closed': [] },
 			class: null,
 			visible: false,
 			backdropEvents: true
 		}, options);
 		this.create();
-	}
-
-	/**
- 	 * Adds a 'closed' event callback.
- 	 * @param {string} event A label to identify the event.
- 	 * @param {Function} callback The event callback function.
- 	 */
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
-	
-	/** @ignore */
-	emit(event, ...parameters) {
-		for (let r of this.signals[event])
-			r(...parameters);
 	}
 
 	/** @ignore */
@@ -807,5 +777,8 @@ class UIDialog { //FIXME standalone class
 		this.visible = !this.visible; //FIXME not in sync with 'force'
 	}
 }
+
+addSignals(UIDialog, 'closed');
+addSignals(UIBasic, 'lightdirection');
 
 export { UIBasic, UIDialog }

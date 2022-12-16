@@ -31,7 +31,7 @@
                 // The fragment shader script. A float uniform for color factor control is defined.
                 shader.fragShaderSrc = function (gl) {
                     let gl2 = !(gl instanceof WebGLRenderingContext);
-                    let str = `${gl2 ? '#version 300 es' : ''}
+                    let str = `
                     precision highp float;
                     precision highp int;
 
@@ -39,14 +39,12 @@
                     uniform float u_colorFactor;
 
                     ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
-                    ${gl2 ? 'out' : ''} vec4 color;
 
-                    void main() {
+                    vec4 data() {
 	                    vec4 s = texture${gl2 ? '' : '2D'}(kd, v_texcoord);
                         vec3 lum = vec3(0.21, 0.71, 0.07); 
                         float grey = dot(s.rgb, lum.rgb);
-                        color = vec4(s.rgb * (1.0 - u_colorFactor) + (grey * u_colorFactor), 1.0);
-	                    ${gl2 ? '' : 'gl_FragColor = color;'}
+                        return vec4(s.rgb * (1.0 - u_colorFactor) + (grey * u_colorFactor), 1.0);
                     }`;
                     return str;
                 }

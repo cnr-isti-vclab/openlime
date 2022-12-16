@@ -30,3 +30,27 @@
 .openlime-attribution {
     color:black;
 }
+
+/* SCALE */
+
+.openlime-scale {
+	fill: black;
+}
+
+.openlime-scale>text {
+	color: black;
+}
+
+.openlime-scale>line {
+	stroke: black;
+}
+
+/* RULER */
+
+.openlime-ruler path, .openlime-ruler line {
+	stroke:rgb(19, 73, 80);
+}
+
+.openlime-ruler text {
+	fill: rgb(19, 73, 80);
+} 

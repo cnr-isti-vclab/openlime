@@ -97,21 +97,22 @@
         // Create an image layer and add it to the canvans
         const layer = new OpenLIME.Layer({
             type: 'image',
-            layout: 'deepzoom1px',
-            url: 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi',
+            layout: 'deepzoom',
+            //url: 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi',
+            url: '../../assets/test/test.dzi'
         });
         lime.addLayer('Base', layer);
 
         // Define annotation parameters
         let annotationServer = 'http://localhost:3000/ol';
         const classParam = {
-            '': { stroke: '#000', label: '' },
-            'class1': { stroke: '#770', label: 'A' },
-            'class2': { stroke: '#707', label: 'B' },
-            'class3': { stroke: '#777', label: 'C' },
-            'class4': { stroke: '#070', label: 'D' },
-            'class5': { stroke: '#007', label: 'E' },
-            'class6': { stroke: '#077', label: 'F' },
+            '': { style: { stroke: '#000' }, label: '' },
+            'class1': { style: { stroke: '#770' }, label: 'A' },
+            'class2': { style: { stroke: '#707' }, label: 'B' },
+            'class3': { style: { stroke: '#777' }, label: 'C' },
+            'class4': { style: { stroke: '#070' }, label: 'D' },
+            'class5': { style: { stroke: '#007' }, label: 'E' },
+            'class6': { style: { stroke: '#077' }, label: 'F' },
         };
 
         let aOptions = {

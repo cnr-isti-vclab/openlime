@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Lens Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+    <style>
+        .openlime {
+            overflow: hidden; /* clip elements outside .openlime */
+        }
+    </style>
+</head>
+
+<body>
+    <h1>OpenLIME - Lens Viewer</h1>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+    <script>
+
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+        // The visualization is unbounded (the camera is )
+        lime.camera.bounded = false;
+
+        // BASE LAYER
+        let baseLayerTransform = new OpenLIME.Transform({x:0, y:0, z:1});
+        const options = {
+            channels: {
+                'kd': '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
+                'ks': '../../assets/lighthouse/deepzoom/lighthouse-ksmap.dzi',
+                'normals': '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
+                'gloss': '../../assets/lighthouse/deepzoom/lighthouse-glmap.dzi'
+            },
+            colorspaces: {
+                'kd': 'linear',
+                'ks': 'linear'
+            },
+            layout: 'deepzoom',
+            alphaLimits: [0.05, 0.6], //Only used for gloss
+            brightness: 3.14,
+            gamma: 1.0, //FIXME to change
+            transform: baseLayerTransform
+        };
+
+        const layer = new OpenLIME.LayerBRDF(options);
+        layer.setMode('color');
+        lime.addLayer('Color', layer);
+
+        // SECOND LAYER
+        const layerIn = new OpenLIME.LayerBRDF({ ...options, visible: false, layerSource: layer });
+        layerIn.setMode('normals');
+        lime.addLayer('MuralIn', layerIn);
+
+        // LENS LAYER
+
+        const lensDashboard = new OpenLIME.LensDashboardNavigatorRadial(lime, {
+            borderColor: [0, 0.7, 0, 1],
+            borderWidth: 15
+        });
+        //const lensDashboard = new OpenLIME.LensDashboardNavigator(lime, {});
+
+        //const lensDashboard = new OpenLIME.LensDashboard(lime, {});
+    
+        // Create a lens layer and add it to the canvans.
+        // The field displayed inside the lens is layer1 (normal map)
+        const lensLayer = new OpenLIME.Layer({
+            type: "lens",
+            layers: [layerIn],
+            camera: lime.camera,
+            radius: 350,
+            borderWidth: 12,
+            borderColor: [0.7, 0, 0, 1],
+            borderEnable: false,
+            dashboard: lensDashboard,
+            visible: true,
+        });
+        lime.addLayer('lens', lensLayer);
+        
+        // Create a lens controller for focus and context exploration.
+        const controllerLens = new OpenLIME.ControllerFocusContext({
+            lensLayer: lensLayer,
+            camera: lime.camera,
+            canvas: lime.canvas,
+            enableDirectContextControl: true
+        });
+        lime.pointerManager.onEvent(controllerLens);
+        lensLayer.controllers.push(controllerLens);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+        const { help, home, fullscreen, layers, light } = ui.actions;
+
+        // Add action (lens enable/disable pressing 'i')
+        const lenstoggle = {
+	            title: 'Show/hide Lenss', key: 'i', display: false, task: (event) => {
+		        lensToggle(event);
+	        }
+        };
+
+        ui.actions = { lenstoggle, layers, light };
+
+        ui.attribution = `Cape Spartivento Lighthouse, oil on canvas, 14x18 cm, 2004 - by Fabio Marton`;
+
+        //////////////////
+        function lensToggle(e) {
+	        lensLayer.setVisible(!lensLayer.visible);
+        }
+
+    </script>
+</body>
+
+</html>

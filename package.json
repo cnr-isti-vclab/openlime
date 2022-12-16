@@ -24,7 +24,7 @@
     "copy-webpack-plugin": "^10.2.4",
     "html-webpack-plugin": "^5.5.0",
     "ink-docstrap-template": "^1.3.2",
-    "jsdoc": "^3.6.10",
+    "jsdoc": "^3.6.11",
     "nodemon": "^2.0.15",
     "rollup": "^2.52.3",
     "rollup-plugin-terser": "^7.0.2",

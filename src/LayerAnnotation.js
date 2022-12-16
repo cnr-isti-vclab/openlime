@@ -1,5 +1,6 @@
 import { Annotation } from './Annotation.js';
 import { Layer } from './Layer.js'
+import { addSignals } from './Signals.js';
 
 /**
  * An annotation layer is a layer used to display decorations (text, graphics elements, glyphs, etc...) on top of other layers.
@@ -28,9 +29,6 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 		}, options);
 		super(options);
 
-		this.signals.selected = [];
-		this.signals.loaded = [];
-
 		if (typeof (this.annotations) == "string") { //assumes it is an URL
 			(async () => { await this.loadAnnotations(this.annotations); })();
 		}
@@ -38,7 +36,13 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 
 	/** @ignore */
 	async loadAnnotations(url) {
-		var response = await fetch(url);
+		const headers = new Headers();
+		headers.append('pragma', 'no-cache');
+		headers.append('cache-control', 'no-cache');
+		var response = await fetch(url, {
+			method: 'GET',
+			headers: headers,
+	  	});
 		if(!response.ok) {
 			this.status = "Failed loading " + this.url + ": " + response.statusText;
 			return;
@@ -63,7 +67,7 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	}
 
 	/** @ignore */
-	newAnnotation(annotation, selected = true) {
+	newAnnotation(annotation) {
 		if(!annotation)
 			annotation = new Annotation();
 
@@ -76,8 +80,7 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 		list.appendChild(template.content.firstChild);
 		
 		this.clearSelected();
-		this.setSelected(annotation);
-
+		//this.setSelected(annotation);
 		return annotation;
 	}
 
@@ -166,4 +169,5 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	}
 }
 
+addSignals(LayerAnnotation, 'selected', 'loaded');
 export { LayerAnnotation }

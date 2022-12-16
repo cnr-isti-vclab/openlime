@@ -104,8 +104,8 @@ class Transform { //FIXME Add translation to P?
 	 */
 	static rotate(x, y, a) {
 		a = Math.PI*(a/180);
-		let ex =  Math.cos(a)*x + Math.sin(a)*y;
-		let ey = -Math.sin(a)*x + Math.cos(a)*y;
+		let ex =  Math.cos(a)*x - Math.sin(a)*y;
+		let ey =  Math.sin(a)*x + Math.cos(a)*y;
 		return {x:ex, y:ey};
 	}
 
@@ -135,7 +135,7 @@ class Transform { //FIXME Add translation to P?
 		let box = new BoundingBox();
 		for(let i = 0; i < 4; i++) {
 			let c = lbox.corner(i);
-			let p = this.apply(c[0], c[1]);
+			let p = this.apply(c.x, c.y);
 			box.mergePoint(p);
 		}
 		return box;
@@ -215,7 +215,7 @@ class Transform { //FIXME Add translation to P?
 		let zy = 2/viewport.dy;
 
 		let dx =  zx * this.x + (2/viewport.dx)*(viewport.w/2-viewport.x)-1;
-		let dy = -zy * this.y + (2/viewport.dy)*(viewport.h/2-viewport.y)-1;
+		let dy =  zy * this.y + (2/viewport.dy)*(viewport.h/2-viewport.y)-1;
 
 		let a = Math.PI *this.a/180;
 		let matrix = [
@@ -248,6 +248,11 @@ class Transform { //FIXME Add translation to P?
         return [(p[0] + viewport.x - viewport.w/2 - this.x) / this.z,
                 (p[1] - viewport.y - viewport.h/2 + this.y) / this.z];
     }
+
+	print(str="", precision=0) {
+    	const p = precision;
+    	console.log(str + " x:" + this.x.toFixed(p) + ", y:" + this.y.toFixed(p) + ", z:" + this.z.toFixed(p) + ", a:" + this.a.toFixed(p) + ", t:" + this.t.toFixed(p));
+	}
 }
 
 export { Transform }

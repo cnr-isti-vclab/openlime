@@ -1,5 +1,6 @@
 import { Transform } from './Transform.js'
 import { BoundingBox } from './BoundingBox.js'
+import { addSignals } from './Signals.js' 
 
 /**
  * The type Viewport defines a rectangular viewing region inside a (wxh) area
@@ -24,6 +25,8 @@ import { BoundingBox } from './BoundingBox.js'
  * 
  * User-generated device events (such as touch events or mouse events) can modify camera parameters via an appropriate {@link Controller}.
  */
+
+ 
 class Camera {
 	/**
 	 * Creates a scene's camera. An update event is issued when the camera has completed its positioning.
@@ -42,7 +45,6 @@ class Camera {
 			maxZoom: 2,
 			minZoom: 1,
 			boundingBox: new BoundingBox,
-			signals: { 'update': [] }
 		});
 		Object.assign(this, options);
 		this.target = new Transform(this.target);
@@ -60,19 +62,8 @@ class Camera {
 		return camera;
 	}
 
-	/** @ignore */
-	addEvent(event, callback) {
-		this.signals[event].push(callback);
-	}
-
-	/** @ignore */
-	emit(event) {
-		for (let r of this.signals[event])
-			r(this);
-	}
-
 	/**
-	 * Sets the viewport and updates the camera position as close as possible to the.
+	 * Sets the viewport and updates the camera position as close as possible to the previuos one.
 	 * @param {Viewport} view The new viewport (in CSS coordinates). 
 	 */
 	setViewport(view) {
@@ -120,12 +111,8 @@ class Camera {
 	 */
 	sceneToCanvas(x, y, transform) {
 		let r = Transform.rotate(x, y, transform.a);
-		x = r.x * transform.z;
-		y = r.y * transform.z;
-		x += transform.x;
-		y += transform.y;
-		x += this.viewport / 2;
-		y += this.viewport / 2;
+		x = r.x * transform.z + transform.x - this.viewport.x + this.viewport.w/2;
+		y = r.y * transform.z - transform.y + this.viewport.y + this.viewport.h/2;
 		return { x: x, y: y };
 	}
 
@@ -190,8 +177,8 @@ class Camera {
 	pan(dt, dx, dy) {
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
-		m.dx += dx; //FIXME what is m.dx?
-		m.dy += dy;
+		m.x += dx;
+		m.y += dy;
 		this.setPosition(dt, m.x, m.y, m.z, m.a);
 	}
 
@@ -267,6 +254,7 @@ class Camera {
 	 * @returns {Transform} The current transform
 	 */
 	getCurrentTransform(time) {
+		if(time > this.target.t) this.easing = 'linear';
 		return Transform.interpolate(this.source, this.target, time, this.easing);
 	}
 
@@ -327,5 +315,7 @@ class Camera {
 		this.maxZoom = Math.max(this.minZoom, this.maxZoom);
 	}
 }
+
+addSignals(Camera, 'update');
 
 export { Camera }

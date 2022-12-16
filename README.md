@@ -137,7 +137,7 @@ source code (in `./src`).
 Once created, it is accessible from `./docs/index.html`
 
 ```bash
-npm run documentation
+npm run doc
 ```
 
 ### Customization

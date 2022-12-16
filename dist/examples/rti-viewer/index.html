@@ -30,7 +30,7 @@
         // A RTI layer has many channels. In this example the 4 layers store 
         // channels in 4 different ways: image, deepzoom, tarzoom and itarzoom 
         const layer0 = new OpenLIME.Layer({
-            label: 'coin-image',
+            label: 'coin-image ptm',
             layout: 'image',
             type: 'rti',
             url: '../../assets/rti/ptm/info.json',
@@ -39,7 +39,7 @@
         lime.addLayer('coin0', layer0);
 
         const layer1 = new OpenLIME.Layer({
-            label: 'coin-deepzoom',
+            label: 'coin-deepzoom hsh',
             layout: 'deepzoom',
             type: 'rti',
             url: '../../assets/rti/hsh/info.json',
@@ -48,7 +48,7 @@
         lime.addLayer('coin1', layer1);
 
         const layer2 = new OpenLIME.Layer({
-            label: 'coin-tarzoom',
+            label: 'coin-tarzoom bln',
             layout: 'tarzoom',
             type: 'rti',
             url: '../../assets/rti/bln/info.json',
@@ -57,7 +57,7 @@
         lime.addLayer('coin2', layer2);
 
         const layer3 = new OpenLIME.Layer({
-            label: 'coin-itarzoom',
+            label: 'coin-itarzoom ybln',
             layout: 'itarzoom',
             type: 'rti',
             url: '../../assets/rti/ybln/info.json',
@@ -73,7 +73,59 @@
 
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display = true;
-        ui.actions.zoomout.display = true;       
+        ui.actions.zoomout.display = true;
+        ui.actions.light.active = true;
+        
+		OpenLIME.HSH.minElevation = 0.2;
+
+        class LightSpin {
+            constructor(layer, secondsPerTurn = 20, height = 0.7) {
+                this.layer = layer;
+                this.setHeight(height);
+                this.startTime = Date.now();
+                this.secondsPerTurn = secondsPerTurn;
+                this.spinning = true;
+                this.angle = 0.0;
+                this.startAngle = 0.0;
+            }
+            setHeight(height) {
+                this.w = Math.sqrt(1 + height*height);
+            }
+            update() {
+                let seconds = (Date.now() - this.startTime) / 1000;
+                
+                this.angle = 2*Math.PI*(seconds/this.secondsPerTurn) + this.startAngle;
+
+                let x = Math.cos(this.angle)/this.w;
+                let y = Math.sin(this.angle)/this.w;
+                this.layer.setLight([x, y], 100);
+                if(this.spinning)
+                    requestAnimationFrame(() => this.update());
+            }
+            start() {
+                this.startTime = Date.now();
+                this.spinning = true;
+                this.update();
+            }
+            stop() {
+                this.startTime = Date.now();
+                this.startAngle = this.angle;
+                this.spinning = false;
+            }
+        }
+
+
+        let spinner = new LightSpin(layer0, 20);
+        //spinner.start();
+        lime.pointerManager.idleTime = 60;
+        lime.pointerManager.onEvent( { 
+            priority: 0,
+            wentIdle: () => { spinner.start() }, 
+            activeAgain: () => { spinner.stop()}
+        });
+        
+        //ui.toggleLightController(true);
+ 
     </script>
 </body>
 

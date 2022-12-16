@@ -1,6 +1,8 @@
 import { Skin } from './Skin.js';
+import { Util } from './Util.js';
 import { simplify, smooth, smoothToPath } from './Simplify.js'
-import { createSVGElement, LayerSvgAnnotation } from './LayerSvgAnnotation.js'
+import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
+import { CoordinateSystem } from './CoordinateSystem.js'
 
 /**
  * Callback for create/update/delete annotations.
@@ -93,9 +95,8 @@ class EditorSvgAnnotation {
 				},
 				pin: {
 					template: (x,y) => {
-						const count = this.layer.annotations.length-1;
-						return `<svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='4%' height='4%' 
-						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text id='pin-text' x='7' y='8'>${count}</text></svg>`;
+						return `<svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='4%' height='4%' class='pin'
+						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='7' y='8'>${this.annotation.idx}</text></svg>`;
 					}, //pin di alcazar  1. url a svg 2. txt (stringa con svg) 3. funzione(x,y) ritorna svg 4. dom (da skin).
 					tooltip: 'New pin',
 					tool: Pin
@@ -144,7 +145,7 @@ class EditorSvgAnnotation {
 			deleteCallback: null
 		}, options);
 
-		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`).join('\n');
+		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].style.stroke}; }`).join('\n');
 		//at the moment is not really possible to unregister the events registered here.
 		viewer.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
@@ -191,22 +192,20 @@ class EditorSvgAnnotation {
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
 		if(this.customData) this.customData(anno);
-		if(this.enableState) this.setAnnotationCurrentState();
+		if(this.enableState) this.setAnnotationCurrentState(anno);
+		anno.idx = this.layer.annotations.length;
 		anno.publish = 1;
 		anno.label = anno.description = anno.class = '';
 		let post = {
-			id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null,
+			id: anno.id, idx: anno.idx, label: anno.label, description: anno.description, 'class': anno.class, svg: null,
 			publish: anno.publish, data: anno.data
 		};
 		if (this.enableState) post = { ...post, state: anno.state };
-		// if (anno.light) post = { ...post, light: anno.light }; FIXME
-		// if (anno.lens) post = { ...post, lens: anno.lens };
 		if (this.createCallback) {
 			let result = this.createCallback(post);
 			if (!result)
 				alert("Failed to create annotation!");
 		}
-		this.showEditWidget(anno);
 		this.layer.setSelected(anno);
 	}
 
@@ -231,7 +230,7 @@ class EditorSvgAnnotation {
 			anno.class = '';
 		edit.querySelector('[name=label]').value = anno.label || '';
 		edit.querySelector('[name=description]').value = anno.description || '';
-
+		edit.querySelector('[name=idx]').value = anno.idx || '';
 		Object.entries(anno.data).map(k => {
 			edit.querySelector(`[name=data-data-${k[0]}]`).value = k[1] || '';
 		});
@@ -241,7 +240,7 @@ class EditorSvgAnnotation {
 		edit.classList.remove('hidden');
 		let button = edit.querySelector('.openlime-select-button');
 		button.textContent = this.classes[anno.class].label;
-		button.style.background = this.classes[anno.class].stroke;
+		button.style.background = this.classes[anno.class].style.stroke;
 	}
 
 	/** @ignore */
@@ -251,7 +250,6 @@ class EditorSvgAnnotation {
 		this.setActiveTool();
 		this.layer.annotationsListEntry.element.querySelector('.openlime-edit').classList.add('active');
 		(async () => {
-			console.log(this.annotation); //FIXME create
 			await this.createEditWidget();
 			this.updateEditWidget();
 		})();
@@ -269,31 +267,30 @@ class EditorSvgAnnotation {
 	/** @ignore */
 	async createEditWidget() {
 		if (this.editWidget)
-			return;
-		console.log('ANNO', this.annotation);
+			return;		
 		let html = `
 				<div class="openlime-annotation-edit">
-					<span>Title:</span> <input name="label" type="text">
-					<span>Description:</span> <input name="description" type="text">
-
-					${Object.entries(this.annotation.data).map(k => {
-						let label = k[0];
-						let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text">`
-						return str;
-					}).join('\n')}
-					
-					<br/>
+					<label for="label">Title:</label> <input name="label" type="text"><br>
+					<label for="description">Description:</label><br>
+					<textarea name="description" cols="30" rows="5"></textarea><br>
 					<span>Class:</span> 
 					<div class="openlime-select">
 						<input type="hidden" name="classes" value=""/>
 						<div class="openlime-select-button"></div>
 						<ul class="openlime-select-menu">
 						${Object.entries(this.classes).map((c) =>
-			`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
+			`<li data-class="${c[0]}" style="background:${c[1].style.stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
-					<span><button class="openlime-state">Set State</button></span>
-					<span><input type="checkbox" name="publish" value=""> Publish</span>
+					<label for="idx">Index:</label> <input name="idx" type="text"><br>	
+					${Object.entries(this.annotation.data).map(k => {
+						let label = k[0];
+						let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text"><br>`
+						return str;
+					}).join('\n')}
+					<br>
+					<span><button class="openlime-state">SAVE</button></span>
+					<span><input type="checkbox" name="publish" value=""> Publish</span><br>
 					<div class="openlime-annotation-edit-tools"></div>
 				</div>`;
 		let template = document.createElement('template');
@@ -309,7 +306,7 @@ class EditorSvgAnnotation {
 		let state = edit.querySelector('.openlime-state');
 		
 		state.addEventListener('click', (e) => {
-			if(this.enableState) this.setAnnotationCurrentState();
+			if(this.enableState) this.setAnnotationCurrentState(this.annotation);
 			this.saveCurrent();
 			this.saveAnnotation(); 
 		});
@@ -327,7 +324,7 @@ class EditorSvgAnnotation {
 
 			input.value = e.srcElement.getAttribute('data-class');
 			input.dispatchEvent(new Event('change'));
-			button.style.background = this.classes[input.value].stroke;
+			button.style.background = this.classes[input.value].style.stroke;
 			button.textContent = e.srcElement.textContent;
 
 			select.classList.toggle('active');
@@ -369,6 +366,21 @@ class EditorSvgAnnotation {
 		let descr = edit.querySelector('[name=description]');
 		descr.addEventListener('blur', (e) => { if (this.annotation.description != descr.value) this.saveCurrent(); this.saveAnnotation(); });
 
+		let idx = edit.querySelector('[name=idx]');
+		idx.addEventListener('blur', (e) => { 
+			if (this.annotation.idx != idx.value) {
+				const svgPinIdx = this.annotation.elements[0];
+				if(svgPinIdx) {
+					const txt = svgPinIdx.querySelector(".pin-text");
+					if(txt) {
+						txt.textContent = idx.value;
+					}
+				}
+				this.saveCurrent();
+			} 
+			this.saveAnnotation(); 
+		});
+
 		Object.entries(this.annotation.data).map(k => {
 			let dataElm = edit.querySelector(`[name=data-data-${k[0]}]`);
 			dataElm.addEventListener('blur', (e) => { if (this.annotation.data[k[0]] != dataElm.value) this.saveCurrent(); this.saveAnnotation(); });
@@ -385,13 +397,10 @@ class EditorSvgAnnotation {
 	}
 
 	/** @ignore */
-	setAnnotationCurrentState() {
-		const cam = this.viewer.camera;
-		let now = performance.now();
-		let m = cam.getCurrentTransform(now);
-		this.annotation.state = { camera: { 'x': m.x, 'y': m.y, 'z': m.z } }; //FIXME active layers  + active controls 
+	setAnnotationCurrentState(anno) {
+		anno.state = window.structuredClone(this.viewer.canvas.getState());
 		// Callback to add  light/lens params or other data
-		if(this.customState) this.customState(this.annotation);
+		if(this.customState) this.customState(anno);
 	}
 
 	/** @ignore */
@@ -401,6 +410,7 @@ class EditorSvgAnnotation {
 
 		anno.label = edit.querySelector('[name=label]').value || '';
 		anno.description = edit.querySelector('[name=description]').value || '';
+		anno.idx = edit.querySelector('[name=idx]').value || '0';
 		Object.entries(anno.data).map(k => {
 			anno.data[k[0]] = edit.querySelector(`[name=data-data-${k[0]}]`).value || '';
 		});		
@@ -409,13 +419,13 @@ class EditorSvgAnnotation {
 		anno.class = select.value || '';
 
 		let button = edit.querySelector('.openlime-select-button');
-		button.style.background = this.classes[anno.class].stroke;
+		button.style.background = this.classes[anno.class].style.stroke;
 
 		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
 
 		let post = {
-			id: anno.id, label: anno.label, description: anno.description, class: anno.class,
+			id: anno.id, idx: anno.idx, label: anno.label, description: anno.description, class: anno.class,
 			publish: anno.publish, data: anno.data
 		};
 		if (this.enableState) post = { ...post, state: anno.state };
@@ -482,7 +492,7 @@ class EditorSvgAnnotation {
 		let svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		const bBox = this.layer.boundingBox();
 		svgElement.setAttribute('viewBox', `0 0 ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
-		let style = createSVGElement('style');
+		let style = Util.createSVGElement('style');
 		style.textContent = this.layer.style;
 		svgElement.appendChild(style);
 		let serializer = new XMLSerializer();
@@ -597,7 +607,6 @@ class EditorSvgAnnotation {
 
 	/** @ignore */
 	saveCurrent() {
-		console.log('save current');
 		let anno = this.annotation; //current annotation.
 		if (!anno.history)
 			anno.history = [];
@@ -747,13 +756,14 @@ class EditorSvgAnnotation {
 
 	/** @ignore */
 	mapToSvg(e) {
-		let camera = this.viewer.camera;
-		let transform = camera.getCurrentTransform(performance.now());
-		let pos = camera.mapToScene(e.offsetX, e.offsetY, transform);
-		const topLeft = this.layer.boundingBox().corner(0);
-		pos.x -= topLeft[0]; 
-		pos.y -= topLeft[1];
-		pos.z = transform.z;
+		const p = {x:e.offsetX, y: e.offsetY};
+		const layerT = this.layer.transform;
+		const useGL = false;
+		console.log(layerT);
+		const layerbb = this.layer.boundingBox();
+		const layerSize = {w:layerbb.width(), h:layerbb.height()};
+		let pos = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
+		
 		return pos;
 	}
 }
@@ -762,7 +772,7 @@ class EditorSvgAnnotation {
 /** @ignore */
 class Point {
 	tap(pos) {
-		let point = createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
+		let point = Util.createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 10, class: 'point' });
 		this.annotation.elements.push(point);
 		return true;
 	}
@@ -794,7 +804,7 @@ class Pen {
 		if (this.points.length == 1) {
 			saveCurrent
 
-			this.path = createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
+			this.path = Util.createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 			return this.path;
 		}
 		let p = this.path.getAttribute('d');
@@ -824,7 +834,7 @@ class Box {
 
 	create(pos) {
 		this.origin = pos;
-		this.box = createSVGElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
+		this.box = Util.createSVGElement('rect', { x: pos.x, y: pos.y, width: 0, height: 0, class: 'rect' });
 		return this.box;
 	}
 
@@ -850,7 +860,7 @@ class Circle {
 	}
 	create(pos) {
 		this.origin = pos;
-		this.circle = createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
+		this.circle = Util.createSVGElement('circle', { cx: pos.x, cy: pos.y, r: 0, class: 'circle' });
 		return this.circle;
 	}
 	adjust(pos) {
@@ -891,7 +901,7 @@ class Line {
 				return;
 			}
 		}
-		this.path = createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
+		this.path = Util.createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 		this.path.points = [pos];
 		this.history = [this.path.points.length];
 		this.annotation.elements.push(this.path);
@@ -923,7 +933,7 @@ class Line {
 			return false;
 		let s = this.path.points[this.path.points.length - 1];
 		if (!this.segment) {
-			this.segment = createSVGElement('path', { class: 'line' });
+			this.segment = Util.createSVGElement('path', { class: 'line' });
 			this.layer.svgGroup.appendChild(this.segment);
 		}
 		pos.x = pos.x - s.x;

@@ -2,6 +2,8 @@ import { Canvas } from './Canvas.js'
 import { Camera } from './Camera.js'
 import { PointerManager } from './PointerManager.js'
 import { Controller } from './Controller.js';
+import { addSignals } from './Signals.js'
+
 
 /** **Viewer** is the central class of the OpenLIME framework. It is used to create a viewer on a web page and manipulate it.
  * In the following example, after instantiating a Viewer, a LayerImage is added to it.
@@ -39,12 +41,10 @@ class Viewer {
 
         Object.assign(this, {
             background: null,
-            autofit: false,
+            autofit: true,
             canvas: {},
-            controllers: [],
-            camera: new Camera()
+            camera: new Camera(),
         });
-
         if (typeof (div) == 'string')
             div = document.querySelector(div);
 
@@ -131,7 +131,10 @@ class Viewer {
         this.canvasElement.width = width * window.devicePixelRatio;
         this.canvasElement.height = height * window.devicePixelRatio;
 
-        this.camera.setViewport({ x: 0, y: 0, dx: width, dy: height, w: width, h: height });
+        let view = { x: 0, y: 0, dx: width, dy: height, w: width, h: height };
+        this.camera.setViewport(view);
+        this.emit('resize', view);
+
         this.canvas.prefetch();
         this.redraw();
     }
@@ -162,8 +165,11 @@ class Viewer {
         let done = this.canvas.draw(time);
         if (!done)
             this.redraw();
+        this.emit('draw');
     }
-
 }
+
+addSignals(Viewer, 'draw');
+addSignals(Viewer, 'resize'); //args: viewport
 
 export { Viewer };
