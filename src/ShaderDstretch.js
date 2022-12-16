@@ -3,16 +3,14 @@ import { Shader } from "./Shader";
 class ShaderDstretch extends Shader {
     constructor(options) {
 		super(options);
-        this.samplers.push({ id:0, name:'image', type:'vec3' });
 
+        this.samplers.push({ id:0, name:'image', type:'vec3' });
+        this.rotationMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
 	}
 
 	init(json) {
-        this.rotationMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
-
         // Store samples, compute min / max on the fly
         this.samples = json["samples"];
-
         this.setMinMax();
 	}
 

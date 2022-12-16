@@ -1,7 +1,6 @@
 import {Layer} from './Layer.js';
 import {LayerImage} from './LayerImage.js'
 import {ShaderDstretch} from './ShaderDstretch.js';
-import { Raster } from './Raster.js';
 
 class LayerDstretch extends LayerImage {
     constructor(options) {
@@ -59,6 +58,8 @@ class LayerDstretch extends LayerImage {
 	}
 
 	loadAndSampleTexture(gl, img) {
+		console.log("Dynamic sampling");
+
 		this.rasters[0].width = img.width;
 		this.rasters[0].height = img.height;
 		let tex = gl.createTexture();

@@ -3,19 +3,18 @@ import { Shader } from "./Shader";
 class ShaderSelectiveStretch extends Shader {
     constructor(options) {
 		super(options);
-	}
-
-	init(json) {
+        
+        this.min = [0,0,0];
+        this.max = [0,0,0];
         this.rotationMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
         this.controls = [0.0, 0.0, 1.0];
 
+        this.samplers.push({ id:0, name:'image', type:'vec3' });
+	}
+
+	init(json) {
         // Store samples, compute min / max on the fly
         this.samples = json["samples"];
-        this.samplers.push({ id:0, name:'image', type:'vec3' });
-
-        this.min = [0,0,0];
-        this.max = [0,0,0];
-
         this.setMinMax();
 	}
 
@@ -126,13 +125,12 @@ class ShaderSelectiveStretch extends Shader {
 	fragShaderSrc(gl) {
         
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		let str = `${gl2? '#version 300 es' : ''}
+		let str = `
 
 precision highp float; 
 precision highp int; 
 
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
-${gl2? 'out' : ''} vec4 color;
 
 uniform mat4 rotation;
 uniform float hueAngle;
@@ -205,7 +203,7 @@ vec3 lab2rgb(vec3 c, float angle) {
     return xyz2rgb( xyz);
 }
 
-void main(void) {
+vec4 data() {
     vec3 texColor = texture(image, v_texcoord).xyz;
     vec3 labColor = rgb2lab(texColor, hueAngle);
 
@@ -230,7 +228,7 @@ void main(void) {
 
     ret = lab2rgb(ret, hueAngle);
     
-    color = vec4(ret, 1.0);
+    return vec4(ret, 1.0);
 }`;
 		return str;
 	}
