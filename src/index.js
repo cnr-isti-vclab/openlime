@@ -14,11 +14,26 @@ import { Skin } from './Skin.js'
 import { LayerAnnotation } from './LayerAnnotation.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
+import { ShaderFilterDstretch } from './ShaderFilterDstretch.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
-//dstretchTest();
-selectiveStretchTest();
+/*
+	Make DStretch and SelectiveStretch filters
+
+	- Start from DStretch
+		- Remove controls, compute the transform once
+		- Remove LayerDstretch since it isn't necessary
+		- The dstretch filter requires one of these 3 things
+			- A layout: the tile that contains the whole scene is used for sampling
+			- An url: a .dstretch file is searched, otherwise the image is sampled dynamically 
+			- A list of samples
+
+	- For selective stretch a layer with controls is needed and it should be updated
+*/
+
+dstretchTest();
+//selectiveStretchTest();
 //filterTest();
 //combinerTest();
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
@@ -68,13 +83,18 @@ function filterTest() {
 function dstretchTest() {
 	console.log("Dstretching");
 
-	let dstretch = new Layer({
-		type: 'dstretch',
+	let layer = new Layer({
+		type: 'image',
 		layout: 'image',
 		url: 'assets/dstretch/coin/plane_0.jpg'
 	});
+	lime.canvas.addLayer('main', layer);
 
-	lime.canvas.addLayer('dstretch', dstretch);
+	let filter = new ShaderFilterDstretch(
+		'assets/dstretch/coin/plane_0.jpg'
+	);
+	layer.addShaderFilter(filter);
+	
 	let ui = new UIBasic(lime);
 	console.log(ui.lightcontroller.relative);
 

@@ -11,22 +11,12 @@ class LayerDstretch extends LayerImage {
 
 		this.shaders['dstretch'] = new ShaderDstretch();
 		this.setShader('dstretch');
-		this.eulerRotation = [0,0,0];
+		this.eulerRotation = [-1,-1,0];
 
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 		if(this.url)
 			this.loadJson();
 		this.addControl('light', [0, 0]);
-	}
-
-	setLight(value, dt) {
-		this.setControl('light', value, dt);
-
-		this.eulerRotation[0] = Math.PI * this.getControl('light').current.value[0];//this.controls['light'].current[0];
-		this.eulerRotation[1] = Math.PI * this.getControl('light').current.value[1];//this.controls['light'].current[1];
-
-		this.shader.updateRotationMatrix(this.eulerRotation);
-		this.emit('update');
 	}
 	
 	loadJson() {
