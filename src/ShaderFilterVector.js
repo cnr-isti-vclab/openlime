@@ -56,13 +56,26 @@ class ShaderFilterVector extends ShaderFilter {
         // 2D vector field visualization by Matthias Reitinger, @mreitinger
         // Based on "2D vector field visualization by Morgan McGuire, http://casual-effects.com", https://www.shadertoy.com/view/4s23DG
         
-        const float ARROW_TILE_SIZE = 32.0;
+        const float ARROW_TILE_SIZE = 24.0;
         
         // Computes the center pixel of the tile containing pixel pos
         vec2 arrowTileCenterCoord(vec2 pos) {
             return (floor(pos / ARROW_TILE_SIZE) + 0.5) * ARROW_TILE_SIZE;
         }
         
+        float line3(vec2 a, vec2 b, vec2 c) {
+            vec2 ba = a - b;
+            vec2 bc = c - b;
+            float d = dot(ba, bc);
+            float len = length(bc);
+            float t = 0.0;
+            if (len != 0.0) {
+              t = clamp(d / (len * len), 0.0, 1.0);
+            }
+            vec2 r = b + bc * t;
+            return distance(a, r);
+          }
+
         float line2(vec2 p, vec2 v, vec2 w) {
             // Return minimum distance between line segment vw and point p
             float l2 = length(w-v);  // i.e. |w-v|^2 -  avoid a sqrt
@@ -109,10 +122,10 @@ class ShaderFilterVector extends ShaderFilter {
                 v = dir_v * mag_v;
         
                 // Signed distance from shaft
-                float shaft = line(p, v, -v);
+                float shaft = line3(p, v, -v);
                 // Signed distance from head
-                float head = min(line(p, v, 0.4*v + 0.2*vec2(-v.y, v.x)),
-                                 line(p, v, 0.4*v + 0.2*vec2(v.y, -v.x)));
+                float head = min(line3(p, v, 0.4*v + 0.2*vec2(-v.y, v.x)),
+                                 line3(p, v, 0.4*v + 0.2*vec2(v.y, -v.x)));
                 return min(shaft, head);
             } else {
                 // Signed distance from the center point
@@ -129,20 +142,18 @@ class ShaderFilterVector extends ShaderFilter {
             float s = 2.0;
             float b = 2.0*indomain[0]/(indomain[1]-indomain[0]);
             vec2 pc_coord = arrowTileCenterCoord(p)/${this.uniformName('resolution')};
-            vec4 pc_col = texture(kd, pc_coord);
-            vec2 uv = vec2(pc_col.r*s+b, pc_col.g*s+b);
-
-            //vec2 uv = (col.rg - vec2(0.5, 0.5))*2.0;
-            float uv_l = length(uv);
+            vec4 pc_val = texture(kd, pc_coord);
+            vec2 uv = vec2(pc_val.x*s+b, pc_val.y*s+b);
             
             float arrow_dist = arrow(p, uv);
-            float isArrow = arrow_dist > 0.5 ? 0.0 : 1.0;
-            //vec4 arrow_col = vec4(0, 0, 0, 1.0-clamp(arrow_dist, 0.0, 1.0));
+            float isArrow = arrow_dist > 0.0 ? 1.0 : 0.0;
             vec4 arrow_col = vec4(0, 0, 0, isArrow);
+            float t = clamp(arrow_dist, 0.0, 1.0);
+            //vec4 arrow_col = vec4(0.0, 0, 0, 1.0-t);
             vec4 field_col = vec4(col.rg, 0.0, 1.0);
             //return vec4(v_texcoord.xy, 0.0, 1.0);
             //return vec4(isArrow, isArrow, isArrow, 1.0);
-            return  mix(arrow_col, field_col, arrow_col.a);
+            return  mix(arrow_col, field_col, t);
         }`;
     }
 
