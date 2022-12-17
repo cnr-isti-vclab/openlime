@@ -146,13 +146,11 @@ class ShaderFilterVector extends ShaderFilter {
             vec2 uv = vec2(pc_val.x*s+b, pc_val.y*s+b);
             
             float arrow_dist = arrow(p, uv);
-            float isArrow = arrow_dist > 0.0 ? 1.0 : 0.0;
-            vec4 arrow_col = vec4(0, 0, 0, isArrow);
-            float t = clamp(arrow_dist, 0.0, 1.0);
-            //vec4 arrow_col = vec4(0.0, 0, 0, 1.0-t);
+            
+            vec4 arrow_col = vec4(0, 0, 0, 1.0);
             vec4 field_col = vec4(col.rg, 0.0, 1.0);
-            //return vec4(v_texcoord.xy, 0.0, 1.0);
-            //return vec4(isArrow, isArrow, isArrow, 1.0);
+
+            float t = clamp(arrow_dist, 0.0, 1.0);
             return  mix(arrow_col, field_col, t);
         }`;
     }
