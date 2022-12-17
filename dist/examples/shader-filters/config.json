@@ -15,6 +15,34 @@
             1144266.572,
             5167038.173
         ],
-        "crs": "EPSG:3857"
+        "inDomain": [
+            -20.0,
+            50.0
+        ],
+        "crs": "EPSG:3857",
+        "description": "Temp. [C]"
+    },
+    "wind": {
+        "url": "../../assets/moloch/moloch_2018050103_0011700_meter_wind.png",
+        "width": 432,
+        "height": 581,
+        "upperLeft": [
+            499679.798,
+            6033947.700
+        ],
+        "lowerRight": [
+            1788853.346,
+            4300128.647
+        ],
+        "center": [
+            1144266.572,
+            5167038.173
+        ],
+        "inDomain": [
+            -30.0,
+            30.0
+        ],        
+        "crs": "EPSG:3857",
+        "description": "Wind [km/h]"
     }
 }

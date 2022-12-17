@@ -71,54 +71,67 @@
         const geoimgCenter = config.temperature.center;
         const geoimgScale = (config.temperature.lowerRight[0] - config.temperature.upperLeft[0]) / config.temperature.width; // Width [m] / Width [pixel]
 
-        const layerTemp = new OpenLIME.Layer({
-            layout: 'image',
-            type: 'maskedimage',
-            transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
-            url: config.temperature.url,
-            overlay: true
-        });
-        lime.addLayer('Temp', layerTemp);
+        // const layerTemp = new OpenLIME.Layer({
+        //     layout: 'image',
+        //     type: 'maskedimage',
+        //     transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
+        //     url: config.temperature.url,
+        //     overlay: true
+        // });
+        // lime.addLayer('Temp', layerTemp);
 
-        // Add a Colormap filter
+        // // Add a Colormap filter
 
-        // Create a colormap
-        const cscaleBar = new OpenLIME.Colormap([
-            new OpenLIME.Color("rgb(0, 0, 255)"),
-            new OpenLIME.Color('rgb(255, 255, 255)'),
-            new OpenLIME.Color('rgb(125, 0, 0)'),
-            new OpenLIME.Color('rgb(200, 0, 0)'),
-            new OpenLIME.Color('rgb(255, 0, 0)'),
-            new OpenLIME.Color('rgb(0, 128, 0)'),
-        ], {
-            domain: [-10, -1, 1, 10, 20, 30],
-            type: 'bar',
-            description: 'Temp. [C]'
-        });
+        // // Create a colormap
+        // const cscaleBar = new OpenLIME.Colormap([
+        //     new OpenLIME.Color("rgb(0, 0, 255)"),
+        //     new OpenLIME.Color('rgb(255, 255, 255)'),
+        //     new OpenLIME.Color('rgb(125, 0, 0)'),
+        //     new OpenLIME.Color('rgb(200, 0, 0)'),
+        //     new OpenLIME.Color('rgb(255, 0, 0)'),
+        //     new OpenLIME.Color('rgb(0, 128, 0)'),
+        // ], {
+        //     domain: [-10, -1, 1, 10, 20, 30],
+        //     type: 'bar',
+        //     description: config.temperature.description
+        // });
 
         const cscaleLinear = new OpenLIME.Colormap([
             new OpenLIME.Color("rgb(0, 0, 255)"),
             new OpenLIME.Color('rgb(255, 255, 255)'),
             new OpenLIME.Color('rgb(255, 0, 0)'),
         ], {
-            domain: [-10, 0, 30],
-            description: 'Temp. [C]'
+            domain: [-30, 0, 30],
+            description: config.temperature.description
         });
 
         const colorscale = cscaleLinear;
 
-        // Create the filter
-        const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: [-30, 70] });
+        // // Create the filter
+        // const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: config.temperature.inDomain });
 
-        // Add the filter to the shader
-        layerTemp.addShaderFilter(filterColormap);
+        // // Add the filter to the shader
+        // layerTemp.addShaderFilter(filterColormap);
 
-        // Add Filter Opacity
-        const filterOpacity = new OpenLIME.ShaderFilterOpacity(1.0);
-        layerTemp.addShaderFilter(filterOpacity);
+        // // Add Filter Opacity
+        // const filterOpacity = new OpenLIME.ShaderFilterOpacity(1.0);
+        // layerTemp.addShaderFilter(filterOpacity);
 
-        // Colormap Legend
-        const legend = new OpenLIME.ColormapLegend(lime, colorscale, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
+        // // Colormap Legend
+        // const legend = new OpenLIME.ColormapLegend(lime, colorscale, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
+
+        // WIND
+        const layerWind = new OpenLIME.Layer({
+            layout: 'image',
+            type: 'image',
+            transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
+            url: config.wind.url,
+            overlay: true
+        });
+        lime.addLayer('Wind', layerWind);
+
+        const filterVector = new OpenLIME.ShaderFilterVector(colorscale, { inDomain: config.wind.inDomain, resolution: [config.wind.width, config.wind.height] });
+        layerWind.addShaderFilter(filterVector);
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
