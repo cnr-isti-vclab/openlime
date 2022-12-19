@@ -43,6 +43,6 @@
             30.0
         ],        
         "crs": "EPSG:3857",
-        "description": "Wind [km/h]"
+        "description": "Wind [m/s]"
     }
 }

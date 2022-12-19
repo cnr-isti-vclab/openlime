@@ -60,7 +60,9 @@
             mipmapBias: 0.4,
             transform: { x: 0, y: 0, z: 1, a: 0 },
             //url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+            url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}'
         });
         lime.addLayer('Base', layer);
 
@@ -96,16 +98,23 @@
         //     description: config.temperature.description
         // });
 
-        const cscaleLinear = new OpenLIME.Colormap([
+        const cscaleLinearTemp = new OpenLIME.Colormap([
             new OpenLIME.Color("rgb(0, 0, 255)"),
             new OpenLIME.Color('rgb(255, 255, 255)'),
             new OpenLIME.Color('rgb(255, 0, 0)'),
         ], {
-            domain: [-30, 0, 30],
+            domain: [-10, 0, 30],
             description: config.temperature.description
         });
 
-        const colorscale = cscaleLinear;
+        const cscaleLinearWind = new OpenLIME.Colormap([
+            new OpenLIME.Color("rgb(0, 0, 255)"),
+            new OpenLIME.Color('rgb(255, 0, 0)'),
+        ], {
+            domain: [0, 30],
+            description: config.wind.description
+        });
+
 
         // // Create the filter
         // const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: config.temperature.inDomain });
@@ -130,8 +139,10 @@
         });
         lime.addLayer('Wind', layerWind);
 
-        const filterVector = new OpenLIME.ShaderFilterVector(colorscale, { inDomain: config.wind.inDomain, resolution: [config.wind.width, config.wind.height] });
+        const filterVector = new OpenLIME.ShaderFilterVector(cscaleLinearWind, { inDomain: config.wind.inDomain, resolution: [config.wind.width, config.wind.height] });
         layerWind.addShaderFilter(filterVector);
+        // // Colormap Legend
+        const windLegend = new OpenLIME.ColormapLegend(lime, cscaleLinearWind, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');

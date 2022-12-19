@@ -336,7 +336,7 @@ class Colormap {
 	sample(maxSteps) {
 		let min = this.xarr[0];
 		let max = this.xarr[this.xarr.length - 1];
-		if (this.domain.length == 2) maxSteps = this.xarr.length;
+		//if (this.domain.length == 2) maxSteps = this.xarr.length;
 		let buffer = new Uint8Array(maxSteps * 4);
 		let delta = (max - min) / maxSteps;
 		for (let i = 0; i < maxSteps; i++) {

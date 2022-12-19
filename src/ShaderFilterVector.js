@@ -21,8 +21,10 @@ class ShaderFilterVector extends ShaderFilter {
         if (this.inDomain.length == 0) this.inDomain = this.colorscale.rangeDomain();
 
         const cscaleDomain = this.colorscale.rangeDomain();
-        const scale = (this.inDomain[1]-this.inDomain[0])/(cscaleDomain[1]-cscaleDomain[0]);
-        const bias = (this.inDomain[0]-cscaleDomain[0])/(cscaleDomain[1]-cscaleDomain[0]);
+
+        const scale = Math.sqrt((this.inDomain[1]*this.inDomain[1]+this.inDomain[0]*this.inDomain[0])/(cscaleDomain[1]*cscaleDomain[1]+cscaleDomain[0]*cscaleDomain[0]));
+        const bias = 0.0;
+
         console.log("scale bias ", scale, bias);
         this.samplers = [{ name:`${this.samplerName('colormap')}` }];
 
@@ -64,15 +66,15 @@ class ShaderFilterVector extends ShaderFilter {
         }
         
         float line3(vec2 a, vec2 b, vec2 c) {
-            vec2 ba = a - b;
-            vec2 bc = c - b;
-            float d = dot(ba, bc);
-            float len = length(bc);
+            vec2 ab = a - b;
+            vec2 cb = c - b;
+            float d = dot(ab, cb);
+            float len = length(cb);
             float t = 0.0;
             if (len != 0.0) {
               t = clamp(d / (len * len), 0.0, 1.0);
             }
-            vec2 r = b + bc * t;
+            vec2 r = b + cb * t;
             return distance(a, r);
           }
 
@@ -112,11 +114,11 @@ class ShaderFilterVector extends ShaderFilter {
             
             if (mag_v > 0.0) {
                 // Non-zero velocity case
-                vec2 dir_v = v / mag_v;
+                vec2 dir_v = normalize(v);
                 
                 // We can't draw arrows larger than the tile radius, so clamp magnitude.
                 // Enforce a minimum length to help see direction
-                mag_v = clamp(mag_v, 5.0, ARROW_TILE_SIZE * 0.4);
+                mag_v = clamp(mag_v, 2.0, ARROW_TILE_SIZE * 0.4);
         
                 // Arrow tip location
                 v = dir_v * mag_v;
@@ -138,18 +140,29 @@ class ShaderFilterVector extends ShaderFilter {
 
             vec2 indomain = ${this.uniformName('indomain')};
             vec2 p = v_texcoord*${this.uniformName('resolution')};
-
+            vec2 pc_coord = arrowTileCenterCoord(p)/${this.uniformName('resolution')};
+            vec4 pc_val = texture(kd, pc_coord); // [0..1]
             float s = 2.0;
             float b = 2.0*indomain[0]/(indomain[1]-indomain[0]);
-            vec2 pc_coord = arrowTileCenterCoord(p)/${this.uniformName('resolution')};
-            vec4 pc_val = texture(kd, pc_coord);
-            vec2 uv = vec2(pc_val.x*s+b, pc_val.y*s+b);
-            
+            vec2 uv = vec2(pc_val.x*s+b, pc_val.y*s+b); // [-1..1]
+ 
+            // Colors
+            float v = length(uv);
+            float cv = v*${this.uniformName('scale')} + ${this.uniformName('bias')};
+            vec4 cmap = vec4(1.0);
+                
+            if(cv >= 1.0) 
+                cmap = ${this.uniformName('high_color')};
+            else if(cv <= 0.0) 
+                cmap = ${this.uniformName('low_color')};
+            else
+                cmap = texture(${this.samplerName('colormap')}, vec2(cv, 0.5));
+
+            // Arrow            
             float arrow_dist = arrow(p, uv);
             
-            vec4 arrow_col = vec4(0, 0, 0, 1.0);
-            vec4 field_col = vec4(col.rg, 0.0, 1.0);
-
+            vec4 arrow_col = cmap;
+            vec4 field_col = vec4(0.0);
             float t = clamp(arrow_dist, 0.0, 1.0);
             return  mix(arrow_col, field_col, t);
         }`;
