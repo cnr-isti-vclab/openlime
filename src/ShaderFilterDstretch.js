@@ -5,19 +5,22 @@ class ShaderFilterDstretch extends ShaderFilter {
     constructor(input, options) {
 		super(options);
 
-        if (typeof(input) === string)
-            console.log("URL");
-        else if (typeof(input) === Array)
-            console.log("Samples");
-        else if (typeof(input) === Layer)
-            console.log("Layer");
+        this.min = [0,0,0];
+        this.max = [0,0,0];
+        this.rotationArray = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 
         this.samplers.push({ id:0, name:'image', type:'vec3' });
         this.rotationMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
 
-        // Load samples
         // Compute rotation matrix
         this.updateRotationMatrix([-1, -1, 0]);
+        // Load samples
+        if (typeof(input) === "string")
+            this.initFromURL(input);
+        else if (typeof(input) === "array")
+            this.initFromSamples(input);
+        else if (typeof(input) === "object")
+            this.initFromLayer(input);
 
         // Set uniforms
         this.uniforms[this.uniformName('min_col')] = 
@@ -25,15 +28,73 @@ class ShaderFilterDstretch extends ShaderFilter {
         this.uniforms[this.uniformName('max_col')] = 
             { type: 'vec3', needsUpdate: true, size: 3, value: this.max };
         this.uniforms[this.uniformName('rotation')] = 
-            { type: 'mat4', needsUpdate: true, size: 16, value: this.rotationMatrix };
+            { type: 'mat4', needsUpdate: true, size: 16, value: this.rotationArray };
 	}
 
-    setMinMax() {
-        if (this.samples == undefined)
+    initFromURL(url) {
+        (async () => {
+			let json;
+			try {
+				let dstretchUrl = url.substring(0, url.lastIndexOf(".")) + ".dstretch";
+				let response = await fetch(dstretchUrl);
+				console.log(response.ok);
+				json = await response.json();
+
+				// Store samples, compute min / max on the fly
+                this.setMinMax(json["samples"]);
+			}
+			catch (error) {
+				json = {
+					transformation: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+					samples: []
+				};
+                this.setMinMax(this.getSamplesFromTexture(url));
+			}
+			
+		})();
+    }
+
+    getSamplesFromTexture(imgUrl) {
+        let img = new Image();
+        img.src = imgUrl;
+
+        img.onload = function() {
+            // Sample the texture
+            // Temporarily print the texture on a canvas
+            let canvas = document.createElement("canvas");
+            let context = canvas.getContext("2d");
+
+            canvas.setAttribute("width", img.width);
+            canvas.setAttribute("height", img.height);
+            context.drawImage(img, 0, 0, img.width, img.height);
+
+            // Get the data and sample the texture
+            let imageData = context.getImageData(0, 0, img.width, img.height).data;
+            let samples = [];
+            let rowSkip = Math.floor(img.height / 32);
+            let colSkip = Math.floor(img.width / 32);
+
+            console.log(rowSkip, colSkip);
+
+            for (let i=0; i<imageData.length; i+=4) {
+                let row = Math.floor((i / 4) / img.width);
+                let col = Math.floor(i / 4) % img.width;
+
+                if (row % rowSkip == 0 && col % colSkip == 0)
+                    samples.push([imageData[i], imageData[i+1], imageData[i+2]]);
+            }
+            
+            console.log(samples);
+            this.setMinMax(samples);
+        }.bind(this);
+    }
+
+    setMinMax(samples) {
+        if (samples == undefined)
             return;
             
         let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
-        for (let sample of this.samples) {
+        for (let sample of samples) {
             let transformedSample = this.transformVector(this.matToArray(this.transpose(this.rotationMatrix)),
              this.transformVector(
                 this.matToArray(this.rotationMatrix), 
@@ -47,14 +108,14 @@ class ShaderFilterDstretch extends ShaderFilter {
             }
         }
 
-        this.min = min;
-        this.max = max;
+        this.uniforms[this.uniformName('min_col')].value = min;
+        this.uniforms[this.uniformName('min_col')].needsUpdate = true;
 
-        this.uniforms = {
-            rotation: { type: 'mat4', needsUpdate: true, size: 16, value: this.matToArray(this.rotationMatrix)},
-			min: {type: 'vec3', needsUpdate:true, size: 3, value: this.min},
-            max: {type: 'vec3', needsUpdate:true, size: 3, value: this.max}
-		}
+        this.uniforms[this.uniformName('max_col')].value = max;
+        this.uniforms[this.uniformName('max_col')].needsUpdate = true;
+
+        this.uniforms[this.uniformName('rotation')].value = this.matToArray(this.rotationMatrix);
+        this.uniforms[this.uniformName('rotation')].needsUpdate = true;
     }
 
     transpose(mat) {
@@ -91,7 +152,6 @@ class ShaderFilterDstretch extends ShaderFilter {
 		mat = this.multiplyMatrices(z, mat);
 
 		this.rotationMatrix = mat;
-        this.setMinMax();
 	}	
 
     multiplyMatrices(mat1, mat2) {
@@ -132,25 +192,28 @@ class ShaderFilterDstretch extends ShaderFilter {
         return [resultX + 127, resultY + 127, resultZ + 127, resultW];
     }
 
+    fragUniformSrc(gl) {
+        return `
+            uniform mat4 ${this.uniformName('rotation')};
+            uniform vec3 ${this.uniformName('min_col')};
+            uniform vec3 ${this.uniformName('max_col')};
+        `;
+    }
+
     fragDataSrc(gl) {
         return `
 
         vec4 ${this.functionName()}(vec4 col) {
-            vec3 ret = vec3(127.0, 127.0, 127.0) + (transpose(rotation) * 
-                (rotation * 255.0 * (col - vec4(0.5, 0.5, 0.5, 0.0)))).xyz;
-            ret = (ret - min_col) / (max_col - min_col);
+            vec3 ret = vec3(127.0, 127.0, 127.0) + (transpose(${this.uniformName('rotation')}) * 
+                (${this.uniformName('rotation')} * 255.0 * (col - vec4(0.5, 0.5, 0.5, 0.0)))).xyz;
+            
+            ret =   (ret - ${this.uniformName('min_col')}) / 
+                    (${this.uniformName('max_col')} - ${this.uniformName('min_col')});
 
             return vec4(ret, 1.0);
         }`;
 	}
 
-    fragUniformSrc(gl) {
-        return `
-            uniform mat4 rotation;
-            uniform vec3 min_col;
-            uniform vec3 max_col;
-        `;
-    }
 }
 
 export {ShaderFilterDstretch}
