@@ -30,7 +30,6 @@ class ShaderFilterVector extends ShaderFilter {
 
         this.uniforms[this.uniformName('low_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.colorscale.lowColor.value() };
         this.uniforms[this.uniformName('high_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.colorscale.highColor.value() };
-        this.uniforms[this.uniformName('indomain')] = { type: 'vec2', needsUpdate: true, size: 2, value: this.inDomain };
         this.uniforms[this.uniformName('scale')] = { type: 'float', needsUpdate: true, size: 1, value: scale };
         this.uniforms[this.uniformName('bias')] = { type: 'float', needsUpdate: true, size: 1, value: bias };
         this.uniforms[this.uniformName('resolution')] = { type: 'vec2', needsUpdate: true, size: 2, value: this.resolution };
@@ -59,36 +58,25 @@ class ShaderFilterVector extends ShaderFilter {
         // Based on "2D vector field visualization by Morgan McGuire, http://casual-effects.com", https://www.shadertoy.com/view/4s23DG
         
         const float ARROW_TILE_SIZE = 24.0;
-        
+        const float ISQRT2 = 0.70710678118; // 1/sqrt(2)
+
         // Computes the center pixel of the tile containing pixel pos
         vec2 arrowTileCenterCoord(vec2 pos) {
             return (floor(pos / ARROW_TILE_SIZE) + 0.5) * ARROW_TILE_SIZE;
         }
-        
+
+        // Computes the distance from a line segment
         float line3(vec2 a, vec2 b, vec2 c) {
             vec2 ab = a - b;
             vec2 cb = c - b;
             float d = dot(ab, cb);
-            float len = length(cb);
+            float len2 = dot(cb, cb);
             float t = 0.0;
-            if (len != 0.0) {
-              t = clamp(d / (len * len), 0.0, 1.0);
+            if (len2 != 0.0) {
+              t = clamp(d / len2, 0.0, 1.0);
             }
             vec2 r = b + cb * t;
             return distance(a, r);
-          }
-
-        float line2(vec2 p, vec2 v, vec2 w) {
-            // Return minimum distance between line segment vw and point p
-            float l2 = length(w-v);  // i.e. |w-v|^2 -  avoid a sqrt
-            if (l2 == 0.0) return distance(p, v);   // v == w case
-            // Consider the line extending the segment, parameterized as v + t (w - v).
-            // We find projection of point p onto the line. 
-            // It falls where t = [(p-v) . (w-v)] / |w-v|^2
-            // We clamp t from [0,1] to handle points outside the segment vw.
-            float t = max(0.0, min(1.0, dot(p - v, w - v) / l2));
-            vec2 projection = v + t * (w - v);  // Projection falls on the segment
-            return distance(p, projection);
         }
 
         // Computes the signed distance from a line segment
@@ -106,7 +94,7 @@ class ShaderFilterVector extends ShaderFilter {
         // desired in pixels for arrows
         // Returns a signed distance from the arrow
         float arrow(vec2 p, vec2 v) {
-            v *= ARROW_TILE_SIZE * 0.5; // Change from [0,1] to pixels
+            v *= ARROW_TILE_SIZE * 0.5; // Change from [-1,1] to pixels
             // Make everything relative to the center, which may be fractional
             p -= arrowTileCenterCoord(p);
                 
@@ -135,33 +123,38 @@ class ShaderFilterVector extends ShaderFilter {
             }
         }
         
+        vec4 lookupColormap(float cv) {            
+            if(cv >= 1.0) 
+                return ${this.uniformName('high_color')};
+            else if(cv <= 0.0) 
+                return ${this.uniformName('low_color')};
+            return texture(${this.samplerName('colormap')}, vec2(cv, 0.5));
+        }
+
         vec4 ${this.functionName()}(vec4 col){
             if(col.a == 0.0) return col;
 
-            vec2 indomain = ${this.uniformName('indomain')};
-            vec2 p = v_texcoord*${this.uniformName('resolution')};
-            vec2 pc_coord = arrowTileCenterCoord(p)/${this.uniformName('resolution')};
-            vec4 pc_val = texture(kd, pc_coord); // [0..1]
+            vec2 p = v_texcoord*${this.uniformName('resolution')}; // point in pixel
+            vec2 pc_coord = arrowTileCenterCoord(p)/${this.uniformName('resolution')}; // center coordinate
+            vec4 pc_val = texture(kd, pc_coord); // [0..1] - lookup color in center
             float s = 2.0;
-            float b = 2.0*indomain[0]/(indomain[1]-indomain[0]);
-            vec2 uv = vec2(pc_val.x*s+b, pc_val.y*s+b); // [-1..1]
- 
-            // Colors
-            float v = length(uv);
-            float cv = v*${this.uniformName('scale')} + ${this.uniformName('bias')};
-            vec4 cmap = vec4(1.0);
-                
-            if(cv >= 1.0) 
-                cmap = ${this.uniformName('high_color')};
-            else if(cv <= 0.0) 
-                cmap = ${this.uniformName('low_color')};
-            else
-                cmap = texture(${this.samplerName('colormap')}, vec2(cv, 0.5));
+            float b = -1.0;
+            vec2 uvc = vec2(pc_val.x*s+b, pc_val.y*s+b); // [-1..1]
+            vec2 uvr =  vec2(col.r*s+b, col.g*s+b); // [-1..1]
 
+            // Colors
+            float vc = length(uvc)*ISQRT2;
+            float cvc = vc*${this.uniformName('scale')} + ${this.uniformName('bias')};
+            float vr = length(uvr)*ISQRT2;
+            float cvr = vr*${this.uniformName('scale')} + ${this.uniformName('bias')};
+            vec4 cmapc = lookupColormap(cvc);
+            vec4 cmapr = lookupColormap(cvr);
+                
             // Arrow            
-            float arrow_dist = arrow(p, uv);
+            float arrow_dist = arrow(p, uvc);
             
-            vec4 arrow_col = cmap;
+            vec4 arrow_col = cmapc;
+            //vec4 arrow_col = vec4(1.0);
             vec4 field_col = vec4(0.0);
             float t = clamp(arrow_dist, 0.0, 1.0);
             return  mix(arrow_col, field_col, t);
