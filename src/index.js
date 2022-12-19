@@ -15,19 +15,15 @@ import { LayerAnnotation } from './LayerAnnotation.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 import { ShaderFilterDstretch } from './ShaderFilterDstretch.js'
+import { LayoutTiles} from './LayoutTiles.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
 /*
 	Make DStretch and SelectiveStretch filters
 
-	- Start from DStretch
-		- Remove controls, compute the transform once
-		- Remove LayerDstretch since it isn't necessary
-		- The dstretch filter requires one of these 3 things
-			- A layout: the tile that contains the whole scene is used for sampling
-			- An url: a .dstretch file is searched, otherwise the image is sampled dynamically 
-			- A list of samples
+	- DStretch
+		Sample from the previous post processing layer, not from the original image?
 
 	- For selective stretch a layer with controls is needed and it should be updated
 */
@@ -85,14 +81,12 @@ function dstretchTest() {
 
 	let layer = new Layer({
 		type: 'image',
-		layout: 'image',
-		url: 'assets/dstretch/coin/plane_0.jpg'
+		layout: 'deepzoom',
+		url: 'assets/dstretch/standard/deepzoomedtest2/plane_0.dzi'
 	});
 	lime.canvas.addLayer('main', layer);
 
-	let filter = new ShaderFilterDstretch(
-		'assets/dstretch/coin/plane_0.jpg'
-	);
+	let filter = new ShaderFilterDstretch(layer);
 	layer.addShaderFilter(filter);
 	
 	let ui = new UIBasic(lime);

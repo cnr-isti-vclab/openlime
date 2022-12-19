@@ -1,5 +1,5 @@
 import { ShaderFilter } from "./ShaderFilter.js";
-import { Layer } from "./Layer.js";
+import {Layer} from "./Layer.js"
 
 class ShaderFilterDstretch extends ShaderFilter {
     constructor(input, options) {
@@ -12,16 +12,6 @@ class ShaderFilterDstretch extends ShaderFilter {
         this.samplers.push({ id:0, name:'image', type:'vec3' });
         this.rotationMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
 
-        // Compute rotation matrix
-        this.updateRotationMatrix([-1, -1, 0]);
-        // Load samples
-        if (typeof(input) === "string")
-            this.initFromURL(input);
-        else if (typeof(input) === "array")
-            this.initFromSamples(input);
-        else if (typeof(input) === "object")
-            this.initFromLayer(input);
-
         // Set uniforms
         this.uniforms[this.uniformName('min_col')] = 
             { type: 'vec3', needsUpdate: true, size: 3, value: this.min };
@@ -29,6 +19,17 @@ class ShaderFilterDstretch extends ShaderFilter {
             { type: 'vec3', needsUpdate: true, size: 3, value: this.max };
         this.uniforms[this.uniformName('rotation')] = 
             { type: 'mat4', needsUpdate: true, size: 16, value: this.rotationArray };
+
+        // Compute rotation matrix
+        this.updateRotationMatrix([-1, -1, 0]);
+        // Load samples
+        if (typeof(input) === "string")
+            this.initFromURL(input);
+        else if (typeof(input) === "object")
+            if (input instanceof Layer)
+                this.initFromLayer(input);
+            else
+                this.initFromSamples(input);
 	}
 
     initFromURL(url) {
@@ -54,9 +55,25 @@ class ShaderFilterDstretch extends ShaderFilter {
 		})();
     }
 
-    getSamplesFromTexture(imgUrl) {
-        let img = new Image();
-        img.src = imgUrl;
+    initFromLayer(layer) {
+        function loadImage() {
+            let imageUrl = layer.layout.getTileURL(0,{level:0, x: 0, y:0});
+            this.initFromURL(imageUrl);
+        }
+        if (layer.layout !== 'ready')
+            layer.layout.addEvent('ready', loadImage.bind(this));
+    }
+
+    initFromSamples(samples) {
+        this.setMinMax(samples);
+    }
+
+    getSamplesFromTexture(image) {
+        let img = image;
+        if (!(img instanceof Image)) {
+            img = new Image();
+            img.src = image;
+        }
 
         img.onload = function() {
             // Sample the texture
