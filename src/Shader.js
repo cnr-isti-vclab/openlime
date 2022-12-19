@@ -70,6 +70,7 @@ class Shader {
 	}
 
 	addFilter(f) {
+		f.shader = this;
 		this.filters.push(f);
 		this.needsUpdate = true;
 		f.needsUpdate = true;

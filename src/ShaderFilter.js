@@ -7,12 +7,27 @@ class ShaderFilter {
         this.uniforms = {};
         this.samplers = [];
         this.needsUpdate = true;
+        this.shader = null;
+
+        this.modes = [];
+        this.mode = null;
+        this.uniforms[this.uniformName('mode')] = { type: 'int', needsUpdate: true, size: 1, value: 0 };
+    }
+
+    setMode(mode) {
+        const modeIdx = this.modes.indexOf(mode);
+        if (modeIdx == -1)
+            throw Error("Unknown mode: " + mode);
+        if (!this.shader)
+            throw Error("Shader not registered");
+        this.mode = mode;
+        this.shader.setUniform(this.uniformName('mode'), modeIdx);
     }
 
     // Callback in Shader.js
     prepare(gl) {
-        if(this.needsUpdate)
-            if(this.createTextures) this.createTextures(gl);
+        if (this.needsUpdate)
+            if (this.createTextures) this.createTextures(gl);
         this.needsUpdate = false;
     }
 

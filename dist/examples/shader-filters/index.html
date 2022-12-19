@@ -108,8 +108,14 @@
         });
 
         const cscaleLinearWind = new OpenLIME.Colormap([
-            new OpenLIME.Color("rgb(0, 0, 255)"),
-            new OpenLIME.Color('rgb(255, 0, 0)'),
+            new OpenLIME.Color('#3288bd'),
+            new OpenLIME.Color('#66c2a5'),
+            new OpenLIME.Color('#abdda4'),
+            new OpenLIME.Color('#e6f598'),
+            new OpenLIME.Color('#fee08b'),
+            new OpenLIME.Color('#fdae61'),
+            new OpenLIME.Color('#f46d43'),
+            new OpenLIME.Color('#d53e4f'),
         ], {
             domain: [0, 30],
             description: config.wind.description
@@ -141,6 +147,10 @@
 
         const filterVector = new OpenLIME.ShaderFilterVector(cscaleLinearWind, { inDomain: config.wind.inDomain, resolution: [config.wind.width, config.wind.height] });
         layerWind.addShaderFilter(filterVector);
+        filterVector.setMode('arrowColMag');
+        
+        //this.modes = ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
+
         // // Colormap Legend
         const windLegend = new OpenLIME.ColormapLegend(lime, cscaleLinearWind, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
 

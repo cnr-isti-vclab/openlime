@@ -1,3 +1,4 @@
+import { Color } from './Colormap.js';
 import { ShaderFilter } from './ShaderFilter.js'
 
 // vector field https://www.shadertoy.com/view/4s23DG
@@ -9,11 +10,12 @@ class ShaderFilterVector extends ShaderFilter {
         options = Object.assign({
             inDomain: [],
             maxSteps: 256,
-            resolution: [1.0, 1.0]
+            resolution: [1.0, 1.0],
+            arrowColor: [0.0, 0.0, 0.0, 1.0]
         }, options);
         Object.assign(this, options);
 
-        if(this.inDomain.length != 2 && this.inDomain[1] <= this.inDomain[0]) {
+        if (this.inDomain.length != 2 && this.inDomain[1] <= this.inDomain[0]) {
             throw Error("inDomain bad format");
         }
 
@@ -22,32 +24,33 @@ class ShaderFilterVector extends ShaderFilter {
 
         const cscaleDomain = this.colorscale.rangeDomain();
 
-        const scale = Math.sqrt((this.inDomain[1]*this.inDomain[1]+this.inDomain[0]*this.inDomain[0])/(cscaleDomain[1]*cscaleDomain[1]+cscaleDomain[0]*cscaleDomain[0]));
+        const scale = Math.sqrt((this.inDomain[1] * this.inDomain[1] + this.inDomain[0] * this.inDomain[0]) / (cscaleDomain[1] * cscaleDomain[1] + cscaleDomain[0] * cscaleDomain[0]));
         const bias = 0.0;
 
-        console.log("scale bias ", scale, bias);
-        this.samplers = [{ name:`${this.samplerName('colormap')}` }];
+        this.modes = ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
 
+        this.samplers = [{ name: `${this.samplerName('colormap')}` }];
+
+        this.uniforms[this.uniformName('arrow_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.arrowColor };
         this.uniforms[this.uniformName('low_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.colorscale.lowColor.value() };
         this.uniforms[this.uniformName('high_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.colorscale.highColor.value() };
         this.uniforms[this.uniformName('scale')] = { type: 'float', needsUpdate: true, size: 1, value: scale };
         this.uniforms[this.uniformName('bias')] = { type: 'float', needsUpdate: true, size: 1, value: bias };
         this.uniforms[this.uniformName('resolution')] = { type: 'vec2', needsUpdate: true, size: 2, value: this.resolution };
-
     }
 
-    createTextures(gl) {       
+    createTextures(gl) {
         const colormap = this.colorscale.sample(this.maxSteps);
-        let textureFilter=gl.LINEAR;
-        if(this.colorscale.type == 'bar') {
-            textureFilter=gl.NEAREST;
+        let textureFilter = gl.LINEAR;
+        if (this.colorscale.type == 'bar') {
+            textureFilter = gl.NEAREST;
         }
-		const tex = gl.createTexture();
-		gl.bindTexture(gl.TEXTURE_2D, tex);
-		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, textureFilter);
-		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, textureFilter);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        const tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, textureFilter);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, textureFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.maxSteps, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, colormap.buffer);
         this.getSampler('colormap').tex = tex; // Link tex to sampler
     }
@@ -154,8 +157,27 @@ class ShaderFilterVector extends ShaderFilter {
             float arrow_dist = arrow(p, uvc);
             
             vec4 arrow_col = cmapc;
+            vec4 field_col = vec4(0.0, 0.0, 0.0, 0.0);
+
+            switch (${this.uniformName('mode')}) {
+                case 0:
+                    arrow_col = cmapc;
+                    field_col = vec4(0.0, 0.0, 0.0, 0.0);
+                    break;
+                case 1:
+                    arrow_col = ${this.uniformName('arrow_color')};
+                    field_col = vec4(0.0, 0.0, 0.0, 0.0);                    
+                    break;
+                case 2:
+                    arrow_col = ${this.uniformName('arrow_color')};
+                    field_col = cmapr;
+                    break;
+            }
+
+            //vec4 arrow_col = cmapc;
             //vec4 arrow_col = vec4(1.0);
-            vec4 field_col = vec4(0.0);
+            
+            //vec4 field_col = vec4(0.0, 0.0, 0.0, 0.3);
             float t = clamp(arrow_dist, 0.0, 1.0);
             return  mix(arrow_col, field_col, t);
         }`;
