@@ -67,7 +67,7 @@ class ShaderFilterVector extends ShaderFilter {
         // 2D vector field visualization by Matthias Reitinger, @mreitinger
         // Based on "2D vector field visualization by Morgan McGuire, http://casual-effects.com", https://www.shadertoy.com/view/4s23DG
         
-        const float ARROW_TILE_SIZE = 24.0;
+        const float ARROW_TILE_SIZE = 16.0;
         const float ISQRT2 = 0.70710678118; // 1/sqrt(2)
 
         // Computes the center pixel of the tile containing pixel pos
@@ -184,10 +184,6 @@ class ShaderFilterVector extends ShaderFilter {
                     break;
             }
 
-            //vec4 arrow_col = cmapc;
-            //vec4 arrow_col = vec4(1.0);
-            
-            //vec4 field_col = vec4(0.0, 0.0, 0.0, 0.3);
             float t = clamp(arrow_dist, 0.0, 1.0);
             return  mix(arrow_col, field_col, t);
         }`;

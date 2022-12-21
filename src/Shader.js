@@ -142,7 +142,7 @@ class Shader {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 
 		let src = `${gl2 ? '#version 300 es' : ''}\n` + this.fragShaderSrc() + '\n';
-		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
+		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n\n`;
 		for (let f of this.filters) {
 			src += `		// Filter: ${f.name}\n`;
 			src += f.fragModeSrc() + '\n';
