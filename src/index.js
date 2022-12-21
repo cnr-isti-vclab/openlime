@@ -3,7 +3,6 @@ import { Layer } from './Layer.js'
 import {Layout} from './Layout.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerDstretch } from './LayerDstretch.js'
-import { LayerSelectiveStretch } from './LayerSelectiveStretch.js'
 import {LayerRTI} from './LayerRTI.js'
 import { LayerCombiner } from './LayerCombiner.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
@@ -19,17 +18,8 @@ import { LayoutTiles} from './LayoutTiles.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
-/*
-	Make DStretch and SelectiveStretch filters
-
-	- DStretch
-		Sample from the previous post processing layer, not from the original image?
-
-	- For selective stretch a layer with controls is needed and it should be updated
-*/
-
-dstretchTest();
-//selectiveStretchTest();
+//dstretchTest();
+selectiveStretchTest();
 //filterTest();
 //combinerTest();
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
@@ -49,32 +39,21 @@ dstretchTest();
 
 function selectiveStretchTest() {
 	let stretch = new Layer({
-		type: 'selective-stretch',
+		type: 'dstretch',
 		layout: 'image',
-		url: 'assets/dstretch/selective/soldier.jpg'
+		url: 'assets/dstretch/selective/soldier.jpg',
+		selective: 'false',
+		sourceType: 'layer',
+		stretchType: 'selective'
 	});
 
-	lime.canvas.addLayer('selective-stretch', stretch);
+	lime.canvas.addLayer('D-Stretch', stretch);
 	let ui = new UIBasic(lime);
-	console.log(ui.lightcontroller.relative);
 
 	ui.lightcontroller.relative = false;
 	ui.actions.light.active = true;
 }
 
-function filterTest() {
-	console.log("Filtering");
-
-	let filterLayer = new Layer({
-		type: 'image',
-		layout: 'image',
-		url: 'assets/test/test.jpg'
-	});
-
-	lime.canvas.addLayer('image', filterLayer);
-	let ui = new UIBasic(lime);
-	ui.actions.light.active = false;
-}
 
 function dstretchTest() {
 	console.log("Dstretching");
@@ -96,6 +75,21 @@ function dstretchTest() {
 	ui.actions.light.active = true;
 
 }
+
+function filterTest() {
+	console.log("Filtering");
+
+	let filterLayer = new Layer({
+		type: 'image',
+		layout: 'image',
+		url: 'assets/test/test.jpg'
+	});
+
+	lime.canvas.addLayer('image', filterLayer);
+	let ui = new UIBasic(lime);
+	ui.actions.light.active = false;
+}
+
 
 function testAnnotationEditor() {
 	let layer0 = new Layer({ 

@@ -60,8 +60,10 @@ class ShaderFilterDstretch extends ShaderFilter {
             let imageUrl = layer.layout.getTileURL(0,{level:0, x: 0, y:0});
             this.initFromURL(imageUrl);
         }
-        if (layer.layout !== 'ready')
+        if (layer.layout.status !== 'ready')
             layer.layout.addEvent('ready', loadImage.bind(this));
+        else
+            loadImage.bind(this)();
     }
 
     initFromSamples(samples) {
