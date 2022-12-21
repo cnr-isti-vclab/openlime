@@ -146,7 +146,7 @@
         });
         lime.addLayer('Wind', layerWind);
 
-        const filterVector = new OpenLIME.ShaderFilterVector(cscaleLinearWind, { inDomain: config.wind.inDomain, arrowColor: [0.0, 0.7, 0.0, 1.0], resolution: [config.wind.width, config.wind.height] });
+        const filterVector = new OpenLIME.ShaderFilterVector(cscaleLinearWind, { inDomain: config.wind.inDomain, arrowColor: [0.0, 0.7, 0.0, 1.0] });
         layerWind.addShaderFilter(filterVector);
 
         // ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
