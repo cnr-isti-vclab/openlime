@@ -9,19 +9,24 @@ class ShaderFilter {
         this.needsUpdate = true;
         this.shader = null;
 
-        this.modes = [];
-        this.mode = null;
-        this.uniforms[this.uniformName('mode')] = { type: 'int', needsUpdate: true, size: 1, value: 0 };
+        this.modes = {};
     }
 
-    setMode(mode) {
-        const modeIdx = this.modes.indexOf(mode);
-        if (modeIdx == -1)
-            throw Error("Unknown mode: " + mode);
+    setMode(mode, id) {
         if (!this.shader)
             throw Error("Shader not registered");
-        this.mode = mode;
-        this.shader.setUniform(this.uniformName('mode'), modeIdx);
+
+        if (Object.keys(this.modes).length > 0) {
+            const list = this.modes[mode];
+            if (list) {
+                list.map(a => {
+                    a.enable = a.id == id;
+                });
+                this.shader.needsUpdate = true;
+            } else {
+                throw Error(`Mode "${mode}" not exist!`);
+            }
+        }
     }
 
     // Callback in Shader.js
@@ -34,6 +39,19 @@ class ShaderFilter {
     // Callback to create textures for samplers
     // createTextures(gl) {
     // }
+
+    // Constant (modes) declarations in shader program 
+    fragModeSrc() {
+        let src = '';
+        for (const key of Object.keys(this.modes)) {
+            for (const e of this.modes[key]) {
+                if (e.enable) {
+                    src += e.src + '\n';
+                }
+            }
+        }
+        return src;
+    }
 
     // Sampler declarations in shader program 
     fragSamplerSrc() {
@@ -69,6 +87,10 @@ class ShaderFilter {
 
     uniformName(name) {
         return `u_${this.name}_${name}`;
+    }
+
+    modeName(name) {
+        return `m_${this.name}_${name}`;
     }
 
     getSampler(name) {

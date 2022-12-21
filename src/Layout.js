@@ -81,6 +81,10 @@ class Layout {
 			throw "Layout type: " + type + " unknown, or module not loaded";
 	}
 
+	getTileSize() {
+		return [this.width, this.height];
+	}
+
 	setDefaults(type) {
 		Object.assign(this, {
 			type: type,

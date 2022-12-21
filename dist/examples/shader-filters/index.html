@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenLIME - Image Viewer</title>
     <link rel="stylesheet" href="../../css/skin.css" />
-    <link rel="stylesheet" href="../../css/light.css" />
+    <!-- <link rel="stylesheet" href="../../css/light.css" /> -->
     <link rel="stylesheet" href="../examples.css" />
     <style>
         .openlime-legend {
@@ -62,7 +62,8 @@
             //url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
             url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-            url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}'
+            url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
+            url: 'https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile//{z}/{y}/{x}'
         });
         lime.addLayer('Base', layer);
 
@@ -117,7 +118,7 @@
             new OpenLIME.Color('#f46d43'),
             new OpenLIME.Color('#d53e4f'),
         ], {
-            domain: [0, 30],
+            domain: [0, 32],
             description: config.wind.description
         });
 
@@ -145,14 +146,28 @@
         });
         lime.addLayer('Wind', layerWind);
 
-        const filterVector = new OpenLIME.ShaderFilterVector(cscaleLinearWind, { inDomain: config.wind.inDomain, resolution: [config.wind.width, config.wind.height] });
+        const filterVector = new OpenLIME.ShaderFilterVector(cscaleLinearWind, { inDomain: config.wind.inDomain, arrowColor: [0.0, 0.7, 0.0, 1.0], resolution: [config.wind.width, config.wind.height] });
         layerWind.addShaderFilter(filterVector);
-        filterVector.setMode('arrowColMag');
-        
-        //this.modes = ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
+
+        // ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
+        filterVector.setMode('arrow', 'col');
+        filterVector.setMode('field', 'mag');
 
         // // Colormap Legend
         const windLegend = new OpenLIME.ColormapLegend(lime, cscaleLinearWind, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
+
+        // Glyph
+        // (async () => {
+        //     const icon = OpenLIME.Util.loadSVG('./../assets/icons/arrow.svg');
+        //     const canvas = document.createElement("canvas");
+        //     canvas.width = 64;
+        //     canvas.height = 64;
+        //     const ctx = canvas.getContext("2d");
+        //     ctx.drawImage(icon, 0, 0);
+        //     const buffer = canvas.toDataURL();
+        //     console.log(buffer);
+        // })().catch(e => { console.log(e); throw Error("Something failed") });
+
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');

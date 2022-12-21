@@ -109,6 +109,10 @@ class LayoutTiles extends Layout {
 		})().catch(e => { console.log(e); this.status = e; });
 	}
 	
+	getTileSize() {
+		return [this.tilesize, this.tilesize];
+	}
+
 	/**
  	*  Each tile is assigned an unique number.
  	*/

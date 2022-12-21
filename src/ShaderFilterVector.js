@@ -10,7 +10,6 @@ class ShaderFilterVector extends ShaderFilter {
         options = Object.assign({
             inDomain: [],
             maxSteps: 256,
-            resolution: [1.0, 1.0],
             arrowColor: [0.0, 0.0, 0.0, 1.0]
         }, options);
         Object.assign(this, options);
@@ -27,8 +26,17 @@ class ShaderFilterVector extends ShaderFilter {
         const scale = Math.sqrt((this.inDomain[1] * this.inDomain[1] + this.inDomain[0] * this.inDomain[0]) / (cscaleDomain[1] * cscaleDomain[1] + cscaleDomain[0] * cscaleDomain[0]));
         const bias = 0.0;
 
-        this.modes = ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
-
+        this.modes = {
+            arrow: [
+                {id: 'mag', enable: true, src: `const int ${this.modeName('arrowColor')} = 0;`},
+                {id: 'col', enable: false, src: `const int ${this.modeName('arrowColor')} = 1;`}
+            ],
+            field: [
+                {id: 'none', enable: true, src: `const int ${this.modeName('fieldColor')} = 0;`},
+                {id: 'mag', enable: false, src: `const int ${this.modeName('fieldColor')} = 1;`}
+            ],
+        };
+        
         this.samplers = [{ name: `${this.samplerName('colormap')}` }];
 
         this.uniforms[this.uniformName('arrow_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.arrowColor };
@@ -36,7 +44,6 @@ class ShaderFilterVector extends ShaderFilter {
         this.uniforms[this.uniformName('high_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.colorscale.highColor.value() };
         this.uniforms[this.uniformName('scale')] = { type: 'float', needsUpdate: true, size: 1, value: scale };
         this.uniforms[this.uniformName('bias')] = { type: 'float', needsUpdate: true, size: 1, value: bias };
-        this.uniforms[this.uniformName('resolution')] = { type: 'vec2', needsUpdate: true, size: 2, value: this.resolution };
     }
 
     createTextures(gl) {
@@ -137,8 +144,8 @@ class ShaderFilterVector extends ShaderFilter {
         vec4 ${this.functionName()}(vec4 col){
             if(col.a == 0.0) return col;
 
-            vec2 p = v_texcoord*${this.uniformName('resolution')}; // point in pixel
-            vec2 pc_coord = arrowTileCenterCoord(p)/${this.uniformName('resolution')}; // center coordinate
+            vec2 p = v_texcoord*tileSize; // point in pixel
+            vec2 pc_coord = arrowTileCenterCoord(p)/tileSize; // center coordinate
             vec4 pc_val = texture(kd, pc_coord); // [0..1] - lookup color in center
             float s = 2.0;
             float b = -1.0;
@@ -159,18 +166,21 @@ class ShaderFilterVector extends ShaderFilter {
             vec4 arrow_col = cmapc;
             vec4 field_col = vec4(0.0, 0.0, 0.0, 0.0);
 
-            switch (${this.uniformName('mode')}) {
+            switch (${this.modeName('arrowColor')}) {
                 case 0:
                     arrow_col = cmapc;
+                    break;
+                case 1:
+                    arrow_col = ${this.uniformName('arrow_color')};               
+                    break;
+            }
+
+            switch (${this.modeName('fieldColor')}) {
+                case 0:
                     field_col = vec4(0.0, 0.0, 0.0, 0.0);
                     break;
                 case 1:
-                    arrow_col = ${this.uniformName('arrow_color')};
-                    field_col = vec4(0.0, 0.0, 0.0, 0.0);                    
-                    break;
-                case 2:
-                    arrow_col = ${this.uniformName('arrow_color')};
-                    field_col = cmapr;
+                    field_col = cmapr;              
                     break;
             }
 

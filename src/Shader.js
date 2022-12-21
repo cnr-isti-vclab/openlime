@@ -57,6 +57,7 @@ class Shader {
 			modes: [],
 			mode: null, // The current mode
 			needsUpdate: true,
+			tileSize: [0, 0]
 		});
 		addSignals(Shader, 'update');
 		Object.assign(this, options);
@@ -101,6 +102,11 @@ class Shader {
 		this.createProgram(gl);
 	}
 
+	setTileSize(sz) {
+		this.tileSize = sz;
+		this.needsUpdate = true;
+	}
+
 	/**
 	 * Sets the value of a uniform variable.
 	 * @param {string} name The name of the uniform variable.
@@ -136,12 +142,15 @@ class Shader {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 
 		let src = `${gl2 ? '#version 300 es' : ''}\n` + this.fragShaderSrc() + '\n';
+		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
 		for (let f of this.filters) {
 			src += `		// Filter: ${f.name}\n`;
+			src += f.fragModeSrc() + '\n';
 			src += f.fragSamplerSrc() + '\n';
 			src += f.fragUniformSrc() + '\n';
 			src += f.fragDataSrc() + '\n\n';
 		}
+
 		src += `
 		${gl2 ? 'out' : ''} vec4 color;
 		void main() { 
