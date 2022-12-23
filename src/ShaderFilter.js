@@ -37,7 +37,7 @@ class ShaderFilter {
     }
 
     // Callback to create textures for samplers
-    // createTextures(gl) {
+    // async createTextures(gl) {
     // }
 
     // Constant (modes) declarations in shader program 

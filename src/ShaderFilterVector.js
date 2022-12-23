@@ -51,7 +51,7 @@ class ShaderFilterVector extends ShaderFilter {
         this.uniforms[this.uniformName('bias')] = { type: 'float', needsUpdate: true, size: 1, value: bias };
     }
 
-    createTextures(gl) {
+    async createTextures(gl) {
         const colormap = this.colorscale.sample(this.maxSteps);
         let textureFilter = gl.LINEAR;
         if (this.colorscale.type == 'bar') {
