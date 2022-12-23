@@ -161,13 +161,17 @@
 
         lime.addLayer('Wind', layerWind);
 
-        const filterVector = new OpenLIME.ShaderFilterVector(cscaleLinearWind, { inDomain: config.wind.inDomain, arrowColor: [0.0, 0.7, 0.0, 1.0] });
-        layerWind.addShaderFilter(filterVector);
+        const filterVectorGlyph = new OpenLIME.ShaderFilterVectorGlyph(cscaleLinearWind, '../../assets/icons/ArrowN.svg',
+            {
+                inDomain: config.wind.inDomain,
+                arrowColor: [0.0, 0.7, 0.0, 1.0]
+            });
+        layerWind.addShaderFilter(filterVectorGlyph);
 
         // ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
-        filterVector.setMode('arrow', 'mag');
-        filterVector.setMode('field', 'none');
-        filterVector.setMode('normalize', 'off');
+        filterVectorGlyph.setMode('glyph', 'col');
+        filterVectorGlyph.setMode('field', 'mag');
+        filterVectorGlyph.setMode('normalize', 'off');
 
         // // Colormap Legend
         const windLegend = new OpenLIME.ColormapLegend(lime, cscaleLinearWind, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
@@ -177,7 +181,7 @@
 
 
             //const b0 = await rasterizeSVG('../../assets/icons/ArrowN.svg', [32, 32]);
-            const b0 = await OpenLIME.Util.rasterizeSVG('../../assets/icons/ArrowNsmall.svg', [128, 128], 1.0);
+            const b0 = await OpenLIME.Util.rasterizeSVG('../../assets/icons/ArrowN.svg', [304, 64]);
             console.log(b0);
             // const d = OpenLIME.Util.computeSDF(b0, 32, 32);
             // console.log("DIST ", d);

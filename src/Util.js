@@ -208,15 +208,13 @@ class Util {
 
                 const imageData = ctx.getImageData(0, 0, size[0], size[1]);
 
-                const buffer = imageData.data.buffer;  // ArrayBuffer
+                // const imgURI = canvas
+                //     .toDataURL('image/png')
+                //     .replace('image/png', 'image/octet-stream');
 
-                const imgURI = canvas
-                    .toDataURL('image/png')
-                    .replace('image/png', 'image/octet-stream');
+                // console.log(imgURI);
 
-                console.log(imgURI);
-
-                resolve(buffer);
+                resolve(imageData);
             };
             img.onerror = (e) => reject(e);
         });

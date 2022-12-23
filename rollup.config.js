@@ -30,6 +30,7 @@ const core = [
 	'./src/ShaderFilter.js',
 	'./src/ShaderFilterColormap.js',
 	'./src/ShaderFilterVector.js',
+	'./src/ShaderFilterVectorGlyph.js',
 	'./src/Shader.js',
 	'./src/ShaderCombiner.js',
 	'./src/Controller.js',
