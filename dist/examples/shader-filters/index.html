@@ -18,13 +18,20 @@
             left: 20px;
             width: 600px;
         }
+
+        #test {
+            display: block;
+            position: absolute;
+            top: 30px;
+            left: 50px;
+        }
     </style>
 </head>
 
 <body>
     <h1>OpenLIME - Image Viewer</h1>
     <div class="openlime"></div>
-
+    <div id="test"></div>
     <script src="../../js/openlime.js"></script>
     <script type="module">
         import config from './config.json' assert {type: 'json'};
@@ -137,37 +144,45 @@
         // const legend = new OpenLIME.ColormapLegend(lime, colorscale, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
 
         // WIND
+        // const layerWind = new OpenLIME.Layer({
+        //     layout: 'image',
+        //     type: 'image',
+        //     transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
+        //     url: config.wind.url,
+        //     overlay: true
+        // });
         const layerWind = new OpenLIME.Layer({
-            layout: 'image',
+            layout: 'deepzoom',
             type: 'image',
             transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
-            url: config.wind.url,
+            url: '../../assets/moloch/moloch_2018050103_0011700_meter_wind.dzi',
             overlay: true
         });
+
         lime.addLayer('Wind', layerWind);
 
         const filterVector = new OpenLIME.ShaderFilterVector(cscaleLinearWind, { inDomain: config.wind.inDomain, arrowColor: [0.0, 0.7, 0.0, 1.0] });
         layerWind.addShaderFilter(filterVector);
 
         // ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
-        filterVector.setMode('arrow', 'col');
-        filterVector.setMode('field', 'mag');
+        filterVector.setMode('arrow', 'mag');
+        filterVector.setMode('field', 'none');
+        filterVector.setMode('normalize', 'off');
 
         // // Colormap Legend
         const windLegend = new OpenLIME.ColormapLegend(lime, cscaleLinearWind, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
 
         // Glyph
-        // (async () => {
-        //     const icon = OpenLIME.Util.loadSVG('./../assets/icons/arrow.svg');
-        //     const canvas = document.createElement("canvas");
-        //     canvas.width = 64;
-        //     canvas.height = 64;
-        //     const ctx = canvas.getContext("2d");
-        //     ctx.drawImage(icon, 0, 0);
-        //     const buffer = canvas.toDataURL();
-        //     console.log(buffer);
-        // })().catch(e => { console.log(e); throw Error("Something failed") });
+        (async () => {
 
+
+            //const b0 = await rasterizeSVG('../../assets/icons/ArrowN.svg', [32, 32]);
+            const b0 = await OpenLIME.Util.rasterizeSVG('../../assets/icons/ArrowNsmall.svg', [128, 128], 1.0);
+            console.log(b0);
+            // const d = OpenLIME.Util.computeSDF(b0, 32, 32);
+            // console.log("DIST ", d);
+
+        })().catch(e => { console.log(e); throw Error("Something failed") });
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');

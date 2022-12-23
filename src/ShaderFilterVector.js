@@ -10,7 +10,8 @@ class ShaderFilterVector extends ShaderFilter {
         options = Object.assign({
             inDomain: [],
             maxSteps: 256,
-            arrowColor: [0.0, 0.0, 0.0, 1.0]
+            arrowColor: [0.0, 0.0, 0.0, 1.0],
+            
         }, options);
         Object.assign(this, options);
 
@@ -27,16 +28,20 @@ class ShaderFilterVector extends ShaderFilter {
         const bias = 0.0;
 
         this.modes = {
+            normalize: [
+                { id: 'off', enable: true, src: `const bool ${this.modeName('arrowNormalize')} = false;` },
+                { id: 'on', enable: false, src: `const bool ${this.modeName('arrowNormalize')} = true;` }
+            ],
             arrow: [
-                {id: 'mag', enable: true, src: `const int ${this.modeName('arrowColor')} = 0;`},
-                {id: 'col', enable: false, src: `const int ${this.modeName('arrowColor')} = 1;`}
+                { id: 'mag', enable: true, src: `const int ${this.modeName('arrowColor')} = 0;` },
+                { id: 'col', enable: false, src: `const int ${this.modeName('arrowColor')} = 1;` }
             ],
             field: [
-                {id: 'none', enable: true, src: `const int ${this.modeName('fieldColor')} = 0;`},
-                {id: 'mag', enable: false, src: `const int ${this.modeName('fieldColor')} = 1;`}
-            ],
+                { id: 'none', enable: true, src: `const int ${this.modeName('fieldColor')} = 0;` },
+                { id: 'mag', enable: false, src: `const int ${this.modeName('fieldColor')} = 1;` }
+            ]
         };
-        
+
         this.samplers = [{ name: `${this.samplerName('colormap')}` }];
 
         this.uniforms[this.uniformName('arrow_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.arrowColor };
@@ -104,6 +109,7 @@ class ShaderFilterVector extends ShaderFilter {
         // desired in pixels for arrows
         // Returns a signed distance from the arrow
         float arrow(vec2 p, vec2 v) {
+            if (${this.modeName('arrowNormalize')}) v = normalize(v);
             v *= ARROW_TILE_SIZE * 0.5; // Change from [-1,1] to pixels
             // Make everything relative to the center, which may be fractional
             p -= arrowTileCenterCoord(p);
