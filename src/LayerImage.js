@@ -51,9 +51,7 @@ class LayerImage extends Layer {
 
 			let gl2 = !(gl instanceof WebGLRenderingContext);
 			let str = `
-precision highp float;
-precision highp int;
-
+			
 uniform sampler2D kd;
 
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;

@@ -144,8 +144,12 @@ class Shader {
 	completeFragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 
-		let src = `${gl2 ? '#version 300 es' : ''}\n` + this.fragShaderSrc() + '\n';
-		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n\n`;
+		let src = `${gl2 ? '#version 300 es' : ''}\n`;
+		src += `precision highp float;\n`;
+		src += `precision highp int;\n`;
+		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
+		src += this.fragShaderSrc() + '\n';
+
 		for (let f of this.filters) {
 			src += `		// Filter: ${f.name}\n`;
 			src += f.fragModeSrc() + '\n';
@@ -294,16 +298,16 @@ class Shader {
 	 */
 	vertShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		return `${ gl2? '#version 300 es': '' }
+		return `${gl2 ? '#version 300 es' : ''}
 
 precision highp float; 
 precision highp int; 
 
 uniform mat4 u_matrix;
-${ gl2 ? 'in' : 'attribute' } vec4 a_position;
-${ gl2 ? 'in' : 'attribute' } vec2 a_texcoord;
+${gl2 ? 'in' : 'attribute'} vec4 a_position;
+${gl2 ? 'in' : 'attribute'} vec2 a_texcoord;
 
-${ gl2 ? 'out' : 'varying' } vec2 v_texcoord;
+${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 
 			void main() {
 				gl_Position = u_matrix * a_position;

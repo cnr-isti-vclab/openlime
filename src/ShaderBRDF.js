@@ -81,8 +81,6 @@ class ShaderBRDF extends Shader {
 		let hasGloss = this.samplers.findIndex( s => s.name == 'uTexGloss') != -1 && this.mode != 'monochrome';
 		let hasKs = this.samplers.findIndex( s => s.name == 'uTexKs') != -1;	
 		let str = `
-precision highp float; 
-precision highp int; 
 
 #define NULL_NORMAL vec3(0,0,0)
 #define SQR(x) ((x)*(x))

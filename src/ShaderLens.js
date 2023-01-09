@@ -52,8 +52,6 @@ class ShaderLens extends Shader {
             `
         }
 		return `
-        precision highp float; 
-        precision highp int; 
 
         ${samplerDeclaration}
         uniform vec4 u_lens; // [cx, cy, radius, border]
@@ -103,9 +101,7 @@ class ShaderLens extends Shader {
     vertShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		return `${gl2? '#version 300 es':''}
-
-precision highp float; 
-precision highp int; 
+ 
 
 ${gl2? 'in' : 'attribute'} vec4 a_position;
 ${gl2? 'in' : 'attribute'} vec2 a_texcoord;
