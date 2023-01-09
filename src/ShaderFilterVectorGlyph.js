@@ -130,7 +130,11 @@ class ShaderFilterVectorGlyph extends ShaderFilter {
                 pp *= scaleToGlyph; // pp in [0, glyph_wh]
                 pp.x += level * ${this.uniformName('glyph_stride')}; // apply stride
                 pp.y = ${this.uniformName('glyph_wh')} - pp.y - 1.0; // invert y-axis
-                vec4 g = texelFetch(${this.samplerName('glyphs')}, ivec2(pp), 0);
+                //vec4 g = texelFetch(${this.samplerName('glyphs')}, ivec2(pp), 0);
+                float w = ${this.uniformName('glyph_stride')}*(${this.uniformName('glyph_count')} -1.0) + ${this.uniformName('glyph_wh')};
+                float h = ${this.uniformName('glyph_wh')};
+                vec2 ppnorm = pp/vec2(w,h);
+                vec4 g = texture(${this.samplerName('glyphs')}, ppnorm);
                 return 1.0-g.a;
 
             } else {

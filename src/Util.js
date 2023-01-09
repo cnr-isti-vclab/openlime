@@ -3,6 +3,21 @@ window.structuredClone = typeof (structuredClone) == "function" ? structuredClon
 
 // Utilities
 class Util {
+    
+    static padZeros(num, size) {
+		num = num.toString();
+		while (num.length < size) num = "0" + num;
+		return num;
+	}
+
+	static printSrcCode(str) {
+		let i = 1;
+		for (let l of str.split(/\r\n|\r|\n/)) {
+			const nline = Util.padZeros(i, 5);
+			console.log(`${nline}   ${l}`);
+			i++;
+		}
+	}
 
     static createSVGElement(tag, attributes) {
         let e = document.createElementNS('http://www.w3.org/2000/svg', tag);

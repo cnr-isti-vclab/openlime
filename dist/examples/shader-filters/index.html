@@ -152,6 +152,7 @@
         //     overlay: true
         // });
         const layerWind = new OpenLIME.Layer({
+            debug: true,
             layout: 'deepzoom',
             type: 'image',
             transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },

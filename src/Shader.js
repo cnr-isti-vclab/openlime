@@ -1,4 +1,6 @@
 import { addSignals } from './Signals.js'
+import { Util } from './Util.js'
+
 /**
  * A reference to a 2D texture.
  * @typedef {Object} Shader#Sampler
@@ -50,6 +52,7 @@ class Shader {
 	constructor(options) {
 		Object.assign(this, {
 			version: 100,   //check for webglversion. 
+			debug: false,
 			samplers: [],
 			uniforms: {},
 			label: null,
@@ -173,9 +176,11 @@ class Shader {
 		gl.compileShader(vert);
 		let compiled = gl.getShaderParameter(vert, gl.COMPILE_STATUS);
 		if (!compiled) {
-			console.log(this.vertShaderSrc(gl))
+			Util.printSrcCode(this.vertShaderSrc(gl))
 			console.log(gl.getShaderInfoLog(vert));
 			throw Error("Failed vertex shader compilation: see console log and ask for support.");
+		} else if (this.debug) {
+			Util.printSrcCode(this.vertShaderSrc(gl))
 		}
 
 		let frag = gl.createShader(gl.FRAGMENT_SHADER);
@@ -190,13 +195,12 @@ class Shader {
 		gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		compiled = gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		if (!compiled) {
-			console.log(this.completeFragShaderSrc(gl));
+			Util.printSrcCode(this.completeFragShaderSrc(gl));
 			console.log(gl.getShaderInfoLog(frag));
 			throw Error("Failed fragment shader compilation: see console log and ask for support.");
+		} else if (this.debug) {
+			Util.printSrcCode(this.completeFragShaderSrc(gl));
 		}
-
-		console.log(this.completeFragShaderSrc(gl));
-
 		gl.attachShader(program, vert);
 		gl.attachShader(program, frag);
 		gl.linkProgram(program);
@@ -290,21 +294,21 @@ class Shader {
 	 */
 	vertShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		return `${gl2 ? '#version 300 es' : ''}
+		return `${ gl2? '#version 300 es': '' }
 
 precision highp float; 
 precision highp int; 
 
 uniform mat4 u_matrix;
-${gl2 ? 'in' : 'attribute'} vec4 a_position;
-${gl2 ? 'in' : 'attribute'} vec2 a_texcoord;
+${ gl2 ? 'in' : 'attribute' } vec4 a_position;
+${ gl2 ? 'in' : 'attribute' } vec2 a_texcoord;
 
-${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
+${ gl2 ? 'out' : 'varying' } vec2 v_texcoord;
 
-void main() {
-	gl_Position = u_matrix * a_position;
-	v_texcoord = a_texcoord;
-}`;
+			void main() {
+				gl_Position = u_matrix * a_position;
+				v_texcoord = a_texcoord;
+			} `;
 	}
 
 	/**
