@@ -90,8 +90,6 @@ class LayerAnnotationImage extends LayerAnnotation {
 
             let gl2 = !(gl instanceof WebGLRenderingContext);
             let str = `
-precision highp float;
-precision highp int;
 
 uniform sampler2D kd;
 

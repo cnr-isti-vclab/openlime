@@ -124,9 +124,6 @@ class ShaderDstretch extends Shader {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let str = `
 
-precision highp float; 
-precision highp int; 
-
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
 
 uniform mat4 rotation;

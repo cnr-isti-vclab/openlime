@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLIME - Shader Filter</title>
+    <title>OpenLIME - Vector Glyph</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <!-- <link rel="stylesheet" href="../../css/light.css" /> -->
     <link rel="stylesheet" href="../examples.css" />
@@ -29,7 +29,7 @@
 </head>
 
 <body>
-    <h1>OpenLIME - Shader Filter</h1>
+    <h1>OpenLIME - Vector Glyph</h1>
     <div class="openlime"></div>
     <div id="test"></div>
     <script src="../../js/openlime.js"></script>
@@ -80,61 +80,53 @@
         const geoimgCenter = config.temperature.center;
         const geoimgScale = (config.temperature.lowerRight[0] - config.temperature.upperLeft[0]) / config.temperature.width; // Width [m] / Width [pixel]
 
-        const layerTemp = new OpenLIME.Layer({
+        const cscaleLinearWind = new OpenLIME.Colormap([
+            new OpenLIME.Color('#3288bd'),
+            new OpenLIME.Color('#66c2a5'),
+            new OpenLIME.Color('#abdda4'),
+            new OpenLIME.Color('#e6f598'),
+            new OpenLIME.Color('#fee08b'),
+            new OpenLIME.Color('#fdae61'),
+            new OpenLIME.Color('#f46d43'),
+            new OpenLIME.Color('#d53e4f'),
+        ], {
+            domain: [0, 32],
+            description: config.wind.description
+        });
+
+        // Create layer with vector data: wind (u,v))
+        const layerWind = new OpenLIME.Layer({
             debug: true,
-            layout: 'image',
-            type: 'maskedimage',
+            layout: 'deepzoom',
+            type: 'image',
             transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
-            url: config.temperature.url,
+            url: '../../assets/moloch/moloch_2018050103_0011700_meter_wind.dzi',
             overlay: true
         });
-        lime.addLayer('Temp', layerTemp);
 
-        // Add a Colormap filter
+        lime.addLayer('Wind', layerWind);
 
-        // Create a colormap
-        const cscaleBar = new OpenLIME.Colormap([
-            new OpenLIME.Color("rgb(0, 0, 255)"),
-            new OpenLIME.Color('rgb(255, 255, 255)'),
-            new OpenLIME.Color('rgb(125, 0, 0)'),
-            new OpenLIME.Color('rgb(200, 0, 0)'),
-            new OpenLIME.Color('rgb(255, 0, 0)'),
-            new OpenLIME.Color('rgb(0, 128, 0)'),
-        ], {
-            domain: [-10, -1, 1, 10, 20, 30],
-            type: 'bar',
-            description: config.temperature.description
+        // Add filter
+        const filterVectorGlyph = new OpenLIME.ShaderFilterVectorGlyph(cscaleLinearWind, '../../assets/icons/ArrowN.svg', {
+            inDomain: config.wind.inDomain,
+            glyphColor: [0.0, 0.4, 0.0, 1.0]
         });
+        layerWind.addShaderFilter(filterVectorGlyph);
 
-        const cscaleLinearTemp = new OpenLIME.Colormap([
-            new OpenLIME.Color("rgb(0, 0, 255)"),
-            new OpenLIME.Color('rgb(255, 255, 255)'),
-            new OpenLIME.Color('rgb(255, 0, 0)'),
-        ], {
-            domain: [-10, 0, 30],
-            description: config.temperature.description
-        });
+        // mode: ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
+        filterVectorGlyph.setMode('glyph', 'col');
+        filterVectorGlyph.setMode('field', 'mag');
+        filterVectorGlyph.setMode('normalize', 'off');
 
-        const colorscale = cscaleLinearTemp;
-
-        // Create the filter
-        const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: config.temperature.inDomain });
-
-        // Add the filter to the shader
-        layerTemp.addShaderFilter(filterColormap);
-
-        // Add Filter Opacity
-        const filterOpacity = new OpenLIME.ShaderFilterOpacity(1.0);
-        layerTemp.addShaderFilter(filterOpacity);
-
-        // Colormap Legend
-        const legend = new OpenLIME.ColormapLegend(lime, colorscale, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
+        // // Colormap Legend
+        const windLegend = new OpenLIME.ColormapLegend(lime, cscaleLinearWind, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
         // Create an User Interface 
         const ui = new OpenLIME.UIBasic(lime);
+        
         // Remove light from the toolbar
         ui.actions.light.display = false;
 

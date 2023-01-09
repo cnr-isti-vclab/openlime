@@ -1,4 +1,6 @@
 import { addSignals } from './Signals.js'
+import { Util } from './Util.js'
+
 /**
  * A reference to a 2D texture.
  * @typedef {Object} Shader#Sampler
@@ -50,6 +52,7 @@ class Shader {
 	constructor(options) {
 		Object.assign(this, {
 			version: 100,   //check for webglversion. 
+			debug: false,
 			samplers: [],
 			uniforms: {},
 			label: null,
@@ -57,6 +60,7 @@ class Shader {
 			modes: [],
 			mode: null, // The current mode
 			needsUpdate: true,
+			tileSize: [0, 0]
 		});
 		addSignals(Shader, 'update');
 		Object.assign(this, options);
@@ -70,6 +74,7 @@ class Shader {
 	}
 
 	addFilter(f) {
+		f.shader = this;
 		this.filters.push(f);
 		this.needsUpdate = true;
 		f.needsUpdate = true;
@@ -98,6 +103,11 @@ class Shader {
 	/** @ignore */
 	restoreWebGL(gl) {
 		this.createProgram(gl);
+	}
+
+	setTileSize(sz) {
+		this.tileSize = sz;
+		this.needsUpdate = true;
 	}
 
 	/**
@@ -134,13 +144,20 @@ class Shader {
 	completeFragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 
-		let src = `${gl2 ? '#version 300 es' : ''}\n` + this.fragShaderSrc() + '\n';
+		let src = `${gl2 ? '#version 300 es' : ''}\n`;
+		src += `precision highp float;\n`;
+		src += `precision highp int;\n`;
+		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
+		src += this.fragShaderSrc() + '\n';
+
 		for (let f of this.filters) {
 			src += `		// Filter: ${f.name}\n`;
+			src += f.fragModeSrc() + '\n';
 			src += f.fragSamplerSrc() + '\n';
 			src += f.fragUniformSrc() + '\n';
 			src += f.fragDataSrc() + '\n\n';
 		}
+
 		src += `
 		${gl2 ? 'out' : ''} vec4 color;
 		void main() { 
@@ -163,9 +180,11 @@ class Shader {
 		gl.compileShader(vert);
 		let compiled = gl.getShaderParameter(vert, gl.COMPILE_STATUS);
 		if (!compiled) {
-			console.log(this.vertShaderSrc(gl))
+			Util.printSrcCode(this.vertShaderSrc(gl))
 			console.log(gl.getShaderInfoLog(vert));
 			throw Error("Failed vertex shader compilation: see console log and ask for support.");
+		} else if (this.debug) {
+			Util.printSrcCode(this.vertShaderSrc(gl))
 		}
 
 		let frag = gl.createShader(gl.FRAGMENT_SHADER);
@@ -180,13 +199,12 @@ class Shader {
 		gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		compiled = gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		if (!compiled) {
-			console.log(this.completeFragShaderSrc(gl));
+			Util.printSrcCode(this.completeFragShaderSrc(gl));
 			console.log(gl.getShaderInfoLog(frag));
 			throw Error("Failed fragment shader compilation: see console log and ask for support.");
+		} else if (this.debug) {
+			Util.printSrcCode(this.completeFragShaderSrc(gl));
 		}
-
-		//console.log(this.completeFragShaderSrc(gl));
-
 		gl.attachShader(program, vert);
 		gl.attachShader(program, frag);
 		gl.linkProgram(program);
@@ -291,10 +309,10 @@ ${gl2 ? 'in' : 'attribute'} vec2 a_texcoord;
 
 ${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 
-void main() {
-	gl_Position = u_matrix * a_position;
-	v_texcoord = a_texcoord;
-}`;
+			void main() {
+				gl_Position = u_matrix * a_position;
+				v_texcoord = a_texcoord;
+			} `;
 	}
 
 	/**

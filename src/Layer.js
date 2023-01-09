@@ -92,6 +92,7 @@ class Layer {
 		Object.assign(this, {
 			transform: new Transform(),
 			viewport: null,
+			debug: false,
 			visible: true,
 			zindex: 0,
 			overlay: false, //in the GUI it won't affect the visibility of the other layers
@@ -125,7 +126,7 @@ class Layer {
 
 		if (typeof (this.layout) == 'string') {
 			let size = { width: this.width, height: this.height };
-			this.setLayout(new Layout(null, this.layout, size)); //FIXME new Layout not have size, but options.width options.height
+			this.setLayout(new Layout(null, this.layout, size));
 		} else {
 			this.setLayout(this.layout);
 		}
@@ -190,10 +191,12 @@ class Layer {
 		* The event is fired if a redraw is needed.
 		* @event Layer#update
 		*/
+		this.layout = layout;
 
 		let callback = () => {
 			this.status = 'ready';
 			this.setupTiles(); //setup expect status to be ready!
+
 			this.emit('ready');
 			this.emit('update');
 		};
@@ -201,10 +204,12 @@ class Layer {
 			callback();
 		else
 			layout.addEvent('ready', callback);
-		this.layout = layout;
 
 		// Set signal to acknowledge change of bbox when it is known. Let this signal go up to canvas
-		this.layout.addEvent('updateSize', () => { this.emit('updateSize'); });
+		this.layout.addEvent('updateSize', () => {
+			this.shader.setTileSize(this.layout.getTileSize());
+			this.emit('updateSize');
+		});
 	}
 
 	// OK
@@ -688,8 +693,10 @@ class Layer {
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]), gl.STATIC_DRAW);
 		}
 
-		if (this.shader.needsUpdate)
+		if (this.shader.needsUpdate) {
+			this.shader.debug = this.debug;
 			this.shader.createProgram(gl);
+		}
 
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl, this.shader.program);

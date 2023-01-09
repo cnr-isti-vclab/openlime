@@ -21,6 +21,10 @@ class LayoutTileImages extends Layout {
 		}
 	}
 
+	getTileSize() {
+		return [0, 0];
+	}
+
 	async loadDescriptors(url) {
 		// Load tile descriptors from annotation file
 		let response = await fetch(url);

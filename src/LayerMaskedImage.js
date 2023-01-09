@@ -24,31 +24,23 @@ class LayerMaskedImage extends Layer {
 			'samplers': [{ id: 0, name: 'kd', type: rasterFormat }]
 		});
 
-		shader.uniforms = {
-			u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1, 1] },
-		}
-
 		shader.fragShaderSrc = function (gl) {
 
 			let gl2 = !(gl instanceof WebGLRenderingContext);
 			let str = `
-		precision highp float;
-		precision highp int;
-
-		uniform vec2 u_width_height; // Keep wh to map to pixels.
-
+		
 		uniform sampler2D kd;
 
 		${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 
 		vec2 bilinear_masked_scalar(sampler2D field, vec2 uv) {
-			vec2 px = uv*u_width_height;
+			vec2 px = uv*tileSize;
 			ivec2 iuv = ivec2(floor( px ));
 			vec2 fuv = fract(px);
 			int i0 = iuv.x;
 			int j0 = iuv.y;
-			int i1 = i0+1>=int(u_width_height.x) ? i0 : i0+1;
-			int j1 = j0+1>=int(u_width_height.y) ? j0 : j0+1;
+			int i1 = i0+1>=int(tileSize.x) ? i0 : i0+1;
+			int j1 = j0+1>=int(tileSize.y) ? j0 : j0+1;
 		  
 			float f00 = texelFetch(field, ivec2(i0, j0), 0).r;
 			float f10 = texelFetch(field, ivec2(i1, j0), 0).r;
@@ -93,8 +85,6 @@ class LayerMaskedImage extends Layer {
 	loadTexture(gl, img) {
 		this.rasters[0].width = img.width;
 		this.rasters[0].height = img.height;
-
-		this.shader.setUniform('u_width_height', [img.width, img.height]);
 
 		var tex = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, tex);

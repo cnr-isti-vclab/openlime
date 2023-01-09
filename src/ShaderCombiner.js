@@ -39,8 +39,6 @@ class ShaderCombiner extends Shader {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let operation = this.operations[this.mode];
 		return `
-precision highp float; 
-precision highp int; 
 
 ${gl2? 'in' : 'varying'} vec2 v_texcoord;
 
@@ -62,8 +60,6 @@ vec4 data() {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		return `${gl2? '#version 300 es':''}
 
-precision highp float; 
-precision highp int; 
 
 ${gl2? 'in' : 'attribute'} vec4 a_position;
 ${gl2? 'in' : 'attribute'} vec2 a_texcoord;

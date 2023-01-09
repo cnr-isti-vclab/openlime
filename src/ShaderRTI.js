@@ -188,8 +188,6 @@ class ShaderRTI extends Shader {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let str = `
 
-precision highp float; 
-precision highp int; 
 
 #define np1 ${this.nplanes + 1}
 

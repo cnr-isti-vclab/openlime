@@ -7,18 +7,51 @@ class ShaderFilter {
         this.uniforms = {};
         this.samplers = [];
         this.needsUpdate = true;
+        this.shader = null;
+
+        this.modes = {};
+    }
+
+    setMode(mode, id) {
+        if (!this.shader)
+            throw Error("Shader not registered");
+
+        if (Object.keys(this.modes).length > 0) {
+            const list = this.modes[mode];
+            if (list) {
+                list.map(a => {
+                    a.enable = a.id == id;
+                });
+                this.shader.needsUpdate = true;
+            } else {
+                throw Error(`Mode "${mode}" not exist!`);
+            }
+        }
     }
 
     // Callback in Shader.js
     prepare(gl) {
-        if(this.needsUpdate)
-            if(this.createTextures) this.createTextures(gl);
+        if (this.needsUpdate)
+            if (this.createTextures) this.createTextures(gl);
         this.needsUpdate = false;
     }
 
     // Callback to create textures for samplers
-    // createTextures(gl) {
+    // async createTextures(gl) {
     // }
+
+    // Constant (modes) declarations in shader program 
+    fragModeSrc() {
+        let src = '';
+        for (const key of Object.keys(this.modes)) {
+            for (const e of this.modes[key]) {
+                if (e.enable) {
+                    src += e.src + '\n';
+                }
+            }
+        }
+        return src;
+    }
 
     // Sampler declarations in shader program 
     fragSamplerSrc() {
@@ -54,6 +87,10 @@ class ShaderFilter {
 
     uniformName(name) {
         return `u_${this.name}_${name}`;
+    }
+
+    modeName(name) {
+        return `m_${this.name}_${name}`;
     }
 
     getSampler(name) {

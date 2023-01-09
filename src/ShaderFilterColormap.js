@@ -34,7 +34,7 @@ class ShaderFilterColormap extends ShaderFilter {
 
     }
 
-    createTextures(gl) {       
+    async createTextures(gl) {
         const colormap = this.colorscale.sample(this.maxSteps);
         let textureFilter=gl.LINEAR;
         if(this.colorscale.type == 'bar') {
