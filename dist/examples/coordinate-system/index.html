@@ -47,7 +47,6 @@
         ui.controlZoomMessage = "Use Ctrl + Wheel to zoom instead of scrolling";
 
         // Draw SVG Overlay
-        const delta = 10;
         const w = lime.camera.viewport.w;
         const h = lime.camera.viewport.h;
         let svgElement = OpenLIME.Util.createSVGElement('svg', { viewBox: `0 0 ${w} ${h}` });
@@ -93,6 +92,21 @@
             return str;
         }
 
+        document.addEventListener('keydown', function(e) {
+            console.log("Press V to change viewport");
+            if (e.key=='v') {
+                const delta = 100;
+                const deltaL = parseInt(Math.random() * delta);
+                const deltaH = parseInt(Math.random() * delta);
+                lime.camera.viewport.x = deltaL;
+                lime.camera.viewport.y = deltaL;
+                lime.camera.viewport.dx = lime.camera.viewport.w - deltaL - deltaH;
+                lime.camera.viewport.dy = lime.camera.viewport.h - deltaL - deltaH;
+                console.log("Change Viewport to ", lime.camera.viewport);
+                lime.redraw();
+            }
+        });
+
         document.addEventListener('mousedown', function (e) {
             // Get Mouse position, do some transformation and checks, and print results
 
@@ -134,7 +148,7 @@
 
             let p = document.getElementById("coordinateInfo");
             p.innerHTML = "Coordinate System info<br><br>" +
-            "Viewport " + vp.w.toFixed(0) + ", " + vp.h.toFixed(0) + "<br>" + 
+            "Viewport " + vp.x.toFixed(0) + ", " + vp.y.toFixed(0) + ", " + vp.dx.toFixed(0) + ", " + vp.dy.toFixed(0) + "<br>" + 
             "GLViewport " + vpGL.w.toFixed(0) + ", " + vpGL.h.toFixed(0) + "<br>" +
             "Coordinates useGL " + useGL +  "<br>" +
             "LayerT: x:" + layerT.x.toFixed(p) + ", y:" + layerT.y.toFixed(p) + ", z:" + layerT.z.toFixed(p) + ", a:" + layerT.a.toFixed(p) + "<br>" +

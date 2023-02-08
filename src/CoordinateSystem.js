@@ -24,7 +24,8 @@ class CoordinateSystem {
      */
      static fromViewportToCanvasHtml(p, camera, useGL) {
         const viewport = this.getViewport(camera, useGL);
-        let result = this.invertY(p, viewport);
+        let result = {x:p.x + viewport.x, y: p.y + viewport.y};
+        result = this.invertY(result, viewport);
         return useGL ? this.scale(result, 1/window.devicePixelRatio) : result;
     }
 
@@ -38,7 +39,10 @@ class CoordinateSystem {
      static fromCanvasHtmlToViewport(p, camera, useGL) {
         let result = useGL ? this.scale(p, window.devicePixelRatio) : p;
         const viewport = this.getViewport(camera, useGL);
-        return this.invertY(result, viewport);
+        result = this.invertY(result, viewport);
+        result.x -= viewport.x;
+        result.y -= viewport.y;
+        return result;
     }
 
     
@@ -306,7 +310,7 @@ class CoordinateSystem {
      * @returns transform from Viewport to Center
      */
     static getFromViewportToCenterTransformNoCamera(viewport) {
-        return new Transform({x:viewport.x-viewport.w/2, y:viewport.y-viewport.h/2, z:1, a:0, t:0});
+        return new Transform({x:-viewport.w/2, y:-viewport.h/2, z:1, a:0, t:0});
     }
 
     /**
