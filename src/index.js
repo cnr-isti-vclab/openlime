@@ -1,6 +1,5 @@
 import { Viewer } from './Viewer.js'
 import { Layer } from './Layer.js'
-import { LayoutTiles } from './LayoutTiles.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerDstretch } from './LayerDstretch.js'
 import { LayerCombiner } from './LayerCombiner.js'
@@ -13,6 +12,9 @@ import { LayerAnnotation } from './LayerAnnotation.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 import { LayerRTI } from './LayerRTI.js'
+import { LayoutTiles} from './LayoutTiles.js'
+
+
 import { LayerNeuralRTI } from './LayerNeuralRTI.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
@@ -22,7 +24,7 @@ let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDraw
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
-//rtiTest('rbf');
+rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 
@@ -37,11 +39,10 @@ let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDraw
 testNeural();
 
 function testNeural() {
-	
 	let layer0 = new Layer({
 		type: 'neural',
-		url: 'assets/neural/Nor_A1/info.json',
-		layout: 'deepzoom',
+		url: 'assets/neural/minmax/obj1mat4/json/',
+		layout: 'image',
 		zindex: 0,
 	});
 	lime.canvas.addLayer('neural', layer0);
