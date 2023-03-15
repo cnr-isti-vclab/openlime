@@ -11,15 +11,17 @@ import { Skin } from './Skin.js'
 import { LayerAnnotation } from './LayerAnnotation.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
+import { LayerRTI } from './LayerRTI.js'
+import { LayoutTiles} from './LayoutTiles.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
-dstretchTest();
+// dstretchTest();
 //combinerTest();
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
-//rtiTest('rbf');
+rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 
@@ -241,7 +243,7 @@ function rtiTest(dataset) {
 
 	let layer0 = new Layer({ 
 		label: '4',
-		layout: 'image', 
+		layout: 'deepzoom',
 		type:'rti',
 		url: 'assets/rti/hsh/info.json',
 		normals: false
@@ -273,9 +275,10 @@ function rtiTest(dataset) {
 	ui.menu[0].section = "Prova";
 	ui.menu.push({ html: "<p>Prova</p>" });
 	ui.scale = 0.002;
-	//ui.actions.light.display = true;
+	// ui.actions.light.display = true;
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };
+	ui.actions.rotate.display = true;
 	
 //	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)], ); lime.canvas.emit('update'); }, 2000);
 }
