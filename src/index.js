@@ -1,5 +1,6 @@
 import { Viewer } from './Viewer.js'
 import { Layer } from './Layer.js'
+import { LayoutTiles } from './LayoutTiles.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerDstretch } from './LayerDstretch.js'
 import { LayerCombiner } from './LayerCombiner.js'
@@ -35,10 +36,11 @@ let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDraw
 testNeural();
 
 function testNeural() {
+	
 	let layer0 = new Layer({
 		type: 'neural',
-		url: 'assets/neural/minmax/obj1mat4/json/',
-		layout: 'image',
+		url: 'assets/neural/Nor_A1/',
+		layout: 'deepzoom',
 		zindex: 0,
 	});
 	lime.canvas.addLayer('neural', layer0);

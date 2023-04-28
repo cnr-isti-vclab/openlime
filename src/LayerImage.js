@@ -47,23 +47,6 @@ class LayerImage extends Layer {
 			'samplers': [{ id:0, name:'kd', type: rasterFormat }]
 		});
 		
-		shader.fragShaderSrc = function(gl) {
-
-			let gl2 = !(gl instanceof WebGLRenderingContext);
-			let str = `
-			
-uniform sampler2D kd;
-
-${gl2? 'in' : 'varying'} vec2 v_texcoord;
-
-vec4 data() {
-	return texture${gl2?'':'2D'}(kd, v_texcoord);
-}
-`;
-			return str;
-
-		};
-
 		this.shaders = {'standard': shader };
 		this.setShader('standard');
 	}

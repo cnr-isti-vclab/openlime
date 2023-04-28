@@ -276,11 +276,10 @@ class Shader {
 	}
 
 	/** @ignore */
-	updateUniforms(gl, program) {
-		let now = performance.now();
+	updateUniforms(gl) {
 		for (const [name, uniform] of Object.entries(this.allUniforms())) {
 			if (!uniform.location)
-				uniform.location = gl.getUniformLocation(program, name);
+				uniform.location = gl.getUniformLocation(this.program, name);
 
 			if (!uniform.location)  //uniform not used in program
 				continue;
@@ -331,8 +330,21 @@ ${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 	 * @param {*} gl Thegl context.
 	 * @returns {string} The vertex shader script.
 	 */
+
+
 	fragShaderSrc(gl) {
-		throw 'Unimplemented!'
+		let gl2 = !(gl instanceof WebGLRenderingContext);
+		let str = `
+
+uniform sampler2D kd;
+
+${gl2? 'in' : 'varying'} vec2 v_texcoord;
+
+vec4 data() {
+	return texture${gl2?'':'2D'}(kd, v_texcoord);
+}
+`;
+		return str;
 	}
 }
 

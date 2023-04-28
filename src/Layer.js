@@ -699,7 +699,7 @@ class Layer {
 		}
 
 		gl.useProgram(this.shader.program);
-		this.shader.updateUniforms(gl, this.shader.program);
+		this.shader.updateUniforms(gl);
 	}
 
 	/** @ignore */
@@ -812,6 +812,8 @@ class Layer {
 				let size = img.width * img.height * 3;
 				tile.size += size;
 				tile.tex[sampler.id] = tex;
+				tile.w = img.width;
+				tile.h = img.height;
 				i++;
 			}
 			tile.missing = 0;

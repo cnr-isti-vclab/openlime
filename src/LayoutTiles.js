@@ -402,7 +402,7 @@ class LayoutTiles extends Layout {
  	*/
 	/** @ignore */
 	async initDeepzoom(onepixel) {
-		let url = this.urls[0];
+		let url = this.urls.filter(u => u)[0];
 		var response = await fetch(url);
 		if(!response.ok) {
 			this.status = "Failed loading " + url + ": " + response.statusText;
@@ -423,7 +423,7 @@ class LayoutTiles extends Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.urls = this.urls.map(url => url.substr(0, url.lastIndexOf(".")) + '_files/');
+		this.urls = this.urls.map(url => url ? url.substr(0, url.lastIndexOf(".")) + '_files/' : null);
 		this.skiplevels = 0;
 		if(onepixel)
 			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
