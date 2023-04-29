@@ -37,6 +37,8 @@ class LayerNeuralRTI extends Layer {
 
 		this.shaders = { 'standard': this.imageShader, 'neural': this.neuralShader };
 		this.setShader('neural');
+		this.neuralShader.setLight([0, 0]);
+
 
 		(async () => { await this.loadNeural(this.url); })();
 	}
@@ -61,14 +63,8 @@ class LayerNeuralRTI extends Layer {
 	
 		const info = await this.loadJSON(data_path + "/utils/info.json");
 		this.max = info.max.flat(1);
-		/*for (let i in this.max){
-			this.max[i] = new Float32Array(this.max[i]);
-		}*/
 		this.min = info.min.flat(1);
-		/*for (let i in this.min){
-			this.min[i] = new Float32Array(this.min[i]);
-		}*/
-		//single tile!
+
 		this.width = info.width;
 		this.height = info.height;
 
@@ -143,24 +139,53 @@ class LayerNeuralRTI extends Layer {
 	/* ************************************************************************** */
 	
 	draw(transform, viewport) {
+		//TODO this is duplicated code. move this check up 
+		if (this.status != 'ready')
+			return true;
+
 		this.worldRotation = transform.a + this.transform.a;
+		if(this.networkParameters !== undefined) {
+
+			let available = this.layout.available(viewport, transform, this.transform, 0, this.mipmapBias, this.tiles);
+			let maxTime = 30; //in ms.
+			let now = performance.now();
+			let preRelightDone = false;
+			for(const [id, tile] of Object.entries(available)) {
+				if(tile.neuralUpdated)
+					continue;
+				if(!preRelightDone) {
+					this.preRelight();
+					preRelightDone = true;
+				}
+
+				this.relightTile(tile);
+				tile.neuralUpdated = true;
+				if(performance.now() - now > maxTime) {
+					this.emit('update');
+					break;
+				}
+			}
+			if(preRelightDone)
+				this.postRelight();
+
+		}
+
+
 		this.shader = this.imageShader;
 		let done = super.draw(transform, viewport);
 		this.shader = this.neuralShader;
+
 		return done;
 	}
 
 	//relight happens int interpolatecontrols, so viewport tile etc
 	//are set for the tile!
-	relight(lights) {
-		if(!this.networkParameters) return; //neural json not loaded.
+	preRelight() {
+ 
 		let gl = this.gl;
 
-		
 		if(!this.neuralShader.program)
 			this.neuralShader.createProgram(gl);
-
-		this.neuralShader.setLight(lights);
 
 		gl.useProgram(this.neuralShader.program);
 		this.neuralShader.updateUniforms(gl);
@@ -178,18 +203,21 @@ class LayerNeuralRTI extends Layer {
 		gl.enable(gl.BLEND);
 
 		//save previous viewport
-		let v = gl.getParameter(gl.VIEWPORT);
+		this.backupViewport = gl.getParameter(gl.VIEWPORT);
 
 		let w = this.layout.tilesize || this.layout.width;
 		let h = this.layout.tilesize || this.layout.height;
 		gl.viewport(0, 0, w, h);
+	}
 
-	
-		for(let [id, tile] of this.tiles) {
+	/*	for(let [id, tile] of this.tiles) {
 			this.relightTile(tile);
-		}
+		} */
+	postRelight() {
+
 		//restore previous viewport
-		gl.viewport(v[0], v[1], v[2], v[3]);
+		let v = this.backupViewport;
+		this.gl.viewport(v[0], v[1], v[2], v[3]);
 	}
 
 	relightTile(tile) {
@@ -236,84 +264,18 @@ class LayerNeuralRTI extends Layer {
 
 	interpolateControls() {
 		let done = super.interpolateControls();
-		if(!done) {
-			(async () => {
-				let light = this.controls['light'].current.value;
-				let rotated = Transform.rotate(light[0], light[1], this.worldRotation*Math.PI);
-				light = [rotated.x, rotated.y];
-				//let texture = 
-				this.relight(light);
-				// this.gl.useProgram(this.shader.program);
-				//this.tiles.get(0).tex[0] = texture;
-				// console.log('TEXTURE', texture);
-			})();
-		} 
-		return done;
+		if(done)
+			return true;
+
+		let light = this.controls['light'].current.value;
+		let rotated = Transform.rotate(light[0], light[1], this.worldRotation*Math.PI);
+		light = [rotated.x, rotated.y];
+		this.neuralShader.setLight(light);
+
+		for(let [id, tile] of this.tiles)
+			tile.neuralUpdated = false;
+		return false;
 	}
-	/*async render(tile, dx, dy) {
-		
-		if(!tile.planes) {
-			tile.planes = tf.concat([tile.tex[0], tile.tex[1], tile.tex[2]], 2);
-		}
-
-		let time = await tf.time(async  () => {
-
-			let profile = await tf.profile(async () => {
-
-				let now = performance.now();
-				let light = tf.tensor1d([dx, dy]);
-				let light1 = tf.broadcastTo(light, [this.width * this.height, 2]);
-
-				let result = this.decoder.predict([tile.planes, light1], { batchSize: 1000000 });
-				let image = tf.reshape(result, [this.height, this.width, 3]);
-				let image1 = tf.reverse(image, -1);
-				let image2 = tf.clipByValue(image1, 0.0, 1.0);
-
-
-				image2.dataSync();
-				
-				const tex = tf.backend().getTexture(image2.dataId);
-				console.log(tex);
-				let canvas = document.getElementById('canvas');
-				await tf.browser.toPixels(image2, canvas);
-
-				tf.dispose(image2);
-				tf.dispose(image1);
-				tf.dispose(image);
-				tf.dispose(result);
-				tf.dispose(light);
-				tf.dispose(light1);
-				console.log(performance.now() - now);
-			});
-			console.log("profile", profile);
-		});
-
-		console.log("time", time);
-		console.log(tf.memory());
-	} */
-	initShader() {
-		throw "a";
-		let shader = new Shader({
-			'label': 'Rgb',
-			'samplers': [{ id:0, name:'kd', type:'vec3', load: false }]
-			//{ id:0, name:'plane_0', type:'vec3', bind: false },
-			//{ id:1, name:'plane_1', type:'vec3', bind: false },
-			//{ id:2, name:'plane_2', type:'vec3', bind: false }]
-		});
-		shader.fragShaderSrc = function(gl) {
-			return `
-			uniform sampler2D kd;
-			in vec2 v_texcoord;
-			
-			vec4 data() {
-				return texture(kd, v_texcoord);
-			}
-			`
-		}
-		this.shaders = {'standard': shader };
-		this.setShader('standard');
-	}
-
 }
 
 
