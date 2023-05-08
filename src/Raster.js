@@ -55,7 +55,7 @@ class Raster {
 			img.onerror = function (e) { console.log("Texture loading error!"); };
 			img.src = tile.url;
 			await new Promise((resolve, reject) => { 
-				img.onload = () => { console.log("Loaded!"); resolve(); } });
+				img.onload = () => { resolve(); } });
 		}
 		let tex = this.loadTexture(gl, img);
 		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.

@@ -117,6 +117,11 @@ class Layout {
 		this.emit('ready');
 	}
 
+	imageUrl(url, plane) {
+		let path = url.substring(0, url.lastIndexOf('/')+1);
+		return path + plane + '.jpg';
+	}
+
 		/**
 	 * Gets the URL of a specific tile. The function must be implemented for each layout type supported by OpenLIME.
 	 * @param {number} id The channel id.

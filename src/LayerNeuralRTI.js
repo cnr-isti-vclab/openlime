@@ -14,9 +14,9 @@ class LayerNeuralRTI extends Layer {
 
 		let textureUrls = [
 			null,
-			this.url + "features/features_1.dzi",
-			this.url + "features/features_2.dzi",
-			this.url + "features/features_3.dzi"
+			this.layout.imageUrl(this.url, 'plane_1'),
+			this.layout.imageUrl(this.url, 'plane_2'),
+			this.layout.imageUrl(this.url, 'plane_3'),
 		];
 
 		this.layout.setUrls(textureUrls);
@@ -59,9 +59,9 @@ class LayerNeuralRTI extends Layer {
 		//this.emit('ready');
 	}
 
-	async initialize(data_path) {
+	async initialize(json_url) {
 	
-		const info = await this.loadJSON(data_path + "/utils/info.json");
+		const info = await this.loadJSON(json_url);
 		this.max = info.max.flat(1);
 		this.min = info.min.flat(1);
 
@@ -69,9 +69,10 @@ class LayerNeuralRTI extends Layer {
 		this.height = info.height;
 
 		let parameters = {};
-		for(let w of ['layer1', 'layer2', 'layer3']) {
-			parameters[w + '_weights'] = (await this.loadJSON(data_path + "/parameters/" + w + "_weights.json")).flat(1);
-			parameters[w + '_biases'] = (await this.loadJSON(data_path + "/parameters/" + w + "_biases.json")).flat(1);
+		for(let i = 0; i < 3; i++) {
+			let key = 'layer' + (i+1);
+			parameters[key + '_weights'] = info.weights[i];//(await this.loadJSON(data_path + "/parameters/" + w + "_weights.json")).flat(1);
+			parameters[key + '_biases'] = info.biases[i]; //(await this.loadJSON(data_path + "/parameters/" + w + "_biases.json")).flat(1);
 		}
 
 		for(const [name, value] of Object.entries(parameters))
@@ -94,9 +95,7 @@ class LayerNeuralRTI extends Layer {
 		// creation of the drawing program
 		super.prepareWebGL();
 
-		if(!this.coords_buffer) {
-			this.setCoords();
-		}
+
 	}
 
 
@@ -147,24 +146,38 @@ class LayerNeuralRTI extends Layer {
 		if(this.networkParameters !== undefined) {
 
 			let available = this.layout.available(viewport, transform, this.transform, 0, this.mipmapBias, this.tiles);
-			let maxTime = 30; //in ms.
-			let now = performance.now();
+			let maxTiles = 5;
+			let processed = 0;
 			let preRelightDone = false;
-			for(const [id, tile] of Object.entries(available)) {
+
+		
+			//update a few tiles in random order (but keep track of where we stopped.)
+			if(this.tileOffset === undefined)
+				this.tileOffset = 0;
+			//let tiles = shuffle(Object.values(available));
+			let tiles = Object.values(available);
+			if(tiles.length == 0)
+				return;
+				
+			for(let i = 0; i < tiles.length; i++) {
+				let tile = tiles[(this.tileOffset + i*251)%tiles.length];
 				if(tile.neuralUpdated)
 					continue;
+	
 				if(!preRelightDone) {
-					this.preRelight();
+					this.preRelight([viewport.x, viewport.y, viewport.dx, viewport.dy]);
 					preRelightDone = true;
+				}
+				if(processed++ > maxTiles) {
+					this.emit('update');
+					break;
 				}
 
 				this.relightTile(tile);
 				tile.neuralUpdated = true;
-				if(performance.now() - now > maxTime) {
-					this.emit('update');
-					break;
-				}
 			}
+			this.tileOffset = (this.tileOffset + processed)%tiles.length;
+				
 			if(preRelightDone)
 				this.postRelight();
 
@@ -180,18 +193,21 @@ class LayerNeuralRTI extends Layer {
 
 	//relight happens int interpolatecontrols, so viewport tile etc
 	//are set for the tile!
-	preRelight() {
+	preRelight(viewport) {
  
 		let gl = this.gl;
 
-		if(!this.neuralShader.program)
+		if(!this.neuralShader.program) {
 			this.neuralShader.createProgram(gl);
-
-		gl.useProgram(this.neuralShader.program);
+			gl.useProgram(this.neuralShader.program);
+			for (var i = 0; i < this.neuralShader.samplers.length; i++) 
+				gl.uniform1i(this.neuralShader.samplers[i].location, i);
+		} else
+			gl.useProgram(this.neuralShader.program);
 		this.neuralShader.updateUniforms(gl);
 
-		//gl.clearColor(0,0,1,1);  // specify the color to be used for clearing
-		//gl.clear(gl.COLOR_BUFFER_BIT);  // clear the canvas (to black)
+		if(!this.coords_buffer) 
+			this.setCoords();
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.coords_buffer);
 		gl.vertexAttribPointer(this.neuralShader.position_location, 2, gl.FLOAT, false, 0, 0);
@@ -203,7 +219,7 @@ class LayerNeuralRTI extends Layer {
 		gl.enable(gl.BLEND);
 
 		//save previous viewport
-		this.backupViewport = gl.getParameter(gl.VIEWPORT);
+		this.backupViewport = viewport;
 
 		let w = this.layout.tilesize || this.layout.width;
 		let h = this.layout.tilesize || this.layout.height;
@@ -246,7 +262,6 @@ class LayerNeuralRTI extends Layer {
 
 		for (var i = 0; i < this.neuralShader.samplers.length; i++) {
 			let id = this.neuralShader.samplers[i].id;
-			gl.uniform1i(this.neuralShader.samplers[i].location, i);
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
@@ -257,7 +272,6 @@ class LayerNeuralRTI extends Layer {
 
 
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	}
 

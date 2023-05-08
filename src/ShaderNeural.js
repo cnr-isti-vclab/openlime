@@ -42,54 +42,8 @@ class ShaderNeural extends Shader {
 	createProgram(gl) {
 		super.createProgram(gl);
 		this.position_location = gl.getAttribLocation(this.program, "a_position");
-		this.texcoord_location = gl.getAttribLocation(this.program, "a_texcoord");
+		this.texcoord_location = gl.getAttribLocation(this.program, "a_texcoord");		
 	}
-
-
-/*+
-		// layer 1
-		for (let i = 0; i < 156; i++) {
-			gl.uniform4fv(this.layer1_w_location[i], this.layer1_weights[i]);
-		}
-
-		for (let i = 0; i < 13; i++) {
-			gl.uniform4fv(this.layer1_b_location[i], this.layer1_biases[i]);
-		}
-
-		// layer 2
-		for (let i = 0; i < 676; i++) {
-			gl.uniform4fv(this.layer2_w_location[i], this.layer2_weights[i]);
-		}
-
-		for (let i = 0; i < 13; i++) {
-			gl.uniform4fv(this.layer2_b_location[i], this.layer2_biases[i]);
-		}
-
-		// layer 3
-		for (let i = 0; i < 39; i++) {
-			gl.uniform4fv(this.layer3_w_location[i], this.layer3_weights[i]);
-		}
-
-		gl.uniform3fv(this.layer3_b_location, this.layer3_biases[0]); */
-	
-
-	/*
- * Set current rendering mode
- * @param {string} mode one of 'light', 'normals', 'diffuse', 'specular'
- * @param {number} dt in ms, interpolation duration.
- */
-/*	setMode(mode) {
-		if(!(this.modes.includes(mode)))
-			throw Error("Unknown mode: " + mode);
-		this.mode = mode;
-
-		if( mode != 'light') {
-			this.lightWeights([ 0.612,  0.354, 0.707], 'base');
-			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
-			this.lightWeights([	 0, -0.707, 0.707], 'base2');
-		}
-		this.needsUpdate = true;
-	} */
 
 	setLight(light) {
 		this.setUniform('lights', light);

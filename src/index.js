@@ -39,7 +39,7 @@ function testNeural() {
 	
 	let layer0 = new Layer({
 		type: 'neural',
-		url: 'assets/neural/Nor_A1/',
+		url: 'assets/neural/Nor_A1/info.json',
 		layout: 'deepzoom',
 		zindex: 0,
 	});
