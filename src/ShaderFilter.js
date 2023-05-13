@@ -59,6 +59,9 @@ class ShaderFilter {
 	 * @param {*} value The value to assign.
 	 */
     setUniform(name, value) {
+        if(!this.shader) {
+            throw Error(`Shader not registered`);
+        }
         this.shader.setUniform(this.uniformName(name), value);
     }
 
