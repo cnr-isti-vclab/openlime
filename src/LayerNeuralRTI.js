@@ -82,6 +82,15 @@ class LayerNeuralRTI extends Layer {
 		this.neuralShader.setUniform('min', this.min);
 		this.neuralShader.setUniform('max', this.max);
 
+		// make the fragment shader flexible to different network configurations
+		let n = info.samples;
+		let c = info.planes + 2;
+		while (n % 4 != 0)
+			n++;
+		while (c % 4 != 0)
+			c++;
+		this.neuralShader.setShaderInfo(info.samples, info.planes, n, c, info.colorspace);
+
 		this.networkParameters = parameters;
 	}
 
