@@ -62,7 +62,9 @@ const lens = [
 
 const rti = [
 	'./src/LayerRTI.js',
-	'./src/ShaderRTI.js'
+	'./src/ShaderRTI.js',
+	'./src/LayerNeuralRTI.js',
+	'./src/ShaderNeural.js'
 ];
 
 const brdf = [

@@ -30,12 +30,12 @@ class ShaderNeural extends Shader {
 			lights: { type: 'vec2', needsUpdate: true, size: 2, value: [0.0, 0.0] },
 			min:    { type: 'vec3', needsUpdate: true, size: 3, value: [0, 0, 0] },
 			max:    { type: 'vec3', needsUpdate: true, size: 3, value: [1, 1, 1] },
-			layer1_weights: { type: 'vec4', needsUpdate: true, size: 156},
-			layer1_biases:  { type: 'vec4', needsUpdate: true, size: 13 },
-			layer2_weights: { type: 'vec4', needsUpdate: true, size: 676},
-			layer2_biases:  { type: 'vec4', needsUpdate: true, size: 13 },
-			layer3_weights: { type: 'vec4', needsUpdate: true, size: 39},
-			layer3_biases:  { type: 'vec3', needsUpdate: true, size: 1 },
+			layer1_weights: { type: 'vec4', needsUpdate: true, size: this.c*this.n/4},
+			layer1_biases:  { type: 'vec4', needsUpdate: true, size: this.n/4},
+			layer2_weights: { type: 'vec4', needsUpdate: true, size: this.n*this.n/4},
+			layer2_biases:  { type: 'vec4', needsUpdate: true, size: this.n/4},
+			layer3_weights: { type: 'vec4', needsUpdate: true, size: this.n*3/4},
+			layer3_biases:  { type: 'vec3', needsUpdate: true, size: 1},
 		};
 	}
 
@@ -53,6 +53,14 @@ class ShaderNeural extends Shader {
 		this.lightWeights([0, 0, 1], 'base');
 	}
 
+	setShaderInfo(samples, planes, n, c, colorspace) {
+		this.samples = samples;
+		this.planes = planes;
+		this.n = n;
+		this.c = c;
+		this.colorspace = colorspace;
+	}
+
 
 	vertShaderSrc(gl) {
 		return `#version 300 es
@@ -66,9 +74,9 @@ void main() {
 	}
 	fragShaderSrc(gl) {
 		return `
-vec4 inputs[3];    // 12/4
-vec4 output1[13];  // 52/4
-vec4 output2[13];  // 52/4
+vec4 inputs[${this.c/4}];    // 12/4
+vec4 output1[${this.n/4}];  // 52/4
+vec4 output2[${this.n/4}];  // 52/4
 vec3 output3;
 
 in vec2 v_texcoord;
@@ -76,17 +84,16 @@ uniform sampler2D u_texture_1;
 uniform sampler2D u_texture_2;
 uniform sampler2D u_texture_3;
 uniform vec2 lights;
-//out vec4 colors;
 
-uniform vec4 layer1_weights[156]; // 12*52/4
-uniform vec4 layer1_biases[13];  // 52/4
-uniform vec4 layer2_weights[676]; // 52*52/4
-uniform vec4 layer2_biases[13];  // 52/4
-uniform vec4 layer3_weights[39];  // 52*3/4
+uniform vec4 layer1_weights[${this.c*this.n/4}]; // 12*52/4
+uniform vec4 layer1_biases[${this.n/4}];  // 52/4
+uniform vec4 layer2_weights[${this.n*this.n/4}]; // 52*52/4
+uniform vec4 layer2_biases[${this.n/4}];  // 52/4
+uniform vec4 layer3_weights[${this.n*3/4}];  // 52*3/4
 uniform vec3 layer3_biases;
 
-uniform vec3 min[3];
-uniform vec3 max[3];
+uniform vec3 min[${this.planes/3}];
+uniform vec3 max[${this.planes/3}];
 
 float elu(float a){
 	if (a > 0.0){
@@ -97,9 +104,9 @@ float elu(float a){
 }
 
 vec4 data(){
-	vec3 color_1 = texture(u_texture_1, v_texcoord).bgr;
-	vec3 color_2 = texture(u_texture_2, v_texcoord).bgr;
-	vec3 color_3 = texture(u_texture_3, v_texcoord).bgr;
+	vec3 color_1 = texture(u_texture_1, v_texcoord).${this.colorspace};
+	vec3 color_2 = texture(u_texture_2, v_texcoord).${this.colorspace};
+	vec3 color_3 = texture(u_texture_3, v_texcoord).${this.colorspace};
 
 	// rescaling features
 	for (int i=0; i < 3; i++){
@@ -116,13 +123,13 @@ vec4 data(){
 	float sum = 0.0;
 
 	// layer 1 - 11 x 49
-	for (int i=0; i < 52; i++){
+	for (int i=0; i < ${this.n}; i++){
 		sum = 0.0;
-		for (int j=0; j < 3; j++){
-			sum += inputs[j][0] * layer1_weights[3*i+j][0];
-			sum += inputs[j][1] * layer1_weights[3*i+j][1];
-			sum += inputs[j][2] * layer1_weights[3*i+j][2];
-			sum += inputs[j][3] * layer1_weights[3*i+j][3];
+		for (int j=0; j < ${this.c/4}; j++){
+			sum += inputs[j][0] * layer1_weights[${this.c/4}*i+j][0];
+			sum += inputs[j][1] * layer1_weights[${this.c/4}*i+j][1];
+			sum += inputs[j][2] * layer1_weights[${this.c/4}*i+j][2];
+			sum += inputs[j][3] * layer1_weights[${this.c/4}*i+j][3];
 		}
 		output1[i/4][i%4] = elu(sum + layer1_biases[i/4][i%4]);
 	}
@@ -130,11 +137,11 @@ vec4 data(){
 	// layer 2 - 49 x 49
 	for (int i=0; i < 52; i++){
 		sum = 0.0;
-		for (int j=0; j < 13; j++){
-			sum += output1[j][0] * layer2_weights[13*i+j][0];
-			sum += output1[j][1] * layer2_weights[13*i+j][1];
-			sum += output1[j][2] * layer2_weights[13*i+j][2];
-			sum += output1[j][3] * layer2_weights[13*i+j][3];
+		for (int j=0; j < ${this.n/4}; j++){
+			sum += output1[j][0] * layer2_weights[${this.n/4}*i+j][0];
+			sum += output1[j][1] * layer2_weights[${this.n/4}*i+j][1];
+			sum += output1[j][2] * layer2_weights[${this.n/4}*i+j][2];
+			sum += output1[j][3] * layer2_weights[${this.n/4}*i+j][3];
 		}
 		output2[i/4][i%4] = elu(sum + layer2_biases[i/4][i%4]);
 	}
@@ -142,15 +149,15 @@ vec4 data(){
 	// layer 1 - 49 x 3
 	for (int i=0; i < 3; i++){
 		sum = 0.0;
-		for (int j=0; j < 13; j++){
-			sum += output2[j][0] * layer3_weights[13*i+j][0];
-			sum += output2[j][1] * layer3_weights[13*i+j][1];
-			sum += output2[j][2] * layer3_weights[13*i+j][2];
-			sum += output2[j][3] * layer3_weights[13*i+j][3];
+		for (int j=0; j < ${this.n/4}; j++){
+			sum += output2[j][0] * layer3_weights[${this.n/4}*i+j][0];
+			sum += output2[j][1] * layer3_weights[${this.n/4}*i+j][1];
+			sum += output2[j][2] * layer3_weights[${this.n/4}*i+j][2];
+			sum += output2[j][3] * layer3_weights[${this.n/4}*i+j][3];
 		}
 		output3[i] = sum + layer3_biases[i];
 	}
-	return vec4(output3.bgr, 1.0);
+	return vec4(output3.${this.colorspace}, 1.0);
 }
 		`;
 	}

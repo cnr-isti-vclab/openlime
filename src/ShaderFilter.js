@@ -53,6 +53,18 @@ class ShaderFilter {
         return src;
     }
 
+    /**
+	 * Sets the value of a uniform variable.
+	 * @param {string} name The name of the uniform variable (it will be converted with the unique filter name).
+	 * @param {*} value The value to assign.
+	 */
+    setUniform(name, value) {
+        if(!this.shader) {
+            throw Error(`Shader not registered`);
+        }
+        this.shader.setUniform(this.uniformName(name), value);
+    }
+
     // Sampler declarations in shader program 
     fragSamplerSrc() {
         let src = '';
@@ -127,5 +139,19 @@ class ShaderFilterOpacity extends ShaderFilter {
     }
 }
 
+class ShaderGammaFilter extends ShaderFilter {
+    constructor(options) {
+        super(options);
+        this.uniforms[this.uniformName('gamma')] = { type: 'float', needsUpdate: true, size: 1, value: 2.2 };
+    }
 
-export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity }
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col){
+                float igamma = 1.0/${this.uniformName('gamma')};
+                return vec4(pow(col.r, igamma), pow(col.g, igamma), pow(col.b, igamma), col.a);
+            }`;
+    }
+}
+
+export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity, ShaderGammaFilter }
