@@ -8,7 +8,10 @@ import { ShaderNeural } from './ShaderNeural.js'
 class LayerNeuralRTI extends Layer {
 	constructor(options) {
 		super(options || {});
-
+		this.targetMipmapBias = this.currentMipmapBias = this.mipmapBias;
+		this.maxTiles = 40;
+		this.relighted = 0;
+		this.convergenceSpeed = 1.2;
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 
@@ -85,20 +88,6 @@ class LayerNeuralRTI extends Layer {
 		this.networkParameters = parameters;
 	}
 
-
-
-	/**		this.max = info.max;
-
-	 * Initialize the WebGL graphics context
-	 */
-	prepareWebGL() {
-		// creation of the drawing program
-		super.prepareWebGL();
-
-
-	}
-
-
 	setCoords() {
 		let gl = this.gl;		
 
@@ -113,19 +102,6 @@ class LayerNeuralRTI extends Layer {
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoords_buffer);
 		gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
 	}
-
-	setNetworkParameters() {
-		throw "obsolete";
-		for(const [name, value] of Object.entries(this.networkParameters))
-			this.neuralShader.setUniform(name, value);
-	
-		//this.neuralShader.updateUniforms(gl, this.neuralShader.program);
-		this.neuralShader.setUniform('min', this.min);
-		this.neuralShader.setUniform('max', this.max);
-	}
-
-	/* ************************************************************************** */
-
 
 
 	// little set of functions to get model, coeff and info
@@ -145,9 +121,28 @@ class LayerNeuralRTI extends Layer {
 		this.worldRotation = transform.a + this.transform.a;
 		if(this.networkParameters !== undefined) {
 
+			//adjust maxTiles to presserve framerate.
+			if(this.relighted > 0) {
+				if(this.canvas.fps > this.canvas.targetfps*1.5)
+					this.currentMipmapBias = Math.max(this.targetMipmapBias, this.currentMipmapBias / this.convergenceSpeed);
+				else if(this.canvas.fps < this.canvas.targetfps*0.75) {
+					this.currentMipmapBias = Math.min(this.currentMipmapBias*this.convergenceSpeed, 4);
+					this.convergenceSpeed = Math.max(1.05, Math.pow(this.convergenceSpeed, 0.9));
+				}
+			}
+
+			//setup final refinement
+			if(this.refineTimeout)
+				clearTimeout(this.refineTimeout);
+
+			if(this.currentMipmapBias > this.targetMipmapBias && this.refine == false)
+				this.refineTimeout = setTimeout(() => { this.emit('update'); this.refine = true; }, Math.max(400, 4000/this.canvas.fps));
+			this.mipmapBias = this.refine ? this.targetMipmapBias : this.currentMipmapBias;
+			//console.log("Canvas fps: ", this.canvas.fps, "Refine? ", this.refine, " mip: ", this.mipmapBias);
+			this.refine = false;
+
 			let available = this.layout.available(viewport, transform, this.transform, 0, this.mipmapBias, this.tiles);
-			let maxTiles = 5;
-			let processed = 0;
+			this.relighted = 0;
 			let preRelightDone = false;
 
 		
@@ -168,15 +163,16 @@ class LayerNeuralRTI extends Layer {
 					this.preRelight([viewport.x, viewport.y, viewport.dx, viewport.dy]);
 					preRelightDone = true;
 				}
-				if(processed++ > maxTiles) {
+				if(this.relighted++ > this.maxTiles) {
 					this.emit('update');
 					break;
 				}
-
-				this.relightTile(tile);
+				//for performance testing.
+				//for(let i = 0; i < 20; i++)
+					this.relightTile(tile);
 				tile.neuralUpdated = true;
 			}
-			this.tileOffset = (this.tileOffset + processed)%tiles.length;
+			this.tileOffset = (this.tileOffset + this.relighted)%tiles.length;
 				
 			if(preRelightDone)
 				this.postRelight();
@@ -291,7 +287,6 @@ class LayerNeuralRTI extends Layer {
 		return false;
 	}
 }
-
 
 Layer.prototype.types['neural'] = (options) => { return new LayerNeuralRTI(options); }
 
