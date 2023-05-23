@@ -96,11 +96,7 @@ uniform vec3 min[${this.planes/3}];
 uniform vec3 max[${this.planes/3}];
 
 float elu(float a){
-	if (a > 0.0){
-		return a;
-	} else {
-		return exp(a) - 1.0;
-	}
+	return (a > 0.0) ? a : (exp(a) - 1.0);
 }
 
 vec4 data(){
@@ -108,12 +104,10 @@ vec4 data(){
 	vec3 color_2 = texture(u_texture_2, v_texcoord).${this.colorspace};
 	vec3 color_3 = texture(u_texture_3, v_texcoord).${this.colorspace};
 
-	// rescaling features
-	for (int i=0; i < 3; i++){
-		color_1[i] = color_1[i] * (max[0][i] - min[0][i]) + min[0][i];
-		color_2[i] = color_2[i] * (max[1][i] - min[1][i]) + min[1][i];
-		color_3[i] = color_3[i] * (max[2][i] - min[2][i]) + min[2][i];
-	}
+	// Rescaling features
+    color_1 = color_1 * (max[0] - min[0]) + min[0];
+    color_2 = color_2 * (max[1] - min[1]) + min[1];
+    color_3 = color_3 * (max[2] - min[2]) + min[2];
 
 	// building input
 	inputs[0] = vec4(color_1, color_2.x);
@@ -126,34 +120,25 @@ vec4 data(){
 	for (int i=0; i < ${this.n}; i++){
 		sum = 0.0;
 		for (int j=0; j < ${this.c/4}; j++){
-			sum += inputs[j][0] * layer1_weights[${this.c/4}*i+j][0];
-			sum += inputs[j][1] * layer1_weights[${this.c/4}*i+j][1];
-			sum += inputs[j][2] * layer1_weights[${this.c/4}*i+j][2];
-			sum += inputs[j][3] * layer1_weights[${this.c/4}*i+j][3];
+			sum += dot(inputs[j], layer1_weights[${this.c/4}*i+j]);
 		}
 		output1[i/4][i%4] = elu(sum + layer1_biases[i/4][i%4]);
 	}
 
 	// layer 2 - 49 x 49
-	for (int i=0; i < 52; i++){
+	for (int i=0; i < ${this.n}; i++){
 		sum = 0.0;
 		for (int j=0; j < ${this.n/4}; j++){
-			sum += output1[j][0] * layer2_weights[${this.n/4}*i+j][0];
-			sum += output1[j][1] * layer2_weights[${this.n/4}*i+j][1];
-			sum += output1[j][2] * layer2_weights[${this.n/4}*i+j][2];
-			sum += output1[j][3] * layer2_weights[${this.n/4}*i+j][3];
+			sum += dot(output1[j], layer2_weights[${this.n/4}*i+j]);
 		}
 		output2[i/4][i%4] = elu(sum + layer2_biases[i/4][i%4]);
 	}
 
-	// layer 1 - 49 x 3
+	// layer 3 - 49 x 3
 	for (int i=0; i < 3; i++){
 		sum = 0.0;
 		for (int j=0; j < ${this.n/4}; j++){
-			sum += output2[j][0] * layer3_weights[${this.n/4}*i+j][0];
-			sum += output2[j][1] * layer3_weights[${this.n/4}*i+j][1];
-			sum += output2[j][2] * layer3_weights[${this.n/4}*i+j][2];
-			sum += output2[j][3] * layer3_weights[${this.n/4}*i+j][3];
+			sum += dot(output2[j], layer3_weights[${this.n/4}*i+j]);
 		}
 		output3[i] = sum + layer3_biases[i];
 	}
