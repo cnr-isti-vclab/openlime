@@ -8,9 +8,9 @@ import { ShaderNeural } from './ShaderNeural.js'
 class LayerNeuralRTI extends Layer {
 	constructor(options) {
 		super(options || {});
-		this.targetMipmapBias = this.currentMipmapBias = this.mipmapBias;
+		this.currentRelightFraction = 1.0; //(min: 0, max 1)
 		this.maxTiles = 40;
-		this.relighted = 0;
+		this.relighted = false;
 		this.convergenceSpeed = 1.2;
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
@@ -57,9 +57,6 @@ class LayerNeuralRTI extends Layer {
 
 	async loadNeural(url) {
 		await this.initialize(url);
-
-		//this.status = 'ready';
-		//this.emit('ready');
 	}
 
 	async initialize(json_url) {
@@ -128,15 +125,19 @@ class LayerNeuralRTI extends Layer {
 			return true;
 
 		this.worldRotation = transform.a + this.transform.a;
+
 		if(this.networkParameters !== undefined) {
 
-			//adjust maxTiles to presserve framerate.
-			if(this.relighted > 0) {
-				if(this.canvas.fps > this.canvas.targetfps*1.5)
-					this.currentMipmapBias = Math.max(this.targetMipmapBias, this.currentMipmapBias / this.convergenceSpeed);
-				else if(this.canvas.fps < this.canvas.targetfps*0.75) {
-					this.currentMipmapBias = Math.min(this.currentMipmapBias*this.convergenceSpeed, 4);
+			let previousRelightFraction = this.relightFraction;
+			//adjust maxTiles to presserve framerate only when we had a draw which included relighting (but not a refine operation!).
+			if(this.relighted) {
+				if(this.canvas.fps > this.canvas.targetfps*1.5) {
+					this.currentRelightFraction = Math.min(1.0, this.currentRelightFraction * this.convergenceSpeed);
+					//console.log('fps fast: ', this.canvas.fps, this.currentRelightFraction);
+				} else if(this.canvas.fps < this.canvas.targetfps*0.75) {
+					this.currentRelightFraction = Math.max(this.currentRelightFraction/this.convergenceSpeed, 0.25);
 					this.convergenceSpeed = Math.max(1.05, Math.pow(this.convergenceSpeed, 0.9));
+					//console.log('fps slow: ', this.canvas.fps, this.currentRelightFraction);
 				}
 			}
 
@@ -144,50 +145,42 @@ class LayerNeuralRTI extends Layer {
 			if(this.refineTimeout)
 				clearTimeout(this.refineTimeout);
 
-			if(this.currentMipmapBias > this.targetMipmapBias && this.refine == false)
+			if(this.currentRelightFraction < 0.75 && this.refine == false)
 				this.refineTimeout = setTimeout(() => { this.emit('update'); this.refine = true; }, Math.max(400, 4000/this.canvas.fps));
-			this.mipmapBias = this.refine ? this.targetMipmapBias : this.currentMipmapBias;
-			//console.log("Canvas fps: ", this.canvas.fps, "Refine? ", this.refine, " mip: ", this.mipmapBias);
+
+			this.relightFraction = this.refine ? 1.0 : this.currentRelightFraction;
+			this.relightFraction = Math.round(this.relightFraction * 8)/8;
+
+			let sizeChanged = this.relightFraction != previousRelightFraction;
+
+			let w = Math.round((this.layout.tilesize || this.layout.width) * this.relightFraction);
+			let h = Math.round((this.layout.tilesize || this.layout.height) * this.relightFraction);
+			
+			//console.log("Canvas fps: ", this.canvas.fps, "relighted: ", this.relighted, "Refine? ", this.refine, " fraction: ", this.relightFraction, " w: ", this.tileRelightWidth);
 			this.refine = false;
 
 			let available = this.layout.available(viewport, transform, this.transform, 0, this.mipmapBias, this.tiles);
-			this.relighted = 0;
-			let preRelightDone = false;
 
-		
-			//update a few tiles in random order (but keep track of where we stopped.)
-			if(this.tileOffset === undefined)
-				this.tileOffset = 0;
-			//let tiles = shuffle(Object.values(available));
 			let tiles = Object.values(available);
 			if(tiles.length == 0)
 				return;
-				
-			for(let i = 0; i < tiles.length; i++) {
-				let tile = tiles[(this.tileOffset + i*251)%tiles.length];
-				if(tile.neuralUpdated)
+
+
+			this.relighted = false;
+			for(let tile of tiles) {
+				if(tile.neuralUpdated && !sizeChanged)
 					continue;
-	
-				if(!preRelightDone) {
-					this.preRelight([viewport.x, viewport.y, viewport.dx, viewport.dy]);
-					preRelightDone = true;
+				if(!this.relighted) {
+					this.relighted = true; //update fps next turn.
+					this.preRelight([viewport.x, viewport.y, viewport.dx, viewport.dy], w, h, sizeChanged);
 				}
-				if(this.relighted++ > this.maxTiles) {
-					this.emit('update');
-					break;
-				}
-				//for performance testing.
-				//for(let i = 0; i < 20; i++)
-					this.relightTile(tile);
-				tile.neuralUpdated = true;
+				this.relightTile(tile, w, h, sizeChanged);
 			}
-			this.tileOffset = (this.tileOffset + this.relighted)%tiles.length;
-				
-			if(preRelightDone)
+			if(this.relighted)
 				this.postRelight();
 
-		}
-
+			this.relighted = this.relighted && !this.refine; //udpate fps only if not refined.
+		} 
 
 		this.shader = this.imageShader;
 		let done = super.draw(transform, viewport);
@@ -196,10 +189,7 @@ class LayerNeuralRTI extends Layer {
 		return done;
 	}
 
-	//relight happens int interpolatecontrols, so viewport tile etc
-	//are set for the tile!
-	preRelight(viewport) {
- 
+	preRelight(viewport, w, h) { 
 		let gl = this.gl;
 
 		if(!this.neuralShader.program) {
@@ -209,6 +199,7 @@ class LayerNeuralRTI extends Layer {
 				gl.uniform1i(this.neuralShader.samplers[i].location, i);
 		} else
 			gl.useProgram(this.neuralShader.program);
+
 		this.neuralShader.updateUniforms(gl);
 
 		if(!this.coords_buffer) 
@@ -223,46 +214,46 @@ class LayerNeuralRTI extends Layer {
 		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 		gl.enable(gl.BLEND);
 
+		if(!this.framebuffer)
+			this.framebuffer = gl.createFramebuffer();
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+
+
 		//save previous viewport
 		this.backupViewport = viewport;
-
-		let w = this.layout.tilesize || this.layout.width;
-		let h = this.layout.tilesize || this.layout.height;
 		gl.viewport(0, 0, w, h);
 	}
 
-	/*	for(let [id, tile] of this.tiles) {
-			this.relightTile(tile);
-		} */
 	postRelight() {
+		let gl = this.gl;
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
 		//restore previous viewport
 		let v = this.backupViewport;
 		this.gl.viewport(v[0], v[1], v[2], v[3]);
 	}
 
-	relightTile(tile) {
+	relightTile(tile, w, h, sizeChanged) {
 		let gl = this.gl;
 
-		let w = this.layout.tilesize || this.layout.width;
-		let h = this.layout.tilesize || this.layout.height;
-
-
-		if(!tile.tex[0]) {
+		
+		let needsCreate = tile.tex[0] == null;
+		if(needsCreate) {
 			let tex = tile.tex[0] = gl.createTexture();
 			gl.bindTexture(gl.TEXTURE_2D, tex);
-
-		
+			// set the filtering so we don't need mips
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		}
+		if(sizeChanged || needsCreate) {
+			gl.bindTexture(gl.TEXTURE_2D, tile.tex[0]);
 			// define size and format of level 0
 			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
 							w, h, 0,
 							gl.RGBA, gl.UNSIGNED_BYTE, null);
 			
-			// set the filtering so we don't need mips
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			gl.bindTexture(gl.TEXTURE_2D, null);
+			//gl.bindTexture(gl.TEXTURE_2D, null);
 		}
 
 		for (var i = 0; i < this.neuralShader.samplers.length; i++) {
@@ -270,14 +261,12 @@ class LayerNeuralRTI extends Layer {
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
 		}
-		const fb = gl.createFramebuffer();
-		gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+		
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
 								gl.TEXTURE_2D, tile.tex[0], 0);
-
-
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+		tile.neuralUpdated = true;
 	}
 
 
@@ -290,6 +279,7 @@ class LayerNeuralRTI extends Layer {
 		let rotated = Transform.rotate(light[0], light[1], this.worldRotation*Math.PI);
 		light = [rotated.x, rotated.y];
 		this.neuralShader.setLight(light);
+
 
 		for(let [id, tile] of this.tiles)
 			tile.neuralUpdated = false;
