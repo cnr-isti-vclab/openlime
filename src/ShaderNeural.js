@@ -99,11 +99,8 @@ float elu(float a){
 	return (a > 0.0) ? a : (exp(a) - 1.0);
 }
 
-vec4 data(){
-	vec3 color_1 = texture(u_texture_1, v_texcoord).${this.colorspace};
-	vec3 color_2 = texture(u_texture_2, v_texcoord).${this.colorspace};
-	vec3 color_3 = texture(u_texture_3, v_texcoord).${this.colorspace};
 
+vec4 relightCoeff(vec3 color_1, vec3 color_2, vec3 color_3) {
 	// Rescaling features
     color_1 = color_1 * (max[0] - min[0]) + min[0];
     color_2 = color_2 * (max[1] - min[1]) + min[1];
@@ -124,7 +121,7 @@ vec4 data(){
 		}
 		output1[i/4][i%4] = elu(sum + layer1_biases[i/4][i%4]);
 	}
-
+	
 	// layer 2 - 49 x 49
 	for (int i=0; i < ${this.n}; i++){
 		sum = 0.0;
@@ -144,6 +141,65 @@ vec4 data(){
 	}
 	return vec4(output3.${this.colorspace}, 1.0);
 }
+
+vec4 relight(vec2 v) {
+	vec3 color_1 = texture(u_texture_1, v).${this.colorspace};
+	vec3 color_2 = texture(u_texture_2, v).${this.colorspace};
+	vec3 color_3 = texture(u_texture_3, v).${this.colorspace};
+	return relightCoeff(color_1, color_2, color_3);
+}
+
+
+vec4 data() {
+	return relight(v_texcoord);
+}
+vec4 data1() {
+	vec2 uv = v_texcoord;
+	bool showDiff = false;
+	bool showA = false;
+	if(v_texcoord.x > 0.5) {
+		showDiff = true;
+		uv.x -= 0.5;
+	}
+	if(v_texcoord.y > 0.5) {
+		showA = true;
+		uv.y -= 0.5;
+	}
+	vec2 o = floor(uv*128.0)/128.0;
+	float step = 1.0/256.0;
+
+	vec4 a = vec4(0, 0, 0, 0);
+	vec3 color_1 = vec3(0, 0, 0);
+	vec3 color_2 = vec3(0, 0, 0);
+	vec3 color_3 = vec3(0, 0, 0);
+
+	for(float y = 0.0; y <= step; y = y + step) {
+		for(float x = 0.0; x <= step; x = x + step) {
+			vec2 d = o + vec2(x, y);
+			a += 0.25*relight(d);
+
+			color_1 += texture(u_texture_1, d).${this.colorspace};
+			color_2 += texture(u_texture_2, d).${this.colorspace};
+			color_3 += texture(u_texture_3, d).${this.colorspace};
+		}
+	}
+	vec4 b = relightCoeff(0.25*color_1, 0.25*color_2, 0.25*color_3);
+	float diff = 255.0*length((a - b).xyz);
+	if(showDiff) {
+		if(diff < 10.0) {
+			return vec4(0.0, 0.0, 0.0, 1.0);
+		} else if (diff < 20.0) {
+			return vec4(0.0, 0.0, 1.0, 1.0);
+		} else if(diff < 40.0) {
+			return vec4(0.0, 1.0, 0.0, 1.0);
+		} else
+			return vec4(1.0, 0.0, 0.0, 1.0);
+	} 
+	if(showA)
+		return a;
+	return b;
+}
+
 		`;
 	}
 

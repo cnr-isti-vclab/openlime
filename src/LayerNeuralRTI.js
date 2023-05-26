@@ -135,11 +135,12 @@ class LayerNeuralRTI extends Layer {
 					this.currentRelightFraction = Math.min(1.0, this.currentRelightFraction * this.convergenceSpeed);
 					//console.log('fps fast: ', this.canvas.fps, this.currentRelightFraction);
 				} else if(this.canvas.fps < this.canvas.targetfps*0.75) {
-					this.currentRelightFraction = Math.max(this.currentRelightFraction/this.convergenceSpeed, 0.25);
+					this.currentRelightFraction = Math.max(this.currentRelightFraction/this.convergenceSpeed, 0.125);
 					this.convergenceSpeed = Math.max(1.05, Math.pow(this.convergenceSpeed, 0.9));
-					//console.log('fps slow: ', this.canvas.fps, this.currentRelightFraction);
+					console.log('fps slow: ', this.canvas.fps, this.currentRelightFraction);
 				}
 			}
+			this.refine = true;
 
 			//setup final refinement
 			if(this.refineTimeout)
