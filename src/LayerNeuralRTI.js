@@ -168,6 +168,7 @@ class LayerNeuralRTI extends Layer {
 
 
 			this.relighted = false;
+			this.totPixels = 0;
 			for(let tile of tiles) {
 				if(tile.neuralUpdated && !sizeChanged)
 					continue;
@@ -176,6 +177,7 @@ class LayerNeuralRTI extends Layer {
 					this.preRelight([viewport.x, viewport.y, viewport.dx, viewport.dy], w, h, sizeChanged);
 				}
 				this.relightTile(tile, w, h, sizeChanged);
+				this.totPixels += w*h;
 			}
 			if(this.relighted)
 				this.postRelight();
