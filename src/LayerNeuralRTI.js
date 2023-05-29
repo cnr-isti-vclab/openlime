@@ -153,9 +153,6 @@ class LayerNeuralRTI extends Layer {
 			this.relightFraction = Math.round(this.relightFraction * 8) / 8;
 
 			let sizeChanged = this.relightFraction != previousRelightFraction;
-			if (sizeChanged)
-				for (let tile of tiles)
-					tile.neuralUpdated = false;
 
 			let w = Math.round((this.layout.tilesize || this.layout.width) * this.relightFraction);
 			let h = Math.round((this.layout.tilesize || this.layout.height) * this.relightFraction);
@@ -168,7 +165,9 @@ class LayerNeuralRTI extends Layer {
 			let tiles = Object.values(available);
 			if (tiles.length == 0)
 				return;
-
+			if (sizeChanged)
+				for (let tile of tiles)
+					tile.neuralUpdated = false;
 
 			this.relighted = false;
 			this.totTiles = 0;
