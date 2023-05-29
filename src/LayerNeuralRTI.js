@@ -140,7 +140,7 @@ class LayerNeuralRTI extends Layer {
 					console.log('fps slow: ', this.canvas.fps, this.currentRelightFraction);
 				}
 			}
-			this.refine = true;
+			//this.refine = true;
 
 			//setup final refinement
 			if(this.refineTimeout)
@@ -168,6 +168,7 @@ class LayerNeuralRTI extends Layer {
 
 
 			this.relighted = false;
+			this.totTiles = 0;
 			this.totPixels = 0;
 			for(let tile of tiles) {
 				if(tile.neuralUpdated && !sizeChanged)
@@ -178,6 +179,7 @@ class LayerNeuralRTI extends Layer {
 				}
 				this.relightTile(tile, w, h, sizeChanged);
 				this.totPixels += w*h;
+				this.totTiles += 1;
 			}
 			if(this.relighted)
 				this.postRelight();
