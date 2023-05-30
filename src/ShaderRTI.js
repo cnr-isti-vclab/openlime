@@ -242,6 +242,9 @@ vec4 data() {
 	vec4 color = render(base);
 `;
 		} else  {
+			str += `
+	vec4 color;
+`;
 			if(this.normals)
 				str += `
 	vec3 normal = (texture${gl2?'':'2D'}(normals, v_texcoord).zyx *2.0) - 1.0;
@@ -262,8 +265,16 @@ vec4 data() {
 `;
 			break;
 
-			case 'diffuse': str += `
-	color = vec4(vec3(dot(light, normal)), 1);
+			case 'diffuse': 
+			if(this.colorspace == 'lrgb' || this.colorspace == 'rgb')
+				str += `
+vec4 diffuse = texture${gl2?'':'2D'}(plane0, v_texcoord);
+float s = dot(light, normal);
+color = vec4(s * diffuse.xyz, 1);
+`;
+			else
+				str += `
+color = vec4(vec3(dot(light, normal)), 1);
 `;
 			break;
 
