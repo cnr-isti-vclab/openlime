@@ -46,7 +46,8 @@ const ui = [
 	'./src/Skin.js',
 	'./src/UIBasic.js',
 	'./src/Ruler.js',
-	'./src/ScaleBar.js'
+	'./src/ScaleBar.js',
+	'./src/Draggable.js'
 
 ];
 

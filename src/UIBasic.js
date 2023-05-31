@@ -117,6 +117,7 @@ class UIBasic {
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 			},
+			postInit: () => { console.log('postInit') },
 			pixelSize: null,
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
@@ -325,8 +326,6 @@ class UIBasic {
 				this.viewer.containerElement.appendChild(p);
 			}
 
-			
-
 			for(let l of Object.values(this.viewer.canvas.layers)) {
 				this.setLayer(l);
 				break;
@@ -336,6 +335,8 @@ class UIBasic {
 				this.toggleLightController();
 			if(this.actions.layers && this.actions.layers.active)
 				this.toggleLayers();
+
+			this.postInit();
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
