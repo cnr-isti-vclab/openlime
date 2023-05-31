@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: LayerAnnotation</title>
+	<title>OpenLIME Class: ShaderNeural</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,20 +88,16 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: LayerAnnotation</h1>
+	<h1 class="page-title">Class: ShaderNeural</h1>
 <section>
 
 <header>
     
         <h2>
-        LayerAnnotation
+        ShaderNeural
         </h2>
         
-            <div class="class-description"><p>An annotation layer is a layer used to display decorations (text, graphics elements, glyphs, etc...) on top of other layers.
-Its purpose is to provide additional information useful for the interpretation of the underlying layers.
-An object literal with <code>options</code> can be specified.</p>
-<p>Here you will find a tutorial to learn how to build a client-server architecture to manage annotations in OpenLIME. //FIXME</p>
-<p>Extends <a href="Layer.html">Layer</a>.</p></div>
+            <div class="class-description"><p>Extends <a href="Shader.html">Shader</a>, initialized with a Neural .json (</p></div>
         
     
 </header>
@@ -113,162 +109,19 @@ An object literal with <code>options</code> can be specified.</p>
         
 <hr>
 <dt>
-    <h4 class="name" id="LayerAnnotation"><span class="type-signature"></span>new LayerAnnotation( [options])</h4>
+    <h4 class="name" id="ShaderNeural"><span class="type-signature"></span>new ShaderNeural()</h4>
     
     
 </dt>
 <dd>
 
     
-    <div class="description">
-        <p>Instantiates a LayerAnnotation object.</p>
-    </div>
-    
 
     
 
     
 
     
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>options</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>An object literal with options that inherits from <a href="Layer.html">Layer</a>.</p>
-                <h6 class="method-params-label method-subparams-label">Properties</h6>
-                
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>style</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Properties to style annotations.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>annotations</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-|
-
-<span class="param-type">Array</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The URL of the annotation data (JSON file or HTTP GET Request to an annotation server) or an array of annotations.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
     
 
     
@@ -306,8 +159,8 @@ An object literal with <code>options</code> can be specified.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerAnnotation.js.html">LayerAnnotation.js</a>,
-				 <a href="LayerAnnotation.js.html#sunlight-1-line-14">line 14</a>
+				<a href="ShaderNeural.js.html">ShaderNeural.js</a>,
+				 <a href="ShaderNeural.js.html#sunlight-1-line-7">line 7</a>
 			</li>
 		</ul>
 	</dd>
@@ -351,346 +204,6 @@ An object literal with <code>options</code> can be specified.</p>
 
     
 
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        <dl>
-            
-<hr>
-<dt>
-    <h4 class="name" id="getAnnotationById"><span class="type-signature"></span>getAnnotationById(id)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Gets an annotation by its <code>id</code></p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>id</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerAnnotation.js.html">LayerAnnotation.js</a>,
-				 <a href="LayerAnnotation.js.html#sunlight-1-line-144">line 144</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>The annotation.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Annotation.html">Annotation</a></span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="setSelected"><span class="type-signature"></span>setSelected(anno, on)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Selects/deselects an annotation</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>anno</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Annotation.html">Annotation</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The annotation.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>on</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">bool</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
-
-            <td class="description last"><p>Whether to select the annotation.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerAnnotation.js.html">LayerAnnotation.js</a>,
-				 <a href="LayerAnnotation.js.html#sunlight-1-line-162">line 162</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        </dl>
     
 
     

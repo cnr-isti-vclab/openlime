@@ -35,7 +35,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="Annotation.html">Annotation</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
 				</ul>
 			</li>
 			
@@ -128,6 +128,12 @@ class Canvas {
 			overlayElement: null,
 			camera: camera,
 			layers: {},
+			targetfps: 30,
+			fps: 0,
+			timing: [16], //records last 30 frames time from request to next draw, rolling, primed to avoid /0
+			timingLength: 5, //max number of timings.
+			overBudget: 0, //fraction of frames that took too long to render.
+
 			signals: {'update':[], 'updateSize':[], 'ready': []}
 		});
 		Object.assign(this, options);
@@ -137,6 +143,14 @@ class Canvas {
 		for(let id in this.layers)
 			this.addLayer(id, new Layer(this.layers[id]));
 		this.camera.addEvent('update', () => this.emit('update'));
+	}
+
+	addRenderTiming(elapsed) {
+		this.timing.push(elapsed);
+		while(this.timing.length > this.timingLength)
+			this.timing.shift();
+		this.overBudget = this.timing.filter(t => t > 1000/this.targetfps).length/this.timingLength;
+		this.fps = 1000/(this.timing.reduce((sum, a) => sum + a, 0)/this.timing.length);
 	}
 
 	/*
@@ -252,10 +266,10 @@ class Canvas {
 		this.emit('update');
 	}
 
-    /** Adds the given layer to the Canvas and connects the layer's events to it.
-    * @param {string} id A label to identify the layer.
-    * @param {Layer} layer An OpenLIME Layer object.
-    */
+	/** Adds the given layer to the Canvas and connects the layer's events to it.
+	* @param {string} id A label to identify the layer.
+	* @param {Layer} layer An OpenLIME Layer object.
+	*/
 	 addLayer(id, layer) {
 		/**
 		* The event is fired if a layer is updated, added or removed.
@@ -278,20 +292,21 @@ class Canvas {
 		layer.addEvent('update', () => { this.emit('update'); });
 		layer.addEvent('updateSize', () => { this.updateSize(); });
 		layer.gl = this.gl;
+		layer.canvas = this;
 		layer.overlayElement = this.overlayElement;
 		this.layers[id] = layer;
 		this.prefetch();
 	}
 
-    /** Remove the given layer from the Canvas
-    * @param {Layer} layer An OpenLIME Layer object.
+	/** Remove the given layer from the Canvas
+	* @param {Layer} layer An OpenLIME Layer object.
 	* 
 	* @example
 	* let layer0 = new Layer(options);
 	* canvas.addLayer('kdmap', layer0);
-    * ...
+	* ...
 	* canvas.removeLayer(layer0);
-    */
+	*/
 	removeLayer(layer) {
 		layer.clear(); //order is important.
 
@@ -415,7 +430,7 @@ export { Canvas }
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
 	
-		on Tue May 30th 2023
+		on Wed May 31st 2023
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: LayerAnnotation</title>
+	<title>OpenLIME Source: ShaderFilter.js</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -83,622 +83,176 @@
 <div class="row">
 
 	
-	<div class="col-md-8">
+	<div class="col-md-12">
 	
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: LayerAnnotation</h1>
+		<h1 class="page-title">Source: ShaderFilter.js</h1>
+    
 <section>
-
-<header>
-    
-        <h2>
-        LayerAnnotation
-        </h2>
-        
-            <div class="class-description"><p>An annotation layer is a layer used to display decorations (text, graphics elements, glyphs, etc...) on top of other layers.
-Its purpose is to provide additional information useful for the interpretation of the underlying layers.
-An object literal with <code>options</code> can be specified.</p>
-<p>Here you will find a tutorial to learn how to build a client-server architecture to manage annotations in OpenLIME. //FIXME</p>
-<p>Extends <a href="Layer.html">Layer</a>.</p></div>
-        
-    
-</header>
-
-
-<article>
-    <div class="container-overview">
-    
-        
-<hr>
-<dt>
-    <h4 class="name" id="LayerAnnotation"><span class="type-signature"></span>new LayerAnnotation( [options])</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Instantiates a LayerAnnotation object.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>options</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>An object literal with options that inherits from <a href="Layer.html">Layer</a>.</p>
-                <h6 class="method-params-label method-subparams-label">Properties</h6>
-                
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>style</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Properties to style annotations.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>annotations</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-|
-
-<span class="param-type">Array</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The URL of the annotation data (JSON file or HTTP GET Request to an annotation server) or an array of annotations.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerAnnotation.js.html">LayerAnnotation.js</a>,
-				 <a href="LayerAnnotation.js.html#sunlight-1-line-14">line 14</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-    
-    </div>
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        <dl>
-            
-<hr>
-<dt>
-    <h4 class="name" id="getAnnotationById"><span class="type-signature"></span>getAnnotationById(id)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Gets an annotation by its <code>id</code></p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>id</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerAnnotation.js.html">LayerAnnotation.js</a>,
-				 <a href="LayerAnnotation.js.html#sunlight-1-line-144">line 144</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>The annotation.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Annotation.html">Annotation</a></span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="setSelected"><span class="type-signature"></span>setSelected(anno, on)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Selects/deselects an annotation</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>anno</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Annotation.html">Annotation</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The annotation.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>on</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">bool</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
-
-            <td class="description last"><p>Whether to select the annotation.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerAnnotation.js.html">LayerAnnotation.js</a>,
-				 <a href="LayerAnnotation.js.html#sunlight-1-line-162">line 162</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        </dl>
-    
-
-    
-
-    
-</article>
-
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">class ShaderFilter {
+    constructor(options) {
+        options = Object.assign({
+        }, options);
+        Object.assign(this, options);
+        this.name = this.constructor.name;
+        this.uniforms = {};
+        this.samplers = [];
+        this.needsUpdate = true;
+        this.shader = null;
+
+        this.modes = {};
+    }
+
+    setMode(mode, id) {
+        if (!this.shader)
+            throw Error("Shader not registered");
+
+        if (Object.keys(this.modes).length > 0) {
+            const list = this.modes[mode];
+            if (list) {
+                list.map(a => {
+                    a.enable = a.id == id;
+                });
+                this.shader.needsUpdate = true;
+            } else {
+                throw Error(`Mode "${mode}" not exist!`);
+            }
+        }
+    }
+
+    // Callback in Shader.js
+    prepare(gl) {
+        if (this.needsUpdate)
+            if (this.createTextures) this.createTextures(gl);
+        this.needsUpdate = false;
+    }
+
+    // Callback to create textures for samplers
+    // async createTextures(gl) {
+    // }
+
+    // Constant (modes) declarations in shader program 
+    fragModeSrc() {
+        let src = '';
+        for (const key of Object.keys(this.modes)) {
+            for (const e of this.modes[key]) {
+                if (e.enable) {
+                    src += e.src + '\n';
+                }
+            }
+        }
+        return src;
+    }
+
+    /**
+	 * Sets the value of a uniform variable.
+	 * @param {string} name The name of the uniform variable (it will be converted with the unique filter name).
+	 * @param {*} value The value to assign.
+	 */
+    setUniform(name, value) {
+        if(!this.shader) {
+            throw Error(`Shader not registered`);
+        }
+        this.shader.setUniform(this.uniformName(name), value);
+    }
+
+    // Sampler declarations in shader program 
+    fragSamplerSrc() {
+        let src = '';
+        for (let s of this.samplers) {
+            src += `
+            uniform sampler2D ${s.name};`;
+        }
+        return src;
+    }
+
+    // Uniform declarations in shader program 
+    fragUniformSrc() {
+        let src = '';
+        for (const [key, value] of Object.entries(this.uniforms)) {
+            src += `
+            uniform ${this.uniforms[key].type} ${key};`;
+        }
+        return src;
+    }
+
+    fragDataSrc(gl) {
+        return null;
+    }
+
+    functionName() {
+        return this.name + "_data";
+    }
+
+    samplerName(name) {
+        return `${this.name}_${name}`;
+    }
+
+    uniformName(name) {
+        return `u_${this.name}_${name}`;
+    }
+
+    modeName(name) {
+        return `m_${this.name}_${name}`;
+    }
+
+    getSampler(name) {
+        const samplername = this.samplerName(name);
+        return this.samplers.find(e => e.name == samplername);
+    }
+}
+
+class ShaderFilterTest extends ShaderFilter {
+    constructor(options) {
+        super(options);
+        this.uniforms[this.uniformName('nodata_col')] = { type: 'vec4', needsUpdate: true, size: 4, value: [1, 1, 0, 1] };
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col){
+                return col.a > 0.0 ? col : ${this.uniformName('nodata_col')};
+            }`;
+    }
+}
+
+class ShaderFilterOpacity extends ShaderFilter {
+    constructor(opacity, options) {
+        super(options);
+        this.uniforms[this.uniformName('opacity')] = { type: 'float', needsUpdate: true, size: 1, value: opacity };
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col){
+                return vec4(col.rgb, col.a * ${this.uniformName('opacity')});
+            }`;
+    }
+}
+
+class ShaderGammaFilter extends ShaderFilter {
+    constructor(options) {
+        super(options);
+        this.uniforms[this.uniformName('gamma')] = { type: 'float', needsUpdate: true, size: 1, value: 2.2 };
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col){
+                float igamma = 1.0/${this.uniformName('gamma')};
+                return vec4(pow(col.r, igamma), pow(col.g, igamma), pow(col.b, igamma), col.a);
+            }`;
+    }
+}
+
+export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity, ShaderGammaFilter }</pre>
+    </article>
 </section>
+
 
 
 
@@ -708,10 +262,6 @@ An object literal with <code>options</code> can be specified.</p>
 
 	<div class="clearfix"></div>
 
-	
-		<div class="col-md-3">
-			<div id="toc" class="col-md-3 hidden-xs hidden-sm hidden-md"></div>
-		</div>
 	
 
 </div>
