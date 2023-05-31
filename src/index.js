@@ -13,7 +13,6 @@ import { LayerAnnotation } from './LayerAnnotation.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 import { LayerRTI } from './LayerRTI.js'
-import { LayoutTiles} from './LayoutTiles.js'
 import { LayerNeuralRTI } from './LayerNeuralRTI.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
