@@ -47,15 +47,12 @@ class Draggable {
         Object.assign(this, options);
         this.element = element;
         this.parent = parent;
+        if (typeof (this.parent) == 'string')
+            this.parent = document.querySelector(this.parent);
 
         if (!(this.top || this.bottom) && (this.left || this.right))
             throw Error("Unknown drag position");
 
-        let pos = "";
-        if (this.top) pos += `top: ${this.top}px; `
-        if (this.bottom) pos += `bottom: ${this.bottom}px; `
-        if (this.left) pos += `left: ${this.left}px; `
-        if (this.right) pos += `right: ${this.right}px; `
 
         // Disable context menu
         if (!('setCtxMenu' in window)) {
@@ -64,19 +61,32 @@ class Draggable {
         }
 
         this.container = document.createElement('div');
-        this.container.style = `${pos} display: flex; gap:${this.handleGap}px; position: absolute; z-index: 200; touch-action: none; visibility: visible;`;
+        this.container.classList.add('openlime-draggable');
+        this.container.style = `display: flex; gap:${this.handleGap}px; position: absolute; z-index: 200; touch-action: none; visibility: visible;`;
         this.handle = document.createElement('div');
         this.handle.style = `border-radius: 4px; background-color: ${this.handleColor}; padding: 0; width: ${this.handleSize}px; height: ${this.handleSize}px; z-index: 205;`;
         this.container.appendChild(this.handle);
         this.parent.appendChild(this.container);
+
         this.dragEvents();
-        this.element.style.position='unset';
+        this.element.style.position = 'unset';
+
         this.appendChild(this.element);
     }
 
     /** Append an HTML element `e` to the draggable container */
     appendChild(e) {
         this.container.appendChild(e);
+        const w = this.container.offsetWidth;
+        const h = this.container.offsetHeight;
+        let t = 0;
+        let l = 0;
+        if (this.top) t = this.top;
+        if (this.bottom) t = this.parent.offsetHeight - this.bottom - h;
+        if (this.left) l = this.left;
+        if (this.right) l =  this.parent.offsetWidth - this.right - w;
+        this.container.style.top = `${t}px`;
+        this.container.style.left = `${l}px`;
     }
 
     /** @ignore */

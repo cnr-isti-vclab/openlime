@@ -5,14 +5,14 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLIME - Image Viewer</title>
+    <title>OpenLIME - Draggable</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <link rel="stylesheet" href="../../css/light.css" />
     <link rel="stylesheet" href="../examples.css" />
 </head>
 
 <body>
-    <h1>OpenLIME - Image Viewer</h1>
+    <h1>OpenLIME - Draggable</h1>
     <div class="openlime"></div>
 
     <script src="../../js/openlime.js"></script>
@@ -28,6 +28,10 @@
         });
         lime.addLayer('Base', layer);
 
+        const lsc = new OpenLIME.LightSphereController('.openlime');
+        const draggableLsc = new OpenLIME.Draggable(lsc.containerElement, '.openlime',
+                    { top: 20, right: 20, handleColor: '#5a82aab3' });
+
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
@@ -35,8 +39,8 @@
         const ui = new OpenLIME.UIBasic(lime, {
             postInit: () => {
                 const toolbar = document.querySelector('.openlime-toolbar');
-                const draggableToolbar = new OpenLIME.Draggable(toolbar, lime.containerElement,
-                    { top: 10, right: 20, handleColor: '#5a82aab3' });
+                const draggableToolbar = new OpenLIME.Draggable(toolbar, '.openlime',
+                    { bottom: 20, right: 20, handleColor: '#5a82aab3' });
             }
         });
         // Remove light from the toolbar

@@ -47,7 +47,8 @@ const ui = [
 	'./src/UIBasic.js',
 	'./src/Ruler.js',
 	'./src/ScaleBar.js',
-	'./src/Draggable.js'
+	'./src/Draggable.js',
+	'./src/LightSphereController.js'
 
 ];
 
