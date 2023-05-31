@@ -5,7 +5,10 @@ class LightSphereController {
             height: 128,
             top: 60,
             right: 0,
-            thetaMin: 0
+            thetaMin: 0,
+            colorSpot: '#ffffff',
+            colorBkg: '#0000ff',
+            colorMark: '#ff0000'
         }, options);
         Object.assign(this, options);
         this.parent = parent;
@@ -92,8 +95,8 @@ class LightSphereController {
             x, y, this.dlCanvas.height / 8.0,
             x, y, this.dlCanvas.width / 1.2
         );
-        this.dlGradient.addColorStop(0, "white");
-        this.dlGradient.addColorStop(1, "blue");
+        this.dlGradient.addColorStop(0, this.colorSpot);
+        this.dlGradient.addColorStop(1, this.colorBkg);
     }
 
     interactLightDir(x, y) {
@@ -132,7 +135,7 @@ class LightSphereController {
 
         this.dlCanvasCtx.beginPath();
         this.dlCanvasCtx.arc(x, y, this.dlCanvas.width / 30, 0, 2 * Math.PI);
-        this.dlCanvasCtx.strokeStyle = "red";
+        this.dlCanvasCtx.strokeStyle = this.colorMark;
         this.dlCanvasCtx.lineWidth = 2;
         this.dlCanvasCtx.stroke();
     }
