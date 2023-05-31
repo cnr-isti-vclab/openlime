@@ -164,13 +164,15 @@ class UIBasic {
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
 				modes.push(mode);
 			}
+
 			let layerEntry = {
 				button: layer.label || id,
 				onclick: () => { this.setLayer(layer); },
 				status: () => layer.visible ? 'active' : '',
-				list: modes,
 				layer: id
 			};
+			if(modes.length > 1) layerEntry.list = modes;
+			
 			if (layer.annotations) {
 				layerEntry.list.push(layer.annotationsEntry());
 				//TODO: this could be a convenience, creating an editor which can be

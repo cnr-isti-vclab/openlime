@@ -108,6 +108,25 @@ class LayoutTiles extends Layout {
 			this.emit('ready');
 		})().catch(e => { console.log(e); this.status = e; });
 	}
+
+	/*
+ *  Internal function to assemble the url needed to retrieve the image or the image tile.
+ */
+	imageUrl(url, plane) {
+		let path = url.substring(0, url.lastIndexOf('/')+1);
+		switch(this.type) {
+			case 'image':    return path + plane + '.jpg'; break;
+			case 'google':   return path + plane;          break;
+			case 'deepzoom': return path + plane + '.dzi'; break;
+			case 'tarzoom':  return path + plane + '.tzi'; break;
+			case 'itarzoom': return path + 'planes.tzi'; break;
+			case 'zoomify':  return path + plane + '/ImageProperties.xml'; break;
+			//case 'iip':      return this.plane.throw Error("Unimplemented");
+			case 'iiif': throw Error("Unimplemented");
+			default:     throw Error("Unknown layout: " + this.type);
+		}
+	}
+
 	
 	getTileSize() {
 		return [this.tilesize, this.tilesize];
@@ -402,7 +421,7 @@ class LayoutTiles extends Layout {
  	*/
 	/** @ignore */
 	async initDeepzoom(onepixel) {
-		let url = this.urls[0];
+		let url = this.urls.filter(u => u)[0];
 		var response = await fetch(url);
 		if(!response.ok) {
 			this.status = "Failed loading " + url + ": " + response.statusText;
@@ -423,7 +442,7 @@ class LayoutTiles extends Layout {
 		let max = Math.max(this.width, this.height)/this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.urls = this.urls.map(url => url.substr(0, url.lastIndexOf(".")) + '_files/');
+		this.urls = this.urls.map(url => url ? url.substr(0, url.lastIndexOf(".")) + '_files/' : null);
 		this.skiplevels = 0;
 		if(onepixel)
 			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);

@@ -33,6 +33,12 @@ class Canvas {
 			overlayElement: null,
 			camera: camera,
 			layers: {},
+			targetfps: 30,
+			fps: 0,
+			timing: [16], //records last 30 frames time from request to next draw, rolling, primed to avoid /0
+			timingLength: 5, //max number of timings.
+			overBudget: 0, //fraction of frames that took too long to render.
+
 			signals: {'update':[], 'updateSize':[], 'ready': []}
 		});
 		Object.assign(this, options);
@@ -42,6 +48,14 @@ class Canvas {
 		for(let id in this.layers)
 			this.addLayer(id, new Layer(this.layers[id]));
 		this.camera.addEvent('update', () => this.emit('update'));
+	}
+
+	addRenderTiming(elapsed) {
+		this.timing.push(elapsed);
+		while(this.timing.length > this.timingLength)
+			this.timing.shift();
+		this.overBudget = this.timing.filter(t => t > 1000/this.targetfps).length/this.timingLength;
+		this.fps = 1000/(this.timing.reduce((sum, a) => sum + a, 0)/this.timing.length);
 	}
 
 	/*
@@ -157,10 +171,10 @@ class Canvas {
 		this.emit('update');
 	}
 
-    /** Adds the given layer to the Canvas and connects the layer's events to it.
-    * @param {string} id A label to identify the layer.
-    * @param {Layer} layer An OpenLIME Layer object.
-    */
+	/** Adds the given layer to the Canvas and connects the layer's events to it.
+	* @param {string} id A label to identify the layer.
+	* @param {Layer} layer An OpenLIME Layer object.
+	*/
 	 addLayer(id, layer) {
 		/**
 		* The event is fired if a layer is updated, added or removed.
@@ -183,20 +197,21 @@ class Canvas {
 		layer.addEvent('update', () => { this.emit('update'); });
 		layer.addEvent('updateSize', () => { this.updateSize(); });
 		layer.gl = this.gl;
+		layer.canvas = this;
 		layer.overlayElement = this.overlayElement;
 		this.layers[id] = layer;
 		this.prefetch();
 	}
 
-    /** Remove the given layer from the Canvas
-    * @param {Layer} layer An OpenLIME Layer object.
+	/** Remove the given layer from the Canvas
+	* @param {Layer} layer An OpenLIME Layer object.
 	* 
 	* @example
 	* let layer0 = new Layer(options);
 	* canvas.addLayer('kdmap', layer0);
-    * ...
+	* ...
 	* canvas.removeLayer(layer0);
-    */
+	*/
 	removeLayer(layer) {
 		layer.clear(); //order is important.
 

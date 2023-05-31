@@ -6,6 +6,17 @@ import { Util } from './Util.js'
  * @typedef {Object} Shader#Sampler
  * @property {number} id A sampler unique identifier.
  * @property {string} name The sampler name (the texture reference name in the shader program).
+ * @property {string} label used for menu
+ * @property {array} samplers array of rasters {id:, type: } color, normals, etc.	 * *samplers*: array of rasters {id:, type: } color, normals, etc.
+ *         bind: false will not used in preparegl
+ *         load: false will not be loaded from raster
+ *         both options are used in neural where the coefficients are loaded, but used by tf
+ * @property {array} uniforms: 
+ *         type = <vec4|vec3|vec2|float|int>, 
+ *         needsUpdate controls when updated in gl, 
+ *         size is unused, 
+ *         value is and array or a float, 	 
+ *         we also want to support interpolation: source (value is the target), start, end are the timing (same as camera interpolation)
  */
 
 /**
@@ -265,11 +276,10 @@ class Shader {
 	}
 
 	/** @ignore */
-	updateUniforms(gl, program) {
-		let now = performance.now();
+	updateUniforms(gl) {
 		for (const [name, uniform] of Object.entries(this.allUniforms())) {
 			if (!uniform.location)
-				uniform.location = gl.getUniformLocation(program, name);
+				uniform.location = gl.getUniformLocation(this.program, name);
 
 			if (!uniform.location)  //uniform not used in program
 				continue;
@@ -277,16 +287,17 @@ class Shader {
 			if (uniform.needsUpdate) {
 				let value = uniform.value;
 				switch (uniform.type) {
-					case 'vec4': gl.uniform4fv(uniform.location, value); break;
-					case 'vec3': gl.uniform3fv(uniform.location, value); break;
-					case 'vec2': gl.uniform2fv(uniform.location, value); break;
+					case 'vec4' : gl.uniform4fv(uniform.location, value); break;
+					case 'vec3' : gl.uniform3fv(uniform.location, value); break;
+					case 'vec2' : gl.uniform2fv(uniform.location, value); break;
 					case 'float': gl.uniform1f(uniform.location, value); break;
-					case 'int': gl.uniform1i(uniform.location, value); break;
-					case 'bool': gl.uniform1i(uniform.location, value); break;
-					case 'mat3': gl.uniformMatrix3fv(uniform.location, false, value); break;
-					case 'mat4': gl.uniformMatrix4fv(uniform.location, false, value); break;
+					case 'int'  : gl.uniform1i(uniform.location, value); break;
+					case 'bool' : gl.uniform1i(uniform.location, value); break;
+					case 'mat3' : gl.uniformMatrix3fv(uniform.location, false, value); break;
+					case 'mat4' : gl.uniformMatrix4fv(uniform.location, false, value); break;
 					default: throw Error('Unknown uniform type: ' + u.type);
 				}
+				uniform.needsUpdate = false;
 			}
 		}
 	}
@@ -320,8 +331,21 @@ ${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 	 * @param {*} gl Thegl context.
 	 * @returns {string} The vertex shader script.
 	 */
+
+
 	fragShaderSrc(gl) {
-		throw 'Unimplemented!'
+		let gl2 = !(gl instanceof WebGLRenderingContext);
+		let str = `
+
+uniform sampler2D kd;
+
+${gl2? 'in' : 'varying'} vec2 v_texcoord;
+
+vec4 data() {
+	return texture${gl2?'':'2D'}(kd, v_texcoord);
+}
+`;
+		return str;
 	}
 }
 

@@ -1,5 +1,6 @@
 import { Viewer } from './Viewer.js'
 import { Layer } from './Layer.js'
+import { LayoutTiles } from './LayoutTiles.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerDstretch } from './LayerDstretch.js'
 import { LayerCombiner } from './LayerCombiner.js'
@@ -13,10 +14,11 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 import { LayerRTI } from './LayerRTI.js'
 import { LayoutTiles} from './LayoutTiles.js'
+import { LayerNeuralRTI } from './LayerNeuralRTI.js'
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
 
-// dstretchTest();
+//dstretchTest();
 //combinerTest();
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
@@ -32,6 +34,21 @@ rtiTest('rbf');
 //testMedicalAnnotations();
 
 //testAnnotationEditor();
+
+testNeural();
+
+function testNeural() {
+	
+	let layer0 = new Layer({
+		type: 'neural',
+		url: 'assets/neural/Nor_A1/info.json',
+		layout: 'deepzoom',
+		zindex: 0,
+	});
+	lime.canvas.addLayer('neural', layer0);
+	let ui = new UIBasic(lime);
+}
+
 
 function dstretchTest() {
 	console.log("Dstretching");
