@@ -72,11 +72,19 @@ class Draggable {
         this.element.style.position = 'unset';
 
         this.appendChild(this.element);
+
+        addEventListener("resize", (event) => {
+            this.updatePos();
+        });
     }
 
     /** Append an HTML element `e` to the draggable container */
     appendChild(e) {
         this.container.appendChild(e);
+        this.updatePos();
+    }
+
+    updatePos() {
         const w = this.container.offsetWidth;
         const h = this.container.offsetHeight;
         let t = 0;
