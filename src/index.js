@@ -23,7 +23,7 @@ let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDraw
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
-rtiTest('rbf');
+//rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 
