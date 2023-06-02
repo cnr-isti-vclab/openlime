@@ -6,7 +6,7 @@ an optional object that allows customization of the draggable behavior.
 
 The class supports flexible positioning of the draggable container within its parent element. The `options` parameter 
 can specify the positioning using properties such as `top`, `bottom`, `left`, and `right`. The default values for these properties 
-are null, and at least one of the `top` or `bottom` properties and one of the `left` or `right` properties must be provided. 
+are right=20 bottom=20, and at least one of the `top` or `bottom` properties and one of the `left` or `right` properties must be provided. 
 If an unknown drag position is detected (neither `top` nor `bottom` specified, but either `left` or `right` is
 provided), an error is thrown.
 
@@ -25,11 +25,11 @@ class Draggable {
     *
     * @param {HTMLElement} element the element to be added to the draggable container
     * @param {HTMLElement} parent the element where the draggable container will be appended
-    * @param {Object} options an object literal with options. One between `top` and `bottom`, and one between `left` and `right` are required parameters.
+    * @param {Object} options an object literal with options.
       * @param {number} options.top the initial CSS top position of the draggable container
-      * @param {number} options.bottom the initial CSS bottom position of the draggable container
+      * @param {number} options.bottom=20 the initial CSS bottom position of the draggable container
       * @param {number} options.left the initial CSS left position of the draggable container
-      * @param {number} options.right the initial CSS right position of the draggable container
+      * @param {number} options.right=20 the initial CSS right position of the draggable container
     * @param {number} options.handleSize=10 the size of the handle in pixels
     * @param {number} options.handleGap=5 the gap between the handle and the element appended to the draggable container
     * @param {string} options.handleColor='#f0f0f0b3' the semi-transparent background color of the handle
@@ -37,9 +37,9 @@ class Draggable {
     constructor(element, parent, options) {
         options = Object.assign({
             top: null,
-            bottom: null,
+            bottom: 20,
             left: null,
-            right: null,
+            right: 20,
             handleSize: 10,
             handleGap: 5,
             handleColor: '#f0f0f0b3' // rgba(240, 240, 240, 0.7)
@@ -50,9 +50,8 @@ class Draggable {
         if (typeof (this.parent) == 'string')
             this.parent = document.querySelector(this.parent);
 
-        if (!(this.top || this.bottom) && (this.left || this.right))
-            throw Error("Unknown drag position");
-
+        if (this.left) this.right = null;
+        if (this.top) this.bottom = null;
 
         // Disable context menu
         if (!('setCtxMenu' in window)) {
@@ -92,7 +91,7 @@ class Draggable {
         if (this.top) t = this.top;
         if (this.bottom) t = this.parent.offsetHeight - this.bottom - h;
         if (this.left) l = this.left;
-        if (this.right) l =  this.parent.offsetWidth - this.right - w;
+        if (this.right) l = this.parent.offsetWidth - this.right - w;
         this.container.style.top = `${t}px`;
         this.container.style.left = `${l}px`;
     }
