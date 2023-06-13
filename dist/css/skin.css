@@ -368,7 +368,8 @@ g.openlime-expand {
 /* Works on Firefox */
 .openlime-list.openlime-annotations {
 	scrollbar-width: thin;
-	scrollbar-color: rgb(80, 80, 80);
+	scrollbar-color: inherit;
+	-webkit-scrollbar-color: #505050;
 }
 
 /* Works on Chrome, Edge, and Safari */
