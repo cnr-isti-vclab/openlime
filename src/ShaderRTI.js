@@ -22,7 +22,7 @@ class ShaderRTI extends Shader {
 		super({});
 
 		Object.assign(this, {
-			modes: ['light', 'normals', 'diffuse', 'specular'],
+			modes: ['light', 'normals', 'diffuse', 'specular', 'texture'],
 			mode: 'normal',
 			type:        ['ptm', 'hsh',  'sh', 'rbf', 'bln'],
 			colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
@@ -47,6 +47,9 @@ class ShaderRTI extends Shader {
 			this.init(this.relight);
 
 		this.setMode('light');
+
+		this.textureSize = 10;
+		this.textureWidth = this.textureHeight = (2*this.textureSize + 1);
 	}
 
 	/*
@@ -64,7 +67,35 @@ class ShaderRTI extends Shader {
 			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
 			this.lightWeights([     0, -0.707, 0.707], 'base2');
 		}
+		if(mode == 'texture') {
+			this.buildTextureCoefficients();
+		}
 		this.needsUpdate = true;
+	}
+
+	buildTextureCoefficients() {
+		let n = this.textureSize;  // 2*n+1
+		let w = this.textureWidth;
+		let h = this.textureHeight;
+		let XF = this.XF = new Float32Array(this.textureWidth*this.textureWidth);
+		let YF = this.YF = new Float32Array(this.textureHeight*this.textureHeight);
+
+		let n2 = (n+1)*(n+1);
+		for(let i = 1; i < n; i++) {
+			for(let j = 0; j < n; j++) {
+				let r2 = i*i + j*j;
+				if(r2 > n2)
+					continue;
+				let v = i*(1 - r2/n2)/r2;
+				XF[n+1-i + w*(n+1-j)] = XF[n+1-i + w*(n+1+j)] = v;
+				YF[n+1-j + w*(n+1-i)] = YF[n+1+j + w*(n+1-i)] = v;
+
+				XF[n+1+i + w*(n+1-j)] = XF[n+1+i + w*(n+1+j)] = -v;
+				YF[n+1-j + w*(n+1+i)] = YF[n+1+j + w*(n+1+i)] = -v;
+			}
+		}
+		this.setUniform('XF', XF);
+		this.setUniform('YF', YF);
 	}
 
 	setLight(light) {
@@ -138,7 +169,9 @@ class ShaderRTI extends Shader {
 			scale: { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.scale },
 			base:  { type: 'vec3', needsUpdate: true, size: this.nplanes },
 			base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
-			base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
+			base2: { type: 'vec3', needsUpdate: false, size: this.nplanes },
+			XF:    { type: 'vec1', needsUpdate: false, size: this.textureWidth * this.textureWidth },
+			YF:    { type: 'vec1', needsUpdate: false, size: this.textureHeight * this.textureHeight },
 		}
 
 		this.lightWeights([0, 0, 1], 'base');
@@ -201,7 +234,14 @@ uniform vec3 light;
 uniform float specular_exp;
 uniform vec3 bias[np1];
 uniform vec3 scale[np1];
+`
 
+	str += `
+uniform float XF[${this.textureWidth*this.textureWidth}];
+uniform float YF[${this.textureHeight*this.textureHeight}];
+`;
+
+str += `
 uniform ${basetype} base[np1];
 uniform ${basetype} base1[np1];
 uniform ${basetype} base2[np1];
@@ -265,6 +305,29 @@ vec4 data() {
 `;
 			break;
 
+			case 'texture':
+			//X
+			str += `
+			float c = 0.0;
+			vec3 n;
+			`;
+			for(let y = 0; y < this.textureWidth; y++) {
+				for(let x = 0; x < this.textureWidth; x++) {
+					let dx = 0.5*(x - this.textureSize-1)/this.tileSize[0]; //here we would need tile width!
+					let dy = 0.5*(y - this.textureSize-1)/this.tileSize[1];
+					str += `
+					n = (texture${gl2?'':'2D'}(normals, v_texcoord + vec2(${dx}, ${dy})).zyx *2.0) - 1.0;
+					c += n.x * XF[${x + y*this.textureWidth}];
+					c += n.y * YF[${x + y*this.textureWidth}];`;
+				}
+			}
+			
+			str += `
+				color = vec4(c, c, c, 1);
+			`;
+			break;
+
+
 			case 'diffuse': 
 			if(this.colorspace == 'lrgb' || this.colorspace == 'rgb')
 				str += `
@@ -284,7 +347,7 @@ color = vec4(vec3(dot(light, normal)), 1);
 	//color = vec4(render(base).xyz*s, 1.0);
 	color = vec4(s, s, s, 1.0);
 `;
-			break;
+			break;	
 			}
 		}
 
