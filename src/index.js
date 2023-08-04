@@ -1,5 +1,6 @@
 import { Viewer } from './Viewer.js'
 import { Layer } from './Layer.js'
+import { LayoutTiles } from './LayoutTiles.js'
 import { LayerImage } from './LayerImage.js'
 import { LayerDstretch } from './LayerDstretch.js'
 import { LayerCombiner } from './LayerCombiner.js'
@@ -22,7 +23,7 @@ let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDraw
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
-rtiTest('rbf');
+rtiTest('ptm');
 //tomeTest();
 //testUIBasic();
 
@@ -37,10 +38,11 @@ rtiTest('rbf');
 testNeural();
 
 function testNeural() {
+	
 	let layer0 = new Layer({
 		type: 'neural',
-		url: 'assets/neural/minmax/obj1mat4/json/',
-		layout: 'image',
+		url: 'assets/neural/Nor_A1/info.json',
+		layout: 'deepzoom',
 		zindex: 0,
 	});
 	lime.canvas.addLayer('neural', layer0);
@@ -258,10 +260,10 @@ function rtiTest(dataset) {
 
 	let layer0 = new Layer({ 
 		label: '4',
-		layout: 'deepzoom',
+		layout: 'image',
 		type:'rti',
-		url: 'assets/rti/hsh/info.json',
-		normals: false
+		url: 'assets/rti/tablets_ptm/info.json',
+		normals: true
 	});
 	lime.canvas.addLayer('coin', layer0);
 
