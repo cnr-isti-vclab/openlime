@@ -34,7 +34,7 @@ rtiTest('ptm');
 
 //testAnnotationEditor();
 
-testNeural();
+//testNeural();
 
 function testNeural() {
 	
@@ -286,10 +286,8 @@ function rtiTest(dataset) {
 
 
 
-	let ui = new UIBasic(lime);
+	let ui = new UIBasic(lime, { showLightDirections: true });
 	lime.camera.maxFixedZoom = 4;
-	ui.menu[0].section = "Prova";
-	ui.menu.push({ html: "<p>Prova</p>" });
 	ui.scale = 0.002;
 	// ui.actions.light.display = true;
 	//const { home, fullscreen, rotate } = ui.actions;
