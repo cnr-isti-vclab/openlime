@@ -65,6 +65,7 @@ class LayoutTiles extends Layout {
  	* @param {number} options.height The total height of the original, unsplit image. This parameter must only be specified for the 'google' layout type.
  	* @param {string} options.suffix='jpg' The filename suffix of the tiles.
  	* @param {string} options.subdomains='abc' The ('a'|'b'|'c') *s* subdomain of a Google template URL (for instance: 'https:{s}.my.example//{z}/{x}/{y}.png').
+	* @param {number} options.cachelevels Number of levels above the current level which will be loaded. Lowering will reduce number of http requests, but image will have tile missing while loading.
 	*/
 	constructor(url, type, options) {
 		super(url, null, options);
@@ -80,6 +81,7 @@ class LayoutTiles extends Layout {
 			qbox: [],          //array of bounding box in tiles, one for mipmap 
 			bbox: [],          //array of bounding box in pixels (w, h)
 			urls: [],
+			cachelevels: 10,
 		});
 	}
 
@@ -282,6 +284,7 @@ class LayoutTiles extends Layout {
 					let tile = tiles.get(index) || this.newTile(index); //{ index, x, y, missing, tex: [], level };
 					tile.time = now;
 					tile.priority = neededBox.level - level;
+					if(tile.priority >  this.cachelevels) continue;
 					if (tile.missing === null) // || tile.missing != 0 && !this.requested[index])
 						tmp.push(tile);
 				}

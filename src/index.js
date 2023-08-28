@@ -22,7 +22,7 @@ let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDraw
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
-//rtiTest('rbf');
+rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 
@@ -34,7 +34,7 @@ let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDraw
 
 //testAnnotationEditor();
 
-testNeural();
+//testNeural();
 
 function testNeural() {
 	
@@ -261,9 +261,11 @@ function rtiTest(dataset) {
 		label: '4',
 		layout: 'deepzoom',
 		type:'rti',
-		url: 'assets/rti/hsh/info.json',
+//		url: 'assets/rti/hsh/info.json',
+		url: 'assets/rti/tablets_ptm/info.json',
 		normals: false
 	});
+	layer0.layout.cachelevels = 0;
 	lime.canvas.addLayer('coin', layer0);
 
 	// let layer0 = new Layer({ 
