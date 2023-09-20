@@ -16,6 +16,9 @@ class _Cache {
 			size: 0,                //amount of GPU ram used
 
 			maxRequest: 6,          //max number of concurrent HTTP requests
+			maxRequestsRate: 1,     //max number of requests per period.
+			maxRequestsPeriod: 1000,  //period in milliseconds
+			requestLog: [],           //holdls last requests timestamps.
 			requested: 0,
 			maxPrefetch: 8*(1<<20), //max amount of prefetched tiles.
 			prefetched: 0           //amount of currently prefetched GPU ram.
@@ -37,9 +40,24 @@ class _Cache {
 	}
 
 	/** @ignore */
-	update() {
+	rateLimited() {
+		console.log('rate!');
 		if(this.requested > this.maxRequest)
+			return true;
+		
+		let now = new Date();
+		//clean up old requests
+		while(this.requestLog.length > 0) {
+			if(this.requestLog[0] + this.maxRequestsPeriod < now )
+				this.requestLog.shift();
+		}
+		return this.requestLog.length > this.maxRequestRate;
+	}
+	/** @ignore */
+	update() {
+		if(this.rateLimited())
 			return;
+		
 
 		let best = this.findBestCandidate();
 		if(!best) return;
@@ -56,6 +74,7 @@ class _Cache {
 		}
 		console.assert(best != best.layer.queue[0]);
 		best.layer.queue.shift();
+		this.requestLog.push(new Date());
 		this.loadTile(best.layer, best.tile);
 	}
 
