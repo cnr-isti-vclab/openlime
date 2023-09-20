@@ -257,12 +257,13 @@ function flipTest() {
 
 function rtiTest(dataset) {
 
+	Cache.maxRequestRate = 30;
 	let layer0 = new Layer({ 
 		label: '4',
 		layout: 'deepzoom',
 		type:'rti',
 //		url: 'assets/rti/hsh/info.json',
-		url: 'assets/rti/tablets_ptm/info.json',
+		url: 'assets/rti/hsh/info.json',
 		normals: false
 	});
 	layer0.layout.cachelevels = 0;

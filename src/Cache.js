@@ -16,11 +16,10 @@ class _Cache {
 			size: 0,                //amount of GPU ram used
 
 			maxRequest: 6,          //max number of concurrent HTTP requests
-			maxRequestsRate: 10,     //max number of requests per period.
-			maxRequestsPeriod: 1000,  //period in milliseconds
-			requestRateTimeout: null, //calls update when a new slot is available due to request rate.
-			requestLog: [],           //holdls last requests timestamps.
 			requested: 0,
+			maxRequestsRate: 0,     //max number of requests per second, 0 means no rate.
+			requestRateTimeout: null, //calls update when a new slot is available due to request rate.
+			lastRequestTimestamp: performance.now(),           //holdls last requests timestamps.
 			maxPrefetch: 8*(1<<20), //max amount of prefetched tiles.
 			prefetched: 0           //amount of currently prefetched GPU ram.
 		});
@@ -42,34 +41,28 @@ class _Cache {
 
 	/** @ignore */
 	rateLimited() {
-		console.log('rate!');
 		if(this.requested > this.maxRequest)
 			return true;
 		
-		let now = performance.now();
-		//clean up old requests
-		while(this.requestLog.length > 0) {
-			if(this.requestLog[0] + this.maxRequestsPeriod < now )
-				this.requestLog.shift();
-			else
-				break;
-		}
+		if(this.maxRequestsRate == 0)
+			return false;
 
-		if(this.requestLog.length > this.maxRequestsRate) {
-			//update again when the first request expires.
-			if(!this.requestRateTimeout) {
-				console.log('setTimeout', this.requestRateTimeout, this.maxRequestsPeriod - (now - this.requestLog[0]) + 50);
-				this.requestRateTimeout = setTimeout(() => {
-					console.log('update');
-					this.requestRateTimeout = null;
-					this.update();
-				}, this.maxRequestsPeriod - (now - this.requestLog[0]) + 50);
-				console.log('settedTimeout', this.requestRateTimeout);
-			}
-			return true;
-		}
-		return false;
+		let now = performance.now();
+		let period = 1000/this.maxRequestsRate;
+		let diff = now - this.lastRequestTimestamp;
+		if(diff > period)
+			return false;
+
+
+		if(!this.requestRateTimeout) {
+			this.requestRateTimeout = setTimeout(() => {
+				this.requestRateTimeout = null;
+				this.update();
+			}, period -diff + 10);
+		}	
+		return true;
 	}
+
 	/** @ignore */
 	update() {
 		if(this.rateLimited())
@@ -91,7 +84,7 @@ class _Cache {
 		}
 		console.assert(best != best.layer.queue[0]);
 		best.layer.queue.shift();
-		this.requestLog.push(performance.now());
+		this.lastRequestTimestamp = performance.now();
 		this.loadTile(best.layer, best.tile);
 	}
 
