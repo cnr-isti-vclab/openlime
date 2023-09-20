@@ -16,8 +16,9 @@ class _Cache {
 			size: 0,                //amount of GPU ram used
 
 			maxRequest: 6,          //max number of concurrent HTTP requests
-			maxRequestsRate: 1,     //max number of requests per period.
+			maxRequestsRate: 10,     //max number of requests per period.
 			maxRequestsPeriod: 1000,  //period in milliseconds
+			requestRateTimeout: null, //calls update when a new slot is available due to request rate.
 			requestLog: [],           //holdls last requests timestamps.
 			requested: 0,
 			maxPrefetch: 8*(1<<20), //max amount of prefetched tiles.
@@ -45,13 +46,29 @@ class _Cache {
 		if(this.requested > this.maxRequest)
 			return true;
 		
-		let now = new Date();
+		let now = performance.now();
 		//clean up old requests
 		while(this.requestLog.length > 0) {
 			if(this.requestLog[0] + this.maxRequestsPeriod < now )
 				this.requestLog.shift();
+			else
+				break;
 		}
-		return this.requestLog.length > this.maxRequestRate;
+
+		if(this.requestLog.length > this.maxRequestsRate) {
+			//update again when the first request expires.
+			if(!this.requestRateTimeout) {
+				console.log('setTimeout', this.requestRateTimeout, this.maxRequestsPeriod - (now - this.requestLog[0]) + 50);
+				this.requestRateTimeout = setTimeout(() => {
+					console.log('update');
+					this.requestRateTimeout = null;
+					this.update();
+				}, this.maxRequestsPeriod - (now - this.requestLog[0]) + 50);
+				console.log('settedTimeout', this.requestRateTimeout);
+			}
+			return true;
+		}
+		return false;
 	}
 	/** @ignore */
 	update() {
@@ -74,7 +91,7 @@ class _Cache {
 		}
 		console.assert(best != best.layer.queue[0]);
 		best.layer.queue.shift();
-		this.requestLog.push(new Date());
+		this.requestLog.push(performance.now());
 		this.loadTile(best.layer, best.tile);
 	}
 
