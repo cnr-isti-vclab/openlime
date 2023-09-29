@@ -160,7 +160,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		if (typeof (this.annotations) == "string") return; //FIXME Is it right? Should we use this.status?
 
 		const bBox = this.boundingBox();
-		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh - bBox.xLow} ${bBox.yHigh - bBox.yLow}`);
+		//this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh - bBox.xLow} ${bBox.yHigh - bBox.yLow}`);
 
 		//find which annotations needs to be added to the ccanvas, some 
 		//indexing whould be used, for the moment we just iterate all of them.

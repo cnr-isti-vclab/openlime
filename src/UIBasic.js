@@ -174,7 +174,11 @@ class UIBasic {
 			if(modes.length > 1) layerEntry.list = modes;
 			
 			if (layer.annotations) {
+				layerEntry.list = [];
+				setTimeout(() => { 
 				layerEntry.list.push(layer.annotationsEntry());
+				this.updateMenu();
+				}, 1000);
 				//TODO: this could be a convenience, creating an editor which can be
 				//customized later using layer.editor.
 				//if(layer.editable) 

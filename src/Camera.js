@@ -290,7 +290,7 @@ class Camera {
 		let c = box.center();
 		let z = Math.min(w / bw, h / bh);
 
-		this.setPosition(dt, -c[0], -c[1], z, 0);
+		this.setPosition(dt, -c.x, -c.y, z, 0);
 	}
 
 	/**

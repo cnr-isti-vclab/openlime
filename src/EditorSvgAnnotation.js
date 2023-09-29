@@ -145,7 +145,9 @@ class EditorSvgAnnotation {
 			deleteCallback: null
 		}, options);
 
-		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].style.stroke}; }`).join('\n');
+		layer.style += Object.entries(this.classes).map((g) => {
+			return `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`;
+		}).join('\n');
 		//at the moment is not really possible to unregister the events registered here.
 		viewer.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);

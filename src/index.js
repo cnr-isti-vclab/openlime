@@ -22,7 +22,7 @@ let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDraw
 //imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
 //flipTest();
 //brdfTest();
-rtiTest('rbf');
+//rtiTest('rbf');
 //tomeTest();
 //testUIBasic();
 
@@ -32,7 +32,7 @@ rtiTest('rbf');
 
 //testMedicalAnnotations();
 
-//testAnnotationEditor();
+testAnnotationEditor();
 
 //testNeural();
 
@@ -64,18 +64,21 @@ function dstretchTest() {
 }
 
 function testAnnotationEditor() {
+
+	
+	Skin.setUrl('skin/skin.svg');
 	let layer0 = new Layer({ 
 		label: 'Coin 10',
 		layout: 'image', 
 		type:'rti',
-		url: 'assets/rti/hsh/info.json',
+		url: 'assets/rti/eloi/info.json',
 		normals: false
 	});
 	lime.canvas.addLayer('hsh', layer0);
-	
+
 	let layer1 = new LayerSvgAnnotation({ 
 		label: 'Annotations',
-		viewBox: "0 0 256 256",
+		layout: layer0.layout,
 		style:` 
 			.openlime-annotation { pointer-events:all; opacity: 0.7; }
 			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
@@ -94,25 +97,24 @@ function testAnnotationEditor() {
 			<p>${annotation.description}</p>
 			
 		`; },
-		annotations: 'assets/medical/PH1101-1.json',
+		annotations: 'assets/medical/test.json',
 		editable: true,
 
 	}); 
 	lime.canvas.addLayer('anno', layer1); //here the overlayelement created and attached to layer1
-	Skin.setUrl('skin/skin.svg');
+	let ui = new UIBasic(lime);
 
 	let editor = new EditorSvgAnnotation(lime, layer1, { lime: lime });
 	editor.classes = {
-		'': { color: '#000', label: '' },
-		'class1': { color: '#770', label: '' },
-		'class2': { color: '#707', label: '' },
-		'class3': { color: '#777', label: '' },
-		'class4': { color: '#070', label: '' },
-		'class5': { color: '#007', label: '' },
-		'class6': { color: '#077', label: '' },
+		'': { stroke: '#000', label: '' },
+		'class1': { stroke: "#00FF00", label: "Vert" },
+		'class2': { stroke: '#707', label: '' },
+		'class3': { stroke: '#777', label: '' },
+		'class4': { stroke: '#070', label: '' },
+		'class5': { stroke: '#007', label: '' },
+		'class6': { stroke: '#077', label: '' },
 	};
 	
-	let ui = new UIBasic(lime);
 	lime.camera.maxFixedZoom = 4;
 	ui.actions.help.display = true;
 	ui.actions.help.html = "Help text could be here.";
@@ -123,8 +125,7 @@ function testAnnotationEditor() {
 	editor.deleteCallback = (annotation) => { console.log("Deleted annotation: ", annotation); return true; };
 	editor.updateCallback = (annotation) => { console.log("Updated annotation: ", annotation); return true; };
 
-	editor.multiple = true;
-	
+	editor.multiple = true; 
 }
 
 function testMedicalAnnotations() {
@@ -152,7 +153,6 @@ function testMedicalAnnotations() {
 		infoTemplate: (annotation) => { return `
 			<h3>${annotation.class}</h3>
 			<p>${annotation.description}</p>
-			
 		`; },
 		annotations: 'assets/medical/PH1101-1.json',
 		editable: true,
