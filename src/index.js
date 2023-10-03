@@ -102,20 +102,24 @@ function testAnnotationEditor() {
 
 	}); 
 	lime.canvas.addLayer('anno', layer1); //here the overlayelement created and attached to layer1
-	let ui = new UIBasic(lime);
-
-	let editor = new EditorSvgAnnotation(lime, layer1, { lime: lime });
-	editor.classes = {
-		'': { stroke: '#000', label: '' },
-		'class1': { stroke: "#00FF00", label: "Vert" },
-		'class2': { stroke: '#707', label: '' },
-		'class3': { stroke: '#777', label: '' },
-		'class4': { stroke: '#070', label: '' },
-		'class5': { stroke: '#007', label: '' },
-		'class6': { stroke: '#077', label: '' },
-	};
 	
+
+	let editor = new EditorSvgAnnotation(lime, layer1, { lime: lime, 
+		classes: {
+			'': { stroke: '#000', label: '' },
+			'class1': { stroke: "#00FF00", label: "Vert" },
+			'class2': { stroke: '#707', label: '' },
+			'class3': { stroke: '#777', label: '' },
+			'class4': { stroke: '#070', label: '' },
+			'class5': { stroke: '#007', label: '' },
+			'class6': { stroke: '#077', label: '' },
+		}
+	});
+
+	
+	let ui = new UIBasic(lime);
 	lime.camera.maxFixedZoom = 4;
+	
 	ui.actions.help.display = true;
 	ui.actions.help.html = "Help text could be here.";
 	ui.actions.snapshot.display = true;
@@ -126,6 +130,7 @@ function testAnnotationEditor() {
 	editor.updateCallback = (annotation) => { console.log("Updated annotation: ", annotation); return true; };
 
 	editor.multiple = true; 
+	
 }
 
 function testMedicalAnnotations() {

@@ -144,8 +144,9 @@ class EditorSvgAnnotation {
 			updateCallback: null,
 			deleteCallback: null
 		}, options);
-
+		
 		layer.style += Object.entries(this.classes).map((g) => {
+			console.assert(g[1].hasOwnProperty('stroke'), "Classes needs a stroke property");
 			return `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`;
 		}).join('\n');
 		//at the moment is not really possible to unregister the events registered here.
