@@ -762,11 +762,13 @@ class EditorSvgAnnotation {
 		const p = {x:e.offsetX, y: e.offsetY};
 		const layerT = this.layer.transform;
 		const useGL = false;
-		console.log(layerT);
 		const layerbb = this.layer.boundingBox();
 		const layerSize = {w:layerbb.width(), h:layerbb.height()};
+		//compute also size of an image pixel on screen and store in pixelSize.
 		let pos = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
-		
+		p.x += 1;
+		let pos1 = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
+		pos.pixelSize = Math.abs(pos1.x - pos.x);
 		return pos;
 	}
 }
@@ -889,7 +891,7 @@ class Line {
 		for (let e of this.annotation.elements) {
 			if (!e.points || e.points.length < 2)
 				continue;
-			if (Line.distance(e.points[0], pos) * pos.z < 5) {
+			if (Line.distance(e.points[0], pos) / pos.pixelSize < 5) {
 				e.points.reverse();
 				this.path = e;
 				this.path.setAttribute('d', Line.svgPath(e.points));
@@ -959,7 +961,7 @@ class Line {
 
 	adjust(pos) {
 		let gap = Line.distanceToLast(this.path.points, pos);
-		if (gap * pos.z < 4) return false;
+		if (gap / pos.pixelSize < 4) return false;
 
 		this.path.points.push(pos);
 
@@ -987,7 +989,7 @@ class Line {
 	static svgPath(points) {
 		//return points.map((p, i) =>  `${(i == 0? "M" : "L")}${p.x} ${p.y}`).join(' '); 
 
-		let tolerance = 1.5 / points[0].z;
+		let tolerance = 1.5 * points[0].pixelSize;
 		let tmp = simplify(points, tolerance);
 
 		let smoothed = smooth(tmp, 90, true);
