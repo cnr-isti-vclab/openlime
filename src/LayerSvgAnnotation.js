@@ -39,13 +39,13 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			svgGroup: null,
 			onClick: null,			//callback function
 			classes: {
-				'': { style: { stroke: '#000' }, label: '' },
+				'': { stroke: '#000', label: '' },
 			},
 			annotationUpdate: null
 		}, options);
 		super(options);
 		for(const [key, value] of Object.entries(this.classes)) {
-			this.style += `[data-class=${key}] { ` + Object.entries(value.style).map( g => `${g[0]}: ${g[1]};`).join('\n') + '}';
+			this.style += `[data-class=${key}] { ` + Object.entries(value).map( g => `${g[0]}: ${g[1]};`).join('\n') + '}';
 		}
 		//this.createOverlaySVGElement();
 		//this.setLayout(this.layout);
