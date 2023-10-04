@@ -243,7 +243,7 @@ class EditorSvgAnnotation {
 		edit.classList.remove('hidden');
 		let button = edit.querySelector('.openlime-select-button');
 		button.textContent = this.classes[anno.class].label;
-		button.style.background = this.classes[anno.class].style.stroke;
+		button.style.background = this.classes[anno.class].stroke;
 	}
 
 	/** @ignore */
@@ -282,7 +282,7 @@ class EditorSvgAnnotation {
 						<div class="openlime-select-button"></div>
 						<ul class="openlime-select-menu">
 						${Object.entries(this.classes).map((c) =>
-			`<li data-class="${c[0]}" style="background:${c[1].style.stroke};">${c[1].label}</li>`).join('\n')}
+			`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
 					<label for="idx">Index:</label> <input name="idx" type="text"><br>	
@@ -327,7 +327,7 @@ class EditorSvgAnnotation {
 
 			input.value = e.srcElement.getAttribute('data-class');
 			input.dispatchEvent(new Event('change'));
-			button.style.background = this.classes[input.value].style.stroke;
+			button.style.background = this.classes[input.value].stroke;
 			button.textContent = e.srcElement.textContent;
 
 			select.classList.toggle('active');
@@ -422,7 +422,7 @@ class EditorSvgAnnotation {
 		anno.class = select.value || '';
 
 		let button = edit.querySelector('.openlime-select-button');
-		button.style.background = this.classes[anno.class].style.stroke;
+		button.style.background = this.classes[anno.class].stroke;
 
 		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
