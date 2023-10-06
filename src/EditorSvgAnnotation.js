@@ -144,8 +144,11 @@ class EditorSvgAnnotation {
 			updateCallback: null,
 			deleteCallback: null
 		}, options);
-
-		layer.style += Object.entries(this.classes).map((g) => `[data-class=${g[0]}] { stroke:${g[1].style.stroke}; }`).join('\n');
+		
+		layer.style += Object.entries(this.classes).map((g) => {
+			console.assert(g[1].hasOwnProperty('stroke'), "Classes needs a stroke property");
+			return `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`;
+		}).join('\n');
 		//at the moment is not really possible to unregister the events registered here.
 		viewer.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
@@ -240,7 +243,7 @@ class EditorSvgAnnotation {
 		edit.classList.remove('hidden');
 		let button = edit.querySelector('.openlime-select-button');
 		button.textContent = this.classes[anno.class].label;
-		button.style.background = this.classes[anno.class].style.stroke;
+		button.style.background = this.classes[anno.class].stroke;
 	}
 
 	/** @ignore */
@@ -279,7 +282,7 @@ class EditorSvgAnnotation {
 						<div class="openlime-select-button"></div>
 						<ul class="openlime-select-menu">
 						${Object.entries(this.classes).map((c) =>
-			`<li data-class="${c[0]}" style="background:${c[1].style.stroke};">${c[1].label}</li>`).join('\n')}
+			`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
 					<label for="idx">Index:</label> <input name="idx" type="text"><br>	
@@ -324,7 +327,7 @@ class EditorSvgAnnotation {
 
 			input.value = e.srcElement.getAttribute('data-class');
 			input.dispatchEvent(new Event('change'));
-			button.style.background = this.classes[input.value].style.stroke;
+			button.style.background = this.classes[input.value].stroke;
 			button.textContent = e.srcElement.textContent;
 
 			select.classList.toggle('active');
@@ -419,7 +422,7 @@ class EditorSvgAnnotation {
 		anno.class = select.value || '';
 
 		let button = edit.querySelector('.openlime-select-button');
-		button.style.background = this.classes[anno.class].style.stroke;
+		button.style.background = this.classes[anno.class].stroke;
 
 		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
@@ -759,11 +762,13 @@ class EditorSvgAnnotation {
 		const p = {x:e.offsetX, y: e.offsetY};
 		const layerT = this.layer.transform;
 		const useGL = false;
-		console.log(layerT);
 		const layerbb = this.layer.boundingBox();
 		const layerSize = {w:layerbb.width(), h:layerbb.height()};
+		//compute also size of an image pixel on screen and store in pixelSize.
 		let pos = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
-		
+		p.x += 1;
+		let pos1 = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
+		pos.pixelSize = Math.abs(pos1.x - pos.x);
 		return pos;
 	}
 }
@@ -886,7 +891,7 @@ class Line {
 		for (let e of this.annotation.elements) {
 			if (!e.points || e.points.length < 2)
 				continue;
-			if (Line.distance(e.points[0], pos) * pos.z < 5) {
+			if (Line.distance(e.points[0], pos) / pos.pixelSize < 5) {
 				e.points.reverse();
 				this.path = e;
 				this.path.setAttribute('d', Line.svgPath(e.points));
@@ -956,7 +961,7 @@ class Line {
 
 	adjust(pos) {
 		let gap = Line.distanceToLast(this.path.points, pos);
-		if (gap * pos.z < 4) return false;
+		if (gap / pos.pixelSize < 4) return false;
 
 		this.path.points.push(pos);
 
@@ -984,7 +989,7 @@ class Line {
 	static svgPath(points) {
 		//return points.map((p, i) =>  `${(i == 0? "M" : "L")}${p.x} ${p.y}`).join(' '); 
 
-		let tolerance = 1.5 / points[0].z;
+		let tolerance = 1.5 * points[0].pixelSize;
 		let tmp = simplify(points, tolerance);
 
 		let smoothed = smooth(tmp, 90, true);

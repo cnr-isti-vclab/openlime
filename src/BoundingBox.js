@@ -139,7 +139,7 @@ class BoundingBox {
      * @returns {number} The center value.
      */
     center() {
-        return [(this.xLow+this.xHigh)/2, (this.yLow+this.yHigh)/2];
+        return { x: (this.xLow+this.xHigh)/2, y: (this.yLow+this.yHigh)/2 };
     }
 
     /**

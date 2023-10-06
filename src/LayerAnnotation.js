@@ -62,6 +62,7 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 			this.createAnnotationsList();
 		
 		this.emit('update');
+		this.status = 'ready';
 		this.emit('ready');
 		this.emit('loaded');
 	}

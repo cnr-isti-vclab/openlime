@@ -291,7 +291,7 @@ class LayoutTiles extends Layout {
 			}
 			let c = box.center();
 			//sort tiles by distance to the center TODO: check it's correct!
-			tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
+			tmp.sort(function (a, b) { return Math.abs(a.x - c.x) + Math.abs(a.y - c.y) - Math.abs(b.x - c.x) - Math.abs(b.y - c.y); });
 			needed = needed.concat(tmp);
 		}
 		return needed;
