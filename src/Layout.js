@@ -71,12 +71,15 @@ class Layout {
 
 		
 		if (type == 'image') {
-			this.init(url, type, options);
 			this.setDefaults(type);
+			this.init(url, type, options);
+
 		} else if(type in this.types)
 			return this.types[type](url, type, options);
+
 		else if(type == null)
 			return;
+		
 		else
 			throw "Layout type: " + type + " unknown, or module not loaded";
 	}
@@ -103,6 +106,8 @@ class Layout {
 
 		if(typeof(url) == 'string')
 			this.setUrls([url]);
+		if(this.width && this.height)
+			this.status = 'ready';
 	}
 
 	/** @ignore */

@@ -226,7 +226,7 @@ class Canvas {
  		* The event is fired if a layout changes its size or position (the event forces the re-computation of the layer bounding boxes).
  		* @event Canvas#updateSize
  		*/
-		const discardHidden = true;
+		const discardHidden = false;
 		let sceneBBox = Layer.computeLayersBBox(this.layers, discardHidden);
 		let minScale =  Layer.computeLayersMinScale(this.layers, discardHidden);
 		

@@ -784,8 +784,11 @@ class Layer {
 		if (this.tiles.has(tile.index))
 			throw "AAARRGGHHH double tile!";
 
-		if (this.requested[tile.index])
+		if (this.requested[tile.index]) {
 			console.log("Warning: double request!");
+			callback("Double tile request");
+			return;
+		}
 
 		this.tiles.set(tile.index, tile);
 		this.requested[tile.index] = true;
