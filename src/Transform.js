@@ -177,6 +177,8 @@ class Transform { //FIXME Add translation to P?
 	 * @returns {Transform} The interpolated transform.
 	 */
 	static interpolate(source, target, time, easing) { //FIXME STATIC
+		console.assert(!isNaN(source.x));
+		console.assert(!isNaN(target.x));
 		const pos = new Transform();
 		let dt = (target.t - source.t);
 		if (time < source.t) {
