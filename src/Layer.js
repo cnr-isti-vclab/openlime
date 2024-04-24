@@ -37,7 +37,10 @@ import { addSignals } from './Signals.js'
 class Layer {
 	/**
 	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
-	* Signals are triggered when the layer is ready (i.e. completely initialized) or if its state variables have been updated (a redraw is needed).
+	* Signals are triggered when:
+	* ready: the size and layout of the layer is known
+	* update: some new tile is available, or some visualization parameters has changed
+	* loaded: is fired when all the images needed have been downloaded
 	* @param {Object} [options]
 	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
 	* @param {string} options.type A string identifier to select the specific derived layer class to instantiate.
@@ -116,7 +119,7 @@ class Layer {
 			//each tile is tex: [.. one for raster ..], missing: 3 missing tex before tile is ready.
 			//only raster used by the shader will be loade.
 			queue: [],     //queue of tiles to be loaded.
-			requested: {},  //tiles requested.
+			requested: new Map,  //tiles requested.
 		});
 
 		Object.assign(this, options);
@@ -785,14 +788,14 @@ class Layer {
 		if (this.tiles.has(tile.index))
 			throw "AAARRGGHHH double tile!";
 
-		if (this.requested[tile.index]) {
+		if (this.requested.has(tile.index)) {
 			console.log("Warning: double request!");
 			callback("Double tile request");
 			return;
 		}
 
 		this.tiles.set(tile.index, tile);
-		this.requested[tile.index] = true;
+		this.requested.set(tile.index, true);
 
 		if (this.layout.type == 'itarzoom') {
 			tile.url = this.layout.getTileURL(null, tile);
@@ -822,7 +825,7 @@ class Layer {
 			}
 			tile.missing = 0;
 			this.emit('update');
-			delete this.requested[tile.index];
+			this.requested.delete(tile.index);
 			if (callback) callback(tile.size);
 			return;
 		}
@@ -842,7 +845,9 @@ class Layer {
 			tile.missing--;
 			if (tile.missing <= 0) {
 				this.emit('update');
-				delete this.requested[tile.index];
+				this.requested.delete(tile.index);
+				if(this.requested.size == 0)
+					this.emit('loaded');
 				if (callback) callback(size);
 			}
 		}
@@ -850,6 +855,6 @@ class Layer {
 }
 
 Layer.prototype.types = {}
-addSignals(Layer, 'update', 'ready', 'updateSize');
+addSignals(Layer, 'ready', 'update', 'loaded', 'updateSize');
 
 export { Layer }
