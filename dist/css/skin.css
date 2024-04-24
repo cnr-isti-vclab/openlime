@@ -159,11 +159,11 @@
 	opacity: 70%;
 }
 
-.openlime-light path[style] {
+.openlime-light .openlime-bulb {
 	fill: #80808011 !important;
 }
 
-.openlime-light-active .openlime-light path[style] {
+.openlime-light-active .openlime-light .openlime-bulb {
 	fill: #ffcc00 !important;
 }
 
