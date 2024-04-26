@@ -51,7 +51,7 @@ class Layer {
 	* @param {number} options.zindex Stack ordering value for the rendering of layers (higher zindex on top).
 	* @param {bool} options.overlay=false  Whether the layer must be rendered in overlay mode.
 	* @param {number} options.prefetchBorder=1 The threshold (in tile units) around the current camera position for which to prefetch tiles.
-	* @param {number} options.mipmapBias=0.4 The mipmap bias of the texture.
+	* @param {number} options.mipmapBias=0.2 Determine which texture is used when scale is not a power of 2. 0: use always the highest resulution, 1 the lowest, 0.5 switch halfway.
 	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader}.
 	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
 	* @param {Layer} options.sourceLayer The layer from which to take the tiles (in order to avoid tile duplication).
