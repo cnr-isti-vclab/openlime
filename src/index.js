@@ -6,7 +6,7 @@ import { LayerDstretch } from './LayerDstretch.js'
 import { LayerCombiner } from './LayerCombiner.js'
 import { ShaderCombiner } from './ShaderCombiner.js'
 import { ControllerPanZoom } from './ControllerPanZoom.js'
-import { UIBasic } from './UIBasic.js'
+import { UIBasic, UIDialog } from './UIBasic.js'
 import { LayerLens } from './LayerLens.js'
 import { Skin } from './Skin.js'
 import { LayerAnnotation } from './LayerAnnotation.js'
@@ -14,499 +14,464 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { EditorSvgAnnotation } from './EditorSvgAnnotation.js'
 import { LayerRTI } from './LayerRTI.js'
 import { LayerNeuralRTI } from './LayerNeuralRTI.js'
+import { ShaderFilter } from './ShaderFilter.js'
+import { AnnotationEditor } from './AnnotationEditor.js'
+
+// CLASS TO CREATE FILTERS
+
+class GammaFilter extends ShaderFilter {
+    constructor(options) {
+        super(options);
+        this.uniforms = { 
+            gamma: {type: 'float', needsUpdate: true, size: 1, value: 2.2},
+        };
+    }
+
+    fragDataSrc(gl) {
+        return `
+        vec4 ${this.functionName()}(vec4 col){
+            float igamma = 1.0/gamma;
+            return vec4(pow(col.r, igamma), pow(col.g, igamma), pow(col.b, igamma), col.a);
+        }`;
+    }
+}
+
+class UnsharpFilter extends ShaderFilter {
+    constructor(options) {
+        super(options);
+        this.uniforms = { 
+            unsharp: {type: 'float', needsUpdate: true, size: 1, value: 10.0},
+        };
+    }
+
+    fragDataSrc(gl) {
+        return `
+        vec4 ${this.functionName()}(vec4 col){
+            mat3 unsharp_M = mat3(0.0, -1.0, 0.0, -1.0, 5.0, -1.0, 0.0, -1.0, 0.0);
+
+            unsharp_M = mat3(0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0) +
+                      (mat3(0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0) - 
+                      mat3(0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0)/5.0)*unsharp;
+
+            // unsharp_M = mat3(0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0)/5.0;
+
+            vec3 blur = unsharp_M[0][0]*render(base,vec2(v_texcoord.x-1.0/tileSize.x,v_texcoord.y-1.0/tileSize.y)).rgb + 
+                        unsharp_M[0][1]*render(base,vec2(v_texcoord.x-1.0/tileSize.x,v_texcoord.y)).rgb +
+                        unsharp_M[0][2]*render(base,vec2(v_texcoord.x-1.0/tileSize.x,v_texcoord.y+1.0/tileSize.y)).rgb +
+                        unsharp_M[1][0]*render(base,vec2(v_texcoord.x,v_texcoord.y-1.0/tileSize.y)).rgb +
+                        unsharp_M[1][1]*col.rgb +
+                        unsharp_M[1][2]*render(base,vec2(v_texcoord.x,v_texcoord.y+1.0/tileSize.y)).rgb +
+                        unsharp_M[2][0]*render(base,vec2(v_texcoord.x+1.0/tileSize.x,v_texcoord.y-1.0/tileSize.y)).rgb +
+                        unsharp_M[2][1]*render(base,vec2(v_texcoord.x+1.0/tileSize.x,v_texcoord.y)).rgb +
+                        unsharp_M[2][2]*render(base,vec2(v_texcoord.x+1.0/tileSize.x,v_texcoord.y+1.0/tileSize.y)).rgb;
+            // return vec4((col.rgb - blur) * unsharp, 1.0);
+            return vec4(blur,1.0);
+        }`;
+    }
+}
+
+class FadeFilter extends ShaderFilter {
+    constructor(options) {
+        super(options);
+        this.uniforms = { 
+            alpha: {type: 'float', needsUpdate: true, size: 1, value: 0.5},
+        };
+    }
+
+    fragDataSrc(gl) {
+        return `
+        vec4 ${this.functionName()}(vec4 col){
+            return vec4(vec3(col.rgb), alpha);
+        }`;
+    }
+}
+
+class SigmoidFilter extends ShaderFilter {
+    constructor(options) {
+        super(options);
+        this.uniforms = { 
+            sigmoid: {type: 'float', needsUpdate: true, size: 1, value: 0.3},
+        };
+    }
+
+    fragDataSrc(gl) {
+        return `
+        vec4 ${this.functionName()}(vec4 color){
+
+            vec3 max_v = color.rgb;
+            vec3 min_v = color.rgb;
+            float win = 1.0;
+
+            for (float i = -win; i < win+1.0; i++){
+                for (float j = -1.0; j < 2.0; j++){
+                    max_v = max(max_v, render(base1,vec2(v_texcoord.x+i/tileSize.x,v_texcoord.y+j/tileSize.y)).rgb);
+                    min_v = min(min_v, render(base1,vec2(v_texcoord.x+i/tileSize.x,v_texcoord.y+j/tileSize.y)).rgb);
+                }
+            }
+
+            vec3 out_v = (color.rgb - min_v) / (max_v - min_v);
+            out_v = out_v * 2.0 - 1.0;
+            out_v = exp(out_v / sigmoid) / (1.0 + exp(out_v / sigmoid));
+
+            // vec3 out_v = (color.rgb - min_v) / (max_v - min_v);
+
+            return vec4(out_v, 1.0);
+        }`;
+    }
+}
+
+class AlbedoFilter extends ShaderFilter {
+    constructor(options) {
+        super(options);
+        this.uniforms = { 
+            // albedo: {type: 'sampler2D', needsUpdate: true, size: 1, value: 10.0},
+        };
+    }
+
+    fragDataSrc(gl) {
+        return `
+        vec4 ${this.functionName()}(vec4 col){
+            vec3 alb = texture(albedo, v_texcoord).rgb;
+            vec3 out_col = col.rgb * 0.5 + alb * 0.5;
+            return vec4(out_col,1.0);
+        }`;
+    }
+}
 
 let lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
+lime.camera.bounded = false;
 
-//dstretchTest();
-//combinerTest();
-//imageTest('google'); // image google deepzoom deepzoom1px zoomify iiif tarzoon itarzoom
-//flipTest();
-//brdfTest();
-rtiTest('rbf');
-//tomeTest();
-//testUIBasic();
+main();
 
-//testUISvg();
-//lensTest();
-//testSVGAnnotations();
+function main(){
 
-//testMedicalAnnotations();
+    // create openlime div
+    // const openlimeDiv = document.createElement('div');
+    // openlimeDiv.id = 'openlime';
+    // document.querySelector('body').appendChild(openlimeDiv);
 
-//testAnnotationEditor();
+    // openlime canvas creation
+    // var lime = new Viewer('#openlime', { background:'black' });
+    // lime.camera.bounded = false;
 
-//testNeural();
+    const urlParams = new URLSearchParams(window.location.search);
+    const editorEnable = urlParams.has('editor');
 
-function testNeural() {
-	
-	let layer0 = new Layer({
-		type: 'neural',
-		url: 'assets/neural/Nor_A1/info.json',
-		layout: 'deepzoom',
-		zindex: 0,
-	});
-	lime.canvas.addLayer('neural', layer0);
-	let ui = new UIBasic(lime);
+    // Create an OpenLIME canvas into openlime
+    // const lime = new Viewer('.openlime', { background: 'black', canvas: { preserveDrawingBuffer: true} });
+    // lime.camera.bounded = false;
+
+    Skin.setUrl('skin/skin.svg');
+
+    let openlime = document.querySelector('.openlime');
+    let infoDialog = new UIDialog(openlime, { modal: true });
+    infoDialog.hide();
+
+    const layer1 = new Layer({
+        type: 'rti',
+        url: 'assets/rti/ptm/info.json',
+        layout: 'image',
+        transform: { x: 0, y: 0, z: 1, a: 0 },
+        zindex: 0,
+        label: 'PTM',
+        overlay: false,
+        section: "Layers",
+        shaderOptions: {
+            albedo: false,
+            normals: false,
+            mask: false,
+            secondLight: false,
+            // secondLight: {
+            //     intensity: [1.0, 1.0],
+            //     weight: 0.5}
+        }
+    });
+    lime.addLayer('Layer1', layer1)
+
+    // console.log(layer1);
+
+    const layer2 = new Layer({
+        type: 'neural',
+        url: 'assets/rti/neural/info.json',
+        layout: 'image',
+        transform: { x: 0, y: 0, z: 1, a: 0 },
+        zindex: 0,
+        label: 'Neural',
+        overlay: false,
+        section: "Layers",
+        shaderOptions: {
+            albedo: false,
+            normals: false,
+            mask: false,
+            secondLight: false,
+            // secondLight: {
+            //     intensity: [1.0, 1.0],
+            //     weight: 0.5}
+        }
+    });
+    lime.addLayer('Layer2', layer2);
+    // console.log(layer2);
+
+    // user interface configuration
+    // the "section" attribute can be omitted. This way, a single section called "Layers"
+    // will be created. Otherwise, an array of strings must be given
+
+    // Define annotation parameters
+    let annotationServer = 'http://localhost:3000/ol';
+    const classParam = {
+        '': { style: { stroke: '#000' }, label: '' },
+        'class1': { style: { stroke: '#770' }, label: 'A' },
+        'class2': { style: { stroke: '#707' }, label: 'B' },
+        'class3': { style: { stroke: '#777' }, label: 'C' },
+        'class4': { style: { stroke: '#070' }, label: 'D' },
+        'class5': { style: { stroke: '#007' }, label: 'E' },
+        'class6': { style: { stroke: '#077' }, label: 'F' },
+    };
+
+    let aOptions = {
+        label: 'Annotations',
+        layout: layer1.layout,
+        type: 'svg_annotations',
+        style: ` 
+        .openlime-annotation { pointer-events:stroke; opacity: 0.7; }
+        .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+
+        :focus { fill:yellow; }
+        path { fill:none; stroke-width:2; stroke:#000; vector-effect:non-scaling-stroke; pointer-events:all; }
+        path:hover { cursor:pointer; stroke:#f00; }
+        .selected { stroke-width:3; }
+        `,
+        annotations: annotationServer,
+        overlay: true,
+    }
+
+    if (!editorEnable) {
+        aOptions = {
+            ...aOptions,
+            onClick: (anno) => {
+                infoDialog.setContent(`<h4>${anno.label}</h4><p>${anno.description}</p>`);
+                infoDialog.show();
+            },
+            classes: classParam
+        }
+    }
+
+    // Create an annotation layer and add it to the canvans
+    const annoLayer = new LayerAnnotation(aOptions);
+    lime.addLayer('annoLayer', annoLayer);
+
+    // If editorEnable, create a SVG annotation Editor
+    // if (editorEnable) {
+    //     const editor = new EditorSvgAnnotation(lime, annoLayer, {
+    //         classes: classParam
+    //     });
+    //     editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
+    //     editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
+    //     editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); processRequest(anno, 'update'); return true; };
+    // }
+
+    let ui = new UIBasic(lime, { skin: 'skin/skin.svg', showLightDirections: true});
+
+    if (editorEnable) {
+        const editor = new AnnotationEditor(lime, annoLayer, {
+            classes: classParam
+        });
+        editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
+        editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
+        editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); processRequest(anno, 'update'); return true; };
+    }
+
+    // Add image attribution 
+    ui.attribution = `CRS4 Digital Pathology Platform - <a href="https://www.crs4.it/research/visual-and-data-intensive-computing/digital-health/">CRS4 Digital Health Research Program</a>`;
+
+    // Calback function to send http requests to the Annotation server
+    async function processRequest(anno, action) {
+        let method = "GET";
+        let url = `${annotationServer}`;
+        let body = "";
+        switch (action) {
+            case "create":
+                method = "POST";
+                url = `${annotationServer}`;
+                body = JSON.stringify(anno);
+                break;
+            case "update":
+                method = "PUT";
+                url = `${annotationServer}/${anno.id}`;
+                body = JSON.stringify(anno);
+                break;
+            case "delete":
+                method = "DELETE";
+                url = `${annotationServer}/${anno.id}`;
+                body = "";
+                break;
+            default:
+                break;
+        }
+        const response = await fetch(url, {
+            method: method,
+            mode: 'cors', // this cannot be 'no-cors'
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: body
+        });
+        if (!response.ok) {
+            const message = `An error has occured: ${response.status} ${response.statusText} `;
+            alert(message);
+            throw new Error(message);
+        }
+        let json = await response.json();
+        if (json.status == 'error')
+            alert(json.msg);
+    }
+
+
+
+    
+    ui.actions.light.active = true;
+    ui.actions.layers.display = true;
+    ui.actions.zoomin.display = true;
+    ui.actions.zoomout.display = true;
+    ui.actions.rotate.display = true;
+    ui.actions.ruler.display = true;
+    ui.actions.help.display = true;
+    ui.actions.snapshot.display = false;
+    lime.camera.maxFixedZoom = 1;
+    window.lime = lime;
+
+    // console.log(ui);
+
+    let filter;
+    // gamma filter
+    filter = new GammaFilter({label: 'Gamma', uniform: 'gamma', value: 2.2, min: 0, max: 3, step: 0.1});
+    addFilter(ui, ui.menu.option, filter);
+    // unsharp filter
+    filter = new UnsharpFilter({label: 'Unsharp', uniform: 'unsharp', value: 10.0, min: 0, max: 20, step: 1});
+    addFilter(ui, ui.menu.option, filter);
+    addSecondLight(ui);
+
+
+    console.log(annoLayer);
+
+
+    // ui.menu.push({ section: "Filters" });
+    // let filter;
+    // // gamma filter
+    // filter = new GammaFilter({label: 'Gamma', uniform: 'gamma', value: 2.2, min: 0, max: 3, step: 0.1});
+    // addFilter(ui, filter);
+    // // unsharp filter
+    // filter = new UnsharpFilter({label: 'Unsharp', uniform: 'unsharp', value: 10.0, min: 0, max: 20, step: 1});
+    // addFilter(ui, filter);
+
+    // ui.menu.push({ section: "Options" });
+    // addSecondLight(ui);
 }
 
+//autodetect type ------------------------------------------------------------------
+async function autodetect(data_path) {
+    let response = await fetch(data_path + '/plane_0.tzi');
+    if(response.status == 200)
+        return 'tarzoom';
 
-function dstretchTest() {
-	console.log("Dstretching");
+    response = await fetch(data_path + '/plane_0.dzi');
+    if(response.status == 200)
+        return 'deepzoom';
 
-	let dstretch = new Layer({
-		type: 'dstretch',
-		layout: 'image',
-		url: 'assets/dstretch/coin/plane_0.jpg'
-	});
+    response = await fetch(data_path + '/planes.tzi');
+    if(response.status == 200)
+        return 'tarzoom';
 
-	lime.canvas.addLayer('dstretch', dstretch);
-	let ui = new UIBasic(lime);
-	ui.actions.light.active = true;
+    response = await fetch(data_path + '/plane_0.jpg');
+    if(response.status == 200)
+        return 'image';
+
+    return false;
 }
 
-function testAnnotationEditor() {
+/*
+filter = {
+    object: ...,
+    name: ...,
+    uniform: ...,
+    value: ...,
+    min: ...,
+    max: ...,
+    step: ...
+}
+*/
+function addFilter(ui, menu, filter){
 
-	
-	Skin.setUrl('skin/skin.svg');
-	let layer0 = new Layer({ 
-		label: 'Coin 10',
-		layout: 'image', 
-		type:'rti',
-		url: 'assets/rti/eloi/info.json',
-		normals: false
-	});
-	lime.canvas.addLayer('hsh', layer0);
+    if (!filter){
+        return;
+    }
+ 
+    let filter_active = false;
+    let filter_value = filter.value; 
 
-	let layer1 = new LayerSvgAnnotation({ 
-		label: 'Annotations',
-		layout: layer0.layout,
-		style:` 
-			.openlime-annotation { pointer-events:all; opacity: 0.7; }
-			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
-			
-			:focus { fill:yellow; }
-			polyline, path { fill:none; stroke-width:1; stroke:#800; vector-effect:non-scaling-stroke; pointer-events:all; }
-			polyline, path:hover { cursor:pointer; stroke:#f00; }
+    const button = {
+        button: filter.label,
+        onclick: () => { 
+            filter_active = !filter_active;
 
-			rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
-			circle { fill:rgba(255, 0, 0, 0.2); stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
-			circle.point { stroke-width:10px }
-			.selected { fill:#ffaaaa; stroke:$ff0000 }
-		`,
-		infoTemplate: (annotation) => { return `
-			<h3>${annotation.class}</h3>
-			<p>${annotation.description}</p>
-			
-		`; },
-		annotations: 'assets/medical/test.json',
-		editable: true,
+            if (filter_active){
+                for (let layer of Object.values(lime.canvas.layers)){
+                    layer.shader.addFilter(filter);
+                    layer.shader.setUniform(filter.uniform, filter_value);
+                }
+            }
+            else{
+                for (let layer of Object.values(lime.canvas.layers)){
+                    layer.shader.removeFilter(filter.name);
+                }
+            }
+            ui.updateMenu(menu); // Update menu (run status() callback)
+        },
+        status: () => {
+            return filter_active ? 'active' : '';
+        }
+    };
+    menu.list.push(button);
 
-	}); 
-	lime.canvas.addLayer('anno', layer1); //here the overlayelement created and attached to layer1
-	
+    const slider = {
+        html: `<input id="${filter.label}Slider" type="range" min="${filter.min}" max="${filter.max}" value=${filter_value} step="${filter.step}">
+            <output id="${filter.label}SliderOutput">${filter_value}</output>`,
 
-	let editor = new EditorSvgAnnotation(lime, layer1, { lime: lime, 
-		classes: {
-			'': { stroke: '#000', label: '' },
-			'class1': { stroke: "#00FF00", label: "Vert" },
-			'class2': { stroke: '#707', label: '' },
-			'class3': { stroke: '#777', label: '' },
-			'class4': { stroke: '#070', label: '' },
-			'class5': { stroke: '#007', label: '' },
-			'class6': { stroke: '#077', label: '' },
-		}
-	});
-
-	
-	let ui = new UIBasic(lime);
-	lime.camera.maxFixedZoom = 4;
-	
-	ui.actions.help.display = true;
-	ui.actions.help.html = "Help text could be here.";
-	ui.actions.snapshot.display = true;
-
-
-	editor.createCallback = (annotation) => { console.log("Created annotation: ", annotation); return true; };
-	editor.deleteCallback = (annotation) => { console.log("Deleted annotation: ", annotation); return true; };
-	editor.updateCallback = (annotation) => { console.log("Updated annotation: ", annotation); return true; };
-
-	editor.multiple = true; 
-	
+        onchange: () => {
+            filter_value = document.querySelector(`#${filter.label}Slider`).value;
+            document.querySelector(`#${filter.label}SliderOutput`).textContent = filter_value;
+            if (filter_active){
+                for (let layer of Object.values(lime.canvas.layers)){
+                    layer.shader.setUniform(filter.uniform, filter_value);
+                }
+            }
+        }
+    };
+    menu.list.push(slider);
 }
 
-function testMedicalAnnotations() {
-	let layer0 = new Layer({
-		type: 'image',
-		url: 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi',
-		layout: 'deepzoom1px',
-		zindex: 0,
-	});
-
-	let layer1 = new LayerSvgAnnotation({ 
-		layout: layer0.layout,
-		style:` 
-			.openlime-annotation { pointer-events:all; opacity: 0.7; }
-			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
-			
-			path { fill:none; stroke-width:1; stroke:#800; vector-effect:non-scaling-stroke; pointer-events:all; }
-			path:hover { cursor:pointer; stroke:#f00; }
-
-			rect { fill:rgba(255, 0, 0, 0.2); stroke:rgba(127, 0, 0, 0.7); vector-effect:non-scaling-stroke;}
-			circle { fill:rgba(255, 0, 0, 0.2); stroke:#800; stroke-width:1px; vector-effect:non-scaling-stroke; }
-
-			.selected { fill:#ffaaaa; stroke:$ff0000 }
-		`,
-		infoTemplate: (annotation) => { return `
-			<h3>${annotation.class}</h3>
-			<p>${annotation.description}</p>
-		`; },
-		annotations: 'assets/medical/PH1101-1.json',
-		editable: true,
-
-	}); 
-
-	lime.canvas.addLayer('img', layer0);
-	lime.canvas.addLayer('anno', layer1);
-	let ui = new UIBasic(lime);
-	ui.panzoom.zoomAmount = 2.0;
+function addSecondLight(ui){
+    let secondLight = false;
+    const button = {
+        button: "Second Light",
+        onclick: () => { 
+            secondLight = !secondLight;
+            for (let layer of Object.values(lime.canvas.layers)){
+                // console.log(layer, secondLight);
+                layer.shader.secondLight = secondLight;
+                layer.shader.needsUpdate = true;
+                layer.shader.emit('update');
+            }
+            ui.updateMenu(ui.menu.option); // Update menu (run status() callback)
+        },
+        status: () => {
+            return secondLight ? 'active' : '';
+        }
+    };
+    ui.menu.option.list.push(button);
 }
 
-	
-function testSVGAnnotations() {
-	let layer0 = new Layer({
-		type: 'image',
-		url: 'assets/svbrdf/vis/kdMap.jpg',
-		layout: 'image',
-		zindex: 0,
-		transform: { x: 0, y: 0, z: 1.2, a: 0 },
-	});
+// ------------------------------------------------------------------------------------------------------------------------------------------------
 
-	let layer1 = new LayerAnnotation({ 
-		layout: layer0.layout,
-		svgURL: 'assets/svbrdf/vis/annotations.svg',
-		style:` 
-			.openlime-annotation { pointer-events:all; opacity: 0.7; }
-			.openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
-		`,
-		annotations: { aura: {}, sun: {} },
-		transform: { x: 0, y: 0, z: 1.2, a: 0 },
-	}); 
-
-	lime.canvas.addLayer('img', layer0);
-	lime.canvas.addLayer('anno', layer1);
-	let ui = new UIBasic(lime);
-	// const { home, fullscreen, rotate } = ui.actions;
-	// ui.actions = { home, fullscreen, rotate };
-	// ui.actions.zoomin = { title: "Zoom in", task: (event) => { lime.camera.deltaZoom(1000, 2, 0, 0); } }; //actions can be modified just after ui creation (not later!)
-}
-
-function testUIBasic() {
-	tomeTest();
-	let ui = new UIBasic(lime, { skin: null });
-}
-
-
-function testUISvg() {
-	tomeTest();
-	let ui = new UIBasic(lime);
-}
-
-
-function tomeTest() {
-	let layer0 = new Layer({ 
-		layout: 'deepzoom', 
-		type:'rti',
-		url: 'assets/rti/tome/info.json'
-	});
-	lime.canvas.addLayer('tome', layer0); 
-	layer0.setLight([0.4, 0.4], 2000);
-	setTimeout(() => { 
-		layer0.setLight([-1, 0], 2000); 
-	}, 2000); 
-}
-
-
-function flipTest() {
-	let layer0 = new Layer({ 
-		layout: 'image', 
-		type:'rti',
-		url: 'assets/rti/bln/info.json'
-	});
-	lime.canvas.addLayer('bln', layer0); 
-
-	let layer1 = new Layer({ 
-		layout: 'image', 
-		type:'rti',
-		url: 'assets/rti/ptm/info.json'
-	});
-	layer1.visible = false;
-	//layer0.transform.x = -1000;
-	lime.canvas.addLayer('ptm', layer1); 
-	
-	let ui = new UIBasic(lime);
-	ui.actions.flip = { title: 'Flip', display: true,  task: (event) => { 
-		layer0.setVisible(!layer0.visible);
-		layer1.setVisible(!layer1.visible);
-		lime.redraw();
-	}
-	};
-	ui.actions.light.active = true;
-	lime.camera.maxFixedZoom = 1;
-	
-	//ui.actions.light.display = true;
-	//const { home, fullscreen, rotate } = ui.actions;
-	//ui.actions = { home, fullscreen, rotate };
-	
-//	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)], ); lime.canvas.emit('update'); }, 2000);
-}
-
-
-function rtiTest(dataset) {
-
-	Cache.maxRequestRate = 30;
-	let layer0 = new Layer({ 
-		label: '4',
-		layout: 'deepzoom',
-		type:'rti',
-//		url: 'assets/rti/hsh/info.json',
-		url: 'assets/rti/hsh/info.json',
-		normals: false
-	});
-	layer0.layout.cachelevels = 0;
-	lime.canvas.addLayer('coin', layer0);
-
-	// let layer0 = new Layer({ 
-	// 	layout: 'image', 
-	// 	type:'rti',
-	// 	url: 'assets/rti/hsh/info.json',
-	// 	normals: true
-	// });
-	// //layer0.transform.x = -200;
-	// lime.canvas.addLayer('hsh', layer0); 
-
-
-	/*let layer1 = new Layer({ 
-		layout: 'image', 
-		type:'rti',
-		url: 'assets/rti/ptm/info.json'
-	});
-	layer1.transform.x = +200;
-	lime.canvas.addLayer('ptm', layer1);  */
-
-
-
-	let ui = new UIBasic(lime);
-	lime.camera.maxFixedZoom = 4;
-	ui.menu[0].section = "Prova";
-	ui.menu.push({ html: "<p>Prova</p>" });
-	ui.scale = 0.002;
-	// ui.actions.light.display = true;
-	//const { home, fullscreen, rotate } = ui.actions;
-	//ui.actions = { home, fullscreen, rotate };
-	ui.actions.rotate.display = true;
-	
-//	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)], ); lime.canvas.emit('update'); }, 2000);
-}
-
-
-/* COMBINER TEST */
-function combinerTest() {
-
-	let layer0 = new Layer({
-		type: 'image',
-		url: './assets/lighthouse/image/lighthouse-kdmap.jpg',
-		layout: 'image',
-		zindex: 0,
-		transform: { x: 100, y: 0, z: 1, a: 0 },
-		visible: false
-	});
-
-	let layer1 = new Layer({
-		type: 'image',
-		url: './assets/lighthouse/image/lighthouse-nomap.jpg',
-		layout: 'image',
-		zindex: 0,
-		transform: { x: 0, y: 0, z: 1, a: 0 },
-		visible: false
-	});
-
-	let combiner = new LayerCombiner({
-		layers: [layer0, layer1]
-	});
-
-	let shader = new ShaderCombiner();
-	shader.mode = 'diff';
-
-	combiner.shaders = {'standard': shader };
-	combiner.setShader('standard'); 
-
-	let panzoom = new ControllerPanZoom(lime.camera, { priority: -1000 });
-	lime.pointerManager.onEvent(panzoom); //register wheel, doubleclick, pan and pinch
-
-	lime.canvas.addLayer('kdmap', layer0);
-	lime.canvas.addLayer('ksmap', layer1);
-	lime.canvas.addLayer('combiner', combiner);
-
-	let ui = new UIBasic(lime);
-	ui.actions.snapshot.display = true;
-}
-
-/* COMBINER TEST */
-function lensTest() {
-
-	// let layer0 = new Layer({
-	// 	type: 'brdf',
-	// 	channels: {
-	// 		'kd': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_kd.tzi',
-	// 		'ks': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_ks.tzi',
-	// 		'normals': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_n.tzi',
-	// 		'gloss': 'assets/nivola_mural_cropped_brdf/nivola_mural_cropped_gm.tzi'
-	// 	},
-	// 	colorspaces: {
-	// 		'kd': 'linear',
-	// 		'ks': 'linear'
-	// 	},
-	// 	layout: 'tarzoom',
-		
-	// 	transform: { x: 0, y: 0, z: 1, a: 0 },
-	// });
-
-	let layer0 = new Layer({
-		type: 'image',
-		url: 'assets/svbrdf/vis/kdMap.jpg',
-		layout: 'image',
-		zindex: 0,
-		transform: { x: 0, y: 0, z: 1, a: 0 },
-		visible: false
-	});
-
-	let lensLayer = new LayerLens({
-		layers: [layer0],
-		camera: lime.camera,
-		radius:50,
-		border:10
-	});
-
-	lime.camera.bounded = false;
-	const controllerLens = new OpenLIME.ControllerLens({
-		lensLayer: lensLayer,
-		camera: lime.camera,
-		hover: true,
-		priority: 0
-	});
-
-	lime.pointerManager.onEvent(controllerLens); 
-	lensLayer.controllers.push(controllerLens);
-
-	let cameraCtrl = new ControllerPanZoom(lime.camera, { priority: -1000 });
-	lime.camera.setPosition(1000,0,0,1,0);
-	lime.pointerManager.onEvent(cameraCtrl); //register wheel, doubleclick, pan and pinch
-	lime.camera.maxFixedZoom = 4;
-
-	lime.canvas.addLayer('kdmap', layer0);
-	lime.canvas.addLayer('lens', lensLayer);
-	//let ui = new UIBasic(lime);
-
-}
-
-/* IMAGE TEST */
-function imageTest(layout) {
-	if (!layout)
-		layout = 'deepzoom';
-
-//	let options = { layout: layout, type: 'image', transform: { x: -100, a: 45 } };
-	let options = { layout: layout, type: 'image'};
-	console.log("OPTIONS: ", options);
-	switch (layout) {
-		case 'image':
-			options.url = 'assets/lime/image/lime.jpg';
-//			options.url = 'http://dev.isti.cnr.it/iipsrv/iipsrv.fcgi?IIIF=/home/ponchio/Sync/html/cenobium/sites/monreale/tif/N1ShNWNW.tif/2048,0,1952,2048/244.875,256/0/default.jpg';
-			break;
-
-			case 'deepzoom1px':
-				options.url = 'assets/lime/deepzoom1px/lime.dzi';
-			break;	
-			case 'deepzoom':
-				//options.url = 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
-				//options.url = 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi'; //'assets/svbrdf/vis/ksMap.dzi';
-			break;
-
-		// case 'google':
-		// 	options.width = 3184;
-        //     options.height = 2024;
-        //     options.url = 'assets/lime/google/lime';
-		// 	break;
-
-		case 'google':
-			const l=19;
-			options.width = Math.pow(2, l+8);
-			options.height = Math.pow(2, l+8);
-			options.mipmapBias = 0.4;
-			options.url= 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-			//options.url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-			break;
-
-		case 'zoomify':
-			options.url = 'assets/lime/zoomify/lime/ImageProperties.xml';
-			break;
-
-		case 'iiif':
-			//options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=PIA03883.pyr.tif/info.json';
-			//options.url = 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?IIIF=HD3/HD3_pyr_000_090.tif/info.json';
-			options.url = 'http://dev.isti.cnr.it/iipsrv/iipsrv.fcgi?IIIF=/home/ponchio/Sync/html/cenobium/sites/monreale/tif/N1ShNWNW.tif/info.json';
-			break;
-
-		case 'tarzoom':
-			options.url = 'assets/lime/tarzoom/lime.tzi';
-			break;
-
-		case 'itarzoom':
-			//options.url = 'assets/rti/hsh/planes.tzi';
-			break;
-		
-	}
-	let layer0 = new Layer(options);
-	lime.canvas.addLayer('kdmap', layer0);
-
-	let ui = new UIBasic(lime);
-
-	setTimeout(() => { 
-		console.log(layer0);
-		lime.removeLayer('kdmap');
-	}, 3000);
-	setTimeout(() => {
-		console.log(layer0);
-		lime.addLayer('kdmap', layer0);
-	}, 6000);
-
-}
-
-
-/* BRDF TEST */
-function brdfTest() {
-	let brdf = new Layer({
-		type: 'brdf',
-		channels: {
-			'kd': 'assets/svbrdf/vis/kdMap.jpg',
-			'ks': 'assets/svbrdf/vis/ksMap.jpg',
-			'normals': 'assets/svbrdf/normalMap.jpg',
-			'gloss': 'assets/svbrdf/vis/glossMap.jpg'
-		},
-		colorspaces: {
-			'kd': 'linear',
-			'ks': 'linear'
-		},
-		layout: 'image',
-	});
-
-	lime.canvas.addLayer('brdf', brdf);
-	let ui = new UIBasic(lime);
-
-}
-
-
-lime.draw();
-
-//setTimeout(() => { lime.camera.fit([-150, -276, 150, 277], 200); }, 1000);
-
-
-
+// ------------------------------------------------------------------------------------------------------------------------------------------------

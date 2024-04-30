@@ -108,13 +108,15 @@ class UIBasic {
 			actions: {
 				home: { title: 'Home', display: true, key: 'Home', task: (event) => { if (camera.boundingBox) camera.fitCameraBox(250); } },
 				fullscreen: { title: 'Fullscreen', display: true, key: 'f', task: (event) => { this.toggleFullscreen(); } },
-				layers: { title: 'Layers', display: true, key: 'Escape', task: (event) => { this.toggleLayers(); } },
+				layers: { title: 'Layers', display: true, key: 'Escape', task: (event) => { this.toggleMenu(this.menu.layer); } },
+				ruler: { title: 'Options', display: true, key: 'o', task: (event) => { this.toggleMenu(this.menu.option); } },
+				help: { title: 'Annotations', display: true, key: 'a', task: (event) => { this.toggleMenu(this.menu.annotation); } },
 				zoomin: { title: 'Zoom in', display: false, key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout: { title: 'Zoom out', display: false, key: '-', task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
 				rotate: { title: 'Rotate', display: false, key: 'r', task: (event) => { camera.rotate(250, -45); } },
 				light: { title: 'Light', display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
-				ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
-				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
+				// ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
+				// help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 			},
 			pixelSize: null,
@@ -124,7 +126,11 @@ class UIBasic {
 			showLightDirections: false,
 			enableTooltip: true,
 			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
-			menu: []
+			menu: {
+				layer: {list: [], overlay: null},
+				option: {list: [], overlay: null},
+				annotation: {list: [], overlay: null},
+			},
 		});
 		
 		Object.assign(this, options);
@@ -149,7 +155,10 @@ class UIBasic {
 			(!mode || this.viewer.canvas.layers[layer].getMode() == mode);
 		entry.element.classList.toggle('active', active); */
 
-		this.menu.push({ section: "Layers" });
+		this.menu.layer.list.push({ section: "Layers" });
+		this.menu.option.list.push({ section: "Options" });
+		this.menu.annotation.list.push({ section: "Annotations" });
+
 		for (let [id, layer] of Object.entries(this.viewer.canvas.layers)) {
 			let modes = []
 			for (let m of layer.getModes()) {
@@ -167,25 +176,34 @@ class UIBasic {
 
 			let layerEntry = {
 				button: layer.label || id,
-				onclick: () => { this.setLayer(layer); },
+				onclick: () => { this.setLayer(layer); console.log(layer.visible)},
 				status: () => layer.visible ? 'active' : '',
 				layer: id
 			};
 			if(modes.length > 1) layerEntry.list = modes;
 			
 			if (layer.annotations ) {
+				// this.annoMenu.push({ section: "Annotations" });
+				// this.annoMenu.push({ list: layer.annotationsEntry()});
 				layerEntry.list = [];
-				//setTimeout(() => { 
+				// //setTimeout(() => { 
 				layerEntry.list.push(layer.annotationsEntry());
+				// this.annoMenu.push(layerEntry);
 					//this.updateMenu();
 				//}, 1000);
 				//TODO: this could be a convenience, creating an editor which can be
 				//customized later using layer.editor.
 				//if(layer.editable) 
 				//	layer.editor = this.editor;
+				this.menu.annotation.list.push(layerEntry);
 			}
-			this.menu.push(layerEntry);
+			else{
+				this.menu.layer.list.push(layerEntry);
+			}
+			// this.menu.annotation.list.push(layerEntry);
 		}
+
+		console.log(this.menu.annotation);
 
 		let controller = new Controller2D(
 			(x, y) => {
@@ -230,34 +248,65 @@ class UIBasic {
 		else setTimeout(() => { this.init(); }, 0);
 	}
 
-	showOverlayMessage(msg, duration = 2000) {
-		if(this.overlayMessage) {
-			clearTimeout(this.overlayMessage.timeout);
-			this.overlayMessage.timeout = setTimeout(() => this.destroyOverlayMessage(), duration);
-			return;
-		}
-		
-		
-		let background = document.createElement('div');
-		background.classList.add('openlime-overlaymsg');
-		background.innerHTML = `<p>${msg}</p>`;
-		this.viewer.containerElement.appendChild(background);
-
-		this.overlayMessage = {
-			background,
-			timeout: setTimeout(() => this.destroyOverlayMessage(), duration)
-		}
-	}
-	destroyOverlayMessage() {
-		this.overlayMessage.background.remove();
-		this.overlayMessage = null;
-	}
+	// ************************************************************************************
+	// INITIALIZATION
+	// ************************************************************************************
 
 	/** @ignore */
-	getMenuLayerEntry(id) {
-		const found = this.menu.find(e => e.layer == id);
-		return found;
+	init() {
+		(async () => {
+
+			document.addEventListener('keydown', (e) => this.keyDown(e), false);
+			document.addEventListener('keyup', (e) => this.keyUp(e), false);
+
+			for (let m of Object.values(this.menu)){
+				this.createMenu(m);
+				this.updateMenu(m);
+			}
+			this.viewer.canvas.addEvent('update', () => this.updateMenu());
+
+			if (this.actions.light && this.actions.light.display === 'auto')
+				this.actions.light.display = true;
+
+
+			if (this.skin)
+				await this.loadSkin();
+				// await this.createAnnotationEditor();
+			/* TODO: this is probably not needed
+			if(this.skinCSS)
+				await this.loadSkinCSS();
+			*/
+
+			this.setupActions();
+			if(this.pixelSize) 
+				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+
+			if(this.attribution) {
+				var p = document.createElement('p');
+				p.classList.add('openlime-attribution');
+				p.innerHTML = this.attribution;
+				this.viewer.containerElement.appendChild(p);
+			}
+
+			
+
+			for(let l of Object.values(this.viewer.canvas.layers)) {
+				this.setLayer(l);
+				break;
+			}
+
+			if(this.actions.light && this.actions.light.active)
+				this.toggleLightController();
+			if(this.actions.layers && this.actions.layers.active)
+				// this.toggleLayers();
+				this.toggleMenu(this.menu.layer);
+
+		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
+
+	// ************************************************************************************
+	// LIGHTS
+	// ************************************************************************************
 
 	/** @ignore */
 	createLightDirections() {
@@ -296,53 +345,36 @@ class UIBasic {
 		this.lightDirections.style.display = show? 'block' : 'none';
 	}
 
-	/** @ignore */
-	init() {
-		(async () => {
+	// ************************************************************************************
+	// OVERLAY MESSAGE
+	// ************************************************************************************
 
-			document.addEventListener('keydown', (e) => this.keyDown(e), false);
-			document.addEventListener('keyup', (e) => this.keyUp(e), false);
+	showOverlayMessage(msg, duration = 2000) {
+		if(this.overlayMessage) {
+			clearTimeout(this.overlayMessage.timeout);
+			this.overlayMessage.timeout = setTimeout(() => this.destroyOverlayMessage(), duration);
+			return;
+		}
+		
+		let background = document.createElement('div');
+		background.classList.add('openlime-overlaymsg');
+		background.innerHTML = `<p>${msg}</p>`;
+		this.viewer.containerElement.appendChild(background);
 
-			this.createMenu();
-			this.updateMenu();
-			this.viewer.canvas.addEvent('update', () => this.updateMenu());
-
-			if (this.actions.light && this.actions.light.display === 'auto')
-				this.actions.light.display = true;
-
-
-			if (this.skin)
-				await this.loadSkin();
-			/* TODO: this is probably not needed
-			if(this.skinCSS)
-				await this.loadSkinCSS();
-			*/
-
-			this.setupActions();
-			if(this.pixelSize) 
-				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
-
-			if(this.attribution) {
-				var p = document.createElement('p');
-				p.classList.add('openlime-attribution');
-				p.innerHTML = this.attribution;
-				this.viewer.containerElement.appendChild(p);
-			}
-
-			
-
-			for(let l of Object.values(this.viewer.canvas.layers)) {
-				this.setLayer(l);
-				break;
-			}
-
-			if(this.actions.light && this.actions.light.active)
-				this.toggleLightController();
-			if(this.actions.layers && this.actions.layers.active)
-				this.toggleLayers();
-
-		})().catch(e => { console.log(e); throw Error("Something failed") });
+		this.overlayMessage = {
+			background,
+			timeout: setTimeout(() => this.destroyOverlayMessage(), duration)
+		}
 	}
+
+	destroyOverlayMessage() {
+		this.overlayMessage.background.remove();
+		this.overlayMessage = null;
+	}
+
+	// ************************************************************************************
+	// EVENTS
+	// ************************************************************************************
 
 	/** @ignore */
 	keyDown(e) {
@@ -364,6 +396,10 @@ class UIBasic {
 		}
 	}
 	
+	// ************************************************************************************
+	// TOOLBAR
+	// ************************************************************************************
+
 	/** @ignore */
 	async loadSkin() {
 		let toolbar = document.createElement('div');
@@ -441,6 +477,10 @@ class UIBasic {
 				skin.setAttribute('viewBox', `0 0 ${w} ${h}`);
 		}
 	}
+
+	// ************************************************************************************
+	// ACTIONS
+	// ************************************************************************************
 
 	/** @ignore */
 	setupActions() {
@@ -533,7 +573,15 @@ class UIBasic {
 		document.body.removeChild(e);
 	}
 
-	/* Layer management */
+	// ************************************************************************************
+	// MENU
+	// ************************************************************************************
+
+	/** @ignore */
+	getMenuLayerEntry(id, menu = this.menu.layer) {
+		const found = menu.list.find(e => e.layer == id);
+		return found;
+	}
 
 	/** @ignore */
 	createEntry(entry) {
@@ -574,8 +622,8 @@ class UIBasic {
 	}
 
 	/** @ignore */
-	addEntryCallbacks(entry) {
-		entry.element = this.layerMenu.querySelector('#' + entry.id);
+	addEntryCallbacks(entry, menu = this.menu.layer) {
+		entry.element = menu.overlay.querySelector('#' + entry.id);
 		if (entry.onclick)
 			entry.element.addEventListener('click', (e) => {
 				entry.onclick();
@@ -583,12 +631,14 @@ class UIBasic {
 			});
 		if (entry.oninput)
 			entry.element.addEventListener('input', entry.oninput);
+		if (entry.onchange)
+			entry.element.addEventListener('change', entry.onchange);
 		if (entry.oncreate)
 			entry.oncreate();
 
 		if ('list' in entry)
 			for (let e of entry.list)
-				this.addEntryCallbacks(e);
+				this.addEntryCallbacks(e, menu);
 	}
 
 	/** @ignore */
@@ -602,16 +652,16 @@ class UIBasic {
 	}
 
 	/** @ignore */
-	updateMenu() {
-		for (let entry of this.menu)
+	updateMenu(menu = this.menu.layer) {
+		for (let entry of menu.list)
 			this.updateEntry(entry);
 	}
 
 	/** @ignore */
-	createMenu() {
+	createMenu(menu = this.menu.layer) {
 		this.entry_count = 0;
 		let html = `<div class="openlime-layers-menu">`;
-		for (let entry of this.menu) {
+		for (let entry of menu.list) {
 			html += this.createEntry(entry);
 		}
 		html += '</div>';
@@ -619,11 +669,11 @@ class UIBasic {
 
 		let template = document.createElement('template');
 		template.innerHTML = html.trim();
-		this.layerMenu = template.content.firstChild;
-		this.viewer.containerElement.appendChild(this.layerMenu);
+		menu.overlay = template.content.firstChild;
+		this.viewer.containerElement.appendChild(menu.overlay);
 
-		for (let entry of this.menu) {
-			this.addEntryCallbacks(entry);
+		for (let entry of menu.list) {
+			this.addEntryCallbacks(entry, menu);
 		}
 
 
@@ -634,8 +684,11 @@ class UIBasic {
 	}
 
 	/** @ignore */
-	toggleLayers() {
-		this.layerMenu.classList.toggle('open');
+	toggleMenu(menu) {
+		menu.overlay.classList.toggle('open');
+		for (let m of Object.values(this.menu))
+			if (m != menu)
+				m.overlay.classList.remove('open');
 	}
 
 	/** @ignore */

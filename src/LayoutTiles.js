@@ -340,7 +340,7 @@ class LayoutTiles extends Layout {
 	* @param {Transform} transform The current transform.
 	* @param {Transform} layerTransform The transform of the calling layer
  	* @param {number} border The threshold (in tile units) around the current camera position for which to prefetch tiles.
-	* @param {number} bias Determine which texture is used when scale is not a power of 2. 0: use always the highest resulution, 1 the lowest, 0.5 switch halfway.
+	* @param {number} bias The mipmap bias of the texture.
  	* @returns {Object} level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.
  	*/
 	neededBox(viewport, transform, layerTransform, border, bias) {

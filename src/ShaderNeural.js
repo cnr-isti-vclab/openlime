@@ -25,6 +25,12 @@ class ShaderNeural extends Shader {
 			{ id:2, name:'u_texture_2', type:'vec3' },
 			{ id:3, name:'u_texture_3', type:'vec3' }
 		];
+		if(this.normals)
+			this.samplers.push({ id:this.samplers.length+1, name:'normals', type:'vec3' });
+		if(this.albedo)
+			this.samplers.push({ id:this.samplers.length+1, name:'albedo', type:'vec3' });
+		if(this.mask)
+			this.samplers.push({ id:this.samplers.length+1, name:'mask', type:'vec3' });
 
 		this.uniforms = {
 			lights: { type: 'vec2', needsUpdate: true, size: 2, value: [0.0, 0.0] },
@@ -73,7 +79,7 @@ void main() {
 }`;
 	}
 	fragShaderSrc(gl) {
-		return `
+		let str =  `
 vec4 inputs[${this.c/4}];    // 12/4
 vec4 output1[${this.n/4}];  // 52/4
 vec4 output2[${this.n/4}];  // 52/4
@@ -98,9 +104,15 @@ uniform vec3 max[${this.planes/3}];
 float elu(float a){
 	return (a > 0.0) ? a : (exp(a) - 1.0);
 }
+`;
 
+		if (this.mask)
+			str += `
+uniform sampler2D mask;
+`;
 
-vec4 relightCoeff(vec3 color_1, vec3 color_2, vec3 color_3) {
+		str += `
+vec4 relightCoeff(vec3 color_1, vec3 color_2, vec3 color_3, vec2 lights) {
 	// Rescaling features
     color_1 = color_1 * (max[0] - min[0]) + min[0];
     color_2 = color_2 * (max[1] - min[1]) + min[1];
@@ -141,18 +153,50 @@ vec4 relightCoeff(vec3 color_1, vec3 color_2, vec3 color_3) {
 	}
 	return vec4(output3.${this.colorspace}, 1.0);
 }
+`;
 
-vec4 relight(vec2 v) {
-	vec3 color_1 = texture(u_texture_1, v).${this.colorspace};
-	vec3 color_2 = texture(u_texture_2, v).${this.colorspace};
-	vec3 color_3 = texture(u_texture_3, v).${this.colorspace};
-	return relightCoeff(color_1, color_2, color_3);
+		str += `
+vec4 render(vec2 lights, vec2 v_texcoord) {
+	vec3 color_1 = texture(u_texture_1, v_texcoord).${this.colorspace};
+	vec3 color_2 = texture(u_texture_2, v_texcoord).${this.colorspace};
+	vec3 color_3 = texture(u_texture_3, v_texcoord).${this.colorspace};
+	return relightCoeff(color_1, color_2, color_3, lights);
 }
+`;
 
-
+		str += `
 vec4 data() {
-	return relight(v_texcoord);
+	vec4 color;
+`;
+
+		if (this.mask)
+			str += `
+	float mask_pixel = texture(mask, v_texcoord)[0];
+	if (mask_pixel == 0.0)
+		return vec4(0);
+`;
+
+		if (this.secondLight)
+			str += `
+	// color = render(lights, v_texcoord) * 0.5 + render(-lights, v_texcoord) * 0.5;
+	color = vec4(render(lights, v_texcoord).rgb + render(-lights, v_texcoord).rgb, 1.0);
+`;
+		else
+			str += `
+	color = render(lights, v_texcoord);
+`;
+
+		if (this.mask)
+			str += `
+	color *= mask_pixel;
+`;
+
+		str += `
+	return color;
 }
+`;
+
+		str += `
 vec4 data1() {
 	vec2 uv = v_texcoord;
 	bool showDiff = false;
@@ -176,14 +220,14 @@ vec4 data1() {
 	for(float y = 0.0; y <= step; y = y + step) {
 		for(float x = 0.0; x <= step; x = x + step) {
 			vec2 d = o + vec2(x, y);
-			a += 0.25*relight(d);
+			a += 0.25*render(lights, d);
 
 			color_1 += texture(u_texture_1, d).${this.colorspace};
 			color_2 += texture(u_texture_2, d).${this.colorspace};
 			color_3 += texture(u_texture_3, d).${this.colorspace};
 		}
 	}
-	vec4 b = relightCoeff(0.25*color_1, 0.25*color_2, 0.25*color_3);
+	vec4 b = relightCoeff(0.25*color_1, 0.25*color_2, 0.25*color_3, lights);
 	float diff = 255.0*length((a - b).xyz);
 	if(showDiff) {
 		if(diff < 10.0) {
@@ -199,8 +243,9 @@ vec4 data1() {
 		return a;
 	return b;
 }
+`;
 
-		`;
+		return str;
 	}
 
 }

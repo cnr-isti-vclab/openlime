@@ -86,6 +86,8 @@ class ShaderRTI extends Shader {
 		if(this.mode == 'light')
 			this.lightWeights(light, 'base');
 		this.setUniform('light', light);
+
+		this.lightWeights([-light[0], -light[1], light[2]], 'baseSL');
 	}
 	setSpecularExp(value) {
 		this.setUniform('specular_exp', value);
@@ -108,7 +110,11 @@ class ShaderRTI extends Shader {
 			this.samplers.push({ id:i, name:'plane'+i, type:'vec3' });
 		
 		if(this.normals)
-			this.samplers.push({ id:this.njpegs, name:'normals', type:'vec3' });
+			this.samplers.push({ id:this.samplers.length, name:'normals', type:'vec3' });
+		if(this.albedo)
+			this.samplers.push({ id:this.samplers.length, name:'albedo', type:'vec3' });
+		if(this.mask)
+			this.samplers.push({ id:this.samplers.length, name:'mask', type:'vec3' });
 
 		this.material = this.materials[0];
 
@@ -138,10 +144,13 @@ class ShaderRTI extends Shader {
 			scale: { type: 'vec3', needsUpdate: true, size: this.nplanes/3, value: this.scale },
 			base:  { type: 'vec3', needsUpdate: true, size: this.nplanes },
 			base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
-			base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
+			base2: { type: 'vec3', needsUpdate: false, size: this.nplanes },
+			baseSL: { type: 'vec3', needsUpdate: true, size: this.nplanes }
 		}
 
 		this.lightWeights([0, 0, 1], 'base');
+		this.lightWeights([0, 0, 1], 'baseSL');
+			
 	}
 
 	lightWeights(light, basename, time) {
@@ -207,6 +216,11 @@ uniform ${basetype} base1[np1];
 uniform ${basetype} base2[np1];
 `;
 
+		if (this.secondLight)
+			str += `
+uniform ${basetype} baseSL[np1];
+`;
+
 		for(let n = 0; n < this.njpegs; n++) 
 			str += `
 uniform sampler2D plane${n};
@@ -215,6 +229,16 @@ uniform sampler2D plane${n};
 		if(this.normals)
 			str += `
 uniform sampler2D normals;
+`;
+
+		if(this.albedo)
+			str += `
+uniform sampler2D albedo;
+`;
+
+		if(this.mask)
+			str += `
+uniform sampler2D mask;
 `;
 
 		if(this.colorspace == 'mycc')
@@ -236,15 +260,31 @@ const int ny1 = ${this.yccplanes[1]};
 
 vec4 data() {
 
-`;
-		if(this.mode == 'light') {
-			str += `
-	vec4 color = render(base);
-`;
-		} else  {
-			str += `
 	vec4 color;
+
 `;
+
+		if (this.mask){
+			str += `
+			float mask_pixel = texture${gl2?'':'2D'}(mask, v_texcoord)[0];
+			if (mask_pixel == 0.0)
+				return vec4(0);
+`;
+		}
+
+
+		if(this.mode == 'light') {
+			if (this.secondLight)
+				str += `
+	// color = render(base) * 0.5 + render(baseSL) * 0.5;
+	color = vec4(render(base).rgb + render(baseSL).rgb, 1.0);
+`;
+			else
+				str += `
+	color = render(base);
+`; 
+		} else  {
+
 			if(this.normals)
 				str += `
 	vec3 normal = (texture${gl2?'':'2D'}(normals, v_texcoord).zyx *2.0) - 1.0;
@@ -286,6 +326,12 @@ color = vec4(vec3(dot(light, normal)), 1);
 `;
 			break;
 			}
+		}
+
+		if (this.mask){
+			str += `
+			color *= mask_pixel;
+`;
 		}
 
 		str += `return color;
@@ -342,6 +388,28 @@ vec4 render(vec3 base[np1]) {
 	return rgb;
 }
 `;
+
+
+		str += `
+vec4 render(vec3 base[np1], vec2 v_texcoord) {
+	vec4 rgb = vec4(0, 0, 0, 1);`;
+
+		for(let j = 0; j < njpegs; j++) {
+			str += `
+	{
+		vec4 c = texture${gl2?'':'2D'}(plane${j}, v_texcoord);
+		rgb.x += base[${j}].x*(c.x - bias[${j}].x)*scale[${j}].x;
+		rgb.y += base[${j}].y*(c.y - bias[${j}].y)*scale[${j}].y;
+		rgb.z += base[${j}].z*(c.z - bias[${j}].z)*scale[${j}].z;
+	}
+`;
+		}
+		str += `
+	return rgb;
+}
+`;
+
+
 		return str;
 	}
 }

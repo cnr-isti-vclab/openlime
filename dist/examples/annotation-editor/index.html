@@ -160,18 +160,22 @@
         const ui = new OpenLIME.UIBasic(lime);
 
         // Get a subset of pre-defined actions to work on it
-        let { help, home, layers, fullscreen, light, zoomin, zoomout } = ui.actions
+        // let { help, home, layers, fullscreen, light, zoomin, zoomout } = ui.actions
 
         // Remove light from the toolbar
-        light.display = false;
+        ui.actions.light.display = false;
 
         // Add help, zoomin and zoomout to the toolbar
-        help.display = true;
-        zoomin.display = true;
-        zoomout.display = true;
+        ui.actions.help.display = true;
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+
+        ui.actions.snapshot.display = true;
+
+        console.log(ui);
 
         // Add configured actions to the toolbar
-        ui.actions = { help, home, layers, fullscreen, light, zoomin, zoomout };
+        // ui.actions = { help, home, layers, fullscreen, light, zoomin, zoomout };
 
         // Add image attribution 
         ui.attribution = `CRS4 Digital Pathology Platform - <a href="https://www.crs4.it/research/visual-and-data-intensive-computing/digital-health/">CRS4 Digital Health Research Program</a>`;
@@ -218,6 +222,20 @@
             if (json.status == 'error')
                 alert(json.msg);
         }
+
+        const button = document.createElement('button');
+        button.innerHTML = 'ciao';
+        document.body.appendChild(button);
+
+        button.addEventListener('click', (event) => {
+            var e = document.createElement('a');
+            e.setAttribute('href', ui.viewer.canvas.canvasElement.toDataURL());
+            e.setAttribute('download', 'snapshot.png');
+            e.style.display = 'none';
+            document.body.appendChild(e);
+            e.click();
+            document.body.removeChild(e);
+        });
 
     </script>
 </body>

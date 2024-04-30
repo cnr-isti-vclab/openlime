@@ -33,7 +33,8 @@
     "webpack-dev-server": "^4.7.4"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^4.2.0"
+    "@tensorflow/tfjs": "^4.2.0",
+    "cors": "^2.8.5"
   },
   "files": [
     "build/openlime.js",

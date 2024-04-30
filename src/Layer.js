@@ -37,10 +37,7 @@ import { addSignals } from './Signals.js'
 class Layer {
 	/**
 	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
-	* Signals are triggered when:
-	* ready: the size and layout of the layer is known
-	* update: some new tile is available, or some visualization parameters has changed
-	* loaded: is fired when all the images needed have been downloaded
+	* Signals are triggered when the layer is ready (i.e. completely initialized) or if its state variables have been updated (a redraw is needed).
 	* @param {Object} [options]
 	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
 	* @param {string} options.type A string identifier to select the specific derived layer class to instantiate.
@@ -51,7 +48,7 @@ class Layer {
 	* @param {number} options.zindex Stack ordering value for the rendering of layers (higher zindex on top).
 	* @param {bool} options.overlay=false  Whether the layer must be rendered in overlay mode.
 	* @param {number} options.prefetchBorder=1 The threshold (in tile units) around the current camera position for which to prefetch tiles.
-	* @param {number} options.mipmapBias=0.2 Determine which texture is used when scale is not a power of 2. 0: use always the highest resulution, 1 the lowest, 0.5 switch halfway.
+	* @param {number} options.mipmapBias=0.4 The mipmap bias of the texture.
 	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader}.
 	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
 	* @param {Layer} options.sourceLayer The layer from which to take the tiles (in order to avoid tile duplication).
@@ -119,7 +116,7 @@ class Layer {
 			//each tile is tex: [.. one for raster ..], missing: 3 missing tex before tile is ready.
 			//only raster used by the shader will be loade.
 			queue: [],     //queue of tiles to be loaded.
-			requested: new Map,  //tiles requested.
+			requested: {},  //tiles requested.
 		});
 
 		Object.assign(this, options);
@@ -788,14 +785,14 @@ class Layer {
 		if (this.tiles.has(tile.index))
 			throw "AAARRGGHHH double tile!";
 
-		if (this.requested.has(tile.index)) {
+		if (this.requested[tile.index]) {
 			console.log("Warning: double request!");
 			callback("Double tile request");
 			return;
 		}
 
 		this.tiles.set(tile.index, tile);
-		this.requested.set(tile.index, true);
+		this.requested[tile.index] = true;
 
 		if (this.layout.type == 'itarzoom') {
 			tile.url = this.layout.getTileURL(null, tile);
@@ -825,7 +822,7 @@ class Layer {
 			}
 			tile.missing = 0;
 			this.emit('update');
-			this.requested.delete(tile.index);
+			delete this.requested[tile.index];
 			if (callback) callback(tile.size);
 			return;
 		}
@@ -845,9 +842,7 @@ class Layer {
 			tile.missing--;
 			if (tile.missing <= 0) {
 				this.emit('update');
-				this.requested.delete(tile.index);
-				if(this.requested.size == 0)
-					this.emit('loaded');
+				delete this.requested[tile.index];
 				if (callback) callback(size);
 			}
 		}
@@ -855,6 +850,6 @@ class Layer {
 }
 
 Layer.prototype.types = {}
-addSignals(Layer, 'ready', 'update', 'loaded', 'updateSize');
+addSignals(Layer, 'update', 'ready', 'updateSize');
 
 export { Layer }

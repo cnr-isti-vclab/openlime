@@ -15,12 +15,51 @@ class LayerNeuralRTI extends Layer {
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 
+
+
+		// set shaders
+		this.neuralShader = new ShaderNeural(this.shaderOptions);
+		
+		this.imageShader = new Shader({
+			'label': 'Rgb',
+			'samplers': [{ id: 0, name: 'kd', type: 'vec3', load: false }]
+		});
+
+		this.shaders = { 'standard': this.imageShader, 'neural': this.neuralShader };
+		this.setShader('neural');
+		this.neuralShader.setLight([0, 0]);
+
 		let textureUrls = [
 			null,
+			this.layout.imageUrl(this.url, 'plane_0'),
 			this.layout.imageUrl(this.url, 'plane_1'),
 			this.layout.imageUrl(this.url, 'plane_2'),
-			this.layout.imageUrl(this.url, 'plane_3'),
 		];
+
+		if(this.shader.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
+			let url;
+			if (typeof this.shader.normals === 'string')
+				url = this.layout.imageUrl(this.url, this.shader.normals);
+			else
+				url = this.layout.imageUrl(this.url, 'normals');
+			textureUrls.push(url);			
+		}	
+		if(this.shader.albedo) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
+			let url;
+			if (typeof this.shader.albedo === 'string')
+				url = this.layout.imageUrl(this.url, this.shader.albedo);
+			else
+				url = this.layout.imageUrl(this.url, 'albedo');	
+			textureUrls.push(url);
+		}	
+		if(this.shader.mask) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
+			let url;
+			if (typeof this.shader.mask === 'string')
+				url = this.layout.imageUrl(this.url, this.shader.mask);
+			else
+				url = this.layout.imageUrl(this.url, 'mask');	
+			textureUrls.push(url);		
+		}			
 
 		this.layout.setUrls(textureUrls);
 
@@ -28,20 +67,6 @@ class LayerNeuralRTI extends Layer {
 			let raster = new Raster({ format: 'vec3' });
 			this.rasters.push(raster);
 		}
-
-		this.imageShader = new Shader({
-			'label': 'Rgb',
-			'samplers': [{ id: 0, name: 'kd', type: 'vec3', load: false }]
-		});
-
-
-
-		this.neuralShader = new ShaderNeural();
-
-		this.shaders = { 'standard': this.imageShader, 'neural': this.neuralShader };
-		this.setShader('neural');
-		this.neuralShader.setLight([0, 0]);
-
 
 		(async () => { await this.loadNeural(this.url); })();
 	}
@@ -126,6 +151,8 @@ class LayerNeuralRTI extends Layer {
 
 		this.worldRotation = transform.a + this.transform.a;
 
+		this.shader = this.neuralShader;
+
 		if (this.networkParameters !== undefined) {
 
 			let previousRelightFraction = this.relightFraction;
@@ -191,7 +218,6 @@ class LayerNeuralRTI extends Layer {
 
 		this.shader = this.imageShader;
 		let done = super.draw(transform, viewport);
-		this.shader = this.neuralShader;
 
 		return done;
 	}

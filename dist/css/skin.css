@@ -159,11 +159,80 @@
 	opacity: 70%;
 }
 
-.openlime-light .openlime-bulb {
+/* ANNOTATION MENU */
+
+.openlime-annotation-editor rect[style] {
+	fill: rgb(255, 255, 255, 0) !important;
+	stroke: none !important;
+}
+
+/* .openlime-annotation-editor path[style] {
+	stroke: white !important;
+	fill: white !important
+} */
+
+/* .openlime-annotation-editor text {
+	stroke: white !important;
+	fill: white !important
+} */
+
+.openlime-annotation-editor {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	padding: 5px;
+	background-color: transparent;
+	display: flex;
+	border: 1px dashed white;
+}
+
+.openlime-annotation-editor.hidden {
+	display: none;
+}
+
+.openlime-annotation-editor svg:not(:root) {
+	width: auto;
+	height: 5vh;
+	display: block;
+}
+
+.openlime-annotation-editor svg:hover {
+	cursor: pointer;
+	opacity: 70%;
+}
+
+.openlime-annotation-editor input {
+	background-color: rgba(255,255,255,0.9);
+	width: 10vw;
+	height: auto;
+	/* box-sizing: content-box; */
+	padding: 0;
+	margin: 1px;
+	border: 1px solid black;
+}
+
+.openlime-annotation-editor textarea {
+	position: fixed;
+	left: 25vw;
+	top: 25vh;
+	width: 50vw;
+	height: 50vh;
+}
+
+/* .openlime-tool.active,
+.openlime-tool.active * {
+	stroke: #fff !important;
+} */
+
+.openlime-annotation-editor .active * {
+	stroke: #fff !important;
+}
+
+.openlime-light path[style] {
 	fill: #80808011 !important;
 }
 
-.openlime-light-active .openlime-light .openlime-bulb {
+.openlime-light-active .openlime-light path[style] {
 	fill: #ffcc00 !important;
 }
 
