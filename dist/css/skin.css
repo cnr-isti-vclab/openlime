@@ -201,9 +201,9 @@
 	opacity: 70%;
 }
 
-.openlime-annotation-editor input {
+.openlime-annotation-editor input, .openlime-annotation-editor select {
 	background-color: rgba(255,255,255,0.9);
-	width: 10vw;
+	/* width: 10vw; */
 	height: auto;
 	/* box-sizing: content-box; */
 	padding: 0;
@@ -212,6 +212,7 @@
 }
 
 .openlime-annotation-editor textarea {
+	background-color: rgba(255,255,255,0.9);
 	position: fixed;
 	left: 25vw;
 	top: 25vh;

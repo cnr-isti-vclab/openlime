@@ -78,14 +78,19 @@ class AnnotationEditor {
 			currentLine: [],
 			annotation: null,
 			priority: 20000,
+			enableState: false,
+			customState: null,
+			customData: null,
+			editWidget: null,
+			selectedCallback: null,
+			createCallback: null, //callbacks for backend
+			updateCallback: null,
+			deleteCallback: null,
 			classes: {
-				'class0': { stroke: '#000', label: '' },
-				'class1': { stroke: '#770', label: '' },
-				'class2': { stroke: '#707', label: '' },
-				'class3': { stroke: '#777', label: '' },
-				'class4': { stroke: '#070', label: '' },
-				'class5': { stroke: '#007', label: '' },
-				'class6': { stroke: '#077', label: '' },
+				'sea': { stroke: 'blue', fill: '' },
+				'grass': { stroke: 'green', fill: '' },
+				'fire': { stroke: 'red', fill: '' },
+				'air': { stroke: 'gray', fill: '' },
 			},
 			tools: {
 				point: {
@@ -134,21 +139,15 @@ class AnnotationEditor {
 									tool: Colorpick,
 								} */
 			},
-			annotation: null, //not null only when editWidget is shown.
-			enableState: false,
-			customState: null,
-			customData: null,
-			editWidget: null,
-			selectedCallback: null,
-			createCallback: null, //callbacks for backend
-			updateCallback: null,
-			deleteCallback: null
 		}, options);
 		
 		layer.style += Object.entries(this.classes).map((g) => {
 			// console.assert(g[1].hasOwnProperty('stroke'), "Classes needs a stroke property");
 			return `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`;
 		}).join('\n');
+
+		this.layerStyle = layer.style;
+
 		//at the moment is not really possible to unregister the events registered here.
 		viewer.pointerManager.onEvent(this);
 		document.addEventListener('keyup', (e) => this.keyUp(e), false);
@@ -189,14 +188,34 @@ class AnnotationEditor {
 				event:  { type: 'change', listener: (event) => { this.saveCurrent(); this.saveAnnotation(); } },
 			},
 			class: {
-				html: '<input type="text" name="class" placeholder="Class" id="openlime-annotation-class"/>',
+				html: '<select name="class" id="openlime-annotation-class"> <option value="">Class</option> <option value="sea">Sea</option> <option value="grass">Grass</option> <option value="fire">Fire</option> <option value="air">Air</option> </select>',
 				element: null,
-				event:  { type: 'change', listener: (event) => { this.saveCurrent(); this.saveAnnotation(); } },
+				event:  { type: 'change', listener: (event) => {
+					this.saveCurrent();
+					this.saveAnnotation(); 
+					this.annotation.style = null;
+					this.updateAnnotation();
+				} },
 			},
-			color: {
-				html: '<input type="color" name="color" value="#ff0000" id="openlime-annotation-color"/>',
+			stroke: {
+				html: '<input type="color" name="stroke" value="#ff0000" id="openlime-annotation-stroke"/>',
 				element: null,
-				event:  { type: 'change', listener: (event) => { this.saveCurrent(); this.saveAnnotation(); } },
+				event:  { type: 'change', listener: (event) => { 
+					this.saveCurrent(); 
+					this.saveAnnotation(); 
+					this.annotation.class = null; 
+					this.updateAnnotation();
+				} },
+			},
+			fill: {
+				html: '<input type="color" name="fill" value="#ff0000" id="openlime-annotation-fill"/>',
+				element: null,
+				event:  { type: 'change', listener: (event) => { 
+					this.saveCurrent(); 
+					this.saveAnnotation();
+					this.annotation.class = null; 
+					this.updateAnnotation();
+				 } },
 			},
 			description: {
 				html: '<textarea name="description" placeholder="Insert description." hidden="true" id="openlime-annotation-description"></textarea>',
@@ -221,6 +240,7 @@ class AnnotationEditor {
 			draw: {title: "Line", display: true, icon: null, element: null, label: 'line' },
 			pen: {title: "Pen", display: true, icon: null, element: null, label: 'pen' },
 			erase: { title: 'Erase', display: true, icon: null, element: null, label: 'erase' },
+			edit: { title: 'aa', display: true, icon: null, element: null, label: 'point' }
 		}
 
 		// set of general actions, for each action:
@@ -303,34 +323,6 @@ class AnnotationEditor {
 	}
 
 	/** @ignore */
-	createAnnotation() {
-		let anno = this.layer.newAnnotation();
-		if(this.customData) this.customData(anno);
-		if(this.enableState) this.setAnnotationCurrentState(anno);
-		anno.idx = this.layer.annotations.length;
-		anno.publish = 1;
-		anno.label = anno.description = anno.class = '';
-		let post = {
-			id: anno.id,
-			idx: anno.idx,
-			label: anno.label,
-			class: anno.class,
-			color: anno.color,
-			description: anno.description,
-			svg: null,
-			publish: anno.publish,
-			data: anno.data
-		};
-		if (this.enableState) post = { ...post, state: anno.state };
-		if (this.createCallback) {
-			let result = this.createCallback(post);
-			if (!result)
-				alert("Failed to create annotation!");
-		}
-		this.layer.setSelected(anno);
-	}
-
-	/** @ignore */
 	toggleAnnotationEditor() {
 		if (this.annotation)
 			return this.hideAnnotationEditor();
@@ -349,9 +341,12 @@ class AnnotationEditor {
 		if (!anno.class)
 			anno.class = '';
 
+			console.log(anno.style);
+
 		document.querySelector('#openlime-annotation-label').value = anno.label || '';
 		document.querySelector('#openlime-annotation-class').value = anno.class || '';
-		document.querySelector('#openlime-annotation-color').value = anno.color || '';
+		document.querySelector('#openlime-annotation-stroke').value = anno.style.stroke || '#000000';
+		document.querySelector('#openlime-annotation-fill').value = anno.style.fill || '#000000';
 		document.querySelector('#openlime-annotation-description').value = anno.description || '';
 
 
@@ -387,13 +382,47 @@ class AnnotationEditor {
 	}
 
 	/** @ignore */
+	createAnnotation() {
+		let anno = this.layer.newAnnotation();
+		if(this.customData) this.customData(anno);
+		if(this.enableState) this.setAnnotationCurrentState(anno);
+		anno.idx = this.layer.annotations.length;
+		anno.publish = 1;
+		anno.label = anno.description = anno.class = '';
+		let post = {
+			id: anno.id,
+			idx: anno.idx,
+			label: anno.label,
+			class: anno.class,
+			style: anno.style,
+			description: anno.description,
+			svg: null,
+			publish: anno.publish,
+			data: anno.data
+		};
+		if (this.enableState) post = { ...post, state: anno.state };
+		if (this.createCallback) {
+			let result = this.createCallback(post);
+			if (!result)
+				alert("Failed to create annotation!");
+		}
+		this.layer.setSelected(anno);
+	}
+
+	/** @ignore */
 	saveAnnotation() {
 		let anno = this.annotation;
 
 		anno.label = document.querySelector('#openlime-annotation-label').value || '';
 		anno.class = document.querySelector('#openlime-annotation-class').value || '';
-		anno.color = document.querySelector('#openlime-annotation-color').value || '';
 		anno.description = document.querySelector('#openlime-annotation-description').value || '';
+		let stroke = document.querySelector('#openlime-annotation-stroke').value || '#000000';
+		let fill = document.querySelector('#openlime-annotation-fill').value || '#000000';
+		
+		anno.style = {'stroke': stroke, 'fill': fill};
+
+		for (let e of this.annotation.elements)
+			e.setAttribute('data-class', anno.class);
 
 		console.log(anno);
 
@@ -402,7 +431,7 @@ class AnnotationEditor {
 			idx: anno.idx,
 			label: anno.label,
 			class: anno.class,
-			color: anno.color,
+			style: anno.style,
 			description: anno.description,
 			publish: anno.publish,
 			data: anno.data
@@ -433,6 +462,45 @@ class AnnotationEditor {
 		//TODO find a better way to locate the entry!
 		this.layer.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).replaceWith(entry);
 		this.layer.setSelected(anno);
+	}
+
+	/** @ignore */
+	updateAnnotation(){
+		let anno = this.annotation;
+
+		let style;
+		style = this.layer.svgElement.querySelector(`#style-${anno.id}`);
+
+		if (anno.style) {
+			if (style) {
+				style.textContent = `
+				[data-annotation=${anno.id}] {
+					stroke: ${anno.style.stroke};
+					/* fill: ${anno.style.fill}; */
+				}
+				
+				`;
+			}
+			else {
+				style = document.createElement('style');
+				style.id = `style-${anno.id}`;
+				style.textContent = `
+				[data-annotation=${anno.id}] {
+					stroke: ${anno.style.stroke};
+					/* fill: ${anno.style.fill}; */
+				}
+				
+				`;
+				this.layer.svgElement.append(style);
+			}
+		}
+
+		// if anno.style is null
+		else {
+			// if style exist, remove it
+			if (style)
+				style.remove();
+		}
 	}
 
 	/** @ignore */
@@ -697,7 +765,7 @@ class AnnotationEditor {
 
 	/** @ignore */
 	fingerSingleTap(e) {
-		if (!['point', 'pin', 'line', 'erase'].includes(this.tool))
+		if (!['point', 'pin', 'line', 'erase', 'pen'].includes(this.tool))
 			return;
 		e.preventDefault();
 
@@ -768,8 +836,8 @@ class Pin {
 		const str = this.template(pos.x,pos.y);
 		let parser = new DOMParser();
 	    let point = parser.parseFromString(str, "image/svg+xml").documentElement;
-//		this.annotation.elements.push(point);
-		this.annotation.elements[0] = point;
+		this.annotation.elements.push(point);
+		// this.annotation.elements[0] = point;
 		return true;
 	}
 }
@@ -783,7 +851,7 @@ class Pen {
 	create(pos) {
 		this.points.push(pos);
 		if (this.points.length == 1) {
-			saveCurrent
+			this.saveCurrent();
 
 			this.path = Util.createSVGElement('path', { d: `M${pos.x} ${pos.y}`, class: 'line' });
 			return this.path;
@@ -792,6 +860,32 @@ class Pen {
 		this.path.setAttribute('d', p + ` L${pos.x} ${pos.y}`);
 		this.path.points = this.points;
 	}
+
+
+	tap(pos) {
+		if (!this.path) {
+			this.create(pos);
+			return false;
+		} else {
+			if (this.adjust(pos))
+				this.history = [this.path.points.length - 1];
+			return true;
+		}
+	}
+
+	adjust(pos) {
+		// let gap = Line.distanceToLast(this.path.points, pos);
+		// if (gap / pos.pixelSize < 4) return false;
+
+		// this.path.points.push(pos);
+
+		// let d = this.path.getAttribute('d');
+		// this.path.setAttribute('d', Line.svgPath(this.path.points));//d + `L${pos.x} ${pos.y}`);
+		return true;
+	}
+
+
+
 	undo() {
 		if (!this.points.length)
 			return;

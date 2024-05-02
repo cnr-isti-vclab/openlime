@@ -252,7 +252,7 @@ function main(){
                 infoDialog.setContent(`<h4>${anno.label}</h4><p>${anno.description}</p>`);
                 infoDialog.show();
             },
-            classes: classParam
+            // classes: classParam
         }
     }
 
@@ -274,7 +274,7 @@ function main(){
 
     if (editorEnable) {
         const editor = new AnnotationEditor(lime, annoLayer, {
-            classes: classParam
+            // classes: classParam
         });
         editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
         editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
@@ -337,7 +337,7 @@ function main(){
     ui.actions.rotate.display = true;
     ui.actions.ruler.display = true;
     ui.actions.help.display = true;
-    ui.actions.snapshot.display = false;
+    ui.actions.snapshot.display = true;
     lime.camera.maxFixedZoom = 1;
     window.lime = lime;
 

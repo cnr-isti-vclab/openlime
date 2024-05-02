@@ -174,22 +174,6 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 			this.selected.delete(anno.id);
 		this.emit('selected', anno);
 	}
-
-
-	toggleSelected(anno) {
-		let selected = this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.contains('selected');
-		if(selected) {
-			// this.clearSelected();
-			this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.remove('selected');
-			this.selected.delete(anno.id);
-		}
-		else {
-			// this.clearSelected();
-			this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.add('selected');
-			this.selected.add(anno.id);
-		}
-		this.emit('selected', anno);
-	}
 }
 
 addSignals(LayerAnnotation, 'selected', 'loaded');

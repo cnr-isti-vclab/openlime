@@ -114,10 +114,10 @@ class UIBasic {
 				zoomin: { title: 'Zoom in', display: false, key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout: { title: 'Zoom out', display: false, key: '-', task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
 				rotate: { title: 'Rotate', display: false, key: 'r', task: (event) => { camera.rotate(250, -45); } },
+				snapshot: { title: 'Snapshot', display: true, task: (event) => { this.snapshot() } }, //FIXME not work!
 				light: { title: 'Light', display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
 				// ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
 				// help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
-				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 			},
 			pixelSize: null,
 			unit: null, //FIXME to be used with ruler
