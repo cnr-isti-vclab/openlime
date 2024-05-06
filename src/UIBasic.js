@@ -109,15 +109,15 @@ class UIBasic {
 				home: { title: 'Home', display: true, key: 'Home', task: (event) => { if (camera.boundingBox) camera.fitCameraBox(250); } },
 				fullscreen: { title: 'Fullscreen', display: true, key: 'f', task: (event) => { this.toggleFullscreen(); } },
 				layers: { title: 'Layers', display: true, key: 'Escape', task: (event) => { this.toggleMenu(this.menu.layer); } },
-				ruler: { title: 'Options', display: true, key: 'o', task: (event) => { this.toggleMenu(this.menu.option); } },
-				help: { title: 'Annotations', display: true, key: 'a', task: (event) => { this.toggleMenu(this.menu.annotation); } },
+				options: { title: 'Options', display: true, key: 'o', task: (event) => { this.toggleMenu(this.menu.option); } },
+				annotations: { title: 'Annotations', display: true, key: 'a', task: (event) => { this.toggleMenu(this.menu.annotation); } },
 				zoomin: { title: 'Zoom in', display: false, key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout: { title: 'Zoom out', display: false, key: '-', task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
 				rotate: { title: 'Rotate', display: false, key: 'r', task: (event) => { camera.rotate(250, -45); } },
 				snapshot: { title: 'Snapshot', display: true, task: (event) => { this.snapshot() } }, //FIXME not work!
+				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				light: { title: 'Light', display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
 				// ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
-				// help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 			},
 			pixelSize: null,
 			unit: null, //FIXME to be used with ruler
@@ -259,8 +259,8 @@ class UIBasic {
 			document.addEventListener('keydown', (e) => this.keyDown(e), false);
 			document.addEventListener('keyup', (e) => this.keyUp(e), false);
 
-			for (let m of Object.values(this.menu)){
-				this.createMenu(m);
+			for (let [k,m] of Object.entries(this.menu)){
+				this.createMenu(m,k);
 				this.updateMenu(m);
 			}
 			this.viewer.canvas.addEvent('update', () => this.updateMenu());
@@ -271,7 +271,6 @@ class UIBasic {
 
 			if (this.skin)
 				await this.loadSkin();
-				// await this.createAnnotationEditor();
 			/* TODO: this is probably not needed
 			if(this.skinCSS)
 				await this.loadSkinCSS();
@@ -658,9 +657,10 @@ class UIBasic {
 	}
 
 	/** @ignore */
-	createMenu(menu = this.menu.layer) {
+	createMenu(menu = this.menu.layer, name = 'layer') {
 		this.entry_count = 0;
-		let html = `<div class="openlime-layers-menu">`;
+		console.log(menu);
+		let html = `<div id="openlime-overlay-menu-${name}" class="openlime-layers-menu">`;
 		for (let entry of menu.list) {
 			html += this.createEntry(entry);
 		}

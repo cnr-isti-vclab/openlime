@@ -6,7 +6,7 @@
    height="422.05872"
    id="svg2"
    version="1.1"
-   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04, custom)"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
    sodipodi:docname="skin.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -16,7 +16,32 @@
    xmlns:cc="http://creativecommons.org/ns#"
    xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
-     id="defs4" />
+     id="defs4">
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect23"
+       is_visible="true"
+       lpeversion="1.3"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false"
+       uniform="false" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect22"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="516.31084 : 840.2315 : 1"
+       inkscape:vp_y="927.31336 : -374.2859 : 0"
+       inkscape:vp_z="161.65774 : -38.440525 : 1"
+       inkscape:persp3d-origin="273.75418 : 427.22393 : 1"
+       id="perspective1" />
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -24,17 +49,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.9050967"
-     inkscape:cx="448.01843"
-     inkscape:cy="125.95339"
+     inkscape:zoom="1.992868"
+     inkscape:cx="163.33244"
+     inkscape:cy="68.243356"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
-     inkscape:window-width="1920"
-     inkscape:window-height="1011"
+     inkscape:window-width="1440"
+     inkscape:window-height="449"
      inkscape:window-x="0"
-     inkscape:window-y="32"
-     inkscape:window-maximized="1"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
      inkscape:snap-grids="true"
      fit-margin-top="5"
      fit-margin-left="5"
@@ -46,7 +71,9 @@
      inkscape:snap-global="false"
      inkscape:measure-start="323.032,18.7135"
      inkscape:measure-end="319.372,14.7774"
-     inkscape:pagecheckerboard="0">
+     inkscape:pagecheckerboard="0"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1">
     <inkscape:grid
        type="xygrid"
        id="grid3829"
@@ -57,7 +84,8 @@
        spacingx="0.5"
        spacingy="0.5"
        originx="16.045948"
-       originy="-575.84746" />
+       originy="-575.84746"
+       units="px" />
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -368,6 +396,153 @@
            d="m 527.5,346.33892 -10,5 25,12.5 25,-12.5 -10,-5 -15,7.5 -15,-7.5"
            id="path941-2"
            inkscape:connector-curvature="0" />
+      </g>
+    </g>
+    <g
+       id="icon-annotations"
+       class="openlime-button openlime-annotations"
+       transform="translate(-508.26113,-82.965862)">
+      <rect
+         ry="12"
+         rx="12"
+         y="301.14792"
+         x="509.45792"
+         height="71"
+         width="71"
+         id="rect2993-75-9"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#666666;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <g
+         transform="translate(2.4579113,0.3089987)"
+         id="g961-3">
+        <path
+           style="vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           id="path4-4-9"
+           d="m 560.19292,314.356 a 4.6385952,4.6385952 0 0 1 6.55996,6.55996 l -20.77321,20.77321 -8.74662,2.18666 2.18665,-8.74662 z"
+           inkscape:connector-curvature="0" />
+        <path
+           style="display:inline;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           id="path2-4-9"
+           d="m 541.38638,320.27235 h -15.30657 a 4.3733079,4.3733079 0 0 0 -4.37331,4.3733 v 30.61316 a 4.3733079,4.3733079 0 0 0 4.37331,4.37331 h 30.61316 a 4.3733079,4.3733079 0 0 0 4.3733,-4.37331 v -15.30658"
+           inkscape:connector-curvature="0" />
+      </g>
+    </g>
+    <g
+       id="icon-options"
+       class="openlime-button openlime-options"
+       transform="translate(-427.16127,-83.796935)">
+      <rect
+         ry="12"
+         rx="12"
+         y="301.14792"
+         x="509.45792"
+         height="71"
+         width="71"
+         id="rect2993-75-9-6"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#666666;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <g
+         transform="matrix(0.82673726,0,0,0.85177362,11.092991,60.711614)"
+         id="g961-3-5">
+        <circle
+           cy="323.63535"
+           cx="645.77191"
+           id="path1988-4"
+           style="fill:none;fill-opacity:1;stroke:#808080;stroke-width:6.8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           r="23.201941" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3"
+           width="10.081099"
+           height="8.0020628"
+           x="291.64136"
+           y="-649.31824"
+           transform="rotate(90)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-3"
+           width="10.081099"
+           height="8.0020628"
+           x="18.708578"
+           y="-727.27014"
+           transform="rotate(112.5682)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-3-5"
+           width="10.081099"
+           height="8.0020628"
+           x="-451.81168"
+           y="-589.48724"
+           transform="rotate(152.13515)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-6"
+           width="10.081099"
+           height="8.0020628"
+           x="-677.36658"
+           y="-326.54803"
+           transform="scale(-1)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-3-6"
+           width="10.081099"
+           height="8.0020628"
+           x="-752.94452"
+           y="-57.626057"
+           transform="rotate(-157.4318)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-3-5-7"
+           width="10.081099"
+           height="8.0020628"
+           x="-621.10547"
+           y="418.35672"
+           transform="rotate(-117.86485)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-6-8"
+           width="10.081099"
+           height="8.0020628"
+           x="-355.96188"
+           y="642.58203"
+           transform="rotate(-90)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-3-6-4"
+           width="10.081099"
+           height="8.0020628"
+           x="-83.663284"
+           y="713.11353"
+           transform="rotate(-67.4318)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-3-5-7-1"
+           width="10.081099"
+           height="8.0020628"
+           x="386.42126"
+           y="584.9657"
+           transform="rotate(-27.86485)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-6-8-8"
+           width="10.081099"
+           height="8.0020628"
+           x="613.65198"
+           y="319.32834" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-3-6-4-7"
+           width="10.081099"
+           height="8.0020628"
+           x="688.25775"
+           y="42.535358"
+           transform="rotate(22.5682)" />
+        <rect
+           style="fill:#808080;fill-opacity:1;stroke-width:1.12194;stroke-dasharray:none"
+           id="rect19-3-3-5-7-1-8"
+           width="10.081099"
+           height="8.0020628"
+           x="555.54291"
+           y="-422.40494"
+           transform="rotate(62.13515)" />
       </g>
     </g>
     <g

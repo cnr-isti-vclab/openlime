@@ -124,6 +124,21 @@
 
 /* TOOLBAR */
 
+#icon-options g rect {
+	stroke: white !important;
+	fill: white !important;
+}
+
+#icon-options g circle {
+	stroke: white !important;
+	fill: none !important;
+}
+
+#icon-annotations path {
+	stroke: white !important;
+	fill: none !important;
+}
+
 .openlime-toolbar rect[style] {
 	fill: rgb(255, 255, 255, 0) !important;
 	stroke: none !important;
@@ -181,9 +196,10 @@
 	top: 0px;
 	right: 0px;
 	padding: 5px;
-	background-color: transparent;
+	background-color: rgba(60,60,60,0.9);
+	border-radius: 4px;
 	display: flex;
-	border: 1px dashed white;
+	/* border: 1px dashed white; */
 }
 
 .openlime-annotation-editor.hidden {

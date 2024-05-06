@@ -102,8 +102,8 @@ class AnnotationEditor {
 				},
 				pin: {
 					template: (x,y) => {
-						return `<svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='4%' height='4%' class='pin'
-						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='7' y='8'>${this.annotation.idx}</text></svg>`;
+						return `<svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='3%' height='3%' class='pin'
+						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='4' y='12'>${this.annotation.idx}</text></svg>`;
 					}, //pin di alcazar  1. url a svg 2. txt (stringa con svg) 3. funzione(x,y) ritorna svg 4. dom (da skin).
 					tooltip: 'New pin',
 					tool: Pin
@@ -289,7 +289,7 @@ class AnnotationEditor {
 		const tools = {
 			pin: {title: "Pin", display: true, icon: null, element: null, label: 'pin' },
 			draw: {title: "Line", display: true, icon: null, element: null, label: 'line' },
-			pen: {title: "Pen", display: true, icon: null, element: null, label: 'pen' },
+			// pen: {title: "Pen", display: true, icon: null, element: null, label: 'pen' },
 			erase: { title: 'Erase', display: true, icon: null, element: null, label: 'erase' },
 		}
 
@@ -303,7 +303,12 @@ class AnnotationEditor {
 			redo: { title: 'Redo', display: true, task: (event) => { this.redo() } },
 			trash: { title: 'Delete', display: true, task: (event) => { this.deleteSelected() } },
 			export: { title: 'Export', display: true, task: (event) => { this.exportAnnotations(); this.exportAnnotationsJSON(); } },
-			add: { title: 'New', display: true, task: (event) => { this.createAnnotation() } },
+			add: { title: 'New', display: true, task: (event) => {
+				this.createAnnotation();
+				document.querySelector('#openlime-overlay-menu-layer').classList.remove('open');
+				document.querySelector('#openlime-overlay-menu-option').classList.remove('open');
+				document.querySelector('#openlime-overlay-menu-annotation').classList.add('open');
+			} },
 		}
 
 		// create the annotation menu div

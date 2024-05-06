@@ -339,7 +339,7 @@ function main(){
     ui.actions.zoomin.display = true;
     ui.actions.zoomout.display = true;
     ui.actions.rotate.display = true;
-    ui.actions.ruler.display = true;
+    // ui.actions.ruler.display = true;
     ui.actions.help.display = true;
     ui.actions.snapshot.display = true;
     lime.camera.maxFixedZoom = 1;
