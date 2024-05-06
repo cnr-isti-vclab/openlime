@@ -3,6 +3,7 @@ import { Util } from './Util.js';
 import { simplify, smooth, smoothToPath } from './Simplify.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { CoordinateSystem } from './CoordinateSystem.js'
+import { Annotation } from './Annotation.js';
 
 /**
  * Callback for create/update/delete annotations.
@@ -87,10 +88,11 @@ class AnnotationEditor {
 			updateCallback: null,
 			deleteCallback: null,
 			classes: {
-				'sea': { stroke: 'blue', fill: '' },
-				'grass': { stroke: 'green', fill: '' },
-				'fire': { stroke: 'red', fill: '' },
-				'air': { stroke: 'gray', fill: '' },
+				'': {stroke: '#000000', fill: ''},
+				'sea': { stroke: '#0000ff', fill: '' },
+				'grass': { stroke: '#00ff00', fill: '' },
+				'fire': { stroke: '#ff0000', fill: '' },
+				'air': { stroke: '#777777', fill: '' },
 			},
 			tools: {
 				point: {
@@ -185,47 +187,96 @@ class AnnotationEditor {
 			label: {
 				html: '<input type="text" name="label" placeholder="Name" id="openlime-annotation-label"/>',
 				element: null,
-				event:  { type: 'change', listener: (event) => { this.saveCurrent(); this.saveAnnotation(); } },
+				event:  {
+					type: 'change',
+					listener: (event) => { 
+						this.annotation.label = document.querySelector('#openlime-annotation-label').value || '';
+						this.saveCurrent(); 
+						this.saveAnnotation(); 
+					} 
+				},
 			},
 			class: {
 				html: '<select name="class" id="openlime-annotation-class"> <option value="">Class</option> <option value="sea">Sea</option> <option value="grass">Grass</option> <option value="fire">Fire</option> <option value="air">Air</option> </select>',
 				element: null,
-				event:  { type: 'change', listener: (event) => {
-					this.saveCurrent();
-					this.saveAnnotation(); 
-					this.annotation.style = null;
-					this.updateAnnotation();
-				} },
+				event:  { 
+					type: 'change', 
+					listener: (event) => {
+						const c = document.querySelector('#openlime-annotation-class').value || '';
+						this.annotation.class = c;
+						this.annotation.style.stroke = this.classes[c].stroke;
+						this.updateAnnotationStyle();
+						this.saveCurrent();
+						this.saveAnnotation();
+						this.updateAnnotationEditor();
+					} 
+				},
 			},
 			stroke: {
 				html: '<input type="color" name="stroke" value="#ff0000" id="openlime-annotation-stroke"/>',
 				element: null,
-				event:  { type: 'change', listener: (event) => { 
-					this.saveCurrent(); 
-					this.saveAnnotation(); 
-					this.annotation.class = null; 
-					this.updateAnnotation();
-				} },
+				event:  { 
+					type: 'change', 
+					listener: (event) => { 
+						this.annotation.style.stroke = document.querySelector('#openlime-annotation-stroke').value;
+						this.updateAnnotationStyle();
+						this.saveCurrent(); 
+						this.saveAnnotation();  
+					} 
+				},
 			},
 			fill: {
-				html: '<input type="color" name="fill" value="#ff0000" id="openlime-annotation-fill"/>',
+				html: '<input hidden type="color" name="fill" value="#ff0000" id="openlime-annotation-fill"/>',
 				element: null,
-				event:  { type: 'change', listener: (event) => { 
-					this.saveCurrent(); 
-					this.saveAnnotation();
-					this.annotation.class = null; 
-					this.updateAnnotation();
-				 } },
+				event:  { 
+					type: 'change', 
+					listener: (event) => { 
+						this.annotation.style.fill = document.querySelector('#openlime-annotation-fill').value;
+						this.updateAnnotationStyle();
+						this.saveCurrent(); 
+						this.saveAnnotation();
+				 	} 
+				},
 			},
 			description: {
 				html: '<textarea name="description" placeholder="Insert description." hidden="true" id="openlime-annotation-description"></textarea>',
 				element: null,
-				event:  { type: 'change', listener: (event) => { this.saveCurrent(); this.saveAnnotation(); } },
+				event:  { 
+					type: 'change', 
+					listener: (event) => { 
+						this.annotation.description = document.querySelector('#openlime-annotation-description').value || '';
+						this.saveCurrent(); 
+						this.saveAnnotation(); 
+					} 
+				},
 			},
 			descriptionButton: {
 				html: '<input type="button" name="description-button" value="Description" id="openlime-annotation-description-button"/>',
 				element: null,
-				event:  { type: 'click', listener: (event) => { this.toggleDescription(); } },
+				event:  { 
+					type: 'click', 
+					listener: (event) => { 
+						this.toggleDescription(); 
+					} 
+				},
+			},
+			annotationFile: {
+				html: '<input type="file" name="annotation-file" id="openlime-annotation-file"/>',
+				element: null,
+				event: {
+					type: 'change',
+					listener: (event) => {
+						const selectedFile = document.querySelector("#openlime-annotation-file").files[0];
+						const editor = this;
+						this.deleteAllAnnotation();
+						const reader = new FileReader();
+						reader.readAsText(selectedFile, "UTF-8");
+						reader.onload = function (evt) {
+							const newAnnotations = JSON.parse(evt.target.result);
+							editor.loadAnnotationsFromFile(newAnnotations);
+						};			
+					},
+				},
 			},
 		}
 
@@ -240,7 +291,6 @@ class AnnotationEditor {
 			draw: {title: "Line", display: true, icon: null, element: null, label: 'line' },
 			pen: {title: "Pen", display: true, icon: null, element: null, label: 'pen' },
 			erase: { title: 'Erase', display: true, icon: null, element: null, label: 'erase' },
-			edit: { title: 'aa', display: true, icon: null, element: null, label: 'point' }
 		}
 
 		// set of general actions, for each action:
@@ -252,7 +302,7 @@ class AnnotationEditor {
 			undo: { title: 'Undo', display: true, task: (event) => { this.undo() } },
 			redo: { title: 'Redo', display: true, task: (event) => { this.redo() } },
 			trash: { title: 'Delete', display: true, task: (event) => { this.deleteSelected() } },
-			export: { title: 'Export', display: true, task: (event) => { this.exportAnnotations() } },
+			export: { title: 'Export', display: true, task: (event) => { this.exportAnnotations(); this.exportAnnotationsJSON(); } },
 			add: { title: 'New', display: true, task: (event) => { this.createAnnotation() } },
 		}
 
@@ -341,12 +391,10 @@ class AnnotationEditor {
 		if (!anno.class)
 			anno.class = '';
 
-			console.log(anno.style);
-
 		document.querySelector('#openlime-annotation-label').value = anno.label || '';
 		document.querySelector('#openlime-annotation-class').value = anno.class || '';
-		document.querySelector('#openlime-annotation-stroke').value = anno.style.stroke || '#000000';
-		document.querySelector('#openlime-annotation-fill').value = anno.style.fill || '#000000';
+		document.querySelector('#openlime-annotation-stroke').value = anno.style.stroke || '';
+		document.querySelector('#openlime-annotation-fill').value = anno.style.fill || '';
 		document.querySelector('#openlime-annotation-description').value = anno.description || '';
 
 
@@ -413,18 +461,8 @@ class AnnotationEditor {
 	saveAnnotation() {
 		let anno = this.annotation;
 
-		anno.label = document.querySelector('#openlime-annotation-label').value || '';
-		anno.class = document.querySelector('#openlime-annotation-class').value || '';
-		anno.description = document.querySelector('#openlime-annotation-description').value || '';
-		let stroke = document.querySelector('#openlime-annotation-stroke').value || '#000000';
-		let fill = document.querySelector('#openlime-annotation-fill').value || '#000000';
-		
-		anno.style = {'stroke': stroke, 'fill': fill};
-
 		for (let e of this.annotation.elements)
 			e.setAttribute('data-class', anno.class);
-
-		console.log(anno);
 
 		let post = {
 			id: anno.id,
@@ -443,7 +481,10 @@ class AnnotationEditor {
 		//anno.bbox = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
 		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">
-				${anno.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
+				${anno.elements.map((s) => { 
+					s.classList.remove('selected'); 
+					return serializer.serializeToString(s) 
+				}).join("\n")}  
 				</svg>`;
 
 		if (this.updateCallback) {
@@ -465,41 +506,16 @@ class AnnotationEditor {
 	}
 
 	/** @ignore */
-	updateAnnotation(){
+	updateAnnotationStyle(){
 		let anno = this.annotation;
 
-		let style;
-		style = this.layer.svgElement.querySelector(`#style-${anno.id}`);
+		///////
+		anno.style.fill = '';
+		// anno.style.stroke = '';
+		///////
 
-		if (anno.style) {
-			if (style) {
-				style.textContent = `
-				[data-annotation=${anno.id}] {
-					stroke: ${anno.style.stroke};
-					/* fill: ${anno.style.fill}; */
-				}
-				
-				`;
-			}
-			else {
-				style = document.createElement('style');
-				style.id = `style-${anno.id}`;
-				style.textContent = `
-				[data-annotation=${anno.id}] {
-					stroke: ${anno.style.stroke};
-					/* fill: ${anno.style.fill}; */
-				}
-				
-				`;
-				this.layer.svgElement.append(style);
-			}
-		}
-
-		// if anno.style is null
-		else {
-			// if style exist, remove it
-			if (style)
-				style.remove();
+		for (let e of anno.elements){
+			e.setAttribute('style', Object.entries(anno.style).map(p => `${p[0]}:${p[1]};`).join(' '));
 		}
 	}
 
@@ -532,6 +548,51 @@ class AnnotationEditor {
 		this.layer.annotations = this.layer.annotations.filter(a => a !== anno);
 		this.layer.clearSelected();
 		// this.hideAnnotationEditor();
+	}
+
+	/** @ignore */
+	loadAnnotationsFromFile(newAnnotations) {
+		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
+		this.layer.annotations = newAnnotations;
+		this.layer.annotations = this.layer.annotations.map(a => new Annotation(a));
+		console.log(this.layer.annotations);
+		for(let a of this.layer.annotations)
+			if(a.publish != 1)
+				a.visible = false;
+		//this.layer.annotations.sort((a, b) => a.label.localeCompare(b.label));
+		if(this.layer.annotationsListEntry)
+			this.layer.createAnnotationsList();
+		
+		this.layer.emit('update');
+		this.layer.status = 'ready';
+		this.layer.emit('ready');
+		this.layer.emit('loaded');
+
+		//update the entry
+		for (let anno of this.layer.annotations){
+			let template = document.createElement('template');
+			template.innerHTML = this.layer.createAnnotationEntry(anno);
+			let entry = template.content.firstChild;
+			//TODO find a better way to locate the entry!
+			this.layer.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).replaceWith(entry);
+		}
+	}
+
+	/** @ignore */
+	deleteAllAnnotation() {
+		
+		for (let anno of this.layer.annotations) {
+		
+			//remove svg elements from the canvas
+			this.layer.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`).forEach(e => e.remove());
+
+			//remove entry from the list
+			let list = this.layer.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+			list.querySelectorAll(`[data-annotation="${anno.id}"]`).forEach(e => e.remove());
+
+			this.layer.annotations = [];
+			// this.hideAnnotationEditor();
+		}
 	}
 
 	/** @ignore */
@@ -570,6 +631,48 @@ class AnnotationEditor {
 		var e = document.createElement('a');
 		e.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(svg));
 		e.setAttribute('download', 'annotations.svg');
+		e.style.display = 'none';
+		document.body.appendChild(e);
+		e.click();
+		document.body.removeChild(e);
+	}
+
+	exportAnnotationsJSON() {
+
+		let annotationsArray = []
+
+		for (let anno of this.layer.annotations) {
+			let post = {
+				id: anno.id,
+				idx: anno.idx,
+				label: anno.label,
+				class: anno.class,
+				style: anno.style,
+				description: anno.description,
+				publish: anno.publish,
+				data: anno.data
+			};
+			if (this.enableState) post = { ...post, state: anno.state };
+			// if (anno.light) post = { ...post, light: anno.light }; FIXME
+			// if (anno.lens) post = { ...post, lens: anno.lens };
+
+			//anno.bbox = anno.getBBoxFromElements();
+			let serializer = new XMLSerializer();
+			post.svg = `<svg xmlns="http://www.w3.org/2000/svg">
+					${anno.elements.map((s) => { 
+						s.classList.remove('selected'); 
+						return serializer.serializeToString(s) 
+					}).join("\n")}  
+					</svg>`;
+
+			annotationsArray.push(post);
+		}
+
+		let annotationsJSON = JSON.stringify(annotationsArray);
+
+		let e = document.createElement('a');
+		e.setAttribute('href', "data:text/json;charset=utf-8," + encodeURIComponent(annotationsJSON));
+		e.setAttribute('download', 'annotations.json');
 		e.style.display = 'none';
 		document.body.appendChild(e);
 		e.click();

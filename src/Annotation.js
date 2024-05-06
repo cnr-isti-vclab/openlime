@@ -30,7 +30,7 @@ class Annotation {
 				image: null,
 				region: null,
 				data: {},
-				style: {stroke: null, fill: null},
+				style: {},
 				bbox: null,
 				visible: true,
 				state: null,

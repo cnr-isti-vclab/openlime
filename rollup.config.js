@@ -75,7 +75,8 @@ const brdf = [
 const annotation = [
 	'./src/LayerAnnotation.js',
 	'./src/LayerSvgAnnotation.js',
-	'./src/EditorSvgAnnotation.js'
+	// './src/EditorSvgAnnotation.js'
+	'./src/AnnotationEditor.js'
 ];
 
 export default [

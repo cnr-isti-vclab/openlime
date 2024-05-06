@@ -39,7 +39,7 @@ class LayerNeuralRTI extends Layer {
 		if(this.shader.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
 			let url;
 			if (typeof this.shader.normals === 'string')
-				url = this.layout.imageUrl(this.url, this.shader.normals);
+				url = this.shader.normals;
 			else
 				url = this.layout.imageUrl(this.url, 'normals');
 			textureUrls.push(url);			
@@ -47,7 +47,7 @@ class LayerNeuralRTI extends Layer {
 		if(this.shader.albedo) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
 			let url;
 			if (typeof this.shader.albedo === 'string')
-				url = this.layout.imageUrl(this.url, this.shader.albedo);
+				url = this.shader.albedo;
 			else
 				url = this.layout.imageUrl(this.url, 'albedo');	
 			textureUrls.push(url);
@@ -55,7 +55,7 @@ class LayerNeuralRTI extends Layer {
 		if(this.shader.mask) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
 			let url;
 			if (typeof this.shader.mask === 'string')
-				url = this.layout.imageUrl(this.url, this.shader.mask);
+				url = this.shader.mask;
 			else
 				url = this.layout.imageUrl(this.url, 'mask');	
 			textureUrls.push(url);		

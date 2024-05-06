@@ -39,7 +39,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			svgGroup: null,
 			onClick: null,			//callback function
 			classes: {
-				'': { stroke: '#000', fill: '' },
+				// '': { stroke: '#000', fill: '' },
 			},
 			annotationUpdate: null
 		}, options);

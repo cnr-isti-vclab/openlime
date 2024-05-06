@@ -218,6 +218,8 @@ function main(){
 
     // Define annotation parameters
     let annotationServer = 'http://localhost:3000/ol';
+    let annotationFile = 'assets/annotations/annotations.json'
+    
     const classParam = {
         '': { style: { stroke: '#000' }, label: '' },
         'class1': { style: { stroke: '#770' }, label: 'A' },
@@ -242,6 +244,8 @@ function main(){
         .selected { stroke-width:3; }
         `,
         annotations: annotationServer,
+        // annotations: annotationFile,
+        // annotations: [],
         overlay: true,
     }
 
