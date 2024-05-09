@@ -258,7 +258,7 @@ const int ny1 = ${this.yccplanes[1]};
 
 		str += `
 
-vec4 data() {
+vec4 data(vec2 v_texcoord) {
 
 	vec4 color;
 
@@ -281,7 +281,7 @@ vec4 data() {
 `;
 			else
 				str += `
-	color = render(base);
+	color = render(base, v_texcoord);
 `; 
 		} else  {
 

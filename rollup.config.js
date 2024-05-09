@@ -79,10 +79,15 @@ const annotation = [
 	'./src/AnnotationEditor.js'
 ];
 
+const ps = [
+	'./src/LayerPS.js',
+	'./src/ShaderPS.js'
+]
+
 export default [
 	{
 		input: {
-			include: [...core, ...ui, ...rti, ...brdf, ...lens, ...annotation],		
+			include: [...core, ...ui, ...rti, ...brdf, ...lens, ...annotation, ...ps],		
 		},
 		output: [{
 			format: 'umd',

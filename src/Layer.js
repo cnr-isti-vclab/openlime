@@ -847,6 +847,35 @@ class Layer {
 			}
 		}
 	}
+
+	loadStaticMaps(staticMaps) {
+
+		if (!staticMaps)
+			if (!this.staticMaps)
+				return;
+			else
+				staticMaps = this.staticMaps;
+
+		let textureUrls = [];
+
+		for (let [map,url] of Object.entries(staticMaps)){
+
+			if (typeof url !== 'string' || url === '')
+				url = this.layout.imageUrl(this.url, map);	
+
+			textureUrls.push(url);
+
+			let raster = new Raster({ format: 'vec3' });
+			this.rasters.push(raster);
+		}
+
+		this.layout.setUrls(textureUrls);
+
+		// for (let url of textureUrls) {
+		// 	let raster = new Raster({ format: 'vec3' });
+		// 	this.rasters.push(raster);
+		// }
+	}
 }
 
 Layer.prototype.types = {}

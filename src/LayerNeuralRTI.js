@@ -30,7 +30,7 @@ class LayerNeuralRTI extends Layer {
 		this.neuralShader.setLight([0, 0]);
 
 		let textureUrls = [
-			null,
+			this.layout.imageUrl(this.url, 'plane_0'),
 			this.layout.imageUrl(this.url, 'plane_0'),
 			this.layout.imageUrl(this.url, 'plane_1'),
 			this.layout.imageUrl(this.url, 'plane_2'),

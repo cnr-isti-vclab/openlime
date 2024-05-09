@@ -165,7 +165,7 @@ vec4 render(vec2 lights, vec2 v_texcoord) {
 `;
 
 		str += `
-vec4 data() {
+vec4 data(vec2 v_texcoord) {
 	vec4 color;
 `;
 

@@ -172,7 +172,7 @@ class Shader {
 		src += `
 		${gl2 ? 'out' : ''} vec4 color;
 		void main() { 
-			color = data();
+			color = data(v_texcoord);
 			`;
 		for (let f of this.filters) {
 			src += `color=${f.functionName()}(color);\n`
@@ -334,17 +334,37 @@ ${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 
 
 	fragShaderSrc(gl) {
-		let gl2 = !(gl instanceof WebGLRenderingContext);
-		let str = `
+        let gl2 = !(gl instanceof WebGLRenderingContext);
+
+        let str;
+
+        str = `
 
 uniform sampler2D kd;
+${gl2? 'in' : 'varying'} vec2 v_texcoord;`;
 
-${gl2? 'in' : 'varying'} vec2 v_texcoord;
+        if (this.mask)
+            str += `
+uniform sampler2D mask;`;
 
-vec4 data() {
-	return texture${gl2?'':'2D'}(kd, v_texcoord);
+        str +=`
+
+vec4 data(vec2 v_texcoord) {`;
+
+        if (this.mask)
+            str +=`
+	float mask_pixel = texture${gl2?'':'2D'}(mask, v_texcoord)[0];
+	if (mask_pixel == 0.0)
+		return vec4(0);
+	return mask_pixel * texture${gl2?'':'2D'}(kd, v_texcoord);
 }
 `;
+        else
+            str +=`
+        return texture${gl2?'':'2D'}(kd, v_texcoord);
+}
+`;
+
 		return str;
 	}
 }

@@ -1,6 +1,7 @@
 import { Layer }  from './Layer.js'
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
+import { ShaderPS } from './ShaderPS.js';
 
 /**
  * The class LayerImage is derived from Layer and it is responsible for the rendering of simple images.
@@ -14,7 +15,7 @@ import { Shader } from './Shader.js'
  * });
  * lime.addLayer('Base', layer);
  */
-class LayerImage extends Layer {
+class LayerPS extends Layer {
 	/**
  	* Displays a simple image.
  	* An object literal with Layer `options` can be specified.
@@ -31,12 +32,13 @@ class LayerImage extends Layer {
 		if(Object.keys(this.rasters).length != 0)
 			throw "Rasters options should be empty!";
 
-		let textureUrls = [];
+		if(!this.modes)
+			this.modes = ['albedo', 'cavity', 'curvature', 'him', 'normals', 'outlim', 'residual', 'shim'];
 
-		if (this.url)
-			textureUrls.push(this.url);
-		else if (this.layout.urls.length == 0)
-			throw "Missing options.url parameter";	
+		// use url for reference, use this.modes for actual urls
+		let textureUrls = [];
+		for (let mode of this.modes)
+			textureUrls.push(this.layout.imageUrl(this.url, mode));
 
 		if(this.mask) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
 			let url;
@@ -56,21 +58,18 @@ class LayerImage extends Layer {
 		}
 
 		let shaderOptions = {
-			label: 'Rgb',
 			mask: this.mask,
-			samplers: [{ id:0, name:'kd', type: rasterFormat }]
+			modes: this.modes,
 		};
 
-		if (this.mask)
-			shaderOptions['samplers'].push({ id:1, name:'mask', type: rasterFormat })
 
-		let shader = new Shader(shaderOptions);
+		let shader = new ShaderPS(shaderOptions);
 		
-		this.shaders = {'standard': shader };
-		this.setShader('standard');
+		this.shaders = {'ps': shader };
+		this.setShader('ps');
 	}
 }
 
-Layer.prototype.types['image'] = (options) => { return new LayerImage(options); }
+Layer.prototype.types['ps'] = (options) => { return new LayerPS(options); }
 
-export { LayerImage }
+export { LayerPS }
