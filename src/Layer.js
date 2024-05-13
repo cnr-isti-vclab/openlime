@@ -207,6 +207,9 @@ class Layer {
 
 		// Set signal to acknowledge change of bbox when it is known. Let this signal go up to canvas
 		this.layout.addEvent('updateSize', () => {
+			if (this.shaders)
+				for (let shader of Object.values(this.shaders))
+					shader.setTileSize(this.layout.getTileSize());
 			if(this.shader)
 				this.shader.setTileSize(this.layout.getTileSize());
 			this.emit('updateSize');

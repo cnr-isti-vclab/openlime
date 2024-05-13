@@ -1,4 +1,3 @@
-import { string } from '@tensorflow/tfjs';
 import { Layer }  from './Layer.js'
 import { Raster } from './Raster.js'
 import { ShaderRTI } from './ShaderRTI.js'
@@ -28,8 +27,7 @@ class LayerRTI extends Layer {
 		if(!this.url)
 			throw "Url option is required";
 
-		// this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
-		this.shaders['rti'] = new ShaderRTI(this.shaderOptions);
+		this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
 		this.setShader('rti');
 
 		this.addControl('light', [0, 0]);
@@ -80,32 +78,8 @@ class LayerRTI extends Layer {
 				let raster = new Raster({ format: 'vec3'});
 				this.rasters.push(raster);
 			}
-			if(this.shader.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
-				let url;
-				if (typeof this.shader.normals === 'string')
-					url = this.shader.normals;
-				else
-					url = this.layout.imageUrl(this.url, 'normals');
-				urls.push(url);
-				let raster = new Raster({ format: 'vec3'});
-				this.rasters.push(raster);				
-			}	
-			if(this.shader.albedo) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
-				let url;
-				if (typeof this.shader.albedo === 'string')
-					url = this.shader.albedo;
-				else
-					url = this.layout.imageUrl(this.url, 'albedo');
-				urls.push(url);
-				let raster = new Raster({ format: 'vec3'});
-				this.rasters.push(raster);				
-			}	
-			if(this.shader.mask) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
-				let url;
-				if (typeof this.shader.mask === 'string')
-					url = this.shader.mask;
-				else
-					url = this.layout.imageUrl(this.url, 'mask');
+			if(this.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
+				let url = this.layout.imageUrl(this.url, 'normals');
 				urls.push(url);
 				let raster = new Raster({ format: 'vec3'});
 				this.rasters.push(raster);				

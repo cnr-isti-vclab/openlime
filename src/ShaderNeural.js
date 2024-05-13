@@ -9,7 +9,7 @@ class ShaderNeural extends Shader {
 		super({});
 
 		Object.assign(this, {
-			modes: ['light'],
+			modes: ['light'],// 'second light', 'albedo blend'],
 			mode: 'light',
 
 			nplanes: null,	 //number of coefficient planes
@@ -106,9 +106,14 @@ float elu(float a){
 }
 `;
 
-		if (this.mask)
+		if (this.albedo)
 			str += `
-uniform sampler2D mask;
+uniform sampler2D albedo;
+`;
+
+		if (this.normals)
+			str += `
+uniform sampler2D normals;
 `;
 
 		str += `
@@ -169,26 +174,22 @@ vec4 data(vec2 v_texcoord) {
 	vec4 color;
 `;
 
-		if (this.mask)
-			str += `
-	float mask_pixel = texture(mask, v_texcoord)[0];
-	if (mask_pixel == 0.0)
-		return vec4(0);
-`;
-
-		if (this.secondLight)
-			str += `
-	// color = render(lights, v_texcoord) * 0.5 + render(-lights, v_texcoord) * 0.5;
-	color = vec4(render(lights, v_texcoord).rgb + render(-lights, v_texcoord).rgb, 1.0);
-`;
-		else
+		if (this.mode == 'light')
 			str += `
 	color = render(lights, v_texcoord);
 `;
 
-		if (this.mask)
+		else if (this.mode == 'second light')
 			str += `
-	color *= mask_pixel;
+	// color = render(lights, v_texcoord) * 0.5 + render(-lights, v_texcoord) * 0.5;
+	color = vec4(render(lights, v_texcoord).rgb + render(-lights, v_texcoord).rgb, 1.0);
+`;
+
+		else if (this.mode == 'albedo blend')
+			str += `
+	color = render(lights, v_texcoord);
+	vec4 albedo = texture(albedo, v_texcoord);
+	color = color * 0.5 + albedo * 0.5;
 `;
 
 		str += `

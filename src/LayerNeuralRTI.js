@@ -225,7 +225,7 @@ class LayerNeuralRTI extends Layer {
 	preRelight(viewport, w, h) {
 		let gl = this.gl;
 
-		if (!this.neuralShader.program) {
+		if (!this.neuralShader.program || this.neuralShader.needsUpdate) {
 			this.neuralShader.createProgram(gl);
 			gl.useProgram(this.neuralShader.program);
 			for (var i = 0; i < this.neuralShader.samplers.length; i++)

@@ -169,11 +169,28 @@ class Shader {
 			src += f.fragDataSrc() + '\n\n';
 		}
 
+		if (this.mask)
+            src += `
+uniform sampler2D mask;
+`;
+
 		src += `
 		${gl2 ? 'out' : ''} vec4 color;
-		void main() { 
+		void main() {
+`;
+
+		if (this.mask)
+			src +=`
+			float mask_pixel = texture${gl2?'':'2D'}(mask, v_texcoord)[0];
+			if (mask_pixel == 0.0)
+				color = vec4(0);
+			else
+				color = mask_pixel * data(v_texcoord);
+`;
+		else
+			src += `
 			color = data(v_texcoord);
-			`;
+`;
 		for (let f of this.filters) {
 			src += `color=${f.functionName()}(color);\n`
 		}
@@ -341,26 +358,9 @@ ${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
         str = `
 
 uniform sampler2D kd;
-${gl2? 'in' : 'varying'} vec2 v_texcoord;`;
+${gl2? 'in' : 'varying'} vec2 v_texcoord;
 
-        if (this.mask)
-            str += `
-uniform sampler2D mask;`;
-
-        str +=`
-
-vec4 data(vec2 v_texcoord) {`;
-
-        if (this.mask)
-            str +=`
-	float mask_pixel = texture${gl2?'':'2D'}(mask, v_texcoord)[0];
-	if (mask_pixel == 0.0)
-		return vec4(0);
-	return mask_pixel * texture${gl2?'':'2D'}(kd, v_texcoord);
-}
-`;
-        else
-            str +=`
+vec4 data(vec2 v_texcoord) {
         return texture${gl2?'':'2D'}(kd, v_texcoord);
 }
 `;
