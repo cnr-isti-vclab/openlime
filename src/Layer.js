@@ -879,6 +879,17 @@ class Layer {
 		// 	this.rasters.push(raster);
 		// }
 	}
+
+	rotateLight(light) {
+		let [x,y] = light;
+		let r = Math.sqrt(x*x + y*y);
+		if(r > 1) {
+			x /= r;
+			y /= r;
+		}
+		let rotated = Transform.rotate(x, y, 360 - this.worldRotation);
+		return [rotated.x, rotated.y];
+	}
 }
 
 Layer.prototype.types = {}

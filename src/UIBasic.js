@@ -166,11 +166,24 @@ class UIBasic {
 					button: m,
 					mode: m,
 					layer: id,
+					list: [],
 					onclick: () => { layer.setMode(m); },
 					status: () => layer.getMode() == m ? 'active' : '',
 				};
-				if (m == 'specular' && layer.shader.setSpecularExp)
-					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
+
+				let shader = layer.neuralShader ? layer.neuralShader : layer.shader;
+
+				if (m == 'specular' && shader.setSpecularExp)
+					mode.list.push({ slider: '', oninput: (e) => { shader.setSpecularExp(e.target.value); } });
+
+				if (m == 'multi light') {
+					mode.list.push({ slider: '', value: 1, min: 1, max: 10, step: 1, oninput: (e) => { shader.numLights = e.target.value; } });
+					if (shader.setLightIntensity)
+						mode.list.push({ slider: '', value: 0.5, min: 0.0, max: 1.0, step: 0.1, oninput: (e) => { shader.setLightIntensity(e.target.value); layer.forceRelight(); layer.emit('update'); }});
+				}
+
+				if (m == 'albedo blend' && shader.setLightIntensity)
+					mode.list.push({ slider: '', value: 0.5, min: 0.0, max: 1.0, step: 0.1, oninput: (e) => { shader.setLightIntensity(e.target.value); layer.forceRelight(); layer.emit('update'); }});
 				modes.push(mode);
 			}
 
@@ -607,7 +620,10 @@ class UIBasic {
 			html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry ${classes}">${entry.button}</a>`;
 		} else if ('slider' in entry) {
 			let value = ('value' in entry) ? entry['value'] : 50;
-			html += `<input type="range" min="1" max="100" value="${value}" class="openlime-slider ${classes}" ${id}>`;
+			let min = ('min' in entry) ? entry['min'] : 1;
+			let max = ('max' in entry) ? entry['max'] : 100;
+			let step = ('step' in entry) ? entry['step'] : 1;
+			html += `<input type="range" min="${min}" max="${max}" value="${value}" step="${step}" class="openlime-slider ${classes}" ${id}>`;
 		}
 
 		if ('list' in entry) {

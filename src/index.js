@@ -16,6 +16,7 @@ import { LayerRTI } from './LayerRTI.js'
 import { LayerNeuralRTI } from './LayerNeuralRTI.js'
 import { ShaderFilter } from './ShaderFilter.js'
 import { AnnotationEditor } from './AnnotationEditor.js'
+import { LayerBRDFIkehata } from './LayerBRDFIkehata.js'
 
 // CLASS TO CREATE FILTERS
 
@@ -36,6 +37,22 @@ class GammaFilter extends ShaderFilter {
     }
 }
 
+// class LinearFilter extends ShaderFilter {
+//     constructor(options) {
+//         super(options);
+//         this.uniforms = { 
+//             linear_factor: {type: 'float', needsUpdate: true, size: 1, value: 2},
+//         };
+//     }
+
+//     fragDataSrc(gl) {
+//         return `
+//         vec4 ${this.functionName()}(vec4 col){
+//             return vec4(col.rgb * linear_factor, 1.0);
+//         }`;
+//     }
+// }
+
 class UnsharpFilter extends ShaderFilter {
     constructor(options) {
         super(options);
@@ -47,93 +64,25 @@ class UnsharpFilter extends ShaderFilter {
     fragDataSrc(gl) {
         return `
         vec4 ${this.functionName()}(vec4 col){
-            mat3 unsharp_M = mat3(0.0, -1.0, 0.0, -1.0, 5.0, -1.0, 0.0, -1.0, 0.0);
+            // mat3 unsharp_M = mat3(0.0, -1.0, 0.0, -1.0, 5.0, -1.0, 0.0, -1.0, 0.0);
 
-            unsharp_M = mat3(0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0) +
+            mat3 unsharp_M = mat3(0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0) +
                       (mat3(0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0) - 
                       mat3(0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0)/5.0)*unsharp;
+            float dx = 1.0/tileSize.x;
+            float dy = 1.0/tileSize.y;
 
-            // unsharp_M = mat3(0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0)/5.0;
-
-            vec3 blur = unsharp_M[0][0]*render(base,vec2(v_texcoord.x-1.0/tileSize.x,v_texcoord.y-1.0/tileSize.y)).rgb + 
-                        unsharp_M[0][1]*render(base,vec2(v_texcoord.x-1.0/tileSize.x,v_texcoord.y)).rgb +
-                        unsharp_M[0][2]*render(base,vec2(v_texcoord.x-1.0/tileSize.x,v_texcoord.y+1.0/tileSize.y)).rgb +
-                        unsharp_M[1][0]*render(base,vec2(v_texcoord.x,v_texcoord.y-1.0/tileSize.y)).rgb +
+            vec3 unsharp_col = unsharp_M[0][0]*data(vec2(v_texcoord.x-dx,v_texcoord.y-dy)).rgb + 
+                        unsharp_M[0][1]*data(vec2(v_texcoord.x-dx,v_texcoord.y)).rgb +
+                        unsharp_M[0][2]*data(vec2(v_texcoord.x-dx,v_texcoord.y+dy)).rgb +
+                        unsharp_M[1][0]*data(vec2(v_texcoord.x,v_texcoord.y-dy)).rgb +
                         unsharp_M[1][1]*col.rgb +
-                        unsharp_M[1][2]*render(base,vec2(v_texcoord.x,v_texcoord.y+1.0/tileSize.y)).rgb +
-                        unsharp_M[2][0]*render(base,vec2(v_texcoord.x+1.0/tileSize.x,v_texcoord.y-1.0/tileSize.y)).rgb +
-                        unsharp_M[2][1]*render(base,vec2(v_texcoord.x+1.0/tileSize.x,v_texcoord.y)).rgb +
-                        unsharp_M[2][2]*render(base,vec2(v_texcoord.x+1.0/tileSize.x,v_texcoord.y+1.0/tileSize.y)).rgb;
+                        unsharp_M[1][2]*data(vec2(v_texcoord.x,v_texcoord.y+dy)).rgb +
+                        unsharp_M[2][0]*data(vec2(v_texcoord.x+dx,v_texcoord.y-dy)).rgb +
+                        unsharp_M[2][1]*data(vec2(v_texcoord.x+dx,v_texcoord.y)).rgb +
+                        unsharp_M[2][2]*data(vec2(v_texcoord.x+dx,v_texcoord.y+dy)).rgb;
             // return vec4((col.rgb - blur) * unsharp, 1.0);
-            return vec4(blur,1.0);
-        }`;
-    }
-}
-
-class FadeFilter extends ShaderFilter {
-    constructor(options) {
-        super(options);
-        this.uniforms = { 
-            alpha: {type: 'float', needsUpdate: true, size: 1, value: 0.5},
-        };
-    }
-
-    fragDataSrc(gl) {
-        return `
-        vec4 ${this.functionName()}(vec4 col){
-            return vec4(vec3(col.rgb), alpha);
-        }`;
-    }
-}
-
-class SigmoidFilter extends ShaderFilter {
-    constructor(options) {
-        super(options);
-        this.uniforms = { 
-            sigmoid: {type: 'float', needsUpdate: true, size: 1, value: 0.3},
-        };
-    }
-
-    fragDataSrc(gl) {
-        return `
-        vec4 ${this.functionName()}(vec4 color){
-
-            vec3 max_v = color.rgb;
-            vec3 min_v = color.rgb;
-            float win = 1.0;
-
-            for (float i = -win; i < win+1.0; i++){
-                for (float j = -1.0; j < 2.0; j++){
-                    max_v = max(max_v, render(base1,vec2(v_texcoord.x+i/tileSize.x,v_texcoord.y+j/tileSize.y)).rgb);
-                    min_v = min(min_v, render(base1,vec2(v_texcoord.x+i/tileSize.x,v_texcoord.y+j/tileSize.y)).rgb);
-                }
-            }
-
-            vec3 out_v = (color.rgb - min_v) / (max_v - min_v);
-            out_v = out_v * 2.0 - 1.0;
-            out_v = exp(out_v / sigmoid) / (1.0 + exp(out_v / sigmoid));
-
-            // vec3 out_v = (color.rgb - min_v) / (max_v - min_v);
-
-            return vec4(out_v, 1.0);
-        }`;
-    }
-}
-
-class AlbedoFilter extends ShaderFilter {
-    constructor(options) {
-        super(options);
-        this.uniforms = { 
-            // albedo: {type: 'sampler2D', needsUpdate: true, size: 1, value: 10.0},
-        };
-    }
-
-    fragDataSrc(gl) {
-        return `
-        vec4 ${this.functionName()}(vec4 col){
-            vec3 alb = texture(albedo, v_texcoord).rgb;
-            vec3 out_col = col.rgb * 0.5 + alb * 0.5;
-            return vec4(out_col,1.0);
+            return vec4(unsharp_col,1.0);
         }`;
     }
 }
@@ -186,9 +135,8 @@ function main(){
             //     weight: 0.5}
         }
     });
-    lime.addLayer('Layer1', layer1)
-
-    // console.log(layer1);
+    lime.addLayer('Layer1', layer1);
+    console.log(layer1);
 
     const layer2 = new Layer({
         type: 'neural',
@@ -211,6 +159,27 @@ function main(){
     });
     lime.addLayer('Layer2', layer2);
     // console.log(layer2);
+
+    const layerBRDFIkehata = new Layer({
+        type: 'brdf_ikehata',
+        url: 'assets/brdf/ikehata/base.jpg',
+        layout: 'image',
+        transform: { x: 0, y: 0, z: 1, a: 0 },
+        zindex: 0,
+        label: 'BRDF Ikehata',
+        overlay: false,
+        section: "Layers",
+        shaderOptions: {
+            albedo: false,
+            normals: false,
+            mask: false,
+            secondLight: false,
+            // secondLight: {
+            //     intensity: [1.0, 1.0],
+            //     weight: 0.5}
+        }
+    });
+    lime.addLayer('LayerBRDFIkehata', layerBRDFIkehata);
 
     // user interface configuration
     // the "section" attribute can be omitted. This way, a single section called "Layers"
@@ -262,7 +231,7 @@ function main(){
 
     // Create an annotation layer and add it to the canvans
     const annoLayer = new LayerAnnotation(aOptions);
-    lime.addLayer('annoLayer', annoLayer);
+    // lime.addLayer('annoLayer', annoLayer);
 
     // If editorEnable, create a SVG annotation Editor
     // if (editorEnable) {
@@ -462,10 +431,15 @@ function addSecondLight(ui){
         onclick: () => { 
             secondLight = !secondLight;
             for (let layer of Object.values(lime.canvas.layers)){
+                
+                if (layer.neuralShader) {
                 // console.log(layer, secondLight);
-                layer.shader.secondLight = secondLight;
-                layer.shader.needsUpdate = true;
-                layer.shader.emit('update');
+                layer.neuralShader.secondLight = secondLight;
+                layer.neuralShader.needsUpdate = true;
+                layer.forceRelight();
+		        layer.emit('update');
+                }
+                // layer.shader.emit('update');
             }
             ui.updateMenu(ui.menu.option); // Update menu (run status() callback)
         },

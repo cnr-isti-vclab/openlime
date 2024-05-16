@@ -22,8 +22,37 @@ class LayerNeuralRTI extends Layer {
 		
 		this.imageShader = new Shader({
 			'label': 'Rgb',
-			'samplers': [{ id: 0, name: 'kd', type: 'vec3', load: false }]
+			'samplers': [{ id: 0, name: 'kd', type: 'vec3', load: false }],
 		});
+
+	// 	this.imageShader['modes'] = ['light', 'colore prova'];
+
+	// 	this.imageShader.fragShaderSrc = (gl) => {
+	// 		let gl2 = !(gl instanceof WebGLRenderingContext);
+	
+	// 		let str;
+
+	// 		str = `
+	
+	// uniform sampler2D kd;
+	// ${gl2? 'in' : 'varying'} vec2 v_texcoord;
+	
+	// vec4 data(vec2 v_texcoord) {
+	// 		`;
+	// 		if (this.imageShader.mode == 'light')
+	// 			str += `return texture${gl2?'':'2D'}(kd, v_texcoord);
+	// 	}
+	// 		`;
+	// 		if (this.imageShader.mode == 'colore prova')
+	// 			str += ` return vec4(1.0,1.0,0.0,1.0);
+
+	// }
+	// `;
+	
+	// 		return str;
+	// 	}
+
+	// 	this.imageShader.setMode('light');
 
 		this.shaders = { 'standard': this.imageShader, 'neural': this.neuralShader };
 		this.setShader('neural');
@@ -69,6 +98,24 @@ class LayerNeuralRTI extends Layer {
 		}
 
 		(async () => { await this.loadNeural(this.url); })();
+	}
+
+	setMode(mode) {
+		this.neuralShader.setMode(mode);
+		this.forceRelight();
+		this.emit('update');
+	};
+
+	getModes() {
+		if (this.neuralShader)
+			return this.neuralShader.modes;
+		return [];
+	}
+
+	getMode() {
+		if (this.neuralShader)
+			return this.neuralShader.mode;
+		return null;
 	}
 
 	setLight(light, dt) {
@@ -193,8 +240,7 @@ class LayerNeuralRTI extends Layer {
 			if (tiles.length == 0)
 				return;
 			if (sizeChanged)
-				for (let tile of tiles)
-					tile.neuralUpdated = false;
+				this.forceRelight();
 
 			this.relighted = false;
 			this.totTiles = 0;
@@ -309,14 +355,31 @@ class LayerNeuralRTI extends Layer {
 			return true;
 
 		let light = this.controls['light'].current.value;
+		console.log(light);
 		let rotated = Transform.rotate(light[0], light[1], this.worldRotation * Math.PI);
 		light = [rotated.x, rotated.y];
+		console.log(this.transform);
 		this.neuralShader.setLight(light);
 
 
+		this.forceRelight();
+		return false;
+	}
+
+	interpolateControls() {
+		let done = super.interpolateControls();
+		if (!done) {
+			let light = this.controls['light'].current.value;
+			light = this.rotateLight(light);
+			this.neuralShader.setLight(light);
+			this.forceRelight();
+		}
+		return done;
+	}
+
+	forceRelight() {
 		for (let [id, tile] of this.tiles)
 			tile.neuralUpdated = false;
-		return false;
 	}
 }
 

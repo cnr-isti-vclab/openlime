@@ -27,7 +27,7 @@ class LayerRTI extends Layer {
 		if(!this.url)
 			throw "Url option is required";
 
-		this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
+		this.shaders['rti'] = new ShaderRTI(this.shaderOptions);
 		this.setShader('rti');
 
 		this.addControl('light', [0, 0]);
@@ -89,19 +89,19 @@ class LayerRTI extends Layer {
 		})().catch(e => { console.log(e); this.status = e; });
 	}
 
-/*
- *  Internal function: light control maps to light direction in the shader.
- */
+	/*
+	*  Internal function: light control maps to light direction in the shader.
+	*/
 	interpolateControls() {
 		let done = super.interpolateControls();
-		if(!done) {
+		if (!done) {
 			let light = this.controls['light'].current.value;
-			//this.shader.setLight(light);
-			let rotated = Transform.rotate(light[0], light[1], this.worldRotation*Math.PI);
-			this.shader.setLight([rotated.x, rotated.y]);
+			light = this.rotateLight(light);
+			this.shader.setLight(light);
 		}
 		return done;
 	}
+
 	draw(transform, viewport) {
 		this.worldRotation = transform.a + this.transform.a;
 		return super.draw(transform, viewport);

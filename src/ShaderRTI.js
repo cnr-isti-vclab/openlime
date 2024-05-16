@@ -22,7 +22,7 @@ class ShaderRTI extends Shader {
 		super({});
 
 		Object.assign(this, {
-			modes: ['light', 'normals', 'diffuse', 'specular'],
+			modes: ['light', 'multi light', 'normals', 'diffuse', 'specular'],
 			mode: 'normal',
 			type:        ['ptm', 'hsh',  'sh', 'rbf', 'bln'],
 			colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
@@ -39,7 +39,9 @@ class ShaderRTI extends Shader {
 			bias: null,
 
 			basis: null,       //PCA basis for rbf and bln
-			lweights: null    //light direction dependent coefficients to be used with coefficient planes
+			lweights: null,    //light direction dependent coefficients to be used with coefficient planes
+
+			numLights: 1,
 		});
 		Object.assign(this, options);
 
@@ -59,10 +61,13 @@ class ShaderRTI extends Shader {
 			throw Error("Unknown mode: " + mode);
 		this.mode = mode;
 
-		if( mode != 'light') {
-			this.lightWeights([ 0.612,  0.354, 0.707], 'base');
-			this.lightWeights([-0.612,  0.354, 0.707], 'base1');
-			this.lightWeights([     0, -0.707, 0.707], 'base2');
+		if( mode != 'light' && mode != 'multi light') {
+			let base = this.lightWeights([ 0.612,  0.354, 0.707]);
+			let base1 = this.lightWeights([-0.612,  0.354, 0.707]);
+			let base2 = this.lightWeights([     0, -0.707, 0.707]);
+			this.setUniform('base', base);
+			this.setUniform('base1', base1);
+			this.setUniform('base2', base2);
 		}
 		this.needsUpdate = true;
 	}
@@ -83,8 +88,25 @@ class ShaderRTI extends Shader {
 		let z = Math.sqrt(Math.max(0, 1 - x*x - y*y));
 		light = [x, y, z];
 
-		if(this.mode == 'light')
-			this.lightWeights(light, 'base');
+		if (this.mode == 'light') {
+			let base = this.lightWeights(light);
+			this.setUniform('base', base);
+		}
+		if (this.mode == 'multi light'){
+			let base = this.lightWeights(light);
+			let a = Math.atan2(y,x);
+			let da = 2 * Math.PI / this.numLights;
+
+			for (let i = 1; i < this.numLights; i++) {
+				let x1 = Math.cos(a + da*i);
+				let y1 = Math.sin(a + da*i);
+				let base1 = this.lightWeights([x1, y1, 0]);
+				for (let j = 0; j < base.length; j++)
+					base[j] = base[j] + base1[j];
+			}
+
+			this.setUniform('base', base);
+		}
 		this.setUniform('light', light);
 	}
 	setSpecularExp(value) {
@@ -141,10 +163,11 @@ class ShaderRTI extends Shader {
 			base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
 		}
 
-		this.lightWeights([0, 0, 1], 'base');
+		let base = this.lightWeights([0, 0, 1]);
+		this.setUniform('base', base);
 	}
 
-	lightWeights(light, basename, time) {
+	lightWeights(light) {
 		let value;
 		switch(this.type) {
 			case 'ptm': value = PTM.lightWeights(light); break;
@@ -153,7 +176,7 @@ class ShaderRTI extends Shader {
 			case 'rbf': value = RBF.lightWeights(light, this); break;
 			case 'bln': value = BLN.lightWeights(light, this); break;
 		}
-		this.setUniform(basename, value, time);
+		return value;
 	}
 
 	baseLightOffset(p, l, k) {
@@ -234,12 +257,12 @@ const int ny1 = ${this.yccplanes[1]};
 
 		str += `
 
-vec4 data() {
+vec4 data(vec2 v_texcoord) {
 
 `;
-		if(this.mode == 'light') {
+		if(this.mode == 'light' || this.mode == 'multi light') {
 			str += `
-	vec4 color = render(base);
+	vec4 color = render(base, v_texcoord);
 `;
 		} else  {
 			str += `
@@ -253,9 +276,9 @@ vec4 data() {
 			else
 				str += `
 	vec3 normal;
-	normal.x = dot(render(base ).xyz, vec3(1));
-	normal.y = dot(render(base1).xyz, vec3(1));
-	normal.z = dot(render(base2).xyz, vec3(1));
+	normal.x = dot(render(base, v_texcoord).xyz, vec3(1));
+	normal.y = dot(render(base1, v_texcoord).xyz, vec3(1));
+	normal.z = dot(render(base2, v_texcoord).xyz, vec3(1));
 	normal = normalize(T * normal);
 `; 
 			switch(this.mode) {
@@ -325,7 +348,7 @@ vec4 render(vec3 base[np1]) {
 class RGB {
 	static render(njpegs, gl2) {
 		let str = `
-vec4 render(vec3 base[np1]) {
+vec4 render(vec3 base[np1], vec2 v_texcoord) {
 	vec4 rgb = vec4(0, 0, 0, 1);`;
 
 		for(let j = 0; j < njpegs; j++) {

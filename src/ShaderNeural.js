@@ -9,7 +9,7 @@ class ShaderNeural extends Shader {
 		super({});
 
 		Object.assign(this, {
-			modes: ['light'],// 'second light', 'albedo blend'],
+			modes: ['light', 'multi light', 'albedo blend'],
 			mode: 'light',
 
 			nplanes: null,	 //number of coefficient planes
@@ -17,6 +17,7 @@ class ShaderNeural extends Shader {
 			scale: null,	  //factor and bias are used to dequantize coefficient planes.
 			bias: null,
 
+			numLights: 1,
 		});
 		Object.assign(this, options);
 
@@ -42,6 +43,7 @@ class ShaderNeural extends Shader {
 			layer2_biases:  { type: 'vec4', needsUpdate: true, size: this.n/4},
 			layer3_weights: { type: 'vec4', needsUpdate: true, size: this.n*3/4},
 			layer3_biases:  { type: 'vec3', needsUpdate: true, size: 1},
+			light_intensity: { type: 'float', needsUpdate: false, size: 1, value: 0.5 },
 		};
 	}
 
@@ -90,6 +92,7 @@ uniform sampler2D u_texture_1;
 uniform sampler2D u_texture_2;
 uniform sampler2D u_texture_3;
 uniform vec2 lights;
+uniform float light_intensity;
 
 uniform vec4 layer1_weights[${this.c*this.n/4}]; // 12*52/4
 uniform vec4 layer1_biases[${this.n/4}];  // 52/4
@@ -179,17 +182,17 @@ vec4 data(vec2 v_texcoord) {
 	color = render(lights, v_texcoord);
 `;
 
-		else if (this.mode == 'second light')
+		if (this.mode == 'multi light')
 			str += `
-	// color = render(lights, v_texcoord) * 0.5 + render(-lights, v_texcoord) * 0.5;
-	color = vec4(render(lights, v_texcoord).rgb + render(-lights, v_texcoord).rgb, 1.0);
+	color = render(lights, v_texcoord) * light_intensity + render(-lights, v_texcoord) * (1.0 - light_intensity);
 `;
 
 		else if (this.mode == 'albedo blend')
 			str += `
-	color = render(lights, v_texcoord);
-	vec4 albedo = texture(albedo, v_texcoord);
-	color = color * 0.5 + albedo * 0.5;
+	// vec4 albedo_pixel = texture(albedo, v_texcoord);
+	vec4 albedo_pixel = texture(u_texture_1, v_texcoord);
+	color = render(lights, v_texcoord) * light_intensity + albedo_pixel * (1.0 - light_intensity);
+
 `;
 
 		str += `
@@ -249,8 +252,11 @@ vec4 data1() {
 		return str;
 	}
 
-}
 
+	setLightIntensity(value) {
+		this.setUniform('light_intensity', value);
+	}
+}
 
 export { ShaderNeural }
 
