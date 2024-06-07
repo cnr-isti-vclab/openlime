@@ -195,7 +195,7 @@ class UIBasic {
 			};
 			if(modes.length > 1) layerEntry.list = modes;
 			
-			if (layer.annotations ) {
+			if (layer.annotations !== undefined) {
 				// this.annoMenu.push({ section: "Annotations" });
 				// this.annoMenu.push({ list: layer.annotationsEntry()});
 				layerEntry.list = [];

@@ -138,48 +138,48 @@ function main(){
     lime.addLayer('Layer1', layer1);
     console.log(layer1);
 
-    const layer2 = new Layer({
-        type: 'neural',
-        url: 'assets/rti/neural/info.json',
-        layout: 'image',
-        transform: { x: 0, y: 0, z: 1, a: 0 },
-        zindex: 0,
-        label: 'Neural',
-        overlay: false,
-        section: "Layers",
-        shaderOptions: {
-            albedo: false,
-            normals: false,
-            mask: false,
-            secondLight: false,
-            // secondLight: {
-            //     intensity: [1.0, 1.0],
-            //     weight: 0.5}
-        }
-    });
-    lime.addLayer('Layer2', layer2);
+    // const layer2 = new Layer({
+    //     type: 'neural',
+    //     url: 'assets/rti/neural/info.json',
+    //     layout: 'image',
+    //     transform: { x: 0, y: 0, z: 1, a: 0 },
+    //     zindex: 0,
+    //     label: 'Neural',
+    //     overlay: false,
+    //     section: "Layers",
+    //     shaderOptions: {
+    //         albedo: false,
+    //         normals: false,
+    //         mask: false,
+    //         secondLight: false,
+    //         // secondLight: {
+    //         //     intensity: [1.0, 1.0],
+    //         //     weight: 0.5}
+    //     }
+    // });
+    // lime.addLayer('Layer2', layer2);
     // console.log(layer2);
 
-    const layerBRDFIkehata = new Layer({
-        type: 'brdf_ikehata',
-        url: 'assets/brdf/ikehata/base.jpg',
-        layout: 'image',
-        transform: { x: 0, y: 0, z: 1, a: 0 },
-        zindex: 0,
-        label: 'BRDF Ikehata',
-        overlay: false,
-        section: "Layers",
-        shaderOptions: {
-            albedo: false,
-            normals: false,
-            mask: false,
-            secondLight: false,
-            // secondLight: {
-            //     intensity: [1.0, 1.0],
-            //     weight: 0.5}
-        }
-    });
-    lime.addLayer('LayerBRDFIkehata', layerBRDFIkehata);
+    // const layerBRDFIkehata = new Layer({
+    //     type: 'brdf_ikehata',
+    //     url: 'assets/brdf/ikehata/base.jpg',
+    //     layout: 'image',
+    //     transform: { x: 0, y: 0, z: 1, a: 0 },
+    //     zindex: 0,
+    //     label: 'BRDF Ikehata',
+    //     overlay: false,
+    //     section: "Layers",
+    //     shaderOptions: {
+    //         albedo: false,
+    //         normals: false,
+    //         mask: false,
+    //         secondLight: false,
+    //         // secondLight: {
+    //         //     intensity: [1.0, 1.0],
+    //         //     weight: 0.5}
+    //     }
+    // });
+    // lime.addLayer('LayerBRDFIkehata', layerBRDFIkehata);
 
     // user interface configuration
     // the "section" attribute can be omitted. This way, a single section called "Layers"
@@ -231,7 +231,7 @@ function main(){
 
     // Create an annotation layer and add it to the canvans
     const annoLayer = new LayerAnnotation(aOptions);
-    // lime.addLayer('annoLayer', annoLayer);
+    lime.addLayer('annoLayer', annoLayer);
 
     // If editorEnable, create a SVG annotation Editor
     // if (editorEnable) {

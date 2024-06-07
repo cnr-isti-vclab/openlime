@@ -260,6 +260,16 @@ class AnnotationEditor {
 					} 
 				},
 			},
+			printBBoxButton: {
+				html: '<input type="button" name="bbox-button" value="BBOX" id="openlime-annotation-bbox-button"/>',
+				element: null,
+				event:  { 
+					type: 'click', 
+					listener: (event) => { 
+						console.log(this.getPixelsAroundAllAnnotations()); 
+					} 
+				},
+			},
 			annotationFile: {
 				html: '<input type="file" name="annotation-file" id="openlime-annotation-file"/>',
 				element: null,
@@ -370,6 +380,62 @@ class AnnotationEditor {
 		// save the div with all elements
 		this.annotationEditor = annotationEditor;
 	}
+
+	/** @ignore */
+	getPixelsAroundPath(path) {
+		let gl = this.viewer.canvas.gl;
+		// let bbox = path.getBBox();
+		let bbox = path.getBoundingClientRect();
+		let pixels = new Uint8Array(3*bbox.width*bbox.height);
+		gl.readPixels(
+			bbox.x,
+			bbox.y,
+			bbox.width,
+			bbox.height,
+			gl.RGB,
+			gl.UNSIGNED_BYTE,
+			pixels
+		);
+
+		gl.getError();
+
+		console.log('gl', gl);
+		console.log('gl viewport', gl.getParameter(gl.VIEWPORT));
+		console.log('bbox', bbox);
+
+		console.log('svgElement', this.layer.svgElement);
+		console.log('svgElement bbox', this.layer.svgElement.getBBox());
+
+		console.log('layer bbox', this.layer.boundingBox());
+
+		return pixels;
+	}
+
+	/** @ignore */
+	getPixelsAroundAnnotation(annotation) {
+		if (!annotation)
+			annotation = this.annotation;
+
+		let pixelsForEachPath = [];
+
+		for (let element of annotation.elements) {
+			if (element.tagName == 'path') {
+				let pixels = this.getPixelsAroundPath(element);
+				pixelsForEachPath.push(pixels);
+			}
+		}
+		
+		return {id: annotation.id, pixels: pixelsForEachPath};
+	}
+
+	/** @ignore */
+	getPixelsAroundAllAnnotations() {
+		let pixelsForEachAnnotation = [];
+		for (let annotation of this.layer.annotations)
+			pixelsForEachAnnotation.push(this.getPixelsAroundAnnotation(annotation));
+		return pixelsForEachAnnotation;
+	}
+
 
 	/** @ignore */
 	toggleDescription() {
