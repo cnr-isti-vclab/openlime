@@ -384,18 +384,19 @@ class AnnotationEditor {
 	/** @ignore */
 	getPixelsAroundPath(path) {
 		let gl = this.viewer.canvas.gl;
-		// let bbox = path.getBBox();
 		let bbox = path.getBoundingClientRect();
-		let pixels = new Uint8Array(3*bbox.width*bbox.height);
+		let pixels = new Uint8Array(4 * bbox.width * bbox.height);
 		gl.readPixels(
 			bbox.x,
 			bbox.y,
 			bbox.width,
 			bbox.height,
-			gl.RGB,
+			gl.RGBA,
 			gl.UNSIGNED_BYTE,
 			pixels
 		);
+
+		////////////////////// DEBUG //////////////////////
 
 		gl.getError();
 
@@ -407,6 +408,15 @@ class AnnotationEditor {
 		console.log('svgElement bbox', this.layer.svgElement.getBBox());
 
 		console.log('layer bbox', this.layer.boundingBox());
+
+		for (let i of pixels)
+			if (i != 0) {
+				console.log(i);
+				break;
+			}
+
+		////////////////////// DEBUG //////////////////////
+
 
 		return pixels;
 	}
