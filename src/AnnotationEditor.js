@@ -384,40 +384,31 @@ class AnnotationEditor {
 	/** @ignore */
 	getPixelsAroundPath(path) {
 		let gl = this.viewer.canvas.gl;
+
+		console.log('devicePixelRation: ', window.devicePixelRatio);
+
+		let parentBox = this.layer.svgElement.getBoundingClientRect();
 		let bbox = path.getBoundingClientRect();
-		let pixels = new Uint8Array(4 * bbox.width * bbox.height);
+		let [x,y,w,h] = [bbox.x, bbox.y, bbox.width, bbox.height];
+		// traslation to align origin (if canvas doesn't cover the whole body)
+		x -= parentBox.x;
+		y -= parentBox.y;
+		// invert y
+		y = parentBox.height - y;
+		[x,y,w,h] = [Math.floor(x), Math.floor(y), Math.ceil(w), Math.ceil(h)];
+
+		let pixels = new Uint8Array(4 * w * h);
 		gl.readPixels(
-			bbox.x,
-			bbox.y,
-			bbox.width,
-			bbox.height,
+			x,
+			y,
+			w,
+			h,
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
 			pixels
 		);
 
-		////////////////////// DEBUG //////////////////////
-
-		gl.getError();
-
-		console.log('gl', gl);
-		console.log('gl viewport', gl.getParameter(gl.VIEWPORT));
-		console.log('bbox', bbox);
-
-		console.log('svgElement', this.layer.svgElement);
-		console.log('svgElement bbox', this.layer.svgElement.getBBox());
-
-		console.log('layer bbox', this.layer.boundingBox());
-
-		for (let i of pixels)
-			if (i != 0) {
-				console.log(i);
-				break;
-			}
-
-		////////////////////// DEBUG //////////////////////
-
-
+		// return {h: h, w: w, pixels: Array.from(pixels)};
 		return pixels;
 	}
 
@@ -435,7 +426,7 @@ class AnnotationEditor {
 			}
 		}
 		
-		return {id: annotation.id, pixels: pixelsForEachPath};
+		return {id: annotation.id, data: pixelsForEachPath};
 	}
 
 	/** @ignore */
@@ -443,6 +434,16 @@ class AnnotationEditor {
 		let pixelsForEachAnnotation = [];
 		for (let annotation of this.layer.annotations)
 			pixelsForEachAnnotation.push(this.getPixelsAroundAnnotation(annotation));
+
+		// const jsonPixels = JSON.stringify(pixelsForEachAnnotation);
+		// var e = document.createElement('a');
+		// e.setAttribute('href', "data:text/json;charset=utf-8," + encodeURIComponent(jsonPixels));
+		// e.setAttribute('download', 'pixels.json');
+		// e.style.display = 'none';
+		// document.body.appendChild(e);
+		// e.click();
+		// document.body.removeChild(e);
+
 		return pixelsForEachAnnotation;
 	}
 
