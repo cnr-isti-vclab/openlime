@@ -89,10 +89,11 @@ class AnnotationEditor {
 			deleteCallback: null,
 			classes: {
 				'': {stroke: '#000000', fill: ''},
-				'sea': { stroke: '#0000ff', fill: '' },
-				'grass': { stroke: '#00ff00', fill: '' },
-				'fire': { stroke: '#ff0000', fill: '' },
-				'air': { stroke: '#777777', fill: '' },
+				'black': {stroke: '#000000', fill: ''},
+				'blue': { stroke: '#0000ff', fill: '' },
+				'green': { stroke: '#00ff00', fill: '' },
+				'red': { stroke: '#ff0000', fill: '' },
+				'white': { stroke: '#ffffff', fill: '' },
 			},
 			tools: {
 				point: {
@@ -197,7 +198,14 @@ class AnnotationEditor {
 				},
 			},
 			class: {
-				html: '<select name="class" id="openlime-annotation-class"> <option value="">Class</option> <option value="sea">Sea</option> <option value="grass">Grass</option> <option value="fire">Fire</option> <option value="air">Air</option> </select>',
+				html: `<select name="class" id="openlime-annotation-class"> 
+						   <option value="">-- Choose Color --</option> 
+						   <option value="black">Black</option>
+						   <option value="blue">Blue</option> 
+						   <option value="green">Green</option> 
+						   <option value="red">Red</option> 
+						   <option value="white">White</option> 
+					   </select>`,
 				element: null,
 				event:  { 
 					type: 'change', 
@@ -213,12 +221,12 @@ class AnnotationEditor {
 				},
 			},
 			stroke: {
-				html: '<input type="color" name="stroke" value="#ff0000" id="openlime-annotation-stroke"/>',
+				html: '<input type="color" name="stroke" value="#000000" id="openlime-annotation-stroke"/>',
 				element: null,
 				event:  { 
 					type: 'change', 
 					listener: (event) => { 
-						this.annotation.style.stroke = document.querySelector('#openlime-annotation-stroke').value;
+						this.annotation.style.stroke = document.querySelector('#openlime-annotation-stroke').value || '';
 						this.updateAnnotationStyle();
 						this.saveCurrent(); 
 						this.saveAnnotation();  
@@ -231,7 +239,7 @@ class AnnotationEditor {
 				event:  { 
 					type: 'change', 
 					listener: (event) => { 
-						this.annotation.style.fill = document.querySelector('#openlime-annotation-fill').value;
+						this.annotation.style.fill = document.querySelector('#openlime-annotation-fill').value || '';
 						this.updateAnnotationStyle();
 						this.saveCurrent(); 
 						this.saveAnnotation();
@@ -526,7 +534,7 @@ class AnnotationEditor {
 			idx: anno.idx,
 			label: anno.label,
 			class: anno.class,
-			style: anno.style,
+			// style: anno.style,
 			description: anno.description,
 			svg: null,
 			publish: anno.publish,
@@ -553,7 +561,7 @@ class AnnotationEditor {
 			idx: anno.idx,
 			label: anno.label,
 			class: anno.class,
-			style: anno.style,
+			// style: anno.style,
 			description: anno.description,
 			publish: anno.publish,
 			data: anno.data
@@ -731,7 +739,7 @@ class AnnotationEditor {
 				idx: anno.idx,
 				label: anno.label,
 				class: anno.class,
-				style: anno.style,
+				// style: anno.style,
 				description: anno.description,
 				publish: anno.publish,
 				data: anno.data
