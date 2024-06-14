@@ -129,6 +129,7 @@ class Layer {
 
 		if (typeof (this.layout) == 'string') {
 			let size = { width: this.width, height: this.height };
+			if (this.server) size.server = this.server;
 			this.setLayout(new Layout(null, this.layout, size));
 		} else {
 			this.setLayout(this.layout);
