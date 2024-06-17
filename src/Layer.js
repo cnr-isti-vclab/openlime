@@ -111,6 +111,7 @@ class Layer {
 			height: 0,
 			prefetchBorder: 1,
 			mipmapBias: 0.4,
+			pixelSize: 0.0,
 
 			//signals: { update: [], ready: [], updateSize: [] },  //update callbacks for a redraw, ready once layout is known.
 
@@ -313,6 +314,16 @@ class Layer {
 		// FIXME: this do not consider children layers
 		return this.transform.z;
 	}
+
+
+	/**
+	* Transform-adjusted spatial resolution for this layer
+	* @return {number} size of a single pixel in mm
+	*/
+	pixelSizePerMM() {
+		return this.pixelSize * this.transform.z;
+	}
+
 
 	/**
 	 * Gets the layer bounding box (<FIXME> Change name: box is in scene coordinates)
