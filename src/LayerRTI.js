@@ -32,7 +32,7 @@ class LayerRTI extends Layer {
 
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
-		
+
 		this.loadJson(this.url);
 	}
 /*
@@ -47,7 +47,7 @@ class LayerRTI extends Layer {
 			case 'tarzoom':  return path + plane + '.tzi'; break;
 			case 'itarzoom': return path + 'planes.tzi'; break;
 			case 'zoomify':  return path + plane + '/ImageProperties.xml'; break;
-			//case 'iip':      return this.plane.throw Error("Unimplemented");
+		        case 'iip':      return url; break;
 			case 'iiif': throw Error("Unimplemented");
 			default:     throw Error("Unknown layout: " + layout.type);
 		}
@@ -64,26 +64,36 @@ class LayerRTI extends Layer {
 
 	loadJson(url) {
 		(async () => {
-			var response = await fetch(this.url);
+			let infoUrl = url;
+
+			// Need to handle embedded RTI info.json when using IIP and TIFF image stacks
+			if (this.layout.type == "iip") infoUrl = (this.server?this.server+'?FIF=':'') + url + "&obj=description";
+
+			var response = await fetch(infoUrl);
 			if(!response.ok) {
-				this.status = "Failed loading " + this.url + ": " + response.statusText;
+				this.status = "Failed loading " + infoUrl + ": " + response.statusText;
 				return;
 			}
 			let json = await response.json();
+
+			// Update layout image format and pixelSize if provided in info.json
+			this.layout.suffix = json.format;
+			if( json.pixelSizeInMM ) this.pixelSize = json.pixelSizeInMM;
+
 			this.shader.init(json);
 			let urls = [];
 			for(let p = 0; p < this.shader.njpegs; p++) {
-				let url = this.layout.imageUrl(this.url, 'plane_' + p);
-				urls.push(url);
+				let imageUrl = this.layout.imageUrl(url, 'plane_' + p);
+				urls.push(imageUrl);
 				let raster = new Raster({ format: 'vec3'});
 				this.rasters.push(raster);
 			}
-			if(this.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile 
-				let url = this.layout.imageUrl(this.url, 'normals');
-				urls.push(url);
+			if(this.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile
+				let imageUrl = this.layout.imageUrl(url, 'normals');
+				urls.push(imageUrl);
 				let raster = new Raster({ format: 'vec3'});
-				this.rasters.push(raster);				
-			}			
+				this.rasters.push(raster);
+			}
 			this.layout.setUrls(urls);
 
 		})().catch(e => { console.log(e); this.status = e; });

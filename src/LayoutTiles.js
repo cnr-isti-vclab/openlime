@@ -45,8 +45,12 @@ import { Transform } from "./Transform";
  * width and height in pixels of the original image. See: {@link https://www.microimages.com/documentation/TechGuides/78googleMapsStruc.pdf Google Maps}
  * * **zoomify** - The URL indicates the location of Zoomify configuration file (for instance, 'https://my.example/image/ImageProperties.xml').
  * See: {@link http://www.zoomify.com/ZIFFileFormatSpecification.htm Zoomify}
+ * * **iip** - The server parameter (optional) indicates the URL of the IIPImage endpoint (for example '/fcgi-bin/iipsrv.fcgi').
+ * The URL parameter indicates either just the name of the path and image file (for instance 'image.tif') if the server parameter has been set or the full IIP URL if not
+ * (for instance '/fcgi-bin/iipsrv.fcgi?FIF=image.tif' or 'https://you.server//fcgi-bin/iipsrv.fcgi?FIF=image.tif' if image is hosted elsewhere)
+ * See: {@link https://iipimage.sourceforge.io/ IIPImage Server}
  * * **iiif** - According to the standard, the URL is the address of a IIIF server (for instance, 'https://myiiifserver.example/').
- * See: {@link https://iipimage.sourceforge.io/ IIP Server}, {@link https://iiif.io/api/image/3.0/ IIIF }
+ * See: {@link https://iiif.io/api/image/3.0/ IIIF }
  * * **tarzoom** and **itarzoom** - This is a custom format of the OpenLIME framework. It can be described as the TAR of a DeepZoom (all the DeepZoom image pyramid is stored in a single file).
  * It takes advantage of the fact that current web servers are able to handle partial-content HTTP requests. Tarzoom facilitates
  * the work of the server, which is not penalised by having to manage a file system with many small files. The URL is the address of the *.tzi* file 
@@ -94,16 +98,14 @@ class LayoutTiles extends Layout {
 		this.urls = urls;
 		(async () => {
 			switch(this.type) {
-				case 'google':      await this.initGoogle(); break; // No Url needed
-
-				case 'deepzoom1px': await this.initDeepzoom(true); break; // urls[0] only needed
+				case 'google':      await this.initGoogle(); break;        // No Url needed
+				case 'deepzoom1px': await this.initDeepzoom(true); break;  // urls[0] only needed
 				case 'deepzoom':    await this.initDeepzoom(false); break; // urls[0] only needed
-				case 'zoomify':     await this.initZoomify(); break; // urls[0] only needed
-				case 'iiif':        await this.initIIIF(); break; // urls[0] only needed
-
-				case 'tarzoom':     await this.initTarzoom(); break; // all urls needed
-
-				case 'itarzoom':    await this.initITarzoom(); break; // actually it has just one url
+				case 'zoomify':     await this.initZoomify(); break;       // urls[0] only needed
+				case 'iiif':        await this.initIIIF(); break;          // urls[0] only needed
+			        case 'iip':         await this.initIIP(); break;           // urls[0] only needed
+				case 'tarzoom':     await this.initTarzoom(); break;       // all urls needed
+				case 'itarzoom':    await this.initITarzoom(); break;      // actually it has just one url
 			}
 			this.initBoxes();
 			this.status = 'ready';
@@ -123,7 +125,7 @@ class LayoutTiles extends Layout {
 			case 'tarzoom':  return path + plane + '.tzi'; break;
 			case 'itarzoom': return path + 'planes.tzi'; break;
 			case 'zoomify':  return path + plane + '/ImageProperties.xml'; break;
-			//case 'iip':      return this.plane.throw Error("Unimplemented");
+		        case 'iip':      return url + "&SDS=" + plane.substring(plane.lastIndexOf('_')+1, plane.length); break;
 			case 'iiif': throw Error("Unimplemented");
 			default:     throw Error("Unknown layout: " + this.type);
 		}
@@ -573,10 +575,47 @@ class LayoutTiles extends Layout {
 			return `${tileUrl}/${xr},${yr},${wr},${hr}/${ws},${hs}/0/default.jpg`;
 		};
 	}
+
+        async initIIP() {
+
+		const server = this.server ? (this.server+'?FIF=') : '';
+		const url = server + this.urls[0] + "&obj=Max-size&obj=Tile-size&obj=Resolution-number";
+
+		let response = await fetch(url);
+		if(!response.ok) {
+			this.status = "Failed loading " + url + ": " + response.statusText;
+			throw new Error(this.status);
+		}
+		let info = await response.text();
+
+		let tmp = info.split( "Tile-size:" );
+		if(!tmp[1]) return null;
+		this.tilesize = parseInt(tmp[1].split(" ")[0]);
+		tmp = info.split( "Max-size:" );
+		if(!tmp[1]) return null;
+		tmp = tmp[1].split('\n')[0].split(' ');
+		this.width = parseInt(tmp[0]);
+		this.height= parseInt(tmp[1]);
+		this.nlevels  = parseInt(info.split( "Resolution-number:" )[1]);
+
+		this.getTileURL = (rasterid, tile) => {
+
+			// Tile index for this resolution
+			let index = tile.y*this.qbox[tile.level].xHigh + tile.x;
+
+			// Handle different formats if requested or indicated in the info.json
+			let command = "JTL"; // Default
+			if (this.suffix == "webp") command = "WTL";
+			else if( this.suffix == "png" ) command = "PTL";
+
+			let url = (this.server?this.server+'?FIF=':'') + this.urls[rasterid] + "&" + command + "=" + tile.level + "," + index;
+			return url;
+		};
+	}
 }
 
 let factory = (url, type, options) => { return new LayoutTiles(url, type, options); };
-for(let type of ['google', 'deepzoom1px', 'deepzoom', 'zoomify', 'iiif', 'tarzoom', 'itarzoom'])
+for(let type of ['google', 'deepzoom1px', 'deepzoom', 'zoomify', 'iiif', 'iip', 'tarzoom', 'itarzoom'])
     Layout.prototype.types[type] = factory;
 
 export { LayoutTiles }

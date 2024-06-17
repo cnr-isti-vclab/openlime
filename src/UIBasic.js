@@ -91,6 +91,7 @@ class UIBasic {
 	 * @param {bool} options.autofit=true Whether the initial position of the camera is set to fit the scene model.
 	 * @param {number} options.priority=0 Higher priority controllers are invoked first.
 	 * @param {{UIBasic#Action}} options.actions An Object of {@link UIBasic#Action}. A set of default actions are ready to be used.
+	 * @param {number} options.pixelSize Spatial resolution: physical size represented by a single pixel in mm
 	 * @param {string} options.attribution Some information related to data attribution or credits.
 	 * @param {Array<UIBasic#MenuEntry>} options.menu The interface menu structure.
 	 * @param {bool} options.enableTooltip=true Whether to enable tool button tooltip.
@@ -126,7 +127,7 @@ class UIBasic {
 			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
 			menu: []
 		});
-		
+
 		Object.assign(this, options);
 		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
 			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
@@ -319,17 +320,28 @@ class UIBasic {
 			*/
 
 			this.setupActions();
-			if(this.pixelSize) 
-				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
 
-			if(this.attribution) {
+
+			/* Get pixel size from options if provided or from layer metadata
+			 */
+			if(this.pixelSize) {
+				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+			}
+			else if(this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSize) {
+				let pixelSize = this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSizePerMM();
+				this.scalebar = new ScaleBar(pixelSize, this.viewer);
+			}
+
+
+
+		        if(this.attribution) {
 				var p = document.createElement('p');
 				p.classList.add('openlime-attribution');
 				p.innerHTML = this.attribution;
 				this.viewer.containerElement.appendChild(p);
 			}
 
-			
+
 
 			for(let l of Object.values(this.viewer.canvas.layers)) {
 				this.setLayer(l);
