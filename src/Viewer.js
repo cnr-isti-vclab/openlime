@@ -128,6 +128,7 @@ class Viewer {
 	 * @ignore
 	*/
 	resize(width, height) {
+		if(width == 0 || height == 0) return;
 		// Test with retina display!
 		this.canvasElement.width = width * window.devicePixelRatio;
 		this.canvasElement.height = height * window.devicePixelRatio;
