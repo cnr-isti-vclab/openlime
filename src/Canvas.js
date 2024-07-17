@@ -230,7 +230,8 @@ class Canvas {
 		let sceneBBox = Layer.computeLayersBBox(this.layers, discardHidden);
 		let minScale =  Layer.computeLayersMinScale(this.layers, discardHidden);
 		
-		if (sceneBBox != null) this.camera.updateBounds(sceneBBox, minScale);
+		if (sceneBBox != null && this.camera.viewport) 
+			this.camera.updateBounds(sceneBBox, minScale);
 		this.emit('updateSize');
 	}
 
