@@ -58,9 +58,15 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 		this.svgElement.append(this.svgGroup);
 
+		// Check if the shadow root already exists before attaching
 		let root = this.overlayElement;
-		if (this.shadow)
-			root = this.overlayElement.attachShadow({ mode: "open" });
+		if (this.shadow) {
+			if (!this.overlayElement.shadowRoot) {
+				root = this.overlayElement.attachShadow({ mode: "open" });
+			} else {
+				root = this.overlayElement.shadowRoot; // Use existing shadow root
+			}
+		}
 
 		if (this.style) {
 			const style = document.createElement('style');
