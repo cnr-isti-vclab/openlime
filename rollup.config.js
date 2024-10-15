@@ -73,6 +73,7 @@ const brdf = [
 ];
 
 const annotation = [
+	'./src/TextToSpeechPlayer.js',
 	'./src/LayerAnnotation.js',
 	'./src/LayerSvgAnnotation.js',
 	'./src/EditorSvgAnnotation.js'
