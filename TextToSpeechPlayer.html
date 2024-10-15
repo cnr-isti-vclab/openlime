@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: LayoutTiles</title>
+	<title>OpenLIME Class: TextToSpeechPlayer</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,43 +88,17 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: LayoutTiles</h1>
+	<h1 class="page-title">Class: TextToSpeechPlayer</h1>
 <section>
 
 <header>
     
         <h2>
-        LayoutTiles
+        TextToSpeechPlayer
         </h2>
         
-            <div class="class-description"><p>The Layout class is responsible for specifying the data formats (images) managed by OpenLIME.
-All web single-resolution image types (<em>jpg</em>, <em>png</em>, <em>gif</em>, etc...) are supported as well as the most common
-tiled image formats (<em>deepzoom</em>, <em>zoomify</em>, <em>IIIF</em>, <em>google maps</em>), which are suitable for large images.</p>
-<h4>Single-resolution images</h4>
-<p>The URL is the address of the file (for instance, 'https://my.example/image.jpg').</p>
-<h4>Tiled images</h4>
-<p>They can be specified in a variety of ways depending on the format chosen.</p>
-<ul>
-<li><strong>deepzoom</strong> - The root tile of the image pyramid has a size &gt; 1px (typical value is 254px). It is defined by the URL of the <em>.dzi</em> file
-(for instance, 'https://my.example/image.dzi'). See: <a href="https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN">DeepZoom</a></li>
-<li><strong>deepzoom1px</strong> - The root tile of the image pyramid has a size = 1px. It is defined by the URL of the <em>.dzi</em> file
-(for instance, 'https://my.example/image.dzi'). See: <a href="https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN">DeepZoom</a></li>
-<li><strong>google</strong> - The URL points directly to the directory containing the pyramid of images (for instance, 'https://my.example/image').
-The standard does not require any configuration file, so it is mandatory to indicate in the <code>options</code> the
-width and height in pixels of the original image. See: <a href="https://www.microimages.com/documentation/TechGuides/78googleMapsStruc.pdf">Google Maps</a></li>
-<li><strong>zoomify</strong> - The URL indicates the location of Zoomify configuration file (for instance, 'https://my.example/image/ImageProperties.xml').
-See: <a href="http://www.zoomify.com/ZIFFileFormatSpecification.htm">Zoomify</a></li>
-<li><strong>iip</strong> - The server parameter (optional) indicates the URL of the IIPImage endpoint (for example '/fcgi-bin/iipsrv.fcgi').
-The URL parameter indicates either just the name of the path and image file (for instance 'image.tif') if the server parameter has been set or the full IIP URL if not
-(for instance '/fcgi-bin/iipsrv.fcgi?FIF=image.tif' or 'https://you.server//fcgi-bin/iipsrv.fcgi?FIF=image.tif' if image is hosted elsewhere)
-See: <a href="https://iipimage.sourceforge.io/">IIPImage Server</a></li>
-<li><strong>iiif</strong> - According to the standard, the URL is the address of a IIIF server (for instance, 'https://myiiifserver.example/').
-See: <a href="https://iiif.io/api/image/3.0/">IIIF </a></li>
-<li><strong>tarzoom</strong> and <strong>itarzoom</strong> - This is a custom format of the OpenLIME framework. It can be described as the TAR of a DeepZoom (all the DeepZoom image pyramid is stored in a single file).
-It takes advantage of the fact that current web servers are able to handle partial-content HTTP requests. Tarzoom facilitates
-the work of the server, which is not penalised by having to manage a file system with many small files. The URL is the address of the <em>.tzi</em> file
-(for instance, 'https://my.example/image.tzi'). Warning: tarzoom|itarzoom may not work on older web servers.</li>
-</ul></div>
+            <div class="class-description"><p>The TextToSpeechPlayer class is responsible for text-to-speech functionality in the application.
+It handles voice selection, speech synthesis, and various audio controls.</p></div>
         
     
 </header>
@@ -136,7 +110,7 @@ the work of the server, which is not penalised by having to manage a file system
         
 <hr>
 <dt>
-    <h4 class="name" id="LayoutTiles"><span class="type-signature"></span>new LayoutTiles(url, type [, options])</h4>
+    <h4 class="name" id="TextToSpeechPlayer"><span class="type-signature"></span>new TextToSpeechPlayer( [options])</h4>
     
     
 </dt>
@@ -144,10 +118,7 @@ the work of the server, which is not penalised by having to manage a file system
 
     
     <div class="description">
-        <p>Creates a Layout, a container for a raster image.
-A layout is defined by a <code>url</code> of the image and a <code>type</code>.
-Additionally, an object literal with Layout <code>options</code> can be specified.
-Signals are triggered when the layout is ready to be drawn or its size is modified.</p>
+        <p>Creates an TextToSpeechPlayer. Additionally, an object literal with TextToSpeechPlayer <code>options</code> can be specified.</p>
     </div>
     
 
@@ -184,70 +155,6 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 
         <tr>
             
-                <td class="name"><code>url</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>URL of the image.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>type</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Layout.html#Type">Layout#Type</a></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>The type of the image.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>options</code></td>
             
 
@@ -275,7 +182,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 
             
 
-            <td class="description last"><p>An object literal describing the layout content.</p>
+            <td class="description last">
                 <h6 class="method-params-label method-subparams-label">Properties</h6>
                 
 
@@ -288,6 +195,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 
         <th>Type</th>
 
+        
+        <th>Argument</th>
         
 
         
@@ -303,63 +212,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 
         <tr>
             
-                <td class="name"><code>width</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The total width of the original, unsplit image. This parameter must only be specified for the 'google' layout type.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>height</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The total height of the original, unsplit image. This parameter must only be specified for the 'google' layout type.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>suffix</code></td>
+                <td class="name"><code>language</code></td>
             
 
             <td class="type">
@@ -373,53 +226,33 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
             </td>
 
             
-
-            
-                <td class="default">
+                <td class="attributes">
                 
-                    'jpg'
+                    &lt;optional><br>
+                
+
+                
+
                 
                 </td>
             
 
-            <td class="description last"><p>The filename suffix of the tiles.</p></td>
+            
+                <td class="default">
+                
+                    'it-IT'
+                
+                </td>
+            
+
+            <td class="description last"><p>The language for speech synthesis.</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>subdomains</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    'abc'
-                
-                </td>
-            
-
-            <td class="description last"><p>The ('a'|'b'|'c') <em>s</em> subdomain of a Google template URL (for instance: 'https:{s}.my.example//{z}/{x}/{y}.png').</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cachelevels</code></td>
+                <td class="name"><code>rate</code></td>
             
 
             <td class="type">
@@ -433,14 +266,146 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
 
-            
-                <td class="default">
+                
+
                 
                 </td>
             
 
-            <td class="description last"><p>Number of levels above the current level which will be loaded. Lowering will reduce number of http requests, but image will have tile missing while loading.</p></td>
+            
+                <td class="default">
+                
+                    1.12
+                
+                </td>
+            
+
+            <td class="description last"><p>The speech rate.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>volume</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    1.0
+                
+                </td>
+            
+
+            <td class="description last"><p>The speech volume.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cleanText</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"><p>Whether to clean the text before speech synthesis.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>voiceSelected</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    -1
+                
+                </td>
+            
+
+            <td class="description last"><p>The index of the selected voice.</p></td>
         </tr>
 
     
@@ -491,8 +456,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
-				 <a href="LayoutTiles.js.html#sunlight-1-line-59">line 59</a>
+				<a href="TextToSpeechPlayer.js.html">TextToSpeechPlayer.js</a>,
+				 <a href="TextToSpeechPlayer.js.html#sunlight-1-line-5">line 5</a>
 			</li>
 		</ul>
 	</dd>
@@ -543,7 +508,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
             
 <hr>
 <dt>
-    <h4 class="name" id="available"><span class="type-signature"></span>available()</h4>
+    <h4 class="name" id="activate"><span class="type-signature"></span>activate()</h4>
     
     
 </dt>
@@ -551,7 +516,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 
     
     <div class="description">
-        <p>returns the list of tiles available for a rendering</p>
+        <p>Activates the TextToSpeechPlayer.</p>
     </div>
     
 
@@ -597,8 +562,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
-				 <a href="LayoutTiles.js.html#sunlight-1-line-303">line 303</a>
+				<a href="TextToSpeechPlayer.js.html">TextToSpeechPlayer.js</a>,
+				 <a href="TextToSpeechPlayer.js.html#sunlight-1-line-73">line 73</a>
 			</li>
 		</ul>
 	</dd>
@@ -631,7 +596,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
             
 <hr>
 <dt>
-    <h4 class="name" id="getTileURL"><span class="type-signature"></span>getTileURL(id, tile)</h4>
+    <h4 class="name" id="initialize"><span class="type-signature">&lt;async> </span>initialize()</h4>
     
     
 </dt>
@@ -639,169 +604,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 
     
     <div class="description">
-        <p>Gets the URL of a specific tile. The function must be implemented for each layout type supported by OpenLIME.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>id</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The channel id.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>tile</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="global.html#Tile">Tile</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The tile.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
-				 <a href="LayoutTiles.js.html#sunlight-1-line-383">line 383</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="needed"><span class="type-signature"></span>needed()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>returns the list of tiles required for a rendering, sorted by priority, max</p>
+        <p>Initializes the TextToSpeechPlayer by loading the voice and checking offline capability.</p>
     </div>
     
 
@@ -847,242 +650,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
-				 <a href="LayoutTiles.js.html#sunlight-1-line-268">line 268</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="neededBox"><span class="type-signature"></span>neededBox(viewport, transform, layerTransform, border, bias)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Computes the tiles needed for each level, given a viewport and a transform.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>viewport</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="global.html#Viewport">Viewport</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The viewport.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>transform</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Transform.html">Transform</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The current transform.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>layerTransform</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Transform.html">Transform</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The transform of the calling layer</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>border</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The threshold (in tile units) around the current camera position for which to prefetch tiles.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>bias</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Determine which texture is used when scale is not a power of 2. 0: use always the highest resulution, 1 the lowest, 0.5 switch halfway.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
-				 <a href="LayoutTiles.js.html#sunlight-1-line-348">line 348</a>
+				<a href="TextToSpeechPlayer.js.html">TextToSpeechPlayer.js</a>,
+				 <a href="TextToSpeechPlayer.js.html#sunlight-1-line-39">line 39</a>
 			</li>
 		</ul>
 	</dd>
@@ -1110,10 +679,6 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
     <h5>Returns:</h5>
     
             
-<div class="param-desc">
-    <p>level: the optimal level in the pyramid, pyramid: array of bounding boxes in tile units.</p>
-</div>
-
 
 
 <dl>
@@ -1122,7 +687,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
     </dt>
     <dd>
         
-<span class="param-type">Object</span>
+<span class="param-type">Promise.&lt;void></span>
 
 
 
@@ -1139,7 +704,7 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
             
 <hr>
 <dt>
-    <h4 class="name" id="tileCoords"><span class="type-signature"></span>tileCoords()</h4>
+    <h4 class="name" id="mute"><span class="type-signature"></span>mute(enable)</h4>
     
     
 </dt>
@@ -1147,7 +712,441 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 
     
     <div class="description">
-        <p>Returns the coordinates of the tile (in [0, 0, w h] image coordinate system) and the texture coords associated.</p>
+        <p>Mutes or unmutes the audio playback.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>enable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>True to mute, false to unmute.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="TextToSpeechPlayer.js.html">TextToSpeechPlayer.js</a>,
+				 <a href="TextToSpeechPlayer.js.html#sunlight-1-line-271">line 271</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="pauseSpeaking"><span class="type-signature"></span>pauseSpeaking(enable)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Pauses or resumes the current speech synthesis.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>enable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>True to pause, false to resume.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="TextToSpeechPlayer.js.html">TextToSpeechPlayer.js</a>,
+				 <a href="TextToSpeechPlayer.js.html#sunlight-1-line-243">line 243</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="speakText"><span class="type-signature">&lt;async> </span>speakText(text)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Speaks the provided text using speech synthesis.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>text</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The text to speak.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="TextToSpeechPlayer.js.html">TextToSpeechPlayer.js</a>,
+				 <a href="TextToSpeechPlayer.js.html#sunlight-1-line-163">line 163</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="stopSpeaking"><span class="type-signature"></span>stopSpeaking()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Stops the current speech synthesis.</p>
     </div>
     
 
@@ -1193,8 +1192,8 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayoutTiles.js.html">LayoutTiles.js</a>,
-				 <a href="LayoutTiles.js.html#sunlight-1-line-208">line 208</a>
+				<a href="TextToSpeechPlayer.js.html">TextToSpeechPlayer.js</a>,
+				 <a href="TextToSpeechPlayer.js.html#sunlight-1-line-283">line 283</a>
 			</li>
 		</ul>
 	</dd>
@@ -1219,17 +1218,6 @@ Signals are triggered when the layout is ready to be drawn or its size is modifi
     
 
     
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>the tile coordinates (image coords and texture coords)</p>
-</div>
-
-
-
-
-        
 
     
 </dd>
