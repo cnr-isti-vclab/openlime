@@ -15,7 +15,7 @@ class TextToSpeechPlayer {
   constructor(options) {
     Object.assign(this, {
       language: 'it-IT',
-      rate: 1.12,
+      rate: 1.0,
       volume: 1.0,
       cleanText: true,
       voiceSelected: -1
@@ -215,7 +215,7 @@ class TextToSpeechPlayer {
             reject(new Error("Speech synthesis timeout"));
           }
         }, maxSpeechTime);
-        // Workaround to resume speech every 14 seconds
+        // Workaround to resume speech every 10 seconds
         this.resumeTimer = setInterval(() => {
           console.log(speechSynthesis.speaking);
           if (!speechSynthesis.speaking) {
