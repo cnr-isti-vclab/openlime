@@ -48,9 +48,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			this.style += `[data-class=${key}] { ` + Object.entries(value).map( g => `${g[0]}: ${g[1]};`).join('\n') + '}';
 		}
 		
-		// The following line allows the container of SVG elements 
-		// from old Openlime annotations to be positioned correctly
-		// this.style += `.openlime-svgoverlay { position:absolute; top:0px; left:0px;}`;
+		this.style += `.openlime-svgoverlay { position:absolute; top:0px; left:0px;}`;
 		
 		//this.createOverlaySVGElement();
 		//this.setLayout(this.layout);
