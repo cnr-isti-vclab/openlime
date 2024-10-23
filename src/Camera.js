@@ -1,41 +1,40 @@
 import { Transform } from './Transform.js'
 import { BoundingBox } from './BoundingBox.js'
-import { addSignals } from './Signals.js' 
+import { addSignals } from './Signals.js'
 
 /**
- * The type Viewport defines a rectangular viewing region inside a (wxh) area
+ * Defines a rectangular viewing region inside a canvas area.
  * @typedef {Object} Viewport
- * @property {number} x x-component of the lower left corner.
- * @property {number} y y-component of the lower left corner.
- * @property {number} dx x-component of the top right corner.
- * @property {number} dy y-component of the top right corner.
- * @property {number} w the viewport width.
- * @property {number} w the viewport height.
+ * @property {number} x - X-coordinate of the lower-left corner
+ * @property {number} y - Y-coordinate of the lower-left corner
+ * @property {number} dx - Width of the viewport
+ * @property {number} dy - Height of the viewport
+ * @property {number} w - Total canvas width
+ * @property {number} h - Total canvas height
  */
 
 /**
- * The class Camera does not have an operational role, but it is rather a container of parameters 
- * needed by the system to define the viewport, the camera position and to calculate the appropriate view.
+ * Camera class that manages viewport parameters and camera transformations.
+ * Acts as a container for parameters needed to define the viewport and camera position,
+ * supporting smooth animations between positions using source and target transforms.
  * 
- * To enable the animation, a camera contains two view matrices (two {@link Transform} objects): a `source` with the 
- * current position and a `target` with the position the camera will arrive at in a time `dt`. 
+ * The camera maintains two Transform objects:
+ * - source: represents current position
+ * - target: represents destination position
  * 
- * The member function `setPosition()` takes care of defining the target, the OpenLIME system automatically animates the 
- * camera to bring it from source to target, unless the user manually interrupts the current animation.
- * 
- * User-generated device events (such as touch events or mouse events) can modify camera parameters via an appropriate {@link Controller}.
+ * Animation between positions is handled automatically by the OpenLIME system
+ * unless manually interrupted by user input.
  */
-
- 
 class Camera {
 	/**
-	 * Creates a scene's camera. An update event is issued when the camera has completed its positioning.
- 	 * Additionally, an object literal with Viewer `options` can be specified.
- 	 * @param {Object} [options]
- 	 * @param {bool} options.bounded=true Weather to limit the translation of the camera to the boundary of the scene.
- 	 * @param {number} options.maxFixedZoom=2 The maximum pixel size.
-  	 * @param {number} options.minScreenFraction=1 The minimum portion of the screen to zoom in.
- 	 */
+	 * Creates a new Camera instance.
+	 * @param {Object} [options] - Configuration options
+	 * @param {boolean} [options.bounded=true] - Whether to limit camera translation to scene boundaries
+	 * @param {number} [options.maxFixedZoom=2] - Maximum allowed pixel size
+	 * @param {number} [options.minScreenFraction=1] - Minimum portion of screen to show when zoomed in
+	 * @param {Transform} [options.target] - Initial target transform
+	 * @fires Camera#update
+	 */
 	constructor(options) {
 		Object.assign(this, {
 			viewport: null,
@@ -53,8 +52,8 @@ class Camera {
 	}
 
 	/**
-	 * Defines the copy constructor.
-	 * @returns A copy of the Camera.
+	 * Creates a deep copy of the camera instance.
+	 * @returns {Camera} A new Camera instance with copied properties
 	 */
 	copy() {
 		let camera = new Camera();
@@ -63,9 +62,9 @@ class Camera {
 	}
 
 	/**
-	 * Sets the viewport and updates the camera position as close as possible to the previuos one.
-	 * @param {Viewport} view The new viewport (in CSS coordinates). 
-	 */
+	* Updates the viewport while maintaining the camera position as close as possible to the previous one.
+	* @param {Viewport} view - The new viewport in CSS coordinates
+	*/
 	setViewport(view) {
 		if (this.viewport) {
 			let rz = Math.sqrt((view.w / this.viewport.w) * (view.h / this.viewport.h));
@@ -77,10 +76,10 @@ class Camera {
 		}
 	}
 
-	/** 
-	* Gets the current viewport (in device coordinates).
-	* @return the current viewport
-	*/
+	/**
+	 * Returns the current viewport in device coordinates (accounting for device pixel ratio).
+	 * @returns {Viewport} The current viewport scaled for device pixels
+	 */
 	glViewport() {
 		let d = window.devicePixelRatio;
 		let viewport = {};
@@ -90,8 +89,11 @@ class Camera {
 	}
 
 	/**
-	 * Map coordinate relative to the canvas into scene coords using the specified transform.
-	 * @return {Object} {X, Y} in scene coordinates (relative to the center of the viewport).
+	 * Converts canvas coordinates to scene coordinates using the specified transform.
+	 * @param {number} x - X coordinate relative to canvas
+	 * @param {number} y - Y coordinate relative to canvas
+	 * @param {Transform} transform - Transform to use for conversion
+	 * @returns {{x: number, y: number}} Coordinates in scene space relative to viewport center
 	 */
 	mapToScene(x, y, transform) {
 		//compute coords relative to the center of the viewport.
@@ -106,24 +108,28 @@ class Camera {
 	}
 
 	/**
-	 * Map coordinate relative to the scene into canvas coords using the specified transform.
-	 * @return {Object} {X, Y} in canvas coordinates.
+	 * Converts scene coordinates to canvas coordinates using the specified transform.
+	 * @param {number} x - X coordinate in scene space
+	 * @param {number} y - Y coordinate in scene space
+	 * @param {Transform} transform - Transform to use for conversion
+	 * @returns {{x: number, y: number}} Coordinates in canvas space
 	 */
 	sceneToCanvas(x, y, transform) {
 		let r = Transform.rotate(x, y, transform.a);
-		x = r.x * transform.z + transform.x - this.viewport.x + this.viewport.w/2;
-		y = r.y * transform.z - transform.y + this.viewport.y + this.viewport.h/2;
+		x = r.x * transform.z + transform.x - this.viewport.x + this.viewport.w / 2;
+		y = r.y * transform.z - transform.y + this.viewport.y + this.viewport.h / 2;
 		return { x: x, y: y };
 	}
 
 	/**
-	 * Sets the camera target parameters (position, rotation, )
-	 * @param {number} dt The animation duration in millisecond.
-	 * @param {*} x The x-component of the translation vector.
-	 * @param {*} y The y-component of the translation vector.
-	 * @param {*} z The zoom factor.
-	 * @param {*} a The rotation angle (in degrees).
-	 * @param {Easing} easing The function aimed at making the camera movement less severe or pronounced.
+	 * Sets the camera target parameters for a new position.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} x - X component of translation
+	 * @param {number} y - Y component of translation
+	 * @param {number} z - Zoom factor
+	 * @param {number} a - Rotation angle in degrees
+	 * @param {string} [easing] - Easing function name for animation
+	 * @fires Camera#update
 	 */
 	setPosition(dt, x, y, z, a, easing) {
 		/**
@@ -170,10 +176,10 @@ class Camera {
 	}
 
 	/**
-	 * Pan the camera (in canvas coords)
-	 * @param {number} dt The animation duration in millisecond.
-	 * @param {number} dx The horizontal displancement.
-	 * @param {number} dy The vertical displacement. 
+	 * Pans the camera by a specified amount in canvas coordinates.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} dx - Horizontal displacement
+	 * @param {number} dy - Vertical displacement
 	 */
 	pan(dt, dx, dy) {
 		let now = performance.now();
@@ -183,11 +189,12 @@ class Camera {
 		this.setPosition(dt, m.x, m.y, m.z, m.a);
 	}
 
-	/** Zoom in or out at a specific point (in canvas coords)
-	 * @param {number} dt The animation duration in millisecond.
-	 * @param {number} z The distance of the camera from the canvas.
-	 * @param {number} x The x coord to zoom in|out
-	 * @param {number} y The y coord to zoom in|out
+	/**
+	 * Zooms the camera to a specific point in canvas coordinates.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} z - Target zoom level
+	 * @param {number} [x=0] - X coordinate to zoom towards
+	 * @param {number} [y=0] - Y coordinate to zoom towards
 	 */
 	zoom(dt, z, x, y) {
 		if (!x) x = 0;
@@ -208,9 +215,9 @@ class Camera {
 	}
 
 	/**
-	 * Rotate the camera around its z-axis by an `a` angle (in degrees) 
-	 * @param {number} dt The animation duration in millisecond.
-	 * @param {angle} a The rotation angle (in degrees).
+	 * Rotates the camera around its z-axis.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} a - Rotation angle in degrees
 	 */
 	rotate(dt, a) {
 
@@ -220,13 +227,14 @@ class Camera {
 		this.setPosition(dt, m.x, m.y, m.z, this.target.a + a);
 	}
 
-	/** Zoom in or out at a specific point (in canvas coords)
-	 * @param {number} dt The animation duration in millisecond.
-	 * @param {number} dz The scroll amount for the z-axis.
-	 * @param {number} x=0 The x coord to zoom in|out
-	 * @param {number} y=0 The y coord to zoom in|out
+	/**
+	 * Applies a relative zoom change at a specific point.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} dz - Relative zoom change factor
+	 * @param {number} [x=0] - X coordinate to zoom around
+	 * @param {number} [y=0] - Y coordinate to zoom around
 	 */
-	deltaZoom(dt, dz, x=0, y=0) {
+	deltaZoom(dt, dz, x = 0, y = 0) {
 
 		let now = performance.now();
 		let m = this.getCurrentTransform(now);
@@ -250,21 +258,21 @@ class Camera {
 	}
 
 	/**
-	 * Gets the camera transform at `time` in canvas coords.
-	 * @param {time} time The current time (a DOMHighResTimeStamp variable, as in `performance.now()`).
-	 * @returns {Transform} The current transform
+	 * Gets the camera transform at a specific time.
+	 * @param {number} time - Current time in milliseconds (from performance.now())
+	 * @returns {Transform} The interpolated transform at the specified time
 	 */
 	getCurrentTransform(time) {
-		if(time > this.target.t) this.easing = 'linear';
+		if (time > this.target.t) this.easing = 'linear';
 		return Transform.interpolate(this.source, this.target, time, this.easing);
 	}
 
 	/**
-	 * Gets the camera transform at `time` in device coords.
-	 * @param {time} time The current time (a DOMHighResTimeStamp variable, as in `performance.now()`).
-	 * @returns {Transform} The current transform
+	 * Gets the camera transform at a specific time in device coordinates.
+	 * @param {number} time - Current time in milliseconds (from performance.now())
+	 * @returns {Transform} The interpolated transform scaled for device pixels
 	 */
-	 getGlCurrentTransform(time) {
+	getGlCurrentTransform(time) {
 		const pos = this.getCurrentTransform(time);
 		pos.x *= window.devicePixelRatio;
 		pos.y *= window.devicePixelRatio;
@@ -272,11 +280,10 @@ class Camera {
 		return pos;
 	}
 
-
 	/**
-	 * Modify the camera settings to frame the specified `box` 
-	 * @param {BoundingBox} box The specified rectangle [minx, miny, maxx, maxy] in the canvas.
-	 * @param {number} dt The animation duration in millisecond 
+	 * Adjusts the camera to frame a specified bounding box.
+	 * @param {BoundingBox} box - The box to frame in canvas coordinates
+	 * @param {number} [dt=0] - Animation duration in milliseconds
 	 */
 	fit(box, dt) {
 		if (box.isEmpty()) return;
@@ -291,18 +298,23 @@ class Camera {
 		let c = box.center();
 		let z = Math.min(w / bw, h / bh);
 
-		this.setPosition(dt, -c.x*z, -c.y*z, z, 0);
+		this.setPosition(dt, -c.x * z, -c.y * z, z, 0);
 	}
 
 	/**
-	 * Modify the camera settings to the factory values (home). 
-	 * @param {number} dt animation duration in millisecond
+	 * Resets the camera to show the entire scene.
+	 * @param {number} dt - Animation duration in milliseconds
 	 */
 	fitCameraBox(dt) {
 		this.fit(this.boundingBox, dt);
 	}
 
-	/** @ignore */
+	/**
+	 * Updates the camera's boundary constraints and zoom limits.
+	 * @private
+	 * @param {BoundingBox} box - New bounding box for constraints
+	 * @param {number} minScale - Minimum scale factor
+	 */
 	updateBounds(box, minScale) {
 		this.boundingBox = box;
 		const w = this.viewport.dx;

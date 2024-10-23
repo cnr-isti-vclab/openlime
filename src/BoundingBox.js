@@ -1,92 +1,96 @@
 /**
- * The bounding box is a rectangular box that is wrapped as tightly as possible around a geometric element. It is oriented parallel to the axes.
- * It is defined by two opposite vertices. The class It includes a comprehensive set of functions for various processing tasks related to bounding boxes.
- * 
+ * Represents an axis-aligned rectangular bounding box that can be wrapped tightly around geometric elements.
+ * The box is defined by two opposite vertices (low and high corners) and provides a comprehensive set of
+ * utility methods for manipulating and analyzing bounding boxes.
  */
 class BoundingBox {
     /**
-     * Instantiates a **BoundingBox** object.
-     * @param {Object} [options] An object literal defining the bounding box.
-     * @param {number} xLow=1e20 The x coordinate of the low corner a rectangle.
-     * @param {number} yLow=1e20 The y coordinate of the low corner a rectangle.
-     * @param {number} xHigh=-1e20 The x coordinate of the high corner a rectangle.
-     * @param {number} xHigh=-1e20 The y coordinate of the high corner a rectangle.
+     * Creates a new BoundingBox instance.
+     * @param {Object} [options] - Configuration options for the bounding box
+     * @param {number} [options.xLow=1e20] - X coordinate of the lower corner
+     * @param {number} [options.yLow=1e20] - Y coordinate of the lower corner
+     * @param {number} [options.xHigh=-1e20] - X coordinate of the upper corner
+     * @param {number} [options.yHigh=-1e20] - Y coordinate of the upper corner
      */
     constructor(options) {
         Object.assign(this, {
             xLow: 1e20,
             yLow: 1e20,
-            xHigh: -1e20, 
-            yHigh: -1e20 });
+            xHigh: -1e20,
+            yHigh: -1e20
+        });
         Object.assign(this, options);
     }
 
     /**
-     * Defines a bonding box from an array of four elements.
-     * @param {Array<number>} x The array of four elements with the two corners ([xLow, yLow, xHigh, yHigh]).
+     * Initializes the bounding box from an array of coordinates.
+     * @param {number[]} x - Array containing coordinates in order [xLow, yLow, xHigh, yHigh]
      */
     fromArray(x) {
         this.xLow = x[0];
-        this.yLow = x[1]; 
+        this.yLow = x[1];
         this.xHigh = x[2];
-        this.yHigh  = x[3];
-    }
-    
-    /**
-     * Empties a bounding box.
-     */
-    toEmpty() {
-        this.xLow = 1e20;
-        this.yLow = 1e20; 
-        this.xHigh = -1e20;
-        this.yHigh  = -1e20;
+        this.yHigh = x[3];
     }
 
     /**
-     * Tests weather the bounding box is empty.
-     * @returns {bool} The test result.
+     * Resets the bounding box to an empty state by setting coordinates to extreme values.
+     */
+    toEmpty() {
+        this.xLow = 1e20;
+        this.yLow = 1e20;
+        this.xHigh = -1e20;
+        this.yHigh = -1e20;
+    }
+
+    /**
+     * Checks if the bounding box is empty (has no valid area).
+     * A box is considered empty if its low corner coordinates are greater than its high corner coordinates.
+     * @returns {boolean} True if the box is empty, false otherwise
      */
     isEmpty() {
         return this.xLow > this.xHigh || this.yLow > this.yHigh;
     }
 
     /**
-     * Returns an array of four elements containg the low and high corners.
-     * @returns {Array<number>} The array of corners.
+     * Converts the bounding box coordinates to an array.
+     * @returns {number[]} Array of coordinates in order [xLow, yLow, xHigh, yHigh]
      */
     toArray() {
-        return [this.xLow, this.yLow, this.xHigh, this. yHigh];
+        return [this.xLow, this.yLow, this.xHigh, this.yHigh];
     }
 
     /**
-     * Returns a text string with the corner coordinates separated by a space.
-     * @returns {string} The string of corners.
-     */
+      * Creates a space-separated string representation of the bounding box coordinates.
+      * @returns {string} String in format "xLow yLow xHigh yHigh"
+      */
     toString() {
         return this.xLow.toString() + " " + this.yLow.toString() + " " + this.xHigh.toString() + " " + this.yHigh.toString();
     }
 
     /**
-     * Merges a `box` to `this` BoundingBox.
-     * @param {BoundingBox} box The bounding box to be merged. 
+     * Enlarges this bounding box to include another bounding box.
+     * If this box is empty, it will adopt the dimensions of the input box.
+     * If the input box is null, no changes are made.
+     * @param {BoundingBox|null} box - The bounding box to merge with this one
      */
     mergeBox(box) {
-		if (box == null)
+        if (box == null)
             return;
 
-        if(this.isEmpty())
+        if (this.isEmpty())
             Object.assign(this, box);
         else {
-            this.xLow = Math.min(this.xLow,  box.xLow);
-            this.yLow = Math.min(this.yLow,  box.yLow);
+            this.xLow = Math.min(this.xLow, box.xLow);
+            this.yLow = Math.min(this.yLow, box.yLow);
             this.xHigh = Math.max(this.xHigh, box.xHigh);
             this.yHigh = Math.max(this.yHigh, box.yHigh);
         }
     }
 
     /**
-     * Merges a point `p`{x, y} to `this` BoundingBox.
-     * @param {{x, y}} p The point to be merged. 
+     * Enlarges this bounding box to include a point.
+     * @param {{x: number, y: number}} p - The point to include in the bounding box
      */
     mergePoint(p) {
         this.xLow = Math.min(this.xLow, p.x);
@@ -94,11 +98,11 @@ class BoundingBox {
         this.xHigh = Math.max(this.xHigh, p.x);
         this.yHigh = Math.max(this.yHigh, p.y);
     }
-    
+
     /**
-     * Translates the bounding box by a displacement vector (dx, dy).
-     * @param {number} dx Displacement along the x-axis.
-     * @param {number} dy Displacement along the y-axis.
+     * Moves the bounding box by the specified displacement.
+     * @param {number} dx - Displacement along the x-axis
+     * @param {number} dy - Displacement along the y-axis
      */
     shift(dx, dy) {
         this.xLow += dx;
@@ -108,56 +112,64 @@ class BoundingBox {
     }
 
     /**
-     * Divides by `side` and truncates the corner coordinates.
-     * @param {*} side The value to divide by.
+     * Quantizes the bounding box coordinates by dividing by a specified value and rounding down.
+     * This creates a grid-aligned bounding box.
+     * @param {number} side - The value to divide coordinates by
      */
     quantize(side) {
-        this.xLow =  Math.floor(this.xLow/side);
-        this.yLow =  Math.floor(this.yLow/side);
-        this.xHigh = Math.floor((this.xHigh-1)/side) + 1;
-        this.yHigh = Math.floor((this.yHigh-1)/side) + 1;
+        this.xLow = Math.floor(this.xLow / side);
+        this.yLow = Math.floor(this.yLow / side);
+        this.xHigh = Math.floor((this.xHigh - 1) / side) + 1;
+        this.yHigh = Math.floor((this.yHigh - 1) / side) + 1;
     }
 
     /**
-     * Returns the bounding box width.
-     * @returns {number} The width value.
+     * Calculates the width of the bounding box.
+     * @returns {number} The difference between xHigh and xLow
      */
     width() {
         return this.xHigh - this.xLow;
     }
-    
+
     /**
-     * Returns the bounding box height.
-     * @returns {number} The height value.
+     * Calculates the height of the bounding box.
+     * @returns {number} The difference between yHigh and yLow
      */
     height() {
         return this.yHigh - this.yLow;
     }
 
     /**
-     * Returns the bounding box center.
-     * @returns {number} The center value.
+     * Calculates the center point of the bounding box.
+     * @returns {{x: number, y: number}} The coordinates of the center point
      */
     center() {
-        return { x: (this.xLow+this.xHigh)/2, y: (this.yLow+this.yHigh)/2 };
+        return { x: (this.xLow + this.xHigh) / 2, y: (this.yLow + this.yHigh) / 2 };
     }
 
     /**
-     * Returns the i-th corner.
-     * @param {number} i The index of the corner. 
-     * @returns {Array<number>} A [x, y] pair.
+     * Gets the coordinates of a specific corner of the bounding box.
+     * @param {number} i - Corner index (0: bottom-left, 1: bottom-right, 2: top-left, 3: top-right)
+     * @returns {{x: number, y: number}} The coordinates of the specified corner
      */
     corner(i) {
         // To avoid the switch
         let v = this.toArray();
-        return {x: v[0 + (i&0x1)<<1], y: v[1 + (i&0x2)] };
+        return { x: v[0 + (i & 0x1) << 1], y: v[1 + (i & 0x2)] };
     }
 
+    /**
+     * Checks if this bounding box intersects with another bounding box.
+     * @param {BoundingBox} box - The other bounding box to check intersection with
+     * @returns {boolean} True if the boxes intersect, false otherwise
+     */
     intersects(box) {
         return xLow <= box.xHigh && xHigh >= box.xLow && yLow <= box.yHigh && yHigh >= box.yLow;
     }
+
     /**
-     * Prints out the bounding box corners in the console.
+     * Prints the bounding box coordinates to the console in a formatted string.
+     * Output format: "BOX=xLow, yLow, xHigh, yHigh" with values rounded to 2 decimal places
      */
     print() {
         console.log("BOX=" + this.xLow.toFixed(2) + ", " + this.yLow.toFixed(2) + ", " + this.xHigh.toFixed(2) + ", " + this.yHigh.toFixed(2))
@@ -165,4 +177,4 @@ class BoundingBox {
 
 }
 
-export{ BoundingBox }
+export { BoundingBox }
