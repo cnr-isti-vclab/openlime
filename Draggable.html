@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: LayerRTI</title>
+	<title>OpenLIME Class: Draggable</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,21 +88,29 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: LayerRTI</h1>
+	<h1 class="page-title">Class: Draggable</h1>
 <section>
 
 <header>
     
         <h2>
-        LayerRTI
+        Draggable
         </h2>
         
-            <div class="class-description"><p>Extends <a href="Layer.html">Layer</a>, and can display a relightable images (RTI) using the 'relight' data format (see:
-<a href="https://github.com/cnr-isti-vclab/relight">relight on github</a> for details).
-This web-friendly format is composed of a info.json with RTI parametets and a set of images
-(plane_0.jpg, plane_1.jpg etc.) with encoded coefficients.
-As with all other layers Deepzoom and other <a href="Layout.html">Layout</a>s can be used.</p>
-<p>The ligh direction can be changed programmatically using setLight.</p></div>
+            <div class="class-description"><p>The Draggable class enables an element to be dragged and moved around within its parent element.
+It creates a draggable container with a handle that can be used to initiate the dragging action. The class accepts two
+parameters: <code>parent</code>, which represents the parent element where the draggable container will be appended, and <code>options</code>,
+an optional object that allows customization of the draggable behavior.</p>
+<p>The class supports flexible positioning of the draggable container within its parent element. The <code>options</code> parameter
+can specify the positioning using properties such as <code>top</code>, <code>bottom</code>, <code>left</code>, and <code>right</code>. The default values for these properties
+are right=20 bottom=20, and at least one of the <code>top</code> or <code>bottom</code> properties and one of the <code>left</code> or <code>right</code> properties must be provided.
+If an unknown drag position is detected (neither <code>top</code> nor <code>bottom</code> specified, but either <code>left</code> or <code>right</code> is
+provided), an error is thrown.</p>
+<p>The class creates a container element and a handle element within it. The container is positioned absolutely
+based on the specified positioning properties. It also has a fixed size (defaulting to 10 pixels) and a flexible
+layout with a <code>handleGap</code> (defaulting to 5 pixels) between its child elements. The handle element is a small square with rounded
+corners and a semi-transparent background color.</p>
+<p>The class provides an appendChild method that allows elements to be appended to the draggable container.</p></div>
         
     
 </header>
@@ -114,12 +122,17 @@ As with all other layers Deepzoom and other <a href="Layout.html">Layout</a>s ca
         
 <hr>
 <dt>
-    <h4 class="name" id="LayerRTI"><span class="type-signature"></span>new LayerRTI(options)</h4>
+    <h4 class="name" id="Draggable"><span class="type-signature"></span>new Draggable(element, parent, options)</h4>
     
     
 </dt>
 <dd>
 
+    
+    <div class="description">
+        <p>Enables an element to be dragged and moved around within its parent element.
+An object literal with <code>options</code> can be specified.</p>
+    </div>
     
 
     
@@ -153,13 +166,13 @@ As with all other layers Deepzoom and other <a href="Layout.html">Layout</a>s ca
 
         <tr>
             
-                <td class="name"><code>options</code></td>
+                <td class="name"><code>element</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">options</span>
+<span class="param-type">HTMLElement</span>
 
 
 
@@ -170,9 +183,289 @@ As with all other layers Deepzoom and other <a href="Layout.html">Layout</a>s ca
 
             
 
-            <td class="description last"><p>Same as <a href="Layer.html">Layer</a>, but url and layout are required.
-<strong>url</strong>: points to a relight .json
-<strong>layout</strong>: one of image, deepzoom, google, iiif, zoomify, tarzoom, itarzoom</p></td>
+            <td class="description last"><p>the element to be added to the draggable container</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>parent</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">HTMLElement</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the element where the draggable container will be appended</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>an object literal with options.</p>
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>top</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the initial CSS top position of the draggable container</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>bottom</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    20
+                
+                </td>
+            
+
+            <td class="description last"><p>the initial CSS bottom position of the draggable container</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>left</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the initial CSS left position of the draggable container</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>right</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    20
+                
+                </td>
+            
+
+            <td class="description last"><p>the initial CSS right position of the draggable container</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>handleSize</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    10
+                
+                </td>
+            
+
+            <td class="description last"><p>the size of the handle in pixels</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>handleGap</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    5
+                
+                </td>
+            
+
+            <td class="description last"><p>the gap between the handle and the element appended to the draggable container</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>handleColor</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    '#f0f0f0b3'
+                
+                </td>
+            
+
+            <td class="description last"><p>the semi-transparent background color of the handle</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -216,8 +509,8 @@ As with all other layers Deepzoom and other <a href="Layout.html">Layout</a>s ca
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerRTI.js.html">LayerRTI.js</a>,
-				 <a href="LayerRTI.js.html#sunlight-1-line-20">line 20</a>
+				<a href="Draggable.js.html">Draggable.js</a>,
+				 <a href="Draggable.js.html#sunlight-1-line-21">line 21</a>
 			</li>
 		</ul>
 	</dd>
@@ -261,6 +554,98 @@ As with all other layers Deepzoom and other <a href="Layout.html">Layout</a>s ca
 
     
 
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<hr>
+<dt>
+    <h4 class="name" id="appendChild"><span class="type-signature"></span>appendChild()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Append an HTML element <code>e</code> to the draggable container</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Draggable.js.html">Draggable.js</a>,
+				 <a href="Draggable.js.html#sunlight-1-line-81">line 81</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        </dl>
     
 
     

@@ -35,7 +35,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="Annotation.html">Annotation</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
 				</ul>
 			</li>
 			
@@ -99,7 +99,7 @@ import { Controller2D } from './Controller2D'
 import { ControllerPanZoom } from './ControllerPanZoom'
 import { Ruler } from "./Ruler"
 import { ScaleBar } from './ScaleBar'
-import { addSignals }  from './Signals'
+import { addSignals } from './Signals'
 
 /**
  * An Action describes the behaviour of a tool button.
@@ -176,7 +176,7 @@ import { addSignals }  from './Signals'
  * ui.actions.zoomin.display=true;
  * ui.actions.zoomout.display=true;
  * ```
- */ 
+ */
 class UIBasic {
 	/**
 	 * Instantiates a UIBasic object.
@@ -213,6 +213,7 @@ class UIBasic {
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '&lt;p>Help here!&lt;/p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 			},
+			postInit: () => { console.log('postInit') },
 			pixelSize: null,
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
@@ -232,7 +233,7 @@ class UIBasic {
 			activeModifiers: [0, 1],
 			controlZoom: this.controlZoomMessage != null
 		});
-		if(this.controlZoomMessage)
+		if (this.controlZoomMessage)
 			this.panzoom.addEvent('nowheel', () => { this.showOverlayMessage(this.controlZoomMessage); });
 		this.viewer.pointerManager.onEvent(this.panzoom); //register wheel, doubleclick, pan and pinch
 		// this.viewer.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
@@ -267,13 +268,13 @@ class UIBasic {
 				status: () => layer.visible ? 'active' : '',
 				layer: id
 			};
-			if(modes.length > 1) layerEntry.list = modes;
-			
-			if (layer.annotations ) {
+			if (modes.length > 1) layerEntry.list = modes;
+
+			if (layer.annotations) {
 				layerEntry.list = [];
 				//setTimeout(() => { 
 				layerEntry.list.push(layer.annotationsEntry());
-					//this.updateMenu();
+				//this.updateMenu();
 				//}, 1000);
 				//TODO: this could be a convenience, creating an editor which can be
 				//customized later using layer.editor.
@@ -287,22 +288,24 @@ class UIBasic {
 			(x, y) => {
 				for (let layer of lightLayers)
 					layer.setLight([x, y], 0);
-				if(this.showLightDirections)
+				if (this.showLightDirections)
 					this.updateLightDirections(x, y);
-				this.emit('lightdirection', [x, y, Math.sqrt(1 - x*x + y*y)]);
-			}, { 
-				// TODO: IS THIS OK? It was false before
-				active: false, 
-    			activeModifiers: [2, 4], 
-    			control: 'light', 
-    			onPanStart: this.showLightDirections ? () => {
-    				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false) );
-    				this.enableLightDirections(true); } : null,
-    			onPanEnd: this.showLightDirections ? () => { 
-    				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true) );
-    				this.enableLightDirections(false); } : null,
-    			relative: true 
-			});
+				this.emit('lightdirection', [x, y, Math.sqrt(1 - x * x + y * y)]);
+			}, {
+			// TODO: IS THIS OK? It was false before
+			active: false,
+			activeModifiers: [2, 4],
+			control: 'light',
+			onPanStart: this.showLightDirections ? () => {
+				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false));
+				this.enableLightDirections(true);
+			} : null,
+			onPanEnd: this.showLightDirections ? () => {
+				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true));
+				this.enableLightDirections(false);
+			} : null,
+			relative: true
+		});
 
 		controller.priority = 0;
 		this.viewer.pointerManager.onEvent(controller);
@@ -327,13 +330,13 @@ class UIBasic {
 	}
 
 	showOverlayMessage(msg, duration = 2000) {
-		if(this.overlayMessage) {
+		if (this.overlayMessage) {
 			clearTimeout(this.overlayMessage.timeout);
 			this.overlayMessage.timeout = setTimeout(() => this.destroyOverlayMessage(), duration);
 			return;
 		}
-		
-		
+
+
 		let background = document.createElement('div');
 		background.classList.add('openlime-overlaymsg');
 		background.innerHTML = `&lt;p>${msg}&lt;/p>`;
@@ -362,34 +365,34 @@ class UIBasic {
 		this.lightDirections.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 		this.lightDirections.style.display = 'none';
 		this.lightDirections.classList.add('openlime-lightdir');
-		for(let x = -1; x &lt;= 1; x++) {
-			for(let y = -1; y &lt;= 1; y++) {
+		for (let x = -1; x &lt;= 1; x++) {
+			for (let y = -1; y &lt;= 1; y++) {
 				let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-				line.pos = [x*35, y*35];
+				line.pos = [x * 35, y * 35];
 				//line.setAttribute('data-start', `${x} ${y}`);
 				this.lightDirections.appendChild(line);
 			}
 		}
 		this.viewer.containerElement.appendChild(this.lightDirections);
 	}
-	
+
 	/** @ignore */
 	updateLightDirections(lx, ly) {
 		let lines = [...this.lightDirections.children];
-		for(let line of lines) {
+		for (let line of lines) {
 			let x = line.pos[0];
 			let y = line.pos[1];
-			
-			line.setAttribute('x1', 0.6*x -25*0*lx);
-			line.setAttribute('y1', 0.6*y +25*0*ly);
-			line.setAttribute('x2', x/0.6 + 60*lx);
-			line.setAttribute('y2', y/0.6 - 60*ly);
+
+			line.setAttribute('x1', 0.6 * x - 25 * 0 * lx);
+			line.setAttribute('y1', 0.6 * y + 25 * 0 * ly);
+			line.setAttribute('x2', x / 0.6 + 60 * lx);
+			line.setAttribute('y2', y / 0.6 - 60 * ly);
 		}
 	}
 
 	/** @ignore */
 	enableLightDirections(show) {
-		this.lightDirections.style.display = show? 'block' : 'none';
+		this.lightDirections.style.display = show ? 'block' : 'none';
 	}
 
 	/** @ignore */
@@ -419,34 +422,32 @@ class UIBasic {
 
 			/* Get pixel size from options if provided or from layer metadata
 			 */
-			if(this.pixelSize) {
+			if (this.pixelSize) {
 				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
 			}
-			else if(this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSize) {
+			else if (this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSize) {
 				let pixelSize = this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSizePerMM();
 				this.scalebar = new ScaleBar(pixelSize, this.viewer);
 			}
 
-
-
-		        if(this.attribution) {
+			if (this.attribution) {
 				var p = document.createElement('p');
 				p.classList.add('openlime-attribution');
 				p.innerHTML = this.attribution;
 				this.viewer.containerElement.appendChild(p);
 			}
 
-
-
-			for(let l of Object.values(this.viewer.canvas.layers)) {
+			for (let l of Object.values(this.viewer.canvas.layers)) {
 				this.setLayer(l);
 				break;
 			}
 
-			if(this.actions.light &amp;&amp; this.actions.light.active)
+			if (this.actions.light &amp;&amp; this.actions.light.active)
 				this.toggleLightController();
-			if(this.actions.layers &amp;&amp; this.actions.layers.active)
+			if (this.actions.layers &amp;&amp; this.actions.layers.active)
 				this.toggleLayers();
+
+			this.postInit();
 
 		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
@@ -470,7 +471,7 @@ class UIBasic {
 			}
 		}
 	}
-	
+
 	/** @ignore */
 	async loadSkin() {
 		let toolbar = document.createElement('div');
@@ -488,9 +489,9 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
-				if('icon' in action) {
-					if(typeof action.icon == 'string') {
-						if(Util.isSVGString(action.icon)) {
+				if ('icon' in action) {
+					if (typeof action.icon == 'string') {
+						if (Util.isSVGString(action.icon)) {
 							action.icon = Util.SVGFromString(action.icon);
 						} else {
 							action.icon = await Util.loadSVG(action.icon);
@@ -609,12 +610,12 @@ class UIBasic {
 
 	/** @ignore */
 	toggleRuler() {
-		if(!this.ruler) {
+		if (!this.ruler) {
 			this.ruler = new Ruler(this.viewer, this.pixelSize);
 			this.viewer.pointerManager.onEvent(this.ruler);
 		}
-		
-		if(!this.ruler.enabled)
+
+		if (!this.ruler.enabled)
 			this.ruler.start();
 		else
 			this.ruler.end();
@@ -622,11 +623,11 @@ class UIBasic {
 
 	/** @ignore */
 	toggleHelp(help, on) {
-		if(!help.dialog) {
+		if (!help.dialog) {
 			help.dialog = new UIDialog(this.viewer.containerElement, { modal: true, class: 'openlime-help-dialog' });
 			help.dialog.setContent(help.html);
 		} else
-			help.dialog.toggle(on);		
+			help.dialog.toggle(on);
 	}
 
 	/** @ignore */
@@ -827,7 +828,7 @@ class UIDialog { //FIXME standalone class
 		dialog.append(content);
 
 		if (this.modal) { //FIXME backdrown => backdrop
-			if(this.backdropEvents) background.addEventListener('click', (e) => { if (e.target == background) this.hide(); });
+			if (this.backdropEvents) background.addEventListener('click', (e) => { if (e.target == background) this.hide(); });
 			background.appendChild(dialog);
 			this.container.appendChild(background);
 			this.element = background;
@@ -851,15 +852,15 @@ class UIDialog { //FIXME standalone class
 		else
 			this.content.replaceChildren(html);
 	}
-	
+
 	/**
 	 * Shows the dialog.
 	 */
 	show() {
 		this.element.classList.remove('hidden');
-		this.visible=true;
+		this.visible = true;
 	}
-	
+
 	/**
 	 * Hides the dialog.
 	 */
@@ -869,10 +870,10 @@ class UIDialog { //FIXME standalone class
 		 * @event UIDialog#closed
 		 */
 		this.element.classList.add('hidden');
-		this.visible=false;
+		this.visible = false;
 		this.emit('closed');
 	}
-	
+
 	/**
 	 * Adds fading effect to the dialog.
 	 * @param {bool} on Whether the fading effect is enabled.
@@ -942,7 +943,7 @@ export { UIBasic, UIDialog }
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
 	
-		on Sun Oct 20th 2024
+		on Wed Oct 23rd 2024
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
