@@ -37,7 +37,10 @@ import { addSignals } from './Signals.js'
 class Layer {
 	/**
 	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
-	* Signals are triggered when the layer is ready (i.e. completely initialized) or if its state variables have been updated (a redraw is needed).
+	* Signals are triggered when:
+	* ready: the size and layout of the layer is known
+	* update: some new tile is available, or some visualization parameters has changed
+	* loaded: is fired when all the images needed have been downloaded
 	* @param {Object} [options]
 	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
 	* @param {string} options.type A string identifier to select the specific derived layer class to instantiate.
@@ -48,7 +51,7 @@ class Layer {
 	* @param {number} options.zindex Stack ordering value for the rendering of layers (higher zindex on top).
 	* @param {bool} options.overlay=false  Whether the layer must be rendered in overlay mode.
 	* @param {number} options.prefetchBorder=1 The threshold (in tile units) around the current camera position for which to prefetch tiles.
-	* @param {number} options.mipmapBias=0.4 The mipmap bias of the texture.
+	* @param {number} options.mipmapBias=0.2 Determine which texture is used when scale is not a power of 2. 0: use always the highest resulution, 1 the lowest, 0.5 switch halfway.
 	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader}.
 	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
 	* @param {Layer} options.sourceLayer The layer from which to take the tiles (in order to avoid tile duplication).
@@ -108,6 +111,7 @@ class Layer {
 			height: 0,
 			prefetchBorder: 1,
 			mipmapBias: 0.4,
+			pixelSize: 0.0,
 
 			//signals: { update: [], ready: [], updateSize: [] },  //update callbacks for a redraw, ready once layout is known.
 
@@ -116,7 +120,7 @@ class Layer {
 			//each tile is tex: [.. one for raster ..], missing: 3 missing tex before tile is ready.
 			//only raster used by the shader will be loade.
 			queue: [],     //queue of tiles to be loaded.
-			requested: {},  //tiles requested.
+			requested: new Map,  //tiles requested.
 		});
 
 		Object.assign(this, options);
@@ -126,6 +130,7 @@ class Layer {
 
 		if (typeof (this.layout) == 'string') {
 			let size = { width: this.width, height: this.height };
+			if (this.server) size.server = this.server;
 			this.setLayout(new Layout(null, this.layout, size));
 		} else {
 			this.setLayout(this.layout);
@@ -207,7 +212,8 @@ class Layer {
 
 		// Set signal to acknowledge change of bbox when it is known. Let this signal go up to canvas
 		this.layout.addEvent('updateSize', () => {
-			this.shader.setTileSize(this.layout.getTileSize());
+			if(this.shader)
+				this.shader.setTileSize(this.layout.getTileSize());
 			this.emit('updateSize');
 		});
 	}
@@ -308,6 +314,16 @@ class Layer {
 		// FIXME: this do not consider children layers
 		return this.transform.z;
 	}
+
+
+	/**
+	* Transform-adjusted spatial resolution for this layer
+	* @return {number} size of a single pixel in mm
+	*/
+	pixelSizePerMM() {
+		return this.pixelSize * this.transform.z;
+	}
+
 
 	/**
 	 * Gets the layer bounding box (<FIXME> Change name: box is in scene coordinates)
@@ -784,11 +800,14 @@ class Layer {
 		if (this.tiles.has(tile.index))
 			throw "AAARRGGHHH double tile!";
 
-		if (this.requested[tile.index])
+		if (this.requested.has(tile.index)) {
 			console.log("Warning: double request!");
+			callback("Double tile request");
+			return;
+		}
 
 		this.tiles.set(tile.index, tile);
-		this.requested[tile.index] = true;
+		this.requested.set(tile.index, true);
 
 		if (this.layout.type == 'itarzoom') {
 			tile.url = this.layout.getTileURL(null, tile);
@@ -818,7 +837,7 @@ class Layer {
 			}
 			tile.missing = 0;
 			this.emit('update');
-			delete this.requested[tile.index];
+			this.requested.delete(tile.index);
 			if (callback) callback(tile.size);
 			return;
 		}
@@ -838,7 +857,9 @@ class Layer {
 			tile.missing--;
 			if (tile.missing <= 0) {
 				this.emit('update');
-				delete this.requested[tile.index];
+				this.requested.delete(tile.index);
+				if(this.requested.size == 0)
+					this.emit('loaded');
 				if (callback) callback(size);
 			}
 		}
@@ -846,6 +867,6 @@ class Layer {
 }
 
 Layer.prototype.types = {}
-addSignals(Layer, 'update', 'ready', 'updateSize');
+addSignals(Layer, 'ready', 'update', 'loaded', 'updateSize');
 
 export { Layer }

@@ -5,8 +5,8 @@ import { Util } from './Util'
 
 class Units {
     constructor(options) {
-        this.units = ["km", "m", "cm", "mm"],
-        this.allUnits = { "mm": 1, "cm": 10, "m": 1000, "km": 1e6, "in": 254, "ft": 254*12,  }
+        this.units = ["km", "m", "cm", "mm", "µm"],
+        this.allUnits = { "µm": 0.001, "mm": 1, "cm": 10, "m": 1000, "km": 1e6, "in": 254, "ft": 254*12 }
         this.precision = 2;
         if(options)
             Object.assign(options, this);
@@ -17,7 +17,7 @@ class Units {
 			return '';
         if(unit)
             return (d/this.allUnits[unit]).toFixed(this.precision) + unit;
-        
+
         let best_u = null;
         let best_penalty = 100;
         for(let u of this.units) {
@@ -40,7 +40,7 @@ class ScaleBar extends Units {
             viewer: viewer,
             width: 200,
             fontSize: 24,
-			precision: 0
+            precision: 0
         }, options);
 		Object.assign(this, options);
 
@@ -51,7 +51,7 @@ class ScaleBar extends Units {
 
 		this.text = Util.createSVGElement('text', { x: '50%', y: '16px', 'dominant-basiline': 'middle', 'text-anchor': 'middle' });
 		this.text.textContent = "";
-		
+
 		this.svg.appendChild(this.line);
 		this.svg.appendChild(this.text);
 		this.viewer.containerElement.appendChild(this.svg);
@@ -72,7 +72,7 @@ class ScaleBar extends Units {
 		this.line.setAttribute('x2', this.width - margin/2);
 		this.text.textContent = this.format(s.label);
 	}
-	
+
 
     //find best length for scale from min -> max
 	//zoom 2 means a pixel in image is now 2 pixel on screen, scale is

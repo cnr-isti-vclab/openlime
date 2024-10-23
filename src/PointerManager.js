@@ -38,7 +38,6 @@ class PointerManager {
      * Instatiates a PointerManager object.
      * @param {HTMLElement} target The DOM element from which the events are generated
      * @param {Object} [options] An object literal with class parameters.
-     * @param {number} options.diagonal=27 The diagonal of the screen (in inches).
      * @param {number} options.pinchMaxInterval=200 fingerDown event max distance in time to trigger a pinch (in ms).
      */
     constructor(target, options) {
@@ -46,8 +45,7 @@ class PointerManager {
         this.target = target;
 
         Object.assign(this, {
-            diagonal: 27,                // Standard monitor 27"
-            pinchMaxInterval: 200        // in ms, fingerDown event max distance in time to trigger a pinch.
+            pinchMaxInterval: 250        // in ms, fingerDown event max distance in time to trigger a pinch.
         });
 
         if (options)
@@ -59,7 +57,7 @@ class PointerManager {
 
         this.currentPointers = [];
         this.eventObservers = new Map();
-        this.ppmm = PointerManager.getPPMM(this.diagonal);
+        this.ppmm = PointerManager.getPixelsPerMM();
 
         this.target.style.touchAction = "none";
         this.target.addEventListener('pointerdown', (e) => this.handleEvent(e), false);
@@ -80,9 +78,29 @@ class PointerManager {
         return str.trim().split(/\s+/g);
     }
 
-    static getPPMM(diagonal) {
-        // sqrt(w^2 + h^2) / diagonal / 1in
-        return Math.round(Math.sqrt(screen.width **2  + screen.height **2) / diagonal / 25.4);
+    static getPixelsPerMM() {
+        // Get the device pixel ratio
+        const pixelRatio = window.devicePixelRatio || 1;
+    
+        // Create a div to measure
+        const div = document.createElement("div");
+        div.style.width = "1in";
+        div.style.height = "1in";
+        div.style.position = "absolute";
+        div.style.left = "-100%";
+        div.style.top = "-100%";
+        document.body.appendChild(div);
+    
+        // Measure the div
+        const pixelsPerInch = div.offsetWidth * pixelRatio;
+    
+        // Clean up
+        document.body.removeChild(div);
+    
+        // Convert pixels per inch to pixels per mm
+        const pixelsPerMM = pixelsPerInch / 25.4;
+    
+        return pixelsPerMM;
     }
 
     ///////////////////////////////////////////////////////////
@@ -139,9 +157,9 @@ class PointerManager {
             if (typeof (handler[e]) == 'function') {
                 this.on(e, handler);
             }
-        if(handler.panStart)
+        if (handler.panStart)
             this.onPan(handler);
-        if(handler.pinchStart)
+        if (handler.pinchStart)
             this.onPinch(handler);
     }
 
@@ -157,7 +175,7 @@ class PointerManager {
         handler.fingerMovingStart = (e) => {
             handler.panStart(e);
             if (!e.defaultPrevented) return;
-             this.on('fingerMoving', (e1) => {
+            this.on('fingerMoving', (e1) => {
                 handler.panMove(e1);
             }, e.idx);
             this.on('fingerMovingEnd', (e2) => {
@@ -195,7 +213,7 @@ class PointerManager {
             //TODO maybe we should sort by distance instead.
             fingerDownEvents.sort((a, b) => b.timeStamp - a.timeStamp);
             for (let e2 of fingerDownEvents) {
-                if (e1.timeStamp - e2.timeStamp > this.pinchMaxInterval) break; 
+                if (e1.timeStamp - e2.timeStamp > this.pinchMaxInterval) break;
 
                 handler.pinchStart(e1, e2);
                 if (!e1.defaultPrevented) break;
@@ -205,8 +223,8 @@ class PointerManager {
 
                 this.on('fingerMovingStart', (e) => e.preventDefault(), e1.idx); //we need to capture this event (pan conflict)
                 this.on('fingerMovingStart', (e) => e.preventDefault(), e2.idx);
-                this.on('fingerMoving',      (e) => e2 && handler.pinchMove(e1 = e, e2), e1.idx); //we need to assign e1 and e2, to keep last position.
-                this.on('fingerMoving',      (e) => e1 && handler.pinchMove(e1, e2 = e), e2.idx);
+                this.on('fingerMoving', (e) => e2 && handler.pinchMove(e1 = e, e2), e1.idx); //we need to assign e1 and e2, to keep last position.
+                this.on('fingerMoving', (e) => e1 && handler.pinchMove(e1, e2 = e), e2.idx);
 
                 this.on('fingerMovingEnd', (e) => {
                     if (e2)
@@ -229,14 +247,12 @@ class PointerManager {
 
     // register broadcast handlers
     broadcastOn(eventType, obj) {
-        const handlers = this.eventObservers.get(eventType);
-        if (handlers)
-            handlers.push(obj);
-        else
-            this.eventObservers.set(eventType, [obj]);
+        if (!this.eventObservers.has(eventType)) {
+            this.eventObservers.set(eventType, new Set());
+        }
+        this.eventObservers.get(eventType).add(obj);
     }
 
-    // unregister broadcast handlers
     broadcastOff(eventTypes, obj) {
         PointerManager.splitStr(eventTypes).forEach(eventType => {
             if (this.eventObservers.has(eventType)) {
@@ -244,11 +260,8 @@ class PointerManager {
                     this.eventObservers.delete(eventType);
                 } else {
                     const handlers = this.eventObservers.get(eventType);
-                    const index = handlers.indexOf(obj);
-                    if (index > -1) {
-                        handlers.splice(index, 1);
-                    }
-                    if (handlers.length == 0) {
+                    handlers.delete(obj);
+                    if (handlers.size === 0) {
                         this.eventObservers.delete(eventType);
                     }
                 }
@@ -256,15 +269,14 @@ class PointerManager {
         });
     }
 
-    // emit broadcast events
     broadcast(e) {
         if (!this.eventObservers.has(e.fingerType)) return;
-        this.eventObservers.get(e.fingerType)
-            .sort((a, b) => b.priority - a.priority)
-            .every(obj => {
-                obj[e.fingerType](e);
-                return !e.defaultPrevented;
-            });  // the first obj returning a defaultPrevented event breaks the every loop
+        const handlers = Array.from(this.eventObservers.get(e.fingerType));
+        handlers.sort((a, b) => b.priority - a.priority);
+        for (const obj of handlers) {
+            obj[e.fingerType](e);
+            if (e.defaultPrevented) break;
+        }
     }
 
     addCurrPointer(cp) {
@@ -293,18 +305,18 @@ class PointerManager {
 
     handleEvent(e) {
         //IDLING MANAGEMENT
-        if(this.idling) {
+        if (this.idling) {
             this.broadcast({ fingerType: 'activeAgain' });
             this.idling = false;
 
         } else {
-            if(this.idleTimeout)
+            if (this.idleTimeout)
                 clearTimeout(this.idleTimeout);
 
             this.idleTimeout = setTimeout(() => {
-                this.broadcast({ fingerType: 'wentIdle'});
+                this.broadcast({ fingerType: 'wentIdle' });
                 this.idling = true;
-            }, this.idleTime*1000);
+            }, this.idleTime * 1000);
         }
 
         if (e.type == 'pointerdown') this.target.setPointerCapture(e.pointerId);
@@ -488,7 +500,7 @@ class SinglePointerHandler {
                     this.originSrc = e.composedPath()[0];
                     this.timeout = setTimeout(() => {
                         this.emit(this.createOutputEvent(e, 'fingerHold'));
-                        if(e.defaultPrevented) this.status = this.stateEnum.IDLE;
+                        if (e.defaultPrevented) this.status = this.stateEnum.IDLE;
                     }, this.holdTimeoutThreshold);
                 }
                 break;
@@ -516,7 +528,7 @@ class SinglePointerHandler {
                     this.status = this.stateEnum.DOUBLE_TAP_DETECT;
                     this.timeout = setTimeout(() => {
                         this.emit(this.createOutputEvent(e, 'fingerHold'));
-                        if(e.defaultPrevented) this.status = this.stateEnum.IDLE;
+                        if (e.defaultPrevented) this.status = this.stateEnum.IDLE;
                     }, this.tapTimeoutThreshold);
                 } else if (e.type == 'pointermove' && distance > this.movingThreshold) {
                     clearTimeout(this.timeout);
@@ -617,7 +629,7 @@ class CircularBuffer {
     }
 
     push(v) {
-        if (this.size == this.capacity) {
+        if (this.size === this.capacity) {
             this.buffer[this.first] = v;
             this.first = (this.first + 1) % this.capacity;
         } else {
@@ -646,23 +658,20 @@ class CircularBuffer {
     }
 
     get(start, end) {
-        if (this.size == 0 && start == 0 && (end == undefined || end == 0)) return [];
-        if (typeof start != "number" || !Number.isInteger(start) || start < 0) throw new TypeError("Invalid start value");
+        if (this.size === 0 && start === 0 && (end === undefined || end === 0)) return [];
+        if (typeof start !== "number" || !Number.isInteger(start) || start < 0) throw new TypeError("Invalid start value");
         if (start >= this.size) throw new RangeError("Start index past end of buffer: " + start);
 
-        if (end == undefined) return this.buffer[(this.first + start) % this.capacity];
+        if (end === undefined) return this.buffer[(this.first + start) % this.capacity];
 
-        if (typeof end != "number" || !Number.isInteger(end) || end < 0) throw new TypeError("Invalid end value");
+        if (typeof end !== "number" || !Number.isInteger(end) || end < 0) throw new TypeError("Invalid end value");
         if (end >= this.size) throw new RangeError("End index past end of buffer: " + end);
 
-        if (this.first + start >= this.capacity) {
-            start -= this.capacity;
-            end -= this.capacity;
+        const result = [];
+        for (let i = start; i <= end; i++) {
+            result.push(this.buffer[(this.first + i) % this.capacity]);
         }
-        if (this.first + end < this.capacity)
-            return this.buffer.slice(this.first + start, this.first + end + 1);
-        else
-            return this.buffer.slice(this.first + start, this.capacity).concat(this.buffer.slice(0, this.first + end + 1 - this.capacity));
+        return result;
     }
 
     toArray() {

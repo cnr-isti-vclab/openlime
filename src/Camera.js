@@ -149,10 +149,10 @@ class Camera {
 			// Do not let transform offet go beyond this limit.
 			// if (scaled-image-size < screen) it remains fully contained
 			// else the scaled-image boundary closest to the screen cannot enter the screen.
-			const dx = Math.abs(bw - sw) / 2;
+			const dx = Math.abs(bw - sw) / 2;// + this.boundingBox.center().x- tbox.center().x;
 			x = Math.min(Math.max(-dx, x), dx);
 
-			const dy = Math.abs(bh - sh) / 2;
+			const dy = Math.abs(bh - sh) / 2;// + this.boundingBox.center().y - tbox.center().y;
 			y = Math.min(Math.max(-dy, y), dy);
 		}
 
@@ -165,6 +165,7 @@ class Camera {
 		if (a - this.source.a > 180) this.source.a += 360;
 		if (this.source.a - a > 180) this.source.a -= 360;
 		Object.assign(this.target, { x: x, y: y, z: z, a: a, t: now + dt });
+		console.assert(!isNaN(this.target.x));
 		this.emit('update');
 	}
 
@@ -290,7 +291,7 @@ class Camera {
 		let c = box.center();
 		let z = Math.min(w / bw, h / bh);
 
-		this.setPosition(dt, -c[0], -c[1], z, 0);
+		this.setPosition(dt, -c.x*z, -c.y*z, z, 0);
 	}
 
 	/**

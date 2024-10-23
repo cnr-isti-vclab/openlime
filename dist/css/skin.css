@@ -159,11 +159,11 @@
 	opacity: 70%;
 }
 
-.openlime-light path[style] {
+.openlime-light .openlime-bulb {
 	fill: #80808011 !important;
 }
 
-.openlime-light-active .openlime-light path[style] {
+.openlime-light-active .openlime-light .openlime-bulb {
 	fill: #ffcc00 !important;
 }
 
@@ -541,6 +541,10 @@ g.openlime-expand {
 	animation: fadein 1s linear forwards; */
 	visibility: visible !important;
 	/* background-color: rgb(200, 0, 0, 0.8) !important; */
+}
+
+.openlime-lens-dashboard.closed .openlime-lens-dashboard-annoswitch-bar {
+  visibility: hidden !important;
 }
 
 .openlime-lens-dashboard.closed {

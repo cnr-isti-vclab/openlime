@@ -39,14 +39,17 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			svgGroup: null,
 			onClick: null,			//callback function
 			classes: {
-				'': { style: { stroke: '#000' }, label: '' },
+				'': { stroke: '#000', label: '' },
 			},
 			annotationUpdate: null
 		}, options);
 		super(options);
 		for(const [key, value] of Object.entries(this.classes)) {
-			this.style += `[data-class=${key}] { ` + Object.entries(value.style).map( g => `${g[0]}: ${g[1]};`).join('\n') + '}';
+			this.style += `[data-class=${key}] { ` + Object.entries(value).map( g => `${g[0]}: ${g[1]};`).join('\n') + '}';
 		}
+		
+		this.style += `.openlime-svgoverlay { position:absolute; top:0px; left:0px;}`;
+		
 		//this.createOverlaySVGElement();
 		//this.setLayout(this.layout);
 	}
@@ -58,9 +61,15 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 		this.svgElement.append(this.svgGroup);
 
+		// Check if the shadow root already exists before attaching
 		let root = this.overlayElement;
-		if (this.shadow)
-			root = this.overlayElement.attachShadow({ mode: "open" });
+		if (this.shadow) {
+			if (!this.overlayElement.shadowRoot) {
+				root = this.overlayElement.attachShadow({ mode: "open" });
+			} else {
+				root = this.overlayElement.shadowRoot; // Use existing shadow root
+			}
+		}
 
 		if (this.style) {
 			const style = document.createElement('style');
@@ -160,7 +169,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		if (typeof (this.annotations) == "string") return; //FIXME Is it right? Should we use this.status?
 
 		const bBox = this.boundingBox();
-		this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh - bBox.xLow} ${bBox.yHigh - bBox.yLow}`);
+		//this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh - bBox.xLow} ${bBox.yHigh - bBox.yLow}`);
 
 		//find which annotations needs to be added to the ccanvas, some 
 		//indexing whould be used, for the moment we just iterate all of them.

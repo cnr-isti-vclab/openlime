@@ -4,7 +4,7 @@ import { Controller2D } from './Controller2D'
 import { ControllerPanZoom } from './ControllerPanZoom'
 import { Ruler } from "./Ruler"
 import { ScaleBar } from './ScaleBar'
-import { addSignals }  from './Signals'
+import { addSignals } from './Signals'
 
 /**
  * An Action describes the behaviour of a tool button.
@@ -81,7 +81,7 @@ import { addSignals }  from './Signals'
  * ui.actions.zoomin.display=true;
  * ui.actions.zoomout.display=true;
  * ```
- */ 
+ */
 class UIBasic {
 	/**
 	 * Instantiates a UIBasic object.
@@ -91,6 +91,7 @@ class UIBasic {
 	 * @param {bool} options.autofit=true Whether the initial position of the camera is set to fit the scene model.
 	 * @param {number} options.priority=0 Higher priority controllers are invoked first.
 	 * @param {{UIBasic#Action}} options.actions An Object of {@link UIBasic#Action}. A set of default actions are ready to be used.
+	 * @param {number} options.pixelSize Spatial resolution: physical size represented by a single pixel in mm
 	 * @param {string} options.attribution Some information related to data attribution or credits.
 	 * @param {Array<UIBasic#MenuEntry>} options.menu The interface menu structure.
 	 * @param {bool} options.enableTooltip=true Whether to enable tool button tooltip.
@@ -127,7 +128,7 @@ class UIBasic {
 			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
 			menu: []
 		});
-		
+
 		Object.assign(this, options);
 		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
 			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
@@ -137,7 +138,7 @@ class UIBasic {
 			activeModifiers: [0, 1],
 			controlZoom: this.controlZoomMessage != null
 		});
-		if(this.controlZoomMessage)
+		if (this.controlZoomMessage)
 			this.panzoom.addEvent('nowheel', () => { this.showOverlayMessage(this.controlZoomMessage); });
 		this.viewer.pointerManager.onEvent(this.panzoom); //register wheel, doubleclick, pan and pinch
 		// this.viewer.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
@@ -172,10 +173,14 @@ class UIBasic {
 				status: () => layer.visible ? 'active' : '',
 				layer: id
 			};
-			if(modes.length > 1) layerEntry.list = modes;
-			
+			if (modes.length > 1) layerEntry.list = modes;
+
 			if (layer.annotations) {
+				layerEntry.list = [];
+				//setTimeout(() => { 
 				layerEntry.list.push(layer.annotationsEntry());
+				//this.updateMenu();
+				//}, 1000);
 				//TODO: this could be a convenience, creating an editor which can be
 				//customized later using layer.editor.
 				//if(layer.editable) 
@@ -188,22 +193,24 @@ class UIBasic {
 			(x, y) => {
 				for (let layer of lightLayers)
 					layer.setLight([x, y], 0);
-				if(this.showLightDirections)
+				if (this.showLightDirections)
 					this.updateLightDirections(x, y);
-				this.emit('lightdirection', [x, y, Math.sqrt(1 - x*x + y*y)]);
-			}, { 
-				// TODO: IS THIS OK? It was false before
-				active: false, 
-    			activeModifiers: [2, 4], 
-    			control: 'light', 
-    			onPanStart: this.showLightDirections ? () => {
-    				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false) );
-    				this.enableLightDirections(true); } : null,
-    			onPanEnd: this.showLightDirections ? () => { 
-    				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true) );
-    				this.enableLightDirections(false); } : null,
-    			relative: true 
-			});
+				this.emit('lightdirection', [x, y, Math.sqrt(1 - x * x + y * y)]);
+			}, {
+			// TODO: IS THIS OK? It was false before
+			active: false,
+			activeModifiers: [2, 4],
+			control: 'light',
+			onPanStart: this.showLightDirections ? () => {
+				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false));
+				this.enableLightDirections(true);
+			} : null,
+			onPanEnd: this.showLightDirections ? () => {
+				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true));
+				this.enableLightDirections(false);
+			} : null,
+			relative: true
+		});
 
 		controller.priority = 0;
 		this.viewer.pointerManager.onEvent(controller);
@@ -228,13 +235,13 @@ class UIBasic {
 	}
 
 	showOverlayMessage(msg, duration = 2000) {
-		if(this.overlayMessage) {
+		if (this.overlayMessage) {
 			clearTimeout(this.overlayMessage.timeout);
 			this.overlayMessage.timeout = setTimeout(() => this.destroyOverlayMessage(), duration);
 			return;
 		}
-		
-		
+
+
 		let background = document.createElement('div');
 		background.classList.add('openlime-overlaymsg');
 		background.innerHTML = `<p>${msg}</p>`;
@@ -263,34 +270,34 @@ class UIBasic {
 		this.lightDirections.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 		this.lightDirections.style.display = 'none';
 		this.lightDirections.classList.add('openlime-lightdir');
-		for(let x = -1; x <= 1; x++) {
-			for(let y = -1; y <= 1; y++) {
+		for (let x = -1; x <= 1; x++) {
+			for (let y = -1; y <= 1; y++) {
 				let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-				line.pos = [x*35, y*35];
+				line.pos = [x * 35, y * 35];
 				//line.setAttribute('data-start', `${x} ${y}`);
 				this.lightDirections.appendChild(line);
 			}
 		}
 		this.viewer.containerElement.appendChild(this.lightDirections);
 	}
-	
+
 	/** @ignore */
 	updateLightDirections(lx, ly) {
 		let lines = [...this.lightDirections.children];
-		for(let line of lines) {
+		for (let line of lines) {
 			let x = line.pos[0];
 			let y = line.pos[1];
-			
-			line.setAttribute('x1', 0.6*x -25*0*lx);
-			line.setAttribute('y1', 0.6*y +25*0*ly);
-			line.setAttribute('x2', x/0.6 + 60*lx);
-			line.setAttribute('y2', y/0.6 - 60*ly);
+
+			line.setAttribute('x1', 0.6 * x - 25 * 0 * lx);
+			line.setAttribute('y1', 0.6 * y + 25 * 0 * ly);
+			line.setAttribute('x2', x / 0.6 + 60 * lx);
+			line.setAttribute('y2', y / 0.6 - 60 * ly);
 		}
 	}
 
 	/** @ignore */
 	enableLightDirections(show) {
-		this.lightDirections.style.display = show? 'block' : 'none';
+		this.lightDirections.style.display = show ? 'block' : 'none';
 	}
 
 	/** @ignore */
@@ -316,24 +323,33 @@ class UIBasic {
 			*/
 
 			this.setupActions();
-			if(this.pixelSize) 
-				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
 
-			if(this.attribution) {
+
+			/* Get pixel size from options if provided or from layer metadata
+			 */
+			if (this.pixelSize) {
+				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+			}
+			else if (this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSize) {
+				let pixelSize = this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSizePerMM();
+				this.scalebar = new ScaleBar(pixelSize, this.viewer);
+			}
+
+			if (this.attribution) {
 				var p = document.createElement('p');
 				p.classList.add('openlime-attribution');
 				p.innerHTML = this.attribution;
 				this.viewer.containerElement.appendChild(p);
 			}
 
-			for(let l of Object.values(this.viewer.canvas.layers)) {
+			for (let l of Object.values(this.viewer.canvas.layers)) {
 				this.setLayer(l);
 				break;
 			}
 
-			if(this.actions.light && this.actions.light.active)
+			if (this.actions.light && this.actions.light.active)
 				this.toggleLightController();
-			if(this.actions.layers && this.actions.layers.active)
+			if (this.actions.layers && this.actions.layers.active)
 				this.toggleLayers();
 
 			this.postInit();
@@ -360,7 +376,7 @@ class UIBasic {
 			}
 		}
 	}
-	
+
 	/** @ignore */
 	async loadSkin() {
 		let toolbar = document.createElement('div');
@@ -378,9 +394,9 @@ class UIBasic {
 				if (action.display !== true)
 					continue;
 
-				if('icon' in action) {
-					if(typeof action.icon == 'string') {
-						if(Util.isSVGString(action.icon)) {
+				if ('icon' in action) {
+					if (typeof action.icon == 'string') {
+						if (Util.isSVGString(action.icon)) {
 							action.icon = Util.SVGFromString(action.icon);
 						} else {
 							action.icon = await Util.loadSVG(action.icon);
@@ -499,12 +515,12 @@ class UIBasic {
 
 	/** @ignore */
 	toggleRuler() {
-		if(!this.ruler) {
+		if (!this.ruler) {
 			this.ruler = new Ruler(this.viewer, this.pixelSize);
 			this.viewer.pointerManager.onEvent(this.ruler);
 		}
-		
-		if(!this.ruler.enabled)
+
+		if (!this.ruler.enabled)
 			this.ruler.start();
 		else
 			this.ruler.end();
@@ -512,11 +528,11 @@ class UIBasic {
 
 	/** @ignore */
 	toggleHelp(help, on) {
-		if(!help.dialog) {
+		if (!help.dialog) {
 			help.dialog = new UIDialog(this.viewer.containerElement, { modal: true, class: 'openlime-help-dialog' });
 			help.dialog.setContent(help.html);
 		} else
-			help.dialog.toggle(on);		
+			help.dialog.toggle(on);
 	}
 
 	/** @ignore */
@@ -717,7 +733,7 @@ class UIDialog { //FIXME standalone class
 		dialog.append(content);
 
 		if (this.modal) { //FIXME backdrown => backdrop
-			if(this.backdropEvents) background.addEventListener('click', (e) => { if (e.target == background) this.hide(); });
+			if (this.backdropEvents) background.addEventListener('click', (e) => { if (e.target == background) this.hide(); });
 			background.appendChild(dialog);
 			this.container.appendChild(background);
 			this.element = background;
@@ -741,15 +757,15 @@ class UIDialog { //FIXME standalone class
 		else
 			this.content.replaceChildren(html);
 	}
-	
+
 	/**
 	 * Shows the dialog.
 	 */
 	show() {
 		this.element.classList.remove('hidden');
-		this.visible=true;
+		this.visible = true;
 	}
-	
+
 	/**
 	 * Hides the dialog.
 	 */
@@ -759,10 +775,10 @@ class UIDialog { //FIXME standalone class
 		 * @event UIDialog#closed
 		 */
 		this.element.classList.add('hidden');
-		this.visible=false;
+		this.visible = false;
 		this.emit('closed');
 	}
-	
+
 	/**
 	 * Adds fading effect to the dialog.
 	 * @param {bool} on Whether the fading effect is enabled.

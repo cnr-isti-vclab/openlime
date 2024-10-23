@@ -128,12 +128,14 @@ class Viewer {
 	 * @ignore
 	*/
 	resize(width, height) {
+		if(width == 0 || height == 0) return;
 		// Test with retina display!
 		this.canvasElement.width = width * window.devicePixelRatio;
 		this.canvasElement.height = height * window.devicePixelRatio;
 
 		let view = { x: 0, y: 0, dx: width, dy: height, w: width, h: height };
 		this.camera.setViewport(view);
+		this.canvas.updateSize();
 		this.emit('resize', view);
 
 		this.canvas.prefetch();

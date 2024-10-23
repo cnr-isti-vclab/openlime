@@ -51,24 +51,24 @@ class Skin {
 	 */
 	static async appendIcon(container, icon) {
 		let element = null;
+		let box = null;
 		if (typeof icon == 'string') {
 			element = await Skin.getElement(icon);
 			icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 			icon.appendChild(element);
-			container.appendChild(icon);
-			let box = element.getBBox();
+			document.body.appendChild(icon);
+			box = element.getBBox();
 			let tlist = element.transform.baseVal;
 			if (tlist.numberOfItems == 0)
 				tlist.appendItem(icon.createSVGTransform());
 			tlist.getItem(0).setTranslate(-box.x, -box.y);
-			icon.setAttribute('viewBox', `${-pad} ${-pad} ${box.width + 2 * pad} ${box.height + 2 * pad}`);
-			icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 		} else {
-			container.appendChild(icon);
-			let box = icon.getBBox();
-			icon.setAttribute('viewBox', `${-pad} ${-pad} ${box.width + 2 * pad} ${box.height + 2 * pad}`);
-			icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+			document.body.appendChild(icon);
+			box = icon.getBBox();
 		}
+		icon.setAttribute('viewBox', `${-pad} ${-pad} ${box.width + 2 * pad} ${box.height + 2 * pad}`);
+		icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+		container.appendChild(icon);
 		return icon;
 	 }
 }
