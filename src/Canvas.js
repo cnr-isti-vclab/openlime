@@ -1,34 +1,36 @@
 import { Util } from './Util'
 import { Camera } from './Camera'
-import { Layer  } from './Layer'
+import { Layer } from './Layer'
 import { Cache } from './Cache'
 import { addSignals } from './Signals'
 
 //// HELPERS
 
-window.structuredClone = typeof(structuredClone) == "function" ? structuredClone : function (value) { return  JSON.parse(JSON.stringify(value)); };
+window.structuredClone = typeof (structuredClone) == "function" ? structuredClone : function (value) { return JSON.parse(JSON.stringify(value)); };
 
 
 /**
- * Creates the WebGL context for the `canvas`. It stores information related to the `overlay` DOM element and the `camera` of the scene.
- * Signals are triggered in case of scene modifications.
- * Additionally, an object literal with Canvas `options` can be specified.
- * @param {(element|string)} canvas DOM element or selector for a `<canvas>`.
- * @param {(element|string)} overlay DOM element or selector for overlay decorations (i.e. annotations, glyphs, etc...)
- * @param {Camera} camera  The scene's camera.
- * @param {Object} [options] An object literal.
- * @param {Object} options.layers Object specifies layers (see. {@link Layer})
- * @param {bool} options.preserveDrawingBuffer=false Whether to preserve the buffers until manually cleared or overwritten. Needed for screenshots 
- * (otherwise is just a performance penalty).
- * 
-*/
-
+ * Canvas class that manages WebGL context, layers, and scene rendering.
+ * Handles layer management, WebGL context creation/restoration, and render timing.
+ */
 class Canvas {
-
+	/**
+	 * Creates a new Canvas instance with WebGL context and overlay support.
+	 * @param {HTMLCanvasElement|string} canvas - Canvas DOM element or selector
+	 * @param {HTMLElement|string} overlay - Overlay DOM element or selector for decorations (annotations, glyphs)
+	 * @param {Camera} camera - Scene camera instance
+	 * @param {Object} [options] - Configuration options
+	 * @param {Object} [options.layers] - Layer configurations mapping layer IDs to Layer instances
+	 * @param {boolean} [options.preserveDrawingBuffer=false] - Whether to preserve WebGL buffers until manually cleared
+	 * @param {number} [options.targetfps=30] - Target frames per second for rendering
+	 * @fires Canvas#update
+	 * @fires Canvas#updateSize
+	 * @fires Canvas#ready
+	 */
 	constructor(canvas, overlay, camera, options) {
-		Object.assign(this, { 
+		Object.assign(this, {
 			canvasElement: null,
-			preserveDrawingBuffer: false, 
+			preserveDrawingBuffer: false,
 			gl: null,
 			overlayElement: null,
 			camera: camera,
@@ -39,57 +41,60 @@ class Canvas {
 			timingLength: 5, //max number of timings.
 			overBudget: 0, //fraction of frames that took too long to render.
 
-			signals: {'update':[], 'updateSize':[], 'ready': []}
+			signals: { 'update': [], 'updateSize': [], 'ready': [] }
 		});
 		Object.assign(this, options);
 
 		this.init(canvas, overlay);
-			
-		for(let id in this.layers)
+
+		for (let id in this.layers)
 			this.addLayer(id, new Layer(this.layers[id]));
 		this.camera.addEvent('update', () => this.emit('update'));
 	}
 
+	/**
+	 * Records render timing information and updates FPS statistics.
+	 * @param {number} elapsed - Time elapsed since last frame in milliseconds
+	 * @private
+	 */
 	addRenderTiming(elapsed) {
 		this.timing.push(elapsed);
-		while(this.timing.length > this.timingLength)
+		while (this.timing.length > this.timingLength)
 			this.timing.shift();
-		this.overBudget = this.timing.filter(t => t > 1000/this.targetfps).length/this.timingLength;
-		this.fps = 1000/(this.timing.reduce((sum, a) => sum + a, 0)/this.timing.length);
+		this.overBudget = this.timing.filter(t => t > 1000 / this.targetfps).length / this.timingLength;
+		this.fps = 1000 / (this.timing.reduce((sum, a) => sum + a, 0) / this.timing.length);
 	}
 
-	/*
- 	* Adds a Canvas Event
- 	* @param {*} event A label to identify the event.
- 	* @param {*} callback The event callback function.
- 	*/
-
-
-
-	/** @ignore */
+	/**
+	 * Initializes WebGL context and sets up event listeners.
+	 * @param {HTMLCanvasElement|string} canvas - Canvas element or selector
+	 * @param {HTMLElement|string} overlay - Overlay element or selector
+	 * @throws {Error} If canvas or overlay elements cannot be found or initialized
+	 * @private
+	 */
 	init(canvas, overlay) {
-		if(!canvas)
+		if (!canvas)
 			throw "Missing element parameter"
 
-		if(typeof(canvas) == 'string') {
+		if (typeof (canvas) == 'string') {
 			canvas = document.querySelector(canvas);
-			if(!canvas)
+			if (!canvas)
 				throw "Could not find dom element.";
 		}
 
-		if(!overlay)
+		if (!overlay)
 			throw "Missing element parameter"
 
-		if(typeof(overlay) == 'string') {
+		if (typeof (overlay) == 'string') {
 			overlay = document.querySelector(overlay);
-			if(!overlay)
+			if (!overlay)
 				throw "Could not find dom element.";
 		}
 
-		if(!canvas.tagName)
+		if (!canvas.tagName)
 			throw "Element is not a DOM element"
 
-		if(canvas.tagName != "CANVAS")
+		if (canvas.tagName != "CANVAS")
 			throw "Element is not a canvas element";
 
 		this.canvasElement = canvas;
@@ -101,25 +106,27 @@ class Canvas {
 
 
 		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
-		this.gl = this.gl || 
-			canvas.getContext("webgl2", glopt) || 
-			canvas.getContext("webgl", glopt) || 
-			canvas.getContext("experimental-webgl", glopt) ;
+		this.gl = this.gl ||
+			canvas.getContext("webgl2", glopt) ||
+			canvas.getContext("webgl", glopt) ||
+			canvas.getContext("experimental-webgl", glopt);
 
 		if (!this.gl)
 			throw "Could not create a WebGL context";
 
 		canvas.addEventListener("webglcontextlost", (event) => { console.log("Context lost."); event.preventDefault(); }, false);
-		canvas.addEventListener("webglcontextrestored", ()  => { this.restoreWebGL(); }, false);
-		document.addEventListener("visibilitychange", (event) => { if(this.gl.isContextLost()) { this.restoreWebGL(); }});
+		canvas.addEventListener("webglcontextrestored", () => { this.restoreWebGL(); }, false);
+		document.addEventListener("visibilitychange", (event) => { if (this.gl.isContextLost()) { this.restoreWebGL(); } });
 	}
 
 	/**
-	 * Sets the state variables of all the system
-	 * @param {Object} state An object with state variables.
-	 * @param {number} dt The animation duration in millisecond.
-	 * @param {Easing} easing The function aimed at making the camera movement or control adjustments less severe or pronounced.
-	 */
+	* Updates the state of the canvas and its components.
+	* @param {Object} state - State object containing updates
+	* @param {Object} [state.camera] - Camera state updates
+	* @param {Object} [state.layers] - Layer state updates
+	* @param {number} dt - Animation duration in milliseconds
+	* @param {string} [easing='linear'] - Easing function for animations
+	*/
 	setState(state, dt, easing = 'linear') {
 		if ('camera' in state) {
 			const m = state.camera;
@@ -134,10 +141,11 @@ class Canvas {
 	}
 
 	/**
-	 * Gets the state variables of all the system as described in the stateMask
-	 * @return {Object} An object with state variables.
-	 */
-	getState(stateMask=null) {
+	* Retrieves current state of the canvas and its components.
+	* @param {Object} [stateMask=null] - Optional mask to filter returned state properties
+	* @returns {Object} Current state object
+	*/
+	getState(stateMask = null) {
 		let state = {};
 		if (!stateMask || stateMask.camera) {
 			let now = performance.now();
@@ -153,44 +161,43 @@ class Canvas {
 		return state;
 	}
 
-	/** @ignore */
+	/**
+ * Restores WebGL context after loss.
+ * Reinitializes shaders and textures for all layers.
+ * @private
+ */
 	restoreWebGL() {
 		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
-		this.gl = this.gl || 
-			this.canvasElement.getContext("webgl2", glopt) || 
-			this.canvasElement.getContext("webgl", glopt) || 
-			this.canvasElement.getContext("experimental-webgl", glopt) ;
+		this.gl = this.gl ||
+			this.canvasElement.getContext("webgl2", glopt) ||
+			this.canvasElement.getContext("webgl", glopt) ||
+			this.canvasElement.getContext("experimental-webgl", glopt);
 
-		for(let layer of Object.values(this.layers)) {
+		for (let layer of Object.values(this.layers)) {
 			layer.gl = this.gl;
 			layer.clear();
-			if(layer.shader)
+			if (layer.shader)
 				layer.shader.restoreWebGL(this.gl);
 		}
 		this.prefetch();
 		this.emit('update');
 	}
 
-	/** Adds the given layer to the Canvas and connects the layer's events to it.
-	* @param {string} id A label to identify the layer.
-	* @param {Layer} layer An OpenLIME Layer object.
-	*/
-	 addLayer(id, layer) {
-		/**
-		* The event is fired if a layer is updated, added or removed.
-		* @event Canvas#update
-		*/
-
-		/** 
-		* The event is fired when all the layers are ready (i.e. initialized and with data ready to be displayed).
-		* @event Canvas#ready
-		*/
+	/**
+	 * Adds a layer to the canvas.
+	 * @param {string} id - Unique identifier for the layer
+	 * @param {Layer} layer - Layer instance to add
+	 * @fires Canvas#update
+	 * @fires Canvas#ready
+	 * @throws {Error} If layer ID already exists
+	 */
+	addLayer(id, layer) {
 
 		console.assert(!(id in this.layers), "Duplicated layer id");
 
 		layer.id = id;
-		layer.addEvent('ready', () => { 
-			if(Object.values(this.layers).every( l => l.status == 'ready'))
+		layer.addEvent('ready', () => {
+			if (Object.values(this.layers).every(l => l.status == 'ready'))
 				this.emit('ready');
 			this.prefetch();
 		});
@@ -203,15 +210,15 @@ class Canvas {
 		this.prefetch();
 	}
 
-	/** Remove the given layer from the Canvas
-	* @param {Layer} layer An OpenLIME Layer object.
-	* 
-	* @example
-	* let layer0 = new Layer(options);
-	* canvas.addLayer('kdmap', layer0);
-	* ...
-	* canvas.removeLayer(layer0);
-	*/
+	/**
+ * Removes a layer from the canvas.
+ * @param {Layer} layer - Layer instance to remove
+ * @example
+ * const layer = new Layer(options);
+ * canvas.addLayer('map', layer);
+ * // ... later ...
+ * canvas.removeLayer(layer);
+ */
 	removeLayer(layer) {
 		layer.clear(); //order is important.
 
@@ -220,22 +227,27 @@ class Canvas {
 		this.prefetch();
 	}
 
-	/** @ignore */
+	/**
+	 * Updates canvas size and camera bounds based on layers.
+	 * @fires Canvas#updateSize
+	 * @private
+	 */
 	updateSize() {
-		/**
- 		* The event is fired if a layout changes its size or position (the event forces the re-computation of the layer bounding boxes).
- 		* @event Canvas#updateSize
- 		*/
 		const discardHidden = false;
 		let sceneBBox = Layer.computeLayersBBox(this.layers, discardHidden);
-		let minScale =  Layer.computeLayersMinScale(this.layers, discardHidden);
-		
-		if (sceneBBox != null && this.camera.viewport) 
+		let minScale = Layer.computeLayersMinScale(this.layers, discardHidden);
+
+		if (sceneBBox != null && this.camera.viewport)
 			this.camera.updateBounds(sceneBBox, minScale);
 		this.emit('updateSize');
 	}
 
-	/** @ignore */
+	/**
+ * Renders a frame at the specified time.
+ * @param {number} time - Current time in milliseconds
+ * @returns {boolean} True if all animations are complete
+ * @private
+ */
 	draw(time) {
 		let gl = this.gl;
 		let view = this.camera.glViewport();
@@ -254,12 +266,12 @@ class Canvas {
 		this.prefetch(pos);
 
 		//pos layers using zindex.
-		let ordered = Object.values(this.layers).sort( (a, b) => a.zindex - b.zindex);
+		let ordered = Object.values(this.layers).sort((a, b) => a.zindex - b.zindex);
 
 		//NOTICE: camera(pos) must be relative to the WHOLE canvas
 		let done = true;
-		for(let layer of ordered) {
-			if(layer.visible)
+		for (let layer of ordered) {
+			if (layer.visible)
 				done = layer.draw(pos, view) && done;
 		}
 
@@ -267,24 +279,39 @@ class Canvas {
 		return done && pos.t >= this.camera.target.t;
 	}
 
-	/*
- 	* This function have each layer to check which tiles are needed and schedule them for download.
- 	* @param {object} transform is the camera position (layer will combine with local transform).
- 	*/
-	/** @ignore */
+	/**
+ * Schedules tile downloads based on current view.
+ * @param {Object} [transform] - Optional transform override, defaults to current camera transform
+ * @private
+ */
 	prefetch(transform) {
-		if(!transform)
+		if (!transform)
 			transform = this.camera.getGlCurrentTransform(performance.now());
-		for(let id in this.layers) {
+		for (let id in this.layers) {
 			let layer = this.layers[id];
 			//console.log(layer);
 			//console.log(layer.layout.status);
-			if(layer.visible && layer.status == 'ready') {
+			if (layer.visible && layer.status == 'ready') {
 				layer.prefetch(transform, this.camera.glViewport());
 			}
 		}
 	}
 }
+
+/**
+ * Fired when canvas content is updated (layer changes, camera moves).
+ * @event Canvas#update
+ */
+
+/**
+ * Fired when canvas or layout size changes.
+ * @event Canvas#updateSize
+ */
+
+/**
+ * Fired when all layers are initialized and ready to display.
+ * @event Canvas#ready
+ */
 
 addSignals(Canvas, 'update', 'updateSize', 'ready');
 

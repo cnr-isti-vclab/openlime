@@ -1,44 +1,43 @@
 {
     "tags": {
-      "allowUnknownTags": true
+        "allowUnknownTags": ["all"]
     },
     "source": {
-      "include": [
-        "./src"
-      ],
-      "includePattern": ".+\\.js(doc|x)?$",
-      "excludePattern": "(^|\\/|\\\\)_"
+        "include": ["./src"],
+        "includePattern": ".+\\.js(doc|x)?$",
+        "excludePattern": "(^|\\/|\\\\)_"
     },
     "opts": {
-      "template": "./jsdoc/template/openlime/",
-      "encoding": "utf8",
-      "destination": "./docs/",
-      "recurse": false,
-      "tutorials": "./jsdoc/tutorials"
+        "template": "./jsdoc/template/openlime/",
+        "encoding": "utf8",
+        "destination": "./docs/",
+        "recurse": true,
+        "tutorials": "./jsdoc/tutorials",
+        "readme": "./README.md",
+        "package": "./package.json"
     },
     "plugins": [
-      "plugins/markdown"
+        "plugins/markdown"
     ],
-    "templates": {
-      "logoFile": "",
-      "cleverLinks": false,
-      "monospaceLinks": false,
-      "dateFormat": "ddd MMM Do YYYY",
-      "outputSourceFiles": true,
-      "outputSourcePath": true,
-      "systemName": "OpenLIME",
-      "footer": "<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>",
-      "copyright": "DocStrap Copyright © 2012-2015 The contributors to the JSDoc3 and DocStrap projects.",
-      "navType": "vertical",
-      "theme": "cerulean",
-      "linenums": true,
-      "collapseSymbols": false,
-      "inverseNav": true,
-      "protocol": "html://",
-      "methodHeadingReturns": false
-    },
     "markdown": {
-      "parser": "gfm",
-      "hardwrap": false
+        "hardwrap": false,
+        "idInHeadings": true
+    },
+    "templates": {
+        "default": {
+            "outputSourceFiles": true,
+            "includeDate": true,
+            "useLongnameInNav": true,
+            "systemName": "OpenLIME",
+            "footer": "<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>",
+            "navType": "vertical",
+            "theme": "cerulean",
+            "linenums": true,
+            "collapseSymbols": false,
+            "inverseNav": true,
+            "protocol": "html://",
+            "methodHeadingReturns": false,
+            "sort": true
+        }
     }
-  }
+}
