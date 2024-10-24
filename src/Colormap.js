@@ -1,4 +1,13 @@
+/**
+ * Represents a cubic spline interpolation for smooth color transitions.
+ * @private
+ */
 class Spline {
+	/**
+	 * Creates a new Spline instance.
+	 * @param {number[]} xs - X coordinates array
+	 * @param {number[]} ys - Y coordinates array
+	 */
 	constructor(xs, ys) {
 		this.xs = xs;
 		this.ys = ys;
@@ -34,9 +43,14 @@ class Spline {
 			((this.xs[n] - this.xs[n - 1]) * (this.xs[n] - this.xs[n - 1]));
 		return Spline.solve(A, ks);
 	}
+
 	/**
-	 * inspired by https://stackoverflow.com/a/40850313/4417327
-	 */
+ * Finds index of the point before the target value using binary search.
+ * Inspired by https://stackoverflow.com/a/40850313/4417327
+ * @param {number} target - Value to search for
+ * @returns {number} Index of the point before target
+ * @private
+ */
 	getIndexBefore(target) {
 		let low = 0;
 		let high = this.xs.length;
@@ -58,6 +72,12 @@ class Spline {
 		}
 		return low + 1;
 	}
+
+	/**
+ * Calculates interpolated value at given point.
+ * @param {number} x - Point to interpolate at
+ * @returns {number} Interpolated value
+ */
 	at(x) {
 		let i = this.getIndexBefore(x);
 		const t = (x - this.xs[i - 1]) / (this.xs[i] - this.xs[i - 1]);
@@ -133,8 +153,18 @@ class Spline {
 }
 
 
-
+/**
+ * Represents a color in RGBA format with values normalized between 0 and 1.
+ */
 class Color {
+	/**
+	 * Creates a new Color instance.
+	 * @param {number|string} r - Red component [0.0, 1.0] or color string ('#RGB', '#RGBA', '#RRGGBB', '#RRGGBBAA', 'rgb()', 'rgba()')
+	 * @param {number} [g] - Green component [0.0, 1.0]
+	 * @param {number} [b] - Blue component [0.0, 1.0]
+	 * @param {number} [a] - Alpha component [0.0, 1.0]
+	 * @throws {Error} If string value is not a valid color format
+	 */
 	constructor(r, g = undefined, b = undefined, a = undefined) {
 		if (typeof (r) == 'string') {
 			if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(r)) {
@@ -198,10 +228,19 @@ class Color {
 		return '#' + Color.hex(r) + Color.hex(g) + Color.hex(b) + Color.hex(a);
 	}
 
+	/**
+	 * Gets color components as an array.
+	 * @returns {number[]} Array of [r, g, b, a] values
+	 */
+
 	value() {
 		return [this.r, this.g, this.b, this.a];
 	}
 
+	/**
+	 * Converts color to RGB values [0, 255].
+	 * @returns {number[]} Array of [r, g, b] values
+	 */
 	toRGB() {
 		const rgb = [this.r * 255, this.g * 255, this.b * 255];
 		rgb.forEach((e, idx, arr) => {
@@ -210,16 +249,28 @@ class Color {
 		return rgb;
 	}
 
+	/**
+	 * Converts color to hexadecimal string.
+	 * @returns {string} Color in '#RRGGBB' format
+	 */
 	toHex() {
 		const rgb = this.toRGB();
 		return Color.rgbToHex(rgb[0], rgb[1], rgb[2]);
 	}
 
+	/**
+	 * Converts color to hexadecimal string with alpha.
+	 * @returns {string} Color in '#RRGGBBAA' format
+	 */
 	toHexa() {
 		const rgba = this.toRGBA();
 		return Color.rgbToHexa(rgba[0], rgba[1], rgba[2], rgba[3]);
 	}
 
+	/**
+	 * Converts color to RGBA values [0-255].
+	 * @returns {number[]} Array of [r, g, b, a] values
+	 */
 	toRGBA() {
 		const rgba = [this.r * 255, this.g * 255, this.b * 255, this.a * 255];
 		rgba.forEach((e, idx, arr) => {
@@ -229,7 +280,22 @@ class Color {
 	}
 }
 
+/**
+ * Creates a colormap for mapping numerical values to colors.
+ * Supports linear, spline, and bar interpolation between colors.
+ */
 class Colormap {
+	/**
+	 * Creates a new Colormap instance.
+	 * @param {Color[]} [colors=[black, white]] - Array of colors to interpolate between
+	 * @param {Object} [options] - Configuration options
+	 * @param {number[]} [options.domain=[0,1]] - Domain range for mapping
+	 * @param {Color} [options.lowColor] - Color for values below domain (defaults to first color)
+	 * @param {Color} [options.highColor] - Color for values above domain (defaults to last color)
+	 * @param {string} [options.description=''] - Description of the colormap
+	 * @param {('linear'|'spline'|'bar')} [options.type='linear'] - Interpolation type
+	 * @throws {Error} If colors/domain format is invalid
+	 */
 	constructor(colors = [new Color(0, 0, 0, 1), new Color(1, 1, 1, 1)], options = '') {
 		options = Object.assign({
 			domain: [0.0, 1.0],
@@ -273,10 +339,20 @@ class Colormap {
 
 	static clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
+	/**
+	 * Gets the domain range of the colormap.
+	 * @returns {number[]} Array containing [min, max] of domain
+	 */
 	rangeDomain() {
 		return [this.domain[0], this.domain[this.domain.length - 1]];
 	}
 
+	/**
+	 * Gets color for a value using bar interpolation.
+	 * @param {number} x - Value to get color for
+	 * @returns {Color} Corresponding color
+	 * @private
+	 */
 	bar(x) {
 		if (x < this.xarr[0]) return this.lowColor;
 		if (x > this.xarr[this.xarr.length - 1]) return this.highColor;
@@ -292,6 +368,12 @@ class Colormap {
 		return c;
 	}
 
+	/**
+	 * Gets color for a value using linear interpolation.
+	 * @param {number} x - Value to get color for
+	 * @returns {Color} Corresponding color
+	 * @private
+	 */
 	linear(x) {
 		if (x < this.xarr[0]) return this.lowColor;
 		if (x > this.xarr[this.xarr.length - 1]) return this.highColor;
@@ -307,12 +389,24 @@ class Colormap {
 		return c;
 	}
 
+	/**
+	 * Gets color for a value using spline interpolation.
+	 * @param {number} x - Value to get color for
+	 * @returns {Color} Corresponding color
+	 * @private
+	 */
 	spline(x) {
 		if (x < this.xarr[0]) return this.lowColor;
 		if (x > this.xarr[this.xarr.length - 1]) return this.highColor;
 		return new Color(this.rspline.at(x), this.gspline.at(x), this.bspline.at(x), this.aspline.at(x));
 	}
 
+	/**
+	 * Gets color for a value using configured interpolation type.
+	 * @param {number} x - Value to get color for
+	 * @returns {Color} Corresponding color
+	 * @throws {Error} If interpolation type is invalid
+	 */
 	at(x) {
 		let result = null;
 		switch (this.type) {
@@ -332,7 +426,11 @@ class Colormap {
 		return result;
 	}
 
-	/** Precision as parameter for future dev */
+	/**
+	 * Samples the colormap into a buffer.
+	 * @param {number} maxSteps - Number of samples to generate
+	 * @returns {{min: number, max: number, buffer: Uint8Array}} Sample data and buffer
+	 */
 	sample(maxSteps) {
 		let min = this.xarr[0];
 		let max = this.xarr[this.xarr.length - 1];
@@ -350,7 +448,20 @@ class Colormap {
 	}
 }
 
+/**
+ * Creates a visual legend for a colormap.
+ */
 class ColormapLegend {
+	/**
+	 * Creates a new ColormapLegend instance.
+	 * @param {Object} viewer - Viewer instance to attach legend to
+	 * @param {Colormap} colorscale - Colormap to create legend for
+	 * @param {Object} [options] - Configuration options
+	 * @param {number} [options.nticks=6] - Number of ticks/divisions in legend
+	 * @param {number} [options.legendWidth=25] - Width of legend as percentage
+	 * @param {string} [options.textColor='#fff'] - Color of text labels
+	 * @param {string} [options.class='openlime-legend'] - CSS class for legend container
+	 */
 	constructor(viewer, colorscale, options) {
 		options = Object.assign({
 			nticks: 6,
@@ -383,10 +494,14 @@ class ColormapLegend {
 		legend.textContent = colorscale.description;
 		this.scale.appendChild(legend);
 
-		if(this.colorscale.type == 'linear') this.legendLinear();
-		if(this.colorscale.type == 'bar') this.legendBar();
+		if (this.colorscale.type == 'linear') this.legendLinear();
+		if (this.colorscale.type == 'bar') this.legendBar();
 	}
 
+	/**
+	 * Creates legend for linear interpolation.
+	 * @private
+	 */
 	legendLinear() {
 		const domain = this.colorscale.rangeDomain();
 		const delta = (domain[1] - domain[0]) / this.nticks;
@@ -408,9 +523,13 @@ class ColormapLegend {
 		}
 	}
 
+	/**
+	 * Creates legend for bar interpolation.
+	 * @private
+	 */
 	legendBar() {
 		const deltaWidth = (100 - this.legendWidth) / this.colorscale.domain.length;
-		for (let i=0 ; i<this.colorscale.xarr.length; i++) {
+		for (let i = 0; i < this.colorscale.xarr.length; i++) {
 			const c = new Color(this.colorscale.rarr[i], this.colorscale.garr[i], this.colorscale.barr[i], this.colorscale.aarr[i]);
 			const v = this.colorscale.xarr[i];
 			const value = document.createElement('div');

@@ -1,6 +1,6 @@
 /**
- * **Controller** is a virtual base class that handles user interaction via device events (mouse/touch events).
- * It provides an abstract user interface to define interaction actions such as panning, pinching, tapping, etc...
+ * Base class that handles user interaction via device events (mouse/touch events).
+ * Provides an abstract user interface to define interaction actions such as panning, pinching, tapping, etc...
  * The actions are implemented by pre-defined callback functions:
  * * `panStart(e)` intercepts the initial pan event (movement of the mouse after pressing a mouse button or moving a finger).
  * The event is captured calling `e.preventDefault()`.
@@ -19,22 +19,25 @@
  * This class only describes user interactions by implementing actions or callbacks. A **Controller** works in concert with a **PointerManager** object 
  * that emits events and links them to actions.
  * 
- * In the example below a **ControllerPanZoom** object (derived from **Controller**) is created and associated with the `pointerManager` of the `viewer`.
- * ```
+ * @abstract
+ * @example
+ * // Create a pan-zoom controller and associate it with the viewer's pointer manager
  * const panzoom = new OpenLIME.ControllerPanZoom(viewer.camera, {
  *     priority: -1000,
  *     activeModifiers: [0, 1]
  * });
  * viewer.pointerManager.onEvent(panzoom);
- * ```	
  */
 class Controller {
 	/**
-	 * Instantiates a Controller object.
-	 * @param {Object} [options] An object literal with controller parameters.
-	 * @param {number} options.panDelay=50 Inertial value of the movement in ms for panning movements.
-	 * @param {number} options.zoomDelay=200 A zoom event is smoothed over this delay in ms,
-	 * @param {number} options.priority=0 Higher priority controllers are invoked first.
+	 * Creates a new Controller instance.
+	 * @param {Object} [options] - Configuration options
+	 * @param {boolean} [options.active=true] - Whether the controller is initially active
+	 * @param {boolean} [options.debug=false] - Enable debug logging
+	 * @param {number} [options.panDelay=50] - Inertial value for panning movements in milliseconds
+	 * @param {number} [options.zoomDelay=200] - Delay for smoothing zoom events in milliseconds
+	 * @param {number} [options.priority=0] - Controllers with higher priority are invoked first
+	 * @param {number[]} [options.activeModifiers=[0]] - Array of modifier states that activate this controller
 	 */
 	constructor(options) {
 		Object.assign(this, {
@@ -51,36 +54,116 @@ class Controller {
 	}
 
 	/**
-	 * Returns the modifier state of the event `e`. Modifiers are keyboard events that happens simultaneously 
-	 * with a device event (e.g. shift + left mouse button).
-	 * The modifiers handled by a controller are:
-	 * * NoModifiers = 0
-	 * * CrtlModifier = 1
-	 * * ShiftModifier = 2
-	 * * AltModifier = 4
-	 * 
-	 * The modifier state is the sum of values above corresponding to the key pressed (CTRL, SHIFT or ALT).
-	 * @param {Event} e 
-	 * @returns {number} The modifier state.
+	 * Gets the modifier state from an event.
+	 * @param {Event} e - The event to check
+	 * @returns {number} Modifier state bitmask where:
+	 * - 0 = No modifiers
+	 * - 1 = Ctrl key
+	 * - 2 = Shift key
+	 * - 4 = Alt key
+	 * Multiple modifiers combine their values (e.g., Ctrl+Shift = 3)
 	 */
 	modifierState(e) {
 		let state = 0;
-		if(e.ctrlKey) state += 1;
-		if(e.shiftKey) state += 2;
-		if(e.altKey) state += 4;
-		
+		if (e.ctrlKey) state += 1;
+		if (e.shiftKey) state += 2;
+		if (e.altKey) state += 4;
+
 		return state;
 	}
 
-	/** @ignore */
+	/**
+	 * Captures all events, preventing them from reaching other controllers.
+	 * @private
+	 */
 	captureEvents() {
 		this.capture = true;
 	}
 
-	/** @ignore */
+	/**
+	 * Releases event capture, allowing events to reach other controllers.
+	 * @private
+	 */
 	releaseEvents() {
 		this.capture = false;
 	}
+
+	/**
+	 * Handles the start of a pan gesture.
+	 * @virtual
+	 * @param {Event} e - The pan start event
+	 * @description Called when user starts panning (mouse down or finger touch).
+	 * Call e.preventDefault() to capture the event.
+	 */
+	panStart(e) { }
+
+	/**
+	 * Handles pan movement.
+	 * @virtual
+	 * @param {Event} e - The pan move event
+	 * @description Called continuously during panning.
+	 */
+	panMove(e) { }
+
+	/**
+	 * Handles the end of a pan gesture.
+	 * @virtual
+	 * @param {Event} e - The pan end event
+	 * @description Called when panning ends (mouse up or finger lift).
+	 */
+	panEnd(e) { }
+
+	/**
+	 * Handles the start of a pinch gesture.
+	 * @virtual
+	 * @param {Event} e1 - First finger event
+	 * @param {Event} e2 - Second finger event
+	 * @description Called when user starts a two-finger pinch.
+	 * Call e1.preventDefault() to capture the event.
+	 */
+	pinchStart(e1, e2) { }
+
+	/**
+	 * Handles pinch movement.
+	 * @virtual
+	 * @param {Event} e1 - First finger event
+	 * @param {Event} e2 - Second finger event
+	 * @description Called continuously during pinching.
+	 */
+	pinchMove(e1, e2) { }
+
+	/**
+	 * Handles the end of a pinch gesture.
+	 * @virtual
+	 * @param {Event} e1 - First finger event
+	 * @param {Event} e2 - Second finger event
+	 * @description Called when pinch ends (finger lift).
+	 */
+	pinchEnd(e1, e2) { }
+
+	/**
+	 * Handles mouse wheel events.
+	 * @virtual
+	 * @param {WheelEvent} e - The wheel event
+	 * @description Called when user rotates mouse wheel.
+	 */
+	mouseWheel(e) { }
+
+	/**
+	 * Handles single tap/click events.
+	 * @virtual
+	 * @param {Event} e - The tap event
+	 * @description Called for quick mouse press or short finger touch.
+	 */
+	fingerSingleTap(e) { }
+
+	/**
+	 * Handles double tap/click events.
+	 * @virtual
+	 * @param {Event} e - The double tap event
+	 * @description Called for quick double mouse press or double finger touch.
+	 */
+	fingerDoubleTap(e) { }
 }
 
 export { Controller }
