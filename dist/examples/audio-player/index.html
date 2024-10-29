@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Lens Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+
+    <style>
+        button {
+            background-color: #012b49;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-family: "Open Sans", sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 15px 30px;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+        }
+
+        button:hover {
+            background-color: #0095ff;
+        }
+
+        button:active {
+            background-color: #005fa3;
+            transform: scale(0.98);
+        }
+
+        .bottom_block {
+            position: fixed;
+            margin: 0;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 1000;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="bottom_block">
+        <button id="play_btn">PLAY AUDIO</button>
+    </div>
+
+    <h1>OpenLIME - Lens Viewer</h1>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+        // The visualization is unbounded (the camera is )
+        lime.camera.bounded = false;
+
+        // Instatiate TextToSpeechPlayer
+        const player = new OpenLIME.AudioPlayer();
+        const audioFile = 'audio/lighthouse.mp3';
+
+        // AudioPlayer usage. Clicking PLAY will have the player read the description aloud. 
+        // Clicking STOP will interrupt and stop the audio playback.
+        const playBtn = document.getElementById("play_btn");
+        let isPlaying = false;
+        playBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                playBtn.textContent = "STOP";
+                await player.play(audioFile);
+                playBtn.textContent = "PLAY";
+            } else {
+                player.stopSpeaking();
+                playBtn.textContent = "PLAY";
+            }
+        });
+
+        player.addEvent('ended', () => {
+            playBtn.textContent = "PLAY";
+        });
+
+        // Create an image layer and add it to the canvans. This layer is used as background for the lens.
+        const layer0 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
+            layout: 'deepzoom',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: true
+        });
+        lime.addLayer('kdmap', layer0);
+
+        // Create a second layer and add it to the canvans. This layer contains the normal map of the picture.
+        // It is displayed inside the lens.
+        const layer1 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
+            layout: 'deepzoom',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: false
+        });
+        lime.addLayer('nomap', layer1);
+
+        // Create a third layer with annotations and add it to the canvans.
+        // This layer is transparent and will be displayed in overlay mode inside the lens.
+        const layer2 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lighthouse/image/lighthouse-anno.png',
+            layout: 'image',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: false
+        });
+        lime.addLayer('anno', layer2);
+
+
+        // Create a lens layer and add it to the canvans.
+        // The field displayed inside the lens is layer1 (normal map)
+        const lensLayer = new OpenLIME.Layer({
+            type: "lens",
+            layers: [layer1, layer2],
+            camera: lime.camera,
+            radius: 200,
+            border: 10,
+            visible: true
+        });
+        lime.addLayer('lens', lensLayer);
+
+        // Create a lens controller for focus and context exploration.
+        const controllerLens = new OpenLIME.ControllerFocusContext({
+            lensLayer: lensLayer,
+            camera: lime.camera,
+            canvas: lime.canvas,
+        });
+        lime.pointerManager.onEvent(controllerLens);
+        lensLayer.controllers.push(controllerLens);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime, { autofit: false });
+
+        // Remove light from the toolbar
+        ui.actions.light.display = false;
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+
+        ui.attribution = `Cape Spartivento Lighthouse, oil on canvas, 14x18 cm, 2004 - by Fabio Marton`;
+
+    </script>
+</body>
+
+</html>
