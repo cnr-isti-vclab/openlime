@@ -52,7 +52,7 @@
 <body>
 
     <div class="bottom_block">
-        <button id="play_btn">PLAY AUDIO</button>
+        <button id="play_btn">PLAY</button>
     </div>
 
     <h1>OpenLIME - Lens Viewer</h1>
@@ -80,7 +80,7 @@
                 await player.play(audioFile);
                 playBtn.textContent = "PLAY";
             } else {
-                player.stopSpeaking();
+                player.stop();
                 playBtn.textContent = "PLAY";
             }
         });
