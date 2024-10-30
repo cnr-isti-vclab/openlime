@@ -6,19 +6,24 @@ class AudioPlayer {
     this.isPlaying = false;
     this.isPaused = false;
     this.isMuted = false;
-    this.previousVolume = 1.0; // Volume di default
+    this.previousVolume = 1.0;
+    this.playStartTime = null;
+    this.playDuration = 0;
     addSignals(AudioPlayer, 'ended');
   }
 
   async play(audioFile, speed = 1.0) {
     if (!this.isPlaying && !this.isPaused) {
       this.audio = new Audio(audioFile);
-      this.audio.volume = this.previousVolume; // Imposta il volume iniziale
+      this.audio.playbackRate = speed;
+      this.audio.volume = this.previousVolume;
       this.isPlaying = true;
       this.isPaused = false;
-
+      this.playStartTime = Date.now();
+      this.playDuration = 0;
       this.onEndedListener = () => {
         this.isPlaying = false;
+        this.updatePlayDuration();
         this.emit('ended');
 
         // Remove the listener
@@ -28,9 +33,6 @@ class AudioPlayer {
 
       this.audio.addEventListener('ended', this.onEndedListener);
 
-      this.audio.play();
-      this.audio.pause();
-      this.audio.playbackRate = speed;
       await this.audio.play();
 
       return new Promise((resolve) => {
@@ -45,17 +47,17 @@ class AudioPlayer {
   }
 
   pause() {
-    if (this.isPlaying && this.audio) {
+    if (!this.isPaused && this.audio) {
       this.audio.pause();
-      this.isPlaying = false;
       this.isPaused = true;
+      this.updatePlayDuration();
     }
   }
 
   async continue() {
     if (this.isPaused && this.audio) {
-      this.isPlaying = true;
       this.isPaused = false;
+      this.playStartTime = Date.now();
 
       await this.audio.play();
 
@@ -74,10 +76,27 @@ class AudioPlayer {
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0;
+      if (this.onEndedListener) {
+        this.audio.removeEventListener('ended', this.onEndedListener);
+        this.onEndedListener = null;
+      }
       this.isPlaying = false;
       this.isPaused = false;
       this.isMuted = false;
+      this.updatePlayDuration();
     }
+  }
+
+  updatePlayDuration() {
+    if (this.playStartTime) {
+      const now = Date.now();
+      this.playDuration += now - this.playStartTime;
+      this.playStartTime = null;
+    }
+  }
+
+  getPlayDuration() {
+    return this.playDuration;
   }
 
   setVolume(volume) {
@@ -93,8 +112,8 @@ class AudioPlayer {
     }
   }
 
-  async silence(seconds) {
-    return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+  async silence(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   toggleMute() {
@@ -103,7 +122,7 @@ class AudioPlayer {
         this.audio.volume = this.previousVolume;
         this.isMuted = false;
       } else {
-        this.previousVolume = this.audio.volume; // Salva il volume attuale
+        this.previousVolume = this.audio.volume;
         this.audio.volume = 0;
         this.isMuted = true;
       }
