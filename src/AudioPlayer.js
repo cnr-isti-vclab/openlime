@@ -10,19 +10,7 @@ class AudioPlayer {
     addSignals(AudioPlayer, 'ended');
   }
 
-  isPlaying() {
-    return this.isPlaying;
-  }
-
-  isPaused() {
-    return this.isPaused;
-  }
-
-  isMuted() {
-    return this.isMuted;
-  }
-
-  async play(audioFile) {
+  async play(audioFile, speed = 1.0) {
     if (!this.isPlaying && !this.isPaused) {
       this.audio = new Audio(audioFile);
       this.audio.volume = this.previousVolume; // Imposta il volume iniziale
@@ -40,6 +28,9 @@ class AudioPlayer {
 
       this.audio.addEventListener('ended', this.onEndedListener);
 
+      this.audio.play();
+      this.audio.pause();
+      this.audio.playbackRate = speed;
       await this.audio.play();
 
       return new Promise((resolve) => {
