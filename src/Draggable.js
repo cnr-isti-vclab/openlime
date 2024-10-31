@@ -42,6 +42,7 @@ class Draggable {
             right: 20,
             handleSize: 10,
             handleGap: 5,
+            zindex: 200,
             handleColor: '#f0f0f0b3' // rgba(240, 240, 240, 0.7)
         }, options);
         Object.assign(this, options);
@@ -61,7 +62,7 @@ class Draggable {
 
         this.container = document.createElement('div');
         this.container.classList.add('openlime-draggable');
-        this.container.style = `display: flex; gap:${this.handleGap}px; position: absolute; z-index: 200; touch-action: none; visibility: visible;`;
+        this.container.style = `display: flex; gap:${this.handleGap}px; position: absolute; z-index: ${this.zindex}; touch-action: none; visibility: visible;`;
         this.handle = document.createElement('div');
         this.handle.style = `border-radius: 4px; background-color: ${this.handleColor}; padding: 0; width: ${this.handleSize}px; height: ${this.handleSize}px; z-index: 205;`;
         this.container.appendChild(this.handle);
