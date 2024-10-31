@@ -451,7 +451,7 @@ class LensDashboardNavigator extends LensDashboard {
             toggleElm.style.visibility = `hidden`;
             action.active = false;
          }
-         action.element.addEventListener('click', (e) => {
+         action.element.addEventListener('pointerdown', (e) => {
             if (action.type == 'toggle') {
                action.active = !action.active;
                const toggleElm = action.element.querySelector(action.toggleClass);
