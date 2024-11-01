@@ -98,8 +98,8 @@ class LayoutTileImages extends Layout {
 
 	/**
 	 * Computes the bounding box containing all tile regions.
-	 * @private
 	 * Updates the layout's box property to encompass all tile regions.
+	 * @private
 	 */
 	computeBoundingBox() {
 		this.box = new BoundingBox();
