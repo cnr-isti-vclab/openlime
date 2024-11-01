@@ -5,31 +5,74 @@ import { LayerAnnotation } from './LayerAnnotation'
 import { CoordinateSystem } from './CoordinateSystem';
 
 /**
- * Elements to classify the annotations.
- * @typedef {Object} AnnotationClass
- * @property {color} stroke The CSS color of a line, text or outline SVG element.
- * @property {string} label The class name.
- */
-/**
- * Annotation classes.
- * @typedef {Object.<string, AnnotationClass>} AnnotationClasses
- */
-
+* @typedef {Object} AnnotationClass
+* @property {string} stroke - CSS color for SVG elements (lines, text, outlines)
+* @property {string} label - Display name for the class
+*/
 
 /**
- * An annotation layer that draws SVG elements directly on the canvas (outside the WebGL context).
- * 
- * Here you will find a tutorial to learn how to build a client-server architecture to manage annotations in OpenLIME. //FIXME
- * 
- * Extends {@link LayerAnnotation}.
- */
+* @typedef {Object.<string, AnnotationClass>} AnnotationClasses
+* @description Map of class names to their visual properties
+*/
+
+/**
+* @typedef {Object} LayerSvgAnnotationOptions
+* @property {AnnotationClasses} classes - Annotation class definitions with styles
+* @property {Function} [onClick] - Callback for annotation click events (param: selected annotation)
+* @property {boolean} [shadow=true] - Whether to use Shadow DOM for SVG elements
+* @property {HTMLElement} [overlayElement] - Container for SVG overlay
+* @property {string} [style] - Additional CSS styles for annotations
+* @property {Function} [annotationUpdate] - Custom update function for annotations
+* @extends LayerAnnotationOptions
+*/
+
+/**
+* LayerSvgAnnotation provides SVG-based annotation capabilities in OpenLIME.
+* It renders SVG elements directly on the canvas overlay, outside the WebGL context,
+* enabling rich vector graphics annotations with interactive features.
+* 
+* Features:
+* - SVG-based vector annotations
+* - Custom styling per annotation class
+* - Interactive selection
+* - Shadow DOM isolation
+* - Dynamic SVG transformation
+* - Event handling
+* - Custom update callbacks
+* 
+* Technical Details:
+* - Uses SVG overlay for rendering
+* - Handles coordinate system transformations
+* - Manages DOM element lifecycle
+* - Supports custom class styling
+* - Implements visibility management
+* - Provides selection mechanisms
+* 
+* @extends LayerAnnotation
+* 
+* @example
+* ```javascript
+* // Create SVG annotation layer with custom classes
+* const annotationLayer = new OpenLIME.Layer({
+*   type: 'svg_annotations',
+*   classes: {
+*     'highlight': { stroke: '#ff0', label: 'Highlight' },
+*     'comment': { stroke: '#0f0', label: 'Comment' }
+*   },
+*   onClick: (annotation) => {
+*     console.log('Clicked:', annotation.label);
+*   },
+*   shadow: true
+* });
+* 
+* // Add to viewer
+* viewer.addLayer('annotations', annotationLayer);
+* ```
+*/
 class LayerSvgAnnotation extends LayerAnnotation {
 	/**
-	 * Instantiates a LayerSvgAnnotation object.
-	 * @param {Object} [options] An object literal with options that inherits from {@link LayerAnnotation}.
- 	 * @param {AnnotationClasses} options.classes An object literal definying colors and labels of the annotation classes.
- 	 * @param {Function} options.onClick The callback to fire when the an annotation is clicked on the canvas. The callback is passed an object containing the selected annotation.
-	 * @param {bool} options.shadow=true Whether to insert SVG elements in a shadow DOM.
+	 * Creates a new LayerSvgAnnotation instance
+	 * @param {LayerSvgAnnotationOptions} [options] - Configuration options
 	 */
 	constructor(options) {
 		options = Object.assign({
@@ -44,18 +87,21 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			annotationUpdate: null
 		}, options);
 		super(options);
-		for(const [key, value] of Object.entries(this.classes)) {
-			this.style += `[data-class=${key}] { ` + Object.entries(value).map( g => `${g[0]}: ${g[1]};`).join('\n') + '}';
+		for (const [key, value] of Object.entries(this.classes)) {
+			this.style += `[data-class=${key}] { ` + Object.entries(value).map(g => `${g[0]}: ${g[1]};`).join('\n') + '}';
 		}
-		
+
 		this.style += `.openlime-svgoverlay { position:absolute; top:0px; left:0px;}`;
-		
+
 		//this.createOverlaySVGElement();
 		//this.setLayout(this.layout);
 	}
 
-	/** @ignore */
-	createOverlaySVGElement() { 
+	/**
+	 * Creates the SVG overlay element and initializes the shadow DOM if enabled
+	 * @private
+	 */
+	createOverlaySVGElement() {
 		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svgElement.classList.add('openlime-svgoverlay');
 		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -93,8 +139,10 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	*/
 
 	/**
-	 * Sets a value that indicates whether the layer is visible.
-	 * @param {bool} visible The value.
+	 * Sets visibility of the annotation layer
+	 * Updates both SVG display and underlying layer visibility
+	 * @param {boolean} visible - Whether layer should be visible
+	 * @override
 	 */
 	setVisible(visible) {
 		if (this.svgElement)
@@ -102,7 +150,9 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		super.setVisible(visible);
 	}
 
-	/** @ignore */
+	/**
+	 * Clears all annotation selections
+	 */
 	clearSelected() {
 		if (!this.svgElement) this.createOverlaySVGElement();
 		//		return;
@@ -111,9 +161,9 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	}
 
 	/**
-	 * Selects/deselects an annotation
-	 * @param {Annotation} anno The annotation.
-	 * @param {bool} on=true Whether to select the annotation.
+	 * Sets selection state of an annotation
+	 * @param {Annotation} anno - The annotation to select/deselect
+	 * @param {boolean} [on=true] - Whether to select (true) or deselect (false)
 	 */
 	setSelected(anno, on = true) {
 		for (let a of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))
@@ -122,7 +172,12 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		super.setSelected(anno, on);
 	}
 
-	/** @ignore */
+	/**
+	 * Creates a new SVG annotation
+	 * @param {Annotation} [annotation] - Optional existing annotation to use
+	 * @returns {Annotation} The created annotation
+	 * @private
+	 */
 	newAnnotation(annotation) {
 		let svg = Util.createSVGElement('svg');
 		if (!annotation)
@@ -130,34 +185,46 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		return super.newAnnotation(annotation)
 	}
 
-	/** @ignore */
+	/**
+	 * Renders the SVG annotations
+	 * Updates SVG viewBox and transformation to match current view
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport
+	 * @returns {boolean} Whether render completed successfully
+	 * @override
+	 */
 	draw(transform, viewport) {
 		if (!this.svgElement)
 			return true;
 		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
 
 		const svgTransform = this.getSvgGroupTransform(transform);
-		this.svgGroup.setAttribute("transform",	svgTransform);
+		this.svgGroup.setAttribute("transform", svgTransform);
 		return true;
 	}
 
 	/**
-	 * Return the string containing the transform for drawing the svg group in the proper position
-	 * @param {Transform} transform current transform parameter of the draw function
-	 * @param {bool} inverse when its false return the transform needed to draw the svgGroup
-	 * @returns string with svgroup transform 
+	 * Calculates SVG group transform string
+	 * @param {Transform} transform - Current view transform
+	 * @param {boolean} [inverse=false] - Whether to return inverse transform
+	 * @returns {string} SVG transform attribute value
 	 */
-	getSvgGroupTransform(transform, inverse=false) {
+	getSvgGroupTransform(transform, inverse = false) {
 		let t = this.transform.compose(transform);
 		let c = this.boundingBox().corner(0);
 		// FIXME CHECK IT: Convert from GL to SVG, but without any scaling. It just needs to reflect around 0,
 		t = CoordinateSystem.reflectY(t);
 		return inverse ?
-		 `translate(${-c.x} ${-c.y})  scale(${1/t.z} ${1/t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
-		 `translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c.x} ${c.y})`;
+			`translate(${-c.x} ${-c.y})  scale(${1 / t.z} ${1 / t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
+			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c.x} ${c.y})`;
 	}
 
-	/** @ignore */
+	/**
+	 * Prepares annotations for rendering
+	 * Handles SVG element creation and updates
+	 * @param {Transform} transform - Current view transform
+	 * @private
+	 */
 	prefetch(transform) {
 		if (!this.svgElement)
 			this.createOverlaySVGElement();
@@ -190,8 +257,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 								} */
 			}
 
-			if(this.annotationUpdate)
-    				this.annotationUpdate(anno, transform);
+			if (this.annotationUpdate)
+				this.annotationUpdate(anno, transform);
 
 			if (!anno.needsUpdate)
 				continue;
@@ -228,19 +295,16 @@ class LayerSvgAnnotation extends LayerAnnotation {
 						this.setSelected(anno, true);
 					}
 				}
-
-
-				//utils
-
-				/*				let parser = new DOMParser();
-								let use = createElement('use', { 'xlink:href': '#' + a.id,  'stroke-width': 10,  'pointer-events': 'stroke' });
-								//let use = parser.parseFromString(`<use xlink:href="${a.id}" stroke-width="10" pointer-events="stroke"/>`, "image/svg+xml");
-								this.svgGroup.appendChild(use);  */
 			}
 		}
 	}
 }
 
+/**
+ * Register this layer type with the Layer factory
+ * @type {Function}
+ * @private
+ */
 Layer.prototype.types['svg_annotations'] = (options) => { return new LayerSvgAnnotation(options); }
 
 export { LayerSvgAnnotation }

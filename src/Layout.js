@@ -6,88 +6,119 @@ import { CoordinateSystem } from "./CoordinateSystem";
 // Tile level x y  index ----- tex missing() start/end (tarzoom) ----- time, priority size(byte)
 
 /**
- * A tile represents a single element of a regular grid that subdivides an image.
- * A tile is identified by its position (`x`, `y`) within the grid and the zoom `level` of the image.
  * @typedef {Object} Tile
- * @property {number} level The zoom level of the tile.
- * @property {number} x x position of the tile in the grid.
- * @property {number} y y position of the tile in the grid.
- * @property {number} index Unique tile identifier.
- * @property {number} start The position of the first byte of the tile in the image dataset (used only for tarzoom and itarzoom image formats).
- * @property {number} end The position of the last byte of the tile in the image dataset (used only for tarzoom and itarzoom image formats).
- * @property {number} missing In the case of multi-channel formats (RTI, BRDF), the information content of a tile is distributed over several planes (channels). 
- * `missing` represents the number of pending channel data requests.
- * @property {Array} tex A array of WebGLTexture (one texture per channel).
- * @property {time} time Tile creation time (this value is used internally by the cache algorithms).
- * @property {number} priority The priority of the tile (this value is used internally by the cache algorithms).
- * @property {number} size The total size of the tile in bytes (this value is used internally by the cache algorithms).
+ * @property {number} level - Zoom level in the image pyramid
+ * @property {number} x - Horizontal position in tile grid
+ * @property {number} y - Vertical position in tile grid
+ * @property {number} index - Unique tile identifier
+ * @property {number} [start] - Starting byte position in dataset (for tar formats)
+ * @property {number} [end] - Ending byte position in dataset (for tar formats)
+ * @property {number} missing - Number of pending channel data requests
+ * @property {WebGLTexture[]} tex - Array of textures (one per channel)
+ * @property {number} time - Tile creation timestamp for cache management
+ * @property {number} priority - Loading priority for cache management
+ * @property {number} size - Total tile size in bytes
  */
 
 /**
-* The type of the image. All web single-resolution image types (*jpg*, *png*, *gif*, etc...) are supported
-* as well as the most common multi-resolution image formats (*deepzoom*, *zoomify*, *IIIF*, *google maps*).
-* @typedef {('image'|'deepzoom'|'deepzoom1px'|'google'|'zoomify'|'iiif'|'tarzoom'|'itarzoom')} Layout#Type
-*/
+ * @typedef {'image'|'deepzoom'|'deepzoom1px'|'google'|'zoomify'|'iiif'|'tarzoom'|'itarzoom'} LayoutType
+ * @description Supported image format types:
+ * - image: Single-resolution web images (jpg, png, etc.)
+ * - deepzoom: Microsoft Deep Zoom with root tile > 1px
+ * - deepzoom1px: Microsoft Deep Zoom with 1px root tile
+ * - google: Google Maps tiling scheme
+ * - zoomify: Zoomify format
+ * - iiif: International Image Interoperability Framework
+ * - tarzoom: OpenLIME tar-based tiling
+ * - itarzoom: OpenLIME indexed tar-based tiling
+ */
 
 /**
- * The Layout class is responsible for specifying the data formats (images) managed by OpenLIME.
- * All web single-resolution image types (*jpg*, *png*, *gif*, etc...) are supported as well as the most common 
- * tiled image formats (*deepzoom*, *zoomify*, *IIIF*, *google maps*), which are suitable for large images.
- * #### Single-resolution images
- * The URL is the address of the file (for instance, 'https://my.example/image.jpg').
- * #### Tiled images
- * They can be specified in a variety of ways depending on the format chosen.
- * * **deepzoom** - The root tile of the image pyramid has a size > 1px (typical value is 254px). It is defined by the URL of the *.dzi* file 
- * (for instance, 'https://my.example/image.dzi'). See: {@link https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN DeepZoom}
- * * **deepzoom1px** - The root tile of the image pyramid has a size = 1px. It is defined by the URL of the *.dzi* file 
- * (for instance, 'https://my.example/image.dzi'). See: {@link https://docs.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/cc645077(v=vs.95)?redirectedfrom=MSDN DeepZoom}
- * * **google** - The URL points directly to the directory containing the pyramid of images (for instance, 'https://my.example/image'). 
- * The standard does not require any configuration file, so it is mandatory to indicate in the `options` the 
- * width and height in pixels of the original image. See: {@link https://www.microimages.com/documentation/TechGuides/78googleMapsStruc.pdf Google Maps}
- * * **zoomify** - The URL indicates the location of Zoomify configuration file (for instance, 'https://my.example/image/ImageProperties.xml').
- * See: {@link http://www.zoomify.com/ZIFFileFormatSpecification.htm Zoomify}
- * * **iiif** - According to the standard, the URL is the address of a IIIF server (for instance, 'https://myiiifserver.example/').
- * See: {@link https://iipimage.sourceforge.io/ IIP Server}, {@link https://iiif.io/api/image/3.0/ IIIF }
- * * **tarzoom** and **itarzoom** - This is a custom format of the OpenLIME framework. It can be described as the TAR of a DeepZoom (all the DeepZoom image pyramid is stored in a single file).
- * It takes advantage of the fact that current web servers are able to handle partial-content HTTP requests. Tarzoom facilitates
- * the work of the server, which is not penalised by having to manage a file system with many small files. The URL is the address of the *.tzi* file 
- * (for instance, 'https://my.example/image.tzi'). Warning: tarzoom|itarzoom may not work on older web servers.
+ * @typedef {Object} LayoutOptions
+ * @property {number} [width] - Image width (required for google layout)
+ * @property {number} [height] - Image height (required for google layout)
+ * @property {string} [suffix='jpg'] - Tile file extension
+ * @property {string} [subdomains='abc'] - Available subdomains for URL templates
+ */
+
+/**
+ * Layout manages image formats and tiling schemes in OpenLIME.
+ * 
+ * This class is responsible for:
+ * - Managing different image formats
+ * - Handling tiling schemes
+ * - Coordinating tile loading
+ * - Converting between coordinate systems
+ * - Managing tile priorities
+ * 
+ * Format Support:
+ * 1. Single-resolution images:
+ * - Direct URL to image file
+ * - Supports all standard web formats (jpg, png, etc)
+ * 
+ * 2. Tiled formats:
+ * - DeepZoom (Microsoft): Uses .dzi config file
+ * - Google Maps: Direct directory structure
+ * - Zoomify: Uses ImageProperties.xml
+ * - IIIF: Standard server interface
+ * - TarZoom: OpenLIME's optimized format
+ * 
+ * @fires Layout#ready - When layout is initialized and ready for use
+ * @fires Layout#updateSize - When layout dimensions change
+ * 
+ * @example
+ * ```javascript
+ * // Single image
+ * const imageLayout = new Layout('image.jpg', 'image');
+ * 
+ * // Deep Zoom
+ * const dzLayout = new Layout('tiles.dzi', 'deepzoom');
+ * 
+ * // Google Maps format
+ * const googleLayout = new Layout('tiles/', 'google', {
+ *   width: 2000,
+ *   height: 1500
+ * });
+ * ```
  */
 class Layout {
 	/**
-	* Creates a Layout, a container for a raster image.
-    * A layout is defined by a `url` of the image and a `type`.
-    * Additionally, an object literal with Layout `options` can be specified.
-    * Signals are triggered when the layout is ready to be drawn or its size is modified.
-	* @param {string} url URL of the image.
- 	* @param {Layout#Type} type The type of the image.
- 	* @param {Object} [options] An object literal describing the layout content.
- 	* @param {number} options.width The total width of the original, unsplit image. This parameter must only be specified for the 'google' layout type. 
- 	* @param {number} options.height The total height of the original, unsplit image. This parameter must only be specified for the 'google' layout type.
- 	* @param {string} options.suffix='jpg' The filename suffix of the tiles.
- 	* @param {string} options.subdomains='abc' The ('a'|'b'|'c') *s* subdomain of a Google template URL (for instance: 'https:{s}.my.example//{z}/{x}/{y}.png').
-	*/
+	 * Creates a new Layout instance
+	 * @param {string} url - URL to image or configuration file
+	 * @param {LayoutType} type - Type of image layout
+	 * @param {LayoutOptions} [options] - Additional configuration
+	 * @throws {Error} If layout type is unknown or module not loaded
+	 */
 	constructor(url, type, options) {
 
-		
+
 		if (type == 'image') {
 			this.setDefaults(type);
 			this.init(url, type, options);
 
-		} else if(type in this.types)
+		} else if (type in this.types)
 			return this.types[type](url, type, options);
 
-		else if(type == null)
+		else if (type == null)
 			return;
-		
+
 		else
 			throw "Layout type: " + type + " unknown, or module not loaded";
 	}
 
+	/**
+	 * Gets tile dimensions
+	 * @returns {number[]} [width, height] of tiles
+	 */
 	getTileSize() {
 		return [this.width, this.height];
 	}
 
+	/**
+	 * Sets default layout properties
+	 * @param {LayoutType} type - Layout type
+	 * @private
+	 */
 	setDefaults(type) {
 		Object.assign(this, {
 			type: type,
@@ -100,17 +131,29 @@ class Layout {
 		});
 	}
 
+	/**
+	 * Initializes layout configuration
+	 * @param {string} url - Resource URL
+	 * @param {LayoutType} type - Layout type
+	 * @param {LayoutOptions} options - Configuration options
+	 * @private
+	 */
 	init(url, type, options) {
-		if(options)
+		if (options)
 			Object.assign(this, options);
 
-		if(typeof(url) == 'string')
+		if (typeof (url) == 'string')
 			this.setUrls([url]);
-		if(this.width && this.height)
+		if (this.width && this.height)
 			this.status = 'ready';
 	}
 
-	/** @ignore */
+	/**
+	 * Sets URLs for layout resources
+	 * @param {string[]} urls - Array of resource URLs
+	 * @fires Layout#ready
+	 * @private
+	 */
 	setUrls(urls) {
 		/**
 		* The event is fired when a layout is ready to be drawn(the single-resolution image is downloaded or the multi-resolution structure has been initialized).
@@ -122,52 +165,77 @@ class Layout {
 		this.emit('ready');
 	}
 
+	/**
+	 * Constructs URL for specific image plane
+	 * @param {string} url - Base URL
+	 * @param {string} plane - Plane identifier
+	 * @returns {string} Complete URL
+	 */
 	imageUrl(url, plane) {
-		let path = url.substring(0, url.lastIndexOf('/')+1);
+		let path = url.substring(0, url.lastIndexOf('/') + 1);
 		return path + plane + '.jpg';
 	}
 
-		/**
-	 * Gets the URL of a specific tile. The function must be implemented for each layout type supported by OpenLIME.
-	 * @param {number} id The channel id.
-	 * @param {Tile} tile The tile.
+	/**
+	 * Gets URL for specific tile
+	 * @param {number} id - Channel identifier
+	 * @param {Tile} tile - Tile object
+	 * @returns {string} Tile URL
+	 * @abstract
 	 */
-	 getTileURL(id, tile) {
+	getTileURL(id, tile) {
 		throw Error("Layout not defined or ready.");
 	}
 
 	/**
-	 * Gets the layout bounding box.
-	 * @returns {BoundingBox} The layout bounding box.
+	 * Gets layout bounds
+	 * @returns {BoundingBox} Layout boundaries
 	 */
 	boundingBox() {
 		//if(!this.width) throw "Layout not initialized still";
-		return new BoundingBox({xLow:-this.width/2, yLow: -this.height/2, xHigh: this.width/2, yHigh: this.height/2});
+		return new BoundingBox({ xLow: -this.width / 2, yLow: -this.height / 2, xHigh: this.width / 2, yHigh: this.height / 2 });
 	}
 
 	/**
-	* Returns the coordinates of the tile (in [0, 0, w h] image coordinate system) and the texture coords associated. 
- 	* @returns the tile coordinates (image coords and texture coords) 
- 	*/
+	 * Calculates tile coordinates
+	 * @param {Tile} tile - Tile to calculate coordinates for
+	 * @returns {{coords: Float32Array, tcoords: Float32Array}} Image and texture coordinates
+	 */
 	tileCoords(tile) {
 		let w = this.width;
 		let h = this.height;
 		//careful: here y is inverted due to textures not being flipped on load (Firefox fault!).
-		var tcoords = new Float32Array([0, 1,     0, 0,     1, 0,     1, 1]);
+		var tcoords = new Float32Array([0, 1, 0, 0, 1, 0, 1, 1]);
 
-		return { 
-			coords: new Float32Array([-w/2, -h/2, 0,  -w/2, h/2, 0,  w/2, h/2, 0,  w/2, -h/2, 0]),
-			tcoords: tcoords 
+		return {
+			coords: new Float32Array([-w / 2, -h / 2, 0, -w / 2, h / 2, 0, w / 2, h / 2, 0, w / 2, -h / 2, 0]),
+			tcoords: tcoords
 		};
 	}
 
+	/**
+	 * Creates new tile instance
+	 * @param {number} index - Tile identifier
+	 * @returns {Tile} New tile object
+	 * @private
+	 */
 	newTile(index) {
 		let tile = new Tile();
 		tile.index = index;
 		return tile;
 	}
 
-	/** returns the list of tiles required for a rendering, sorted by priority, max */
+	/**
+	 * Determines required tiles for rendering
+	 * @param {Object} viewport - Current viewport
+	 * @param {Transform} transform - Current transform
+	 * @param {Transform} layerTransform - Layer transform
+	 * @param {number} border - Border size
+	 * @param {number} bias - Mipmap bias
+	 * @param {Map} tiles - Existing tiles
+	 * @param {number} [maxtiles=8] - Maximum tiles to return
+	 * @returns {Tile[]} Array of needed tiles
+	 */
 	needed(viewport, transform, layerTransform, border, bias, tiles, maxtiles = 8) {
 		//FIXME should check if image is withing the viewport (+ border)
 		let tile = tiles.get(0) || this.newTile(0); //{ index, x, y, missing, tex: [], level };
@@ -179,19 +247,35 @@ class Layout {
 		return [];
 	}
 
-	/** returns the list of tiles available for a rendering */
+	/**
+	 * Gets tiles available for rendering
+	 * @param {Object} viewport - Current viewport
+	 * @param {Transform} transform - Current transform
+	 * @param {Transform} layerTransform - Layer transform
+	 * @param {number} border - Border size
+	 * @param {number} bias - Mipmap bias
+	 * @param {Map} tiles - Existing tiles
+	 * @returns {Object.<number, Tile>} Map of available tiles
+	 */
 	available(viewport, transform, layerTransform, border, bias, tiles) {
 		//FIXME should check if image is withing the viewport (+ border)
 		let torender = {};
 
-		if (tiles.has(0) && tiles.get(0).missing == 0) 
+		if (tiles.has(0) && tiles.get(0).missing == 0)
 			torender[0] = tiles.get(0); //{ index: index, level: level, x: x >> d, y: y >> d, complete: true };
 		return torender;
 	}
 
+	/**
+	 * Calculates viewport bounding box
+	 * @param {Object} viewport - Viewport parameters
+	 * @param {Transform} transform - Current transform
+	 * @param {Transform} layerT - Layer transform
+	 * @returns {BoundingBox} Viewport bounds in image space
+	 */
 	getViewportBox(viewport, transform, layerT) {
-		const boxViewport = new BoundingBox({xLow:viewport.x, yLow:viewport.y, xHigh:viewport.x+viewport.dx, yHigh:viewport.y+viewport.dy});
-		return CoordinateSystem.fromViewportBoxToImageBox(boxViewport, transform, viewport, layerT, {w:this.width, h:this.height});
+		const boxViewport = new BoundingBox({ xLow: viewport.x, yLow: viewport.y, xHigh: viewport.x + viewport.dx, yHigh: viewport.y + viewport.dy });
+		return CoordinateSystem.fromViewportBoxToImageBox(boxViewport, transform, viewport, layerT, { w: this.width, h: this.height });
 	}
 }
 
