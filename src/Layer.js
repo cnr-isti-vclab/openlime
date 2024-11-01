@@ -6,34 +6,64 @@ import { addSignals } from './Signals.js'
 
 
 /**
- * The Layer class is responsible for drawing slides in the OpenLIME viewer. 
- * Layers can directly draw their contents on the viewer or be combined with each other to obtain more complex visualizations.
- * OpenLIME provides a set of ready-to-use layers that allows developers to quickly publish their datasets on the web
- * or make kiosk applications. Ready-to-use layers ranging from images, to multi-channel data (such as, for example, RTI or BRDF)
- * or the combination of multiple layers or for visualization through lenses.
- * 
- * A Layer takes raster data (images) as input which are managed by the layout. A layer stores all the information
- * and functions needed to render the graphics (shaders, shader parameters, data structures, etc.), and takes care
- * of data prefetching and communication with the cache.
- * 
- * The Layer is a kind of primitive class from which other Layer classes can inherit.
- * Each derived class "registers" on the Layer base class, the user can then use an instance of 
- * Layer by indicating the chosen `type` in the `options`.
- * 
- * In the example below a Layer of type 'rti' is created, then a LayerRTI (class derived from Layer) is instantiated and added to the viewer's layer stack.
- * 
- * @example
- *      const layer1 = new OpenLIME.Layer({
- *          layout: 'deepzoom',
- *          label: 'Ancient Roman coin',
- *          type: 'rti',
- *          url: '../../assets/rti/hsh/info.json',
- *          normals: false
- *      });
- *      viewer.addLayer('coin1', layer1);
+ * @typedef {Object} LayerOptions
+ * @property {string|Layout} [layout='image'] - Layout/format of input raster images
+ * @property {string} [type] - Identifier for specific derived layer class
+ * @property {string} [id] - Unique layer identifier
+ * @property {string} [label] - Display label for UI (defaults to id)
+ * @property {Transform} [transform] - Transform from layer to canvas coordinates
+ * @property {boolean} [visible=true] - Whether layer should be rendered
+ * @property {number} [zindex=0] - Stack order for rendering (higher = on top)
+ * @property {boolean} [overlay=false] - Whether layer renders in overlay mode
+ * @property {number} [prefetchBorder=1] - Tile prefetch threshold in tile units
+ * @property {number} [mipmapBias=0.4] - Texture resolution selection bias (0=highest, 1=lowest)
+ * @property {Object.<string, Shader>} [shaders] - Map of available shaders
+ * @property {Controller[]} [controllers] - Array of active UI controllers
+ * @property {Layer} [sourceLayer] - Layer to share tiles with
+ * @property {number} [pixelSize=0.0] - Physical size of a pixel in mm
  */
 
-//FIXME: prefetchborder and mipmapbias should probably go into layout
+/**
+ * Layer is the core class for rendering content in OpenLIME.
+ * It manages raster data display, tile loading, and shader-based rendering.
+ * 
+ * Features:
+ * - Tile-based rendering with level-of-detail
+ * - Shader-based visualization effects
+ * - Automatic tile prefetching and caching
+ * - Coordinate system transformations
+ * - Animation and interpolation of shader parameters
+ * - Support for multiple visualization modes
+ * - Integration with layout systems for different data formats
+ * 
+ * Layers can be used directly or serve as a base class for specialized layer types.
+ * The class uses a registration system where derived classes register themselves,
+ * allowing instantiation through the 'type' option.
+ * 
+ * @fires Layer#ready - Fired when layer is initialized
+ * @fires Layer#update - Fired when redraw is needed
+ * @fires Layer#loaded - Fired when all tiles are loaded
+ * @fires Layer#updateSize - Fired when layer size changes
+ * 
+ * @example
+ * ```javascript
+ * // Create a basic image layer
+ * const layer = new OpenLIME.Layer({
+ *   layout: 'deepzoom',
+ *   type: 'image',
+ *   url: 'path/to/image.dzi',
+ *   label: 'Main Image'
+ * });
+ * 
+ * // Add to viewer
+ * viewer.addLayer('main', layer);
+ * 
+ * // Listen for events
+ * layer.addEvent('ready', () => {
+ *   console.log('Layer initialized');
+ * });
+ * ```
+ */
 class Layer {
 	/**
 	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
@@ -69,25 +99,6 @@ class Layer {
 		}
 
 		this.init(options);
-
-		/*
-		//create members from options.
-		this.rasters = this.rasters.map((raster) => new Raster(raster));
-
-		//layout needs to be the same for all rasters
-		if(this.rasters.length) {
-			if(typeof(this.layout) != 'object')
-				this.layout = new Layout(this.rasters[0].url, this.layout)
-			this.setLayout(this.layout)
-
-			if(this.rasters.length)
-				for(let raster in this.rasters)
-					raster.layout = this.layout;
-		}
-
-		if(this.shader)
-			this.shader = new Shader(this.shader);
-		*/
 	}
 
 	/** @ignore */
@@ -137,27 +148,55 @@ class Layer {
 		}
 	}
 
+	/**
+	 * Sets the layer's viewport
+	 * @param {Object} view - Viewport specification
+	 * @param {number} view.x - X position
+	 * @param {number} view.y - Y position
+	 * @param {number} view.dx - Width 
+	 * @param {number} view.dy - Height
+	 * @fires Layer#update
+	 */
 	setViewport(view) {
 		this.viewport = view;
 		this.emit('update');
 	}
+
+	/**
+	 * Adds a filter to the current shader
+	 * @param {Object} filter - Filter specification
+	 * @throws {Error} If no shader is set
+	 */
 	addShaderFilter(f) {
 		if (!this.shader) throw "Shader not implemented";
 		this.shader.addFilter(f);
 	}
 
+	/**
+	 * Removes a filter from the current shader
+	 * @param {Object} name - Filter name
+	 * @throws {Error} If no shader is set
+	 */
 	removeShaderFilter(name) {
 		if (!this.shader) throw "Shader not implemented";
 		this.shader.removeFilter(name);
 	}
 
+	/**
+	 * Removes all filters from the current shader
+	 * @param {Object} name - Filter name
+	 * @throws {Error} If no shader is set
+	 */
 	clearShaderFilters() {
 		if (!this.shader) throw "Shader not implemented";
 		this.shader.clearFilters();
 	}
 
 	/**
-	 * Sets the state of the layer 
+	 * Sets the layer state with optional animation
+	 * @param {Object} state - State object with controls and mode
+	 * @param {number} [dt] - Animation duration in ms
+	 * @param {string} [easing='linear'] - Easing function ('linear'|'ease-out'|'ease-in-out')
 	 */
 	setState(state, dt, easing = 'linear') {
 		if ('controls' in state)
@@ -170,8 +209,9 @@ class Layer {
 	}
 
 	/**
-	 * Gets the state variables of the layer.
-	 * @return {Object} An object with state variables 
+	 * Gets the current layer state
+	 * @param {Object} [stateMask] - Optional mask to filter returned state properties
+	 * @returns {Object} Current state object
 	 */
 	getState(stateMask = null) {
 		const state = {};
@@ -212,21 +252,27 @@ class Layer {
 
 		// Set signal to acknowledge change of bbox when it is known. Let this signal go up to canvas
 		this.layout.addEvent('updateSize', () => {
-			if(this.shader)
+			if (this.shader)
 				this.shader.setTileSize(this.layout.getTileSize());
 			this.emit('updateSize');
 		});
 	}
 
-	// OK
+	/**
+	 * Sets the layer's transform
+	 * @param {Transform} tx - New transform
+	 * @fires Layer#updateSize
+	 */
 	setTransform(tx) { //FIXME
 		this.transform = tx;
 		this.emit('updateSize');
 	}
 
 	/**
-	 * Sets the shader to use
-	 * @param {*} id the current shader identifier (the shader must already be registered in the `shaders` array)
+	 * Sets the active shader
+	 * @param {string} id - Shader identifier from registered shaders
+	 * @throws {Error} If shader ID is not found
+	 * @fires Layer#update
 	 */
 	setShader(id) {
 		if (!id in this.shaders)
@@ -237,8 +283,8 @@ class Layer {
 	}
 
 	/**
-	 * Gets the current shader mode.
-	 * @returns {string} the shader mode
+	 * Gets the current shader visualization mode
+	 * @returns {string|null} Current mode or null if no shader
 	 */
 	getMode() {
 		if (this.shader)
@@ -247,8 +293,8 @@ class Layer {
 	}
 
 	/**
-	 * Gets an arrays of all the modes implemented in the current shader.
-	 * @returns {string[]} arrays of modes
+	 * Gets available shader modes
+	 * @returns {string[]} Array of available modes
 	 */
 	getModes() {
 		if (this.shader)
@@ -257,8 +303,9 @@ class Layer {
 	}
 
 	/**
-	 * Set the mode of the current shader.
-	 * @param {string} mode the mode of the current shader.
+	 * Sets shader visualization mode
+	 * @param {string} mode - Mode to set
+	 * @fires Layer#update
 	 */
 	setMode(mode) {
 		this.shader.setMode(mode);
@@ -266,8 +313,9 @@ class Layer {
 	}
 
 	/**
-	 * Sets a value that indicates whether the layer is visible.
-	 * @param {bool} visible The value.
+	 * Sets layer visibility
+	 * @param {boolean} visible - Whether layer should be visible
+	 * @fires Layer#update
 	 */
 	setVisible(visible) {
 		this.visible = visible;
@@ -276,8 +324,9 @@ class Layer {
 	}
 
 	/**
-	 * Sets the layer zindex value (stack ordering value for the rendering of layers).
-	 * @param {int} zindex The value.
+	 * Sets layer rendering order
+	 * @param {number} zindex - Stack order value
+	 * @fires Layer#update
 	 */
 	setZindex(zindex) {
 		this.zindex = zindex;
@@ -285,10 +334,10 @@ class Layer {
 	}
 
 	/**
-	 * Computes the minum scale value of the `layers`.
-	 * @param {Layer[]} layers 
-	 * @param {bool} discardHidden Whether hidden layers are not to be included in the computation.
-	 * @returns {number} the minimum scale.
+	 * Computes minimum scale across layers
+	 * @param {Object.<string, Layer>} layers - Map of layers
+	 * @param {boolean} discardHidden - Whether to ignore hidden layers
+	 * @returns {number} Minimum scale value
 	 * @static
 	 */
 	static computeLayersMinScale(layers, discardHidden) {
@@ -307,8 +356,8 @@ class Layer {
 	}
 
 	/**
-	 * Gets the scale of the layer transformation
-	 * @returns {number} The scale
+	 * Gets layer scale
+	 * @returns {number} Current scale value
 	 */
 	scale() {
 		// FIXME: this do not consider children layers
@@ -317,17 +366,17 @@ class Layer {
 
 
 	/**
-	* Transform-adjusted spatial resolution for this layer
-	* @return {number} size of a single pixel in mm
-	*/
+	 * Gets pixel size in millimeters
+	 * @returns {number} Size of one pixel in mm
+	 */
 	pixelSizePerMM() {
 		return this.pixelSize * this.transform.z;
 	}
 
 
 	/**
-	 * Gets the layer bounding box (<FIXME> Change name: box is in scene coordinates)
-	 * @returns {BoundingBox} The bounding box 
+	 * Gets layer bounding box in scene coordinates
+	 * @returns {BoundingBox} Bounding box
 	 */
 	boundingBox() {
 		// FIXME: this do not consider children layers
@@ -343,12 +392,12 @@ class Layer {
 	}
 
 	/**
-	  * Computes the merge bounding box of all the 'layers`
-	  * @param {Layer[]} layers 
-	  * @param {bool} discardHidden Whether hidden layers are not to be included in the computation.
-	  * @returns {BoundingBox} The bounding box 
-	* @static 
-	  */
+	 * Computes combined bounding box of multiple layers
+	 * @param {Object.<string, Layer>} layers - Map of layers
+	 * @param {boolean} discardHidden - Whether to ignore hidden layers
+	 * @returns {BoundingBox} Combined bounding box
+	 * @static
+	 */
 	static computeLayersBBox(layers, discardHidden) {
 		if (layers == undefined || layers == null) {
 			console.log("ASKING BBOX INFO ON NO LAYERS");
@@ -380,9 +429,10 @@ class Layer {
 	}
 
 	/**
-	 * Adds a new shader parameter control.
-	 * @param {string} name The name of the control.
-	 * @param {*} value The value for initialization.
+	 * Adds a shader parameter control
+	 * @param {string} name - Control identifier
+	 * @param {*} value - Initial value
+	 * @throws {Error} If control already exists
 	 */
 	addControl(name, value) {
 		if (this.controls[name])
@@ -392,10 +442,12 @@ class Layer {
 	}
 
 	/**
-	 * Set a shader parameter control with new value
-	 * @param {*} name The name of the control.
-	 * @param {*} value The value for initialization.
-	 * @param {time} dt Duration of the interpolation (0=no interpolation).
+	 * Sets a shader control value with optional animation
+	 * @param {string} name - Control identifier
+	 * @param {*} value - New value
+	 * @param {number} [dt] - Animation duration in ms
+	 * @param {string} [easing='linear'] - Easing function
+	 * @fires Layer#update
 	 */
 	setControl(name, value, dt, easing = 'linear') { //When are created?
 		let now = performance.now();
@@ -412,9 +464,10 @@ class Layer {
 
 		this.emit('update');
 	}
+
 	/**
-	 * Update the current values of the parameter controls.
-	 * @returns {bool} Weather the interpolation is finished (the time has now gone).
+	 * Updates control interpolation
+	 * @returns {boolean} Whether all interpolations are complete
 	 */
 	interpolateControls() {
 		let now = performance.now();
@@ -469,7 +522,10 @@ class Layer {
 		this.tiles.delete(tile.index);
 	}
 
-	/** @ignore */
+	/**
+	 * Clears layer resources and resets state
+	 * @private
+	 */
 	clear() {
 		this.ibuffer = this.vbuffer = null;
 		Cache.flushLayer(this);
@@ -496,11 +552,11 @@ class Layer {
 		let done = this.interpolateControls();
 
 		let parent_viewport = viewport;
-		if(this.viewport) {
+		if (this.viewport) {
 			viewport = this.viewport;
 			this.gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
 		}
-		
+
 
 		this.prepareWebGL();
 
@@ -530,7 +586,7 @@ class Layer {
 			this.drawTile(tile, i);
 			++i;
 		}
-		if(this.vieport) 
+		if (this.vieport)
 			this.gl.viewport(parent_viewport.x, parent_viewport.y, parent_viewport.dx, parent_viewport.dy);
 
 		return done;
@@ -730,9 +786,14 @@ class Layer {
 		return true;
 	}
 
-	/** @ignore */
+	/**
+	 * Initiates tile prefetching based on viewport
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport
+	 * @private
+	 */
 	prefetch(transform, viewport) {
-		if(this.viewport)
+		if (this.viewport)
 			viewport = this.viewport;
 
 		if (this.layers.length != 0) { //combine layers
@@ -795,7 +856,13 @@ class Layer {
 		Cache.setCandidates(this);
 	}
 
-	/** @ignore */
+	/**
+	 * Loads a specific tile
+	 * @param {Object} tile - Tile specification
+	 * @param {Function} callback - Completion callback
+	 * @returns {Promise<void>}
+	 * @private
+	 */
 	async loadTile(tile, callback) {
 		if (this.tiles.has(tile.index))
 			throw "AAARRGGHHH double tile!";
@@ -858,7 +925,7 @@ class Layer {
 			if (tile.missing <= 0) {
 				this.emit('update');
 				this.requested.delete(tile.index);
-				if(this.requested.size == 0)
+				if (this.requested.size == 0)
 					this.emit('loaded');
 				if (callback) callback(size);
 			}

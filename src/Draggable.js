@@ -1,39 +1,39 @@
 /**
-The Draggable class enables an element to be dragged and moved around within its parent element. 
-It creates a draggable container with a handle that can be used to initiate the dragging action. The class accepts two 
-parameters: `parent`, which represents the parent element where the draggable container will be appended, and `options`, 
-an optional object that allows customization of the draggable behavior.
-
-The class supports flexible positioning of the draggable container within its parent element. The `options` parameter 
-can specify the positioning using properties such as `top`, `bottom`, `left`, and `right`. The default values for these properties 
-are right=20 bottom=20, and at least one of the `top` or `bottom` properties and one of the `left` or `right` properties must be provided. 
-If an unknown drag position is detected (neither `top` nor `bottom` specified, but either `left` or `right` is
-provided), an error is thrown.
-
-The class creates a container element and a handle element within it. The container is positioned absolutely 
-based on the specified positioning properties. It also has a fixed size (defaulting to 10 pixels) and a flexible 
-layout with a `handleGap` (defaulting to 5 pixels) between its child elements. The handle element is a small square with rounded 
-corners and a semi-transparent background color.
-
-The class provides an appendChild method that allows elements to be appended to the draggable container.
-*/
-
+ * The Draggable class enables an element to be dragged and moved around within its parent element.
+ * It creates a draggable container with a handle that can be used to initiate the dragging action.
+ * The draggable element is positioned absolutely within its parent container and can be customized
+ * through various options.
+ * 
+ * The class requires either a top or bottom position and either a left or right position to be 
+ * specified through the options parameter. These determine the initial position of the draggable
+ * element within its parent container. The default positioning is bottom=20 and right=20.
+ * 
+ * Features:
+ * - Flexible positioning using top/bottom and left/right coordinates
+ * - Customizable handle size and appearance
+ * - Automatic position updates on window resize
+ * - Touch-enabled dragging support
+ * - Configurable spacing between handle and content
+ * 
+ * @class
+ */
 class Draggable {
     /**
-      * Enables an element to be dragged and moved around within its parent element.
-      * An object literal with `options` can be specified.
-    *
-    * @param {HTMLElement} element the element to be added to the draggable container
-    * @param {HTMLElement} parent the element where the draggable container will be appended
-    * @param {Object} options an object literal with options.
-      * @param {number} options.top the initial CSS top position of the draggable container
-      * @param {number} options.bottom=20 the initial CSS bottom position of the draggable container
-      * @param {number} options.left the initial CSS left position of the draggable container
-      * @param {number} options.right=20 the initial CSS right position of the draggable container
-    * @param {number} options.handleSize=10 the size of the handle in pixels
-    * @param {number} options.handleGap=5 the gap between the handle and the element appended to the draggable container
-    * @param {string} options.handleColor='#f0f0f0b3' the semi-transparent background color of the handle
-      */
+     * Creates a new Draggable instance.
+     * 
+     * @param {HTMLElement} element - The element to be made draggable
+     * @param {HTMLElement|string} parent - The parent element where the draggable container will be appended.
+     *                                     Can be either an HTMLElement or a CSS selector string
+     * @param {Object} [options] - Configuration options for the draggable element
+     * @param {number} [options.top] - The initial top position in pixels. Mutually exclusive with bottom
+     * @param {number} [options.bottom=20] - The initial bottom position in pixels. Mutually exclusive with top
+     * @param {number} [options.left] - The initial left position in pixels. Mutually exclusive with right
+     * @param {number} [options.right=20] - The initial right position in pixels. Mutually exclusive with left
+     * @param {number} [options.handleSize=10] - The size of the drag handle in pixels
+     * @param {number} [options.handleGap=5] - The gap between the handle and the draggable content in pixels
+     * @param {number} [options.zindex=200] - The z-index of the draggable container
+     * @param {string} [options.handleColor='#f0f0f0b3'] - The background color of the handle (supports rgba)
+     */
     constructor(element, parent, options) {
         options = Object.assign({
             top: null,
@@ -78,12 +78,20 @@ class Draggable {
         });
     }
 
-    /** Append an HTML element `e` to the draggable container */
+    /**
+     * Appends an HTML element to the draggable container and updates its position.
+     * @param {HTMLElement} element - The element to append to the draggable container
+     */
     appendChild(e) {
         this.container.appendChild(e);
         this.updatePos();
     }
 
+    /**
+     * Updates the position of the draggable container based on its current options and parent dimensions.
+     * This method is called automatically on window resize and when elements are appended.
+     * @private
+     */
     updatePos() {
         const w = this.container.offsetWidth;
         const h = this.container.offsetHeight;
@@ -97,7 +105,11 @@ class Draggable {
         this.container.style.left = `${l}px`;
     }
 
-    /** @ignore */
+    /**
+     * Sets up the drag event listeners for the handle.
+     * Manages pointer events for drag start, drag, and drag end operations.
+     * @private
+     */
     dragEvents() {
 
         let offsetX, offsetY;

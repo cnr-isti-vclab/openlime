@@ -5,68 +5,91 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { CoordinateSystem } from './CoordinateSystem.js'
 
 /**
- * Callback for create/update/delete annotations.
- * @function crudCallback
- * @param {Annotation} anno The current annotation entry.
+ * @typedef {Object} Annotation
+ * @property {string} id - Unique identifier
+ * @property {string} label - Annotation title
+ * @property {string} description - Detailed description
+ * @property {string} class - Class name for styling/categorization
+ * @property {number} publish - Publication status (0 or 1)
+ * @property {Object} data - Custom data object
+ * @property {Array<SVGElement>} elements - SVG elements composing the annotation
+ * @property {Object} [state] - Camera and viewer state
  */
 
 /**
- * Callback implementing custom state annotations.
- * @function customStateCallback
- * @param {Annotation} anno The current annotation entry.
+ * @callback crudCallback
+ * @param {Annotation} annotation - The annotation being operated on
+ * @returns {boolean} Success status of the operation
+ * @description Callback for create/update/delete operations on annotations
  */
 
 /**
- * Callback to customize the annotation data object.
- * @function customDataCallback
- * @param {Annotation} anno The current annotation entry.
+ * @callback customStateCallback
+ * @param {Annotation} annotation - The annotation being modified
+ * @description Callback to customize state information saved with annotations
  */
 
 /**
- * Callback executed when an annotation is selcted on the user interface.
- * @function selectedCallback
- * @param {Annotation} anno The current annotation entry.
+ * @callback customDataCallback
+ * @param {Annotation} annotation - The annotation being modified
+ * @description Callback to customize the annotation data object
  */
 
 /**
- * **EditorSvgAnnotation** enables the {@link UIBasic} interface to edit (create/update/delete) SVG annotations.
- * This class is a mere utility that acts as an adapter between the annotation database and the OpenLIME system.
+ * @callback selectedCallback
+ * @param {Annotation} annotation - The selected annotation
+ * @description Callback executed when an annotation is selected in the UI
+ */
+
+/**
+ * EditorSvgAnnotation enables creation and editing of SVG annotations in OpenLIME.
+ * It provides tools for drawing various shapes and managing annotations through a user interface.
  * 
- * Here you will find a tutorial to learn how to use the SVG annotation editor. //FIXME
+ * Features:
+ * - Drawing tools: point, pin, line, box, circle
+ * - Annotation editing and management
+ * - Custom state and data storage
+ * - Integration with annotation databases through callbacks
+ * - Undo/redo functionality
+ * - SVG export capabilities
  * 
- * For the experienced developer this class can be used as an example to design more complex editors.
+ * @example
+ * ```javascript
+ * // Create annotation layer
+ * const anno = new OpenLIME.Layer(options);
+ * viewer.addLayer('annotations', anno);
  * 
- * In the following example an **EditorSvgAnnotation** is instatiated and connected to the annotation database
- * through three callbacks implementing database operations (create/update/delete).
- * ``` 
- * // Creates an annotation layer and add it to the canvans
- * const anno = new OpenLIME.Layer(aOptions);
- * lime.addLayer('anno', anno);
- *
- * // Creates a SVG annotation Editor
- * const editor = new OpenLIME.EditorSvgAnnotation(lime, anno, {
- *          viewer: lime,
- *          classes: classParam
+ * // Initialize editor
+ * const editor = new OpenLIME.EditorSvgAnnotation(viewer, anno, {
+ *   classes: {
+ *     'default': { stroke: '#000', label: 'Default' },
+ *     'highlight': { stroke: '#ff0', label: 'Highlight' }
+ *   }
  * });
- * editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
- * editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); processRequest(anno, 'update'); return true; };
- * editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
+ * 
+ * // Setup callbacks
+ * editor.createCallback = (anno) => { 
+ *   console.log("Created:", anno);
+ *   return saveToDatabase(anno);
+ * };
  * ```
  */
 class EditorSvgAnnotation {
 	/**
-	 * Instatiates a EditorSvgAnnotation object.
-	 * @param {Viewer} viewer The OpenLIME viewer.
-	 * @param {LayerSvgAnnotation} layer The annotation layer on which to operate.
-	 * @param {Object} [options] An object literal with SVG editor parameters.
-	 * @param {AnnotationClasses} options.classes An object literal definying colors and labels of the annotation classes.
-	 * @param {crudCallback} options.createCallback The callback to implement annotation creation.
-	 * @param {crudCallback} options.updateCallback The callback to implement annotation update.
-	 * @param {crudCallback} options.deleteCallback The callback to implement annotation deletion.
-	 * @param {bool} options.enableState=false Whether to enable custom annotation state. This allows to include some state variables into an annotation item (such as camera, light or lens position).
-	 * @param {customStateCallback} options.customState The callback implementing custom state annotations.
-	 * @param {customDataCallback} options.customData The callback to customize the annotation data object.
-	 * @param {selectedCallback} options.selectedCallback The callback executed when an annotation is selcted on the user interface.
+	 * Creates an EditorSvgAnnotation instance
+	 * @param {Viewer} viewer - The OpenLIME viewer instance
+	 * @param {LayerSvgAnnotation} layer - The annotation layer to edit
+	 * @param {Object} [options] - Configuration options
+	 * @param {Object.<string, {stroke: string, label: string}>} options.classes - Annotation classes with colors and labels
+	 * @param {crudCallback} [options.createCallback] - Called when creating annotations
+	 * @param {crudCallback} [options.updateCallback] - Called when updating annotations
+	 * @param {crudCallback} [options.deleteCallback] - Called when deleting annotations
+	 * @param {boolean} [options.enableState=false] - Whether to save viewer state with annotations
+	 * @param {customStateCallback} [options.customState] - Customize saved state data
+	 * @param {customDataCallback} [options.customData] - Customize annotation data
+	 * @param {selectedCallback} [options.selectedCallback] - Called when annotation is selected
+	 * @param {Object} [options.tools] - Custom tool configurations
+	 * @param {number} [options.priority=20000] - Event handling priority
 	 */
 	constructor(viewer, layer, options) {
 		this.layer = layer;
@@ -94,7 +117,7 @@ class EditorSvgAnnotation {
 					tool: Point,
 				},
 				pin: {
-					template: (x,y) => {
+					template: (x, y) => {
 						return `<svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='4%' height='4%' class='pin'
 						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='7' y='8'>${this.annotation.idx}</text></svg>`;
 					}, //pin di alcazar  1. url a svg 2. txt (stringa con svg) 3. funzione(x,y) ritorna svg 4. dom (da skin).
@@ -144,7 +167,7 @@ class EditorSvgAnnotation {
 			updateCallback: null,
 			deleteCallback: null
 		}, options);
-		
+
 		layer.style += Object.entries(this.classes).map((g) => {
 			console.assert(g[1].hasOwnProperty('stroke'), "Classes needs a stroke property");
 			return `[data-class=${g[0]}] { stroke:${g[1].stroke}; }`;
@@ -155,7 +178,7 @@ class EditorSvgAnnotation {
 		layer.addEvent('selected', (anno) => {
 			if (!anno || anno == this.annotation)
 				return;
-			if(this.selectedCallback) this.selectedCallback(anno);
+			if (this.selectedCallback) this.selectedCallback(anno);
 			this.showEditWidget(anno);
 		});
 
@@ -191,11 +214,14 @@ class EditorSvgAnnotation {
 		}
 	}
 
-	/** @ignore */
+	/**
+	 * Creates a new annotation
+	 * @returns {void}
+	 */
 	createAnnotation() {
 		let anno = this.layer.newAnnotation();
-		if(this.customData) this.customData(anno);
-		if(this.enableState) this.setAnnotationCurrentState(anno);
+		if (this.customData) this.customData(anno);
+		if (this.enableState) this.setAnnotationCurrentState(anno);
 		anno.idx = this.layer.annotations.length;
 		anno.publish = 1;
 		anno.label = anno.description = anno.class = '';
@@ -246,7 +272,11 @@ class EditorSvgAnnotation {
 		button.style.background = this.classes[anno.class].stroke;
 	}
 
-	/** @ignore */
+	/**
+ * Shows the annotation editor widget
+ * @param {Annotation} annotation - Annotation to edit
+ * @private
+ */
 	showEditWidget(anno) {
 		this.annotation = anno;
 		this.setTool(null);
@@ -270,7 +300,7 @@ class EditorSvgAnnotation {
 	/** @ignore */
 	async createEditWidget() {
 		if (this.editWidget)
-			return;		
+			return;
 		let html = `
 				<div class="openlime-annotation-edit">
 					<label for="label">Title:</label> <input name="label" type="text"><br>
@@ -287,10 +317,10 @@ class EditorSvgAnnotation {
 					</div>
 					<label for="idx">Index:</label> <input name="idx" type="text"><br>	
 					${Object.entries(this.annotation.data).map(k => {
-						let label = k[0];
-						let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text"><br>`
-						return str;
-					}).join('\n')}
+				let label = k[0];
+				let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text"><br>`
+				return str;
+			}).join('\n')}
 					<br>
 					<span><button class="openlime-state">SAVE</button></span>
 					<span><input type="checkbox" name="publish" value=""> Publish</span><br>
@@ -307,11 +337,11 @@ class EditorSvgAnnotation {
 		let input = edit.querySelector('[name=classes]');
 
 		let state = edit.querySelector('.openlime-state');
-		
+
 		state.addEventListener('click', (e) => {
-			if(this.enableState) this.setAnnotationCurrentState(this.annotation);
+			if (this.enableState) this.setAnnotationCurrentState(this.annotation);
 			this.saveCurrent();
-			this.saveAnnotation(); 
+			this.saveAnnotation();
 		});
 
 		button.addEventListener('click', (e) => {
@@ -370,18 +400,18 @@ class EditorSvgAnnotation {
 		descr.addEventListener('blur', (e) => { if (this.annotation.description != descr.value) this.saveCurrent(); this.saveAnnotation(); });
 
 		let idx = edit.querySelector('[name=idx]');
-		idx.addEventListener('blur', (e) => { 
+		idx.addEventListener('blur', (e) => {
 			if (this.annotation.idx != idx.value) {
 				const svgPinIdx = this.annotation.elements[0];
-				if(svgPinIdx) {
+				if (svgPinIdx) {
 					const txt = svgPinIdx.querySelector(".pin-text");
-					if(txt) {
+					if (txt) {
 						txt.textContent = idx.value;
 					}
 				}
 				this.saveCurrent();
-			} 
-			this.saveAnnotation(); 
+			}
+			this.saveAnnotation();
 		});
 
 		Object.entries(this.annotation.data).map(k => {
@@ -403,10 +433,13 @@ class EditorSvgAnnotation {
 	setAnnotationCurrentState(anno) {
 		anno.state = window.structuredClone(this.viewer.canvas.getState());
 		// Callback to add  light/lens params or other data
-		if(this.customState) this.customState(anno);
+		if (this.customState) this.customState(anno);
 	}
 
-	/** @ignore */
+	/**
+	 * Saves annotation changes and triggers update callback
+	 * @private
+	 */
 	saveAnnotation() {
 		let edit = this.editWidget;
 		let anno = this.annotation;
@@ -416,7 +449,7 @@ class EditorSvgAnnotation {
 		anno.idx = edit.querySelector('[name=idx]').value || '0';
 		Object.entries(anno.data).map(k => {
 			anno.data[k[0]] = edit.querySelector(`[name=data-data-${k[0]}]`).value || '';
-		});		
+		});
 		anno.publish = edit.querySelector('[name=publish]').checked ? 1 : 0;
 		let select = edit.querySelector('[name=classes]');
 		anno.class = select.value || '';
@@ -459,7 +492,10 @@ class EditorSvgAnnotation {
 		this.layer.setSelected(anno);
 	}
 
-	/** @ignore */
+	/**
+	 * Deletes the selected annotation
+	 * @returns {void}
+	 */
 	deleteSelected() {
 		let id = this.layer.selected.values().next().value;
 		if (id)
@@ -490,11 +526,14 @@ class EditorSvgAnnotation {
 		this.hideEditWidget();
 	}
 
-	/** @ignore */
+	/**
+	 * Exports all annotations as SVG
+	 * @returns {void}
+	 */
 	exportAnnotations() {
 		let svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		const bBox = this.layer.boundingBox();
-		svgElement.setAttribute('viewBox', `0 0 ${bBox.xHigh-bBox.xLow} ${bBox.yHigh-bBox.yLow}`);
+		svgElement.setAttribute('viewBox', `0 0 ${bBox.xHigh - bBox.xLow} ${bBox.yHigh - bBox.yLow}`);
 		let style = Util.createSVGElement('style');
 		style.textContent = this.layer.style;
 		svgElement.appendChild(style);
@@ -542,7 +581,11 @@ class EditorSvgAnnotation {
 			e.classList.add('active');
 	}
 
-	/** @ignore */
+	/**
+	 * Sets the active drawing tool
+	 * @param {string} tool - Tool name ('point', 'pin', 'line', 'box', 'circle', 'erase', or null)
+	 * @private
+	 */
 	setTool(tool) {
 		this.tool = tool;
 		if (this.factory && this.factory.quit)
@@ -562,7 +605,10 @@ class EditorSvgAnnotation {
 
 	// UNDO STUFF	
 
-	/** @ignore */
+	/**
+	 * Performs an undo operation
+	 * @returns {void}
+	 */
 	undo() {
 		let anno = this.annotation; //current annotation.
 		if (!anno)
@@ -586,7 +632,10 @@ class EditorSvgAnnotation {
 		}
 	}
 
-	/** @ignore */
+	/**
+	 * Performs a redo operation
+	 * @returns {void}
+	 */
 	redo() {
 		let anno = this.annotation; //current annotation.
 		if (!anno)
@@ -608,7 +657,10 @@ class EditorSvgAnnotation {
 		}
 	}
 
-	/** @ignore */
+	/**
+	 * Saves current annotation state to history
+	 * @private
+	 */
 	saveCurrent() {
 		let anno = this.annotation; //current annotation.
 		if (!anno.history)
@@ -757,13 +809,18 @@ class EditorSvgAnnotation {
 		this.viewer.redraw();
 	}
 
-	/** @ignore */
+	/**
+	 * Converts viewer coordinates to SVG coordinates
+	 * @param {PointerEvent} event - Pointer event
+	 * @returns {Object} Position in SVG coordinates with pixel size information
+	 * @private
+	 */
 	mapToSvg(e) {
-		const p = {x:e.offsetX, y: e.offsetY};
+		const p = { x: e.offsetX, y: e.offsetY };
 		const layerT = this.layer.transform;
 		const useGL = false;
 		const layerbb = this.layer.boundingBox();
-		const layerSize = {w:layerbb.width(), h:layerbb.height()};
+		const layerSize = { w: layerbb.width(), h: layerbb.height() };
 		//compute also size of an image pixel on screen and store in pixelSize.
 		let pos = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
 		p.x += 1;
@@ -789,10 +846,10 @@ class Pin {
 		Object.assign(this, options);
 	}
 	tap(pos) {
-		const str = this.template(pos.x,pos.y);
+		const str = this.template(pos.x, pos.y);
 		let parser = new DOMParser();
-	    let point = parser.parseFromString(str, "image/svg+xml").documentElement;
-//		this.annotation.elements.push(point);
+		let point = parser.parseFromString(str, "image/svg+xml").documentElement;
+		//		this.annotation.elements.push(point);
 		this.annotation.elements[0] = point;
 		return true;
 	}
@@ -994,7 +1051,7 @@ class Line {
 
 		let smoothed = smooth(tmp, 90, true);
 		return smoothToPath(smoothed);
-		
+
 	}
 	static distanceToLast(line, point) {
 		let last = line[line.length - 1];
