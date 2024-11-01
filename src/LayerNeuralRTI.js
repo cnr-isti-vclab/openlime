@@ -5,7 +5,69 @@ import { Transform } from './Transform.js'
 import { Shader } from './Shader.js'
 import { ShaderNeural } from './ShaderNeural.js'
 
+/**
+ * @typedef {Object} LayerNeuralRTIOptions
+ * @property {string} url - URL to the Neural RTI configuration JSON
+ * @property {Layout} layout - Layout system for image loading
+ * @property {number} [convergenceSpeed=1.2] - Speed of quality convergence
+ * @property {number} [maxTiles=40] - Maximum number of tiles to process
+ * @property {string} [colorspace='rgb'] - Color space for processing
+ * @extends LayerOptions
+ */
+
+/**
+ * LayerNeuralRTI implements real-time Neural Reflectance Transformation Imaging.
+ * This layer uses a neural network to perform real-time relighting of images,
+ * offering improved quality and performance compared to traditional RTI approaches.
+ * 
+ * Features:
+ * - Neural network-based relighting
+ * - Adaptive quality scaling
+ * - Frame rate optimization
+ * - Progressive refinement
+ * - Multi-plane texture support
+ * - WebGL acceleration
+ * 
+ * Technical Details:
+ * - Uses 3-layer neural network
+ * - Supports multiple color spaces
+ * - Implements adaptive tile processing
+ * - Handles dynamic quality adjustment
+ * - Manages frame buffer operations
+ * - Coordinates light transformations
+ * 
+ * Performance Optimizations:
+ * - Dynamic resolution scaling
+ * - FPS-based quality adjustment
+ * - Progressive refinement system
+ * - Tile caching
+ * - Batch processing
+ * 
+ * @extends Layer
+ * 
+	* @example
+ * ```javascript
+ * // Create Neural RTI layer
+ * const neuralRTI = new OpenLIME.Layer({
+ *   type: 'neural',
+ *   url: 'config.json',
+ *   layout: 'deepzoom',
+ *   convergenceSpeed: 1.2,
+ *   maxTiles: 40
+ * });
+ * 
+ * // Add to viewer
+ * viewer.addLayer('rti', neuralRTI);
+ * 
+ * // Change light direction
+ * neuralRTI.setLight([0.5, 0.3], 1000);
+ * ```
+ */
 class LayerNeuralRTI extends Layer {
+	/**
+	 * Creates a new LayerNeuralRTI instance
+	 * @param {LayerNeuralRTIOptions} options - Configuration options
+	 */
 	constructor(options) {
 		super(options || {});
 		this.currentRelightFraction = 1.0; //(min: 0, max 1)
@@ -34,8 +96,6 @@ class LayerNeuralRTI extends Layer {
 			'samplers': [{ id: 0, name: 'kd', type: 'vec3', load: false }]
 		});
 
-
-
 		this.neuralShader = new ShaderNeural();
 
 		this.shaders = { 'standard': this.imageShader, 'neural': this.neuralShader };
@@ -46,19 +106,37 @@ class LayerNeuralRTI extends Layer {
 		(async () => { await this.loadNeural(this.url); })();
 	}
 
+	/**
+	 * Sets light direction with optional animation
+	 * @param {number[]} light - Light direction vector [x, y]
+	 * @param {number} [dt] - Animation duration in milliseconds
+	 */
 	setLight(light, dt) {
 		this.setControl('light', light, dt);
 	}
 
+	/** @ignore */
 	loadTile(tile, callback) {
 		this.shader = this.neuralShader;
 		super.loadTile(tile, callback);
 	}
 
+	/**
+	 * Loads neural network configuration and weights
+	 * @param {string} url - URL to configuration JSON
+	 * @private
+	 * @async
+	 */
 	async loadNeural(url) {
 		await this.initialize(url);
 	}
 
+	/**
+	 * Initializes neural network parameters
+	 * @param {string} json_url - URL to configuration
+	 * @private
+	 * @async
+	 */
 	async initialize(json_url) {
 
 		const info = await this.loadJSON(json_url);
@@ -94,6 +172,7 @@ class LayerNeuralRTI extends Layer {
 		this.networkParameters = parameters;
 	}
 
+	/** @ignore */
 	setCoords() {
 		let gl = this.gl;
 
@@ -111,6 +190,7 @@ class LayerNeuralRTI extends Layer {
 
 
 	// little set of functions to get model, coeff and info
+	/** @ignore */
 	async loadJSON(info_file) {
 		const info_response = await fetch(info_file);
 		const info = await info_response.json();
@@ -119,6 +199,15 @@ class LayerNeuralRTI extends Layer {
 
 	/* ************************************************************************** */
 
+	/**
+	 * Renders the Neural RTI visualization
+	 * Handles quality adaptation and progressive refinement
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport
+	 * @returns {boolean} Whether render completed
+	 * @override
+	 * @private
+	 */
 	draw(transform, viewport) {
 		//TODO this is duplicated code. move this check up 
 		if (this.status != 'ready')
@@ -196,6 +285,13 @@ class LayerNeuralRTI extends Layer {
 		return done;
 	}
 
+	/**
+	 * Prepares WebGL resources for relighting
+	 * @param {number[]} viewport - Viewport parameters
+	 * @param {number} w - Width for processing
+	 * @param {number} h - Height for processing
+	 * @private
+	 */
 	preRelight(viewport, w, h) {
 		let gl = this.gl;
 
@@ -231,6 +327,23 @@ class LayerNeuralRTI extends Layer {
 		gl.viewport(0, 0, w, h);
 	}
 
+/**
+ * Finalizes the relighting pass and restores rendering state
+ * 
+ * This method performs cleanup after relighting operations by:
+ * 1. Unbinding the framebuffer to return to normal rendering
+ * 2. Restoring the original viewport dimensions
+ * 
+ * Technical details:
+ * - Restores WebGL rendering state
+ * - Returns framebuffer binding to default
+ * - Resets viewport to original dimensions
+ * - Must be called after all tiles have been processed
+ * 
+ * @private
+ * @see preRelight - Called at start of relighting process
+ * @see relightTile - Called for each tile during relighting
+ */
 	postRelight() {
 		let gl = this.gl;
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -240,6 +353,14 @@ class LayerNeuralRTI extends Layer {
 		this.gl.viewport(v[0], v[1], v[2], v[3]);
 	}
 
+	/**
+	 * Processes individual tile using neural network
+	 * @param {Object} tile - Tile to process
+	 * @param {number} w - Processing width
+	 * @param {number} h - Processing height
+	 * @param {boolean} sizeChanged - Whether tile size changed
+	 * @private
+	 */
 	relightTile(tile, w, h, sizeChanged) {
 		let gl = this.gl;
 
@@ -276,7 +397,12 @@ class LayerNeuralRTI extends Layer {
 		tile.neuralUpdated = true;
 	}
 
-
+	/**
+	 * Updates light direction and marks tiles for update
+	 * @returns {boolean} Whether updates are complete
+	 * @override
+	 * @private
+	 */
 	interpolateControls() {
 		let done = super.interpolateControls();
 		if (done)
@@ -294,6 +420,11 @@ class LayerNeuralRTI extends Layer {
 	}
 }
 
+/**
+ * Register this layer type with the Layer factory
+ * @type {Function}
+ * @private
+ */
 Layer.prototype.types['neural'] = (options) => { return new LayerNeuralRTI(options); }
 
 export { LayerNeuralRTI }

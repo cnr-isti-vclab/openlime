@@ -1,65 +1,126 @@
-import { Layer }  from './Layer.js'
+import { Layer } from './Layer.js'
 
 /**
- * Combines other layers (in the framebuffer) using a custom shader. {@link LayerLens} is an example.
- * The class LayerImage can also be instantiated via the Layer parent class and `options.type='combiner'`.
+ * @typedef {Object} LayerCombinerOptions
+ * @property {Layer[]} layers - Array of layers to be combined (required)
+ * @property {Object.<string, Shader>} [shaders] - Map of available shaders
+ * @property {string} [type='combiner'] - Must be 'combiner' when using Layer factory
+ * @property {boolean} [visible=true] - Whether combined output is visible
+ * @extends LayerOptions
+ */
+
+/**
+ * LayerCombiner provides functionality to combine multiple layers using framebuffer operations
+ * and custom shaders. It enables complex visual effects by compositing layers in real-time
+ * using GPU-accelerated rendering.
  * 
- * Extends {@link Layer}.
- * @param {options} options Same as {@link Layer}, but `options.layers` are required
+ * Features:
+ * - Real-time layer composition
+ * - Custom shader-based effects
+ * - Framebuffer management
+ * - Dynamic texture allocation
+ * - Resolution-independent rendering
+ * - GPU-accelerated compositing
+ * 
+ * Use Cases:
+ * - Layer blending and mixing
+ * - Image comparison tools
+ * - Lens effects (see {@link LayerLens})
+ * - Custom visual effects
+ * - Multi-layer compositing
+ * 
+ * Technical Details:
+ * - Creates framebuffers for each input layer
+ * - Manages WebGL textures and resources
+ * - Supports dynamic viewport resizing
+ * - Handles shader-based composition
+ * - Maintains proper resource cleanup
+ * 
+ * @extends Layer
+ * 
  * @example
- * // Instantiate the LayerCombiner class and set the two inputs (layer0 and layer1)
- * const combiner = new OpenLIME.Layer({
- *     type: 'combiner',
- *     visible: true,
- *     layers: [layer0, layer1]
+ * ```javascript
+ * // Create two base layers
+ * const baseLayer = new OpenLIME.Layer({
+ *   type: 'image',
+ *   url: 'base.jpg'
  * });
  * 
- * // Instantiate the ShaderCombiner class (a custom shader) and select 'diff' as default mode (for visualization purposes)
+ * const overlayLayer = new OpenLIME.Layer({
+ *   type: 'image',
+ *   url: 'overlay.jpg'
+ * });
+ * 
+ * // Create combiner with custom shader
+ * const combiner = new OpenLIME.Layer({
+ *   type: 'combiner',
+ *   layers: [baseLayer, overlayLayer],
+ *   visible: true
+ * });
+ * 
+ * // Set up blend shader
  * const shader = new OpenLIME.ShaderCombiner();
- * shader.mode = 'diff';
- *
- * // Assign the newly created shader to the combiner (labelling it 'standard') and enable it
+ * shader.mode = 'blend';
  * combiner.shaders = { 'standard': shader };
  * combiner.setShader('standard');
- *
- * // Add the combiner to the canvas
- * lime.addLayer('combiner', combiner);
+ * 
+ * // Add to viewer
+ * viewer.addLayer('combined', combiner);
+ * ```
  */
 class LayerCombiner extends Layer {
+	/**
+	 * Creates a new LayerCombiner instance
+	 * @param {LayerCombinerOptions} options - Configuration options
+	 * @throws {Error} If rasters option is not empty (rasters should be defined in source layers)
+	 */
 	constructor(options) {
 		super(options);
 
-		if(Object.keys(this.rasters).length != 0)
+		if (Object.keys(this.rasters).length != 0)
 			throw "Rasters options should be empty!";
 
-/*		let shader = new ShaderCombiner({
-			'label': 'Combiner',
-			'samplers': [{ id:0, name:'source1', type:'vec3' }, { id:1, name:'source2', type:'vec3' }],
-		});
+		/*		let shader = new ShaderCombiner({
+					'label': 'Combiner',
+					'samplers': [{ id:0, name:'source1', type:'vec3' }, { id:1, name:'source2', type:'vec3' }],
+				});
+		
+				this.shaders = {'standard': shader };
+				this.setShader('standard'); */
 
-		this.shaders = {'standard': shader };
-		this.setShader('standard'); */
-
-//todo if layers check for importjson
+		//todo if layers check for importjson
 
 		this.textures = [];
 		this.framebuffers = [];
 		this.status = 'ready';
 	}
 
-	/** @ignore */
+	/**
+	 * Renders the combined layers using framebuffer operations
+	 * Handles framebuffer creation, layer rendering, and final composition
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport parameters
+	 * @param {number} viewport.x - Viewport X position
+	 * @param {number} viewport.y - Viewport Y position
+	 * @param {number} viewport.dx - Viewport width
+	 * @param {number} viewport.dy - Viewport height
+	 * @param {number} viewport.w - Total width
+	 * @param {number} viewport.h - Total height
+	 * @throws {Error} If shader is not specified
+	 * @private
+	 */
 	draw(transform, viewport) {
-		for(let layer of this.layers)
-			if(layer.status != 'ready')
+		for (let layer of this.layers)
+			if (layer.status != 'ready')
 				return;
 
-		if(!this.shader)
+		if (!this.shader)
 			throw "Shader not specified!";
 
 		let w = viewport.dx;
 		let h = viewport.dy;
 
-		if(!this.framebuffers.length || this.layout.width != w || this.layout.height != h) {
+		if (!this.framebuffers.length || this.layout.width != w || this.layout.height != h) {
 			this.deleteFramebuffers();
 			this.layout.width = w;
 			this.layout.height = h;
@@ -70,34 +131,38 @@ class LayerCombiner extends Layer {
 		var b = [0, 0, 0, 0];
 		gl.clearColor(b[0], b[1], b[2], b[3]);
 
-//TODO optimize: render to texture ONLY if some parameters change!
-//provider di textures... max memory and reference counting.
+		//TODO optimize: render to texture ONLY if some parameters change!
+		//provider di textures... max memory and reference counting.
 
-		for(let i = 0; i < this.layers.length; i++) { 
+		for (let i = 0; i < this.layers.length; i++) {
 			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
 			gl.clear(gl.COLOR_BUFFER_BIT);
-			this.layers[i].draw(transform, {x:0, y:0, dx:w, dy:h, w:w, h:h});
+			this.layers[i].draw(transform, { x: 0, y: 0, dx: w, dy: h, w: w, h: h });
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		}
 
 		this.prepareWebGL();
 
-		for(let i = 0; i < this.layers.length; i++) {
+		for (let i = 0; i < this.layers.length; i++) {
 			gl.uniform1i(this.shader.samplers[i].location, i);
 			gl.activeTexture(gl.TEXTURE0 + i);
 			gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
 		}
 
 		this.updateTileBuffers(
-			new Float32Array([-1, -1, 0,  -1, 1, 0,  1, 1, 0,  1, -1, 0]), 
-			new Float32Array([ 0,  0,      0, 1,     1, 1,     1,  0]));
-		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT,0);
+			new Float32Array([-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0]),
+			new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]));
+		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
 	}
 
-	/** @ignore */
+	/**
+	 * Creates framebuffers and textures for layer composition
+	 * Initializes WebGL resources for each input layer
+	 * @private
+	 */
 	createFramebuffers() {
 		let gl = this.gl;
-		for(let i = 0; i < this.layers.length; i++) {
+		for (let i = 0; i < this.layers.length; i++) {
 			//TODO for thing like lens, we might want to create SMALLER textures for some layers.
 			const texture = gl.createTexture();
 
@@ -126,11 +191,20 @@ class LayerCombiner extends Layer {
 	}
 
 	//TODO release textures and framebuffers
-	/** @ignore */
+	/**
+	 * Cleans up framebuffer and texture resources
+	 * Should be called when resizing or destroying the layer
+	 * @private
+	 */
 	deleteFramebuffers() {
 	}
 
-	/** @ignore */
+	/**
+	 * Computes combined bounding box of all input layers
+	 * @returns {BoundingBox} Combined bounding box
+	 * @override
+	 * @private
+	 */
 	boundingBox() {
 		// Combiner ask the combination of all its children boxes
 		// keeping the hidden, because they could be hidden, but revealed by the combiner
@@ -141,8 +215,13 @@ class LayerCombiner extends Layer {
 		}
 		return result;
 	}
-	
-	/** @ignore */
+
+	/**
+	 * Computes minimum scale across all input layers
+	 * @returns {number} Combined scale factor
+	 * @override
+	 * @private
+	 */
 	scale() {
 		//Combiner ask the scale of all its children
 		//keeping the hidden, because they could be hidden, but revealed by the combiner
@@ -153,6 +232,11 @@ class LayerCombiner extends Layer {
 	}
 }
 
+/**
+ * Register this layer type with the Layer factory
+ * @type {Function}
+ * @private
+ */
 Layer.prototype.types['combiner'] = (options) => { return new LayerCombiner(options); }
 
 export { LayerCombiner }

@@ -2,7 +2,62 @@ import { Layer } from './Layer.js';
 import { Raster } from './Raster.js'
 import { Shader } from './Shader.js'
 
+/**
+ * @typedef {Object} LayerMaskedImageOptions
+ * @property {string} url - URL of the masked image to display (required)
+ * @property {string} [format='vec4'] - Image data format
+ * @property {string} [type='maskedimage'] - Must be 'maskedimage' when using Layer factory
+ * @extends LayerOptions
+ */
+
+/**
+ * LayerMaskedImage provides specialized handling for masked scalar images with bilinear interpolation.
+ * It implements custom texture sampling and masking operations through WebGL shaders.
+ * 
+ * Features:
+ * - Custom scalar image handling
+ * - Bilinear interpolation with masking
+ * - WebGL shader-based processing
+ * - Support for both WebGL 1 and 2
+ * - Nearest-neighbor texture filtering
+ * - Masked value visualization
+ * 
+ * Technical Details:
+ * - Uses LUMINANCE format for single-channel data
+ * - Implements custom bilinear sampling in shader
+ * - Handles mask values through alpha channel
+ * - Supports value rescaling (255.0/254.0 scale with -1.0/254.0 bias)
+ * - Uses custom texture parameters for proper sampling
+ * 
+ * Shader Implementation:
+ * - Performs bilinear interpolation in shader
+ * - Handles masked values (0 = masked)
+ * - Implements value rescaling
+ * - Provides visualization of masked areas (in red)
+ * - Uses texelFetch for precise sampling
+ * 
+ * @extends Layer
+ * 
+ * @example
+ * ```javascript
+ * // Create masked image layer
+ * const maskedLayer = new OpenLIME.Layer({
+ *   type: 'maskedimage',
+ *   url: 'masked-data.png',
+ *   format: 'vec4'
+ * });
+ * 
+ * // Add to viewer
+ * viewer.addLayer('masked', maskedLayer);
+ * ```
+ */
 class LayerMaskedImage extends Layer {
+	/**
+	 * Creates a new LayerMaskedImage instance
+	 * @param {LayerMaskedImageOptions} options - Configuration options
+	 * @throws {Error} If rasters options is not empty
+	 * @throws {Error} If url is not provided and layout has no URLs
+	 */
 	constructor(options) {
 		super(options);
 
@@ -76,12 +131,27 @@ class LayerMaskedImage extends Layer {
 		//this.layout.setUrls([this.url]);
 	}
 
-
+	/**
+	 * Renders the masked image
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport
+	 * @returns {boolean} Whether render completed successfully
+	 * @override
+	 * @private
+	 */
 	draw(transform, viewport) {
 		return super.draw(transform, viewport);
 	}
 
-
+	/**
+	 * Custom texture loader for masked images
+	 * Sets up proper texture parameters for scalar data
+	 * 
+	 * @param {WebGLRenderingContext|WebGL2RenderingContext} gl - WebGL context
+	 * @param {HTMLImageElement} img - Source image
+	 * @returns {WebGLTexture} Created texture
+	 * @private
+	 */
 	loadTexture(gl, img) {
 		this.rasters[0].width = img.width;
 		this.rasters[0].height = img.height;
@@ -99,6 +169,11 @@ class LayerMaskedImage extends Layer {
 	}
 }
 
+/**
+ * Register this layer type with the Layer factory
+ * @type {Function}
+ * @private
+ */
 Layer.prototype.types['maskedimage'] = (options) => { return new LayerMaskedImage(options); }
 
 export { LayerMaskedImage }
