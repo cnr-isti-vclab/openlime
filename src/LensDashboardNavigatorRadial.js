@@ -1,14 +1,45 @@
 import { Util } from "./Util"
 import { LensDashboard } from "./LensDashboard"
 
+/**
+ * @fileoverview
+ * LensDashboardNavigatorRadial module provides a radial menu interface for lens controls.
+ * Extends the base LensDashboard with a circular arrangement of navigation controls and tools.
+ */
+
+/**
+ * LensDashboardNavigatorRadial class creates a circular lens dashboard with radially arranged controls.
+ * Provides:
+ * - Circular arrangement of controls around the lens
+ * - Grouped tool positioning
+ * - Animated visibility transitions
+ * - Background arc for visual grouping
+ * @extends LensDashboard
+ */
 class LensDashboardNavigatorRadial extends LensDashboard {
    /**
-     * Manages creation and update of a lens dashboard.
-     * An object literal with Layer `options` can be specified.
-   * This class instatiates an optional element of {@link LayerLens}
-     * @param {Object} options An object literal with Lensdashboard parameters.
-     * @param {number} options.toolboxHeight=25 The extra border thickness (in pixels) around the square including the lens.
-     */
+    * Creates a new LensDashboardNavigatorRadial instance.
+    * @param {Viewer} viewer - The OpenLIME viewer instance
+    * @param {Object} [options] - Configuration options
+    * @param {number} [options.toolSize=34] - Size of tool buttons in pixels
+    * @param {number} [options.toolPadding=0] - Padding between tool buttons
+    * @param {number[]} [options.group=[-65, 0]] - Angle positions for tool groups in degrees
+    * @param {Object} [options.actions] - Configuration for toolbar actions
+    * @param {Object} [options.actions.camera] - Camera control action
+    * @param {string} options.actions.camera.label - Action identifier
+    * @param {number} options.actions.camera.group - Group index for positioning
+    * @param {number} options.actions.camera.angle - Angle offset within group
+    * @param {Function} options.actions.camera.task - Callback for camera action
+    * @param {Object} [options.actions.light] - Light control action (same properties as camera)
+    * @param {Object} [options.actions.annoswitch] - Annotation toggle action
+    * @param {string} options.actions.annoswitch.type - Action type ('toggle')
+    * @param {string} options.actions.annoswitch.toggleClass - CSS class for toggle element
+    * @param {Object} [options.actions.prev] - Previous annotation action (same properties as camera)
+    * @param {Object} [options.actions.down] - Download annotation action (same properties as camera)
+    * @param {Object} [options.actions.next] - Next annotation action (same properties as camera)
+    * @param {Function} [options.updateCb] - Callback fired during lens updates
+    * @param {Function} [options.updateEndCb] - Callback fired when lens movement ends
+    */
    constructor(viewer, options) {
       super(viewer, options);
       options = Object.assign({
@@ -23,7 +54,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
             down: { label: 'down', group: 1, angle: 50, task: (event) => { } },
             next: { label: 'next', group: 1, angle: 75, task: (event) => { } },
          },
-          updateCb: null,
+         updateCb: null,
          updateEndCb: null
       }, options);
       Object.assign(this, options);
@@ -34,9 +65,9 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.noupdate = false;
 
       // TOOLBOX BKG
- 		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
-      col[3]=0.4;
-      this.toolboxBkgSize = 56                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ;
+      const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
+      col[3] = 0.4;
+      this.toolboxBkgSize = 56;
       this.toolboxBkgPadding = 4;
       this.toolboxBkg = new Object();
       this.toolboxBkg.svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -431,6 +462,11 @@ class LensDashboardNavigatorRadial extends LensDashboard {
 
    }
 
+   /**
+    * Initializes the dashboard after construction.
+    * Allows modification of actions and layers before initialization.
+    * @private
+    */
    init() {
       this.container.style.display = 'block';
       this.container.style.margin = '0';
@@ -450,50 +486,88 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.setActionEnabled('next');
    }
 
+   /**
+    * Converts degrees to radians.
+    * @private
+    * @param {number} angle - Angle in degrees
+    * @returns {number} Angle in radians
+    */
    static degToRadians(angle) {
       return angle * (Math.PI / 180.0);
    }
 
+   /**
+    * Converts polar coordinates to cartesian coordinates.
+    * @private
+    * @param {number} centerX - Center X coordinate
+    * @param {number} centerY - Center Y coordinate
+    * @param {number} radius - Radius
+    * @param {number} angleInDegrees - Angle in degrees
+    * @returns {Object} Cartesian coordinates {x, y}
+    */
    static polarToCartesian(centerX, centerY, radius, angleInDegrees) {
-      const angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
-    
-      return {
-        x: centerX + (radius * Math.cos(angleInRadians)),
-        y: centerY + (radius * Math.sin(angleInRadians))
-      };
-    }
-    
-   static describeArc(x, y, radius, border, startAngle, endAngle){
-    
-        const start = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius+border, endAngle);
-        const end = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius+border, startAngle);
-        const startIn = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius, endAngle);
-        const endIn = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius, startAngle);
-    
-        const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-    
-        const d = [
-            "M", start.x, start.y, 
-            "A", radius+border, radius+border, 0, largeArcFlag, 0, end.x, end.y,
-            "L", endIn.x, endIn.y,
-            "A", radius, radius, 1, largeArcFlag, 1, startIn.x, startIn.y,
-        ].join(" ");
-    
-        return d;       
-    }
+      const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
 
+      return {
+         x: centerX + (radius * Math.cos(angleInRadians)),
+         y: centerY + (radius * Math.sin(angleInRadians))
+      };
+   }
+
+   /**
+    * Generates SVG arc path description.
+    * @private
+    * @param {number} x - Center X coordinate
+    * @param {number} y - Center Y coordinate
+    * @param {number} radius - Inner radius
+    * @param {number} border - Border width
+    * @param {number} startAngle - Start angle in degrees
+    * @param {number} endAngle - End angle in degrees
+    * @returns {string} SVG path description
+    */
+   static describeArc(x, y, radius, border, startAngle, endAngle) {
+
+      const start = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius + border, endAngle);
+      const end = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius + border, startAngle);
+      const startIn = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius, endAngle);
+      const endIn = LensDashboardNavigatorRadial.polarToCartesian(x, y, radius, startAngle);
+
+      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+      const d = [
+         "M", start.x, start.y,
+         "A", radius + border, radius + border, 0, largeArcFlag, 0, end.x, end.y,
+         "L", endIn.x, endIn.y,
+         "A", radius, radius, 1, largeArcFlag, 1, startIn.x, startIn.y,
+      ].join(" ");
+
+      return d;
+   }
+
+   /**
+    * Updates the background arc element.
+    * @private
+    * @param {number} r - Radius
+    * @param {number} sizew - Width
+    * @param {number} sizeh - Height
+    */
    setToolboxBkg(r, sizew, sizeh) {
       const e = this.toolboxBkg.element;
       e.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
       const shape = e.querySelector('#shape-dashboard-bkg');
       const cs = this.containerSpace;
-      const b =  this.toolboxBkgSize;
-      const cx = sizew*0.5;
-      const cy = sizeh*0.5;
+      const b = this.toolboxBkgSize;
+      const cx = sizew * 0.5;
+      const cy = sizeh * 0.5;
       shape.setAttributeNS(null, 'd', LensDashboardNavigatorRadial.describeArc(cx, cy, r, b, -110, 110));
       // shape.setAttributeNS(null, 'd', `M ${sizew*0.5-r-b},${sizeh*0.5} a1,1 0 0,1 ${2*(r+b)},0 h ${-b} a1,1 0 1,0 ${-2*r},0 Z`);
    }
 
+   /**
+    * Adds an action button to the dashboard.
+    * @private
+    * @param {Object} action - Action configuration
+    */
    addAction(action) {
       action.element = Util.SVGFromString(action.svg);
       action.element.style = `position:absolute; height: ${this.toolSize}px; margin: 0`;
@@ -512,7 +586,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
             } else {
                toggleElm.style.visibility = `hidden`;
             }
-            this.noupdate=true;
+            this.noupdate = true;
          }
          action.task(e);
          e.preventDefault();
@@ -520,6 +594,11 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       this.container.appendChild(action.element);
    }
 
+   /**
+    * Retrieves an action configuration by its label.
+    * @param {string} label - The action label to find
+    * @returns {Object|null} The action configuration object or null if not found
+    */
    getAction(label) {
       let result = null;
       for (let [name, action] of Object.entries(this.actions)) {
@@ -531,6 +610,11 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       return result;
    }
 
+   /**
+    * Enables or disables a specific action button.
+    * @param {string} label - The action label to modify
+    * @param {boolean} [enable=true] - Whether to enable or disable the action
+    */
    setActionEnabled(label, enable = true) {
       const action = this.getAction(label);
       if (action) {
@@ -538,6 +622,10 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       }
    }
 
+   /**
+    * Toggles between camera and light control modes.
+    * @private
+    */
    toggleLightController() {
       let active = this.actions.light.element.classList.toggle('openlime-lens-dashboard-light-active');
       this.actions.light.active = active;
@@ -551,6 +639,11 @@ class LensDashboardNavigatorRadial extends LensDashboard {
             }
    }
 
+   /**
+    * Sets visibility of toggle elements.
+    * @private
+    * @param {boolean} visible - Whether toggle elements should be visible
+    */
    setToggleClassVisibility(t) {
       for (let [name, action] of Object.entries(this.actions)) {
          if (action.type == 'toggle' && action.active) {
@@ -564,22 +657,24 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       }
    }
 
-   toggle() {
-      const t = this.container.classList.toggle('closed');
-      this.setToggleClassVisibility(!t);
-   }
-
+   /**
+    * Updates tool element positions in the radial layout.
+    * @private
+    * @param {number} radius - Current lens radius
+    * @param {number} sizew - Container width
+    * @param {number} sizeh - Container height
+    */
    setToolboxElm(radius, sizew, sizeh) {
-      
-        // Toolbox Background
+
+      // Toolbox Background
       this.setToolboxBkg(radius - this.borderWidth - 2, sizew, sizeh);
       this.first = false;
 
       // Set tool position
-      const alphaDelta = 2.0*Math.asin((this.toolSize*0.5+this.toolPadding)/(radius));
+      const alphaDelta = 2.0 * Math.asin((this.toolSize * 0.5 + this.toolPadding) / (radius));
       for (let i = 0; i < this.group.length; i++) {
-         const gArr = Object.entries(this.actions).filter( ([key, value]) => value.group == i);
-         if(Math.abs(this.group[i]) > 90) gArr.reverse();
+         const gArr = Object.entries(this.actions).filter(([key, value]) => value.group == i);
+         if (Math.abs(this.group[i]) > 90) gArr.reverse();
          let idx = 0;
          for (let [name, action] of gArr) {
             // const tw = action.element.clientWidth;
@@ -587,8 +682,8 @@ class LensDashboardNavigatorRadial extends LensDashboard {
             const th = this.toolSize;
             const tw = this.toolSize;
             const rad = LensDashboardNavigatorRadial.degToRadians(this.group[i]) + idx * alphaDelta;
-            let cbx = (radius+this.toolSize*0.5+this.toolboxBkgPadding) * Math.sin(rad);
-            let cby = (radius+this.toolSize*0.5+this.toolboxBkgPadding) * Math.cos(rad);
+            let cbx = (radius + this.toolSize * 0.5 + this.toolboxBkgPadding) * Math.sin(rad);
+            let cby = (radius + this.toolSize * 0.5 + this.toolboxBkgPadding) * Math.cos(rad);
             let bx = sizew * 0.5 + cbx - tw / 2;
             let by = sizeh * 0.5 - cby - th / 2;
             action.element.style.left = `${bx}px`;
@@ -598,13 +693,19 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       }
    }
 
-   /** @ignore */
+   /**
+    * Updates the dashboard position and UI elements.
+    * @private
+    * @param {number} x - Center X coordinate in scene space
+    * @param {number} y - Center Y coordinate in scene space
+    * @param {number} r - Lens radius in scene space
+    */
    update(x, y, r) {
-      if(this.noupdate) {
+      if (this.noupdate) {
          this.noupdate = false;
          return;
       }
-      super.update(x,y,r);
+      super.update(x, y, r);
       const center = {
          x: this.lensBox.x,
          y: this.lensBox.y
@@ -612,7 +713,7 @@ class LensDashboardNavigatorRadial extends LensDashboard {
       const radius = this.lensBox.r;
       const sizew = this.lensBox.w;
       const sizeh = this.lensBox.h;
-     
+
       //this.setToolboxElm(radius, sizew, sizeh);
 
       if (this.updateCb) {

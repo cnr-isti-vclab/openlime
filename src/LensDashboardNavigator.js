@@ -1,14 +1,52 @@
 import { Util } from "./Util"
 import { LensDashboard } from "./LensDashboard"
 
+/**
+ * @fileoverview
+ * LensDashboardNavigator module provides an enhanced lens dashboard with navigation controls and tools.
+ * Extends the base LensDashboard with additional UI elements for camera control, lighting, and annotation navigation.
+ */
+
+/**
+ * LensDashboardNavigator class creates an interactive lens dashboard with navigation controls.
+ * Provides:
+ * - Camera movement control
+ * - Light direction control
+ * - Annotation switching and navigation
+ * - Toolbar UI elements positioned around the lens
+ * @extends LensDashboard
+ */
 class LensDashboardNavigator extends LensDashboard {
    /**
-     * Manages creation and update of a lens dashboard.
-     * An object literal with Layer `options` can be specified.
-   * This class instatiates an optional element of {@link LayerLens}
-     * @param {Object} options An object literal with Lensdashboard parameters.
-     * @param {number} options.toolboxHeight=25 The extra border thickness (in pixels) around the square including the lens.
-     */
+    * Creates a new LensDashboardNavigator instance.
+    * @param {Viewer} viewer - The OpenLIME viewer instance
+    * @param {Object} [options] - Configuration options
+    * @param {number} [options.toolboxHeight=22] - Height of the toolbox UI elements in pixels
+    * @param {number} [options.angleToolbar=30] - Angle of toolbar position in degrees
+    * @param {Object} [options.actions] - Configuration for toolbar actions
+    * @param {Object} [options.actions.camera] - Camera control action
+    * @param {string} options.actions.camera.label - Action identifier
+    * @param {Function} options.actions.camera.task - Callback for camera action
+    * @param {Object} [options.actions.light] - Light control action
+    * @param {string} options.actions.light.label - Action identifier
+    * @param {Function} options.actions.light.task - Callback for light action
+    * @param {Object} [options.actions.annoswitch] - Annotation toggle action
+    * @param {string} options.actions.annoswitch.label - Action identifier
+    * @param {string} options.actions.annoswitch.type - Action type ('toggle')
+    * @param {string} options.actions.annoswitch.toggleClass - CSS class for toggle element
+    * @param {Function} options.actions.annoswitch.task - Callback for annotation toggle
+    * @param {Object} [options.actions.prev] - Previous annotation action
+    * @param {string} options.actions.prev.label - Action identifier
+    * @param {Function} options.actions.prev.task - Callback for previous action
+    * @param {Object} [options.actions.down] - Download annotation action
+    * @param {string} options.actions.down.label - Action identifier
+    * @param {Function} options.actions.down.task - Callback for download action
+    * @param {Object} [options.actions.next] - Next annotation action
+    * @param {string} options.actions.next.label - Action identifier
+    * @param {Function} options.actions.next.task - Callback for next action
+    * @param {Function} [options.updateCb] - Callback fired during lens updates
+    * @param {Function} [options.updateEndCb] - Callback fired when lens movement ends
+    */
    constructor(viewer, options) {
       super(viewer, options);
       options = Object.assign({
@@ -460,7 +498,7 @@ class LensDashboardNavigator extends LensDashboard {
                } else {
                   toggleElm.style.visibility = `hidden`;
                }
-               this.noupdate=true;
+               this.noupdate = true;
             }
             action.task(e);
             e.preventDefault();
@@ -485,6 +523,12 @@ class LensDashboardNavigator extends LensDashboard {
       this.setActionEnabled('next');
    }
 
+   /**
+    * Retrieves an action configuration by its label.
+    * @param {string} label - The action label to find
+    * @returns {Object|null} The action configuration object or null if not found
+    * @private
+    */
    getAction(label) {
       let result = null;
       for (let [name, action] of Object.entries(this.actions)) {
@@ -496,6 +540,11 @@ class LensDashboardNavigator extends LensDashboard {
       return result;
    }
 
+   /**
+    * Enables or disables a specific action button.
+    * @param {string} label - The action label to modify
+    * @param {boolean} [enable=true] - Whether to enable or disable the action
+    */
    setActionEnabled(label, enable = true) {
       const action = this.getAction(label);
       if (action) {
@@ -503,6 +552,11 @@ class LensDashboardNavigator extends LensDashboard {
       }
    }
 
+   /**
+    * Toggles between camera and light control modes.
+    * When light control is active, modifies controller behavior for light direction adjustment.
+    * @private
+    */
    toggleLightController() {
       let active = this.actions.light.element.classList.toggle('openlime-lens-dashboard-light-active');
       this.actions.light.active = active;
@@ -516,17 +570,19 @@ class LensDashboardNavigator extends LensDashboard {
             }
    }
 
-   toggle() {
-      this.container.classList.toggle('closed');
-   }
-
-   /** @ignore */
-   update(x, y, r) { 
-      if(this.noupdate) {
+   /**
+    * Updates the dashboard position and UI elements.
+    * @private
+    * @param {number} x - Center X coordinate in scene space
+    * @param {number} y - Center Y coordinate in scene space
+    * @param {number} r - Lens radius in scene space
+    */
+   update(x, y, r) {
+      if (this.noupdate) {
          this.noupdate = false;
          return;
       }
-      super.update(x,y,r);
+      super.update(x, y, r);
       const center = {
          x: this.lensBox.x,
          y: this.lensBox.y

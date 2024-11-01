@@ -118,7 +118,7 @@ class UIBasic {
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 			},
-			postInit: () => { console.log('postInit') },
+			postInit: () => {},
 			pixelSize: null,
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
