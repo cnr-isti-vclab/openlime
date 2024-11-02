@@ -31,28 +31,33 @@ var template = require('jsdoc/template'),
 var globalUrl = helper.getUniqueFilename('global');
 var indexUrl = helper.getUniqueFilename('index');
 
+const opts = conf.default;
+
 var navOptions = {
-  includeDate: conf.includeDate !== false,
-  logoFile: conf.logoFile,
-  systemName: conf.systemName || "Documentation",
-  navType: conf.navType || "vertical",
-  footer: conf.footer || "",
-  copyright: conf.copyright || "",
-  theme: conf.theme || "simplex",
-  syntaxTheme: conf.syntaxTheme || "default",
-  linenums: conf.linenums,
-  collapseSymbols: conf.collapseSymbols || false,
-  inverseNav: conf.inverseNav,
-  outputSourceFiles: conf.outputSourceFiles === true,
-  sourceRootPath: conf.sourceRootPath,
-  disablePackagePath: conf.disablePackagePath,
-  outputSourcePath: conf.outputSourcePath,
-  dateFormat: conf.dateFormat,
-  analytics: conf.analytics || null,
-  methodHeadingReturns: conf.methodHeadingReturns === true,
-  sort: conf.sort,
+  includeDate: opts.includeDate !== false,
+  logoFile: opts.logoFile,
+  systemName: opts.systemName || "Documentation",
+  navType: opts.navType || "vertical",
+  footer: opts.footer || "",
+  copyright: opts.copyright || "",
+  theme: opts.theme || "simplex",
+  syntaxTheme: opts.syntaxTheme || "default",
+  linenums: opts.linenums,
+  collapseSymbols: opts.collapseSymbols || false,
+  inverseNav: opts.inverseNav,
+  outputSourceFiles: opts.outputSourceFiles === true,
+  sourceRootPath: opts.sourceRootPath,
+  disablePackagePath: opts.disablePackagePath,
+  outputSourcePath: opts.outputSourcePath,
+  dateFormat: opts.dateFormat,
+  analytics: opts.analytics || null,
+  methodHeadingReturns: opts.methodHeadingReturns === true,
+  sort: opts.sort,
   search: searchEnabled
 };
+console.log(conf);
+console.log(navOptions);
+
 var searchableDocuments = {};
 
 var navigationMaster = {
@@ -580,13 +585,13 @@ exports.publish = function(taffyData, opts, tutorials) {
   var packageInfo = (find({
     kind: 'package'
   }) || [])[0];
-  if (navOptions.disablePackagePath !== true && packageInfo && packageInfo.name) {
-    if (packageInfo.version) {
-      outdir = path.join(outdir, packageInfo.name, packageInfo.version);
-    } else {
-      outdir = path.join(outdir, packageInfo.name);
-    }
-  }
+  // if (navOptions.disablePackagePath !== true && packageInfo && packageInfo.name) {
+  //   if (packageInfo.version) {
+  //     outdir = path.join(outdir, packageInfo.name, packageInfo.version);
+  //   } else {
+  //     outdir = path.join(outdir, packageInfo.name);
+  //   }
+  // }
   fs.mkPath(outdir);
 
 	// copy the template's static files to outdir
