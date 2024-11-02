@@ -1,4 +1,4 @@
-/**
+/*
  * @fileoverview
  * LightSphereController module provides a spherical interface for controlling light direction.
  * It creates a circular canvas-based UI element that allows users to interactively adjust
