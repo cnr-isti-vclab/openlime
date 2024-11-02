@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIMEs Source: TextToSpeechPlayer.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cosmo.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIMEs</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="namespaces.list.html" class="dropdown-toggle" data-toggle="dropdown">Namespaces<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Cache.html">Cache</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-PointerManager.html">PointerManager</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#Annotation">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="module-PointerManager-PointerManager.html">PointerManager~PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="global.html#event:Layout#readyFiredwhenthelayoutisreadyforrendering.Thisoccurswhen:-Single-resolutionimageisfullydownloaded-Multi-resolutionstructureisinitializedandvalidated-Tilepyramidinformationiscomputed">Layout#ready
+Fired when the layout is ready for rendering.
+This occurs when:
+- Single-resolution image is fully downloaded
+- Multi-resolution structure is initialized and validated
+- Tile pyramid information is computedevent:</a></li><li><a href="global.html#event:Layout#readyFiredwhenthelayoutisreadyforrendering.Thisoccurswhen:-Tiledescriptorsareloadedfromannotationfile-Tiledescriptorsaresetprogrammatically">Layout#ready
+Fired when the layout is ready for rendering.
+This occurs when:
+- Tile descriptors are loaded from annotation file
+- Tile descriptors are set programmaticallyevent:</a></li><li><a href="global.html#event:Layout#updateSizeFiredwhenthelayoutsizechangesandsceneextensionneedsupdating.Thisoccurswhen:-Imagedimensionsaredetermined-Pyramidlevelsareinitialized-Boundingboxesarecomputed">Layout#updateSize
+Fired when the layout size changes and scene extension needs updating.
+This occurs when:
+- Image dimensions are determined
+- Pyramid levels are initialized
+- Bounding boxes are computedevent:</a></li><li><a href="global.html#event:Layout#updateSizeFiredwhenthelayoutsizechangesandsceneextensionneedsupdating.Thisoccurswhen:-Tiledescriptorsareloadedandboundingboxiscomputed">Layout#updateSize
+Fired when the layout size changes and scene extension needs updating.
+This occurs when:
+- Tile descriptors are loaded and bounding box is computedevent:</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: TextToSpeechPlayer.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">/**
+ * The TextToSpeechPlayer class is responsible for text-to-speech functionality in the application.
+ * It handles voice selection, speech synthesis, and various audio controls.
+ */
+class TextToSpeechPlayer {
+  /**
+   * Creates an TextToSpeechPlayer. Additionally, an object literal with TextToSpeechPlayer `options` can be specified.
+   * @param {Object} [options]
+   * @param {string} [options.language='it-IT'] The language for speech synthesis.
+   * @param {number} [options.rate=1.12] The speech rate.
+   * @param {number} [options.volume=1.0] The speech volume.
+   * @param {boolean} [options.cleanText=true] Whether to clean the text before speech synthesis.
+   * @param {number} [options.voiceSelected=-1] The index of the selected voice.
+   */
+  constructor(options) {
+    Object.assign(this, {
+      language: 'it-IT',
+      rate: 1.0,
+      volume: 1.0,
+      cleanText: true,
+      voiceSelected: -1
+    });
+    Object.assign(this, options);
+
+    this.voice = null;
+    this.isSpeaking = false;
+    this.currentUtterance = null;
+    this.isOfflineCapable = false;
+    this.resumeTimer = null;
+    this.timeoutTimer = null;
+    this.isPaused = false;
+    this.previousVolume = this.volume;
+  }
+
+  /**
+   * Initializes the TextToSpeechPlayer by loading the voice and checking offline capability.
+   * @returns {Promise&lt;void>}
+   */
+  async initialize() {
+    try {
+      await this.loadVoice();
+      this.checkOfflineCapability();
+      console.log("TextToSpeechPlayer initialized successfully");
+      console.log(`Offline capable: ${this.isOfflineCapable}`);
+    } catch (error) {
+      console.error("Failed to initialize TextToSpeechPlayer:", error);
+      throw error;
+    }
+    this.setupPageListeners();
+  }
+
+  /**
+   * Sets up event listeners for page visibility changes and unload events.
+   * @private
+   */
+  setupPageListeners() {
+    // For page close/refresh
+    window.addEventListener('beforeunload', () => {
+      this.stopSpeaking();
+    });
+
+    // For page visibility change (e.g., switching tabs)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.stopSpeaking();
+      }
+    });
+  }
+
+  /**
+   * Activates the TextToSpeechPlayer.
+   */
+  activate() {
+    this.isSpeaking = true;
+  }
+
+  /**
+   * Loads the voice for speech synthesis based on the selected language.
+   * @returns {Promise&lt;SpeechSynthesisVoice>}
+   * @private
+   */
+  async loadVoice() {
+    console.log(`Loading voice for language: ${this.language}`);
+    return new Promise((resolve, reject) => {
+      let synth = window.speechSynthesis;
+
+      const setVoice = () => {
+        let voices = synth.getVoices();
+        if (voices.length === 0) {
+          console.warn(`No voices available for this browser`);
+          reject(new Error(`No voices available for this browser`));
+        }
+        if (this.voiceSelected >= 0) {
+          this.voice = voices[this.voiceSelected];
+        } else {
+          const firstTwo = this.language.substring(0, 2);
+          this.voice = voices.find(v => v.lang.startsWith(firstTwo));
+        }
+        if (this.voice) {
+          console.log(`Voice loaded: ${this.voice.name}`);
+          resolve(this.voice);
+        } else {
+          console.warn(`No suitable voice found for language: ${this.language}`);
+          reject(new Error(`No voice available for ${this.language}`));
+        }
+      };
+
+      if (synth.getVoices().length > 0) {
+        setVoice();
+      } else {
+        synth.onvoiceschanged = () => {
+          setVoice();
+          synth.onvoiceschanged = null;
+        };
+        // Set a timeout in case onvoiceschanged doesn't fire
+        setTimeout(() => {
+          if (!this.voice) {
+            console.warn("Timeout while waiting for voices to load");
+            setVoice();
+          }
+        }, 1000);
+      }
+    });
+  }
+
+  /**
+   * Checks if the selected voice is capable of offline speech synthesis.
+   * @private
+   */
+  checkOfflineCapability() {
+    if (this.voice) {
+      // If a voice is loaded and it's not marked as a network voice, assume it's offline capable
+      this.isOfflineCapable = !this.voice.localService;
+    } else {
+      this.isOfflineCapable = false;
+    }
+  }
+
+  /**
+   * Cleans the input text for speech synthesis by removing HTML tags and escape characters.
+   * @param {string} text - The text to clean.
+   * @returns {string} The cleaned text.
+   * @private
+   */
+  cleanTextForSpeech(text) {
+    // Remove content of any HTML tag with class "omissis" (with or without escaped quotes)
+    let cleanedText = text.replace(/&lt;[^>]+class=(\"omissis\"|"omissis")[^>]*>[\s\S]*?&lt;\/[^>]+>/g, "");
+    // Substitute &lt;br> tag with whitespace " "
+    cleanedText = cleanedText.replace(/&lt;br\s*\/?>/gi, " ");
+    // Remove HTML tags
+    cleanedText = cleanedText.replace(/&lt;\/?[^>]+(>|$)/g, "");
+    // Remove escape characters like \n, \t, etc.
+    cleanedText = cleanedText.replace(/\\[nrt]/g, " ");
+    // Trim leading and trailing whitespace
+    return cleanedText.trim();
+  }
+
+  /**
+   * Speaks the provided text using speech synthesis.
+   * @param {string} text - The text to speak.
+   * @returns {Promise&lt;void>}
+   */
+  async speakText(text) {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+    this.currentUtterance = null;
+
+    if (!this.voice) {
+      console.error("Voice not loaded. Please initialize TextToSpeechPlayer first.");
+      return;
+    }
+
+    if (!this.isOfflineCapable &amp;&amp; !navigator.onLine) {
+      console.error("No internet connection and offline speech is not available.");
+      return;
+    }
+
+    this.isSpeaking = true;
+    let cleanedText = text;
+    if (this.cleanText)
+      cleanedText = this.cleanTextForSpeech(text);
+    console.log("Attempting to speak:", cleanedText);
+
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    let synth = window.speechSynthesis;
+    this.currentUtterance = new SpeechSynthesisUtterance(cleanedText);
+    this.currentUtterance.lang = this.language;
+    this.currentUtterance.voice = this.voice;
+    this.currentUtterance.rate = this.rate;
+    this.currentUtterance.volume = this.volume;
+
+    try {
+      await new Promise((resolve, reject) => {
+        this.currentUtterance.onend = () => {
+          resolve();
+        };
+        this.currentUtterance.onerror = (event) => {
+          console.error("Speech error:", event);
+          reject(event);
+        };
+
+        synth.speak(this.currentUtterance);
+        // Timeout to prevent speech from running indefinitely if it takes too long
+        let maxSpeechTime = cleanedText.length * 800;
+        this.timeoutTimer = setTimeout(() => {
+          if (synth.speaking &amp;&amp; this.isSpeaking) {
+            console.warn("Speech synthesis taking too long. Resetting...");
+            synth.cancel();
+            clearInterval(this.resumeTimer);
+            reject(new Error("Speech synthesis timeout"));
+          }
+        }, maxSpeechTime);
+        // Workaround to resume speech every 10 seconds
+        this.resumeTimer = setInterval(() => {
+          console.log(speechSynthesis.speaking);
+          if (!speechSynthesis.speaking) {
+            clearInterval(this.resumeTimer);
+          } else if (!this.isPaused) { // Only pause and resume if not manually paused
+            speechSynthesis.pause();
+            speechSynthesis.resume();
+          }
+        }, 10000);
+      });
+    } catch (error) {
+      console.error("Error during speech:", error);
+    }
+    clearTimeout(this.timeoutTimer);
+    this.timeoutTimer = null;
+    clearInterval(this.resumeTimer);
+    this.resumeTimer = null;
+    this.currentUtterance = null;
+  }
+
+  /**
+   * Pauses or resumes the current speech synthesis.
+   * @param {boolean} enable - True to pause, false to resume.
+   */
+  pauseSpeaking(enable) {
+    if (!this.currentUtterance) {
+      console.log("No speech in progress to pause/resume");
+      return;
+    }
+    if (enable &amp;&amp; !this.isPaused) {
+      window.speechSynthesis.pause();
+      this.isPaused = true;
+      clearInterval(this.resumeTimer); // Clear the resume timer when pausing
+    } else if (!enable &amp;&amp; this.isPaused) {
+      window.speechSynthesis.resume();
+      this.isPaused = false;
+      // Restart the resume timer
+      this.resumeTimer = setInterval(() => {
+        if (!speechSynthesis.speaking) {
+          clearInterval(this.resumeTimer);
+        } else {
+          speechSynthesis.pause();
+          speechSynthesis.resume();
+        }
+      }, 10000);
+    }
+  }
+
+  /**
+   * Mutes or unmutes the audio playback.
+   * @param {boolean} enable - True to mute, false to unmute.
+   */
+  mute(enable) {
+    if (enable) {
+      this.previousVolume = this.volume;
+      this.volume = 0;
+    } else {
+      this.volume = this.previousVolume;
+    }
+  }
+
+  /**
+   * Stops the current speech synthesis.
+   */
+  stopSpeaking() {
+    if (this.isSpeaking) {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+      this.currentUtterance = null;
+      clearInterval(this.resumeTimer);
+      this.resumeTimer = null;
+    }
+    this.isSpeaking = false;
+  }
+}
+
+export { TextToSpeechPlayer }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
+	
+		on 2024-11-02T10:46:25+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>
