@@ -55,8 +55,8 @@ var navOptions = {
   sort: opts.sort,
   search: searchEnabled
 };
-console.log(conf);
-console.log(navOptions);
+// console.log(conf);
+// console.log(navOptions);
 
 var searchableDocuments = {};
 
