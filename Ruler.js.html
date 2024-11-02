@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Source: LightSphereController.js</title>
+	<title>OpenLIME Source: Ruler.js</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -119,253 +119,315 @@ This occurs when:
 		<div id="main">
 			
 
-		<h1 class="page-title">Source: LightSphereController.js</h1>
+		<h1 class="page-title">Source: Ruler.js</h1>
     
 <section>
     <article>
         <pre
-            class="sunlight-highlight-javascript linenums">/*
+            class="sunlight-highlight-javascript linenums">import { Util } from './Util'
+import { Units } from './ScaleBar'
+
+
+/**
  * @fileoverview
- * LightSphereController module provides a spherical interface for controlling light direction.
- * It creates a circular canvas-based UI element that allows users to interactively adjust
- * lighting direction through pointer interactions.
- */
-
-/**
- * LightSphereController creates an interactive sphere UI for light direction control.
+ * Ruler module provides measurement functionality for the OpenLIME viewer.
+ * Allows users to measure distances in the scene with an interactive ruler tool.
+ * Extends the Units class to handle unit conversions and formatting.
+ *
+ * Ruler class creates an interactive measurement tool for the OpenLIME viewer.
  * Features:
- * - Circular interface with gradient background
- * - Pointer-based interaction for light direction
- * - Configurable size, position, and colors
- * - Minimum theta angle constraint
- * - Visual feedback with gradient and marker
+ * - Interactive distance measurement
+ * - SVG-based visualization
+ * - Scale-aware display
+ * - Multiple measurement history
+ * - Touch and mouse support
+ * 
+ * @extends Units
  */
-class LightSphereController {
-    /**
-     * Creates a new LightSphereController instance.
-     * @param {HTMLElement|string} parent - Parent element or selector where the controller will be mounted
-     * @param {Object} [options] - Configuration options
-     * @param {number} [options.width=128] - Width of the controller in pixels
-     * @param {number} [options.height=128] - Height of the controller in pixels
-     * @param {number} [options.top=60] - Top position offset in pixels
-     * @param {number} [options.right=0] - Right position offset in pixels
-     * @param {number} [options.thetaMin=0] - Minimum theta angle in degrees (constrains interaction radius)
-     * @param {string} [options.colorSpot='#ffffff'] - Color of the central spot in the gradient
-     * @param {string} [options.colorBkg='#0000ff'] - Color of the outer edge of the gradient
-     * @param {string} [options.colorMark='#ff0000'] - Color of the position marker
-     */    
-    constructor(parent, options) {        
-        options = Object.assign({
-            width: 128,
-            height: 128,
-            top: 60,
-            right: 0,
-            thetaMin: 0,
-            colorSpot: '#ffffff',
-            colorBkg: '#0000ff',
-            colorMark: '#ff0000'
-        }, options);
-        Object.assign(this, options);
-        this.parent = parent;
-        this.layers = [];
-        if (typeof (this.parent) == 'string')
-            this.parent = document.querySelector(this.parent);
+class Ruler extends Units {
+	/**
+	 * Creates a new Ruler instance.
+	 * @param {Viewer} viewer - The OpenLIME viewer instance
+	 * @param {number} pixelSize - Size of a pixel in real-world units
+	 * @param {Object} [options] - Configuration options
+	 * @param {boolean} [options.enabled=false] - Whether the ruler is initially enabled
+	 * @param {number} [options.priority=100] - Event handling priority
+	 * @param {number} [options.fontSize=18] - Font size for measurements in pixels
+	 * @param {number} [options.markerSize=8] - Size of measurement markers in pixels
+	 * @param {string} [options.cursor='crosshair'] - Cursor style when ruler is active
+	 */
+	constructor(viewer, pixelSize, options) {
+		super(options);
+		Object.assign(this, {
+			viewer: viewer,
+			camera: viewer.camera,
+			overlay: viewer.overlayElement,
+			pixelSize: pixelSize,
+			enabled: false,
+			priority: 100,
+			measure: null, //current measure
+			history: [],  //past measures
+			fontSize: 18,
+			markerSize: 8,
+			cursor: "crosshair",
 
-        this.lightDir = [0, 0];
+			svg: null,
+			first: null,
+			second: null
+		});
+		if (options)
+			Object.assign(this, options);
+	}
 
-        this.containerElement = document.createElement('div');
-        this.containerElement.style = `padding: 0; position: absolute; width: ${this.width}px; height: ${this.height}px; top:${this.top}px; right:${this.right}px; z-index: 200; touch-action: none; visibility: visible;`;
-        this.containerElement.classList.add('openlime-lsc');
+	/**
+	 * Activates the ruler tool.
+	 * Creates SVG elements if needed and sets up event listeners.
+	 * Changes cursor to indicate tool is active.
+	 */
+	start() {
+		this.enabled = true;
+		this.previousCursor = this.overlay.style.cursor;
+		this.overlay.style.cursor = this.cursor;
 
-        const sd = (this.width * 0.5) * (1 - 0.8);
-        this.dlCanvas = document.createElement('canvas');
-        this.dlCanvas.width = this.width;
-        this.dlCanvas.height = this.height;
-        // this.dlCanvas.style = ''
-        this.dlCanvasCtx = this.dlCanvas.getContext("2d");
-        this.dlGradient = '';
-        this.containerElement.appendChild(this.dlCanvas);
-        this.parent.appendChild(this.containerElement);
+		if (!this.svg) {
+			this.svg = Util.createSVGElement('svg', { class: 'openlime-ruler' });
+			this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+			this.svg.append(this.svgGroup);
+			this.overlay.appendChild(this.svg);
+			this.viewer.addEvent('draw', () => this.update());
+			this.update();
+		}
+	}
 
-        this.r = this.width * 0.5;
-        this.thetaMinRad = this.thetaMin / 180.0 * Math.PI;
-        this.rmax = this.r * Math.cos(this.thetaMinRad);
+	/**
+	 * Deactivates the ruler tool.
+	 * Restores original cursor and clears current measurement.
+	 */
+	end() {
+		this.enabled = false;
+		this.overlay.style.cursor = this.previousCursor;
+		this.clear();
+	}
 
-        this.interactLightDir(this.width * 0.5, this.height * 0.5);
+	/**
+	 * Clears all measurements.
+	 * Removes all SVG elements and resets measurement history.
+	 */
+	clear() {
+		this.svgGroup.replaceChildren([]);
+		this.measure = null;
+		this.history = [];
+	}
 
-        this.pointerDown = false;
-        this.dlCanvas.addEventListener("pointerdown", (e) => {
-            this.pointerDown = true;
-            const rect = this.dlCanvas.getBoundingClientRect();
-            let clickPosX =
-                (this.dlCanvas.width * (e.clientX - rect.left)) /
-                rect.width;
-            let clickPosY =
-                (this.dlCanvas.height * (e.clientY - rect.top)) /
-                rect.height;
-            this.interactLightDir(clickPosX, clickPosY);
-            e.preventDefault();
-        });
+	/*finish() {
+		let m = this.measure;
+		m.line = Util.createSVGElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
+		this.svgGroup.appendChild(m.line);
 
-        this.dlCanvas.addEventListener("pointermove", (e) => {
-            if (this.pointerDown) {
-                const rect = this.dlCanvas.getBoundingClientRect();
-                let clickPosX =
-                    (this.dlCanvas.width * (e.clientX - rect.left)) /
-                    rect.width;
-                let clickPosY =
-                    (this.dlCanvas.height * (e.clientY - rect.top)) /
-                    rect.height;
-                this.interactLightDir(clickPosX, clickPosY);
-                e.preventDefault();
-            }
-        });
+		m.text = Util.createSVGElement('text');
+		m.text.textContent = this.format(this.length(m));
+		this.svgGroup.appendChild(m.text);
 
-        this.dlCanvas.addEventListener("pointerup", (e) => {
-            this.pointerDown = false;
-        });
+		this.history.push(m);
+		this.measure = null;
+		this.update();
+	}*/
 
-        this.dlCanvas.addEventListener("pointerout", (e) => {
-            this.pointerDown = false;
-        });
+	/**
+	 * Updates the visual representation of all measurements.
+	 * Handles camera transformations and viewport changes.
+	 * @private
+	 */
+	update() {
+		if (!this.history.length)
+			return;
+		//if not enabled skip
+		let t = this.camera.getGlCurrentTransform(performance.now());
+		let viewport = this.camera.glViewport();
+		this.svg.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
+		let c = { x: 0, y: 0 }; //this.boundingBox().corner(0);
+		this.svgGroup.setAttribute("transform",
+			`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) translate(${c.x} ${c.y})`);
 
-    }
+		for (let m of this.history)
+			this.updateMeasure(m, t);
+	}
 
-    /**
-     * Adds a layer to be controlled by this light sphere.
-     * The layer must support light control operations.
-     * @param {Layer} layer - Layer to be controlled
-     */    
-    addLayer(l) {
-        this.layers.push(l);
-    }
+	/**
+	 * Creates a marker SVG element.
+	 * @private
+	 * @param {number} x - X coordinate in scene space
+	 * @param {number} y - Y coordinate in scene space
+	 * @returns {SVGElement} The created marker element
+	 */
+	createMarker(x, y) {
+		let m = Util.createSVGElement("path");
+		this.svgGroup.appendChild(m);
+		return m;
+	}
 
-    /**
-     * Makes the controller visible.
-     * @returns {string} The visibility style value
-     */    
-    show() {
-        return this.containerElement.style.visibility = 'visible';
-    }
+	/**
+	 * Updates a marker's position and size.
+	 * @private
+	 * @param {SVGElement} marker - The marker to update
+	 * @param {number} x - X coordinate in scene space
+	 * @param {number} y - Y coordinate in scene space
+	 * @param {number} size - Marker size in pixels
+	 */
+	updateMarker(marker, x, y, size) {
+		let d = `M ${x - size} ${y} L ${x + size} ${y} M ${x} ${y - size} L ${x} ${y + size}`;
+		marker.setAttribute('d', d);
+	}
 
-    /**
-     * Hides the controller.
-     * @returns {string} The visibility style value
-     */    
-    hide() {
-        return this.containerElement.style.visibility = 'hidden';
-    }
+	/**
+	 * Updates measurement text display.
+	 * Handles text positioning and scaling based on camera transform.
+	 * @private
+	 * @param {Object} measure - The measurement object to update
+	 * @param {number} fontsize - Font size in pixels
+	 */
+	updateText(measure, fontsize) {
+		measure.text.setAttribute('font-size', fontsize + "px");
 
-    /**
-     * Computes the radial gradient based on current light direction.
-     * Creates a gradient that provides visual feedback about the light position.
-     * @private
-     */    
-    computeGradient() {
-        const x = (this.lightDir[0] + 1.0) * this.dlCanvas.width * 0.5;
-        const y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
-        this.dlGradient = this.dlCanvasCtx.createRadialGradient(
-            x, y, this.dlCanvas.height / 8.0,
-            x, y, this.dlCanvas.width / 1.2
-        );
-        this.dlGradient.addColorStop(0, this.colorSpot);
-        this.dlGradient.addColorStop(1, this.colorBkg);
-    }
+		let dx = measure.x1 - measure.x2;
+		let dy = measure.y1 - measure.y2;
 
-    /**
-     * Handles interaction to update light direction.
-     * Converts pointer position to light direction vector while respecting constraints.
-     * @private
-     * @param {number} x - X coordinate in canvas space
-     * @param {number} y - Y coordinate in canvas space
-     */    
-    interactLightDir(x, y) {
-        let xc = x - this.r;
-        let yc = this.r - y;
-        const phy = Math.atan2(yc, xc);
-        let l = Math.sqrt(xc * xc + yc * yc);
-        l = l > this.rmax ? this.rmax : l;
-        xc = l * Math.cos(this.thetaMinRad) * Math.cos(phy);
-        yc = l * Math.cos(this.thetaMinRad) * Math.sin(phy);
-        x = xc + this.r;
-        y = this.r - yc;
-        this.lightDir[0] = 2 * (x / this.dlCanvas.width - 0.5);
-        this.lightDir[1] = 2 * (1 - y / this.dlCanvas.height - 0.5);
-        // console.log('LD ', this.lightDir);
-        for (const l of this.layers) {
-            if (l.controls.light) l.setControl('light', this.lightDir, 5);
-        }
-        this.computeGradient();
-        this.drawLightSelector(x, y);
-    }
+		let length = Math.sqrt(dx * dx + dy * dy);
+		if (length > 0) {
+			dx /= length;
+			dy /= length;
+		}
+		if (dx &lt; 0) {
+			dx = -dx;
+			dy = -dy;
+		}
 
-    /**
-     * Draws the light direction selector UI.
-     * Renders:
-     * - Circular background with gradient
-     * - Position marker at current light direction
-     * @private
-     * @param {number} x - X coordinate for position marker
-     * @param {number} y - Y coordinate for position marker
-     */    
-    drawLightSelector(x, y) {
-        this.dlCanvasCtx.clearRect(0, 0, this.dlCanvas.width, this.dlCanvas.height);
-        this.dlCanvasCtx.beginPath();
+		let mx = (measure.x1 + measure.x2) / 2;
+		let my = (measure.y1 + measure.y2) / 2;
+		if (dy / dx &lt; 0) {
+			mx -= 0.25 * dy * fontsize;
+			my += dx * fontsize;
+		} else {
+			my -= 0.25 * fontsize;
+			mx += 0.25 * fontsize;
+		}
+		measure.text.setAttribute('x', mx);
+		measure.text.setAttribute('y', my);
+		measure.text.textContent = this.format(length * this.pixelSize);
+	}
 
-        this.dlCanvasCtx.arc(
-            this.dlCanvas.width / 2,
-            this.dlCanvas.height / 2,
-            this.dlCanvas.width / 2,
-            0,
-            2 * Math.PI
-        );
-        this.dlCanvasCtx.fillStyle = this.dlGradient;
-        this.dlCanvasCtx.fill();
+	/**
+	 * Creates a new measurement.
+	 * Sets up SVG elements for line, markers, and text.
+	 * @private
+	 * @param {number} x - Initial X coordinate
+	 * @param {number} y - Initial Y coordinate
+	 * @returns {Object} Measurement object containing all SVG elements and coordinates
+	 */
+	createMeasure(x, y) {
+		let m = {
+			marker1: this.createMarker(x, y),
+			x1: x, y1: y,
+			marker2: this.createMarker(x, y),
+			x2: x, y2: y
+		};
+		m.line = Util.createSVGElement('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 });
+		this.svgGroup.appendChild(m.line);
 
-        this.dlCanvasCtx.beginPath();
-        this.dlCanvasCtx.arc(x, y, this.dlCanvas.width / 30, 0, 2 * Math.PI);
-        this.dlCanvasCtx.strokeStyle = this.colorMark;
-        this.dlCanvasCtx.lineWidth = 2;
-        this.dlCanvasCtx.stroke();
-    }
-}
+		m.text = Util.createSVGElement('text');
+		m.text.textContent = '';
+		this.svgGroup.appendChild(m.text);
+
+		return m;
+	}
+
+	/**
+	 * Updates a measurement's visual elements.
+	 * @private
+	 * @param {Object} measure - The measurement to update
+	 * @param {Transform} transform - Current camera transform
+	 */
+	updateMeasure(measure, transform) {
+		let markersize = window.devicePixelRatio * this.markerSize / transform.z;
+
+		this.updateMarker(measure.marker1, measure.x1, measure.y1, markersize);
+
+		this.updateMarker(measure.marker2, measure.x2, measure.y2, markersize);
+
+		let fontsize = window.devicePixelRatio * this.fontSize / transform.z;
+		this.updateText(measure, fontsize);
+
+		for (let p of ['x1', 'y1', 'x2', 'y2'])
+			measure.line.setAttribute(p, measure[p]);
+	}
+
+	/**
+	 * Handles single tap/click events.
+	 * Creates or completes measurements.
+	 * @private
+	 * @param {Event} e - The pointer event
+	 * @returns {boolean} Whether the event was handled
+	 */
+	fingerSingleTap(e) {
+		if (!this.enabled)
+			return false;
+
+		let transform = this.camera.getCurrentTransform(performance.now())
+		let { x, y } = this.camera.mapToScene(e.layerX, e.layerY, transform);
+
+
+		if (!this.measure) {
+			this.measure = this.createMeasure(x, y);
+			this.history.push(this.measure);
+		} else {
+			this.measure.x2 = x;
+			this.measure.y2 = y;
+			this.measure = null;
+		}
+		this.update();
+		e.preventDefault();
+	}
+
+	/**
+	 * Handles hover/move events.
+	 * Updates the current measurement endpoint.
+	 * @private
+	 * @param {Event} e - The pointer event
+	 * @returns {boolean} Whether the event was handled
+	 */
+	fingerHover(e) {
+		if (!this.enabled || !this.measure)
+			return false;
+
+		let transform = this.camera.getCurrentTransform(performance.now())
+		let { x, y } = this.camera.mapToScene(e.layerX, e.layerY, transform);
+		this.measure.x2 = x;
+		this.measure.y2 = y;
+		this.update();
+		e.preventDefault();
+	}
+};
 /**
- * Example usage of LightSphereController:
+ * Example usage of Ruler:
  * ```javascript
- * // Create controller with custom options
- * const lightController = new LightSphereController('#container', {
- *     width: 200,
- *     height: 200,
- *     top: 80,
- *     right: 20,
- *     thetaMin: 15,
- *     colorSpot: '#ffff00',
- *     colorBkg: '#000066',
- *     colorMark: '#ff3333'
+ * // Create ruler with 1mm per pixel scale
+ * const ruler = new Ruler(viewer, 0.001, {
+ *     fontSize: 24,
+ *     markerSize: 10
  * });
  * 
- * // Add layers to be controlled
- * lightController.addLayer(layer1);
- * lightController.addLayer(layer2);
+ * // Activate ruler
+ * ruler.start();
  * 
- * // Show/hide controller
- * lightController.show();
- * lightController.hide();
+ * // Deactivate ruler
+ * ruler.end();
+ * 
+ * // Clear measurements
+ * ruler.clear();
  * ```
- * 
- * @property {number[]} lightDir - Current light direction vector [x, y]
- * @property {HTMLElement} containerElement - Main container element
- * @property {HTMLCanvasElement} dlCanvas - Canvas element for drawing
- * @property {CanvasRenderingContext2D} dlCanvasCtx - Canvas 2D rendering context
- * @property {CanvasGradient} dlGradient - Current radial gradient
- * @property {number} r - Radius of the control sphere
- * @property {number} thetaMinRad - Minimum theta angle in radians
- * @property {number} rmax - Maximum interaction radius based on thetaMin
- * @property {boolean} pointerDown - Whether pointer is currently pressed
- * @property {Layer[]} layers - Array of layers being controlled
  */
-
-export { LightSphereController }</pre>
+export { Ruler }
+</pre>
     </article>
 </section>
 

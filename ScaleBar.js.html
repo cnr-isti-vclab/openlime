@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Source: LightSphereController.js</title>
+	<title>OpenLIME Source: ScaleBar.js</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -119,253 +119,186 @@ This occurs when:
 		<div id="main">
 			
 
-		<h1 class="page-title">Source: LightSphereController.js</h1>
+		<h1 class="page-title">Source: ScaleBar.js</h1>
     
 <section>
     <article>
         <pre
-            class="sunlight-highlight-javascript linenums">/*
- * @fileoverview
- * LightSphereController module provides a spherical interface for controlling light direction.
- * It creates a circular canvas-based UI element that allows users to interactively adjust
- * lighting direction through pointer interactions.
- */
+            class="sunlight-highlight-javascript linenums">import { Util } from './Util'
 
 /**
- * LightSphereController creates an interactive sphere UI for light direction control.
- * Features:
- * - Circular interface with gradient background
- * - Pointer-based interaction for light direction
- * - Configurable size, position, and colors
- * - Minimum theta angle constraint
- * - Visual feedback with gradient and marker
+ * @fileoverview
+ * ScaleBar module provides measurement scale visualization and unit conversion functionality.
+ * Includes both a base Units class for unit management and a ScaleBar class for visual representation.
+ *
+ * Units class provides unit conversion and formatting capabilities.
+ * Supports various measurement units and automatic unit selection based on scale.
  */
-class LightSphereController {
-    /**
-     * Creates a new LightSphereController instance.
-     * @param {HTMLElement|string} parent - Parent element or selector where the controller will be mounted
-     * @param {Object} [options] - Configuration options
-     * @param {number} [options.width=128] - Width of the controller in pixels
-     * @param {number} [options.height=128] - Height of the controller in pixels
-     * @param {number} [options.top=60] - Top position offset in pixels
-     * @param {number} [options.right=0] - Right position offset in pixels
-     * @param {number} [options.thetaMin=0] - Minimum theta angle in degrees (constrains interaction radius)
-     * @param {string} [options.colorSpot='#ffffff'] - Color of the central spot in the gradient
-     * @param {string} [options.colorBkg='#0000ff'] - Color of the outer edge of the gradient
-     * @param {string} [options.colorMark='#ff0000'] - Color of the position marker
-     */    
-    constructor(parent, options) {        
-        options = Object.assign({
-            width: 128,
-            height: 128,
-            top: 60,
-            right: 0,
-            thetaMin: 0,
-            colorSpot: '#ffffff',
-            colorBkg: '#0000ff',
-            colorMark: '#ff0000'
-        }, options);
-        Object.assign(this, options);
-        this.parent = parent;
-        this.layers = [];
-        if (typeof (this.parent) == 'string')
-            this.parent = document.querySelector(this.parent);
+class Units {
+	/**
+	 * Creates a new Units instance.
+	 * @param {Object} [options] - Configuration options
+	 * @param {string[]} [options.units=['km', 'm', 'cm', 'mm', 'µm']] - Available units in order of preference
+	 * @param {Object.&lt;string, number>} [options.allUnits] - All supported units and their conversion factors to millimeters
+	 * @param {number} [options.precision=2] - Number of decimal places for formatted values
+	 */
+	constructor(options) {
+		this.units = ["km", "m", "cm", "mm", "µm"],
+			this.allUnits = { "µm": 0.001, "mm": 1, "cm": 10, "m": 1000, "km": 1e6, "in": 254, "ft": 254 * 12 }
+		this.precision = 2;
+		if (options)
+			Object.assign(options, this);
+	}
 
-        this.lightDir = [0, 0];
+	/**
+	 * Formats a measurement value with appropriate units.
+	 * Automatically selects the best unit if none specified.
+	 * @param {number} d - Value to format (in millimeters)
+	 * @param {string} [unit] - Specific unit to use for formatting
+	 * @returns {string} Formatted measurement with units (e.g., "5.00 mm" or "1.00 m")
+	 * 
+	 * @example
+	 * const units = new Units();
+	 * units.format(1500);       // Returns "1.50 m"
+	 * units.format(1500, 'mm'); // Returns "1500.00 mm"
+	 */
+	format(d, unit) {
+		if (d == 0)
+			return '';
+		if (unit)
+			return (d / this.allUnits[unit]).toFixed(this.precision) + unit;
 
-        this.containerElement = document.createElement('div');
-        this.containerElement.style = `padding: 0; position: absolute; width: ${this.width}px; height: ${this.height}px; top:${this.top}px; right:${this.right}px; z-index: 200; touch-action: none; visibility: visible;`;
-        this.containerElement.classList.add('openlime-lsc');
+		let best_u = null;
+		let best_penalty = 100;
+		for (let u of this.units) {
+			let size = this.allUnits[u];
+			let penalty = d &lt;= 0 ? 0 : Math.abs(Math.log10(d / size) - 1);
+			if (penalty &lt; best_penalty) {
+				best_u = u;
+				best_penalty = penalty;
+			}
+		}
+		return this.format(d, best_u);
+	}
+}
 
-        const sd = (this.width * 0.5) * (1 - 0.8);
-        this.dlCanvas = document.createElement('canvas');
-        this.dlCanvas.width = this.width;
-        this.dlCanvas.height = this.height;
-        // this.dlCanvas.style = ''
-        this.dlCanvasCtx = this.dlCanvas.getContext("2d");
-        this.dlGradient = '';
-        this.containerElement.appendChild(this.dlCanvas);
-        this.parent.appendChild(this.containerElement);
+/**
+ * ScaleBar class creates a visual scale bar that updates with viewer zoom level.
+ * Features:
+ * - Automatic scale adjustment based on zoom
+ * - Smart unit selection
+ * - SVG-based visualization
+ * - Configurable size and appearance
+ * @extends Units
+ */
+class ScaleBar extends Units {
+	/**
+	 * Creates a new ScaleBar instance.
+	 * @param {number} pixelSize - Size of a pixel in real-world units (in mm)
+	 * @param {Viewer} viewer - The OpenLIME viewer instance
+	 * @param {Object} [options] - Configuration options
+	 * @param {number} [options.width=200] - Width of the scale bar in pixels
+	 * @param {number} [options.fontSize=24] - Font size for scale text in pixels
+	 * @param {number} [options.precision=0] - Number of decimal places for scale values
+	 * 
+	 * @property {SVGElement} svg - Main SVG container element
+	 * @property {SVGElement} line - Scale bar line element
+	 * @property {SVGElement} text - Scale text element
+	 * @property {number} lastScaleZoom - Last zoom level where scale was updated
+	 */
+	constructor(pixelSize, viewer, options) {
+		super(options)
+		options = Object.assign(this, {
+			pixelSize: pixelSize,
+			viewer: viewer,
+			width: 200,
+			fontSize: 24,
+			precision: 0
+		}, options);
+		Object.assign(this, options);
 
-        this.r = this.width * 0.5;
-        this.thetaMinRad = this.thetaMin / 180.0 * Math.PI;
-        this.rmax = this.r * Math.cos(this.thetaMinRad);
+		this.svg = Util.createSVGElement('svg', { viewBox: `0 0 ${this.width} 30` });
+		this.svg.classList.add('openlime-scale');
 
-        this.interactLightDir(this.width * 0.5, this.height * 0.5);
+		this.line = Util.createSVGElement('line', { x1: 5, y1: 26.5, x2: this.width - 5, y2: 26.5 });
 
-        this.pointerDown = false;
-        this.dlCanvas.addEventListener("pointerdown", (e) => {
-            this.pointerDown = true;
-            const rect = this.dlCanvas.getBoundingClientRect();
-            let clickPosX =
-                (this.dlCanvas.width * (e.clientX - rect.left)) /
-                rect.width;
-            let clickPosY =
-                (this.dlCanvas.height * (e.clientY - rect.top)) /
-                rect.height;
-            this.interactLightDir(clickPosX, clickPosY);
-            e.preventDefault();
-        });
+		this.text = Util.createSVGElement('text', { x: '50%', y: '16px', 'dominant-basiline': 'middle', 'text-anchor': 'middle' });
+		this.text.textContent = "";
 
-        this.dlCanvas.addEventListener("pointermove", (e) => {
-            if (this.pointerDown) {
-                const rect = this.dlCanvas.getBoundingClientRect();
-                let clickPosX =
-                    (this.dlCanvas.width * (e.clientX - rect.left)) /
-                    rect.width;
-                let clickPosY =
-                    (this.dlCanvas.height * (e.clientY - rect.top)) /
-                    rect.height;
-                this.interactLightDir(clickPosX, clickPosY);
-                e.preventDefault();
-            }
-        });
+		this.svg.appendChild(this.line);
+		this.svg.appendChild(this.text);
+		this.viewer.containerElement.appendChild(this.svg);
+		this.viewer.addEvent('draw', () => { this.updateScale(); });
+	}
 
-        this.dlCanvas.addEventListener("pointerup", (e) => {
-            this.pointerDown = false;
-        });
+	/**
+	 * Updates the scale bar based on current zoom level.
+	 * Called automatically on viewer draw events.
+	 * @private
+	 */
+	updateScale() {
+		//let zoom = this.viewer.camera.getCurrentTransform(performance.now()).z;
+		let zoom = this.viewer.camera.target.z;
+		if (zoom == this.lastScaleZoom)
+			return;
+		this.lastScaleZoom = zoom;
+		let s = this.bestLength(this.width / 2, this.width, this.pixelSize, zoom);
 
-        this.dlCanvas.addEventListener("pointerout", (e) => {
-            this.pointerDown = false;
-        });
+		let margin = this.width - s.length;
+		this.line.setAttribute('x1', margin / 2);
+		this.line.setAttribute('x2', this.width - margin / 2);
+		this.text.textContent = this.format(s.label);
+	}
 
-    }
+	/**
+	 * Calculates the best scale length and label value for current zoom.
+	 * Tries to find a "nice" round number that fits within the given constraints.
+	 * @private
+	 * @param {number} min - Minimum desired length in pixels
+	 * @param {number} max - Maximum desired length in pixels
+	 * @param {number} pixelSize - Size of a pixel in real-world units
+	 * @param {number} zoom - Current zoom level
+	 * @returns {Object} Scale information
+	 * @returns {number} .length - Length of scale bar in pixels
+	 * @returns {number} .label - Value to display (in real-world units)
+	 */
+	bestLength(min, max, pixelSize, zoom) {
+		pixelSize /= zoom;
+		//closest power of 10:
+		let label10 = Math.pow(10, Math.floor(Math.log(max * pixelSize) / Math.log(10)));
+		let length10 = label10 / pixelSize;
+		if (length10 > min) return { length: length10, label: label10 };
 
-    /**
-     * Adds a layer to be controlled by this light sphere.
-     * The layer must support light control operations.
-     * @param {Layer} layer - Layer to be controlled
-     */    
-    addLayer(l) {
-        this.layers.push(l);
-    }
+		let label20 = label10 * 2;
+		let length20 = length10 * 2;
+		if (length20 > min) return { length: length20, label: label20 };
 
-    /**
-     * Makes the controller visible.
-     * @returns {string} The visibility style value
-     */    
-    show() {
-        return this.containerElement.style.visibility = 'visible';
-    }
+		let label50 = label10 * 5;
+		let length50 = length10 * 5;
 
-    /**
-     * Hides the controller.
-     * @returns {string} The visibility style value
-     */    
-    hide() {
-        return this.containerElement.style.visibility = 'hidden';
-    }
-
-    /**
-     * Computes the radial gradient based on current light direction.
-     * Creates a gradient that provides visual feedback about the light position.
-     * @private
-     */    
-    computeGradient() {
-        const x = (this.lightDir[0] + 1.0) * this.dlCanvas.width * 0.5;
-        const y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
-        this.dlGradient = this.dlCanvasCtx.createRadialGradient(
-            x, y, this.dlCanvas.height / 8.0,
-            x, y, this.dlCanvas.width / 1.2
-        );
-        this.dlGradient.addColorStop(0, this.colorSpot);
-        this.dlGradient.addColorStop(1, this.colorBkg);
-    }
-
-    /**
-     * Handles interaction to update light direction.
-     * Converts pointer position to light direction vector while respecting constraints.
-     * @private
-     * @param {number} x - X coordinate in canvas space
-     * @param {number} y - Y coordinate in canvas space
-     */    
-    interactLightDir(x, y) {
-        let xc = x - this.r;
-        let yc = this.r - y;
-        const phy = Math.atan2(yc, xc);
-        let l = Math.sqrt(xc * xc + yc * yc);
-        l = l > this.rmax ? this.rmax : l;
-        xc = l * Math.cos(this.thetaMinRad) * Math.cos(phy);
-        yc = l * Math.cos(this.thetaMinRad) * Math.sin(phy);
-        x = xc + this.r;
-        y = this.r - yc;
-        this.lightDir[0] = 2 * (x / this.dlCanvas.width - 0.5);
-        this.lightDir[1] = 2 * (1 - y / this.dlCanvas.height - 0.5);
-        // console.log('LD ', this.lightDir);
-        for (const l of this.layers) {
-            if (l.controls.light) l.setControl('light', this.lightDir, 5);
-        }
-        this.computeGradient();
-        this.drawLightSelector(x, y);
-    }
-
-    /**
-     * Draws the light direction selector UI.
-     * Renders:
-     * - Circular background with gradient
-     * - Position marker at current light direction
-     * @private
-     * @param {number} x - X coordinate for position marker
-     * @param {number} y - Y coordinate for position marker
-     */    
-    drawLightSelector(x, y) {
-        this.dlCanvasCtx.clearRect(0, 0, this.dlCanvas.width, this.dlCanvas.height);
-        this.dlCanvasCtx.beginPath();
-
-        this.dlCanvasCtx.arc(
-            this.dlCanvas.width / 2,
-            this.dlCanvas.height / 2,
-            this.dlCanvas.width / 2,
-            0,
-            2 * Math.PI
-        );
-        this.dlCanvasCtx.fillStyle = this.dlGradient;
-        this.dlCanvasCtx.fill();
-
-        this.dlCanvasCtx.beginPath();
-        this.dlCanvasCtx.arc(x, y, this.dlCanvas.width / 30, 0, 2 * Math.PI);
-        this.dlCanvasCtx.strokeStyle = this.colorMark;
-        this.dlCanvasCtx.lineWidth = 2;
-        this.dlCanvasCtx.stroke();
-    }
+		if (length50 > min) return { length: length50, label: label50 };
+		return { length: 0, label: 0 }
+	}
 }
 /**
- * Example usage of LightSphereController:
+ * Example usage:
  * ```javascript
- * // Create controller with custom options
- * const lightController = new LightSphereController('#container', {
- *     width: 200,
- *     height: 200,
- *     top: 80,
- *     right: 20,
- *     thetaMin: 15,
- *     colorSpot: '#ffff00',
- *     colorBkg: '#000066',
- *     colorMark: '#ff3333'
+ * // Create scale bar with 0.1mm per pixel
+ * const scaleBar = new ScaleBar(0.1, viewer, {
+ *     width: 300,
+ *     fontSize: 20,
+ *     precision: 1,
+ *     units: ['m', 'cm', 'mm']  // Only use these units
  * });
  * 
- * // Add layers to be controlled
- * lightController.addLayer(layer1);
- * lightController.addLayer(layer2);
+ * // The scale bar will automatically update with viewer zoom
  * 
- * // Show/hide controller
- * lightController.show();
- * lightController.hide();
+ * // Format a specific measurement
+ * scaleBar.format(1234);  // Returns "1.23 m"
  * ```
- * 
- * @property {number[]} lightDir - Current light direction vector [x, y]
- * @property {HTMLElement} containerElement - Main container element
- * @property {HTMLCanvasElement} dlCanvas - Canvas element for drawing
- * @property {CanvasRenderingContext2D} dlCanvasCtx - Canvas 2D rendering context
- * @property {CanvasGradient} dlGradient - Current radial gradient
- * @property {number} r - Radius of the control sphere
- * @property {number} thetaMinRad - Minimum theta angle in radians
- * @property {number} rmax - Maximum interaction radius based on thetaMin
- * @property {boolean} pointerDown - Whether pointer is currently pressed
- * @property {Layer[]} layers - Array of layers being controlled
  */
-
-export { LightSphereController }</pre>
+export { Units, ScaleBar }
+</pre>
     </article>
 </section>
 
