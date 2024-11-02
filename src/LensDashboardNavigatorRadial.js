@@ -1,7 +1,7 @@
 import { Util } from "./Util"
 import { LensDashboard } from "./LensDashboard"
 
-/**
+/*
  * @fileoverview
  * LensDashboardNavigatorRadial module provides a radial menu interface for lens controls.
  * Extends the base LensDashboard with a circular arrangement of navigation controls and tools.

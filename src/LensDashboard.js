@@ -1,7 +1,7 @@
 import { CoordinateSystem } from "./CoordinateSystem";
 import { Util } from "./Util"
 
-/**
+/*
  * @fileoverview
  * LensDashboard module provides functionality for creating and managing an interactive lens interface
  * in OpenLIME. It handles the lens border, SVG masking, and positioning of UI elements around the lens.

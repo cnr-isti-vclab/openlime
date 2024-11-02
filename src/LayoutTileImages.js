@@ -2,7 +2,7 @@ import { Layout } from './Layout.js';
 import { BoundingBox } from './BoundingBox.js';
 import { Tile } from './Tile.js';
 import { Annotation } from './Annotation.js';
-/**
+/*
  * @fileoverview
  * LayoutTileImages module provides management for collections of image tiles with associated regions.
  * This layout type is specialized for handling multiple independent image tiles, each with their own

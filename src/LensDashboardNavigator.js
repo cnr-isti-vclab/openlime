@@ -1,7 +1,7 @@
 import { Util } from "./Util"
 import { LensDashboard } from "./LensDashboard"
 
-/**
+/*
  * @fileoverview
  * LensDashboardNavigator module provides an enhanced lens dashboard with navigation controls and tools.
  * Extends the base LensDashboard with additional UI elements for camera control, lighting, and annotation navigation.
