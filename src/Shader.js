@@ -2,64 +2,46 @@ import { addSignals } from './Signals.js'
 import { Util } from './Util.js'
 
 /**
- * A reference to a 2D texture.
- * @typedef {Object} Shader#Sampler
- * @property {number} id A sampler unique identifier.
- * @property {string} name The sampler name (the texture reference name in the shader program).
- * @property {string} label used for menu
- * @property {array} samplers array of rasters {id:, type: } color, normals, etc.	 * *samplers*: array of rasters {id:, type: } color, normals, etc.
- *         bind: false will not used in preparegl
- *         load: false will not be loaded from raster
- *         both options are used in neural where the coefficients are loaded, but used by tf
- * @property {array} uniforms: 
- *         type = <vec4|vec3|vec2|float|int>, 
- *         needsUpdate controls when updated in gl, 
- *         size is unused, 
- *         value is and array or a float, 	 
- *         we also want to support interpolation: source (value is the target), start, end are the timing (same as camera interpolation)
- */
+* @typedef {Object} Shader~Sampler
+* A reference to a 2D texture used in the shader.
+* @property {number} id - Unique identifier for the sampler
+* @property {string} name - Sampler variable name in shader program (e.g., "kd" for diffuse texture)
+* @property {string} label - Display label for UI/menus
+* @property {Array<Object>} samplers - Array of raster definitions
+* @property {number} samplers[].id - Raster identifier
+* @property {string} samplers[].type - Raster type (e.g., 'color', 'normal')
+* @property {boolean} [samplers[].bind=true] - Whether sampler should be bound in prepareGL
+* @property {boolean} [samplers[].load=true] - Whether sampler should load from raster
+* @property {Array<Object>} uniforms - Shader uniform variables
+* @property {string} uniforms[].type - Data type ('vec4'|'vec3'|'vec2'|'float'|'int')
+* @property {boolean} uniforms[].needsUpdate - Whether uniform needs GPU update
+* @property {number} uniforms[].value - Uniform value or array of values
+*/
 
 /**
- * The `Shader` class allows shader programs to be linked and used.
- * This class supports shader programs written in the OpenGL/ES Shading Language (GLSL/ES) with 2.0 amd 3.0 specifications.
+ * Shader module provides WebGL shader program management for OpenLIME.
+ * Supports both WebGL 1.0 and 2.0/3.0 GLSL specifications with automatic version detection.
  * 
- * The `Shader` class keeps the programmer away from the details of compiling and linking vertex and fragment shaders.
- * The following example creates a fragment shader program using the supplied source code. Once compiled and linked, 
- * the shader program is activated in the current WebGLContext.
- * ```
- * const shader = new OpenLIME.Shader({
- *      'label': 'Rgb',
- *      'samplers': [{ id: 0, name: 'kd' }]
- * });
- * // The fragment shader script
- * shader.fragShaderSrc = function (gl) {
- *      let gl2 = !(gl instanceof WebGLRenderingContext);
- *      let str = `${gl2 ? '#version 300 es' : ''}
- *      precision highp float;
- *      precision highp int;
- *
- *      uniform sampler2D kd;
- *      uniform float u_colorFactor;
- *      ...
- *
- *      return str;
- * };
- * // Declares a uniform.
- * shader.uniforms = {
- *      u_colorFactor: { type: 'float', needsUpdate: true, size: 1, value: 0.0 },
- * };
- * // Adds the shader to the Layer and set it as the current one.
- * this.shaders['bw'] = shader;
- * this.setShader('bw');
- * ```
+ * Shader class manages WebGL shader programs.
+ * Features:
+ * - GLSL/ES 2.0 and 3.0 support
+ * - Automatic uniform management
+ * - Multiple shader modes
+ * - Filter pipeline
+ * - Automatic version selection
  */
 class Shader {
-	/** 
-	* Instantiates a Shader class. An object literal with Shader `options` can be specified.
-	* @param {Object} [options] An object literal describing the shader content.
-	* @param {Array<Shader#Sampler>} options.samplers An array of pointers to 2D textures. 
-	* @param {Array<string>} options.modes An optional array of labels that identify different shader behaviors.
-	*/
+	/**
+	 * Creates a new Shader instance.
+	 * @param {Object} [options] - Configuration options
+	 * @param {Array<Shader~Sampler>} [options.samplers=[]] - Texture sampler definitions
+	 * @param {Object.<string,Object>} [options.uniforms={}] - Shader uniform variables
+	 * @param {string} [options.label=null] - Display label for the shader
+	 * @param {Array<string>} [options.modes=[]] - Available shader modes
+	 * @param {number} [options.version=100] - GLSL version (100 for WebGL1, 300 for WebGL2)
+	 * @param {boolean} [options.debug=false] - Enable debug output
+	 * @fires Shader#update
+	 */
 	constructor(options) {
 		Object.assign(this, {
 			version: 100,   //check for webglversion. 
@@ -78,12 +60,21 @@ class Shader {
 		this.filters = [];
 	}
 
+	/**
+	 * Clears all filters from the shader pipeline.
+	 * @fires Shader#update
+	 */
 	clearFilters() {
 		this.filters = [];
 		this.needsUpdate = true;
 		this.emit('update');
 	}
 
+	/**
+	 * Adds a filter to the shader pipeline.
+	 * @param {Object} filter - Filter to add
+	 * @fires Shader#update
+	 */
 	addFilter(f) {
 		f.shader = this;
 		this.filters.push(f);
@@ -92,6 +83,11 @@ class Shader {
 		this.emit('update');
 	}
 
+	/**
+	 * Removes a filter from the pipeline by name.
+	 * @param {string} name - Name of filter to remove
+	 * @fires Shader#update
+	 */
 	removeFilter(name) {
 		this.filters = this.filters.filter((v) => {
 			return v.name != name;
@@ -101,8 +97,9 @@ class Shader {
 	}
 
 	/**
-	 * Sets the current mode of the shader
-	 * @param {string} mode The mode identifier
+	 * Sets the current shader mode.
+	 * @param {string} mode - Mode identifier (must be in options.modes)
+	 * @throws {Error} If mode is not recognized
 	 */
 	setMode(mode) {
 		if (this.modes.indexOf(mode) == -1)
@@ -111,20 +108,30 @@ class Shader {
 		this.needsUpdate = true;
 	}
 
-	/** @ignore */
+	/**
+	 * Restores WebGL state after context loss.
+	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @private
+	 */
 	restoreWebGL(gl) {
 		this.createProgram(gl);
 	}
 
+	/**
+	 * Sets tile dimensions for shader calculations.
+	 * @param {number[]} size - [width, height] of tile
+	 */
 	setTileSize(sz) {
 		this.tileSize = sz;
 		this.needsUpdate = true;
 	}
 
 	/**
-	 * Sets the value of a uniform variable.
-	 * @param {string} name The name of the uniform variable.
-	 * @param {*} value The value to assign.
+	 * Sets a uniform variable value.
+	 * @param {string} name - Uniform variable name
+	 * @param {number|boolean|Array} value - Value to set
+	 * @throws {Error} If uniform doesn't exist
+	 * @fires Shader#update
 	 */
 	setUniform(name, value) {
 		/**
@@ -152,6 +159,7 @@ class Shader {
 		this.emit('update');
 	}
 
+	/** @ignore */
 	completeFragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 
@@ -182,7 +190,12 @@ class Shader {
 		return src;
 	}
 
-	/** @ignore */
+	/**
+	 * Creates the WebGL shader program.
+	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @private
+	 * @throws {Error} If shader compilation or linking fails
+	 */
 	createProgram(gl) {
 
 		let vert = gl.createShader(gl.VERTEX_SHADER);
@@ -257,6 +270,12 @@ class Shader {
 
 	}
 
+	/**
+	 * Gets a uniform variable by name.
+	 * Searches both shader uniforms and filter uniforms.
+	 * @param {string} name - Uniform variable name
+	 * @returns {Object|undefined} Uniform object if found
+	 */
 	getUniform(name) {
 		let u = this.uniforms[name];
 		if (u) return u;
@@ -267,6 +286,11 @@ class Shader {
 		return u;
 	}
 
+	/**
+	 * Returns all uniform variables associated with the shader and its filters.
+	 * Combines uniforms from both the base shader and all active filters into a single object.
+	 * @returns {Object.<string, Object>} Combined uniform variables
+	 */
 	allUniforms() {
 		const result = this.uniforms;
 		for (let f of this.filters) {
@@ -275,7 +299,11 @@ class Shader {
 		return result;
 	}
 
-	/** @ignore */
+	/**
+	 * Updates all uniform values in the GPU.
+	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @private
+	 */
 	updateUniforms(gl) {
 		for (const [name, uniform] of Object.entries(this.allUniforms())) {
 			if (!uniform.location)
@@ -287,14 +315,14 @@ class Shader {
 			if (uniform.needsUpdate) {
 				let value = uniform.value;
 				switch (uniform.type) {
-					case 'vec4' : gl.uniform4fv(uniform.location, value); break;
-					case 'vec3' : gl.uniform3fv(uniform.location, value); break;
-					case 'vec2' : gl.uniform2fv(uniform.location, value); break;
+					case 'vec4': gl.uniform4fv(uniform.location, value); break;
+					case 'vec3': gl.uniform3fv(uniform.location, value); break;
+					case 'vec2': gl.uniform2fv(uniform.location, value); break;
 					case 'float': gl.uniform1f(uniform.location, value); break;
-					case 'int'  : gl.uniform1i(uniform.location, value); break;
-					case 'bool' : gl.uniform1i(uniform.location, value); break;
-					case 'mat3' : gl.uniformMatrix3fv(uniform.location, false, value); break;
-					case 'mat4' : gl.uniformMatrix4fv(uniform.location, false, value); break;
+					case 'int': gl.uniform1i(uniform.location, value); break;
+					case 'bool': gl.uniform1i(uniform.location, value); break;
+					case 'mat3': gl.uniformMatrix3fv(uniform.location, false, value); break;
+					case 'mat4': gl.uniformMatrix4fv(uniform.location, false, value); break;
 					default: throw Error('Unknown uniform type: ' + u.type);
 				}
 				uniform.needsUpdate = false;
@@ -303,9 +331,10 @@ class Shader {
 	}
 
 	/**
-	 * Gets the vertex shader script. By default it only applies the view matrix and passes the texture coordinates to the fragment shader.
-	 * @param {*} gl Thegl context.
-	 * @returns {string} The vertex shader script.
+	 * Gets vertex shader source code.
+	 * Default implementation provides basic vertex transformation and texture coordinate passing.
+	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @returns {string} Vertex shader source code
 	 */
 	vertShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
@@ -327,27 +356,57 @@ ${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 	}
 
 	/**
-	 * Gets the fragment shader script. This is a virtual function and MUST be redefined in derived classes.
-	 * @param {*} gl Thegl context.
-	 * @returns {string} The vertex shader script.
+	 * Gets fragment shader source code.
+	 * Must be overridden in derived classes for custom shading.
+	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @returns {string} Fragment shader source code
+	 * @virtual
 	 */
-
-
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let str = `
 
 uniform sampler2D kd;
 
-${gl2? 'in' : 'varying'} vec2 v_texcoord;
+${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 
 vec4 data() {
-	return texture${gl2?'':'2D'}(kd, v_texcoord);
+	return texture${gl2 ? '' : '2D'}(kd, v_texcoord);
 }
 `;
 		return str;
 	}
 }
+/**
+ * Fired when shader state changes (uniforms, filters, etc).
+ * @event Shader#update
+ */
 
+/**
+ * Example usage:
+ * ```javascript
+ * const shader = new Shader({
+ *     label: 'RGB Shader',
+ *     samplers: [{ 
+ *         id: 0, 
+ *         name: 'kd',
+ *         label: 'Diffuse'
+ *     }],
+ *     uniforms: {
+ *         u_brightness: { 
+ *             type: 'float',
+ *             value: 1.0
+ *         }
+ *     },
+ *     modes: ['normal', 'grayscale']
+ * });
+ * 
+ * // Set shader mode
+ * shader.setMode('grayscale');
+ * 
+ * // Update uniform
+ * shader.setUniform('u_brightness', 1.5);
+ * ```
+ */
 
 export { Shader }
