@@ -5,7 +5,64 @@ import { Util } from './Util'
 // vector field https://www.shadertoy.com/view/4s23DG
 // isolines https://www.shadertoy.com/view/Ms2XWc
 
+/**
+ * @typedef {Object} ShaderFilterVectorGlyph~Options
+ * Configuration options for glyph-based vector field visualization
+ * @property {number[]} [inDomain=[]] - Input value range [min, max] for magnitude mapping
+ * @property {number} [maxSteps=256] - Number of discrete steps in the colormap texture
+ * @property {number[]} [glyphColor=[0.0, 0.0, 0.0, 1.0]] - RGBA color for glyphs when using 'col' mode
+ * @property {number} [glyphsStride=80] - Horizontal spacing between glyphs in the sprite sheet
+ * @property {number[]} [glyphsSize=[304, 64]] - Dimensions of the glyph sprite sheet [width, height]
+ */
+
+/**
+ * @typedef {Object} ShaderFilterVectorGlyph~Modes
+ * Available visualization modes
+ * @property {string} normalize - Glyph size normalization ('on'|'off')
+ * @property {string} glyph - Glyph coloring mode ('mag'|'col')
+ * @property {string} field - Background field visualization ('none'|'mag')
+ */
+
+/**
+ * @class
+ * @extends ShaderFilter
+ * ShaderFilterVectorGlyph implements sprite-based vector field visualization.
+ * Uses pre-rendered glyphs from an SVG sprite sheet for high-quality vector field representation.
+ * 
+ * Features:
+ * - SVG glyph-based vector field visualization
+ * - Magnitude-dependent glyph selection
+ * - Custom glyph coloring
+ * - Optional vector normalization
+ * - Background field visualization
+ * - Smooth rotation and scaling
+ * 
+ * Technical Implementation:
+ * - Sprite sheet-based glyph rendering
+ * - Dynamic glyph rotation and scaling
+ * - Automatic magnitude mapping
+ * - Alpha-based glyph composition
+ * - WebGL texture management
+ */
 class ShaderFilterVectorGlyph extends ShaderFilter {
+    /**
+     * Creates a new glyph-based vector field visualization filter
+     * @param {ColorScale} colorscale - Colorscale for magnitude mapping
+     * @param {string} glyphsUrl - URL to SVG sprite sheet containing glyphs
+     * @param {ShaderFilterVectorGlyph~Options} [options] - Configuration options
+     * @throws {Error} If inDomain is invalid or glyphsUrl is empty
+     * 
+     * @example
+     * ```javascript
+     * // Create with custom options
+     * const filter = new ShaderFilterVectorGlyph(colorscale, 'glyphs.svg', {
+     *     inDomain: [0, 1],
+     *     glyphsSize: [304, 64],
+     *     glyphsStride: 80,
+     *     glyphColor: [0, 0, 0, 1]
+     * });
+     * ```
+     */    
     constructor(colorscale, glyphsUrl, options) {
         super(options);
         options = Object.assign({
@@ -64,6 +121,23 @@ class ShaderFilterVectorGlyph extends ShaderFilter {
         this.uniforms[this.uniformName('bias')] = { type: 'float', needsUpdate: true, size: 1, value: bias };
     }
 
+    /**
+     * Creates textures for glyphs and colormap
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @returns {Promise<void>}
+     * @private
+     * 
+     * Implementation details:
+     * 1. Glyph Texture:
+     *    - Rasterizes SVG to image buffer
+     *    - Creates and configures texture
+     *    - Sets up linear filtering
+     * 
+     * 2. Colormap Texture:
+     *    - Samples colorscale
+     *    - Creates 1D RGBA texture
+     *    - Configures appropriate filtering
+     */    
     async createTextures(gl) {
         // Glyphs
         const glyphsBuffer = await Util.rasterizeSVG(this.glyphsUrl, this.glyphsSize);
@@ -92,6 +166,19 @@ class ShaderFilterVectorGlyph extends ShaderFilter {
         this.getSampler('colormap').tex = tex;
     }
 
+    /**
+     * Generates GLSL code for glyph-based vector field visualization
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @returns {string} GLSL function definition
+     * @private
+     * 
+     * Shader Features:
+     * - Tile-based glyph placement
+     * - Dynamic glyph rotation
+     * - Magnitude-based glyph selection
+     * - Alpha-based composition
+     * - Multiple visualization modes
+     */    
     fragDataSrc(gl) {
         return `
         // 2D vector glyph visualization
@@ -198,9 +285,61 @@ class ShaderFilterVectorGlyph extends ShaderFilter {
             return  mix(glyph_col, field_col, t);
         }`;
     }
-
-
 }
+/**
+ * Default class properties
+ * 
+ * @property {string} glyphsUrl - URL to SVG sprite sheet
+ * @property {ColorScale} colorscale - Associated colorscale for magnitude mapping
+ * @property {number[]} inDomain - Input magnitude range for mapping
+ * @property {number[]} glyphsSize - Dimensions of glyph sprite sheet
+ * @property {number} glyphsStride - Horizontal spacing between glyphs
+ * @property {Object} modes - Visualization mode configurations:
+ *   - normalize: Glyph size normalization
+ *   - glyph: Glyph coloring method
+ *   - field: Background field visualization
+ * @property {Object} uniforms - WebGL uniform definitions:
+ *   - glyph_color: vec4 custom glyph color
+ *   - glyph_count: float number of glyphs in sprite sheet
+ *   - glyph_wh: float glyph height/width
+ *   - glyph_stride: float horizontal spacing
+ *   - low_color: vec4 color for values below range
+ *   - high_color: vec4 color for values above range
+ *   - scale: float magnitude scaling factor
+ *   - bias: float magnitude offset
+ */
 
+/**
+ * GLSL Implementation Details
+ * 
+ * Key Components:
+ * 1. Glyph Rendering:
+ *    - Tile-based positioning
+ *    - Dynamic rotation matrix
+ *    - Sprite sheet sampling
+ *    - Alpha composition
+ * 
+ * 2. Vector Processing:
+ *    - Magnitude computation
+ *    - Direction extraction
+ *    - Level selection
+ *    - Coordinate transformation
+ * 
+ * Constants:
+ * - GLYPH_TILE_SIZE: Spacing between glyphs (16.0)
+ * - ISQRT2: 1/sqrt(2) for magnitude normalization
+ * 
+ * Uniforms:
+ * @property {sampler2D} glyphs - Glyph sprite sheet texture
+ * @property {sampler2D} colormap - Magnitude colormap texture
+ * @property {vec4} glyph_color - Custom glyph color
+ * @property {float} glyph_count - Number of glyphs in sprite sheet
+ * @property {float} glyph_wh - Glyph height/width
+ * @property {float} glyph_stride - Horizontal spacing between glyphs
+ * @property {vec4} low_color - Color for values below range
+ * @property {vec4} high_color - Color for values above range
+ * @property {float} scale - Magnitude scaling factor
+ * @property {float} bias - Magnitude offset
+ */
 
 export { ShaderFilterVectorGlyph }

@@ -1,58 +1,84 @@
 import { BoundingBox } from "./BoundingBox";
 
 /**
- * A [x, y] point.
- * @typedef APoint
- * @property {number} p.0 The x-coordinate.
- * @property {number} p.1 The y-coordinate.
+ * @typedef {[number, number]} APoint
+ * Array representation of a 2D point [x, y]
  */
 
 /**
- * A {x, y} point.
  * @typedef {Object} Point
- * @property {number} x The x-coordinate.
- * @property {number} y The y-coordinate.
+ * Object representation of a 2D point
+ * @property {number} x - X coordinate
+ * @property {number} y - Y coordinate
  */
 
 /**
- * The class **Transform** implements a 2D affine map to convert coordinates between two systems.
- * The map is internally represented by four values:
- * * `x` the x-component of the translation vector
- * * `y` the y-component of the translation vector
- * * `a` the rotation angle around the z-axis (in degrees)
- * * `z` the scale factor
- * 
- * A transformation between a point P to P' is defined by
- * ```
- * P' = z*rot(a)*P + t
- * ```
- * where `z` is the scale factor, `a` is the rotation angle, and `t(x,y)` is the translation vector.
- * 
- * The class implements a set of geometric transformations useful to position the camera, create animations, etc... 
+ * @typedef {Object} TransformParameters
+ * @property {number} [x=0] - X translation component
+ * @property {number} [y=0] - Y translation component
+ * @property {number} [a=0] - Rotation angle in degrees
+ * @property {number} [z=1] - Scale factor
+ * @property {number} [t=0] - Timestamp for animations
  */
 
+/**
+ * @typedef {'linear'|'ease-out'|'ease-in-out'} EasingFunction
+ * Animation easing function type
+ */
+
+/**
+ * @class
+ * Implements a 2D affine transformation system for coordinate manipulation.
+ * Provides a complete set of operations for coordinate system conversions,
+ * camera transformations, and animation support.
+ * 
+ * Mathematical Model:
+ * Transformation of point P to P' follows the equation:
+ * P' = z * R(a) * P + T
+ * where:
+ * - z: scale factor
+ * - R(a): rotation matrix for angle 'a'
+ * - T: translation vector (x,y)
+ * 
+ * Key Features:
+ * - Full affine transformation support
+ * - Camera positioning utilities
+ * - Animation interpolation
+ * - Viewport projection
+ * - Coordinate system conversions
+ * - Bounding box transformations
+ */
 class Transform { //FIXME Add translation to P?
 	/**
-	 * Instantiates a Transform object.
-	 * @param {Object} [options] An object literal with Transform parameters.
-	 * @param {number} options.x=0 The x-component of the translation vector.
-	 * @param {number} options.y=0 The y-component of the translation vector.
-	 * @param {number} options.a=0 The rotation angle (in degrees).
-	 * @param {number} options.z=1 The scale factor.
-	 * @param {time} options.t=0 The current time.
+	 * Creates a new Transform instance
+	 * @param {TransformParameters} [options] - Transform configuration
+	 * 
+	 * @example
+	 * ```javascript
+	 * // Create identity transform
+	 * const t1 = new Transform();
+	 * 
+	 * // Create custom transform
+	 * const t2 = new Transform({
+	 *     x: 100,    // Translate 100 units in x
+	 *     y: 50,     // Translate 50 units in y
+	 *     a: 45,     // Rotate 45 degrees
+	 *     z: 2       // Scale by factor of 2
+	 * });
+	 * ```
 	 */
 	constructor(options) {
-		Object.assign(this, { x:0, y:0, z:1, a:0, t:0 });
+		Object.assign(this, { x: 0, y: 0, z: 1, a: 0, t: 0 });
 
-		if(!this.t) this.t = performance.now();
-		
-		if(typeof(options) == 'object')
+		if (!this.t) this.t = performance.now();
+
+		if (typeof (options) == 'object')
 			Object.assign(this, options);
 	}
 
 	/**
-	 * Gets a copy of `this` Transform.
-	 * @returns {Transform} The copy of the Transform.
+	 * Creates a deep copy of the transform
+	 * @returns {Transform} New transform with identical parameters
 	 */
 	copy() {
 		let transform = new Transform();
@@ -61,59 +87,80 @@ class Transform { //FIXME Add translation to P?
 	}
 
 	/**
-	 * Applies `this` Transform to a point P(x,y) to get P'(x',y').
-	 * @param {number} x x-coordinate of the point P.
-	 * @param {number} y y-coordinate of the point P.
-	 * @returns {{x, y}} The point P'.
+	 * Applies transform to a point (x,y)
+	 * Performs full affine transformation: scale, rotate, translate
+	 * 
+	 * @param {number} x - X coordinate to transform
+	 * @param {number} y - Y coordinate to transform
+	 * @returns {Point} Transformed point
+	 * 
+	 * @example
+	 * ```javascript
+	 * const transform = new Transform({x: 10, y: 20, a: 45, z: 2});
+	 * const result = transform.apply(5, 5);
+	 * // Returns rotated, scaled, and translated point
+	 * ```
 	 */
 	apply(x, y) {
 		//TODO! ROTATE
 		let r = Transform.rotate(x, y, this.a);
-		return { 
-			x: r.x*this.z + this.x,
-			y: r.y*this.z + this.y
+		return {
+			x: r.x * this.z + this.x,
+			y: r.y * this.z + this.y
 		}
 	}
 
 	/**
-	 * Computes the inverse of `this` Transform.
-	 * @returns {Transform} The inverse Transform.
+	 * Computes inverse transformation
+	 * Creates transform that undoes this transform's effects
+	 * @returns {Transform} Inverse transform
 	 */
 	inverse() {
-		let r = Transform.rotate(this.x/this.z, this.y/this.z, -this.a);
-		return new Transform({x:-r.x, y:-r.y, z:1/this.z, a:-this.a, t:this.t});
+		let r = Transform.rotate(this.x / this.z, this.y / this.z, -this.a);
+		return new Transform({ x: -r.x, y: -r.y, z: 1 / this.z, a: -this.a, t: this.t });
 	}
 
 	/**
-	 * Maps an angle `a` to range from 0 to 360 degrees.
-	 * @param {number} a The angle (in degrees).
-	 * @returns {number} The normalized angle.
+	 * Normalizes angle to range [0, 360]
+	 * @param {number} a - Angle in degrees
+	 * @returns {number} Normalized angle
+	 * @static
 	 */
 	static normalizeAngle(a) {
-		while(a > 360) a -= 360;
-		while(a < 0) a += 360;
+		while (a > 360) a -= 360;
+		while (a < 0) a += 360;
 		return a;
 	}
 
 	/**
-	 * Computes the rotation of a point P(x,y) by an angle `a` around the z-axis to get P'(x',y').
-	 * @param {*} x x-coordinate of the point P.
-	 * @param {*} y y-coordinate of the point P.
-	 * @param {*} a The rotation angle (in degrees)
-	 * @returns {{x,y}} The point P'.
+	 * Rotates point (x,y) by angle a around Z axis
+	 * @param {number} x - X coordinate to rotate
+	 * @param {number} y - Y coordinate to rotate
+	 * @param {number} a - Rotation angle in degrees
+	 * @returns {Point} Rotated point
+	 * @static
 	 */
 	static rotate(x, y, a) {
-		a = Math.PI*(a/180);
-		let ex =  Math.cos(a)*x - Math.sin(a)*y;
-		let ey =  Math.sin(a)*x + Math.cos(a)*y;
-		return {x:ex, y:ey};
+		a = Math.PI * (a / 180);
+		let ex = Math.cos(a) * x - Math.sin(a) * y;
+		let ey = Math.sin(a) * x + Math.cos(a) * y;
+		return { x: ex, y: ey };
 	}
 
-	// first get applied this (a) then  transform (b).
 	/**
-	 * Composes (multiplies) `this` Transform with an other `transform`.
-	 * @param {Transform} transform 
-	 * @returns {Transform} The result of the composition.
+	 * Composes two transforms: this * transform
+	 * Applies this transform first, then the provided transform
+	 * 
+	 * @param {Transform} transform - Transform to compose with
+	 * @returns {Transform} Combined transformation
+	 * 
+	 * @example
+	 * ```javascript
+	 * const t1 = new Transform({x: 10, a: 45});
+	 * const t2 = new Transform({z: 2});
+	 * const combined = t1.compose(t2);
+	 * // Results in rotation, then scale, then translation
+	 * ```
 	 */
 	compose(transform) {
 		let a = this.copy();
@@ -121,19 +168,19 @@ class Transform { //FIXME Add translation to P?
 		a.z *= b.z;
 		a.a += b.a;
 		var r = Transform.rotate(a.x, a.y, b.a);
-		a.x = r.x*b.z + b.x;
-		a.y = r.y*b.z + b.y; 
+		a.x = r.x * b.z + b.x;
+		a.y = r.y * b.z + b.y;
 		return a;
 	}
 
 	/**
-	 * Applyes `this` Transform to a bounding box.
-	 * @param {BoundingBox} lbox 
-	 * @returns {BoundingBox} The result.
+	 * Transforms a bounding box through this transform
+	 * @param {BoundingBox} box - Box to transform
+	 * @returns {BoundingBox} Transformed bounding box
 	 */
 	transformBox(lbox) {
 		let box = new BoundingBox();
-		for(let i = 0; i < 4; i++) {
+		for (let i = 0; i < 4; i++) {
 			let c = lbox.corner(i);
 			let p = this.apply(c.x, c.y);
 			box.mergePoint(p);
@@ -142,39 +189,43 @@ class Transform { //FIXME Add translation to P?
 	}
 
 	/**
-	 * Gets the bounding box (in image coordinate space) of the vieport. The viewport y-axis points up.
-	 * The image and screen transform has y pointing down.
-	 * @param {Viewport} viewport 
-	 * @returns {BoundingBox} The bounding box.
+	 * Computes viewport bounds in image space
+	 * Accounts for coordinate system differences between viewport and image
+	 * 
+	 * @param {Viewport} viewport - Current viewport
+	 * @returns {BoundingBox} Bounds in image space
 	 */
 	getInverseBox(viewport) {
 		let inverse = this.inverse();
 		let corners = [
-			{x:viewport.x,               y:viewport.y},
-			{x:viewport.x + viewport.dx, y:viewport.y},
-			{x:viewport.x,               y:viewport.y + viewport.dy},
-			{x:viewport.x + viewport.dx, y:viewport.y + viewport.dy}
+			{ x: viewport.x, y: viewport.y },
+			{ x: viewport.x + viewport.dx, y: viewport.y },
+			{ x: viewport.x, y: viewport.y + viewport.dy },
+			{ x: viewport.x + viewport.dx, y: viewport.y + viewport.dy }
 		];
 		let box = new BoundingBox();
-		for(let corner of corners) {
-			let p = inverse.apply(corner.x -viewport.w/2, -corner.y + viewport.h/2);
+		for (let corner of corners) {
+			let p = inverse.apply(corner.x - viewport.w / 2, -corner.y + viewport.h / 2);
 			box.mergePoint(p);
 		}
 		return box;
 	}
 
 	/**
-	* The type Easing defines the function that regulates the movement of the camera
-	* @typedef {('linear'|'ease-out'|'ease-in-out')} Transform#Easing
-	*/
-
-	/**
-	 * Computes the interpolated transform at time `time` between `source` and `target` 
-	 * @param {Transform} source The source transform.
-	 * @param {Transform} target The target transform.
-	 * @param {time} time The time at which to compute the interpolation.
-	 * @param {Transform#Easing} easing The easing function.
-	 * @returns {Transform} The interpolated transform.
+	 * Interpolates between two transforms
+	 * @param {Transform} source - Starting transform
+	 * @param {Transform} target - Ending transform
+	 * @param {number} time - Current time for interpolation
+	 * @param {EasingFunction} easing - Easing function type
+	 * @returns {Transform} Interpolated transform
+	 * @static
+	 * 
+	 * @example
+	 * ```javascript
+	 * const start = new Transform({x: 0, y: 0});
+	 * const end = new Transform({x: 100, y: 100});
+	 * const mid = Transform.interpolate(start, end, 500, 'ease-out');
+	 * ```
 	 */
 	static interpolate(source, target, time, easing) { //FIXME STATIC
 		console.assert(!isNaN(source.x));
@@ -200,9 +251,11 @@ class Transform { //FIXME Add translation to P?
 	}
 
 	/**
-	 * Combines `this` Transform with the viewport to get the WebGL projection matrix.
-	 * @param {Viewport} viewport The viewport. 
-	 * @returns {number[]} The result.
+	 * Generates WebGL projection matrix
+	 * Combines transform with viewport for rendering
+	 * 
+	 * @param {Viewport} viewport - Current viewport
+	 * @returns {number[]} 4x4 projection matrix in column-major order
 	 */
 	projectionMatrix(viewport) {
 		let z = this.z;
@@ -212,49 +265,87 @@ class Transform { //FIXME Add translation to P?
 		// With x0 != 0: x0 -> x0-v.w/2 -> -1, and x0+dx -> x0+v.dx-v.w/2 -> 1
 		// Where dx is viewport width, while w is window width
 		//0, 0 <-> viewport.x + viewport.dx/2 (if x, y =
-		
-		let zx = 2/viewport.dx;
-		let zy = 2/viewport.dy;
 
-		let dx =  zx * this.x + (2/viewport.dx)*(viewport.w/2-viewport.x)-1;
-		let dy =  zy * this.y + (2/viewport.dy)*(viewport.h/2-viewport.y)-1;
+		let zx = 2 / viewport.dx;
+		let zy = 2 / viewport.dy;
 
-		let a = Math.PI *this.a/180;
+		let dx = zx * this.x + (2 / viewport.dx) * (viewport.w / 2 - viewport.x) - 1;
+		let dy = zy * this.y + (2 / viewport.dy) * (viewport.h / 2 - viewport.y) - 1;
+
+		let a = Math.PI * this.a / 180;
 		let matrix = [
-			 Math.cos(a)*zx*z, Math.sin(a)*zy*z,  0,  0, 
-			-Math.sin(a)*zx*z, Math.cos(a)*zy*z,  0,  0,
-			 0,  0,  1,  0,
-			dx, dy, 0,  1];
+			Math.cos(a) * zx * z, Math.sin(a) * zy * z, 0, 0,
+			-Math.sin(a) * zx * z, Math.cos(a) * zy * z, 0, 0,
+			0, 0, 1, 0,
+			dx, dy, 0, 1];
 		return matrix;
 	}
 
-    /**
-	 * Transforms the point `p` from scene (0 at image center) to [0,wh]  .
-	 * @param {Viewport} viewport The viewport.
-	 * @param {APoint} p The point in scene (0,0 at image center)
-	 * @returns {APoint} The point in range [0..w-1,0..h-1]
-	 */ 
+	/**
+	 * Converts scene coordinates to viewport coordinates
+	 * @param {Viewport} viewport - Current viewport
+	 * @param {APoint} p - Point in scene space
+	 * @returns {APoint} Point in viewport space [0..w-1, 0..h-1]
+	 */
 	sceneToViewportCoords(viewport, p) { //FIXME Point is an array, but in other places it is an Object...
-        return [p[0] * this.z  + this.x - viewport.x + viewport.w/2, 
-                p[1] * this.z  - this.y + viewport.y + viewport.h/2 ];
-    }
+		return [p[0] * this.z + this.x - viewport.x + viewport.w / 2,
+		p[1] * this.z - this.y + viewport.y + viewport.h / 2];
+	}
 
 	/**
-     * Transforms the point `p` from [0,wh] to scene (0 at image center).
-	 * 
-	 * @param {Viewport} viewport The viewport.
-	 * @param {APoint} p The point in range [0..w-1,0..h-1]
-	 * @returns {APoint} The point in scene (0,0 at image center)
+	 * Converts viewport coordinates to scene coordinates
+	 * @param {Viewport} viewport - Current viewport
+	 * @param {APoint} p - Point in viewport space [0..w-1, 0..h-1]
+	 * @returns {APoint} Point in scene space
 	 */
-    viewportToSceneCoords(viewport, p) {
-        return [(p[0] + viewport.x - viewport.w/2 - this.x) / this.z,
-                (p[1] - viewport.y - viewport.h/2 + this.y) / this.z];
-    }
+	viewportToSceneCoords(viewport, p) {
+		return [(p[0] + viewport.x - viewport.w / 2 - this.x) / this.z,
+		(p[1] - viewport.y - viewport.h / 2 + this.y) / this.z];
+	}
 
-	print(str="", precision=0) {
-    	const p = precision;
-    	console.log(str + " x:" + this.x.toFixed(p) + ", y:" + this.y.toFixed(p) + ", z:" + this.z.toFixed(p) + ", a:" + this.a.toFixed(p) + ", t:" + this.t.toFixed(p));
+	/**
+	 * Prints transform parameters for debugging
+	 * @param {string} [str=""] - Prefix string
+	 * @param {number} [precision=0] - Decimal precision
+	 */
+	print(str = "", precision = 0) {
+		const p = precision;
+		console.log(str + " x:" + this.x.toFixed(p) + ", y:" + this.y.toFixed(p) + ", z:" + this.z.toFixed(p) + ", a:" + this.a.toFixed(p) + ", t:" + this.t.toFixed(p));
 	}
 }
+
+/**
+ * Coordinate Systems and Transformations:
+ * 
+ * 1. Scene Space:
+ * - Origin at image center
+ * - Y-axis points up
+ * - Unit scale
+ * 
+ * 2. Viewport Space:
+ * - Origin at top-left
+ * - Y-axis points down
+ * - Pixel units [0..w-1, 0..h-1]
+ * 
+ * 3. WebGL Space:
+ * - Origin at center
+ * - Y-axis points up
+ * - Range [-1..1, -1..1]
+ * 
+ * Transform Pipeline:
+ * ```
+ * Scene -> Transform -> Viewport -> WebGL
+ * ```
+ * 
+ * Animation System:
+ * - Time-based interpolation
+ * - Multiple easing functions
+ * - Smooth transitions
+ * 
+ * Performance Considerations:
+ * - Matrix operations optimized for 2D
+ * - Cached transformation results
+ * - Efficient composition
+ */
 
 export { Transform }

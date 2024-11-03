@@ -1,4 +1,46 @@
+/**
+ * @typedef {Object} ShaderFilter~Mode
+ * A shader filter mode configuration
+ * @property {string} id - Unique identifier for the mode
+ * @property {boolean} enable - Whether the mode is active
+ * @property {string} src - GLSL source code for the mode
+ */
+
+/**
+ * @typedef {Object} ShaderFilter~Sampler
+ * A texture sampler used by the filter
+ * @property {string} name - Unique name for the sampler
+ * @property {WebGLTexture} [texture] - Associated WebGL texture
+ * @property {WebGLUniformLocation} [location] - GPU location for the sampler
+ */
+
+/**
+ * @class
+ * Base class for WebGL shader filters in OpenLIME.
+ * Provides infrastructure for creating modular shader effects that can be chained together.
+ * 
+ * Features:
+ * - Modular filter architecture
+ * - Automatic uniform management
+ * - Dynamic mode switching
+ * - Texture sampling support
+ * - GLSL code generation
+ * - Unique naming conventions
+ * 
+ * Technical Implementation:
+ * - Generates unique names for uniforms and samplers
+ * - Manages WebGL resource lifecycle
+ * - Supports multiple filter modes
+ * - Handles shader program integration
+ */
 class ShaderFilter {
+    /**
+     * Creates a new shader filter
+     * @param {Object} [options] - Filter configuration
+     * @param {Object} [options.modes={}] - Available filter modes
+     * @param {Object} [options.uniforms={}] - Filter uniform variables
+     * @param {Array<ShaderFilter~Sampler>} [options.samplers=[]] - Texture samplers
+     */
     constructor(options) {
         options = Object.assign({
         }, options);
@@ -12,6 +54,12 @@ class ShaderFilter {
         this.modes = {};
     }
 
+    /**
+     * Sets the active mode for the filter
+     * @param {string} mode - Mode category to modify
+     * @param {string} id - Specific mode ID to enable
+     * @throws {Error} If shader not registered or mode doesn't exist
+     */
     setMode(mode, id) {
         if (!this.shader)
             throw Error("Shader not registered");
@@ -29,18 +77,23 @@ class ShaderFilter {
         }
     }
 
-    // Callback in Shader.js
+    /**
+     * Prepares filter resources for rendering
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @private
+     */
     prepare(gl) {
         if (this.needsUpdate)
             if (this.createTextures) this.createTextures(gl);
         this.needsUpdate = false;
     }
 
-    // Callback to create textures for samplers
-    // async createTextures(gl) {
-    // }
 
-    // Constant (modes) declarations in shader program 
+    /**
+     * Generates mode-specific GLSL code
+     * @returns {string} GLSL declarations for enabled modes
+     * @private
+     */
     fragModeSrc() {
         let src = '';
         for (const key of Object.keys(this.modes)) {
@@ -54,18 +107,23 @@ class ShaderFilter {
     }
 
     /**
-	 * Sets the value of a uniform variable.
-	 * @param {string} name The name of the uniform variable (it will be converted with the unique filter name).
-	 * @param {*} value The value to assign.
-	 */
+     * Sets a uniform variable value
+     * @param {string} name - Base name of uniform variable
+     * @param {number|boolean|Array} value - Value to set
+     * @throws {Error} If shader not registered
+     */
     setUniform(name, value) {
-        if(!this.shader) {
+        if (!this.shader) {
             throw Error(`Shader not registered`);
         }
         this.shader.setUniform(this.uniformName(name), value);
     }
 
-    // Sampler declarations in shader program 
+    /**
+     * Generates sampler declarations
+     * @returns {string} GLSL sampler declarations
+     * @private
+     */
     fragSamplerSrc() {
         let src = '';
         for (let s of this.samplers) {
@@ -75,7 +133,11 @@ class ShaderFilter {
         return src;
     }
 
-    // Uniform declarations in shader program 
+    /**
+     * Generates uniform variable declarations
+     * @returns {string} GLSL uniform declarations
+     * @private
+     */
     fragUniformSrc() {
         let src = '';
         for (const [key, value] of Object.entries(this.uniforms)) {
@@ -85,33 +147,74 @@ class ShaderFilter {
         return src;
     }
 
+    /**
+     * Generates filter-specific GLSL function
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @returns {string|null} GLSL function definition
+     * @virtual
+     */
     fragDataSrc(gl) {
         return null;
     }
 
+    // Utility methods documentation
+    /**
+     * @returns {string} Generated function name for the filter
+     * @private
+     */
     functionName() {
         return this.name + "_data";
     }
 
+    /**
+     * @param {string} name - Base sampler name
+     * @returns {string} Unique sampler identifier
+     * @private
+     */
     samplerName(name) {
         return `${this.name}_${name}`;
     }
 
+    /**
+     * @param {string} name - Base uniform name
+     * @returns {string} Unique uniform identifier
+     * @private
+     */
     uniformName(name) {
         return `u_${this.name}_${name}`;
     }
 
+    /**
+     * @param {string} name - Base mode name
+     * @returns {string} Unique mode identifier
+     * @private
+     */
     modeName(name) {
         return `m_${this.name}_${name}`;
     }
 
+    /**
+     * Finds a sampler by name
+     * @param {string} name - Base sampler name
+     * @returns {ShaderFilter~Sampler|undefined} Found sampler or undefined
+     */
     getSampler(name) {
         const samplername = this.samplerName(name);
         return this.samplers.find(e => e.name == samplername);
     }
 }
 
+/**
+ * @class
+ * @extends ShaderFilter
+ * Test filter that replaces transparent pixels with a specified color
+ */
 class ShaderFilterTest extends ShaderFilter {
+    /**
+     * Creates a test filter
+     * @param {Object} [options] - Filter options
+     * @param {number[]} [options.nodata_col=[1,1,0,1]] - Color for transparent pixels
+     */
     constructor(options) {
         super(options);
         this.uniforms[this.uniformName('nodata_col')] = { type: 'vec4', needsUpdate: true, size: 4, value: [1, 1, 0, 1] };
@@ -125,7 +228,17 @@ class ShaderFilterTest extends ShaderFilter {
     }
 }
 
+/**
+ * @class
+ * @extends ShaderFilter
+ * Filter that modifies the opacity of rendered content
+ */
 class ShaderFilterOpacity extends ShaderFilter {
+    /**
+     * Creates an opacity filter
+     * @param {number} opacity - Initial opacity value [0-1]
+     * @param {Object} [options] - Additional filter options
+     */    
     constructor(opacity, options) {
         super(options);
         this.uniforms[this.uniformName('opacity')] = { type: 'float', needsUpdate: true, size: 1, value: opacity };
@@ -139,7 +252,17 @@ class ShaderFilterOpacity extends ShaderFilter {
     }
 }
 
+/**
+ * @class
+ * @extends ShaderFilter
+ * Filter that applies gamma correction to colors
+ */
 class ShaderGammaFilter extends ShaderFilter {
+    /**
+     * Creates a gamma correction filter
+     * @param {Object} [options] - Filter options
+     * @param {number} [options.gamma=2.2] - Gamma correction value
+     */    
     constructor(options) {
         super(options);
         this.uniforms[this.uniformName('gamma')] = { type: 'float', needsUpdate: true, size: 1, value: 2.2 };
@@ -153,5 +276,47 @@ class ShaderGammaFilter extends ShaderFilter {
             }`;
     }
 }
+/**
+ * Example usage:
+ * ```javascript
+ * // Create and configure an opacity filter
+ * const opacityFilter = new ShaderFilterOpacity(0.5);
+ * shader.addFilter(opacityFilter);
+ * 
+ * // Later update opacity
+ * opacityFilter.setUniform('opacity', 0.8);
+ * 
+ * // Chain multiple filters
+ * const gammaFilter = new ShaderGammaFilter({ gamma: 1.8 });
+ * shader.addFilter(gammaFilter);
+ * ```
+ * 
+ * Advanced usage with custom modes:
+ * ```javascript
+ * // Create filter with multiple modes
+ * const filter = new ShaderFilter({
+ *     modes: {
+ *         'blend': [
+ *             { id: 'normal', enable: true, src: '...' },
+ *             { id: 'multiply', enable: false, src: '...' }
+ *         ]
+ *     }
+ * });
+ * 
+ * // Switch modes
+ * filter.setMode('blend', 'multiply');
+ * ```
+ */
+
+/**
+ * Default class properties
+ * 
+ * @property {string} name - Filter name (derived from class name)
+ * @property {Object} uniforms - Uniform variable definitions
+ * @property {Array<ShaderFilter~Sampler>} samplers - Texture sampler definitions
+ * @property {boolean} needsUpdate - Whether filter needs updating
+ * @property {Shader} shader - Associated shader program
+ * @property {Object.<string,Array>} modes - Available filter modes
+ */
 
 export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity, ShaderGammaFilter }

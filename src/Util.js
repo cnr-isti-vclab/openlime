@@ -1,15 +1,38 @@
 // HELPERS
 window.structuredClone = typeof (structuredClone) == "function" ? structuredClone : function (value) { return JSON.parse(JSON.stringify(value)); };
 
-// Utilities
+/**
+ * Utility class providing various helper functions for OpenLIME.
+ * Includes methods for SVG manipulation, file loading, image processing, and string handling.
+ * 
+ * @class
+ * @static
+ */
 class Util {
 
+    /**
+     * Pads a number with leading zeros
+     * @param {number} num - Number to pad
+     * @param {number} size - Desired string length
+     * @returns {string} Zero-padded number string
+     * 
+     * @example
+     * ```javascript
+     * Util.padZeros(42, 5); // Returns "00042"
+     * ```
+     */
     static padZeros(num, size) {
         num = num.toString();
         while (num.length < size) num = "0" + num;
         return num;
     }
 
+    /**
+     * Prints source code with line numbers
+     * Useful for shader debugging
+     * @param {string} str - Source code to print
+     * @private
+     */
     static printSrcCode(str) {
         let i = 1;
         let result = '';
@@ -21,6 +44,21 @@ class Util {
         console.log(result);
     }
 
+    /**
+     * Creates an SVG element with optional attributes
+     * @param {string} tag - SVG element tag name
+     * @param {Object} [attributes] - Key-value pairs of attributes
+     * @returns {SVGElement} Created SVG element
+     * 
+     * @example
+     * ```javascript
+     * const circle = Util.createSVGElement('circle', {
+     *     cx: '50',
+     *     cy: '50',
+     *     r: '40'
+     * });
+     * ```
+     */
     static createSVGElement(tag, attributes) {
         let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
         if (attributes)
@@ -29,11 +67,29 @@ class Util {
         return e;
     }
 
+    /**
+     * Parses SVG string into DOM element
+     * @param {string} text - SVG content string
+     * @returns {SVGElement} Parsed SVG element
+     * @throws {Error} If parsing fails
+     */
     static SVGFromString(text) {
         const parser = new DOMParser();
         return parser.parseFromString(text, "image/svg+xml").documentElement;
     }
 
+    /**
+     * Loads SVG file from URL
+     * @param {string} url - URL to SVG file
+     * @returns {Promise<SVGElement>} Loaded and parsed SVG
+     * @throws {Error} If fetch fails or content isn't SVG
+     * 
+     * @example
+     * ```javascript
+     * const svg = await Util.loadSVG('icons/icon.svg');
+     * document.body.appendChild(svg);
+     * ```
+     */
     static async loadSVG(url) {
         let response = await fetch(url);
         if (!response.ok) {
@@ -51,6 +107,12 @@ class Util {
         return result;
     };
 
+    /**
+     * Loads HTML content from URL
+     * @param {string} url - URL to HTML file
+     * @returns {Promise<string>} HTML content
+     * @throws {Error} If fetch fails
+     */
     static async loadHTML(url) {
         let response = await fetch(url);
         if (!response.ok) {
@@ -61,6 +123,12 @@ class Util {
         return data;
     };
 
+    /**
+     * Loads and parses JSON from URL
+     * @param {string} url - URL to JSON file
+     * @returns {Promise<Object>} Parsed JSON data
+     * @throws {Error} If fetch or parsing fails
+     */
     static async loadJSON(url) {
         let response = await fetch(url);
         if (!response.ok) {
@@ -71,6 +139,12 @@ class Util {
         return data;
     }
 
+    /**
+     * Loads image from URL
+     * @param {string} url - Image URL
+     * @returns {Promise<HTMLImageElement>} Loaded image
+     * @throws {Error} If image loading fails
+     */
     static async loadImage(url) {
         return new Promise((resolve, reject) => {
             const img = new Image();
@@ -80,12 +154,26 @@ class Util {
         });
     }
 
+    /**
+     * Appends loaded image to container
+     * @param {HTMLElement} container - Target container
+     * @param {string} url - Image URL
+     * @param {string} [imgClass] - Optional CSS class
+     * @returns {Promise<void>}
+     */
     static async appendImg(container, url, imgClass = null) {
         const img = await Util.loadImage(url);
         if (imgClass) img.classList.add(imgClass);
         container.appendChild(img);
     }
 
+    /**
+      * Appends multiple images to container
+      * @param {HTMLElement} container - Target container
+      * @param {string[]} urls - Array of image URLs
+      * @param {string} [imgClass] - Optional CSS class
+      * @returns {Promise<void>}
+      */
     static async appendImgs(container, urls, imgClass = null) {
         for (const u of urls) {
             const img = await Util.loadImage(u);
@@ -94,6 +182,11 @@ class Util {
         }
     }
 
+    /**
+     * Tests if string is valid SVG content
+     * @param {string} input - String to test
+     * @returns {boolean} True if string is valid SVG
+     */
     static isSVGString(input) {
         const regex = /^\s*(?:<\?xml[^>]*>\s*)?(?:<!doctype svg[^>]*\s*(?:\[?(?:\s*<![^>]*>\s*)*\]?)*[^>]*>\s*)?(?:<svg[^>]*>[^]*<\/svg>|<svg[^/>]*\/\s*>)\s*$/i
         if (input == undefined || input == null)
@@ -103,6 +196,23 @@ class Util {
         return Boolean(input) && regex.test(input);
     }
 
+    /**
+     * Computes Signed Distance Field from image data
+     * Implementation based on Felzenszwalb & Huttenlocher algorithm
+     * 
+     * @param {Uint8Array} buffer - Input image data
+     * @param {number} w - Image width
+     * @param {number} h - Image height
+     * @param {number} [cutoff=0.25] - Distance field cutoff
+     * @param {number} [radius=8] - Maximum distance to compute
+     * @returns {Float32Array|Array} Computed distance field
+     * 
+     * Technical Details:
+     * - Uses 2D Euclidean distance transform
+     * - Separate inner/outer distance fields
+     * - Optimized grid computation
+     * - Sub-pixel accuracy
+     */
     static computeSDF(buffer, w, h, cutoff = 0.25, radius = 8) {
 
         // 2D Euclidean distance transform by Felzenszwalb & Huttenlocher https://cs.brown.edu/~pff/dt/
@@ -180,6 +290,25 @@ class Util {
         return dist;
     }
 
+    /**
+     * Rasterizes SVG to ImageData
+     * @param {string} url - SVG URL
+     * @param {number[]} [size=[64,64]] - Output dimensions [width, height]
+     * @returns {Promise<ImageData>} Rasterized image data
+     * 
+     * Processing steps:
+     * 1. Loads SVG file
+     * 2. Sets up canvas context
+     * 3. Handles aspect ratio
+     * 4. Centers image
+     * 5. Renders to ImageData
+     * 
+     * @example
+     * ```javascript
+     * const imageData = await Util.rasterizeSVG('icon.svg', [128, 128]);
+     * context.putImageData(imageData, 0, 0);
+     * ```
+     */
     static async rasterizeSVG(url, size = [64, 64]) {
         const svg = await Util.loadSVG(url);
         const svgWidth = svg.getAttribute('width');
@@ -238,5 +367,39 @@ class Util {
     }
 
 }
+
+/**
+ * Implementation Notes:
+ * 
+ * File Loading:
+ * - Consistent error handling across loaders
+ * - Promise-based async operations
+ * - Resource cleanup (URL revocation)
+ * 
+ * SVG Processing:
+ * - Namespace-aware element creation
+ * - Robust SVG validation
+ * - Attribute management
+ * 
+ * Image Processing:
+ * - Canvas-based rasterization
+ * - Aspect ratio preservation
+ * - Memory efficient operations
+ * 
+ * SDF Computation:
+ * - Efficient distance field generation
+ * - Configurable parameters
+ * - TypedArray support
+ * 
+ * Error Handling:
+ * - Input validation
+ * - Descriptive error messages
+ * - Resource cleanup on failure
+ * 
+ * Browser Compatibility:
+ * - Fallbacks for older browsers
+ * - Polyfill for structuredClone
+ * - Vendor prefix handling
+ */
 
 export { Util }

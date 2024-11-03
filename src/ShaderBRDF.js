@@ -1,11 +1,69 @@
 import { Shader } from './Shader.js'
 
 /**
- *  @param {object} options
- *   mode: default is color, can be [color, diffuse, specular, normals]
- * 	 color implements ward
+ * A shader class implementing various BRDF (Bidirectional Reflectance Distribution Function) rendering modes.
+ * Extends the base Shader class to provide specialized material rendering capabilities.
+ * 
+ * @class
+ * @extends Shader
+ * 
+ * @param {Object} options - Configuration options for the shader
+ * @param {string} [options.mode='color'] - Rendering mode to use
+ *   - 'color': Full BRDF rendering using Ward model with ambient light
+ *   - 'diffuse': Shows only diffuse component (kd)
+ *   - 'specular': Shows only specular component (ks * spec * NdotL)
+ *   - 'normals': Visualizes surface normals
+ *   - 'monochrome': Renders using a single material color with diffuse lighting
+ * @param {Object} [options.colorspaces] - Color space configurations
+ * @param {string} [options.colorspaces.kd] - Color space for diffuse texture ('linear' or 'sRGB')
+ * @param {string} [options.colorspaces.ks] - Color space for specular texture ('linear' or 'sRGB')
+ * @param {number} [options.brightness=1.0] - Overall brightness multiplier
+ * @param {number} [options.gamma=2.2] - Gamma correction value
+ * @param {number[]} [options.alphaLimits=[0.01, 0.5]] - Range for surface roughness [min, max]
+ * @param {number[]} [options.monochromeMaterial=[0.80, 0.79, 0.75]] - RGB color for monochrome mode
+ * @param {number} [options.kAmbient=0.02] - Ambient light coefficient
+ * 
+ * @property {string[]} modes - Available rendering modes
+ * @property {string} mode - Current rendering mode
+ * @property {Object} uniforms - WebGL uniform variables
+ * @property {Object} uniforms.uLightInfo - vec4 light position/direction (w=0 for directional, w=1 for spot)
+ * @property {Object} uniforms.uAlphaLimits - vec2 surface roughness range
+ * @property {Object} uniforms.uBrightnessGamma - vec2 containing brightness and gamma values
+ * @property {Object} uniforms.uInputColorSpaceKd - int flag for diffuse texture color space
+ * @property {Object} uniforms.uInputColorSpaceKs - int flag for specular texture color space
+ * @property {Object} uniforms.uMonochromeMaterial - vec3 color for monochrome mode
+ * @property {Object} uniforms.uKAmbient - float ambient light coefficient
+ * 
+ * Shader Features:
+ * - Implements the Ward BRDF model for physically-based rendering
+ * - Supports both directional and spot lights
+ * - Handles normal mapping
+ * - Supports different color spaces (linear and sRGB) for input textures
+ * - Multiple visualization modes for material analysis
+ * - Configurable surface roughness range
+ * - Ambient light contribution
+ * 
+ * Required Textures:
+ * - uTexKd: Diffuse color texture (optional)
+ * - uTexKs: Specular color texture (optional)
+ * - uTexNormals: Normal map
+ * - uTexGloss: Glossiness map (optional)
+ * 
+ * @example
+ * // Create a basic BRDF shader with default settings
+ * const shader = new ShaderBRDF({});
+ * 
+ * @example
+ * // Create a BRDF shader with custom settings
+ * const shader = new ShaderBRDF({
+ *   mode: 'color',
+ *   colorspaces: { kd: 'sRGB', ks: 'linear' },
+ *   brightness: 1.2,
+ *   gamma: 2.2,
+ *   alphaLimits: [0.05, 0.4],
+ *   kAmbient: 0.03
+ * });
  */
-
 class ShaderBRDF extends Shader {
 	constructor(options) {
 		super({});
@@ -13,7 +71,7 @@ class ShaderBRDF extends Shader {
 		this.mode = 'color';
 
 		Object.assign(this, options);
-		
+
 		const kdCS = this.colorspaces['kd'] == 'linear' ? 0 : 1;
 		const ksCS = this.colorspaces['ks'] == 'linear' ? 0 : 1;
 
@@ -24,62 +82,94 @@ class ShaderBRDF extends Shader {
 		const kAmbient = options.kAmbient ? options.kAmbient : 0.02;
 
 		this.uniforms = {
-			uLightInfo:          { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
-			uAlphaLimits:        { type: 'vec2', needsUpdate: true, size: 2, value: alphaLimits },
-			uBrightnessGamma:    { type: 'vec2', needsUpdate: true, size: 2, value: [brightness, gamma] },		
-			uInputColorSpaceKd:  { type: 'int', needsUpdate: true, size: 1, value: kdCS },
-			uInputColorSpaceKs:  { type: 'int', needsUpdate: true, size: 1, value: ksCS },
+			uLightInfo: { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
+			uAlphaLimits: { type: 'vec2', needsUpdate: true, size: 2, value: alphaLimits },
+			uBrightnessGamma: { type: 'vec2', needsUpdate: true, size: 2, value: [brightness, gamma] },
+			uInputColorSpaceKd: { type: 'int', needsUpdate: true, size: 1, value: kdCS },
+			uInputColorSpaceKs: { type: 'int', needsUpdate: true, size: 1, value: ksCS },
 			uMonochromeMaterial: { type: 'vec3', needsUpdate: true, size: 3, value: monochromeMaterial },
-			uKAmbient:           { type: 'float', needsUpdate: true, size: 1, value: kAmbient },
-			
+			uKAmbient: { type: 'float', needsUpdate: true, size: 1, value: kAmbient },
+
 		}
 
 		this.innerCode = '';
 		this.setMode(this.mode);
 	}
 
+	/**
+	 * Sets the light properties for the shader.
+	 * 
+	 * @param {number[]} light - 4D vector containing light information
+	 * @param {number} light[0] - X coordinate of light position/direction
+	 * @param {number} light[1] - Y coordinate of light position/direction
+	 * @param {number} light[2] - Z coordinate of light position/direction
+	 * @param {number} light[3] - Light type flag (0 for directional, 1 for spot)
+	 */
 	setLight(light) {
 		// Light with 4 components (Spot: 4th==1, Dir: 4th==0)
 		this.setUniform('uLightInfo', light);
 	}
 
+
+	/**
+	 * Sets the rendering mode for the shader.
+	 * 
+	 * @param {string} mode - The rendering mode to use
+	 * @throws {Error} If an invalid mode is specified
+	 */
 	setMode(mode) {
 		this.mode = mode;
-		switch(mode) {
+		switch (mode) {
 			case 'color':
-				this.innerCode = 
-				`vec3 linearColor = (kd + ks * spec) * NdotL;
+				this.innerCode =
+					`vec3 linearColor = (kd + ks * spec) * NdotL;
 				linearColor += kd * uKAmbient; // HACK! adding just a bit of ambient`
-			break;
+				break;
 			case 'diffuse':
-				this.innerCode = 
-				`vec3 linearColor = kd;`
-			break;
+				this.innerCode =
+					`vec3 linearColor = kd;`
+				break;
 			case 'specular':
-				this.innerCode = 
-				`vec3 linearColor = clamp((ks * spec) * NdotL, 0.0, 1.0);`
-			break;
+				this.innerCode =
+					`vec3 linearColor = clamp((ks * spec) * NdotL, 0.0, 1.0);`
+				break;
 			case 'normals':
-				this.innerCode = 
-				`vec3 linearColor = (N+vec3(1.))/2.;
+				this.innerCode =
+					`vec3 linearColor = (N+vec3(1.))/2.;
 				applyGamma = false;`
-			break;
+				break;
 			case 'monochrome':
-                this.innerCode = 'vec3 linearColor = kd * NdotL + kd * uKAmbient;'
-			break;
+				this.innerCode = 'vec3 linearColor = kd * NdotL + kd * uKAmbient;'
+				break;
 			default:
 				console.log("ShaderBRDF: Unknown mode: " + mode);
 				throw Error("ShaderBRDF: Unknown mode: " + mode);
-			break;
+				break;
 		}
 		this.needsUpdate = true;
 	}
 
+	/**
+	 * Generates the fragment shader source code based on current configuration.
+	 * 
+	 * @param {WebGLRenderingContext|WebGL2RenderingContext} gl - The WebGL context
+	 * @returns {string} The complete fragment shader source code
+	 * 
+	 * @private
+	 * 
+	 * Shader Features:
+	 * - Normal mapping with null normal detection
+	 * - Color space conversion (linear <-> sRGB)
+	 * - Ward BRDF implementation (isotropic version)
+	 * - Multiple rendering modes with configurable output
+	 * - Gamma correction
+	 * - Configurable gloss to roughness conversion
+	 */
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
-		let hasKd = this.samplers.findIndex( s => s.name == 'uTexKd') != -1 && this.mode != 'monochrome';
-		let hasGloss = this.samplers.findIndex( s => s.name == 'uTexGloss') != -1 && this.mode != 'monochrome';
-		let hasKs = this.samplers.findIndex( s => s.name == 'uTexKs') != -1;	
+		let hasKd = this.samplers.findIndex(s => s.name == 'uTexKd') != -1 && this.mode != 'monochrome';
+		let hasGloss = this.samplers.findIndex(s => s.name == 'uTexGloss') != -1 && this.mode != 'monochrome';
+		let hasKs = this.samplers.findIndex(s => s.name == 'uTexKs') != -1;
 		let str = `
 
 #define NULL_NORMAL vec3(0,0,0)
@@ -87,7 +177,7 @@ class ShaderBRDF extends Shader {
 #define PI (3.14159265359)
 #define ISO_WARD_EXPONENT (4.0)
 
-${gl2? 'in' : 'varying'} vec2 v_texcoord;
+${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 uniform sampler2D uTexKd;
 uniform sampler2D uTexKs;
 uniform sampler2D uTexNormals;
@@ -188,7 +278,7 @@ vec4 data() {
 	return vec4(finalColor, 1.0);
 }
 `;
-	return str;
+		return str;
 	}
 
 }

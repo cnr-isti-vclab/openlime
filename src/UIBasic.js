@@ -7,95 +7,79 @@ import { ScaleBar } from './ScaleBar'
 import { addSignals } from './Signals'
 
 /**
- * An Action describes the behaviour of a tool button.
- * @typedef {Object} UIBasic#Action
- * @property {string} title The nameof the action.
- * @property {bool} display Whether to show the action in the toolbar.
- * @property {string} key The shortcut key.
- * @property {callback} task The callback executed by the action.
+ * @typedef {Object} UIAction
+ * Action configuration for toolbar buttons
+ * @property {string} title - Display title for the action
+ * @property {boolean} display - Whether to show in toolbar
+ * @property {string} [key] - Keyboard shortcut key
+ * @property {Function} task - Callback function for action
+ * @property {string} [icon] - Custom SVG icon path or content
+ * @property {string} [html] - HTML content for help dialog
  */
 
 /**
- * A MenuEntry describes an entry for the menu.
- * @typedef {Object} UIBasic#Action
- * @property {string} title The menu title.
- * @property {string} section The section title.
- * @property {string} html A HTML text.
- * @property {callback} task The callback executed by the action.
+ * @typedef {Object} MenuEntry
+ * Menu configuration item
+ * @property {string} [title] - Large title text
+ * @property {string} [section] - Section header text
+ * @property {string} [html] - Raw HTML content
+ * @property {string} [button] - Button text
+ * @property {string} [group] - Button group identifier
+ * @property {string} [layer] - Associated layer ID
+ * @property {string} [mode] - Layer visualization mode
+ * @property {Function} [onclick] - Click handler
+ * @property {Function} [oninput] - Input handler for sliders
+ * @property {MenuEntry[]} [list] - Nested menu entries
  */
 
-/* Basic viewer for a single layer.
- *  we support actions through buttons: each button style is controlled by classes (trigger), active (if support status)
- *  and custom.
- * actions supported are:
- *  home: reset the camera
- *  zoomin, zoomout
- *  fullscreen
- *  rotate (45/90 deg rotation option.
- *  light: turn on light changing.
- *  switch layer(s)
- *  lens.
+/**
+ * @class
+ * UIBasic implements a complete user interface for OpenLIME viewers.
+ * Provides toolbar controls, layer management, and interactive features.
  * 
- * How the menu works:
- * Each entry eg: { title: 'Coin 16' }
- * title: large title
- * section: smaller title
- * html: whatever html
- * button: visually a button, attributes: group, layer, mode
- * slider: callback(percent)
- * list: an array of entries.
+ * Core Features:
+ * - Customizable toolbar
+ * - Layer management
+ * - Light direction control
+ * - Camera controls
+ * - Keyboard shortcuts
+ * - Scale bar
+ * - Measurement tools
  * 
- * Additional attributes:
- * onclick: a function(event) {}
- * group: a group of entries where at most one is active
- * layer: a layer id: will be active if layer is visible
- * mode: a layer visualization mode, active if it's the current mode.
- * layer + mode: if both are specified, both must be current for an active.
- */
-
-
-/** 
- * **UIBasic** is a flexible and easy-to-use class that implements a complete user interface to bind to the `viewer`
- * The interface is associated with a CSS file (skin.css) that defines the style of the HTML DOM and a graphic 
- * file (skin.svg) that specifies the geometric characteristics of the tool buttons.
- * 
- * The class provides a set of default ready-to-use tools (called actions):
- * * **home** resets the camera.
- * * **fullscreen** enables the fullscreen mode.
- * * **layers** displays the layer menu.
- * * **zoomin** performs a camera zoom-in.
- * * **zoomout** performs a camera zoom-out.
- * * **rotate** rotates the camera around the z-axis (by 45-degs steps).
- * * **light** enables light manipulation.
- * * **help** displays a help dialog box.
- * 
- * In the following example a UIBasic interface is created and binded to the `lime` viewer.
- * The `light` action is disabled, and the `zoomin` and `zoomout` actions are enabled. 
- * ```
- * // Creates an User Interface 
- * const ui = new OpenLIME.UIBasic(lime);
- *
- * // Removes light from the toolbar
- * ui.actions.light.display=false;
- * // Adds zoomin and zoomout to the toolbar
- * ui.actions.zoomin.display=true;
- * ui.actions.zoomout.display=true;
- * ```
+ * Built-in Actions:
+ * - home: Reset camera view
+ * - fullscreen: Toggle fullscreen mode
+ * - layers: Show/hide layer menu
+ * - zoomin/zoomout: Camera zoom controls
+ * - rotate: Rotate view
+ * - light: Light direction control
+ * - ruler: Distance measurement
+ * - help: Show help dialog
+ * - snapshot: Save view as image
  */
 class UIBasic {
 	/**
-	 * Instantiates a UIBasic object.
-	 * @param {Viewer} viewer The OpenLIME viewer.
-	 * @param {Object} [options] An object literal with UIBasic parameters.
-	 * @param {string} options.skin='skin/skin.svg' The file name of the vector image defining the tool buttons.
-	 * @param {bool} options.autofit=true Whether the initial position of the camera is set to fit the scene model.
-	 * @param {number} options.priority=0 Higher priority controllers are invoked first.
-	 * @param {{UIBasic#Action}} options.actions An Object of {@link UIBasic#Action}. A set of default actions are ready to be used.
-	 * @param {number} options.pixelSize Spatial resolution: physical size represented by a single pixel in mm
-	 * @param {string} options.attribution Some information related to data attribution or credits.
-	 * @param {Array<UIBasic#MenuEntry>} options.menu The interface menu structure.
-	 * @param {bool} options.enableTooltip=true Whether to enable tool button tooltip.
-	 * @param {bool} options.showLightDirections=false Whether to draw light direction vectors.
+	 * Creates a new UIBasic instance
+	 * @param {Viewer} viewer - OpenLIME viewer instance
+	 * @param {UIBasic~Options} [options] - Configuration options
+	 * 
+	 * @fires UIBasic#lightdirection
+	 * 
+	 * @example
+	 * ```javascript
+	 * const ui = new UIBasic(viewer, {
+	 *     // Enable specific actions
+	 *     actions: {
+	 *         light: { display: true },
+	 *         zoomin: { display: true },
+	 *         layers: { display: true }
+	 *     },
+	 *     // Add measurement support
+	 *     pixelSize: 0.1,
+	 *     // Add attribution
+	 *     attribution: "© Example Source"
+	 * });
+	 * ```
 	 */
 	constructor(viewer, options) {
 		//we need to know the size of the scene but the layers are not ready.
@@ -118,7 +102,7 @@ class UIBasic {
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 			},
-			postInit: () => {},
+			postInit: () => { },
 			pixelSize: null,
 			unit: null, //FIXME to be used with ruler
 			attribution: null,     //image attribution
@@ -234,6 +218,12 @@ class UIBasic {
 		else setTimeout(() => { this.init(); }, 0);
 	}
 
+	/**
+	 * Shows overlay message
+	 * @param {string} msg - Message to display
+	 * @param {number} [duration=2000] - Display duration in ms
+	 * @private
+	 */
 	showOverlayMessage(msg, duration = 2000) {
 		if (this.overlayMessage) {
 			clearTimeout(this.overlayMessage.timeout);
@@ -252,18 +242,31 @@ class UIBasic {
 			timeout: setTimeout(() => this.destroyOverlayMessage(), duration)
 		}
 	}
+
+	/**
+	 * Removes the overlay message
+	 * @private
+	 */
 	destroyOverlayMessage() {
 		this.overlayMessage.background.remove();
 		this.overlayMessage = null;
 	}
 
-	/** @ignore */
+	/**
+	 * Retrieves menu entry for a specific layer
+	 * @param {string} id - Layer identifier
+	 * @returns {UIBasic~MenuEntry|undefined} Found menu entry or undefined
+	 * @private
+	 */
 	getMenuLayerEntry(id) {
 		const found = this.menu.find(e => e.layer == id);
 		return found;
 	}
 
-	/** @ignore */
+	/**
+	 * Creates SVG elements for light direction indicators
+	 * @private
+	 */
 	createLightDirections() {
 		this.lightDirections = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.lightDirections.setAttribute('viewBox', '-100, -100, 200 200');
@@ -281,7 +284,12 @@ class UIBasic {
 		this.viewer.containerElement.appendChild(this.lightDirections);
 	}
 
-	/** @ignore */
+	/**
+	 * Updates light direction indicator positions
+	 * @param {number} lx - Light X coordinate
+	 * @param {number} ly - Light Y coordinate
+	 * @private
+	 */
 	updateLightDirections(lx, ly) {
 		let lines = [...this.lightDirections.children];
 		for (let line of lines) {
@@ -295,12 +303,21 @@ class UIBasic {
 		}
 	}
 
-	/** @ignore */
+	/**
+	 * Toggles visibility of light direction indicators
+	 * @param {boolean} show - Whether to show indicators
+	 * @private
+	 */
 	enableLightDirections(show) {
 		this.lightDirections.style.display = show ? 'block' : 'none';
 	}
 
-	/** @ignore */
+	/**
+	 * Initializes UI components
+	 * Sets up toolbar, menu, and controllers
+	 * @private
+	 * @async
+	 */
 	init() {
 		(async () => {
 
@@ -357,11 +374,19 @@ class UIBasic {
 		})().catch(e => { console.log(e); throw Error("Something failed") });
 	}
 
-	/** @ignore */
+	/**
+	 * Handles keyboard down events
+	 * @param {KeyboardEvent} e - Keyboard event
+	 * @private
+	 */
 	keyDown(e) {
 	}
 
-	/** @ignore */
+	/**
+	 * Processes keyboard shortcuts
+	 * @param {KeyboardEvent} e - Keyboard event
+	 * @private
+	 */
 	keyUp(e) {
 		if (e.target != document.body && e.target.closest('input, textarea') != null)
 			return;
@@ -377,7 +402,12 @@ class UIBasic {
 		}
 	}
 
-	/** @ignore */
+    /**
+     * Loads and initializes skin SVG elements
+     * @returns {Promise<void>}
+     * @private
+     * @async
+     */
 	async loadSkin() {
 		let toolbar = document.createElement('div');
 		toolbar.classList.add('openlime-toolbar');
@@ -455,7 +485,10 @@ class UIBasic {
 		}
 	}
 
-	/** @ignore */
+    /**
+     * Initializes action buttons and their event handlers
+     * @private
+     */
 	setupActions() {
 		for (let [name, action] of Object.entries(this.actions)) {
 			let element = action.element;
@@ -478,8 +511,10 @@ class UIBasic {
 		}
 	}
 
-	//we need the concept of active layer! so we an turn on and off light.
-	/** @ignore */
+	/**
+	 * Toggles light direction control mode
+	 * @param {boolean} [on] - Force specific state
+	 */
 	toggleLightController(on) {
 		let div = this.viewer.containerElement;
 		let active = div.classList.toggle('openlime-light-active', on);
@@ -493,7 +528,10 @@ class UIBasic {
 				}
 	}
 
-	/** @ignore */
+	/**
+	 * Toggles fullscreen mode
+	 * Handles browser-specific fullscreen APIs
+	 */
 	toggleFullscreen() {
 		let canvas = this.viewer.canvasElement;
 		let div = this.viewer.containerElement;
@@ -513,7 +551,9 @@ class UIBasic {
 		this.viewer.resize(canvas.offsetWidth, canvas.offsetHeight);
 	}
 
-	/** @ignore */
+	/**
+	 * Toggles measurement ruler tool
+	 */
 	toggleRuler() {
 		if (!this.ruler) {
 			this.ruler = new Ruler(this.viewer, this.pixelSize);
@@ -526,7 +566,11 @@ class UIBasic {
 			this.ruler.end();
 	}
 
-	/** @ignore */
+    /**
+     * Toggles help dialog
+     * @param {UIBasic~Action} help - Help action configuration
+     * @param {boolean} [on] - Force specific state
+     */
 	toggleHelp(help, on) {
 		if (!help.dialog) {
 			help.dialog = new UIDialog(this.viewer.containerElement, { modal: true, class: 'openlime-help-dialog' });
@@ -535,7 +579,9 @@ class UIBasic {
 			help.dialog.toggle(on);
 	}
 
-	/** @ignore */
+    /**
+     * Creates and downloads canvas snapshot
+     */
 	snapshot() {
 		var e = document.createElement('a');
 		e.setAttribute('href', this.viewer.canvas.canvasElement.toDataURL());
@@ -548,7 +594,12 @@ class UIBasic {
 
 	/* Layer management */
 
-	/** @ignore */
+    /**
+     * Creates HTML for menu entry
+     * @param {UIBasic~MenuEntry} entry - Menu entry to create
+     * @returns {string} Generated HTML
+     * @private
+     */
 	createEntry(entry) {
 		if (!('id' in entry))
 			entry.id = 'entry_' + (this.entry_count++);
@@ -586,7 +637,11 @@ class UIBasic {
 		return html;
 	}
 
-	/** @ignore */
+    /**
+     * Attaches event handlers to menu entry elements
+     * @param {UIBasic~MenuEntry} entry - Menu entry to process
+     * @private
+     */
 	addEntryCallbacks(entry) {
 		entry.element = this.layerMenu.querySelector('#' + entry.id);
 		if (entry.onclick)
@@ -604,7 +659,11 @@ class UIBasic {
 				this.addEntryCallbacks(e);
 	}
 
-	/** @ignore */
+    /**
+     * Updates menu entry state
+     * @param {UIBasic~MenuEntry} entry - Menu entry to update
+     * @private
+     */
 	updateEntry(entry) {
 		let status = entry.status ? entry.status() : '';
 		entry.element.classList.toggle('active', status == 'active');
@@ -614,13 +673,19 @@ class UIBasic {
 				this.updateEntry(e);
 	}
 
-	/** @ignore */
+    /**
+     * Updates all menu entries
+     * @private
+     */
 	updateMenu() {
 		for (let entry of this.menu)
 			this.updateEntry(entry);
 	}
 
-	/** @ignore */
+    /**
+     * Creates main menu structure
+     * @private
+     */
 	createMenu() {
 		this.entry_count = 0;
 		let html = `<div class="openlime-layers-menu">`;
@@ -646,12 +711,17 @@ class UIBasic {
 					}); */
 	}
 
-	/** @ignore */
+    /**
+     * Toggles layer menu visibility
+     */
 	toggleLayers() {
 		this.layerMenu.classList.toggle('open');
 	}
 
-	/** @ignore */
+    /**
+     * Sets active layer and updates UI
+     * @param {Layer|string} layer_on - Layer or layer ID to activate
+     */
 	setLayer(layer_on) {
 		if (typeof layer_on == 'string')
 			layer_on = this.viewer.canvas.layers[layer_on];
@@ -675,7 +745,9 @@ class UIBasic {
 		this.viewer.redraw();
 	}
 
-	/** @ignore */
+    /**
+     * Hides layers menu
+     */
 	closeLayersMenu() {
 		this.layerMenu.style.display = 'none';
 	}
@@ -706,7 +778,10 @@ class UIDialog { //FIXME standalone class
 		this.create();
 	}
 
-	/** @ignore */
+    /**
+     * Creates dialog DOM structure
+     * @private
+     */
 	create() {
 		let background = document.createElement('div');
 		background.classList.add('openlime-dialog-background');
@@ -747,10 +822,10 @@ class UIDialog { //FIXME standalone class
 		this.hide();
 	}
 
-	/**
-	 * Sets the content of the dialog.
-	 * @param {(string|HTMLElement)} html The content of the dialog (a HTML text or element). 
-	 */
+    /**
+     * Sets dialog content
+     * @param {string|HTMLElement} html - Content to display
+     */
 	setContent(html) {
 		if (typeof (html) == 'string')
 			this.content.innerHTML = html;
@@ -766,9 +841,10 @@ class UIDialog { //FIXME standalone class
 		this.visible = true;
 	}
 
-	/**
-	 * Hides the dialog.
-	 */
+    /**
+     * Hides the dialog and emits closed event
+     * @fires UIDialog#closed
+     */
 	hide() {
 		/**
 		 * The event is fired when the dialog is closed.
@@ -779,25 +855,83 @@ class UIDialog { //FIXME standalone class
 		this.emit('closed');
 	}
 
-	/**
-	 * Adds fading effect to the dialog.
-	 * @param {bool} on Whether the fading effect is enabled.
-	 */
+    /**
+     * Toggles fade effect
+     * @param {boolean} on - Whether to enable fade effect
+     */
 	fade(on) { //FIXME Does it work?
 		this.element.classList.toggle('fading');
 	}
 
-	/**
-	 * Toggles the display of the dialog.
-	 * @param {bool} force Whether to turn the dialog into a one way-only operation.
-	 */
+    /**
+     * Toggles dialog visibility
+     * @param {boolean} [force] - Force specific state
+     */
 	toggle(force) { //FIXME Why not remove force?
 		this.element.classList.toggle('hidden', force);
 		this.visible = !this.visible; //FIXME not in sync with 'force'
 	}
 }
 
+/**
+ * Event Definitions
+ * 
+ * Light Direction Change Event:
+ * @event UIBasic#lightdirection
+ * @type {Object}
+ * @property {number[]} direction - [x, y, z] normalized light vector
+ * 
+ * Dialog Close Event:
+ * @event UIDialog#closed
+ * Emitted when dialog is closed through any means
+ */
+
 addSignals(UIDialog, 'closed');
 addSignals(UIBasic, 'lightdirection');
 
+/**
+ * Implementation Details
+ * 
+ * Layer Management:
+ * - Layers can be toggled individually
+ * - Layer visibility affects associated controllers
+ * - Overlay layers behave independently
+ * - Layer state is reflected in menu UI
+ * 
+ * Mouse/Touch Interaction:
+ * - Uses PointerManager for event handling
+ * - Supports multi-touch gestures
+ * - Handles drag operations for light control
+ * - Manages tool state transitions
+ * 
+ * Menu System:
+ * - Hierarchical structure
+ * - Dynamic updates based on state
+ * - Group-based selection
+ * - Mode-specific entries
+ * 
+ * Controller Integration:
+ * - Light direction controller
+ * - Pan/zoom controller
+ * - Measurement controller
+ * - Priority-based event handling
+ * 
+ * Dialog System:
+ * - Modal blocking of underlying UI
+ * - Non-modal floating windows
+ * - Content injection system
+ * - Event-based communication
+ * 
+ * Skin System:
+ * - SVG-based icons
+ * - Dynamic loading
+ * - CSS customization
+ * - Responsive layout
+ * 
+ * Keyboard Support:
+ * - Configurable shortcuts
+ * - Action mapping
+ * - Mode-specific keys
+ * - Focus handling
+ */
 export { UIBasic, UIDialog }

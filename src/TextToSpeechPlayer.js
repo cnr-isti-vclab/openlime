@@ -1,16 +1,47 @@
 /**
- * The TextToSpeechPlayer class is responsible for text-to-speech functionality in the application.
- * It handles voice selection, speech synthesis, and various audio controls.
+ * @typedef {Object} TextToSpeechOptions
+ * @property {string} [language='it-IT'] - Language code for speech synthesis (e.g., 'en-US', 'it-IT')
+ * @property {number} [rate=1.0] - Speech rate (0.1 to 10)
+ * @property {number} [volume=1.0] - Speech volume (0 to 1)
+ * @property {boolean} [cleanText=true] - Whether to remove HTML tags and format text
+ * @property {number} [voiceSelected=-1] - Index of preferred voice (-1 for auto-selection)
+ */
+
+/**
+ * @class
+ * TextToSpeechPlayer provides text-to-speech functionality with extensive control options.
+ * Handles voice selection, speech synthesis, text cleaning, and playback control.
+ * 
+ * Features:
+ * - Multiple language support
+ * - Automatic voice selection
+ * - Text cleaning and formatting
+ * - Playback controls (pause, resume, stop)
+ * - Volume control with mute option
+ * - Offline capability detection
+ * - Chrome speech bug workarounds
+ * - Page visibility handling
+ * 
+ * Browser Compatibility:
+ * - Uses Web Speech API
+ * - Implements Chrome-specific fixes
+ * - Handles browser tab switching
+ * - Manages page unload events
  */
 class TextToSpeechPlayer {
   /**
-   * Creates an TextToSpeechPlayer. Additionally, an object literal with TextToSpeechPlayer `options` can be specified.
-   * @param {Object} [options]
-   * @param {string} [options.language='it-IT'] The language for speech synthesis.
-   * @param {number} [options.rate=1.12] The speech rate.
-   * @param {number} [options.volume=1.0] The speech volume.
-   * @param {boolean} [options.cleanText=true] Whether to clean the text before speech synthesis.
-   * @param {number} [options.voiceSelected=-1] The index of the selected voice.
+   * Creates a new TextToSpeechPlayer instance
+   * @param {TextToSpeechOptions} [options] - Configuration options
+   * 
+   * @example
+   * ```javascript
+   * const tts = new TextToSpeechPlayer({
+   *     language: 'en-US',
+   *     rate: 1.2,
+   *     volume: 0.8,
+   *     cleanText: true
+   * });
+   * ```
    */
   constructor(options) {
     Object.assign(this, {
@@ -33,8 +64,15 @@ class TextToSpeechPlayer {
   }
 
   /**
-   * Initializes the TextToSpeechPlayer by loading the voice and checking offline capability.
+   * Initializes the player by loading voices and checking capabilities
    * @returns {Promise<void>}
+   * @throws {Error} If voice loading fails or no suitable voices found
+   * 
+   * Initialization steps:
+   * 1. Loads available voices
+   * 2. Selects appropriate voice
+   * 3. Checks offline capability
+   * 4. Sets up page listeners
    */
   async initialize() {
     try {
@@ -75,9 +113,10 @@ class TextToSpeechPlayer {
   }
 
   /**
-   * Loads the voice for speech synthesis based on the selected language.
-   * @returns {Promise<SpeechSynthesisVoice>}
    * @private
+   * Loads and selects appropriate voice for synthesis
+   * @returns {Promise<SpeechSynthesisVoice>}
+   * @throws {Error} If no suitable voice is found
    */
   async loadVoice() {
     console.log(`Loading voice for language: ${this.language}`);
@@ -137,10 +176,17 @@ class TextToSpeechPlayer {
   }
 
   /**
-   * Cleans the input text for speech synthesis by removing HTML tags and escape characters.
-   * @param {string} text - The text to clean.
-   * @returns {string} The cleaned text.
    * @private
+   * Cleans text by removing HTML tags and formatting
+   * @param {string} text - Text to clean
+   * @returns {string} Cleaned text
+   * 
+   * Cleaning steps:
+   * 1. Removes 'omissis' class content
+   * 2. Converts <br> to spaces
+   * 3. Strips HTML tags
+   * 4. Removes escape characters
+   * 5. Trims whitespace
    */
   cleanTextForSpeech(text) {
     // Remove content of any HTML tag with class "omissis" (with or without escaped quotes)
@@ -156,9 +202,22 @@ class TextToSpeechPlayer {
   }
 
   /**
-   * Speaks the provided text using speech synthesis.
-   * @param {string} text - The text to speak.
+   * Speaks the provided text
+   * @param {string} text - Text to be spoken
    * @returns {Promise<void>}
+   * @throws {Error} If speech synthesis fails or times out
+   * 
+   * Processing steps:
+   * 1. Cancels any ongoing speech
+   * 2. Cleans input text if enabled
+   * 3. Creates utterance with current settings
+   * 4. Handles speech synthesis
+   * 5. Manages timeouts and Chrome workarounds
+   * 
+   * @example
+   * ```javascript
+   * await tts.speakText("Hello, world!");
+   * ```
    */
   async speakText(text) {
     if (window.speechSynthesis.speaking) {
@@ -237,8 +296,17 @@ class TextToSpeechPlayer {
   }
 
   /**
-   * Pauses or resumes the current speech synthesis.
-   * @param {boolean} enable - True to pause, false to resume.
+   * Pauses or resumes speech synthesis
+   * @param {boolean} enable - True to pause, false to resume
+   * 
+   * @example
+   * ```javascript
+   * // Pause speech
+   * tts.pauseSpeaking(true);
+   * 
+   * // Resume speech
+   * tts.pauseSpeaking(false);
+   * ```
    */
   pauseSpeaking(enable) {
     if (!this.currentUtterance) {
@@ -265,8 +333,17 @@ class TextToSpeechPlayer {
   }
 
   /**
-   * Mutes or unmutes the audio playback.
-   * @param {boolean} enable - True to mute, false to unmute.
+   * Mutes or unmutes audio output
+   * @param {boolean} enable - True to mute, false to unmute
+   * 
+   * @example
+   * ```javascript
+   * // Mute audio
+   * tts.mute(true);
+   * 
+   * // Restore previous volume
+   * tts.mute(false);
+   * ```
    */
   mute(enable) {
     if (enable) {
@@ -278,7 +355,8 @@ class TextToSpeechPlayer {
   }
 
   /**
-   * Stops the current speech synthesis.
+   * Stops current speech synthesis
+   * Cleans up resources and resets state
    */
   stopSpeaking() {
     if (this.isSpeaking) {
@@ -292,5 +370,32 @@ class TextToSpeechPlayer {
     this.isSpeaking = false;
   }
 }
+
+/**
+ * Implementation Details
+ * 
+ * Chrome Bug Workarounds:
+ * - Implements periodic pause/resume to prevent Chrome from stopping
+ * - Uses timeout to prevent indefinite speech
+ * - Handles voice loading race conditions
+ * 
+ * State Management:
+ * ```javascript
+ * {
+ *     isSpeaking: boolean,    // Current speech state
+ *     isPaused: boolean,      // Pause state
+ *     voice: SpeechSynthesisVoice, // Selected voice
+ *     isOfflineCapable: boolean,   // Offline support
+ *     volume: number,         // Current volume
+ *     previousVolume: number  // Pre-mute volume
+ * }
+ * ```
+ * 
+ * Event Handling:
+ * - beforeunload: Stops speech on page close
+ * - visibilitychange: Handles tab switching
+ * - voiceschanged: Manages voice loading
+ * - utterance events: Tracks speech progress
+ */
 
 export { TextToSpeechPlayer }

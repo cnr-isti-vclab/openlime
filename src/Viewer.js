@@ -4,39 +4,87 @@ import { PointerManager } from './PointerManager.js'
 import { Controller } from './Controller.js';
 import { addSignals } from './Signals.js'
 
+/**
+ * @typedef {Object} ViewerOptions
+ * Configuration options for Viewer initialization
+ * @property {string} [background] - CSS background style
+ * @property {boolean} [autofit=true] - Auto-fit camera to scene
+ * @property {Object} [canvas={}] - Canvas configuration options
+ * @property {Camera} [camera] - Custom camera instance
+ */
 
-/** **Viewer** is the central class of the OpenLIME framework. It is used to create a viewer on a web page and manipulate it.
- * In the following example, after instantiating a Viewer, a LayerImage is added to it.
- * ```
- * // Create an OpenLIME canvas into .openlime
- * const lime = new OpenLIME.Viewer('.openlime');
- *
- * // Create an image layer and add it to the canvans
+/**
+ * @typedef {Object} Viewport
+ * Viewport configuration
+ * @property {number} x - Left coordinate
+ * @property {number} y - Top coordinate
+ * @property {number} dx - Width in pixels
+ * @property {number} dy - Height in pixels
+ * @property {number} w - Total width
+ * @property {number} h - Total height
+ */
+
+/**
+ * Central class of the OpenLIME framework.
+ * Creates and manages the main viewer interface, coordinates components,
+ * and handles rendering pipeline.
+ * 
+ * Core Responsibilities:
+ * - Canvas management
+ * - Layer coordination
+ * - Camera control
+ * - Event handling
+ * - Rendering pipeline
+ * - Resource management
+ * 
+ * @class
+ * @fires Viewer#draw
+ * @fires Viewer#resize
+ * 
+ * @example
+ * ```javascript
+ * // Basic viewer setup
+ * const viewer = new OpenLIME.Viewer('#container');
+ * 
+ * // Add image layer
  * const layer = new OpenLIME.Layer({
  *     layout: 'image',
  *     type: 'image',
- *     url: '../../assets/lime/image/lime.jpg'
+ *     url: 'image.jpg'
  * });
- * lime.addLayer('Base', layer);
+ * viewer.addLayer('main', layer);
  * 
- * // Access to internal structures
- * const camera = lime.camera;
- * const canvas = lime.canvas;
- * const layers = canvas.layers;
+ * // Access components
+ * const camera = viewer.camera;
+ * const canvas = viewer.canvas;
  * ```
-*/
+ */
 class Viewer {
 	/**
-	 * Instantiates a viewer object given the `div` element or a DOM selector of a `div` element.
-	 * Additionally, an object literal with Viewer `options` can be specified.
-	 * The class creates the canvas, enables the WebGL context and takes care of the content redrawing when needed.
-	 * Viewer is the main class of the OpenLIME framework. It allows access to all the internal structures that make up the system.
+	 * Creates a new Viewer instance
+	 * @param {HTMLElement|string} div - Container element or selector
+	 * @param {ViewerOptions} [options] - Configuration options
+	 * @throws {Error} If container element not found
 	 * 
-	 * @param {(HTMLElement|string)} div A DOM element or a selector (es. '#openlime' or '.openlime').
-	 * @param {Object} [options]  An object literal describing the viewer content.
-	 * @param {color} options.background CSS style for background (it overwrites CSS if present).
-	 * @param {bool} options.autofit=true Whether the initial position of the camera is set to fit the scene model.
-	*/
+	 * Component Setup:
+	 * 1. Creates/configures canvas element
+	 * 2. Sets up overlay system
+	 * 3. Initializes camera
+	 * 4. Creates pointer manager
+	 * 5. Sets up resize observer
+	 * 
+	 * @example
+	 * ```javascript
+	 * // Create with options
+	 * const viewer = new OpenLIME.Viewer('.container', {
+	 *     background: '#000000',
+	 *     autofit: true,
+	 *     canvas: {
+	 *         preserveDrawingBuffer: true
+	 *     }
+	 * });
+	 * ```
+	 */
 	constructor(div, options) {
 
 		Object.assign(this, {
@@ -98,18 +146,31 @@ class Viewer {
 		this.pointerManager.onEvent(controller);
 	}
 
-	/** Adds the given layer to the Viewer.
-	* @param {string} id A label to identify the layer.
-	* @param {Layer} layer An OpenLIME Layer object.
-	*/
+    /**
+     * Adds layer to viewer
+     * @param {string} id - Unique layer identifier
+     * @param {Layer} layer - Layer instance
+     * @fires Canvas#update
+     * 
+     * @example
+     * ```javascript
+     * const layer = new OpenLIME.Layer({
+     *     type: 'image',
+     *     url: 'image.jpg'
+     * });
+     * viewer.addLayer('background', layer);
+     * ```
+     */
 	addLayer(id, layer) {
 		this.canvas.addLayer(id, layer);
 		this.redraw();
 	}
 
-	/** Remove the given layer from the Viewer.
-	* @param {(Layer|string)} layer An OpenLIME Layer or a Layer identifier.
-	*/
+    /**
+     * Removes layer from viewer
+     * @param {Layer|string} layer - Layer instance or ID
+     * @fires Canvas#update
+     */
 	removeLayer(layer) {
 		if (typeof (layer) == 'string')
 			layer = this.canvas.layers[layer];
@@ -119,16 +180,16 @@ class Viewer {
 		}
 	}
 
-	/* Resizes the canvas (and the overlay) and triggers a redraw.
-	 * This method is internal and used by a ResizeObserver of the Canvas size.
-	 * @param {number} width A width value defined in CSS pixel.
-	 * @param {number} height A height value defined in CSS pixel.
-	*/
-	/**
-	 * @ignore
-	*/
+
+    /**
+     * Handles viewer resizing
+     * @param {number} width - New width in CSS pixels
+     * @param {number} height - New height in CSS pixels
+     * @private
+     * @fires Viewer#resize
+     */
 	resize(width, height) {
-		if(width == 0 || height == 0) return;
+		if (width == 0 || height == 0) return;
 		// Test with retina display!
 		this.canvasElement.width = width * window.devicePixelRatio;
 		this.canvasElement.height = height * window.devicePixelRatio;
@@ -142,30 +203,29 @@ class Viewer {
 		this.redraw();
 	}
 
-	/**
-	 * Schedules a redrawing.
-	*/
+    /**
+     * Schedules next frame for rendering
+     * Uses requestAnimationFrame for optimal performance
+     */
 	redraw() {
 		if (this.animaterequest) return;
 		this.animaterequest = requestAnimationFrame((time) => { this.draw(time); });
 		this.requestTime = performance.now();
 	}
 
-	/*
-	 * Renders the canvas content.
-	 * This method is internal.
-	 * @param {time} time The current time (a DOMHighResTimeStamp variable, as in `performance.now()`).
-	*/
-	/**
-	* @ignore
-   */
+    /**
+     * Performs actual rendering
+     * @param {number} time - Current timestamp
+     * @private
+     * @fires Viewer#draw
+     */
 	draw(time) {
 		if (!time) time = performance.now();
 		this.animaterequest = null;
 
 		let elapsed = performance.now() - this.requestTime;
 		this.canvas.addRenderTiming(elapsed);
-		
+
 		let viewport = this.camera.viewport;
 		let transform = this.camera.getCurrentTransform(time);
 
@@ -178,5 +238,51 @@ class Viewer {
 
 addSignals(Viewer, 'draw');
 addSignals(Viewer, 'resize'); //args: viewport
+
+/**
+ * Component Relationships:
+ * ```
+ * Viewer
+ * ├── Canvas
+ * │   └── Layers
+ * ├── Camera
+ * ├── PointerManager
+ * └── Controllers
+ * ```
+ * 
+ * Rendering Pipeline:
+ * 1. Camera computes current transform
+ * 2. Canvas prepares render state
+ * 3. Layers render in order
+ * 4. Post-processing applied
+ * 5. Frame timing recorded
+ * 
+ * Event System:
+ * - draw: Emitted after each frame render
+ * - resize: Emitted when viewport changes
+ * 
+ * Performance Considerations:
+ * - Uses requestAnimationFrame
+ * - Tracks frame timing
+ * - Handles device pixel ratio
+ * - Optimizes redraw requests
+ * 
+ * Resource Management:
+ * - Automatic canvas cleanup
+ * - Proper event listener removal
+ * - ResizeObserver handling
+ */
+
+/**
+ * Fired when frame is drawn
+ * @event Viewer#draw
+ */
+
+/**
+ * Fired when viewer is resized
+ * @event Viewer#resize
+ * @property {Viewport} viewport - New viewport configuration
+ */
+
 
 export { Viewer };
