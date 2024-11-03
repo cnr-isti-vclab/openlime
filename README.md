@@ -14,6 +14,8 @@ The **OpenLIME** library comes with a responsive user iterface that works well w
 
 The library contains a convenient set of examples that can be used both to understand how the library works and as a starting point for programming with **OpenLIME** itself.
 
+API Docs: https://cnr-isti-vclab.github.io/openlime/
+
 ## Installing npm
 
 ### Ubuntu
