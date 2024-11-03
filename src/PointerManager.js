@@ -1,53 +1,87 @@
 /**
- * The `PointerManager` class is a high-level event manager that interprets low-level pointer interactions 
- * (mouse, touch, and stylus) into higher-level gestures such as taps, holds, panning, and pinching.
- * It simplifies the process of handling user interactions on devices with touch screens or trackpads by 
- * converting raw pointer events (e.g., `pointerdown`, `pointermove`, `pointerup`) into easy-to-use gestures.
- *
- * Key features include:
- * - **Event Management**: Registers, unregisters, and broadcasts event handlers for gestures like single/double tap, hold, panning, and pinching.
- * - **Gesture Recognition**: Automatically detects and handles gestures such as finger taps, holds (long press), panning (drag), and pinch (zoom).
- * - **Idle Detection**: Detects periods of inactivity and can trigger events based on user idleness.
- * - **Multiple Pointer Support**: Manages multiple pointers simultaneously, supporting interactions like pinch-to-zoom.
- * - **Utility Methods**: Includes helper methods for tasks like calculating device pixels per millimeter (useful for different screen densities).
+ * The `PointerManager` class serves as a central event manager that interprets raw pointer events 
+ * (like mouse clicks, touch gestures, or stylus inputs) into higher-level gestures. It abstracts 
+ * away the complexity of handling multiple input types and transforms them into common gestures 
+ * like taps, holds, panning (drag), and pinch-to-zoom, which are common in modern user interfaces.
  * 
- * Common use cases for `PointerManager` include applications that require touch gestures, such as image or map manipulation, 
- * or any interactive web application that benefits from handling complex pointer-based interactions.
+ * Key mechanisms:
  * 
- * @module PointerManager
- */
-
-/**
- * High-level event manager for handling pointer interactions.
- * Captures and classifies PointerEvents (mouse/touch) into higher-level gestures.
+ * 1. **Event Handling and Gesture Recognition**:
+ *    - `PointerManager` listens for low-level pointer events (such as `pointerdown`, `pointermove`, 
+ *      and `pointerup`) and converts them into higher-level gestures. 
+ *    - For example, a quick touch and release is interpreted as a "tap," while a sustained touch 
+ *      (greater than 600ms) is recognized as a "hold."
+ *    - It handles both mouse and touch events uniformly, making it ideal for web applications that 
+ *      need to support diverse input devices (mouse, trackpad, touch screens).
  * 
- * @fires PointerManager#fingerHover - When pointer moves over target
- * @fires PointerManager#fingerSingleTap - On quick press/touch
- * @fires PointerManager#fingerDoubleTap - On two quick presses/touches
- * @fires PointerManager#fingerHold - When press/touch held for >600ms
- * @fires PointerManager#mouseWheel - On mouse wheel rotation
- * @fires PointerManager#panStart - When pan gesture begins
- * @fires PointerManager#panMove - During pan gesture
- * @fires PointerManager#panEnd - When pan gesture ends
- * @fires PointerManager#pinchStart - When pinch gesture begins
- * @fires PointerManager#pinchMove - During pinch gesture 
- * @fires PointerManager#pinchEnd - When pinch gesture ends
+ * 2. **Multi-pointer Support**:
+ *    - `PointerManager` supports multiple pointers simultaneously, making it capable of recognizing 
+ *      complex gestures involving more than one finger or pointer, such as pinch-to-zoom. 
+ *    - For multi-pointer gestures, it tracks each pointer's position and movement separately, 
+ *      allowing precise gesture handling.
  * 
- * @example
- * // Create manager and attach event handler
- * const canvas = document.querySelector('canvas');
- * const pointerManager = new PointerManager(canvas);
- * const handler = {
- *     priority: 10,
- *     fingerSingleTap: (e) => {
- *         console.log("SINGLE TAP at", e.clientX, e.clientY);
- *     },
- *     fingerHold: (e) => {
- *         console.log("HOLD at", e.clientX, e.clientY);
- *     }
- * };
- * pointerManager.onEvent(handler);
- */
+ * 3. **Idle Detection**:
+ *    - The class includes idle detection mechanisms, which can trigger actions or events when no 
+ *      pointer activity is detected for a specified period. This can be useful for implementing 
+ *      user inactivity warnings or pausing certain interactive elements when the user is idle.
+ * 
+ * 4. **Callback-based Gesture Management**:
+ *    - The core of the `PointerManager` class revolves around registering and triggering callbacks 
+ *      for different gestures. Callbacks are provided by the user of this class for events like 
+ *      pan (`onPan`), pinch (`onPinch`), and others.
+ *    - The class ensures that once a gesture starts, it monitors and triggers the appropriate 
+ *      callbacks, such as `panStart`, `panMove`, and `panEnd`, depending on the detected gesture.
+ * 
+ * 5. **Buffer Management**:
+ *    - The `PointerManager` class also includes a buffer system for managing and storing recent 
+ *      events, allowing the developer to enqueue, push, pop, or shift pointer data as needed. 
+ *      This can be helpful for applications that need to track the history of pointer events 
+ *      for gesture recognition or undo functionality.
+ * 
+ * 6. **Error Handling**:
+ *    - The class includes error handling to ensure that all required gesture handlers are defined 
+ *      by the user. For example, it will throw an error if any essential callback functions for 
+ *      pan or pinch gestures are missing, ensuring robust gesture management.
+ * 
+ * Typical usage involves:
+ * - Registering gesture handlers (e.g., for taps, panning, pinching).
+ * - The class then monitors all pointer events and triggers the corresponding gesture callbacks 
+ *   when appropriate.
+ * 
+ * Example:
+ * ```js
+ * const manager = new PointerManager();
+ * manager.onPan({
+ *   panStart: (e) => console.log('Pan started', e),
+ *   panMove: (e) => console.log('Panning', e),
+ *   panEnd: (e) => console.log('Pan ended', e),
+ *   priority: 1
+ * });
+ * manager.onPinch({
+ *   pinchStart: (e) => console.log('Pinch started', e),
+ *   pinchMove: (e) => console.log('Pinching', e),
+ *   pinchEnd: (e) => console.log('Pinch ended', e),
+ *   priority: 1
+ * });
+ * ```
+ * 
+ * In this example, `PointerManager` registers handlers for pan and pinch gestures, automatically 
+ * converting pointer events into the desired interactions. By abstracting the raw pointer events, 
+ * `PointerManager` allows developers to focus on handling higher-level gestures without worrying 
+ * about the underlying complexity.
+* @fires PointerManager#fingerHover - Triggered when a pointer moves over a target.
+* @fires PointerManager#fingerSingleTap - Triggered on a quick touch or click.
+* @fires PointerManager#fingerDoubleTap - Triggered on two quick touches or clicks.
+* @fires PointerManager#fingerHold - Triggered when a touch or click is held for more than 600ms.
+* @fires PointerManager#mouseWheel - Triggered when the mouse wheel is rotated.
+* @fires PointerManager#panStart - Triggered when a pan (drag) gesture begins.
+* @fires PointerManager#panMove - Triggered during a pan gesture.
+* @fires PointerManager#panEnd - Triggered when a pan gesture ends.
+* @fires PointerManager#pinchStart - Triggered when a pinch gesture begins.
+* @fires PointerManager#pinchMove - Triggered during a pinch gesture.
+* @fires PointerManager#pinchEnd - Triggered when a pinch gesture ends.
+* 
+*/
 class PointerManager {
     /**
      * Creates a new PointerManager instance.
@@ -97,6 +131,7 @@ class PointerManager {
      * 
      * @param {string} str - The input string to split.
      * @returns {Array<string>} An array of strings split by whitespace.
+     * @private
      */
     static splitStr(str) {
         return str.trim().split(/\s+/g);
@@ -220,10 +255,13 @@ class PointerManager {
     }
 
     /**
-     * Registers pan gesture callbacks.
+     * Registers callbacks for pan gestures (start, move, and end).
      * 
-     * @param {Object} handler - The handler object with pan callbacks.
-     * @throws {Error} If the handler is missing any required pan callbacks.
+     * @param {Object} handler - The handler object containing pan gesture callbacks.
+     * @param {function} handler.panStart - Callback function executed when the pan gesture starts.
+     * @param {function} handler.panMove - Callback function executed during the pan gesture movement.
+     * @param {function} handler.panEnd - Callback function executed when the pan gesture ends.
+     * @throws {Error} Throws an error if any required callback functions (`panStart`, `panMove`, `panEnd`) are missing.
      */
     onPan(handler) {
         const cb_properties = ['panStart', 'panMove', 'panEnd'];
@@ -247,10 +285,13 @@ class PointerManager {
     }
 
     /**
-     * Registers pinch gesture callbacks.
+     * Registers callbacks for pinch gestures (start, move, and end).
      * 
-     * @param {Object} handler - The handler object with pinch callbacks.
-     * @throws {Error} If the handler is missing any required pinch callbacks.
+     * @param {Object} handler - The handler object containing pinch gesture callbacks.
+     * @param {function} handler.pinchStart - Callback function executed when the pinch gesture starts.
+     * @param {function} handler.pinchMove - Callback function executed during the pinch gesture movement.
+     * @param {function} handler.pinchEnd - Callback function executed when the pinch gesture ends.
+     * @throws {Error} Throws an error if any required callback functions (`pinchStart`, `pinchMove`, `pinchEnd`) are missing.
      */
     onPinch(handler) {
         const cb_properties = ['pinchStart', 'pinchMove', 'pinchEnd'];

@@ -15,7 +15,7 @@
  * - Touch-enabled dragging support
  * - Configurable spacing between handle and content
  * 
- * @class
+ * 
  */
 class Draggable {
     /**

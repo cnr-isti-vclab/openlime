@@ -9,7 +9,7 @@ import { Annotation } from './Annotation.js';
  * position and dimensions, rather than a regular grid of tiles like LayoutTiles.
  */
 
-/**
+/*
  * @typedef {Object} TileDescriptor
  * Properties expected in tile descriptors:
  * @property {boolean} visible - Whether the tile should be rendered
@@ -153,7 +153,7 @@ class LayoutTileImages extends Layout {
 	/**
 	 * Gets the URL for a specific tile.
 	 * @param {number} id - Channel/raster ID
-	 * @param {Tile} tile - Tile object
+	 * @param {TileObj} tile - Tile object
 	 * @returns {string} URL to fetch tile image
 	 */
 	getTileURL(id, tile) {
@@ -197,7 +197,7 @@ class LayoutTileImages extends Layout {
 
 	/**
 	 * Gets coordinates for a tile in both image space and texture space.
-	 * @param {Tile} tile - The tile to get coordinates for
+	 * @param Obj} tile - The tile to get coordinates for
 	 * @returns {Object} Coordinate data
 	 * @returns {Float32Array} .coords - Image space coordinates [x,y,z, x,y,z, x,y,z, x,y,z]
 	 * @returns {Float32Array} .tcoords - Texture coordinates [u,v, u,v, u,v, u,v]
@@ -226,7 +226,7 @@ class LayoutTileImages extends Layout {
 	 * @param {number} bias - Resolution bias (unused in this layout)
 	 * @param {Map<number,Tile>} tiles - Currently available tiles
 	 * @param {number} [maxtiles=8] - Maximum number of tiles to return
-	 * @returns {Tile[]} Array of needed tiles sorted by distance to viewport center
+	 * @returns {TileObj[]} Array of needed tiles sorted by distance to viewport center
 	 */
 	needed(viewport, transform, layerTransform, border, bias, tiles, maxtiles = 8) {
 		//look for needed nodes and prefetched nodes (on the pos destination
@@ -294,7 +294,7 @@ class LayoutTileImages extends Layout {
 	/**
 	 * Creates a new tile instance with properties from its descriptor.
 	 * @param {number} index - Index of the tile descriptor
-	 * @returns {Tile} New tile instance with region and image properties
+	 * @returns {TileObj} New tile instance with region and image properties
 	 */
 	newTile(index) {
 		let tile = new Tile();

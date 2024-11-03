@@ -4,49 +4,19 @@ import { Shader } from './Shader.js'
  * A shader class implementing various BRDF (Bidirectional Reflectance Distribution Function) rendering modes.
  * Extends the base Shader class to provide specialized material rendering capabilities.
  * 
- * @class
- * @extends Shader
- * 
- * @param {Object} options - Configuration options for the shader
- * @param {string} [options.mode='color'] - Rendering mode to use
- *   - 'color': Full BRDF rendering using Ward model with ambient light
- *   - 'diffuse': Shows only diffuse component (kd)
- *   - 'specular': Shows only specular component (ks * spec * NdotL)
- *   - 'normals': Visualizes surface normals
- *   - 'monochrome': Renders using a single material color with diffuse lighting
- * @param {Object} [options.colorspaces] - Color space configurations
- * @param {string} [options.colorspaces.kd] - Color space for diffuse texture ('linear' or 'sRGB')
- * @param {string} [options.colorspaces.ks] - Color space for specular texture ('linear' or 'sRGB')
- * @param {number} [options.brightness=1.0] - Overall brightness multiplier
- * @param {number} [options.gamma=2.2] - Gamma correction value
- * @param {number[]} [options.alphaLimits=[0.01, 0.5]] - Range for surface roughness [min, max]
- * @param {number[]} [options.monochromeMaterial=[0.80, 0.79, 0.75]] - RGB color for monochrome mode
- * @param {number} [options.kAmbient=0.02] - Ambient light coefficient
- * 
- * @property {string[]} modes - Available rendering modes
- * @property {string} mode - Current rendering mode
- * @property {Object} uniforms - WebGL uniform variables
- * @property {Object} uniforms.uLightInfo - vec4 light position/direction (w=0 for directional, w=1 for spot)
- * @property {Object} uniforms.uAlphaLimits - vec2 surface roughness range
- * @property {Object} uniforms.uBrightnessGamma - vec2 containing brightness and gamma values
- * @property {Object} uniforms.uInputColorSpaceKd - int flag for diffuse texture color space
- * @property {Object} uniforms.uInputColorSpaceKs - int flag for specular texture color space
- * @property {Object} uniforms.uMonochromeMaterial - vec3 color for monochrome mode
- * @property {Object} uniforms.uKAmbient - float ambient light coefficient
- * 
  * Shader Features:
  * - Implements the Ward BRDF model for physically-based rendering
  * - Supports both directional and spot lights
- * - Handles normal mapping
+ * - Handles normal mapping for more detailed surface rendering
  * - Supports different color spaces (linear and sRGB) for input textures
- * - Multiple visualization modes for material analysis
- * - Configurable surface roughness range
- * - Ambient light contribution
+ * - Multiple visualization modes for material analysis (diffuse, specular, normals, monochrome, etc.)
+ * - Configurable surface roughness range for varying material appearance
+ * - Ambient light contribution to simulate indirect light
  * 
  * Required Textures:
  * - uTexKd: Diffuse color texture (optional)
  * - uTexKs: Specular color texture (optional)
- * - uTexNormals: Normal map
+ * - uTexNormals: Normal map for surface detail
  * - uTexGloss: Glossiness map (optional)
  * 
  * @example
@@ -63,10 +33,31 @@ import { Shader } from './Shader.js'
  *   alphaLimits: [0.05, 0.4],
  *   kAmbient: 0.03
  * });
+ * 
+ * @extends Shader
  */
 class ShaderBRDF extends Shader {
+	/**
+	 * Creates a new ShaderBRDF instance.
+	 * @param {Object} [options={}] - Configuration options for the shader.
+	 * @param {string} [options.mode='color'] - Rendering mode to use:
+	 *   - 'color': Full BRDF rendering using Ward model with ambient light
+	 *   - 'diffuse': Shows only diffuse component (kd)
+	 *   - 'specular': Shows only specular component (ks * spec * NdotL)
+	 *   - 'normals': Visualizes surface normals
+	 *   - 'monochrome': Renders using a single material color with diffuse lighting
+	 * @param {Object} [options.colorspaces] - Color space configurations.
+	 * @param {string} [options.colorspaces.kd='sRGB'] - Color space for diffuse texture ('linear' or 'sRGB').
+	 * @param {string} [options.colorspaces.ks='linear'] - Color space for specular texture ('linear' or 'sRGB').
+	 * @param {number} [options.brightness=1.0] - Overall brightness multiplier.
+	 * @param {number} [options.gamma=2.2] - Gamma correction value.
+	 * @param {number[]} [options.alphaLimits=[0.01, 0.5]] - Range for surface roughness [min, max].
+	 * @param {number[]} [options.monochromeMaterial=[0.80, 0.79, 0.75]] - RGB color for monochrome mode.
+	 * @param {number} [options.kAmbient=0.02] - Ambient light coefficient.
+	 * 
+	 */
 	constructor(options) {
-		super({});
+		super(options);
 		this.modes = ['color', 'diffuse', 'specular', 'normals', 'monochrome'];
 		this.mode = 'color';
 
@@ -154,16 +145,7 @@ class ShaderBRDF extends Shader {
 	 * 
 	 * @param {WebGLRenderingContext|WebGL2RenderingContext} gl - The WebGL context
 	 * @returns {string} The complete fragment shader source code
-	 * 
 	 * @private
-	 * 
-	 * Shader Features:
-	 * - Normal mapping with null normal detection
-	 * - Color space conversion (linear <-> sRGB)
-	 * - Ward BRDF implementation (isotropic version)
-	 * - Multiple rendering modes with configurable output
-	 * - Gamma correction
-	 * - Configurable gloss to roughness conversion
 	 */
 	fragShaderSrc(gl) {
 		let gl2 = !(gl instanceof WebGLRenderingContext);
@@ -282,6 +264,5 @@ vec4 data() {
 	}
 
 }
-
 
 export { ShaderBRDF }

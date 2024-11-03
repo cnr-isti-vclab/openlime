@@ -1,8 +1,17 @@
 import { BoundingBox } from "./BoundingBox";
 
 /**
- * @typedef {[number, number]} APoint
- * Array representation of a 2D point [x, y]
+ * @typedef {Array<number>} APoint
+ * A tuple of [x, y] representing a 2D point.
+ * @property {number} 0 - X coordinate
+ * @property {number} 1 - Y coordinate
+ * 
+ * @example
+ * ```javascript
+ * const point: APoint = [10, 20]; // [x, y]
+ * const x = point[0];  // x coordinate
+ * const y = point[1];  // y coordinate
+ * ```
  */
 
 /**
@@ -27,14 +36,16 @@ import { BoundingBox } from "./BoundingBox";
  */
 
 /**
- * @class
+ * 
  * Implements a 2D affine transformation system for coordinate manipulation.
  * Provides a complete set of operations for coordinate system conversions,
  * camera transformations, and animation support.
  * 
  * Mathematical Model:
  * Transformation of point P to P' follows the equation:
+ *
  * P' = z * R(a) * P + T
+ *
  * where:
  * - z: scale factor
  * - R(a): rotation matrix for angle 'a'
@@ -47,6 +58,39 @@ import { BoundingBox } from "./BoundingBox";
  * - Viewport projection
  * - Coordinate system conversions
  * - Bounding box transformations
+ * 
+ *
+ * Coordinate Systems and Transformations:
+ * 
+ * 1. Scene Space:
+ * - Origin at image center
+ * - Y-axis points up
+ * - Unit scale
+ * 
+ * 2. Viewport Space:
+ * - Origin at top-left
+ * - Y-axis points down
+ * - Pixel units [0..w-1, 0..h-1]
+ * 
+ * 3. WebGL Space:
+ * - Origin at center
+ * - Y-axis points up
+ * - Range [-1..1, -1..1]
+ * 
+ * Transform Pipeline:
+ * ```
+ * Scene -> Transform -> Viewport -> WebGL
+ * ```
+ * 
+ * Animation System:
+ * - Time-based interpolation
+ * - Multiple easing functions
+ * - Smooth transitions
+ * 
+ * Performance Considerations:
+ * - Matrix operations optimized for 2D
+ * - Cached transformation results
+ * - Efficient composition
  */
 class Transform { //FIXME Add translation to P?
 	/**
@@ -313,39 +357,5 @@ class Transform { //FIXME Add translation to P?
 		console.log(str + " x:" + this.x.toFixed(p) + ", y:" + this.y.toFixed(p) + ", z:" + this.z.toFixed(p) + ", a:" + this.a.toFixed(p) + ", t:" + this.t.toFixed(p));
 	}
 }
-
-/**
- * Coordinate Systems and Transformations:
- * 
- * 1. Scene Space:
- * - Origin at image center
- * - Y-axis points up
- * - Unit scale
- * 
- * 2. Viewport Space:
- * - Origin at top-left
- * - Y-axis points down
- * - Pixel units [0..w-1, 0..h-1]
- * 
- * 3. WebGL Space:
- * - Origin at center
- * - Y-axis points up
- * - Range [-1..1, -1..1]
- * 
- * Transform Pipeline:
- * ```
- * Scene -> Transform -> Viewport -> WebGL
- * ```
- * 
- * Animation System:
- * - Time-based interpolation
- * - Multiple easing functions
- * - Smooth transitions
- * 
- * Performance Considerations:
- * - Matrix operations optimized for 2D
- * - Cached transformation results
- * - Efficient composition
- */
 
 export { Transform }

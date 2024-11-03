@@ -12,8 +12,6 @@ import { Shader } from './Shader.js'
  */
 
 /**
- * @class
- * @extends Shader
  * ShaderNeural implements a WebGL-based neural network for real-time image relighting.
  * Used in conjunction with LayerNeuralRTI for Neural Reflectance Transformation Imaging.
  * 
@@ -33,6 +31,77 @@ import { Shader } from './Shader.js'
  * - Multi-texture sampling
  * - Weight matrix management
  * - Dequantization support
+ * 
+/**
+ * Neural Network Architecture Details
+ * 
+ * The network consists of three layers:
+ * 1. Input Layer:
+ *    - Accepts coefficient planes and light direction
+ *    - Applies dequantization and normalization
+ * 
+ * 2. Hidden Layers:
+ *    - Two fully connected layers
+ *    - ELU activation function
+ *    - Vectorized operations for efficiency
+ * 
+ * 3. Output Layer:
+ *    - Produces final RGB/XYZ color
+ *    - Linear activation
+ * 
+ * Implementation Notes:
+ * - All matrices are packed into vec4 for efficient GPU processing
+ * - Network dimensions are padded to multiples of 4
+ * - Uses texture sampling for coefficient input
+ * - Implements forward pass only
+ *
+ *
+ * Example usage with LayerNeuralRTI:
+ * ```javascript
+ * // Create neural shader
+ * const shader = new ShaderNeural({
+ *     mode: 'light',
+ *     nplanes: 9
+ * });
+ * 
+ * // Configure network
+ * shader.setShaderInfo(samples, 9, 52, 12, 'rgb');
+ * 
+ * // Update weights
+ * shader.setUniform('layer1_weights', weights1);
+ * shader.setUniform('layer1_biases', biases1);
+ * // ... set other layers
+ * 
+ * // Set light direction
+ * shader.setLight([0.5, 0.3]);
+ * ```
+ *
+ * Fragment Shader Implementation
+ * 
+ * Key Components:
+ * 1. Input Processing:
+ *    - Texture sampling
+ *    - Dequantization
+ *    - Light direction incorporation
+ * 
+ * 2. Network Computation:
+ *    - Vectorized matrix multiplication
+ *    - ELU activation function
+ *    - Layer-wise processing
+ * 
+ * 3. Output Processing:
+ *    - Color space conversion
+ *    - Final color computation
+ * 
+ * Uniforms:
+ * - {sampler2D} u_texture_[1-3] - Coefficient plane textures
+ * - {vec2} lights - Light direction vector
+ * - {vec4[]} layer[1-3]_weights - Layer weight matrices
+ * - {vec4[]} layer[1-3]_biases - Layer bias vectors
+ * - {vec3} min - Minimum values for dequantization
+ * - {vec3} max - Maximum values for dequantization
+ * 
+ * @extends Shader
  */
 class ShaderNeural extends Shader {
 	/**
@@ -275,98 +344,6 @@ vec4 data1() {
 		`;
 	}
 }
-
-/**
- * Default class properties
- * 
- * @property {Array<Object>} samplers - Texture sampler definitions:
- *   - u_texture_1: First coefficient plane
- *   - u_texture_2: Second coefficient plane
- *   - u_texture_3: Third coefficient plane
- * @property {Object} uniforms - WebGL uniform definitions:
- *   - lights: vec2 light direction
- *   - min: vec3 minimum values for dequantization
- *   - max: vec3 maximum values for dequantization
- *   - layer1_weights: vec4[] first layer weights
- *   - layer1_biases: vec4[] first layer biases
- *   - layer2_weights: vec4[] second layer weights
- *   - layer2_biases: vec4[] second layer biases
- *   - layer3_weights: vec4[] output layer weights
- *   - layer3_biases: vec3 output layer biases
- */
-
-/**
- * Neural Network Architecture Details
- * 
- * The network consists of three layers:
- * 1. Input Layer:
- *    - Accepts coefficient planes and light direction
- *    - Applies dequantization and normalization
- * 
- * 2. Hidden Layers:
- *    - Two fully connected layers
- *    - ELU activation function
- *    - Vectorized operations for efficiency
- * 
- * 3. Output Layer:
- *    - Produces final RGB/XYZ color
- *    - Linear activation
- * 
- * Implementation Notes:
- * - All matrices are packed into vec4 for efficient GPU processing
- * - Network dimensions are padded to multiples of 4
- * - Uses texture sampling for coefficient input
- * - Implements forward pass only
- */
-
-/**
- * Example usage with LayerNeuralRTI:
- * ```javascript
- * // Create neural shader
- * const shader = new ShaderNeural({
- *     mode: 'light',
- *     nplanes: 9
- * });
- * 
- * // Configure network
- * shader.setShaderInfo(samples, 9, 52, 12, 'rgb');
- * 
- * // Update weights
- * shader.setUniform('layer1_weights', weights1);
- * shader.setUniform('layer1_biases', biases1);
- * // ... set other layers
- * 
- * // Set light direction
- * shader.setLight([0.5, 0.3]);
- * ```
- */
-
-/**
- * Fragment Shader Implementation
- * 
- * Key Components:
- * 1. Input Processing:
- *    - Texture sampling
- *    - Dequantization
- *    - Light direction incorporation
- * 
- * 2. Network Computation:
- *    - Vectorized matrix multiplication
- *    - ELU activation function
- *    - Layer-wise processing
- * 
- * 3. Output Processing:
- *    - Color space conversion
- *    - Final color computation
- * 
- * Uniforms:
- * @property {sampler2D} u_texture_[1-3] - Coefficient plane textures
- * @property {vec2} lights - Light direction vector
- * @property {vec4[]} layer[1-3]_weights - Layer weight matrices
- * @property {vec4[]} layer[1-3]_biases - Layer bias vectors
- * @property {vec3} min - Minimum values for dequantization
- * @property {vec3} max - Maximum values for dequantization
- */
 
 export { ShaderNeural }
 

@@ -5,25 +5,6 @@ import { Transform } from "./Transform";
 // Tile level x y  index ----- tex missing() start/end (tarzoom) ----- time, priority size(byte)
 
 /**
- * @typedef {Object} Tile
- * Represents a single element of a regular grid that subdivides an image.
- * Tiles are identified by their position (x, y) within the grid and the zoom level.
- * 
- * @property {number} level - The zoom level of the tile (0 is top/most zoomed out)
- * @property {number} x - Horizontal position of the tile in the grid at the given level
- * @property {number} y - Vertical position of the tile in the grid at the given level
- * @property {number} index - Unique identifier for the tile across all levels
- * @property {number} [start] - Starting byte position in the dataset (used for tarzoom/itarzoom formats)
- * @property {number} [end] - Ending byte position in the dataset (used for tarzoom/itarzoom formats)
- * @property {number} missing - For multi-channel formats (RTI, BRDF), tracks pending channel data requests
- * @property {WebGLTexture[]} tex - Array of WebGL textures (one per channel)
- * @property {number} time - Timestamp of tile creation (used by cache algorithms)
- * @property {number} priority - Tile priority for cache management (lower = higher priority)
- * @property {number} size - Total size of the tile in bytes (used by cache algorithms)
- */
-
-
-/**
  * @typedef {'image'|'deepzoom'|'deepzoom1px'|'google'|'zoomify'|'iiif'|'iip'|'tarzoom'|'itarzoom'} Layout#Type
  * Supported image layout types including both single-resolution and multi-resolution formats.
  * - image: Standard web image formats (jpg, png, gif, etc.)
@@ -265,7 +246,7 @@ class LayoutTiles extends Layout {
 
 	/**
 	 * Gets coordinates for a tile in both image space and texture space.
-	 * @param {Tile} tile - The tile to get coordinates for
+	 * @param {TileObj} tile - The tile to get coordinates for
 	 * @returns {Object} Coordinate data
 	 * @returns {Float32Array} .coords - Image space coordinates [x,y,z, x,y,z, x,y,z, x,y,z]
 	 * @returns {Float32Array} .tcoords - Texture coordinates [u,v, u,v, u,v, u,v]
@@ -325,7 +306,7 @@ class LayoutTiles extends Layout {
 	/**
 	 * Creates a new tile instance with computed properties.
 	 * @param {number} index - Unique tile identifier
-	 * @returns {Tile} New tile instance
+	 * @returns {TileObj} New tile instance
 	 */
 	newTile(index) {
 		let tile = super.newTile(index)
@@ -343,7 +324,7 @@ class LayoutTiles extends Layout {
 	 * @param {number} bias - Resolution bias (0-1, affects mipmap level selection)
 	 * @param {Map<number,Tile>} tiles - Currently available tiles
 	 * @param {number} [maxtiles=8] - Maximum number of tiles to return
-	 * @returns {Tile[]} Array of needed tiles sorted by priority
+	 * @returns {TileObj[]} Array of needed tiles sorted by priority
 	 */
 	needed(viewport, transform, layerTransform, border, bias, tiles, maxtiles = 8) {
 		let neededBox = this.neededBox(viewport, transform, layerTransform, 0, bias);
@@ -467,7 +448,7 @@ class LayoutTiles extends Layout {
 	/**
 	 * Gets URL for a specific tile.
 	 * @param {number} id - Channel/raster ID
-	 * @param {Tile} tile - Tile to get URL for
+	 * @param {TileObj} tile - Tile to get URL for
 	 * @returns {string} URL to fetch tile data
 	 * @throws {Error} If layout not defined or ready
 	 */

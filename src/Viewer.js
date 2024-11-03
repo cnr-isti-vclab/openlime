@@ -25,6 +25,18 @@ import { addSignals } from './Signals.js'
  */
 
 /**
+ * Fired when frame is drawn
+ * @event Viewer#draw
+ */
+
+/**
+ * Fired when viewer is resized
+ * @event Viewer#resize
+ * @property {Viewport} viewport - New viewport configuration
+ */
+
+/**
+ * 
  * Central class of the OpenLIME framework.
  * Creates and manages the main viewer interface, coordinates components,
  * and handles rendering pipeline.
@@ -37,7 +49,40 @@ import { addSignals } from './Signals.js'
  * - Rendering pipeline
  * - Resource management
  * 
- * @class
+ *
+ *
+ * Component Relationships:
+ * ```
+ * Viewer
+ * ├── Canvas
+ * │   └── Layers
+ * ├── Camera
+ * ├── PointerManager
+ * └── Controllers
+ * ```
+ * 
+ * Rendering Pipeline:
+ * 1. Camera computes current transform
+ * 2. Canvas prepares render state
+ * 3. Layers render in order
+ * 4. Post-processing applied
+ * 5. Frame timing recorded
+ * 
+ * Event System:
+ * - draw: Emitted after each frame render
+ * - resize: Emitted when viewport changes
+ * 
+ * Performance Considerations:
+ * - Uses requestAnimationFrame
+ * - Tracks frame timing
+ * - Handles device pixel ratio
+ * - Optimizes redraw requests
+ * 
+ * Resource Management:
+ * - Automatic canvas cleanup
+ * - Proper event listener removal
+ * - ResizeObserver handling
+ * 
  * @fires Viewer#draw
  * @fires Viewer#resize
  * 
@@ -238,51 +283,5 @@ class Viewer {
 
 addSignals(Viewer, 'draw');
 addSignals(Viewer, 'resize'); //args: viewport
-
-/**
- * Component Relationships:
- * ```
- * Viewer
- * ├── Canvas
- * │   └── Layers
- * ├── Camera
- * ├── PointerManager
- * └── Controllers
- * ```
- * 
- * Rendering Pipeline:
- * 1. Camera computes current transform
- * 2. Canvas prepares render state
- * 3. Layers render in order
- * 4. Post-processing applied
- * 5. Frame timing recorded
- * 
- * Event System:
- * - draw: Emitted after each frame render
- * - resize: Emitted when viewport changes
- * 
- * Performance Considerations:
- * - Uses requestAnimationFrame
- * - Tracks frame timing
- * - Handles device pixel ratio
- * - Optimizes redraw requests
- * 
- * Resource Management:
- * - Automatic canvas cleanup
- * - Proper event listener removal
- * - ResizeObserver handling
- */
-
-/**
- * Fired when frame is drawn
- * @event Viewer#draw
- */
-
-/**
- * Fired when viewer is resized
- * @event Viewer#resize
- * @property {Viewport} viewport - New viewport configuration
- */
-
 
 export { Viewer };

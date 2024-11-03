@@ -21,8 +21,6 @@ import { Shader } from './Shader.js'
  */
 
 /**
- * @class
- * @extends Shader
  * ShaderRTI implements various Reflectance Transformation Imaging techniques.
  * Works in conjunction with LayerRTI for interactive relighting of cultural heritage objects.
  * 
@@ -47,6 +45,8 @@ import { Shader } from './Shader.js'
  * - Coefficient plane management
  * - Light vector transformation
  * - Color space conversion
+ * 
+ * @extends Shader
  */
 class ShaderRTI extends Shader {
 	/**
@@ -684,25 +684,25 @@ class BLN {
  */
 
 /**
- * @class LRGB
+ *  LRGB
  * Luminance/RGB color space implementation
  * Separates luminance variation from base color
  */
 
 /**
- * @class RGB
+ *  RGB
  * RGB color space implementation
  * Direct RGB coefficient manipulation
  */
 
 /**
- * @class MRGB
+ *  MRGB
  * Modified RGB color space implementation
  * PCA-based color space transformation
  */
 
 /**
- * @class MYCC
+ *  MYCC
  * Modified YCC color space implementation
  * Luminance/chrominance separation with custom transformation
  */
@@ -715,31 +715,31 @@ class BLN {
  */
 
 /**
- * @class PTM
+ *  PTM
  * Polynomial Texture Map basis
  * Uses 6 coefficients per color channel
  */
 
 /**
- * @class HSH
+ *  HSH
  * Hemispherical Harmonics basis
  * Uses 9 coefficients per color channel
  */
 
 /**
- * @class SH
+ *  SH
  * Spherical Harmonics basis
  * Uses 9 coefficients per color channel
  */
 
 /**
- * @class RBF
+ *  RBF
  * Radial Basis Functions
  * Uses measured light directions with Gaussian interpolation
  */
 
 /**
- * @class BLN
+ *  BLN
  * Bilinear interpolation
  * Uses grid-based interpolation of light directions
  */

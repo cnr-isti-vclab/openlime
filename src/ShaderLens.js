@@ -19,8 +19,6 @@ import { Shader } from './Shader.js'
  */
 
 /**
- * @class
- * @extends Shader
  * ShaderLens implements a circular magnification lens effect with optional overlay.
  * 
  * Features:
@@ -37,6 +35,62 @@ import { Shader } from './Shader.js'
  * - Alpha blending for overlays
  * - WebGL 1.0 and 2.0 compatibility
  * - Viewport coordinate mapping
+ * 
+ *
+ * Example usage:
+ * ```javascript
+ * // Create lens shader
+ * const lens = new ShaderLens();
+ * 
+ * // Configure lens
+ * lens.setLensUniforms(
+ *     [400, 300, 100, 10],  // center at (400,300), radius 100, border 10
+ *     [800, 600],           // viewport size
+ *     [0.8, 0.8, 0.8, 1],   // gray border
+ *     true                  // show border
+ * );
+ * 
+ * // Enable overlay
+ * lens.setOverlayLayerEnabled(true);
+ * ```
+ * 
+ * Advanced usage with custom configuration:
+ * ```javascript
+ * const lens = new ShaderLens({
+ *     uniforms: {
+ *         u_lens: { value: [0, 0, 150, 15] },
+ *         u_border_color: { value: [1, 0, 0, 1] }  // red border
+ *     },
+ *     overlayLayerEnabled: true
+ * });
+ * ```
+ *
+ * GLSL Implementation Details
+ * 
+ * Key Components:
+ * 1. Lens Function:
+ *    - Distance-based circle calculation
+ *    - Smooth border transitions
+ *    - Color mixing and blending
+ * 
+ * 2. Overlay Processing:
+ *    - Grayscale conversion
+ *    - Alpha blending
+ *    - Border preservation
+ * 
+ * Functions:
+ * - lensColor(): Handles color transitions between lens regions
+ * - data(): Main processing function
+ * 
+ * Uniforms:
+ * - {vec4} u_lens - Lens parameters [cx, cy, radius, border]
+ * - {vec2} u_width_height - Viewport dimensions
+ * - {vec4} u_border_color - Border color and alpha
+ * - {bool} u_border_enable - Border visibility flag
+ * - {sampler2D} source0 - Main texture
+ * - {sampler2D} source1 - Optional overlay texture
+ *
+ * @extends Shader
  */
 class ShaderLens extends Shader {
     /**
@@ -95,16 +149,17 @@ class ShaderLens extends Shader {
     }
 
     /**
-     * Generates fragment shader source code
-     * @param {WebGLRenderingContext} gl - WebGL context
-     * @returns {string} Fragment shader source code
-     * @private
+     * Generates fragment shader source code.
      * 
      * Shader Features:
      * - Circular lens implementation
      * - Smooth border transitions
      * - Optional overlay support
      * - Grayscale conversion outside lens
+     * 
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @returns {string} Fragment shader source code
+     * @private
      */
     fragShaderSrc(gl) {
         let gl2 = !(gl instanceof WebGLRenderingContext);
@@ -175,7 +230,8 @@ class ShaderLens extends Shader {
     }
 
     /**
-     * Generates vertex shader source code
+     * Generates vertex shader source code.
+     * 
      * @param {WebGLRenderingContext} gl - WebGL context
      * @returns {string} Vertex shader source code
      * @private
@@ -195,76 +251,5 @@ void main() {
 }`;
     }
 }
-/**
- * Default class properties
- * 
- * @property {Array<Object>} samplers - Texture sampler definitions:
- *   - source0: Main image texture
- *   - source1: Optional overlay texture
- * @property {Object} uniforms - WebGL uniform definitions:
- *   - u_lens: vec4 lens parameters
- *   - u_width_height: vec2 viewport dimensions
- *   - u_border_color: vec4 border color
- *   - u_border_enable: bool border visibility
- * @property {string} label - Shader label
- * @property {boolean} overlayLayerEnabled - Overlay state
- */
-
-/**
- * Example usage:
- * ```javascript
- * // Create lens shader
- * const lens = new ShaderLens();
- * 
- * // Configure lens
- * lens.setLensUniforms(
- *     [400, 300, 100, 10],  // center at (400,300), radius 100, border 10
- *     [800, 600],           // viewport size
- *     [0.8, 0.8, 0.8, 1],   // gray border
- *     true                  // show border
- * );
- * 
- * // Enable overlay
- * lens.setOverlayLayerEnabled(true);
- * ```
- * 
- * Advanced usage with custom configuration:
- * ```javascript
- * const lens = new ShaderLens({
- *     uniforms: {
- *         u_lens: { value: [0, 0, 150, 15] },
- *         u_border_color: { value: [1, 0, 0, 1] }  // red border
- *     },
- *     overlayLayerEnabled: true
- * });
- * ```
- */
-
-/**
- * GLSL Implementation Details
- * 
- * Key Components:
- * 1. Lens Function:
- *    - Distance-based circle calculation
- *    - Smooth border transitions
- *    - Color mixing and blending
- * 
- * 2. Overlay Processing:
- *    - Grayscale conversion
- *    - Alpha blending
- *    - Border preservation
- * 
- * Functions:
- * - lensColor(): Handles color transitions between lens regions
- * - data(): Main processing function
- * 
- * Uniforms:
- * @property {vec4} u_lens - Lens parameters [cx, cy, radius, border]
- * @property {vec2} u_width_height - Viewport dimensions
- * @property {vec4} u_border_color - Border color and alpha
- * @property {bool} u_border_enable - Border visibility flag
- * @property {sampler2D} source0 - Main texture
- * @property {sampler2D} source1 - Optional overlay texture
- */
 
 export { ShaderLens }

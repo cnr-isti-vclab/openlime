@@ -1,7 +1,6 @@
 import { Util } from './Util'
 
 /**
- * @fileoverview
  * ScaleBar module provides measurement scale visualization and unit conversion functionality.
  * Includes both a base Units class for unit management and a ScaleBar class for visual representation.
  *

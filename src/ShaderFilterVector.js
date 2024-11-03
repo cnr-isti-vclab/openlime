@@ -21,8 +21,7 @@ import { ShaderFilter } from './ShaderFilter.js'
  */
 
 /**
- * @class
- * @extends ShaderFilter
+ * 
  * ShaderFilterVector implements 2D vector field visualization techniques.
  * Based on techniques from "2D vector field visualization by Morgan McGuire"
  * and enhanced by Matthias Reitinger.
@@ -41,6 +40,62 @@ import { ShaderFilter } from './ShaderFilter.js'
  * - Dynamic magnitude scaling
  * - Colormap-based magnitude visualization
  * - WebGL 1.0 and 2.0 compatibility
+ *
+ * Example usage:
+ * ```javascript
+ * // Basic usage with default options
+ * const vectorField = new ShaderFilterVector(myColorScale);
+ * shader.addFilter(vectorField);
+ * 
+ * // Configure visualization modes
+ * vectorField.setMode('normalize', 'on');  // Normalize arrow lengths
+ * vectorField.setMode('arrow', 'col');     // Use custom arrow color
+ * vectorField.setMode('field', 'mag');     // Show magnitude field
+ * ```
+ * 
+ * Advanced usage with custom configuration:
+ * ```javascript
+ * const vectorField = new ShaderFilterVector(colorscale, {
+ *     inDomain: [-10, 10],         // Vector magnitude range
+ *     maxSteps: 512,               // Higher colormap resolution
+ *     arrowColor: [1, 0, 0, 1]     // Red arrows
+ * });
+ * 
+ * // Add to shader pipeline
+ * shader.addFilter(vectorField);
+ * ```
+ *
+ * GLSL Implementation Details
+ * 
+ * Key Components:
+ * 1. Arrow Generation:
+ *    - Tile-based positioning
+ *    - Shaft and head construction
+ *    - Size and direction control
+ * 
+ * 2. Distance Functions:
+ *    - line3(): Distance to line segment
+ *    - line(): Signed distance to line
+ *    - arrow(): Complete arrow shape
+ * 
+ * 3. Color Processing:
+ *    - Vector magnitude computation
+ *    - Colormap lookup
+ *    - Mode-based blending
+ * 
+ * Constants:
+ * - ARROW_TILE_SIZE: Spacing between arrows (16.0)
+ * - ISQRT2: 1/sqrt(2) for magnitude normalization
+ * 
+ * Uniforms:
+ * - {vec4} arrow_color - Custom arrow color
+ * - {vec4} low_color - Color for values below range
+ * - {vec4} high_color - Color for values above range
+ * - {float} scale - Magnitude scaling factor
+ * - {float} bias - Magnitude offset
+ * - {sampler2D} colormap - Magnitude colormap texture
+ *
+ * @extends ShaderFilter
  */
 class ShaderFilterVector extends ShaderFilter {
     /**
@@ -58,14 +113,14 @@ class ShaderFilterVector extends ShaderFilter {
      *     arrowColor: [0, 0, 0, 1]
      * });
      * ```
-     */    
+     */
     constructor(colorscale, options) {
         super(options);
         options = Object.assign({
             inDomain: [],
             maxSteps: 256,
             arrowColor: [0.0, 0.0, 0.0, 1.0],
-            
+
         }, options);
         Object.assign(this, options);
 
@@ -106,17 +161,14 @@ class ShaderFilterVector extends ShaderFilter {
     }
 
     /**
-     * Creates the colormap texture for magnitude visualization
+     * Creates the colormap texture for magnitude visualization.
+     * Samples colorscale at specified resolution, creates 1D RGBA texture,
+     * configures appropriate texture filtering, and links texture with sampler.
+     * 
      * @param {WebGLRenderingContext} gl - WebGL context
      * @returns {Promise<void>}
      * @private
-     * 
-     * Implementation details:
-     * - Samples colorscale at specified resolution
-     * - Creates 1D RGBA texture
-     * - Configures appropriate texture filtering
-     * - Links texture with sampler
-     */    
+     */
     async createTextures(gl) {
         const colormap = this.colorscale.sample(this.maxSteps);
         let textureFilter = gl.LINEAR;
@@ -134,10 +186,7 @@ class ShaderFilterVector extends ShaderFilter {
     }
 
     /**
-     * Generates GLSL code for vector field visualization
-     * @param {WebGLRenderingContext} gl - WebGL context
-     * @returns {string} GLSL function definition
-     * @private
+     * Generates GLSL code for vector field visualization.
      * 
      * Shader Features:
      * - Tile-based arrow placement
@@ -145,7 +194,11 @@ class ShaderFilterVector extends ShaderFilter {
      * - Multiple visualization modes
      * - Magnitude-based colormapping
      * - Smooth field interpolation
-     */    
+     * 
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @returns {string} GLSL function definition
+     * @private
+     */
     fragDataSrc(gl) {
         return `
         // 2D vector field visualization by Matthias Reitinger, @mreitinger
@@ -276,81 +329,5 @@ class ShaderFilterVector extends ShaderFilter {
 
 
 }
-/**
- * Default class properties
- * 
- * @property {ColorScale} colorscale - Associated colorscale for magnitude mapping
- * @property {number[]} inDomain - Input magnitude range for mapping
- * @property {number} maxSteps - Colormap texture resolution
- * @property {number[]} arrowColor - RGBA color for arrows in 'col' mode
- * @property {Object} modes - Visualization mode configurations:
- *   - normalize: Arrow length normalization
- *   - arrow: Arrow coloring method
- *   - field: Background field visualization
- * @property {Object} uniforms - WebGL uniform definitions:
- *   - arrow_color: vec4 custom arrow color
- *   - low_color: vec4 color for values below range
- *   - high_color: vec4 color for values above range
- *   - scale: float magnitude scaling factor
- *   - bias: float magnitude offset
- */
-
-/**
- * Example usage:
- * ```javascript
- * // Basic usage with default options
- * const vectorField = new ShaderFilterVector(myColorScale);
- * shader.addFilter(vectorField);
- * 
- * // Configure visualization modes
- * vectorField.setMode('normalize', 'on');  // Normalize arrow lengths
- * vectorField.setMode('arrow', 'col');     // Use custom arrow color
- * vectorField.setMode('field', 'mag');     // Show magnitude field
- * ```
- * 
- * Advanced usage with custom configuration:
- * ```javascript
- * const vectorField = new ShaderFilterVector(colorscale, {
- *     inDomain: [-10, 10],         // Vector magnitude range
- *     maxSteps: 512,               // Higher colormap resolution
- *     arrowColor: [1, 0, 0, 1]     // Red arrows
- * });
- * 
- * // Add to shader pipeline
- * shader.addFilter(vectorField);
- * ```
- */
-
-/**
- * GLSL Implementation Details
- * 
- * Key Components:
- * 1. Arrow Generation:
- *    - Tile-based positioning
- *    - Shaft and head construction
- *    - Size and direction control
- * 
- * 2. Distance Functions:
- *    - line3(): Distance to line segment
- *    - line(): Signed distance to line
- *    - arrow(): Complete arrow shape
- * 
- * 3. Color Processing:
- *    - Vector magnitude computation
- *    - Colormap lookup
- *    - Mode-based blending
- * 
- * Constants:
- * - ARROW_TILE_SIZE: Spacing between arrows (16.0)
- * - ISQRT2: 1/sqrt(2) for magnitude normalization
- * 
- * Uniforms:
- * @property {vec4} arrow_color - Custom arrow color
- * @property {vec4} low_color - Color for values below range
- * @property {vec4} high_color - Color for values above range
- * @property {float} scale - Magnitude scaling factor
- * @property {float} bias - Magnitude offset
- * @property {sampler2D} colormap - Magnitude colormap texture
- */
 
 export { ShaderFilterVector }

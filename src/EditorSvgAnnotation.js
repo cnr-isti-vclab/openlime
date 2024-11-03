@@ -5,7 +5,7 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { CoordinateSystem } from './CoordinateSystem.js'
 
 /**
- * @typedef {Object} Annotation
+ * @typedef {Object} AnnotationObj
  * @property {string} id - Unique identifier
  * @property {string} label - Annotation title
  * @property {string} description - Detailed description
@@ -18,26 +18,26 @@ import { CoordinateSystem } from './CoordinateSystem.js'
 
 /**
  * @callback crudCallback
- * @param {Annotation} annotation - The annotation being operated on
+ * @param {AnnotationObj} annotation - The annotation being operated on
  * @returns {boolean} Success status of the operation
  * @description Callback for create/update/delete operations on annotations
  */
 
 /**
  * @callback customStateCallback
- * @param {Annotation} annotation - The annotation being modified
+ * @param {AnnotationObj} annotation - The annotation being modified
  * @description Callback to customize state information saved with annotations
  */
 
 /**
  * @callback customDataCallback
- * @param {Annotation} annotation - The annotation being modified
+ * @param {AnnotationObj} annotation - The annotation being modified
  * @description Callback to customize the annotation data object
  */
 
 /**
  * @callback selectedCallback
- * @param {Annotation} annotation - The selected annotation
+ * @param {AnnotationObj} annotation - The selected annotation
  * @description Callback executed when an annotation is selected in the UI
  */
 
@@ -274,7 +274,7 @@ class EditorSvgAnnotation {
 
 	/**
  * Shows the annotation editor widget
- * @param {Annotation} annotation - Annotation to edit
+ * @param {AnnotationObj} annotation - Annotation to edit
  * @private
  */
 	showEditWidget(anno) {

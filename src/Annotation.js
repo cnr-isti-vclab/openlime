@@ -6,6 +6,7 @@ import { BoundingBox } from './BoundingBox.js'
  * additional information for interpreting underlying drawings.
  * Each annotation has a unique identifier and can contain various properties
  * such as description, category, drawing style, labels, etc.
+ * 
  */
 class Annotation {
 	/**
@@ -28,6 +29,7 @@ class Annotation {
 		* @param {boolean} [options.ready=false] - Indicates if SVG conversion is complete.
 		* @param {boolean} [options.needsUpdate=true] - Indicates if annotation needs updating.
 		* @param {boolean} [options.editing=false] - Indicates if annotation is being edited.
+		* @class
 		*/
 	constructor(options) {
 		Object.assign(

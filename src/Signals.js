@@ -14,6 +14,36 @@
  * - Signal initialization
  * - Signal storage
  * 
+ *
+ * Implementation Details
+ * 
+ * The signal system works by:
+ * 1. Extending the prototype with signal tracking properties
+ * 2. Maintaining arrays of callbacks for each signal type
+ * 3. Providing methods to register and trigger callbacks
+ * 
+ * Signal Storage Structure:
+ * ```javascript
+ * {
+ *     signals: {
+ *         'eventName1': [callback1, callback2, ...],
+ *         'eventName2': [callback3, callback4, ...]
+ *     },
+ *     allSignals: ['eventName1', 'eventName2', ...]
+ * }
+ * ```
+ * 
+ * Performance Considerations:
+ * - Callbacks are stored in arrays for fast iteration
+ * - Signals are initialized lazily on first use
+ * - Direct property access for quick event emission
+ * 
+ * Usage Notes:
+ * - Events must be registered before they can be used
+ * - Multiple callbacks can be registered for the same event
+ * - Callbacks are executed synchronously
+ * - Parameters are passed through to callbacks unchanged
+ *
  * @function
  * @param {Object} proto - The prototype to enhance with signal capabilities
  * @param {...string} signals - Names of signals to register
@@ -113,36 +143,5 @@ function addSignals(proto, ...signals) {
 			r(...parameters);
 	}
 }
-
-/**
- * Implementation Details
- * 
- * The signal system works by:
- * 1. Extending the prototype with signal tracking properties
- * 2. Maintaining arrays of callbacks for each signal type
- * 3. Providing methods to register and trigger callbacks
- * 
- * Signal Storage Structure:
- * ```javascript
- * {
- *     signals: {
- *         'eventName1': [callback1, callback2, ...],
- *         'eventName2': [callback3, callback4, ...]
- *     },
- *     allSignals: ['eventName1', 'eventName2', ...]
- * }
- * ```
- * 
- * Performance Considerations:
- * - Callbacks are stored in arrays for fast iteration
- * - Signals are initialized lazily on first use
- * - Direct property access for quick event emission
- * 
- * Usage Notes:
- * - Events must be registered before they can be used
- * - Multiple callbacks can be registered for the same event
- * - Callbacks are executed synchronously
- * - Parameters are passed through to callbacks unchanged
- */
 
 export { addSignals }

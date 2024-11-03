@@ -1,7 +1,16 @@
 
+/**
+ *  @default
+ */
 let url = 'skin/skin.svg';
-let svg = null;
+
+/**
+ *  @default
+ */
 let pad = 5;
+
+let svg = null;
+
 
 /**
  * @typedef {Object} SkinIcon
@@ -30,7 +39,38 @@ let pad = 5;
  * - Padding management
  * - Transform handling
  * 
- * @class
+ *
+ * Default Configuration
+ * 
+ * - {string} url - Default skin URL ('skin/skin.svg')
+ * - {number} pad - Icon padding in SVG units (5)
+ * 
+ * File Structure Requirements:
+ * ```xml
+ * <svg>
+ *   <!-- Icons should use openlime- prefix -->
+ *   <g class="openlime-home">...</g>
+ *   <g class="openlime-zoom">...</g>
+ *   <g class="openlime-menu">...</g>
+ * </svg>
+ * ```
+ * 
+ * Common Icon Classes:
+ * - openlime-home: Home/reset view
+ * - openlime-zoom: Zoom controls
+ * - openlime-menu: Menu button
+ * - openlime-close: Close button
+ * - openlime-next: Next/forward
+ * - openlime-prev: Previous/back
+ * 
+ * Usage Notes:
+ * - Always use async/await with icon methods
+ * - Icons are cloned to allow multiple instances
+ * - SVG is loaded once and cached
+ * - Padding is applied uniformly
+ * - ViewBox is computed automatically
+ *
+ * 
  * @static
  */
 class Skin {
@@ -149,38 +189,5 @@ class Skin {
 		return icon;
 	}
 }
-
-/**
- * Default Configuration
- * 
- * @property {string} url - Default skin URL ('skin/skin.svg')
- * @property {number} pad - Icon padding in SVG units (5)
- * @property {SVGElement|null} svg - Cached SVG DOM element
- * 
- * File Structure Requirements:
- * ```xml
- * <svg>
- *   <!-- Icons should use openlime- prefix -->
- *   <g class="openlime-home">...</g>
- *   <g class="openlime-zoom">...</g>
- *   <g class="openlime-menu">...</g>
- * </svg>
- * ```
- * 
- * Common Icon Classes:
- * - openlime-home: Home/reset view
- * - openlime-zoom: Zoom controls
- * - openlime-menu: Menu button
- * - openlime-close: Close button
- * - openlime-next: Next/forward
- * - openlime-prev: Previous/back
- * 
- * Usage Notes:
- * - Always use async/await with icon methods
- * - Icons are cloned to allow multiple instances
- * - SVG is loaded once and cached
- * - Padding is applied uniformly
- * - ViewBox is computed automatically
- */
 
 export { Skin }

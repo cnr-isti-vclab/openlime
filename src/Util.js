@@ -5,7 +5,7 @@ window.structuredClone = typeof (structuredClone) == "function" ? structuredClon
  * Utility class providing various helper functions for OpenLIME.
  * Includes methods for SVG manipulation, file loading, image processing, and string handling.
  * 
- * @class
+ * 
  * @static
  */
 class Util {

@@ -8,7 +8,7 @@
  */
 
 /**
- * @class
+ * 
  * TextToSpeechPlayer provides text-to-speech functionality with extensive control options.
  * Handles voice selection, speech synthesis, text cleaning, and playback control.
  * 
@@ -27,6 +27,32 @@
  * - Implements Chrome-specific fixes
  * - Handles browser tab switching
  * - Manages page unload events
+ * 
+ *
+ * Implementation Details
+ * 
+ * Chrome Bug Workarounds:
+ * - Implements periodic pause/resume to prevent Chrome from stopping
+ * - Uses timeout to prevent indefinite speech
+ * - Handles voice loading race conditions
+ * 
+ * State Management:
+ * ```javascript
+ * {
+ *     isSpeaking: boolean,    // Current speech state
+ *     isPaused: boolean,      // Pause state
+ *     voice: SpeechSynthesisVoice, // Selected voice
+ *     isOfflineCapable: boolean,   // Offline support
+ *     volume: number,         // Current volume
+ *     previousVolume: number  // Pre-mute volume
+ * }
+ * ```
+ * 
+ * Event Handling:
+ * - beforeunload: Stops speech on page close
+ * - visibilitychange: Handles tab switching
+ * - voiceschanged: Manages voice loading
+ * - utterance events: Tracks speech progress
  */
 class TextToSpeechPlayer {
   /**
@@ -112,12 +138,13 @@ class TextToSpeechPlayer {
     this.isSpeaking = true;
   }
 
-  /**
-   * @private
-   * Loads and selects appropriate voice for synthesis
-   * @returns {Promise<SpeechSynthesisVoice>}
-   * @throws {Error} If no suitable voice is found
-   */
+/**
+ * Loads and selects appropriate voice for synthesis.
+ * 
+ * @returns {Promise<SpeechSynthesisVoice>}
+ * @throws {Error} If no suitable voice is found
+ * @private
+ */
   async loadVoice() {
     console.log(`Loading voice for language: ${this.language}`);
     return new Promise((resolve, reject) => {
@@ -162,10 +189,11 @@ class TextToSpeechPlayer {
     });
   }
 
-  /**
-   * Checks if the selected voice is capable of offline speech synthesis.
-   * @private
-   */
+/**
+ * Checks if the selected voice is capable of offline speech synthesis.
+ * 
+ * @private
+ */
   checkOfflineCapability() {
     if (this.voice) {
       // If a voice is loaded and it's not marked as a network voice, assume it's offline capable
@@ -175,19 +203,20 @@ class TextToSpeechPlayer {
     }
   }
 
-  /**
-   * @private
-   * Cleans text by removing HTML tags and formatting
-   * @param {string} text - Text to clean
-   * @returns {string} Cleaned text
-   * 
-   * Cleaning steps:
-   * 1. Removes 'omissis' class content
-   * 2. Converts <br> to spaces
-   * 3. Strips HTML tags
-   * 4. Removes escape characters
-   * 5. Trims whitespace
-   */
+/**
+ * Cleans text by removing HTML tags and formatting.
+ * 
+ * Cleaning steps:
+ * 1. Removes 'omissis' class content
+ * 2. Converts <br> to spaces
+ * 3. Strips HTML tags
+ * 4. Removes escape characters
+ * 5. Trims whitespace
+ * 
+ * @param {string} text - Text to clean
+ * @returns {string} Cleaned text
+ * @private
+ */
   cleanTextForSpeech(text) {
     // Remove content of any HTML tag with class "omissis" (with or without escaped quotes)
     let cleanedText = text.replace(/<[^>]+class=(\"omissis\"|"omissis")[^>]*>[\s\S]*?<\/[^>]+>/g, "");
@@ -370,32 +399,5 @@ class TextToSpeechPlayer {
     this.isSpeaking = false;
   }
 }
-
-/**
- * Implementation Details
- * 
- * Chrome Bug Workarounds:
- * - Implements periodic pause/resume to prevent Chrome from stopping
- * - Uses timeout to prevent indefinite speech
- * - Handles voice loading race conditions
- * 
- * State Management:
- * ```javascript
- * {
- *     isSpeaking: boolean,    // Current speech state
- *     isPaused: boolean,      // Pause state
- *     voice: SpeechSynthesisVoice, // Selected voice
- *     isOfflineCapable: boolean,   // Offline support
- *     volume: number,         // Current volume
- *     previousVolume: number  // Pre-mute volume
- * }
- * ```
- * 
- * Event Handling:
- * - beforeunload: Stops speech on page close
- * - visibilitychange: Handles tab switching
- * - voiceschanged: Manages voice loading
- * - utterance events: Tracks speech progress
- */
 
 export { TextToSpeechPlayer }

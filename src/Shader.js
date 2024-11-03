@@ -382,31 +382,4 @@ vec4 data() {
  * @event Shader#update
  */
 
-/**
- * Example usage:
- * ```javascript
- * const shader = new Shader({
- *     label: 'RGB Shader',
- *     samplers: [{ 
- *         id: 0, 
- *         name: 'kd',
- *         label: 'Diffuse'
- *     }],
- *     uniforms: {
- *         u_brightness: { 
- *             type: 'float',
- *             value: 1.0
- *         }
- *     },
- *     modes: ['normal', 'grayscale']
- * });
- * 
- * // Set shader mode
- * shader.setMode('grayscale');
- * 
- * // Update uniform
- * shader.setUniform('u_brightness', 1.5);
- * ```
- */
-
 export { Shader }

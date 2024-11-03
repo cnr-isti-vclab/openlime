@@ -1,23 +1,22 @@
 import { Shader } from "./Shader";
 
 /**
- * @typedef {Object} ShaderDStretch~Config
- * Configuration data for DStretch transformation
- * @property {Array<Array<number>>} samples - RGB color samples for statistics computation
- * @property {number[]} [transformation] - Optional 4x4 transformation matrix
+ * Fragment Shader Details
+ * 
+ * The shader performs these steps:
+ * 1. Centers color values around 127
+ * 2. Applies rotation matrix transformation
+ * 3. Normalizes results using min/max values
+ * 4. Outputs transformed and normalized color
+ * 
+ * Uniforms:
+ * @property {mat4} rotation - Color transformation matrix
+ * @property {vec3} min - Minimum RGB values for normalization
+ * @property {vec3} max - Maximum RGB values for normalization
+ * @property {sampler2D} image - Input image texture
  */
 
 /**
- * @typedef {Object} ShaderDStretch~UniformData
- * Shader uniform data for DStretch processing
- * @property {Object} rotation - 4x4 transformation matrix
- * @property {Object} min - Minimum RGB values after transformation
- * @property {Object} max - Maximum RGB values after transformation
- */
-
-/**
- * @class
- * @extends Shader
  * ShaderDStretch implements the GPU-accelerated portion of the DStretch algorithm.
  * Handles color space transformation and normalization for image enhancement.
  * 
@@ -33,6 +32,7 @@ import { Shader } from "./Shader";
  * - Implements color normalization based on sample statistics
  * - Supports dynamic update of transformation parameters
  * - Handles WebGL uniform management
+ * @extends Shader
  */
 class ShaderDstretch extends Shader {
     /**
@@ -225,55 +225,5 @@ vec4 data() {
         return str;
     }
 }
-/**
- * Example usage:
- * ```javascript
- * // Create shader with configuration
- * const shader = new ShaderDStretch();
- * shader.init({
- *     samples: [[255,0,0], [0,255,0], [0,0,255]], // RGB samples
- * });
- * 
- * // Update transformation
- * shader.updateRotationMatrix([Math.PI/4, 0, 0]);
- * ```
- * 
- * Advanced usage with pre-computed statistics:
- * ```javascript
- * const shader = new ShaderDStretch();
- * shader.init({
- *     samples: precalculatedSamples,
- *     transformation: customMatrix
- * });
- * 
- * // Shader will use provided statistics and transformation
- * ```
- */
-
-/**
- * Default class properties
- * 
- * @property {Array<Array<number>>} rotationMatrix - Current color transformation matrix
- * @property {Array<Array<number>>} samples - Color samples for statistics
- * @property {number[]} min - Minimum RGB values in transformed space
- * @property {number[]} max - Maximum RGB values in transformed space
- * @property {Object} uniforms - WebGL uniform variables for transformation
- */
-
-/**
- * Fragment Shader Details
- * 
- * The shader performs these steps:
- * 1. Centers color values around 127
- * 2. Applies rotation matrix transformation
- * 3. Normalizes results using min/max values
- * 4. Outputs transformed and normalized color
- * 
- * Uniforms:
- * @property {mat4} rotation - Color transformation matrix
- * @property {vec3} min - Minimum RGB values for normalization
- * @property {vec3} max - Maximum RGB values for normalization
- * @property {sampler2D} image - Input image texture
- */
 
 export { ShaderDstretch }

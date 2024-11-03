@@ -33,7 +33,7 @@ import { addSignals } from './Signals'
  */
 
 /**
- * @class
+ * 
  * UIBasic implements a complete user interface for OpenLIME viewers.
  * Provides toolbar controls, layer management, and interactive features.
  * 
@@ -56,6 +56,52 @@ import { addSignals } from './Signals'
  * - ruler: Distance measurement
  * - help: Show help dialog
  * - snapshot: Save view as image
+ *
+ * Implementation Details
+ * 
+ * Layer Management:
+ * - Layers can be toggled individually
+ * - Layer visibility affects associated controllers
+ * - Overlay layers behave independently
+ * - Layer state is reflected in menu UI
+ * 
+ * Mouse/Touch Interaction:
+ * - Uses PointerManager for event handling
+ * - Supports multi-touch gestures
+ * - Handles drag operations for light control
+ * - Manages tool state transitions
+ * 
+ * Menu System:
+ * - Hierarchical structure
+ * - Dynamic updates based on state
+ * - Group-based selection
+ * - Mode-specific entries
+ * 
+ * Controller Integration:
+ * - Light direction controller
+ * - Pan/zoom controller
+ * - Measurement controller
+ * - Priority-based event handling
+ * 
+ * Dialog System:
+ * - Modal blocking of underlying UI
+ * - Non-modal floating windows
+ * - Content injection system
+ * - Event-based communication
+ * 
+ * Skin System:
+ * - SVG-based icons
+ * - Dynamic loading
+ * - CSS customization
+ * - Responsive layout
+ * 
+ * Keyboard Support:
+ * - Configurable shortcuts
+ * - Action mapping
+ * - Mode-specific keys
+ * - Focus handling
+ * 
+ * See the complete example in: {@link https://github.com/cnr-isti-vclab/openlime/tree/main/dist/examples/ui-custom|GitHub ui-custom example}
  */
 class UIBasic {
 	/**
@@ -222,7 +268,6 @@ class UIBasic {
 	 * Shows overlay message
 	 * @param {string} msg - Message to display
 	 * @param {number} [duration=2000] - Display duration in ms
-	 * @private
 	 */
 	showOverlayMessage(msg, duration = 2000) {
 		if (this.overlayMessage) {
@@ -402,12 +447,12 @@ class UIBasic {
 		}
 	}
 
-    /**
-     * Loads and initializes skin SVG elements
-     * @returns {Promise<void>}
-     * @private
-     * @async
-     */
+	/**
+	 * Loads and initializes skin SVG elements
+	 * @returns {Promise<void>}
+	 * @private
+	 * @async
+	 */
 	async loadSkin() {
 		let toolbar = document.createElement('div');
 		toolbar.classList.add('openlime-toolbar');
@@ -485,10 +530,10 @@ class UIBasic {
 		}
 	}
 
-    /**
-     * Initializes action buttons and their event handlers
-     * @private
-     */
+	/**
+	 * Initializes action buttons and their event handlers
+	 * @private
+	 */
 	setupActions() {
 		for (let [name, action] of Object.entries(this.actions)) {
 			let element = action.element;
@@ -514,6 +559,7 @@ class UIBasic {
 	/**
 	 * Toggles light direction control mode
 	 * @param {boolean} [on] - Force specific state
+	 * @private
 	 */
 	toggleLightController(on) {
 		let div = this.viewer.containerElement;
@@ -531,6 +577,7 @@ class UIBasic {
 	/**
 	 * Toggles fullscreen mode
 	 * Handles browser-specific fullscreen APIs
+	 * @private
 	 */
 	toggleFullscreen() {
 		let canvas = this.viewer.canvasElement;
@@ -553,6 +600,7 @@ class UIBasic {
 
 	/**
 	 * Toggles measurement ruler tool
+	 * @private
 	 */
 	toggleRuler() {
 		if (!this.ruler) {
@@ -566,11 +614,12 @@ class UIBasic {
 			this.ruler.end();
 	}
 
-    /**
-     * Toggles help dialog
-     * @param {UIBasic~Action} help - Help action configuration
-     * @param {boolean} [on] - Force specific state
-     */
+	/**
+	 * Toggles help dialog
+	 * @param {UIBasic~Action} help - Help action configuration
+	 * @param {boolean} [on] - Force specific state
+	 * @private
+	 */
 	toggleHelp(help, on) {
 		if (!help.dialog) {
 			help.dialog = new UIDialog(this.viewer.containerElement, { modal: true, class: 'openlime-help-dialog' });
@@ -579,9 +628,10 @@ class UIBasic {
 			help.dialog.toggle(on);
 	}
 
-    /**
-     * Creates and downloads canvas snapshot
-     */
+	/**
+	 * Creates and downloads canvas snapshot
+	 * @private
+	 */
 	snapshot() {
 		var e = document.createElement('a');
 		e.setAttribute('href', this.viewer.canvas.canvasElement.toDataURL());
@@ -594,12 +644,12 @@ class UIBasic {
 
 	/* Layer management */
 
-    /**
-     * Creates HTML for menu entry
-     * @param {UIBasic~MenuEntry} entry - Menu entry to create
-     * @returns {string} Generated HTML
-     * @private
-     */
+	/**
+	 * Creates HTML for menu entry
+	 * @param {UIBasic~MenuEntry} entry - Menu entry to create
+	 * @returns {string} Generated HTML
+	 * @private
+	 */
 	createEntry(entry) {
 		if (!('id' in entry))
 			entry.id = 'entry_' + (this.entry_count++);
@@ -637,11 +687,11 @@ class UIBasic {
 		return html;
 	}
 
-    /**
-     * Attaches event handlers to menu entry elements
-     * @param {UIBasic~MenuEntry} entry - Menu entry to process
-     * @private
-     */
+	/**
+	 * Attaches event handlers to menu entry elements
+	 * @param {UIBasic~MenuEntry} entry - Menu entry to process
+	 * @private
+	 */
 	addEntryCallbacks(entry) {
 		entry.element = this.layerMenu.querySelector('#' + entry.id);
 		if (entry.onclick)
@@ -659,11 +709,11 @@ class UIBasic {
 				this.addEntryCallbacks(e);
 	}
 
-    /**
-     * Updates menu entry state
-     * @param {UIBasic~MenuEntry} entry - Menu entry to update
-     * @private
-     */
+	/**
+	 * Updates menu entry state
+	 * @param {UIBasic~MenuEntry} entry - Menu entry to update
+	 * @private
+	 */
 	updateEntry(entry) {
 		let status = entry.status ? entry.status() : '';
 		entry.element.classList.toggle('active', status == 'active');
@@ -673,19 +723,19 @@ class UIBasic {
 				this.updateEntry(e);
 	}
 
-    /**
-     * Updates all menu entries
-     * @private
-     */
+	/**
+	 * Updates all menu entries
+	 * @private
+	 */
 	updateMenu() {
 		for (let entry of this.menu)
 			this.updateEntry(entry);
 	}
 
-    /**
-     * Creates main menu structure
-     * @private
-     */
+	/**
+	 * Creates main menu structure
+	 * @private
+	 */
 	createMenu() {
 		this.entry_count = 0;
 		let html = `<div class="openlime-layers-menu">`;
@@ -711,17 +761,18 @@ class UIBasic {
 					}); */
 	}
 
-    /**
-     * Toggles layer menu visibility
-     */
+	/**
+	 * Toggles layer menu visibility
+	 * @private
+	 */
 	toggleLayers() {
 		this.layerMenu.classList.toggle('open');
 	}
 
-    /**
-     * Sets active layer and updates UI
-     * @param {Layer|string} layer_on - Layer or layer ID to activate
-     */
+	/**
+	 * Sets active layer and updates UI
+	 * @param {Layer|string} layer_on - Layer or layer ID to activate
+	 */
 	setLayer(layer_on) {
 		if (typeof layer_on == 'string')
 			layer_on = this.viewer.canvas.layers[layer_on];
@@ -745,12 +796,12 @@ class UIBasic {
 		this.viewer.redraw();
 	}
 
-    /**
-     * Hides layers menu
-     */
-	closeLayersMenu() {
-		this.layerMenu.style.display = 'none';
-	}
+	/**
+	 * Hides layers menu
+	 */
+	// closeLayersMenu() {
+	// 	this.layerMenu.style.display = 'none';
+	// }
 }
 
 /**
@@ -778,10 +829,10 @@ class UIDialog { //FIXME standalone class
 		this.create();
 	}
 
-    /**
-     * Creates dialog DOM structure
-     * @private
-     */
+	/**
+	 * Creates dialog DOM structure
+	 * @private
+	 */
 	create() {
 		let background = document.createElement('div');
 		background.classList.add('openlime-dialog-background');
@@ -822,10 +873,10 @@ class UIDialog { //FIXME standalone class
 		this.hide();
 	}
 
-    /**
-     * Sets dialog content
-     * @param {string|HTMLElement} html - Content to display
-     */
+	/**
+	 * Sets dialog content
+	 * @param {string|HTMLElement} html - Content to display
+	 */
 	setContent(html) {
 		if (typeof (html) == 'string')
 			this.content.innerHTML = html;
@@ -841,10 +892,10 @@ class UIDialog { //FIXME standalone class
 		this.visible = true;
 	}
 
-    /**
-     * Hides the dialog and emits closed event
-     * @fires UIDialog#closed
-     */
+	/**
+	 * Hides the dialog and emits closed event
+	 * @fires UIDialog#closed
+	 */
 	hide() {
 		/**
 		 * The event is fired when the dialog is closed.
@@ -855,18 +906,18 @@ class UIDialog { //FIXME standalone class
 		this.emit('closed');
 	}
 
-    /**
-     * Toggles fade effect
-     * @param {boolean} on - Whether to enable fade effect
-     */
+	/**
+	 * Toggles fade effect
+	 * @param {boolean} on - Whether to enable fade effect
+	 */
 	fade(on) { //FIXME Does it work?
 		this.element.classList.toggle('fading');
 	}
 
-    /**
-     * Toggles dialog visibility
-     * @param {boolean} [force] - Force specific state
-     */
+	/**
+	 * Toggles dialog visibility
+	 * @param {boolean} [force] - Force specific state
+	 */
 	toggle(force) { //FIXME Why not remove force?
 		this.element.classList.toggle('hidden', force);
 		this.visible = !this.visible; //FIXME not in sync with 'force'
@@ -889,49 +940,4 @@ class UIDialog { //FIXME standalone class
 addSignals(UIDialog, 'closed');
 addSignals(UIBasic, 'lightdirection');
 
-/**
- * Implementation Details
- * 
- * Layer Management:
- * - Layers can be toggled individually
- * - Layer visibility affects associated controllers
- * - Overlay layers behave independently
- * - Layer state is reflected in menu UI
- * 
- * Mouse/Touch Interaction:
- * - Uses PointerManager for event handling
- * - Supports multi-touch gestures
- * - Handles drag operations for light control
- * - Manages tool state transitions
- * 
- * Menu System:
- * - Hierarchical structure
- * - Dynamic updates based on state
- * - Group-based selection
- * - Mode-specific entries
- * 
- * Controller Integration:
- * - Light direction controller
- * - Pan/zoom controller
- * - Measurement controller
- * - Priority-based event handling
- * 
- * Dialog System:
- * - Modal blocking of underlying UI
- * - Non-modal floating windows
- * - Content injection system
- * - Event-based communication
- * 
- * Skin System:
- * - SVG-based icons
- * - Dynamic loading
- * - CSS customization
- * - Responsive layout
- * 
- * Keyboard Support:
- * - Configurable shortcuts
- * - Action mapping
- * - Mode-specific keys
- * - Focus handling
- */
 export { UIBasic, UIDialog }

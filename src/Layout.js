@@ -6,7 +6,7 @@ import { CoordinateSystem } from "./CoordinateSystem";
 // Tile level x y  index ----- tex missing() start/end (tarzoom) ----- time, priority size(byte)
 
 /**
- * @typedef {Object} Tile
+ * @typedef {Object} TileObj
  * @property {number} level - Zoom level in the image pyramid
  * @property {number} x - Horizontal position in tile grid
  * @property {number} y - Vertical position in tile grid
@@ -179,7 +179,7 @@ class Layout {
 	/**
 	 * Gets URL for specific tile
 	 * @param {number} id - Channel identifier
-	 * @param {Tile} tile - Tile object
+	 * @param {TileObj} tile - Tile object
 	 * @returns {string} Tile URL
 	 * @abstract
 	 */
@@ -198,7 +198,7 @@ class Layout {
 
 	/**
 	 * Calculates tile coordinates
-	 * @param {Tile} tile - Tile to calculate coordinates for
+	 * @param Obj} tile - Tile to calculate coordinates for
 	 * @returns {{coords: Float32Array, tcoords: Float32Array}} Image and texture coordinates
 	 */
 	tileCoords(tile) {
@@ -216,7 +216,7 @@ class Layout {
 	/**
 	 * Creates new tile instance
 	 * @param {number} index - Tile identifier
-	 * @returns {Tile} New tile object
+	 * @returns {TileObj} New tile object
 	 * @private
 	 */
 	newTile(index) {
@@ -234,7 +234,7 @@ class Layout {
 	 * @param {number} bias - Mipmap bias
 	 * @param {Map} tiles - Existing tiles
 	 * @param {number} [maxtiles=8] - Maximum tiles to return
-	 * @returns {Tile[]} Array of needed tiles
+	 * @returns {TileObj[]} Array of needed tiles
 	 */
 	needed(viewport, transform, layerTransform, border, bias, tiles, maxtiles = 8) {
 		//FIXME should check if image is withing the viewport (+ border)

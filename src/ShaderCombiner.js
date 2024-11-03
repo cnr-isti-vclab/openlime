@@ -10,8 +10,14 @@ import { Shader } from './Shader.js'
  */
 
 /**
- * @class
- * @extends Shader
+ * Fired when shader combination mode changes.
+ * @event ShaderCombiner#update
+ * @type {Object}
+ * @property {string} mode - New combination mode
+ * @property {string} previousMode - Previous combination mode
+ */
+
+/**
  * ShaderCombiner module provides texture combination operations for OpenLIME.
  * Supports both WebGL 1.0 and 2.0/3.0 GLSL specifications with automatic version detection.
  * 
@@ -21,6 +27,8 @@ import { Shader } from './Shader.js'
  * - Automatic texture sampling
  * - WebGL 1.0 and 2.0 compatibility
  * - Alpha channel preservation
+ * 
+ * @extends Shader
  */
 class ShaderCombiner extends Shader {
 	/**
@@ -102,65 +110,4 @@ void main() {
 	}
 }
 
-/**
- * Example usage:
- * ```javascript
- * // Create shader to average two textures
- * const combiner = new ShaderCombiner({
- *     mode: 'mean',
- *     samplers: [
- *         { id: 0, name: 'source1', type: 'vec3' },
- *         { id: 1, name: 'source2', type: 'vec3' }
- *     ]
- * });
- * 
- * // Change combination mode
- * combiner.setMode('diff');
- * 
- * // Use first texture only
- * combiner.setMode('first');
- * ```
- * 
- * Advanced usage with custom configuration:
- * ```javascript
- * const combiner = new ShaderCombiner({
- *     mode: 'mean',
- *     debug: true,
- *     label: 'Texture Combiner',
- *     samplers: [
- *         { 
- *             id: 0, 
- *             name: 'source1', 
- *             type: 'vec3',
- *             label: 'First Texture'
- *         },
- *         { 
- *             id: 1, 
- *             name: 'source2', 
- *             type: 'vec3',
- *             label: 'Second Texture'
- *         }
- *     ]
- * });
- * 
- * // Bind textures and render...
- * ```
- */
-
-/**
- * Default class properties
- * 
- * @property {string} mode - Current combination mode (default: 'mean')
- * @property {Array<Object>} samplers - Texture sampler definitions
- * @property {Array<string>} modes - Available combination modes ['first', 'second', 'mean', 'diff']
- * @property {Object.<string,string>} operations - Shader operations for each mode
- */
-
-/**
- * Fired when shader combination mode changes.
- * @event ShaderCombiner#update
- * @type {Object}
- * @property {string} mode - New combination mode
- * @property {string} previousMode - Previous combination mode
- */
 export { ShaderCombiner }

@@ -15,7 +15,7 @@
  */
 
 /**
- * @class
+ * 
  * Base class for WebGL shader filters in OpenLIME.
  * Provides infrastructure for creating modular shader effects that can be chained together.
  * 
@@ -37,7 +37,7 @@ class ShaderFilter {
     /**
      * Creates a new shader filter
      * @param {Object} [options] - Filter configuration
-     * @param {Object} [options.modes={}] - Available filter modes
+     * @param {ShaderFilter~Mode} [options.modes={}] - Available filter modes
      * @param {Object} [options.uniforms={}] - Filter uniform variables
      * @param {Array<ShaderFilter~Sampler>} [options.samplers=[]] - Texture samplers
      */
@@ -205,7 +205,7 @@ class ShaderFilter {
 }
 
 /**
- * @class
+ * 
  * @extends ShaderFilter
  * Test filter that replaces transparent pixels with a specified color
  */
@@ -229,7 +229,7 @@ class ShaderFilterTest extends ShaderFilter {
 }
 
 /**
- * @class
+ * 
  * @extends ShaderFilter
  * Filter that modifies the opacity of rendered content
  */
@@ -253,7 +253,7 @@ class ShaderFilterOpacity extends ShaderFilter {
 }
 
 /**
- * @class
+ * 
  * @extends ShaderFilter
  * Filter that applies gamma correction to colors
  */
@@ -276,47 +276,5 @@ class ShaderGammaFilter extends ShaderFilter {
             }`;
     }
 }
-/**
- * Example usage:
- * ```javascript
- * // Create and configure an opacity filter
- * const opacityFilter = new ShaderFilterOpacity(0.5);
- * shader.addFilter(opacityFilter);
- * 
- * // Later update opacity
- * opacityFilter.setUniform('opacity', 0.8);
- * 
- * // Chain multiple filters
- * const gammaFilter = new ShaderGammaFilter({ gamma: 1.8 });
- * shader.addFilter(gammaFilter);
- * ```
- * 
- * Advanced usage with custom modes:
- * ```javascript
- * // Create filter with multiple modes
- * const filter = new ShaderFilter({
- *     modes: {
- *         'blend': [
- *             { id: 'normal', enable: true, src: '...' },
- *             { id: 'multiply', enable: false, src: '...' }
- *         ]
- *     }
- * });
- * 
- * // Switch modes
- * filter.setMode('blend', 'multiply');
- * ```
- */
-
-/**
- * Default class properties
- * 
- * @property {string} name - Filter name (derived from class name)
- * @property {Object} uniforms - Uniform variable definitions
- * @property {Array<ShaderFilter~Sampler>} samplers - Texture sampler definitions
- * @property {boolean} needsUpdate - Whether filter needs updating
- * @property {Shader} shader - Associated shader program
- * @property {Object.<string,Array>} modes - Available filter modes
- */
 
 export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity, ShaderGammaFilter }

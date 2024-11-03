@@ -5,19 +5,19 @@ import { LayerAnnotation } from './LayerAnnotation'
 import { CoordinateSystem } from './CoordinateSystem';
 
 /**
-* @typedef {Object} AnnotationClass
+* @typedef {Object} AnnoClass
 * @property {string} stroke - CSS color for SVG elements (lines, text, outlines)
 * @property {string} label - Display name for the class
 */
 
 /**
-* @typedef {Object.<string, AnnotationClass>} AnnotationClasses
+* @typedef {Object.<string, AnnoClass>} AnnoClasses
 * @description Map of class names to their visual properties
 */
 
 /**
 * @typedef {Object} LayerSvgAnnotationOptions
-* @property {AnnotationClasses} classes - Annotation class definitions with styles
+* @property {AnnoClasses} classes - Annotation class definitions with styles
 * @property {Function} [onClick] - Callback for annotation click events (param: selected annotation)
 * @property {boolean} [shadow=true] - Whether to use Shadow DOM for SVG elements
 * @property {HTMLElement} [overlayElement] - Container for SVG overlay
