@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Image Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../../css/light.css" />
+    <link rel="stylesheet" href="../examples.css" />
+</head>
+
+<body>
+    <h1>OpenLIME - Image Viewer</h1>
+    <div class="openlime"></div>
+
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into .openlime
+        const lime = new OpenLIME.Viewer('.openlime', { autofit: true });
+
+        // Create an image layer and add it to the canvans
+        const layer = new OpenLIME.Layer({
+            layout: 'image',
+            type: 'image',
+            zindex: 10,
+            url: '../../assets/lighthouse/image/lighthouse-kdmap.jpg'
+        });
+        lime.addLayer('Base', layer);
+
+        const layera = new OpenLIME.Layer({
+            layout: 'image',
+            type: 'image',
+            zindex: 100,
+            url: '../../assets/lighthouse/image/lighthouse-anno.png'
+        });
+        layera.setVisible(true);
+        lime.addLayer('Annotations', layera);
+
+        const layerb = new OpenLIME.Layer({
+            layout: 'image',
+            type: 'image',
+            zindex: 110,
+            url: '../../assets/lighthouse/image/lighthouse-anno2.png'
+        });
+        layerb.setVisible(true);
+        lime.addLayer('Annotationsb', layerb);
+
+        const panzoom = new OpenLIME.ControllerPanZoom(lime.camera, {
+            priority: -1000,
+            activeModifiers: [0, 1]
+        });
+        lime.addController(panzoom);
+
+    </script>
+</body>
+
+</html>

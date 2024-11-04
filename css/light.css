@@ -1,0 +1,56 @@
+.openlime {
+	background-color:white;
+}
+
+/* TOOLBAR */
+
+.openlime-toolbar rect[style] {
+    fill: rgb(255, 255, 255, 0) !important;
+    stroke: none !important;
+}
+
+.openlime-toolbar path[style] {
+	fill: rgb(40, 40, 40, 1) !important;
+	stroke: rgb(40, 40, 40, 1) !important;
+/*    stroke: none !important; */
+}
+
+/* LAYERS MENU */
+
+.openlime-layers-menu {
+	color:#555;
+	background-color: rgb(230, 230, 230, 0.8);
+}
+
+.openlime-layers-menu .openlime-entry.active, .openlime-layers-menu .openlime-entry:active {
+	background-color: rgb(200, 200, 200);
+	color: #000;
+}
+
+.openlime-attribution {
+    color:black;
+}
+
+/* SCALE */
+
+.openlime-scale {
+	fill: black;
+}
+
+.openlime-scale>text {
+	color: black;
+}
+
+.openlime-scale>line {
+	stroke: black;
+}
+
+/* RULER */
+
+.openlime-ruler path, .openlime-ruler line {
+	stroke:rgb(19, 73, 80);
+}
+
+.openlime-ruler text {
+	fill: rgb(19, 73, 80);
+} 

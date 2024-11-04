@@ -1,0 +1,66 @@
+ [{
+    "id": "a62d012e-c408-42fa-82c2-403f3070a700",
+    "idx": "1",
+    "label": "The Talk of the Town",
+    "description": "<img src=\"data/img/01-olivetti-showroom.jpg\">The Olivetti showroom wasn't just selling typewriters. Its environment conveyed the idea of an innovative and forward-looking company. For this reason, it has been dubbed \"the Apple store of the Fifties.\" However, while all the Apple stores look the same, each Olivetti showroom had its own character, given by different architects and artists. Likewise, this might look like an apple, but it isn't. ",
+    "class": "class1",
+    "publish": 1,
+    "data": {
+      "next": "2",
+      "child": ""
+    },
+    "state": {
+      "camera": {
+        "x": 1967.086759064538,
+        "y": 30.943303172375607,
+        "z": 0.16433263432425865,
+        "a": 0
+      },
+      "layers": {
+        "Mural": {
+          "controls": {
+            "light": [
+              0.5166666666666666,
+              0.22854291417165662
+            ]
+          },
+          "mode": "color"
+        },
+        "MuralIn": {
+          "controls": {
+            "light": [
+              0.5166666666666666,
+              0.22854291417165662
+            ]
+          },
+          "mode": "monochrome"
+        },
+        "lens": {
+          "controls": {
+            "center": [
+              -12691.45144288359,
+              -22.64345672092116
+            ],
+            "radius": [
+              738.3163461025426,
+              0
+            ],
+            "borderColor": [
+              0.078,
+              0.078,
+              0.078,
+              1
+            ],
+            "borderWidth": [
+              12
+            ]
+          }
+        },
+        "anno": {
+          "controls": {}
+        }
+      }
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" x=\"10228.273709241877\" y=\"7673.6006610114355\" width=\"219.06786894783994px\" height=\"219.06786894783994px\" class=\"pin openlime-annotation\" viewBox=\"0 0 18 18\" data-class=\"class1\" data-annotation=\"a62d012e-c408-42fa-82c2-403f3070a700\"><path d=\"M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z\"/><text class=\"pin-text\" x=\"7\" y=\"8\">1</text></svg>  \n\t\t\t\t</svg>"
+  }
+]

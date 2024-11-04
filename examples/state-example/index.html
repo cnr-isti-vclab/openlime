@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - State Example</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+
+</head>
+
+<body>
+    <h1>OpenLIME - State Example</h1>
+    <button id="btn">GET & SET STATE</button>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+     <script>
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+        // The visualization is unbounded (the camera is )
+        lime.camera.bounded = false;
+
+        // Create an image layer and add it to the canvans. This layer is used as background for the lens.
+        const layer0 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
+            layout: 'deepzoom',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: true
+        });
+        lime.addLayer('kdmap', layer0);
+
+        // Create a second layer and add it to the canvans. This layer contains the normal map of the picture.
+        // It is displayed inside the lens.
+        const layer1 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
+            layout: 'deepzoom',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: false
+        });
+        lime.addLayer('nomap', layer1);
+
+        // Create a third layer with annotations and add it to the canvans.
+        // This layer is transparent and will be displayed in overlay mode inside the lens.
+        const layer2 = new OpenLIME.Layer({
+            type: 'image',
+            url: '../../assets/lighthouse/image/lighthouse-anno.png',
+            layout: 'image',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: false
+        });
+        lime.addLayer('anno', layer2);
+
+
+         // Create a lens layer and add it to the canvans.
+         // The field displayed inside the lens is layer1 (normal map)
+        const lensLayer = new OpenLIME.Layer({
+            type: "lens",
+            layers: [layer1, layer2],
+            camera: lime.camera,
+            radius: 200,
+            border: 10,
+            visible: true
+        });
+        lime.addLayer('lens', lensLayer);
+
+        // Create a lens controller for focus and context exploration.
+        const controllerLens = new OpenLIME.ControllerFocusContext({
+            lensLayer: lensLayer,
+            camera: lime.camera,
+            canvas: lime.canvas,
+        });
+        lime.pointerManager.onEvent(controllerLens);
+        lensLayer.controllers.push(controllerLens);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime, {autofit:false});
+
+        // Remove light from the toolbar
+        ui.actions.light.display=false;
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+
+        ui.attribution = `Cape Spartivento Lighthouse, oil on canvas, 14x18 cm, 2004 - by Fabio Marton`;
+
+        // On button click the state variable are get, modified and set.
+        const btn = document.getElementById('btn');
+        btn.addEventListener('click', (e) => {
+            // Set a mask to get the state variables: camera, mode, lens center, but not lens radius
+            let mask = {
+                camera: true,
+                mode: true,
+                layers: {
+                    lens: {
+                        controls: {
+                            center: true,
+                            radius: false
+                        }
+                    }
+                }
+            };
+            mask=null;
+            // Acquire the state variables.
+            const s = lime.canvas.getState(mask);
+            console.log(JSON.parse(JSON.stringify(s)));
+            // Modified the state variables
+            s.camera.x = 300;
+            s.camera.y = 0;
+            s.camera.z = 0.5;
+            s.layers.lens.controls.center = [200,200];
+            s.layers.lens.controls.radius = [200,0];
+            s.layers.lens.controls.borderColor = [1, 0, 0, 1];
+            s.layers.lens.controls.borderWidth = [20];
+            console.log(JSON.stringify(mask));
+            console.log(JSON.stringify(s));
+            // Set the new state
+            lime.canvas.setState(s, 2000, 'ease-in-out');
+        });
+
+    </script>
+</body>
+
+</html>
