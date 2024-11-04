@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: LayerAnnotation.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="namespaces.list.html" class="dropdown-toggle" data-toggle="dropdown">Namespaces<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Cache.html">Cache</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="global.html#event:Layout#readyFiredwhenthelayoutisreadyforrendering.Thisoccurswhen:-Single-resolutionimageisfullydownloaded-Multi-resolutionstructureisinitializedandvalidated-Tilepyramidinformationiscomputed">Layout#ready
+Fired when the layout is ready for rendering.
+This occurs when:
+- Single-resolution image is fully downloaded
+- Multi-resolution structure is initialized and validated
+- Tile pyramid information is computedevent:</a></li><li><a href="global.html#event:Layout#readyFiredwhenthelayoutisreadyforrendering.Thisoccurswhen:-Tiledescriptorsareloadedfromannotationfile-Tiledescriptorsaresetprogrammatically">Layout#ready
+Fired when the layout is ready for rendering.
+This occurs when:
+- Tile descriptors are loaded from annotation file
+- Tile descriptors are set programmaticallyevent:</a></li><li><a href="global.html#event:Layout#updateSizeFiredwhenthelayoutsizechangesandsceneextensionneedsupdating.Thisoccurswhen:-Imagedimensionsaredetermined-Pyramidlevelsareinitialized-Boundingboxesarecomputed">Layout#updateSize
+Fired when the layout size changes and scene extension needs updating.
+This occurs when:
+- Image dimensions are determined
+- Pyramid levels are initialized
+- Bounding boxes are computedevent:</a></li><li><a href="global.html#event:Layout#updateSizeFiredwhenthelayoutsizechangesandsceneextensionneedsupdating.Thisoccurswhen:-Tiledescriptorsareloadedandboundingboxiscomputed">Layout#updateSize
+Fired when the layout size changes and scene extension needs updating.
+This occurs when:
+- Tile descriptors are loaded and bounding box is computedevent:</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="global.html#event:UIDialog#closedEmittedwhendialogisclosedthroughanymeans">UIDialog#closed
+Emitted when dialog is closed through any meansevent:</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#pad">pad</a></li><li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li><li><a href="global.html#url">url</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: LayerAnnotation.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Annotation } from './Annotation.js';
+import { Layer } from './Layer.js'
+import { addSignals } from './Signals.js';
+
+/**
+ * @typedef {Object} LayerAnnotationOptions
+ * @property {string} [style] - CSS styles for annotation rendering
+ * @property {string|Annotation[]} [annotations=[]] - URL of JSON annotation data or array of annotations
+ * @property {boolean} [overlay=true] - Whether annotations render as overlay
+ * @property {Set&lt;string>} [selected=new Set()] - Set of selected annotation IDs
+ * @property {Object} [annotationsListEntry=null] - UI entry for annotations list
+ * @extends LayerOptions
+ */
+
+/**
+ * LayerAnnotation provides functionality for displaying and managing annotations overlaid on other layers.
+ * It supports both local and remote annotation data, selection management, and UI integration.
+ * 
+ * Features:
+ * - Display of text, graphics, and glyph annotations
+ * - Remote annotation loading via JSON/HTTP
+ * - Selection management
+ * - Visibility toggling per annotation
+ * - UI integration with annotation list
+ * - Annotation event handling
+ * 
+ * The layer automatically handles:
+ * - Annotation data loading and parsing
+ * - UI synchronization
+ * - Visibility states
+ * - Selection states
+ * - Event propagation
+ * 
+ * @extends Layer
+ * @fires LayerAnnotation#selected - Fired when annotation selection changes, with selected annotation as parameter
+ * @fires LayerAnnotation#loaded - Fired when annotations are loaded
+ * @fires Layer#update - Inherited from Layer, fired when redraw needed
+ * @fires Layer#ready - Inherited from Layer, fired when layer is ready
+ * 
+ * @example
+ * ```javascript
+ * // Create annotation layer from remote JSON
+ * const annoLayer = new OpenLIME.LayerAnnotation({
+ *   annotations: 'https://example.com/annotations.json',
+ *   style: '.annotation { color: red; }',
+ *   overlay: true
+ * });
+ * 
+ * // Listen for selection changes
+ * annoLayer.addEvent('selected', (annotation) => {
+ *   console.log('Selected annotation:', annotation.label);
+ * });
+ * 
+ * // Add to viewer
+ * viewer.addLayer('annotations', annoLayer);
+ * ```
+ */
+class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: { label: defaultValue: type:number,enum,string,boolean min: max: enum:[] }}
+	/**
+	 * Instantiates a LayerAnnotation object.
+	 * @param {Object} [options] An object literal with options that inherits from {@link Layer}.
+	 * @param {string} options.style Properties to style annotations.
+		 * @param {(string|Array)} options.annotations The URL of the annotation data (JSON file or HTTP GET Request to an annotation server) or an array of annotations.
+	 */
+	constructor(options) {
+		options = Object.assign({
+			// geometry: null,  //unused, might want to store here the quads/shapes for opengl rendering
+			style: null,    //straightforward for svg annotations, to be defined or opengl rendering
+			annotations: [],
+			selected: new Set,
+			overlay: true,
+			annotationsListEntry: null, //TODO: horrible name for the interface list of annotations
+		}, options);
+		super(options);
+
+		if (typeof (this.annotations) == "string") { //assumes it is an URL
+			(async () => { await this.loadAnnotations(this.annotations); })();
+		}
+	}
+
+	/**
+	 * Loads annotations from a URL
+	 * @param {string} url - URL to fetch annotations from (JSON format)
+	 * @fires LayerAnnotation#loaded
+	 * @fires Layer#update
+	 * @fires Layer#ready
+	 * @private
+	 * @async
+	 */
+	async loadAnnotations(url) {
+		const headers = new Headers();
+		headers.append('pragma', 'no-cache');
+		headers.append('cache-control', 'no-cache');
+		var response = await fetch(url, {
+			method: 'GET',
+			headers: headers,
+		});
+		if (!response.ok) {
+			this.status = "Failed loading " + this.url + ": " + response.statusText;
+			return;
+		}
+		this.annotations = await response.json();
+		if (this.annotations.status == 'error') {
+			alert("Failed to load annotations: " + this.annotations.msg);
+			return;
+		}
+		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
+		this.annotations = this.annotations.map(a => new Annotation(a));
+		for (let a of this.annotations)
+			if (a.publish != 1)
+				a.visible = false;
+		//this.annotations.sort((a, b) => a.label.localeCompare(b.label));
+		if (this.annotationsListEntry)
+			this.createAnnotationsList();
+
+		this.emit('update');
+		this.status = 'ready';
+		this.emit('ready');
+		this.emit('loaded');
+	}
+
+	/**
+	 * Creates a new annotation and adds it to the layer
+	 * @param {Annotation} [annotation] - Optional pre-configured annotation
+	 * @returns {Annotation} The newly created annotation
+	 * @private
+	 */
+	newAnnotation(annotation) {
+		if (!annotation)
+			annotation = new Annotation();
+
+		this.annotations.push(annotation);
+		let html = this.createAnnotationEntry(annotation);
+		let template = document.createElement('template');
+		template.innerHTML = html.trim();
+
+		let list = this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+		list.appendChild(template.content.firstChild);
+
+		this.clearSelected();
+		//this.setSelected(annotation);
+		return annotation;
+	}
+
+	/**
+	 * Creates the UI entry for the annotations list
+	 * @returns {Object} Configuration object for annotations list UI
+	 * @private
+	 */
+	annotationsEntry() {
+		return this.annotationsListEntry = {
+			html: '',
+			list: [], //will be filled later.
+			classes: 'openlime-annotations',
+			status: () => 'active',
+			oncreate: () => {
+				if (Array.isArray(this.annotations))
+					this.createAnnotationsList();
+			}
+		}
+	}
+
+	/**
+	 * Creates the complete annotations list UI
+	 * @private
+	 */
+	createAnnotationsList() {
+		let html = '';
+		for (let a of this.annotations) {
+			html += this.createAnnotationEntry(a);
+		}
+
+		let list = this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+		list.innerHTML = html;
+		list.addEventListener('click', (e) => {
+			let svg = e.srcElement.closest('svg');
+			if (svg) {
+				let entry = svg.closest('[data-annotation]')
+				entry.classList.toggle('hidden');
+				let id = entry.getAttribute('data-annotation');
+				let anno = this.getAnnotationById(id);
+				anno.visible = !anno.visible;
+				anno.needsUpdate = true;
+				this.emit('update');
+			}
+
+			let id = e.srcElement.getAttribute('data-annotation');
+			if (id) {
+				this.clearSelected();
+				let anno = this.getAnnotationById(id);
+				this.setSelected(anno, true);
+			}
+		});
+	}
+
+	/**
+	 * Creates a single annotation entry for the UI
+	 * @param {Annotation} annotation - The annotation to create an entry for
+	 * @returns {string} HTML string for the annotation entry
+	 * @private
+	 */
+	createAnnotationEntry(a) {
+		return `&lt;a href="#" data-annotation="${a.id}" class="openlime-entry ${a.visible == 0 ? 'hidden' : ''}">${a.label || ''}
+			&lt;svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="openlime-eye">&lt;path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">&lt;/path>&lt;circle cx="12" cy="12" r="3">&lt;/circle>&lt;/svg>
+			&lt;svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="openlime-eye-off">&lt;path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">&lt;/path>&lt;line x1="1" y1="1" x2="23" y2="23">&lt;/line>&lt;/svg>
+			&lt;/a>`;
+	}
+
+	/**
+	 * Retrieves an annotation by its ID
+	 * @param {string} id - Annotation identifier
+	 * @returns {Annotation|null} The found annotation or null if not found
+	 */
+	getAnnotationById(id) {
+		for (const anno of this.annotations)
+			if (anno.id == id)
+				return anno;
+		return null;
+	}
+
+	/**
+	 * Clears all annotation selections
+	 * @private
+	 */
+	clearSelected() {
+		this.annotationsListEntry.element.parentElement.querySelectorAll(`[data-annotation]`).forEach((e) => e.classList.remove('selected'));
+		this.selected.clear();
+	}
+
+	/**
+	 * Sets the selection state of an annotation
+	 * @param {Annotation} anno - The annotation to select/deselect
+	 * @param {boolean} [on=true] - Whether to select (true) or deselect (false)
+	 * @fires LayerAnnotation#selected
+	 */
+	setSelected(anno, on = true) {
+		this.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).classList.toggle('selected', on);
+		if (on)
+			this.selected.add(anno.id);
+		else
+			this.selected.delete(anno.id);
+		this.emit('selected', anno);
+	}
+}
+
+addSignals(LayerAnnotation, 'selected', 'loaded');
+export { LayerAnnotation }
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
+	
+		on 2024-11-04T08:58:32+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>
