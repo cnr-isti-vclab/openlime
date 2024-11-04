@@ -109,6 +109,7 @@ class Viewer {
 	 * Creates a new Viewer instance
 	 * @param {HTMLElement|string} div - Container element or selector
 	 * @param {ViewerOptions} [options] - Configuration options
+   * @param {number} [options.idleTime=60] - Seconds of inactivity before idle event
 	 * @throws {Error} If container element not found
 	 * 
 	 * Component Setup:
@@ -137,6 +138,7 @@ class Viewer {
 			autofit: true,
 			canvas: {},
 			camera: new Camera(),
+			idleTime: 60 // in seconds
 		});
 		if (typeof (div) == 'string')
 			div = document.querySelector(div);
@@ -165,7 +167,7 @@ class Viewer {
 		if (this.autofit)
 			this.canvas.addEvent('updateSize', () => this.camera.fitCameraBox(0));
 
-		this.pointerManager = new PointerManager(this.overlayElement);
+		this.pointerManager = new PointerManager(this.overlayElement, {idleTime: this.idleTime});
 
 		this.canvasElement.addEventListener('contextmenu', (e) => {
 			e.preventDefault();

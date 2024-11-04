@@ -3,7 +3,6 @@
  * @property {Object.<string, Function[]>} signals - Map of event names to arrays of callback functions
  * @property {string[]} allSignals - List of all registered signal names
  */
-
 /**
  * Adds event handling capabilities to a prototype.
  * Creates a simple event system that allows objects to emit and listen to events.
@@ -77,15 +76,12 @@
  * ```
  */
 function addSignals(proto, ...signals) {
-
 	if (!proto.prototype.allSignals)
-		proto.prototype.allSignals = [];
+			proto.prototype.allSignals = [];
 	proto.prototype.allSignals = [...proto.prototype.allSignals, ...signals];
-
 	/**
 	 * Methods added to the prototype
 	 */
-
 	/**
 	 * Initializes the signals system for an instance.
 	 * Creates the signals storage object and populates it with empty arrays
@@ -96,10 +92,8 @@ function addSignals(proto, ...signals) {
 	 * @private
 	 */
 	proto.prototype.initSignals = function () {
-		this.signals = Object.fromEntries(this.allSignals.map(s => [s, []]));
+			this.signals = Object.fromEntries(this.allSignals.map(s => [s, []]));
 	}
-
-
 	/**
 	 * Registers a callback function for a specific event.
 	 * 
@@ -117,30 +111,76 @@ function addSignals(proto, ...signals) {
 	 * ```
 	 */
 	proto.prototype.addEvent = function (event, callback) {
-		if (!this.signals)
-			this.initSignals();
-		this.signals[event].push(callback);
+			if (!this.signals)
+					this.initSignals();
+			this.signals[event].push(callback);
 	}
 
-/**
- * Emits an event, triggering all registered callbacks.
- * Callbacks are executed in the order they were registered.
- * 
- * @memberof SignalHandler
- * @instance
- * @param {string} event - The event name to emit
- * @param {...*} parameters - Parameters to pass to the callback functions
- * 
- * @example
- * ```javascript
- * obj.emit('update', 'param1', 42);
- * ```
- */
+	/**
+	 * Removes an event callback or all callbacks for a specific event.
+	 * If no callback is provided, all callbacks for the event are removed.
+	 * If a callback is provided, only that specific callback is removed.
+	 * 
+	 * @memberof SignalHandler
+	 * @instance
+	 * @param {string} event - The event name to remove callback(s) from
+	 * @param {Function} [callback] - Optional specific callback function to remove
+	 * @returns {boolean} True if callback(s) were removed, false if event or callback not found
+	 * @throws {Error} Implicitly if event doesn't exist
+	 * 
+	 * @example
+	 * ```javascript
+	 * // Remove specific callback
+	 * const callback = (data) => console.log(data);
+	 * obj.addEvent('update', callback);
+	 * obj.removeEvent('update', callback);
+	 * 
+	 * // Remove all callbacks for an event
+	 * obj.removeEvent('update');
+	 * ```
+	 */
+	proto.prototype.removeEvent = function (event, callback) {
+			if (!this.signals) {
+					this.initSignals();
+					return false;
+			}
+
+			if (!this.signals[event]) {
+					return false;
+			}
+
+			if (callback === undefined) {
+					// Remove all callbacks for this event
+					const hadCallbacks = this.signals[event].length > 0;
+					this.signals[event] = [];
+					return hadCallbacks;
+			}
+
+			// Find and remove specific callback
+			const initialLength = this.signals[event].length;
+			this.signals[event] = this.signals[event].filter(cb => cb !== callback);
+			return initialLength > this.signals[event].length;
+	}
+
+	/**
+	 * Emits an event, triggering all registered callbacks.
+	 * Callbacks are executed in the order they were registered.
+	 * 
+	 * @memberof SignalHandler
+	 * @instance
+	 * @param {string} event - The event name to emit
+	 * @param {...*} parameters - Parameters to pass to the callback functions
+	 * 
+	 * @example
+	 * ```javascript
+	 * obj.emit('update', 'param1', 42);
+	 * ```
+	 */
 	proto.prototype.emit = function (event, ...parameters) {
-		if (!this.signals)
-			this.initSignals();
-		for (let r of this.signals[event])
-			r(...parameters);
+			if (!this.signals)
+					this.initSignals();
+			for (let r of this.signals[event])
+					r(...parameters);
 	}
 }
 

@@ -95,14 +95,14 @@ class PointerManager {
         this.target = target;
 
         Object.assign(this, {
-            pinchMaxInterval: 250        // in ms, fingerDown event max distance in time to trigger a pinch.
+            pinchMaxInterval: 250,        // in ms, fingerDown event max distance in time to trigger a pinch.
+            idleTime: 60 //in seconds
         });
 
         if (options)
             Object.assign(this, options);
 
         this.idleTimeout = null;
-        this.idleTime = 60; //in seconds
         this.idling = false;
 
         this.currentPointers = [];
