@@ -100,18 +100,11 @@ npm run start -- --port 8088
 
 ### Create a rollup file to use with other servers
 
-You do not need to use node.js as the server.  Instead, you
-can use the `<script>` approach, embedding a rollup file, either
-`./build/openlime.min.js`
-or 
-`./build/openlime.js`,
-in your web page.  
-The files
-`./dist/ui_custom.html` and `./dist/ui_svg.html` are examples of
-this approach.  
-Such files will display correctly when served from any web server.
-To create the rollup files, call `rollup`:
+To create a rollup file that can be used with other servers, you don’t need to rely on Node.js as the server. Instead, you can embed the rollup file directly in your web page using the `<script>` tag. You can reference either `./dist/js/openlime.min.js` or `./dist/js/openlime.js`.
 
+In the `./dist/examples` folder, you’ll find simple **openLIME** web apps that demonstrate how to use this approach. These files will display correctly when served from any web server.
+
+To generate the rollup files, simply run the following command:
 ```bash
 npm run rollup
 ```
@@ -120,9 +113,9 @@ npm run rollup
 
 If you keep a `nodemon` (**node** **mon**itor) script running, it
 will automatically update the rollup files
-`./build/openlime.min.js`
+`./dist/js/openlime.min.js`
 and 
-`./build/openlime.js` 
+`./dist/js/openlime.js` 
 whenever anything changes in the `./src` directory.
 Note that, unlike with the node.js server, the browser will
 not refresh automatically; you will have to do that yourself
