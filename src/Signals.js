@@ -79,6 +79,7 @@ function addSignals(proto, ...signals) {
 	if (!proto.prototype.allSignals)
 			proto.prototype.allSignals = [];
 	proto.prototype.allSignals = [...proto.prototype.allSignals, ...signals];
+
 	/**
 	 * Methods added to the prototype
 	 */
@@ -94,6 +95,7 @@ function addSignals(proto, ...signals) {
 	proto.prototype.initSignals = function () {
 			this.signals = Object.fromEntries(this.allSignals.map(s => [s, []]));
 	}
+
 	/**
 	 * Registers a callback function for a specific event.
 	 * 
@@ -114,6 +116,40 @@ function addSignals(proto, ...signals) {
 			if (!this.signals)
 					this.initSignals();
 			this.signals[event].push(callback);
+	}
+
+	/**
+	 * Adds a one-time event listener that will be automatically removed after first execution.
+	 * Once the event is emitted, the listener is automatically removed before the callback
+	 * is executed.
+	 * 
+	 * @memberof SignalHandler
+	 * @instance
+	 * @param {string} event - The event name to listen for once
+	 * @param {Function} callback - Function to be called once when event is emitted
+	 * @throws {Error} Implicitly if event doesn't exist or callback is not a function
+	 * 
+	 * @example
+	 * ```javascript
+	 * obj.once('update', (param) => {
+	 *     console.log('This will only run once:', param);
+	 * });
+	 * ```
+	 */
+	proto.prototype.once = function (event, callback) {
+			if (!callback || typeof callback !== 'function') {
+					console.error('Callback must be a function');
+					return;
+			}
+
+			const wrappedCallback = (...args) => {
+					// Remove the listener before calling the callback
+					// to prevent recursion if the callback emits the same event
+					this.removeEvent(event, wrappedCallback);
+					callback.apply(this, args);
+			};
+
+			this.addEvent(event, wrappedCallback);
 	}
 
 	/**
@@ -165,6 +201,8 @@ function addSignals(proto, ...signals) {
 	/**
 	 * Emits an event, triggering all registered callbacks.
 	 * Callbacks are executed in the order they were registered.
+	 * Creates a copy of the callbacks array before iteration to prevent
+	 * issues if callbacks modify the listeners during emission.
 	 * 
 	 * @memberof SignalHandler
 	 * @instance
@@ -179,7 +217,10 @@ function addSignals(proto, ...signals) {
 	proto.prototype.emit = function (event, ...parameters) {
 			if (!this.signals)
 					this.initSignals();
-			for (let r of this.signals[event])
+			// Create a copy of the callbacks array to safely iterate even if
+			// callbacks modify the listeners
+			const callbacks = [...this.signals[event]];
+			for (let r of callbacks)
 					r(...parameters);
 	}
 }

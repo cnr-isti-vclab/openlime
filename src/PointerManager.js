@@ -96,7 +96,7 @@ class PointerManager {
 
         Object.assign(this, {
             pinchMaxInterval: 250,        // in ms, fingerDown event max distance in time to trigger a pinch.
-            idleTime: 60 //in seconds
+            idleTime: 60, //in seconds,
         });
 
         if (options)
@@ -115,6 +115,8 @@ class PointerManager {
         this.target.addEventListener('pointerup', (e) => this.handleEvent(e), false);
         this.target.addEventListener('pointercancel', (e) => this.handleEvent(e), false);
         this.target.addEventListener('wheel', (e) => this.handleEvent(e), false);
+
+        this.startIdle();
     }
 
     /**
@@ -410,6 +412,15 @@ class PointerManager {
         }
     }
 
+    startIdle() {
+        if (this.idleTimeout)
+            clearTimeout(this.idleTimeout)
+        this.idleTimeout = setTimeout(() => {
+            this.broadcast({ fingerType: 'wentIdle' });
+            this.idling = true;
+        }, this.idleTime * 1000);
+    }
+
     handleEvent(e) {
         //IDLING MANAGEMENT
         if (this.idling) {
@@ -417,13 +428,7 @@ class PointerManager {
             this.idling = false;
 
         } else {
-            if (this.idleTimeout)
-                clearTimeout(this.idleTimeout);
-
-            this.idleTimeout = setTimeout(() => {
-                this.broadcast({ fingerType: 'wentIdle' });
-                this.idling = true;
-            }, this.idleTime * 1000);
+            this.startIdle();
         }
 
         if (e.type == 'pointerdown') this.target.setPointerCapture(e.pointerId);

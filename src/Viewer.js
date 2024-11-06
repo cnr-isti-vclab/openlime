@@ -109,7 +109,7 @@ class Viewer {
 	 * Creates a new Viewer instance
 	 * @param {HTMLElement|string} div - Container element or selector
 	 * @param {ViewerOptions} [options] - Configuration options
-   * @param {number} [options.idleTime=60] - Seconds of inactivity before idle event
+	 * @param {number} [options.idleTime=60] - Seconds of inactivity before idle event
 	 * @throws {Error} If container element not found
 	 * 
 	 * Component Setup:
@@ -167,7 +167,7 @@ class Viewer {
 		if (this.autofit)
 			this.canvas.addEvent('updateSize', () => this.camera.fitCameraBox(0));
 
-		this.pointerManager = new PointerManager(this.overlayElement, {idleTime: this.idleTime});
+		this.pointerManager = new PointerManager(this.overlayElement, { idleTime: this.idleTime });
 
 		this.canvasElement.addEventListener('contextmenu', (e) => {
 			e.preventDefault();
@@ -193,31 +193,31 @@ class Viewer {
 		this.pointerManager.onEvent(controller);
 	}
 
-    /**
-     * Adds layer to viewer
-     * @param {string} id - Unique layer identifier
-     * @param {Layer} layer - Layer instance
-     * @fires Canvas#update
-     * 
-     * @example
-     * ```javascript
-     * const layer = new OpenLIME.Layer({
-     *     type: 'image',
-     *     url: 'image.jpg'
-     * });
-     * viewer.addLayer('background', layer);
-     * ```
-     */
+	/**
+	 * Adds layer to viewer
+	 * @param {string} id - Unique layer identifier
+	 * @param {Layer} layer - Layer instance
+	 * @fires Canvas#update
+	 * 
+	 * @example
+	 * ```javascript
+	 * const layer = new OpenLIME.Layer({
+	 *     type: 'image',
+	 *     url: 'image.jpg'
+	 * });
+	 * viewer.addLayer('background', layer);
+	 * ```
+	 */
 	addLayer(id, layer) {
 		this.canvas.addLayer(id, layer);
 		this.redraw();
 	}
 
-    /**
-     * Removes layer from viewer
-     * @param {Layer|string} layer - Layer instance or ID
-     * @fires Canvas#update
-     */
+	/**
+	 * Removes layer from viewer
+	 * @param {Layer|string} layer - Layer instance or ID
+	 * @fires Canvas#update
+	 */
 	removeLayer(layer) {
 		if (typeof (layer) == 'string')
 			layer = this.canvas.layers[layer];
@@ -228,13 +228,13 @@ class Viewer {
 	}
 
 
-    /**
-     * Handles viewer resizing
-     * @param {number} width - New width in CSS pixels
-     * @param {number} height - New height in CSS pixels
-     * @private
-     * @fires Viewer#resize
-     */
+	/**
+	 * Handles viewer resizing
+	 * @param {number} width - New width in CSS pixels
+	 * @param {number} height - New height in CSS pixels
+	 * @private
+	 * @fires Viewer#resize
+	 */
 	resize(width, height) {
 		if (width == 0 || height == 0) return;
 		// Test with retina display!
@@ -250,22 +250,22 @@ class Viewer {
 		this.redraw();
 	}
 
-    /**
-     * Schedules next frame for rendering
-     * Uses requestAnimationFrame for optimal performance
-     */
+	/**
+	 * Schedules next frame for rendering
+	 * Uses requestAnimationFrame for optimal performance
+	 */
 	redraw() {
 		if (this.animaterequest) return;
 		this.animaterequest = requestAnimationFrame((time) => { this.draw(time); });
 		this.requestTime = performance.now();
 	}
 
-    /**
-     * Performs actual rendering
-     * @param {number} time - Current timestamp
-     * @private
-     * @fires Viewer#draw
-     */
+	/**
+	 * Performs actual rendering
+	 * @param {number} time - Current timestamp
+	 * @private
+	 * @fires Viewer#draw
+	 */
 	draw(time) {
 		if (!time) time = performance.now();
 		this.animaterequest = null;

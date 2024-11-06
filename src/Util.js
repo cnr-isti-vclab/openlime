@@ -165,6 +165,7 @@ class Util {
         const img = await Util.loadImage(url);
         if (imgClass) img.classList.add(imgClass);
         container.appendChild(img);
+        return img;
     }
 
     /**

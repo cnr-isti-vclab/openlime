@@ -8,7 +8,7 @@ import { addSignals } from './Signals.js'
 class AudioPlayer {
   /**
    * Creates an instance of AudioPlayer.
-   * Initializes the player with default settings and sets up signal handling for the 'ended' event.
+   * Initializes the player with default settings and sets up signal handling for events.
    */
   constructor() {
     this.audio = null;
@@ -18,7 +18,7 @@ class AudioPlayer {
     this.previousVolume = 1.0;
     this.playStartTime = null;
     this.playDuration = 0;
-    addSignals(AudioPlayer, 'ended');
+    addSignals(AudioPlayer, 'started', 'ended');
   }
 
   /**
@@ -38,22 +38,34 @@ class AudioPlayer {
       this.isPaused = false;
       this.playStartTime = Date.now();
       this.playDuration = 0;
-      this.onEndedListener = () => {
+
+      // Setup play handler
+      this.audio.onplay = () => {
+        this.setMute(this.isMuted);
+        this.emit('started');
+      };
+
+      // Setup ended handler
+      this.audio.onended = () => {
         this.isPlaying = false;
         this.updatePlayDuration();
         this.emit('ended');
-        // Remove the listener
-        this.audio.removeEventListener('ended', this.onEndedListener);
-        this.onEndedListener = null;
       };
-      this.audio.addEventListener('ended', this.onEndedListener);
-      await this.audio.play();
-      return new Promise((resolve) => {
-        this.audio.onended = () => {
-          this.isPlaying = false;
-          resolve();
-        };
-      });
+
+      try {
+        await this.audio.play();
+        return new Promise((resolve) => {
+          const originalOnEnded = this.audio.onended;
+          this.audio.onended = () => {
+            originalOnEnded.call(this);  // Call the original handler
+            resolve();
+          };
+        });
+      } catch (error) {
+        console.error("Error playing audio:", error);
+        this.isPlaying = false;
+        throw error;
+      }
     } else if (this.isPaused) {
       await this.continue();
     }
@@ -80,13 +92,27 @@ class AudioPlayer {
     if (this.isPaused && this.audio) {
       this.isPaused = false;
       this.playStartTime = Date.now();
-      await this.audio.play();
-      return new Promise((resolve) => {
-        this.audio.onended = () => {
-          this.isPlaying = false;
-          resolve();
-        };
-      });
+
+      // Setup play handler
+      this.audio.onplay = () => {
+        this.setMute(this.isMuted);
+        this.emit('started');
+      };
+
+      try {
+        await this.audio.play();
+        return new Promise((resolve) => {
+          const originalOnEnded = this.audio.onended;
+          this.audio.onended = () => {
+            originalOnEnded.call(this);  // Call the original handler
+            resolve();
+          };
+        });
+      } catch (error) {
+        console.error("Error continuing audio:", error);
+        this.isPaused = true;
+        throw error;
+      }
     } else {
       console.log("No paused audio to continue.");
     }
@@ -100,13 +126,10 @@ class AudioPlayer {
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0;
-      if (this.onEndedListener) {
-        this.audio.removeEventListener('ended', this.onEndedListener);
-        this.onEndedListener = null;
-      }
+      this.audio.onplay = null;   // Clean up play handler
+      this.audio.onended = null;  // Clean up ended handler
       this.isPlaying = false;
       this.isPaused = false;
-      this.isMuted = false;
       this.updatePlayDuration();
     }
   }
@@ -162,21 +185,31 @@ class AudioPlayer {
   }
 
   /**
-   * Toggles the mute state of the audio player.
+   * Set the mute state of the audio player.
    * Stores the previous volume level when muting and restores it when unmuting.
+   * @param {boolean} b Whether to mute the audio playback
    */
-  toggleMute() {
+  setMute(b) {
+    this.isMuted = b;
     if (this.audio) {
-      if (this.isMuted) {
+      if (!this.isMuted) {
         this.audio.volume = this.previousVolume;
-        this.isMuted = false;
       } else {
         this.previousVolume = this.audio.volume;
         this.audio.volume = 0;
-        this.isMuted = true;
       }
     } else {
       console.log("No audio loaded.");
+    }
+  }
+
+  /**
+   * Emits an event of the specified type
+   * @param {string} type - The event type to emit
+   */
+  emit(type) {
+    if (this[`${type}Signal`]) {
+      this[`${type}Signal`].emit();
     }
   }
 }
