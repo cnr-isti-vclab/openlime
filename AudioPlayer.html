@@ -145,7 +145,7 @@ and playback speed adjustment.</p></div>
     
     <div class="description">
         <p>Creates an instance of AudioPlayer.
-Initializes the player with default settings and sets up signal handling for the 'ended' event.</p>
+Initializes the player with default settings and sets up signal handling for events.</p>
     </div>
     
 
@@ -298,7 +298,7 @@ Initializes the player with default settings and sets up signal handling for the
 		<ul class="dummy">
 			<li>
 				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-79">line 79</a>
+				 <a href="AudioPlayer.js.html#sunlight-1-line-91">line 91</a>
 			</li>
 		</ul>
 	</dd>
@@ -347,6 +347,144 @@ Initializes the player with default settings and sets up signal handling for the
 
 
         
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="emit"><span class="type-signature"></span>emit(type)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Emits an event of the specified type</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The event type to emit</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
+				 <a href="AudioPlayer.js.html#sunlight-1-line-210">line 210</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 
     
 </dd>
@@ -410,7 +548,7 @@ Initializes the player with default settings and sets up signal handling for the
 		<ul class="dummy">
 			<li>
 				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-132">line 132</a>
+				 <a href="AudioPlayer.js.html#sunlight-1-line-155">line 155</a>
 			</li>
 		</ul>
 	</dd>
@@ -523,7 +661,7 @@ Updates play duration when pausing.</p>
 		<ul class="dummy">
 			<li>
 				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-66">line 66</a>
+				 <a href="AudioPlayer.js.html#sunlight-1-line-78">line 78</a>
 			</li>
 		</ul>
 	</dd>
@@ -775,6 +913,145 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
             
 <hr>
 <dt>
+    <h4 class="name" id="setMute"><span class="type-signature"></span>setMute(b)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Set the mute state of the audio player.
+Stores the previous volume level when muting and restores it when unmuting.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>b</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Whether to mute the audio playback</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
+				 <a href="AudioPlayer.js.html#sunlight-1-line-192">line 192</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
     <h4 class="name" id="setVolume"><span class="type-signature"></span>setVolume(volume)</h4>
     
     
@@ -880,7 +1157,7 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
 		<ul class="dummy">
 			<li>
 				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-141">line 141</a>
+				 <a href="AudioPlayer.js.html#sunlight-1-line-164">line 164</a>
 			</li>
 		</ul>
 	</dd>
@@ -1018,7 +1295,7 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
 		<ul class="dummy">
 			<li>
 				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-160">line 160</a>
+				 <a href="AudioPlayer.js.html#sunlight-1-line-183">line 183</a>
 			</li>
 		</ul>
 	</dd>
@@ -1131,96 +1408,7 @@ Removes event listeners and updates final play duration.</p>
 		<ul class="dummy">
 			<li>
 				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-99">line 99</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="toggleMute"><span class="type-signature"></span>toggleMute()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Toggles the mute state of the audio player.
-Stores the previous volume level when muting and restores it when unmuting.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-168">line 168</a>
+				 <a href="AudioPlayer.js.html#sunlight-1-line-125">line 125</a>
 			</li>
 		</ul>
 	</dd>
@@ -1301,7 +1489,7 @@ Stores the previous volume level when muting and restores it when unmuting.</p>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
 	
-		on 2024-11-04T15:33:35+00:00
+		on 2024-11-07T14:59:47+00:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
