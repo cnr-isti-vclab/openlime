@@ -22,6 +22,7 @@ class LensDashboardNavigator extends LensDashboard {
     * @param {Viewer} viewer - The OpenLIME viewer instance
     * @param {Object} [options] - Configuration options
     * @param {number} [options.toolboxHeight=22] - Height of the toolbox UI elements in pixels
+    * @param {number} [options.toolboxGap=5] - Gap (in px) between left and roght toolboxes
     * @param {number} [options.angleToolbar=30] - Angle of toolbar position in degrees
     * @param {Object} [options.actions] - Configuration for toolbar actions
     * @param {Object} [options.actions.camera] - Camera control action
@@ -51,6 +52,7 @@ class LensDashboardNavigator extends LensDashboard {
       super(viewer, options);
       options = Object.assign({
          toolboxHeight: 22,
+         toolboxGap: 5,
          actions: {
             camera: { label: 'camera', cb_task: (() => { }), task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); this.actions.camera.cb_task() } },
             light: { label: 'light', cb_task: (() => { }), task: (event) => { if (!this.actions.light.active) this.toggleLightController(); this.actions.light.cb_task() } },
@@ -512,12 +514,12 @@ class LensDashboardNavigator extends LensDashboard {
       let cbx = radius * Math.sin(this.angleToolbar);
       let cby = radius * Math.cos(this.angleToolbar);
 
-      let bx1 = this.containerSpace + radius - cbx - tbw1 / 2;
+      let bx1 = this.containerSpace + radius - cbx - tbw1 / 2 - this.toolboxGap;
       let by1 = this.containerSpace + radius + cby - tbh1 / 2;
       this.toolbox1.style.left = `${bx1}px`;
       this.toolbox1.style.top = `${by1}px`;
 
-      let bx2 = this.containerSpace + radius + cbx - tbw2 / 2;
+      let bx2 = this.containerSpace + radius + cbx - tbw2 / 2 + this.toolboxGap;
       let by2 = this.containerSpace + radius + cby - tbh2 / 2;
       this.toolbox2.style.left = `${bx2}px`;
       this.toolbox2.style.top = `${by2}px`;
