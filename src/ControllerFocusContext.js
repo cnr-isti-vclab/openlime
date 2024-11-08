@@ -7,6 +7,10 @@ import { addSignals } from './Signals.js'
  * Controller for handling Focus+Context visualization interactions.
  * Manages lens-based focus region and context region interactions including
  * panning, zooming, and lens radius adjustments.
+ * @fires ControllerFocusContext#panStart - Emitted when a pan operation begins, with timestamp
+ * @fires ControllerFocusContext#panEnd - Emitted when a pan operation ends, with timestamp
+ * @fires ControllerFocusContext#pinchStart - Emitted when a pinch operation begins, with timestamp
+ * @fires ControllerFocusContext#pinchEnd - Emitted when a pinch operation ends, with timestamp
  * @extends ControllerLens
  */
 class ControllerFocusContext extends ControllerLens {
