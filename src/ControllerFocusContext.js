@@ -1,6 +1,7 @@
 import { ControllerLens } from './ControllerLens.js'
 import { CoordinateSystem } from './CoordinateSystem.js';
 import { FocusContext } from './FocusContext.js';
+import { addSignals } from './Signals.js'
 
 /**
  * Controller for handling Focus+Context visualization interactions.
@@ -87,6 +88,7 @@ class ControllerFocusContext extends ControllerLens {
         this.initialPinchDistance = 1;
         this.initialPinchRadius = 1;
         this.initialPinchPos = { x: 0, y: 0 };
+        addSignals(ControllerFocusContext, 'panStart', 'panEnd', 'pinchStart', 'pinchEnd');
     }
 
     /**
@@ -97,7 +99,6 @@ class ControllerFocusContext extends ControllerLens {
     panStart(e) {
         if (!this.active)
             return;
-
         const p = this.getScenePosition(e);
         this.panning = false;
         this.insideLens = this.isInsideLens(p);
@@ -118,7 +119,7 @@ class ControllerFocusContext extends ControllerLens {
             }
         }
         e.preventDefault();
-
+        this.emit('panStart', Date.now());
         // Activate a timeout to call update() in order to update position also when mouse is clicked but steady
         // Stop the time out on panEnd
         this.timeOut = setInterval(this.update.bind(this), 50);
@@ -163,6 +164,7 @@ class ControllerFocusContext extends ControllerLens {
         this.initialPinchRadius = this.lensLayer.getRadius();
 
         e1.preventDefault();
+        this.emit('pinchStart', Date.now());
     }
 
     /**
@@ -201,6 +203,7 @@ class ControllerFocusContext extends ControllerLens {
      */
     pinchEnd(e, x, y, scale) {
         this.zooming = false;
+        this.emit('pinchEnd', Date.now());
     }
 
     /**
@@ -349,6 +352,7 @@ class ControllerFocusContext extends ControllerLens {
         this.panning = false;
         this.panningCamera = false;
         this.zooming = false;
+        this.emit('panEnd', Date.now());
     }
 
     /**
