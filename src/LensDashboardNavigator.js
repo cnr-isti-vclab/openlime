@@ -52,8 +52,8 @@ class LensDashboardNavigator extends LensDashboard {
       options = Object.assign({
          toolboxHeight: 22,
          actions: {
-            camera: { label: 'camera', task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); } },
-            light: { label: 'light', task: (event) => { if (!this.actions.light.active) this.toggleLightController(); } },
+            camera: { label: 'camera', cb_task: (() => { }), task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); this.actions.camera.cb_task() } },
+            light: { label: 'light', cb_task: (() => { }), task: (event) => { if (!this.actions.light.active) this.toggleLightController(); this.actions.light.cb_task() } },
             annoswitch: { label: 'annoswitch', type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
             prev: { label: 'prev', task: (event) => { } },
             down: { label: 'down', task: (event) => { } },
