@@ -1,0 +1,12 @@
+[
+  {
+    "id": "ac06f3f6-9247-4ec8-a54b-d0307aeca53d",
+    "idx": "1",
+    "label": "TEST",
+    "description": "12345",
+    "class": "class4",
+    "publish": 1,
+    "data": {},
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t<path xmlns=\"http://www.w3.org/2000/svg\" d=\"M1712.5 1369.3 q-12.7 239.7 5.5 258.5 c18.2 18.8 78.3 6.3 104.5 5.5 c26.1 -0.8 118.7 10.0 143.0 -16.5 c24.3 -26.5 6.5 -167.6 5.5 -192.5 c-1.0 -24.9 -3.2 -91.1 -11.0 -99.0 c-7.8 -7.9 -32.9 -6.2 -44.0 -5.5 c-11.1 0.7 -65.5 19.2 -88.0 22.0 c-22.5 2.8 -93.4 -0.7 -99.0 0.0 c-5.6 0.7 -18.6 1.2 -22.0 5.5 q-3.4 4.3 0.0 22.0\" class=\"line openlime-annotation\" width=\"197.96847635726797px\" height=\"197.96847635726797px\" data-annotation=\"ac06f3f6-9247-4ec8-a54b-d0307aeca53d\" data-class=\"class4\"/>  \n\t\t\t\t</svg>"
+  }
+]
