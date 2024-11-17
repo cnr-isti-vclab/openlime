@@ -4,9 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const url = require('url');
 
-// Definisci il percorso al file JSON
 const annotationFile = path.join(__dirname, 'data', 'anno.json');
 let annotations = [];
+
 // Initialize annotations
 try {
   // Check if data directory exists, if not create it
@@ -40,7 +40,7 @@ try {
   }
 }
 
-// Funzione per creare la finestra principale
+// Create the main window
 function createWindow() {
 
   const args = process.argv.slice(2);
@@ -56,7 +56,7 @@ function createWindow() {
       enableRemoteModule: false, // Disable unless absolutely necessary
       nodeIntegration: false, // Use preload for secure Node.js access
       preload: path.join(__dirname, 'preload.js'), // Use a preload script
-      webSecurity: true // Disable this to allow loading local resources
+      webSecurity: true
     }
   });
 
@@ -71,10 +71,10 @@ function createWindow() {
   });
 }
 
-// Avvia l'applicazione quando Electron è pronto
+// Start the browser when app is ready
 app.on('ready', createWindow);
 
-// Handler per leggere le annotazioni
+// Handler to read annotations
 ipcMain.handle('read-annotations', async () => {
   try {
     const data = fs.readFileSync(annotationFile, 'utf8');
@@ -84,25 +84,25 @@ ipcMain.handle('read-annotations', async () => {
     }
     return JSON.parse(data);
   } catch (err) {
-    console.error('Errore nella lettura del file JSON:', err);
+    console.error('Error in reading JSON file:', err);
     // If there's a JSON parsing error or any other error, return empty array
     return [];
   }
 });
 
-// Handler per creare una nuova annotazione
+// Handler to create a new annotation
 ipcMain.handle('create-annotation', async (event, newAnnotation) => {
   try {
     annotations.push(newAnnotation);
     fs.writeFileSync(annotationFile, JSON.stringify(annotations, null, 2));
     return { status: 'success' };
   } catch (err) {
-    console.error('Errore durante la creazione dell\'annotazione:', err);
+    console.error('Error while creating the annotation:', err);
     throw err;
   }
 });
 
-// Handler per aggiornare un'annotazione esistente
+// Handler to update an existing annotation
 ipcMain.handle('update-annotation', async (event, updatedAnnotation) => {
   try {
     const index = annotations.findIndex(anno => anno.id === updatedAnnotation.id);
@@ -111,22 +111,22 @@ ipcMain.handle('update-annotation', async (event, updatedAnnotation) => {
       fs.writeFileSync(annotationFile, JSON.stringify(annotations, null, 2));
       return { status: 'success' };
     } else {
-      throw new Error('Annotazione non trovata');
+      throw new Error('Annotation not found');
     }
   } catch (err) {
-    console.error('Errore durante l\'aggiornamento dell\'annotazione:', err);
+    console.error('Error while updating the annotation:', err);
     throw err;
   }
 });
 
-// Handler per cancellare un'annotazione
+// Handler to delete an annotation
 ipcMain.handle('delete-annotation', async (event, annotationId) => {
   try {
     annotations = annotations.filter(anno => anno.id !== annotationId);
     fs.writeFileSync(annotationFile, JSON.stringify(annotations, null, 2));
     return { status: 'success' };
   } catch (err) {
-    console.error('Errore durante la cancellazione dell\'annotazione:', err);
+    console.error('Error while deleting the annotation:', err);
     throw err;
   }
 });
