@@ -103,6 +103,7 @@ The `main.js` file is the entry point for the Electron application. It handles:
 
   The user interacts with the UI to define an annotation and its associated SVG data. The structure matches the OpenLIME `Annotation` class.
 
+  Example in the frontend (`index.js`):
    ```javascript
    const newAnnotation = {
        id: "annotation-1", // Unique identifier
@@ -120,8 +121,7 @@ The `main.js` file is the entry point for the Electron application. It handles:
    window.api.createAnnotation(newAnnotation);
    ```
 
-  **Preload.js**: Exposes an API for secure communication.
-
+  Example in `preload.js`:
    ```javascript
    const { ipcRenderer, contextBridge } = require('electron');
 
@@ -130,8 +130,7 @@ The `main.js` file is the entry point for the Electron application. It handles:
    });
    ```
 
-  **Backend (Main.js)**: Receives the annotation, stores it in memory, and sends it back for rendering.
-
+  Example in `main.js`:
    ```javascript
    const { ipcMain } = require('electron');
    const annotations = []; // In-memory storage
