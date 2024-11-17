@@ -146,13 +146,8 @@ const classParam = {
   // Remove light from the toolbar
   light.display = false;
 
-  // Add help, zoomin and zoomout to the toolbar
-  help.display = true;
-  zoomin.display = true;
-  zoomout.display = true;
-
   // Add configured actions to the toolbar
-  ui.actions = { help, home, layers, fullscreen, light, zoomin, zoomout };
+  ui.actions = { home, layers, light };
 
   // Add image attribution 
   ui.attribution = "";

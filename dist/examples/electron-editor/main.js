@@ -85,24 +85,48 @@ function createWindow() {
     }
   });
 
-  // Add menu item to open data directory
+  // Create application menu
   const { Menu, MenuItem } = require('electron');
-  const menu = Menu.getApplicationMenu() || Menu.buildFromTemplate([]);
-  
-  const fileMenu = menu.items.find(item => item.label === 'File') || 
-                  new MenuItem({ label: 'File', submenu: [] });
-  
-  fileMenu.submenu.append(new MenuItem({
-    label: 'Open Data Directory',
-    click: () => {
-      require('electron').shell.openPath(dataDir);
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Open Annotation Dir',
+          click: () => {
+            require('electron').shell.openPath(dataDir);
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Exit',
+          role: 'quit'
+        }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        {
+          label: 'Toggle Full Screen',
+          accelerator: process.platform === 'darwin' ? 'Cmd+F' : 'F11',
+          click: () => {
+            const isFullScreen = win.isFullScreen();
+            win.setFullScreen(!isFullScreen);
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Developer Tools',
+          accelerator: 'F12',
+          click: () => {
+            win.webContents.toggleDevTools();
+          }
+        }
+      ]
     }
-  }));
+  ]);
 
-  if (!menu.items.find(item => item.label === 'File')) {
-    menu.append(fileMenu);
-  }
-  
   Menu.setApplicationMenu(menu);
 }
 
@@ -110,16 +134,16 @@ function createWindow() {
 app.on('second-instance', (event, commandLine, workingDirectory) => {
   const isEditorMode = commandLine.slice(1).some(arg => arg === '--editor');
   const existingWindows = BrowserWindow.getAllWindows();
-  
+
   if (existingWindows.length > 0) {
     const win = existingWindows[0];
     if (win.isMinimized()) win.restore();
     win.focus();
-    
+
     // Reload the window with new mode if necessary
     const currentURL = new URL(win.webContents.getURL());
     const currentIsEditor = currentURL.searchParams.has('editor');
-    
+
     if (currentIsEditor !== isEditorMode) {
       const queryParams = isEditorMode ? new URLSearchParams({ editor: 'true' }).toString() : "";
       const indexPath = `file://${path.join(__dirname, 'index.html')}?${queryParams}`;

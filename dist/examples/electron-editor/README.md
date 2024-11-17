@@ -9,6 +9,8 @@ The editor integrates OpenLIME structures to handle annotations that can include
 - **Create Annotations**: Add new annotations with title, content, and position.
 - **Update Annotations**: Edit existing annotations.
 - **Delete Annotations**: Remove annotations as needed.
+- **Full Screen Mode**: Toggle between windowed and full screen modes.
+- **Developer Tools**: Built-in developer tools for debugging.
 
 ## Installation
 
@@ -87,9 +89,23 @@ To run in editor mode:
   ./OpenLIME\ Electron\ Editor-1.0.0.AppImage --editor
   ```
 
+#### Application Menu and Shortcuts
+The application provides several menu options and keyboard shortcuts:
+
+- **File Menu**:
+  - Open Annotation Dir: Opens the directory containing annotation files
+  - Exit: Closes the application
+
+- **View Menu**:
+  - Toggle Full Screen: Switch between windowed and full screen modes
+    - Windows/Linux: `F11`
+    - macOS: `Cmd+F`
+  - Developer Tools: Open Chrome Developer Tools
+    - All platforms: `F12`
+
 #### Accessing Annotation Data
 Annotations are stored in a user-specific data directory. You can access this directory through:
-1. The application menu: `File > Open Data Directory`
+1. The application menu: `File > Open Annotation Dir`
 2. Manual navigation to:
    - **Windows**: `%APPDATA%\OpenLIME Electron Editor\data`
    - **macOS**: `~/Library/Application Support/OpenLIME Electron Editor/data`

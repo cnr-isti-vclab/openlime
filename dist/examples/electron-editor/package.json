@@ -1,10 +1,11 @@
 {
   "name": "openlime-electron-editor",
   "version": "1.0.0",
+  "description": "An Electron-based annotation editor using OpenLIME",
   "main": "main.js",
   "build": {
     "appId": "it.openlime.electroneditor",
-    "productName": "OpenLIME Electron Editor",
+    "productName": "OpenLIME Editor",
     "asar": true,
     "directories": {
       "output": "dist"
@@ -16,34 +17,54 @@
     ],
     "mac": {
       "target": "dmg",
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns"
     },
     "win": {
       "target": "nsis",
-      "publisherName": "Your Company"
+      "icon": "build/icon.ico",
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
+      "signtoolOptions": {
+        "publisherName": "OpenLIME"
+      }
     },
     "linux": {
       "target": "AppImage",
       "executableName": "openlime-electron-editor",
+      "icon": "build/icon.png",
       "desktop": {
         "Name": "OpenLIME Editor",
-        "Comment": "An Electron-based annotation editor"
+        "Comment": "An Electron-based annotation editor",
+        "Categories": "Graphics;Utility;",
+        "Type": "Application"
       },
-      "category": "Utility"
+      "category": "Graphics"
     }
   },
   "scripts": {
     "start": "electron .",
     "editor": "electron . --editor",
+    "prepare-icons": "./create_linux_icons.sh",
+    "prebuild": "npm run prepare-icons",
     "build": "electron-builder",
-    "build:win": "electron-builder --win",
+    "build:win": "electron-builder --win --x64",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "openlime",
+    "electron",
+    "annotation",
+    "editor"
+  ],
+  "author": {
+    "name": "OpenLIME",
+    "email": "your.email@example.com",
+    "url": "https://openlime.github.io"
+  },
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "electron": "^33.2.0",
     "electron-builder": "^25.1.8"
