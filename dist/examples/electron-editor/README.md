@@ -94,28 +94,53 @@ The `main.js` file is the entry point for the Electron application. It handles:
   });
   ```
 
+
 - **Frontend to Backend**: 
-  User interactions (e.g., creating an annotation) trigger events that send data back to the backend.
 
-  Example in the frontend (`index.js`):
-  ```javascript
-  const newAnnotation = { title: "New Title", content: "New Content", position: { x: 10, y: 20 } };
-  window.api.createAnnotation(newAnnotation);
-  ```
+The `Annotation.js` file provides a structure for an OpenLIME annotation, including features like a unique identifier, description, category, drawing style, and potentially embedded graphical elements. I'll use this structure as a reference in the "Communication Between Backend and Frontend" section.
 
-  Example in `preload.js`:
-  ```javascript
-  contextBridge.exposeInMainWorld('api', {
-      createAnnotation: (annotation) => ipcRenderer.send('create-annotation', annotation),
-  });
-  ```
+The backend (`main.js`) and frontend (`index.js`) work together to handle the creation of OpenLIME annotations, including SVG graphical elements. Below is an example:
 
-  Example in `main.js`:
-  ```javascript
-  ipcMain.on('create-annotation', (event, annotation) => {
-      annotations.push(annotation);
-      console.log('Annotation added:', annotation);
-  });
-  ```
+The user interacts with the UI to define an annotation and its associated SVG data. The structure matches the OpenLIME `Annotation` class.
 
-This architecture ensures that the backend logic is secure and that the frontend is only responsible for the UI and user interactions.
+   ```javascript
+   const newAnnotation = {
+       id: "annotation-1", // Unique identifier
+       description: "This is a graphical annotation",
+       category: "example",
+       style: {
+           stroke: "black",
+           fill: "red",
+       },
+       content: "<svg><circle cx='50' cy='50' r='40' stroke='black' fill='red'/></svg>", // SVG content
+       position: { x: 10, y: 20 },
+   };
+
+   // Send the annotation to the backend
+   window.api.createAnnotation(newAnnotation);
+   ```
+
+**Preload.js**: Exposes an API for secure communication.
+
+   ```javascript
+   const { ipcRenderer, contextBridge } = require('electron');
+
+   contextBridge.exposeInMainWorld('api', {
+       createAnnotation: (annotation) => ipcRenderer.send('create-annotation', annotation),
+   });
+   ```
+
+**Backend (Main.js)**: Receives the annotation, stores it in memory, and sends it back for rendering.
+
+   ```javascript
+   const { ipcMain } = require('electron');
+   const annotations = []; // In-memory storage
+
+   ipcMain.on('create-annotation', (event, annotation) => {
+       // Add the annotation to the storage
+       annotations.push(annotation);
+       console.log('Annotation added:', annotation);
+   });
+   ```
+
+This flow ensures that the OpenLIME annotation structure is preserved from creation to rendering, allowing graphical SVG elements to be displayed on a designated canvas layer using OpenLIME's capabilities.
