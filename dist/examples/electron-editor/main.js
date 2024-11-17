@@ -4,21 +4,40 @@ const path = require('path');
 const fs = require('fs');
 const url = require('url');
 
-const annotationFile = path.join(__dirname, 'data', 'anno.json');
+// Proper argument handling for both development and packaged modes
+function getIsEditorMode() {
+  if (process.defaultApp) {
+    return process.argv.slice(2).some(arg => arg === '--editor');
+  } else {
+    return process.argv.slice(1).some(arg => arg === '--editor');
+  }
+}
+
+// Get the user data directory path
+const userDataPath = app.getPath('userData');
+const dataDir = path.join(userDataPath, 'data');
+const annotationFile = path.join(dataDir, 'anno.json');
+
+console.log("App launched with arguments:", process.argv);
+console.log("Editor mode:", getIsEditorMode());
+console.log("User data directory:", userDataPath);
+console.log("Data directory:", dataDir);
+
 let annotations = [];
 
 // Initialize annotations
 try {
   // Check if data directory exists, if not create it
-  const dataDir = path.join(__dirname, 'data');
   if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir);
+    fs.mkdirSync(dataDir, { recursive: true });
+    console.log('Created data directory:', dataDir);
   }
 
   // Check if file exists
   if (!fs.existsSync(annotationFile)) {
     // Create file with empty array
     fs.writeFileSync(annotationFile, '[]', 'utf8');
+    console.log('Created annotations file:', annotationFile);
   } else {
     // Read existing file
     const data = fs.readFileSync(annotationFile, 'utf8');
@@ -28,10 +47,10 @@ try {
       annotations = [];
       fs.writeFileSync(annotationFile, '[]', 'utf8');
     }
+    console.log('Loaded existing annotations');
   }
 } catch (err) {
   console.error('Error initializing annotations file:', err);
-  // Initialize with empty array in case of error
   annotations = [];
   try {
     fs.writeFileSync(annotationFile, '[]', 'utf8');
@@ -42,20 +61,16 @@ try {
 
 // Create the main window
 function createWindow() {
-
-  const args = process.argv.slice(2);
-  const editorArgs = args.find(arg => arg.startsWith('--editor'));
-  const isEditorMode = editorArgs ? true : false;
-  const queryParams = isEditorMode ? new URLSearchParams({ editor: isEditorMode }).toString() : "";
+  const isEditorMode = getIsEditorMode();
+  const queryParams = isEditorMode ? new URLSearchParams({ editor: 'true' }).toString() : "";
   const indexPath = `file://${path.join(__dirname, 'index.html')}?${queryParams}`;
-
 
   const win = new BrowserWindow({
     webPreferences: {
-      contextIsolation: true, // Keep this enabled for security
-      enableRemoteModule: false, // Disable unless absolutely necessary
-      nodeIntegration: false, // Use preload for secure Node.js access
-      preload: path.join(__dirname, 'preload.js'), // Use a preload script
+      contextIsolation: true,
+      enableRemoteModule: false,
+      nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js'),
       webSecurity: true
     }
   });
@@ -69,28 +84,70 @@ function createWindow() {
       event.preventDefault();
     }
   });
+
+  // Add menu item to open data directory
+  const { Menu, MenuItem } = require('electron');
+  const menu = Menu.getApplicationMenu() || Menu.buildFromTemplate([]);
+  
+  const fileMenu = menu.items.find(item => item.label === 'File') || 
+                  new MenuItem({ label: 'File', submenu: [] });
+  
+  fileMenu.submenu.append(new MenuItem({
+    label: 'Open Data Directory',
+    click: () => {
+      require('electron').shell.openPath(dataDir);
+    }
+  }));
+
+  if (!menu.items.find(item => item.label === 'File')) {
+    menu.append(fileMenu);
+  }
+  
+  Menu.setApplicationMenu(menu);
 }
 
-// Start the browser when app is ready
-app.on('ready', createWindow);
+// Handle the 'second-instance' event
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  const isEditorMode = commandLine.slice(1).some(arg => arg === '--editor');
+  const existingWindows = BrowserWindow.getAllWindows();
+  
+  if (existingWindows.length > 0) {
+    const win = existingWindows[0];
+    if (win.isMinimized()) win.restore();
+    win.focus();
+    
+    // Reload the window with new mode if necessary
+    const currentURL = new URL(win.webContents.getURL());
+    const currentIsEditor = currentURL.searchParams.has('editor');
+    
+    if (currentIsEditor !== isEditorMode) {
+      const queryParams = isEditorMode ? new URLSearchParams({ editor: 'true' }).toString() : "";
+      const indexPath = `file://${path.join(__dirname, 'index.html')}?${queryParams}`;
+      win.loadURL(indexPath);
+    }
+  }
+});
 
-// Handler to read annotations
+// Ensure single instance
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.whenReady().then(createWindow);
+}
+
+// IPC Handlers
 ipcMain.handle('read-annotations', async () => {
   try {
     const data = fs.readFileSync(annotationFile, 'utf8');
-    // Handle empty file or whitespace-only content
-    if (!data.trim()) {
-      return [];
-    }
-    return JSON.parse(data);
+    return data.trim() ? JSON.parse(data) : [];
   } catch (err) {
     console.error('Error in reading JSON file:', err);
-    // If there's a JSON parsing error or any other error, return empty array
     return [];
   }
 });
 
-// Handler to create a new annotation
 ipcMain.handle('create-annotation', async (event, newAnnotation) => {
   try {
     annotations.push(newAnnotation);
@@ -102,7 +159,6 @@ ipcMain.handle('create-annotation', async (event, newAnnotation) => {
   }
 });
 
-// Handler to update an existing annotation
 ipcMain.handle('update-annotation', async (event, updatedAnnotation) => {
   try {
     const index = annotations.findIndex(anno => anno.id === updatedAnnotation.id);
@@ -119,7 +175,6 @@ ipcMain.handle('update-annotation', async (event, updatedAnnotation) => {
   }
 });
 
-// Handler to delete an annotation
 ipcMain.handle('delete-annotation', async (event, annotationId) => {
   try {
     annotations = annotations.filter(anno => anno.id !== annotationId);
@@ -128,5 +183,19 @@ ipcMain.handle('delete-annotation', async (event, annotationId) => {
   } catch (err) {
     console.error('Error while deleting the annotation:', err);
     throw err;
+  }
+});
+
+// Handle app activation
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+
+// Quit when all windows are closed
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
   }
 });

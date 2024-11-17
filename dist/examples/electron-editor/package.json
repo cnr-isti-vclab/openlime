@@ -1,17 +1,51 @@
 {
-  "name": "electron-editor",
+  "name": "openlime-electron-editor",
   "version": "1.0.0",
   "main": "main.js",
+  "build": {
+    "appId": "it.openlime.electroneditor",
+    "productName": "OpenLIME Electron Editor",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/{dev-dependency-name}/**",
+      "!*.map"
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis",
+      "publisherName": "Your Company"
+    },
+    "linux": {
+      "target": "AppImage",
+      "executableName": "openlime-electron-editor",
+      "desktop": {
+        "Name": "OpenLIME Editor",
+        "Comment": "An Electron-based annotation editor"
+      },
+      "category": "Utility"
+    }
+  },
   "scripts": {
     "start": "electron .",
     "editor": "electron . --editor",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "electron": "^33.2.0"
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
   }
 }

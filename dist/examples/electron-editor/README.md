@@ -17,7 +17,7 @@ The editor integrates OpenLIME structures to handle annotations that can include
 - [Node.js](https://nodejs.org/) (v16 or later recommended)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
 
-### Steps
+### Development Setup
 1. Clone or download this repository to your local machine.
 2. Navigate to the project directory in your terminal:
    ```bash
@@ -28,19 +28,74 @@ The editor integrates OpenLIME structures to handle annotations that can include
    npm install
    ```
 
+### Building Standalone Application
+To create standalone executables for different platforms:
+
+1. For all platforms:
+   ```bash
+   npm run build
+   ```
+
+2. For specific platforms:
+   ```bash
+   # For Windows
+   npm run build:win
+   
+   # For macOS
+   npm run build:mac
+   
+   # For Linux
+   npm run build:linux
+   ```
+
+The built applications will be available in the `dist` directory.
+
 ## Usage
+
+### Development Mode
 1. Start the application:
    ```bash
    npm start
    ```
-   This will launch the annotation editor in an Electron window.
 
 2. To use the editor in a specific mode (e.g., editor mode), run:
    ```bash
    npm run editor
    ```
 
-3. Begin creating, editing, and managing your annotations within the application interface.
+### Standalone Application
+
+#### Running the Application
+- **Windows**: Run the installed `.exe` file or use the Start Menu shortcut
+- **macOS**: Open the `.app` from Applications folder
+- **Linux**: Run the AppImage:
+  ```bash
+  ./OpenLIME\ Electron\ Editor-1.0.0.AppImage
+  ```
+
+To run in editor mode:
+- **Windows**: Use the "Editor Mode" shortcut or run from command line:
+  ```bash
+  "C:\Program Files\OpenLIME Electron Editor\OpenLIME Electron Editor.exe" --editor
+  ```
+- **macOS**: From terminal:
+  ```bash
+  /Applications/OpenLIME\ Electron\ Editor.app/Contents/MacOS/OpenLIME\ Electron\ Editor --editor
+  ```
+- **Linux**:
+  ```bash
+  ./OpenLIME\ Electron\ Editor-1.0.0.AppImage --editor
+  ```
+
+#### Accessing Annotation Data
+Annotations are stored in a user-specific data directory. You can access this directory through:
+1. The application menu: `File > Open Data Directory`
+2. Manual navigation to:
+   - **Windows**: `%APPDATA%\OpenLIME Electron Editor\data`
+   - **macOS**: `~/Library/Application Support/OpenLIME Electron Editor/data`
+   - **Linux**: `~/.config/OpenLIME Electron Editor/data`
+
+The annotations are stored in `anno.json` within the data directory.
 
 ## How It Works
 
@@ -94,14 +149,9 @@ The `main.js` file is the entry point for the Electron application. It handles:
   });
   ```
 
-
 - **Frontend to Backend**: 
 
-  The `Annotation.js` file provides a structure for an OpenLIME annotation, including features like a unique identifier, description, category, drawing style, and potentially embedded graphical elements. I'll use this structure as a reference in the "Communication Between Backend and Frontend" section.
-
-  The backend (`main.js`) and frontend (`index.js`) work together to handle the creation of OpenLIME annotations, including SVG graphical elements. Below is an example:
-
-  The user interacts with the UI to define an annotation and its associated SVG data. The structure matches the OpenLIME `Annotation` class.
+  The `Annotation.js` file provides a structure for an OpenLIME annotation, including features like a unique identifier, description, category, drawing style, and potentially embedded graphical elements.
 
   Example in the frontend (`index.js`):
    ```javascript

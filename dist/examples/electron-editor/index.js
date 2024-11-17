@@ -24,6 +24,11 @@ function formatPerformanceTime() {
 // Check URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const editorEnable = urlParams.has('editor');
+if (editorEnable) {
+  console.log("Running in editor mode");
+} else {
+  console.log("Running in default mode");
+}
 
 // Create an OpenLIME canvas into openlime
 const lime = new OpenLIME.Viewer('.openlime');
