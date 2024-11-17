@@ -97,11 +97,11 @@ The `main.js` file is the entry point for the Electron application. It handles:
 
 - **Frontend to Backend**: 
 
-The `Annotation.js` file provides a structure for an OpenLIME annotation, including features like a unique identifier, description, category, drawing style, and potentially embedded graphical elements. I'll use this structure as a reference in the "Communication Between Backend and Frontend" section.
+  The `Annotation.js` file provides a structure for an OpenLIME annotation, including features like a unique identifier, description, category, drawing style, and potentially embedded graphical elements. I'll use this structure as a reference in the "Communication Between Backend and Frontend" section.
 
-The backend (`main.js`) and frontend (`index.js`) work together to handle the creation of OpenLIME annotations, including SVG graphical elements. Below is an example:
+  The backend (`main.js`) and frontend (`index.js`) work together to handle the creation of OpenLIME annotations, including SVG graphical elements. Below is an example:
 
-The user interacts with the UI to define an annotation and its associated SVG data. The structure matches the OpenLIME `Annotation` class.
+  The user interacts with the UI to define an annotation and its associated SVG data. The structure matches the OpenLIME `Annotation` class.
 
    ```javascript
    const newAnnotation = {
@@ -120,7 +120,7 @@ The user interacts with the UI to define an annotation and its associated SVG da
    window.api.createAnnotation(newAnnotation);
    ```
 
-**Preload.js**: Exposes an API for secure communication.
+  **Preload.js**: Exposes an API for secure communication.
 
    ```javascript
    const { ipcRenderer, contextBridge } = require('electron');
@@ -130,7 +130,7 @@ The user interacts with the UI to define an annotation and its associated SVG da
    });
    ```
 
-**Backend (Main.js)**: Receives the annotation, stores it in memory, and sends it back for rendering.
+  **Backend (Main.js)**: Receives the annotation, stores it in memory, and sends it back for rendering.
 
    ```javascript
    const { ipcMain } = require('electron');
