@@ -198,8 +198,6 @@ class AudioPlayer {
         this.previousVolume = this.audio.volume;
         this.audio.volume = 0;
       }
-    } else {
-      console.log("No audio loaded.");
     }
   }
 
