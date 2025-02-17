@@ -568,6 +568,58 @@ class SH {
 	}
 }
 
+class AdaptiveRBF {
+	constructor(samples, alpha = 1.0, k = 5) {
+		this.samples = samples;
+		this.alpha = alpha; //how smooth is the interpolation
+		this.beta = 2;  //filtering smooth distance (higher will result in bumpy);
+	}
+
+	distance(a, b) {
+		const dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
+		return Math.sqrt(dx * dx + dy * dy + dz * dz);
+	}
+
+	smoothMinDist(neighbors) {
+		let num = 0, denom = 0;
+		for (const { dist } of neighbors) {
+			const weight = Math.exp(-this.beta * dist);
+			num += dist * weight;
+			denom += weight;
+		}
+		return num / denom;
+	}
+
+	findNeighbors(x, y, z) {
+		return this.samples
+			.map((s, i) => ({ index: i, dist: this.distance(s, [x, y, z]) }))
+			.sort((a, b) => a.dist - b.dist)
+	}
+
+	rbf(r, epsilon) {
+		return Math.exp(-epsilon * r * r);
+	}
+
+	weights(x, y, z) {
+		const neighbors = this.findNeighbors(x, y, z);
+
+		const meanDist =  this.smoothMinDist(neighbors);
+		const epsilon = this.alpha / meanDist;
+
+		let num = 0, denom = 0;
+		let weights = [];
+		for (const { index, dist } of neighbors) {
+			const w = this.rbf(dist, epsilon);
+			weights.push([index, w]);
+			denom += w;
+		}
+
+		for(let w of weights)
+			w[1] /= denom;
+		return weights;
+	}
+}
+
 
 class RBF {
 	/* @param {Array} v expects light direction as [x, y, z]
@@ -591,41 +643,21 @@ class RBF {
 	}
 
 	static rbf(lpos, shader) {
-		let radius = 1 / (shader.sigma * shader.sigma);
 		let weights = new Array(shader.ndimensions);
 
-		//compute rbf weights
-		let totw = 0.0;
+		let samples = new Array(shader.ndimensions);
+
 		for (let i = 0; i < weights.length; i++) {
-			let dx = shader.lights[i * 3 + 0] - lpos[0];
-			let dy = shader.lights[i * 3 + 1] - lpos[1];
-			let dz = shader.lights[i * 3 + 2] - lpos[2];
+			let dx = shader.lights[i * 3 + 0];
+			let dy = shader.lights[i * 3 + 1];
+			let dz = shader.lights[i * 3 + 2];
 
-			let d2 = dx * dx + dy * dy + dz * dz;
-			let w = Math.exp(-radius * d2);
-
-			weights[i] = [i, w];
-			totw += w;
-		}
-		for (let i = 0; i < weights.length; i++)
-			weights[i][1] /= totw;
-
-
-		//pick only most significant and renormalize
-		let count = 0;
-		totw = 0.0;
-		for (let i = 0; i < weights.length; i++) {
-			if (weights[i][1] > 0.001) {
-				weights[count++] = weights[i];
-				totw += weights[i][1];
-			}
+			samples[i] = [dx, dy, dz];
 		}
 
-		weights = weights.slice(0, count);
-		for (let i = 0; i < weights.length; i++)
-			weights[i][1] /= totw;
-
-		return weights;
+		const rbf = new AdaptiveRBF(samples, 8, 24);
+		return rbf.weights(lpos[0], lpos[1], lpos[2]);
+		
 	}
 }
 
