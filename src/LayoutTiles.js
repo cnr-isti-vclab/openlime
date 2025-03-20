@@ -524,7 +524,7 @@ class LayoutTiles extends Layout {
 		let max = Math.max(this.width, this.height) / this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.urls = this.urls.map(url => url ? url.substr(0, url.lastIndexOf(".")) + '_files/' : null);
+		this.urls = this.urls.map(url => url ? url.slice(0, url.lastIndexOf(".")) + '_files/' : null);
 		this.skiplevels = 0;
 		if (onepixel)
 			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
@@ -551,7 +551,7 @@ class LayoutTiles extends Layout {
 				throw new Error(this.status);
 			}
 			let json = await response.json();
-			json.url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
+			json.url = url.slice(0, url.lastIndexOf(".")) + '.tzb';
 			Object.assign(this, json);
 			this.tarzoom.push(json);
 		}
@@ -579,7 +579,7 @@ class LayoutTiles extends Layout {
 		}
 		let json = await response.json();
 		Object.assign(this, json); //suffix, tilesize, overlap, width, height, levels
-		this.url = url.substr(0, url.lastIndexOf(".")) + '.tzb';
+		this.url = url.slice(0, url.lastIndexOf(".")) + '.tzb';
 
 		this.getTileURL = (rasterid, tile) => {
 			let index = tile.index * this.stride;
@@ -619,7 +619,7 @@ class LayoutTiles extends Layout {
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
 		this.getTileURL = (rasterid, tile) => {
-			const tileUrl = this.urls[rasterid].substr(0, url.lastIndexOf("/"));
+			const tileUrl = this.urls[rasterid].slice(0, url.lastIndexOf("/"));
 			let group = tile.index >> 8;
 			return tileUrl + "/TileGroup" + group + "/" + tile.level + "-" + tile.x + "-" + tile.y + "." + this.suffix;
 		};
@@ -647,7 +647,7 @@ class LayoutTiles extends Layout {
 		this.tilesize = info.tiles[0].width;
 
 		this.getTileURL = (rasterid, tile) => {
-			const tileUrl = this.urls[rasterid].substr(0, url.lastIndexOf("/"));
+			const tileUrl = this.urls[rasterid].slice(0, url.lastIndexOf("/"));
 			let tw = this.tilesize;
 			let ilevel = parseInt(this.nlevels - 1 - tile.level);
 			let s = Math.pow(2, tile.level);

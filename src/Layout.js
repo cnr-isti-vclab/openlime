@@ -144,8 +144,8 @@ class Layout {
 
 		if (typeof (url) == 'string')
 			this.setUrls([url]);
-		if (this.width && this.height)
-			this.status = 'ready';
+		// if (this.width && this.height)
+		// 	this.status = 'ready';
 	}
 
 	/**

@@ -1,50 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 
-  <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLIME - RTI Viewer</title>
-    <link rel="stylesheet" href="../../css/skin.css" />
-    <link rel="stylesheet" href="../examples.css" />
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenLIME - RTI Viewer</title>
+  <link rel="stylesheet" href="../../css/skin.css" />
+  <link rel="stylesheet" href="../examples.css" />
 
-    <script src="../../js/openlime.js"></script>
+  <script src="../../js/openlime.js"></script>
 
-  </head>
+</head>
 
-  <body>
-    <h1>OpenLIME - IIPImage Viewer</h1>
-    <div class="openlime"></div>
-    <script>
-        // Create an OpenLIME canvas into openlime
-        const lime = new OpenLIME.Viewer('.openlime');
+<body>
+  <h1>OpenLIME - IIPImage Viewer</h1>
+  <div class="openlime"></div>
+  <script>
+    // Create an OpenLIME canvas into openlime
+    const lime = new OpenLIME.Viewer('.openlime');
 
-        const layer0 = new OpenLIME.Layer({
-            layout: 'iip',
-            type: 'image',
-	    server: '/fcgi-bin/iipsrv.fcgi',
-            url: 'image.tif'
-        });
-        lime.addLayer('iip', layer0);
-	lime.camera.maxFixedZoom = 1;  // Disable zooming beyond 100%
+    const layer0 = new OpenLIME.Layer({
+      layout: 'iip',
+      type: 'image',
+      server: 'https://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi',
+      url: 'F5961/HD5/HD5'
+    });
+    lime.addLayer('iip', layer0);
+    lime.camera.maxFixedZoom = 1;  // Disable zooming beyond 100%
 
-        // Fetch a skin (visual elements for the web page)
-        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+    // Fetch a skin (visual elements for the web page)
+    OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
-        // Create an User Interface 
-        const ui = new OpenLIME.UIBasic(lime, {
-					attribution: "image credit",
-					enableTooltip: true });
+    // Create an User Interface 
+    const ui = new OpenLIME.UIBasic(lime, {
+      attribution: "image credit",
+      enableTooltip: true
+    });
 
-        // Customize our toolbar
-        ui.actions.layers.display = false;
-        ui.actions.light.display = false;
-        ui.actions.zoomin.display = true;
-        ui.actions.zoomout.display = true;
-        ui.actions.rotate.display = true;
- 
-    </script>
-  </body>
+    // Customize our toolbar
+    ui.actions.layers.display = false;
+    ui.actions.light.display = false;
+    ui.actions.zoomin.display = true;
+    ui.actions.zoomout.display = true;
+    ui.actions.rotate.display = true;
+
+  </script>
+</body>
 
 </html>
