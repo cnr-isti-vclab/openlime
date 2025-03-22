@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Lens Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+
+</head>
+
+<body>
+    <h1>OpenLIME - Lens Viewer</h1>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+    <script>
+
+        class GrayFilter extends OpenLIME.ShaderFilter {
+            /**
+             * Creates a grayscale filter
+             * @param {Object} [options] - Filter options
+             * @param {number[]} [options.luminanceFactors=[0.299, 0.587, 0.114]] - Luminance conversion factors
+             */
+            constructor(options) {
+                super(options);
+            }
+
+            fragDataSrc(gl) {
+                return `
+        vec4 ${this.functionName()}(vec4 col) {
+            float v = (col.r+col.g+col.b)/3.0;
+            return vec4(vec3(v, v, v), col.a);
+        }`;
+            }
+        };
+
+
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+        // The visualization is unbounded (the camera is )
+        lime.camera.bounded = false;
+
+        // Create an image layer and add it to the canvans. This layer is used as background for the lens.
+        const layer0 = new OpenLIME.Layer({
+            type: 'image',
+            url: './natural.png',
+            layout: 'image',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: true
+        });
+        lime.addLayer('kdmap', layer0);
+
+        // Create a second layer and add it to the canvans. This layer contains the normal map of the picture.
+        // It is displayed inside the lens.
+        const layer1 = new OpenLIME.Layer({
+            type: 'image',
+            url: './natural.png',
+            layout: 'image',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
+            visible: false
+        });
+        lime.addLayer('nomap', layer1);
+
+        // Add Filter Opacity
+        const filterGray = new GrayFilter();
+        layer1.addShaderFilter(filterGray);
+
+        // Create a lens layer and add it to the canvans.
+        // The field displayed inside the lens is layer1 (normal map)
+        const lensLayer = new OpenLIME.Layer({
+            type: "lens",
+            layers: [layer1],
+            camera: lime.camera,
+            radius: 200,
+            borderEnable: true,
+            borderWidth: 3,
+            borderColor: [0, 0, 0.2, 1],
+            visible: true
+        });
+        lime.addLayer('lens', lensLayer);
+
+        // Create a lens controller for focus and context exploration.
+        const controllerLens = new OpenLIME.ControllerFocusContext({
+            lensLayer: lensLayer,
+            camera: lime.camera,
+            canvas: lime.canvas,
+        });
+        lime.pointerManager.onEvent(controllerLens);
+        lensLayer.controllers.push(controllerLens);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime, { autofit: false });
+
+        // Remove light from the toolbar
+        ui.actions.light.display = false;
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+
+        ui.attribution = `Cape Spartivento Lighthouse, oil on canvas, 14x18 cm, 2004 - by Fabio Marton`;
+
+    </script>
+</body>
+
+</html>
