@@ -6,10 +6,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenLIME - Vector Glyph</title>
+    <!-- Link to the OpenLIME skin CSS for UI styling -->
     <link rel="stylesheet" href="../../css/skin.css" />
+    <!-- Light theme is commented out - can be uncommented if needed -->
     <!-- <link rel="stylesheet" href="../../css/light.css" /> -->
     <link rel="stylesheet" href="../examples.css" />
     <style>
+        /* Styling for the colormap legend - positioned at bottom left of the viewport */
         .openlime-legend {
             display: flex;
             flex-flow: column-reverse nowrap;
@@ -19,6 +22,7 @@
             width: 600px;
         }
 
+        /* Test div for debugging purposes */
         #test {
             display: block;
             position: absolute;
@@ -30,115 +34,193 @@
 
 <body>
     <h1>OpenLIME - Vector Glyph</h1>
+    <!-- Main container where the OpenLIME viewer will be initialized -->
     <div class="openlime"></div>
+    <!-- Test div for debugging elements -->
     <div id="test"></div>
+
+    <!-- Load the OpenLIME library -->
     <script src="../../js/openlime.js"></script>
+
+    <!-- Main application script as a module -->
     <script type="module">
-        import config from './config.json' assert {type: 'json'};
+        // Declare config variable to store JSON configuration
+        let config;
 
-        // EPSG:4326 (WGS84) to EPSG:3857 (Web Mercatore)
-        function degrees2meters(lon, lat) {
-            var x = lon * 20037508.34 / 180;
-            var y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180);
-            y = y * 20037508.34 / 180;
-            return [x, y]
+        // Fetch the configuration file using the Fetch API
+        // This replaces the problematic import with assert statement
+        fetch('./config.json')
+            .then(response => response.json())
+            .then(data => {
+                // Store the loaded config
+                config = data;
+                // Initialize the viewer once config is loaded
+                initializeViewer();
+            })
+            .catch(error => console.error('Error loading config:', error));
+
+        // Main function to initialize the OpenLIME viewer and its components
+        function initializeViewer() {
+            // ===== COORDINATE CONVERSION FUNCTIONS =====
+
+            // Convert geographic coordinates (longitude/latitude) to Web Mercator projection
+            // This is needed because the map uses Web Mercator (EPSG:3857)
+            function degrees2meters(lon, lat) {
+                var x = lon * 20037508.34 / 180;
+                var y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180);
+                y = y * 20037508.34 / 180;
+                return [x, y]
+            }
+
+            // Convert Web Mercator coordinates back to geographic coordinates
+            // Useful for displaying coordinates to users
+            function meters2degress(x, y) {
+                const lon = x * 180 / 20037508.34;
+                const lat = Math.atan(Math.exp(y * Math.PI / 20037508.34)) * 360 / Math.PI - 90;
+                return [lon, lat]
+            }
+
+            // ===== INITIALIZE THE OPENLIME VIEWER =====
+
+            // Create a new OpenLIME viewer in the element with class 'openlime'
+            const lime = new OpenLIME.Viewer('.openlime');
+            // Allow camera to move beyond bounds (not restricted to content area)
+            lime.camera.bounded = false;
+
+            // ===== CREATE BASE MAP LAYER =====
+
+            // Calculate the size of the map based on maximum zoom level
+            // The map follows the Google Maps tiling scheme
+            const mapMaxlevel = 19;
+            const mapSize = Math.pow(2, mapMaxlevel + 8); // Calculate pixel dimensions at max zoom
+
+            // Create a base layer with a world map from ArcGIS Dark Gray Base
+            // Several other map sources are commented out and can be used instead
+            const layer = new OpenLIME.Layer({
+                layout: 'google',           // Use Google Maps tiling layout
+                type: 'image',              // This is an image layer
+                width: mapSize,             // Width in pixels at max zoom
+                height: mapSize,            // Height in pixels at max zoom
+                mipmapBias: 0.4,            // Bias for mipmap selection (affects detail level)
+                transform: { x: 0, y: 0, z: 1, a: 0 }, // Position and scale of the layer
+                //url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                //url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                //url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+                //url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
+                url: 'https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile//{z}/{y}/{x}'
+            });
+            // Add the base layer to the viewer with the name 'Base'
+            lime.addLayer('Base', layer);
+
+            // ===== CALCULATE SCALING AND POSITIONING PARAMETERS =====
+
+            // Calculate Earth's circumference in Web Mercator projection units
+            const EarthCirconference = degrees2meters(360, 0)[0];
+            // Calculate scaling factor between Earth size and pixel dimensions
+            const EarthScale = EarthCirconference / mapSize; // Earth circumference [m] / width [pixel]
+
+            // Get the center coordinates of the geospatial image from config
+            const geoimgCenter = config.temperature.center;
+            // Calculate scale factor between image width in meters and pixels
+            const geoimgScale = (config.temperature.lowerRight[0] - config.temperature.upperLeft[0]) / config.temperature.width;
+
+            // ===== CREATE COLORMAP FOR WIND DATA =====
+
+            // Create a colormap for wind speed visualization
+            // The colormap goes from blue (low) through green/yellow to red (high)
+            const cscaleLinearWind = new OpenLIME.Colormap([
+                new OpenLIME.Color('#3288bd'), // Dark blue
+                new OpenLIME.Color('#66c2a5'), // Teal
+                new OpenLIME.Color('#abdda4'), // Light green
+                new OpenLIME.Color('#e6f598'), // Yellow-green
+                new OpenLIME.Color('#fee08b'), // Light yellow
+                new OpenLIME.Color('#fdae61'), // Orange
+                new OpenLIME.Color('#f46d43'), // Light red
+                new OpenLIME.Color('#d53e4f'), // Dark red
+            ], {
+                domain: [0, 32],                // Min and max values for the colormap
+                description: config.wind.description  // Description from config
+            });
+
+            // ===== CREATE WIND VECTOR LAYER =====
+
+            // Create a layer for the wind vector data
+            // This will show wind direction and magnitude
+            const layerWind = new OpenLIME.Layer({
+                debug: true,                // Enable debug mode
+                layout: 'deepzoom',         // Use DeepZoom layout for this layer
+                type: 'image',              // This is an image layer
+                // Position and scale the layer to match the geographic coordinates
+                transform: {
+                    x: geoimgCenter[0] / EarthScale,   // X position 
+                    y: geoimgCenter[1] / EarthScale,   // Y position
+                    z: geoimgScale / EarthScale,       // Scale
+                    a: 0                               // Rotation (0 = no rotation)
+                },
+                url: '../../assets/moloch/moloch_2018050103_0011700_meter_wind.dzi', // DeepZoom file
+                overlay: true               // This is an overlay layer
+            });
+            // Add the wind layer to the viewer with the name 'Wind'
+            lime.addLayer('Wind', layerWind);
+
+            // ===== ADD VECTOR GLYPH SHADER =====
+
+            // Add a vector glyph shader to visualize wind vectors
+            // This shader will render arrows showing wind direction and speed
+            const filterVectorGlyph = new OpenLIME.ShaderFilterVectorGlyph(
+                cscaleLinearWind,                  // Use the wind colormap
+                '../../assets/icons/ArrowN.svg',   // Arrow SVG icon
+                {
+                    inDomain: config.wind.inDomain,   // Input value range
+                    glyphColor: [0.0, 0.4, 0.0, 1.0]  // Green color for glyphs
+                }
+            );
+            // Add the shader filter to the wind layer
+            layerWind.addShaderFilter(filterVectorGlyph);
+
+            // ===== CONFIGURE VECTOR GLYPH DISPLAY MODE =====
+
+            // Set display modes for the vector glyphs
+            // Available modes: ['arrowMagNone', 'arrowColNone', 'arrowColMag']
+            filterVectorGlyph.setMode('glyph', 'col');     // Color-coded glyphs
+            filterVectorGlyph.setMode('field', 'mag');     // Show magnitude field
+            filterVectorGlyph.setMode('normalize', 'off'); // Don't normalize vectors
+
+            // ===== CREATE COLORMAP LEGEND =====
+
+            // Add a legend for the wind colormap
+            const windLegend = new OpenLIME.ColormapLegend(
+                lime,                               // OpenLIME viewer
+                cscaleLinearWind,                   // Wind colormap
+                {
+                    class: 'openlime-legend',       // CSS class for styling
+                    textColor: '#222',              // Dark gray text color
+                    nticks: 8                       // Number of ticks on the legend
+                }
+            );
+
+            // ===== INITIALIZE UI COMPONENTS =====
+
+            // Load the skin (visual elements) for the UI
+            OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+            // Create the basic user interface
+            const ui = new OpenLIME.UIBasic(lime);
+
+            // Configure UI toolbar options
+            ui.actions.light.display = false;        // Hide light control
+            ui.actions.zoomin.display = true;        // Show zoom in button
+            ui.actions.zoomout.display = true;       // Show zoom out button
+            ui.actions.snapshot.display = true;      // Show snapshot button
+            ui.pixelSize = null;                     // Don't show pixel size
+            ui.actions.ruler.display = false;        // Hide ruler tool
+
+            // Set attribution text for the map data
+            ui.attribution = 'Tiles: ESRI &mdash; Data: NCEP NOAA, IISAC CNR Bologna, CRS4, UNICA';
+
+            // Set zoom wheel control message
+            ui.controlZoomMessage = "Use Ctrl + Wheel to zoom instead of scrolling";
         }
-        // EPSG:3857 (Web Mercatore) to EPSG:4326 (WGS84)
-        function meters2degress(x, y) {
-            const lon = x * 180 / 20037508.34;
-            const lat = Math.atan(Math.exp(y * Math.PI / 20037508.34)) * 360 / Math.PI - 90;
-            return [lon, lat]
-        }
-
-        // // Create an OpenLIME canvas into .openlime
-        const lime = new OpenLIME.Viewer('.openlime');
-        lime.camera.bounded = false;
-
-        // Create a base layer with a world map
-        // All geo-referenced images must be in the same coordinate system (EPSG:3857)
-        const mapMaxlevel = 19;
-        const mapSize = Math.pow(2, mapMaxlevel + 8);
-        const layer = new OpenLIME.Layer({
-            layout: 'google',
-            type: 'image',
-            width: mapSize,
-            height: mapSize,
-            mipmapBias: 0.4,
-            transform: { x: 0, y: 0, z: 1, a: 0 },
-            //url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-            //url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            //url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-            //url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
-            url: 'https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile//{z}/{y}/{x}'
-        });
-        lime.addLayer('Base', layer);
-
-        // Create a layer with a geo-referenced image properly positioned onto the base layer.
-        const EarthCirconference = degrees2meters(360, 0)[0];
-        const EarthScale = EarthCirconference / mapSize; // Earth circonference [m] / width [pixel]
-
-        const geoimgCenter = config.temperature.center;
-        const geoimgScale = (config.temperature.lowerRight[0] - config.temperature.upperLeft[0]) / config.temperature.width; // Width [m] / Width [pixel]
-
-        const cscaleLinearWind = new OpenLIME.Colormap([
-            new OpenLIME.Color('#3288bd'),
-            new OpenLIME.Color('#66c2a5'),
-            new OpenLIME.Color('#abdda4'),
-            new OpenLIME.Color('#e6f598'),
-            new OpenLIME.Color('#fee08b'),
-            new OpenLIME.Color('#fdae61'),
-            new OpenLIME.Color('#f46d43'),
-            new OpenLIME.Color('#d53e4f'),
-        ], {
-            domain: [0, 32],
-            description: config.wind.description
-        });
-
-        // Create layer with vector data: wind (u,v))
-        const layerWind = new OpenLIME.Layer({
-            debug: true,
-            layout: 'deepzoom',
-            type: 'image',
-            transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
-            url: '../../assets/moloch/moloch_2018050103_0011700_meter_wind.dzi',
-            overlay: true
-        });
-
-        lime.addLayer('Wind', layerWind);
-
-        // Add filter
-        const filterVectorGlyph = new OpenLIME.ShaderFilterVectorGlyph(cscaleLinearWind, '../../assets/icons/ArrowN.svg', {
-            inDomain: config.wind.inDomain,
-            glyphColor: [0.0, 0.4, 0.0, 1.0]
-        });
-        layerWind.addShaderFilter(filterVectorGlyph);
-
-        // mode: ['arrowMagNone', 'arrowColNone', 'arrowColMag'];
-        filterVectorGlyph.setMode('glyph', 'col');
-        filterVectorGlyph.setMode('field', 'mag');
-        filterVectorGlyph.setMode('normalize', 'off');
-
-        // // Colormap Legend
-        const windLegend = new OpenLIME.ColormapLegend(lime, cscaleLinearWind, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
-
-        // Fetch a skin (visual elements for the web page)
-        OpenLIME.Skin.setUrl('../../skin/skin.svg');
-
-        // Create an User Interface 
-        const ui = new OpenLIME.UIBasic(lime);
-        
-        // Remove light from the toolbar
-        ui.actions.light.display = false;
-
-        // Add zoomin and zoomout to the toolbar
-        ui.actions.zoomin.display = true;
-        ui.actions.zoomout.display = true;
-        ui.actions.snapshot.display = true;
-        ui.pixelSize = null;
-        ui.actions.ruler.display = false;
-        ui.attribution = 'Tiles: ESRI &mdash; Data: NCEP NOAA, IISAC CNR Bologna, CRS4, UNICA';
-        ui.controlZoomMessage = "Use Ctrl + Wheel to zoom instead of scrolling";
-
     </script>
 </body>
 
