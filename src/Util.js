@@ -22,9 +22,7 @@ class Util {
      * ```
      */
     static padZeros(num, size) {
-        num = num.toString();
-        while (num.length < size) num = "0" + num;
-        return num;
+        return num.toString().padStart(size, '0');
     }
 
     /**
@@ -34,15 +32,14 @@ class Util {
      * @private
      */
     static printSrcCode(str) {
-        let i = 1;
         let result = '';
-        for (let l of str.split(/\r\n|\r|\n/)) {
-            const nline = Util.padZeros(i, 5);
-            result += nline + '   ' + l + '\n';
-            i++;
-        }
+        str.split(/\r\n|\r|\n/).forEach((line, i) => {
+            const nline = Util.padZeros(i + 1, 5);
+            result += `${nline}   ${line}\n`;
+        });
         console.log(result);
     }
+    
 
     /**
      * Creates an SVG element with optional attributes
@@ -60,7 +57,7 @@ class Util {
      * ```
      */
     static createSVGElement(tag, attributes) {
-        let e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
         if (attributes)
             for (const [key, value] of Object.entries(attributes))
                 e.setAttribute(key, value);

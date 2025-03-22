@@ -197,7 +197,6 @@ class Shader {
 	 * @throws {Error} If shader compilation or linking fails
 	 */
 	createProgram(gl) {
-
 		let vert = gl.createShader(gl.VERTEX_SHADER);
 		gl.shaderSource(vert, this.vertShaderSrc(gl));
 
@@ -208,7 +207,8 @@ class Shader {
 			console.log(gl.getShaderInfoLog(vert));
 			throw Error("Failed vertex shader compilation: see console log and ask for support.");
 		} else if (this.debug) {
-			Util.printSrcCode(this.vertShaderSrc(gl))
+			console.log("here");
+			Util.printSrcCode(this.vertShaderSrc(gl));
 		}
 
 		let frag = gl.createShader(gl.FRAGMENT_SHADER);

@@ -17,57 +17,73 @@
 
     <script src="../../js/openlime.js"></script>
     <script>
-        const colorFactorDefault=1.0;
+        const colorFactorDefault = 1.0;
+
+        // Create a custom shader by extending the base Shader class
+        class GrayscaleShader extends OpenLIME.Shader {
+            /**
+             * The fragment shader implementation
+             * @param {WebGLRenderingContext} gl - WebGL context
+             * @returns {string} Fragment shader source code
+             */
+            fragShaderSrc(gl) {
+                let gl2 = !(gl instanceof WebGLRenderingContext);
+                let str = `
+                precision highp float;
+                precision highp int;
+
+                uniform sampler2D kd;
+                uniform float u_colorFactor;
+
+                ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
+
+                vec4 data() {
+                    vec4 s = texture${gl2 ? '' : '2D'}(kd, v_texcoord);
+                    vec3 lum = vec3(0.21, 0.71, 0.07); 
+                    float grey = dot(s.rgb, lum.rgb);
+                    return vec4(s.rgb * (1.0 - u_colorFactor) + (grey * u_colorFactor), 1.0);
+                }`;
+                return str;
+            }
+        }
 
         // LayerImage with custom shader
         class LayerCustom extends OpenLIME.LayerImage {
             constructor(options) {
+
                 super(options);
-                // Instatiates the shader
-                const shader = new OpenLIME.Shader({
-                    'label': 'Rgb',
-                    'samplers': [{ id: 0, name: 'kd' }]
+
+                // Instantiate the custom shader
+                const shader = new GrayscaleShader({
+                    'label': 'Grayscale',
+                    'samplers': [{ id: 0, name: 'kd' }],
+                    'uniforms': {
+                        u_colorFactor: {
+                            type: 'float',
+                            needsUpdate: true,
+                            size: 1,
+                            value: colorFactorDefault
+                        }
+                    },
+                    debug: true
                 });
-                // The fragment shader script. A float uniform for color factor control is defined.
-                shader.fragShaderSrc = function (gl) {
-                    let gl2 = !(gl instanceof WebGLRenderingContext);
-                    let str = `
-                    precision highp float;
-                    precision highp int;
 
-                    uniform sampler2D kd;
-                    uniform float u_colorFactor;
-
-                    ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
-
-                    vec4 data() {
-	                    vec4 s = texture${gl2 ? '' : '2D'}(kd, v_texcoord);
-                        vec3 lum = vec3(0.21, 0.71, 0.07); 
-                        float grey = dot(s.rgb, lum.rgb);
-                        return vec4(s.rgb * (1.0 - u_colorFactor) + (grey * u_colorFactor), 1.0);
-                    }`;
-                    return str;
-                }
-                // Declares the uniform to set the color factor.
-                shader.uniforms = {
-                    u_colorFactor: { type: 'float', needsUpdate: true, size: 1, value: colorFactorDefault },
-                };
-                // Adds the shader to the Layer and set it as the current one.
-                this.shaders['bw'] = shader;
-                this.setShader('bw');
+                // Add the shader to the Layer and set it as the current one.
+                this.shaders['grayscale'] = shader;
+                this.setShader('grayscale');
             }
-        };
+        }
 
         // Creates an OpenLIME canvas into .openlime
         const lime = new OpenLIME.Viewer('.openlime');
 
-        // Creates an image layer with a custom shader that displays the image as B&W. Adds it to the canvas.
-        const layerbw = new LayerCustom({
+        // Creates an image layer with a custom shader that displays the image with adjustable grayscale
+        const layerBW = new LayerCustom({
             label: 'Black and white',
             layout: 'image',
             url: '../../assets/lime/image/lime.jpg'
         });
-        lime.addLayer('BW', layerbw);
+        lime.addLayer('BW', layerBW);
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
@@ -89,9 +105,9 @@
             bwMenuEntry.list = [{
                 id: 'colorFactor',
                 slider: '',
-                value: colorFactorDefault*100,
+                value: colorFactorDefault * 100,
                 oninput: (e) => {
-                    layerbw.shader.setUniform('u_colorFactor', e.target.value/100);
+                    layerBW.shader.setUniform('u_colorFactor', e.target.value / 100);
                 }
             }];
         }

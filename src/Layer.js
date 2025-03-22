@@ -85,6 +85,7 @@ class Layer {
 	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader}.
 	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
 	* @param {Layer} options.sourceLayer The layer from which to take the tiles (in order to avoid tile duplication).
+	* @param {boolean} [options.debug=false] - Enable debug output
 	*/
 	constructor(options) {
 		//create from derived class if type specified
@@ -766,7 +767,7 @@ class Layer {
 		}
 
 		if (this.shader.needsUpdate) {
-			this.shader.debug = this.debug;
+			// this.shader.debug = this.debug;
 			this.shader.createProgram(gl);
 		}
 
