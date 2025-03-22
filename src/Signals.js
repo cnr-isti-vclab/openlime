@@ -76,8 +76,7 @@
  * ```
  */
 function addSignals(proto, ...signals) {
-	if (!proto.prototype.allSignals)
-			proto.prototype.allSignals = [];
+	proto.prototype.allSignals ??= [];
 	proto.prototype.allSignals = [...proto.prototype.allSignals, ...signals];
 
 	/**
@@ -93,7 +92,8 @@ function addSignals(proto, ...signals) {
 	 * @private
 	 */
 	proto.prototype.initSignals = function () {
-			this.signals = Object.fromEntries(this.allSignals.map(s => [s, []]));
+		// Use nullish coalescing for signal initialization
+		this.signals ??= Object.fromEntries(this.allSignals.map(s => [s, []]));
 	}
 
 	/**
@@ -113,9 +113,9 @@ function addSignals(proto, ...signals) {
 	 * ```
 	 */
 	proto.prototype.addEvent = function (event, callback) {
-			if (!this.signals)
-					this.initSignals();
-			this.signals[event].push(callback);
+		// Use optional chaining for safer access
+		this.signals?.hasOwnProperty(event) || this.initSignals();
+		this.signals[event].push(callback);
 	}
 
 	/**
@@ -137,19 +137,19 @@ function addSignals(proto, ...signals) {
 	 * ```
 	 */
 	proto.prototype.once = function (event, callback) {
-			if (!callback || typeof callback !== 'function') {
-					console.error('Callback must be a function');
-					return;
-			}
+		if (!callback || typeof callback !== 'function') {
+			console.error('Callback must be a function');
+			return;
+		}
 
-			const wrappedCallback = (...args) => {
-					// Remove the listener before calling the callback
-					// to prevent recursion if the callback emits the same event
-					this.removeEvent(event, wrappedCallback);
-					callback.apply(this, args);
-			};
+		const wrappedCallback = (...args) => {
+			// Remove the listener before calling the callback
+			// to prevent recursion if the callback emits the same event
+			this.removeEvent(event, wrappedCallback);
+			callback.apply(this, args);
+		};
 
-			this.addEvent(event, wrappedCallback);
+		this.addEvent(event, wrappedCallback);
 	}
 
 	/**
@@ -176,26 +176,26 @@ function addSignals(proto, ...signals) {
 	 * ```
 	 */
 	proto.prototype.removeEvent = function (event, callback) {
-			if (!this.signals) {
-					this.initSignals();
-					return false;
-			}
+		if (!this.signals) {
+			this.initSignals();
+			return false;
+		}
 
-			if (!this.signals[event]) {
-					return false;
-			}
+		if (!this.signals[event]) {
+			return false;
+		}
 
-			if (callback === undefined) {
-					// Remove all callbacks for this event
-					const hadCallbacks = this.signals[event].length > 0;
-					this.signals[event] = [];
-					return hadCallbacks;
-			}
+		if (callback === undefined) {
+			// Remove all callbacks for this event
+			const hadCallbacks = this.signals[event].length > 0;
+			this.signals[event] = [];
+			return hadCallbacks;
+		}
 
-			// Find and remove specific callback
-			const initialLength = this.signals[event].length;
-			this.signals[event] = this.signals[event].filter(cb => cb !== callback);
-			return initialLength > this.signals[event].length;
+		// Find and remove specific callback
+		const initialLength = this.signals[event].length;
+		this.signals[event] = this.signals[event].filter(cb => cb !== callback);
+		return initialLength > this.signals[event].length;
 	}
 
 	/**
@@ -215,13 +215,13 @@ function addSignals(proto, ...signals) {
 	 * ```
 	 */
 	proto.prototype.emit = function (event, ...parameters) {
-			if (!this.signals)
-					this.initSignals();
-			// Create a copy of the callbacks array to safely iterate even if
-			// callbacks modify the listeners
-			const callbacks = [...this.signals[event]];
-			for (let r of callbacks)
-					r(...parameters);
+		if (!this.signals)
+			this.initSignals();
+		// Create a copy of the callbacks array to safely iterate even if
+		// callbacks modify the listeners
+		const callbacks = [...this.signals[event]];
+		for (let r of callbacks)
+			r(...parameters);
 	}
 }
 

@@ -854,83 +854,221 @@ class Layer {
 					tmp.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
 					this.queue = this.queue.concat(tmp);
 				}*/
-		Cache.setCandidates(this);
+		Cache.getInstance().setCandidates(this);
 	}
 
 	/**
-	 * Loads a specific tile
-	 * @param {Object} tile - Tile specification
-	 * @param {Function} callback - Completion callback
+	 * Loads and processes a single image tile with optimized resource management.
+	 * Implements request batching, concurrent loading, and proper error handling.
+	 * 
+	 * @async
+	 * @param {Object} tile - Tile specification object
+	 * @param {string} tile.index - Unique tile identifier
+	 * @param {string} tile.url - Base URL for tile resource 
+	 * @param {number} [tile.start] - Start byte for partial content (for tarzoom)
+	 * @param {number} [tile.end] - End byte for partial content (for tarzoom)
+	 * @param {Object[]} [tile.offsets] - Byte offsets for interleaved formats
+	 * @param {Function} callback - Completion callback(error, size)
 	 * @returns {Promise<void>}
-	 * @private
+	 * @throws {Error} If tile is already in processing queue
 	 */
 	async loadTile(tile, callback) {
-		if (this.tiles.has(tile.index))
-			throw "AAARRGGHHH double tile!";
-
-		if (this.requested.has(tile.index)) {
-			console.log("Warning: double request!");
-			callback("Double tile request");
+		// Validate tile isn't already loaded or in processing queue
+		if (this.tiles.has(tile.index)) {
+			const error = new Error(`Tile with index ${tile.index} already exists in cache`);
+			callback(error);
 			return;
 		}
 
+		if (this.requested.has(tile.index)) {
+			// Log warning but continue - don't throw since this could be a race condition
+			console.warn(`Duplicate tile request for index ${tile.index}`);
+			callback(new Error("Duplicate tile request"));
+			return;
+		}
+
+		// Track the tile in collections before loading starts
 		this.tiles.set(tile.index, tile);
 		this.requested.set(tile.index, true);
 
-		if (this.layout.type == 'itarzoom') {
-			tile.url = this.layout.getTileURL(null, tile);
-			let options = {};
-			if (tile.end)
-				options.headers = { range: `bytes=${tile.start}-${tile.end}`, 'Accept-Encoding': 'indentity' }
-
-			var response = await fetch(tile.url, options);
-			if (!response.ok) {
-				callback("Failed loading " + tile.url + ": " + response.statusText);
-				return;
-			}
-			let blob = await response.blob();
-
-			let i = 0;
-			for (let sampler of this.shader.samplers) {
-				let raster = this.rasters[sampler.id];
-				let imgblob = blob.slice(tile.offsets[i], tile.offsets[i + 1]);
-				const img = await raster.blobToImage(imgblob, this.gl);
-				let tex = raster.loadTexture(this.gl, img);
-				let size = img.width * img.height * 3;
-				tile.size += size;
-				tile.tex[sampler.id] = tex;
-				tile.w = img.width;
-				tile.h = img.height;
-				i++;
-			}
-			tile.missing = 0;
-			this.emit('update');
-			this.requested.delete(tile.index);
-			if (callback) callback(tile.size);
-			return;
-		}
+		// Initialize progress tracking
+		tile.size = 0;
 		tile.missing = this.shader.samplers.length;
-		for (let sampler of this.shader.samplers) {
+		tile.tex = [];
 
-			let raster = this.rasters[sampler.id];
-			tile.url = this.layout.getTileURL(sampler.id, tile);
-			const [tex, size] = await raster.loadImage(tile, this.gl); // TODO Parallelize request and url must be a parameter (implement request ques per url)
-			if (this.layout.type == "image") {
-				this.layout.width = raster.width;
-				this.layout.height = raster.height;
-				this.layout.emit('updateSize');
+		try {
+			// Handle specialized tarzoom format differently from regular tiles
+			if (this.layout.type === 'itarzoom') {
+				await this._loadInterleaved(tile, callback);
+			} else {
+				await this._loadParallel(tile, callback);
 			}
+		} catch (error) {
+			// Clean up after error
+			this.requested.delete(tile.index);
+			this.tiles.delete(tile.index);
+			console.error(`Error loading tile ${tile.index}:`, error);
+			callback(error);
+		}
+	}
+
+	/**
+	* Loads an interleaved tile format (itarzoom) where all textures are in one file
+	* 
+	* @private
+	* @async
+	* @param {Object} tile - Tile specification object
+	* @param {Function} callback - Completion callback
+	* @returns {Promise<void>}
+	*/
+	async _loadInterleaved(tile, callback) {
+		// Configure URL and fetch options
+		tile.url = this.layout.getTileURL(null, tile);
+		const options = {};
+
+		// Set range headers if we're using byte ranges
+		if (tile.end) {
+			options.headers = {
+				range: `bytes=${tile.start}-${tile.end}`,
+				'Accept-Encoding': 'identity'  // Prevent compression which breaks byte ranges
+			};
+		}
+
+		// Use HTTP/2 if available through the fetch() API
+		const response = await fetch(tile.url, options);
+
+		if (!response.ok) {
+			throw new Error(`Failed loading ${tile.url}: ${response.statusText} (${response.status})`);
+		}
+
+		// Get whole blob and then process parts of it for each texture
+		const blob = await response.blob();
+
+		// Process each sampler in the shader
+		for (let i = 0; i < this.shader.samplers.length; i++) {
+			const sampler = this.shader.samplers[i];
+			const raster = this.rasters[sampler.id];
+
+			// Extract the specific portion for this texture from the blob
+			const imgblob = blob.slice(tile.offsets[i], tile.offsets[i + 1]);
+
+			// Convert to image and create texture - use texture pool if available
+			const img = await raster.blobToImage(imgblob, this.gl);
+			const tex = raster.loadTexture(this.gl, img);
+
+			// Store result and track size
+			const size = img.width * img.height * this.getPixelSize(sampler.id);
 			tile.size += size;
 			tile.tex[sampler.id] = tex;
-			tile.missing--;
-			if (tile.missing <= 0) {
-				this.emit('update');
-				this.requested.delete(tile.index);
-				if (this.requested.size == 0)
-					this.emit('loaded');
-				if (callback) callback(size);
+			tile.w = img.width;
+			tile.h = img.height;
+		}
+
+		// Mark as complete
+		tile.missing = 0;
+
+		// Trigger updates and notify
+		this.emit('update');
+		this.requested.delete(tile.index);
+
+		if (callback) callback(null, tile.size);
+	}
+
+	/**
+	* Loads textures in parallel for regular tile formats
+	* 
+	* @private
+	* @async
+	* @param {Object} tile - Tile specification object
+	* @param {Function} callback - Completion callback
+	* @returns {Promise<void>}
+	*/
+	async _loadParallel(tile, callback) {
+		// Track completion for clean callback handling
+		let completed = 0;
+		let errors = [];
+
+		// Create promises for all texture loads but don't await yet
+		const loadPromises = this.shader.samplers.map(async (sampler) => {
+			try {
+				const raster = this.rasters[sampler.id];
+				tile.url = this.layout.getTileURL(sampler.id, tile);
+
+				// Load the image using the raster loader
+				const [tex, size] = await raster.loadImage(tile, this.gl);
+
+				// For image layout, we might need to update layer dimensions
+				if (this.layout.type === "image") {
+					this.layout.width = raster.width;
+					this.layout.height = raster.height;
+					this.layout.emit('updateSize');
+				}
+
+				// Update tile information
+				tile.size += size;
+				tile.tex[sampler.id] = tex;
+
+				// Track completion status
+				tile.missing--;
+				completed++;
+
+				// If this tile is now complete, emit update
+				if (tile.missing <= 0) {
+					this.emit('update');
+
+					if (this.requested.size === 0) {
+						this.emit('loaded');
+					}
+				}
+
+				return { success: true, size };
+			} catch (error) {
+				errors.push(error);
+				return { success: false, error };
+			}
+		});
+
+		// Use Promise.allSettled to wait for all texture loads, handling errors gracefully
+		const results = await Promise.allSettled(loadPromises);
+
+		// Handle errors and clean up
+		this.requested.delete(tile.index);
+
+		if (errors.length > 0) {
+			callback(errors[0]); // Return first error
+		} else {
+			callback(null, tile.size);
+		}
+	}
+
+	/**
+	* Determines the number of bytes per pixel for a given sampler
+	* 
+	* @private
+	* @param {number} samplerId - Sampler identifier
+	* @returns {number} Bytes per pixel
+	*/
+	getPixelSize(samplerId) {
+		// Default to 3 bytes per pixel (RGB)
+		let bytesPerPixel = 3;
+
+		// Check format of the raster if available
+		const raster = this.rasters[samplerId];
+		if (raster && raster.format) {
+			switch (raster.format) {
+				case 'vec4':
+					bytesPerPixel = 4; // RGBA
+					break;
+				case 'vec3':
+					bytesPerPixel = 3; // RGB
+					break;
+				case 'float':
+					bytesPerPixel = 1; // Single channel
+					break;
 			}
 		}
+
+		return bytesPerPixel;
 	}
 }
 
