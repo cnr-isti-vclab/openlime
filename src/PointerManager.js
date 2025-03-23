@@ -707,7 +707,8 @@ class SinglePointerHandler {
 }
 
 /**
- * Circular buffer for event history.
+ * A fixed-size circular buffer for efficient event history management.
+ * Provides FIFO operations with automatic overwriting of oldest entries.
  * @private
  */
 class CircularBuffer {
@@ -717,100 +718,164 @@ class CircularBuffer {
      * @throws {TypeError} If capacity is not a positive integer
      */
     constructor(capacity) {
-        if (typeof capacity != "number" || !Number.isInteger(capacity) || capacity < 1)
+        if (typeof capacity !== "number" || !Number.isInteger(capacity) || capacity < 1) {
             throw new TypeError("Invalid capacity");
+        }
+
         this.buffer = new Array(capacity);
         this.capacity = capacity;
-        this.first = 0;
-        this.size = 0;
+        this.first = 0;    // Index of first element
+        this.size = 0;     // Current number of elements
     }
 
+    /**
+     * Removes all elements from the buffer.
+     */
     clear() {
         this.first = 0;
         this.size = 0;
     }
 
+    /**
+     * Checks if the buffer is empty.
+     * @returns {boolean} True if empty
+     */
     empty() {
-        return this.size == 0;
+        return this.size === 0;
     }
 
-    size() {
-        return this.size;
-    }
-
-    capacity() {
-        return this.capacity;
-    }
-
+    /**
+     * Gets the first (oldest) element.
+     * @returns {*} First element or null if empty
+     */
     first() {
-        let result = null;
-        if (this.size > 0) result = this.buffer[this.first];
-        return result;
+        return this.size > 0 ? this.buffer[this.first] : null;
     }
 
+    /**
+     * Gets the last (newest) element.
+     * @returns {*} Last element or null if empty
+     */
     last() {
-        let result = null;
-        if (this.size > 0) result = this.buffer[(this.first + this.size - 1) % this.capacity];
-        return result;
+        return this.size > 0 ? this.buffer[(this.first + this.size - 1) % this.capacity] : null;
     }
 
-    enqueue(v) {
-        this.first = (this.first > 0) ? this.first - 1 : this.first = this.capacity - 1;
-        this.buffer[this.first] = v;
-        if (this.size < this.capacity) this.size++;
-    }
+    /**
+     * Adds an element to the front, replacing the last if full.
+     * @param {*} value - Value to add
+     */
+    enqueue(value) {
+        this.first = (this.first > 0) ? this.first - 1 : this.capacity - 1;
+        this.buffer[this.first] = value;
 
-    push(v) {
-        if (this.size === this.capacity) {
-            this.buffer[this.first] = v;
-            this.first = (this.first + 1) % this.capacity;
-        } else {
-            this.buffer[(this.first + this.size) % this.capacity] = v;
+        if (this.size < this.capacity) {
             this.size++;
         }
     }
 
-    dequeue() {
-        if (this.size == 0) throw new RangeError("Dequeue on empty buffer");
-        const v = this.buffer[(this.first + this.size - 1) % this.capacity];
-        this.size--;
-        return v;
+    /**
+     * Adds an element to the end, replacing the first if full.
+     * @param {*} value - Value to add
+     */
+    push(value) {
+        const index = (this.first + this.size) % this.capacity;
+        this.buffer[index] = value;
+
+        if (this.size === this.capacity) {
+            // Buffer is full, advance first position
+            this.first = (this.first + 1) % this.capacity;
+        } else {
+            this.size++;
+        }
     }
 
+    /**
+     * Removes and returns the last element.
+     * @returns {*} Removed element
+     * @throws {RangeError} If buffer is empty
+     */
     pop() {
-        return this.dequeue();
-    }
+        if (this.size === 0) {
+            throw new RangeError("Dequeue on empty buffer");
+        }
 
-    shift() {
-        if (this.size == 0) throw new RangeError("Shift on empty buffer");
-        const v = this.buffer[this.first];
-        if (this.first == this.capacity - 1) this.first = 0; else this.first++;
+        const index = (this.first + this.size - 1) % this.capacity;
+        const value = this.buffer[index];
         this.size--;
-        return v;
+
+        return value;
     }
 
+    /**
+     * Removes and returns the first element.
+     * @returns {*} Removed element
+     * @throws {RangeError} If buffer is empty
+     */
+    shift() {
+        if (this.size === 0) {
+            throw new RangeError("Shift on empty buffer");
+        }
+
+        const value = this.buffer[this.first];
+        this.first = (this.first + 1) % this.capacity;
+        this.size--;
+
+        return value;
+    }
+
+    /**
+     * Gets elements by index or range.
+     * @param {number} start - Start index
+     * @param {number} [end] - End index (inclusive)
+     * @returns {*|Array} Single element or array of elements
+     * @throws {TypeError|RangeError} If indices are invalid
+     */
     get(start, end) {
-        if (this.size === 0 && start === 0 && (end === undefined || end === 0)) return [];
-        if (typeof start !== "number" || !Number.isInteger(start) || start < 0) throw new TypeError("Invalid start value");
-        if (start >= this.size) throw new RangeError("Start index past end of buffer: " + start);
+        // Special case for empty buffer with valid indices
+        if (this.size === 0 && start === 0 && (end === undefined || end === 0)) {
+            return [];
+        }
 
-        if (end === undefined) return this.buffer[(this.first + start) % this.capacity];
+        // Validate start index
+        if (typeof start !== "number" || !Number.isInteger(start) || start < 0) {
+            throw new TypeError("Invalid start value");
+        }
 
-        if (typeof end !== "number" || !Number.isInteger(end) || end < 0) throw new TypeError("Invalid end value");
-        if (end >= this.size) throw new RangeError("End index past end of buffer: " + end);
+        if (start >= this.size) {
+            throw new RangeError("Start index past end of buffer: " + start);
+        }
 
+        // Return single element if no end index
+        if (end === undefined) {
+            return this.buffer[(this.first + start) % this.capacity];
+        }
+
+        // Validate end index
+        if (typeof end !== "number" || !Number.isInteger(end) || end < 0) {
+            throw new TypeError("Invalid end value");
+        }
+
+        if (end >= this.size) {
+            throw new RangeError("End index past end of buffer: " + end);
+        }
+
+        // Return range of elements
         const result = [];
         for (let i = start; i <= end; i++) {
             result.push(this.buffer[(this.first + i) % this.capacity]);
         }
+
         return result;
     }
 
+    /**
+     * Converts the buffer to an array.
+     * @returns {Array} Array containing all elements in order
+     */
     toArray() {
-        if (this.size == 0) return [];
+        if (this.size === 0) return [];
         return this.get(0, this.size - 1);
     }
-
 }
 
 export { PointerManager }

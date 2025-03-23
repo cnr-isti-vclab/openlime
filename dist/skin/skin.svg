@@ -6,7 +6,7 @@
    height="422.05872"
    id="svg2"
    version="1.1"
-   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04, custom)"
+   inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
    sodipodi:docname="skin.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -28,13 +28,13 @@
      inkscape:cx="448.01843"
      inkscape:cy="125.95339"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g1196"
      showgrid="true"
-     inkscape:window-width="1920"
+     inkscape:window-width="1290"
      inkscape:window-height="1011"
-     inkscape:window-x="0"
+     inkscape:window-x="50"
      inkscape:window-y="32"
-     inkscape:window-maximized="1"
+     inkscape:window-maximized="0"
      inkscape:snap-grids="true"
      fit-margin-top="5"
      fit-margin-left="5"
@@ -46,7 +46,9 @@
      inkscape:snap-global="false"
      inkscape:measure-start="323.032,18.7135"
      inkscape:measure-end="319.372,14.7774"
-     inkscape:pagecheckerboard="0">
+     inkscape:pagecheckerboard="0"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1">
     <inkscape:grid
        type="xygrid"
        id="grid3829"
@@ -57,7 +59,8 @@
        spacingx="0.5"
        spacingy="0.5"
        originx="16.045948"
-       originy="-575.84746" />
+       originy="-575.84746"
+       units="px" />
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -94,8 +97,7 @@
          id="g3000-4">
         <g
            id="g49"
-           class="openlime-bulb"
-           style="fill:#808080;fill-opacity:1">
+           class="openlime-bulb">
           <path
              sodipodi:nodetypes="czccssszcssssssssc"
              transform="translate(0,952.36218)"

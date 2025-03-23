@@ -2,11 +2,13 @@
 	position: relative;
 	background-color: #000;
 	height: 100%;
-	touch-action: none; /* Remove default behavior of the user agent */
+	touch-action: none;
+	/* Remove default behavior of the user agent */
 }
 
-.openlime > canvas {
-	width: 100%; /* leave this at 100%, it's needed to align annotations correctly */
+.openlime>canvas {
+	width: 100%;
+	/* leave this at 100%, it's needed to align annotations correctly */
 	height: 100%;
 	overflow: hidden;
 	/* this is important, it would cause firefox flickering! */
@@ -29,13 +31,13 @@
 }
 
 .openlime-scale {
-	position:absolute;
-	bottom:25px;
-	left:0px;
-	width:200px;
-	height:40px;
-	padding:15px;
-	fill:white;
+	position: absolute;
+	bottom: 25px;
+	left: 0px;
+	width: 200px;
+	height: 40px;
+	padding: 15px;
+	fill: white;
 }
 
 .openlime-scale>text {
@@ -99,9 +101,10 @@
 	opacity: 0.0;
 }
 
-.openlime-dialog.hidden, .openlime-dialog-background.hidden {
-	visibility:hidden;
-	opacity:0.0;
+.openlime-dialog.hidden,
+.openlime-dialog-background.hidden {
+	visibility: hidden;
+	opacity: 0.0;
 }
 
 .openlime-dialog .openlime-close {
@@ -159,11 +162,11 @@
 	opacity: 70%;
 }
 
-.openlime-light .openlime-bulb {
+.openlime-light .openlime-bulb path[style] {
 	fill: #80808011 !important;
 }
 
-.openlime-light-active .openlime-light .openlime-bulb {
+.openlime-light-active .openlime-bulb path[style] {
 	fill: #ffcc00 !important;
 }
 
@@ -544,7 +547,7 @@ g.openlime-expand {
 }
 
 .openlime-lens-dashboard.closed .openlime-lens-dashboard-annoswitch-bar {
-  visibility: hidden !important;
+	visibility: hidden !important;
 }
 
 .openlime-lens-dashboard.closed {
@@ -584,27 +587,29 @@ g.openlime-expand {
 /* Ruler */
 
 .openlime-ruler {
-	width:100%;
-	height:100%;
+	width: 100%;
+	height: 100%;
 }
 
-.openlime-ruler path, .openlime-ruler line {
-	stroke:yellow;
-	stroke-width:2px;
-	vector-effect:non-scaling-stroke;
+.openlime-ruler path,
+.openlime-ruler line {
+	stroke: yellow;
+	stroke-width: 2px;
+	vector-effect: non-scaling-stroke;
 }
+
 .openlime-ruler text {
 	fill: yellow;
-} 
+}
 
 .openlime-overlaymsg {
-	background:white;
-	opacity:80%;
-	position:absolute;
-	top:0px;
-	width:100%;
-	height:100%;
-	display:flex;
+	background: white;
+	opacity: 80%;
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	display: flex;
 	align-items: center;
 	justify-content: center;
 
@@ -612,8 +617,19 @@ g.openlime-expand {
 }
 
 @keyframes fadeOut {
-	0% { opacity: 0.8; }
-	33% { opacity: 0.8; }
-	66% { opacity: 0; }
-	100% { opacity: 0; }
-  }
+	0% {
+		opacity: 0.8;
+	}
+
+	33% {
+		opacity: 0.8;
+	}
+
+	66% {
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
