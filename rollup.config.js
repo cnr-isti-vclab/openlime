@@ -3,12 +3,10 @@ import multi from '@rollup/plugin-multi-entry'
 
 function header() {
 	return {
-
 		renderChunk(code) {
 			return "//license \n" + code;
 		}
 	};
-
 }
 
 const core = [
@@ -49,7 +47,6 @@ const ui = [
 	'./src/ScaleBar.js',
 	'./src/Draggable.js',
 	'./src/LightSphereController.js'
-
 ];
 
 const lens = [
@@ -82,24 +79,36 @@ const annotation = [
 	'./src/EditorSvgAnnotation.js'
 ];
 
+const allModules = [...core, ...ui, ...rti, ...brdf, ...lens, ...annotation];
+
 export default [
 	{
 		input: {
-			include: [...core, ...ui, ...rti, ...brdf, ...lens, ...annotation],		
+			include: allModules,		
 		},
-		output: [{
-			format: 'umd',
-			name: 'OpenLIME',
-			file: 'dist/js/openlime.min.js',
-			plugins: [terser()],
-			globals: {}
-		},
-		{
-			format: 'umd',
-			name: 'OpenLIME',
-			file: 'dist/js/openlime.js',
-			globals: {}
-		}],
+		output: [
+			// Versione UMD minificata
+			{
+				format: 'umd',
+				name: 'OpenLIME',
+				file: 'dist/js/openlime.min.js',
+				plugins: [terser()],
+				globals: {}
+			},
+			// Versione UMD non minificata
+			{
+				format: 'umd',
+				name: 'OpenLIME',
+				file: 'dist/js/openlime.js',
+				globals: {}
+			},
+			// Nuova versione ESM
+			{
+				format: 'es',
+				file: 'dist/js/openlime.esm.js',
+				sourcemap: true
+			}
+		],
 		plugins: [multi()]
 	}
 ];

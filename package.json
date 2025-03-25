@@ -5,7 +5,14 @@
   "author": "",
   "license": "GPL-3.0",
   "private": false,
-  "main": "build/openlime.js",
+  "main": "dist/js/openlime.js",
+  "module": "dist/js/openlime.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/js/openlime.esm.js",
+      "require": "./dist/js/openlime.js"
+    }
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack-dev-server",
@@ -34,10 +41,11 @@
     "webpack-dev-server": "^4.7.4"
   },
   "files": [
-    "build/openlime.js",
+    "dist/css",
+    "dist/skin",
+    "dist/js",
     "LICENSE",
     "package.json",
-    "README.md",
-    "src"
+    "README.md"
   ]
 }
