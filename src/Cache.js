@@ -6,37 +6,70 @@
  * @class
  */
 class Cache {
-	/** @type {Cache} Private static instance for singleton pattern */
+	/**
+	 * Private static instance for singleton pattern
+	 * @type {Cache}
+	 */
 	static #instance;
-	
-	/** @type {Array} Private array of layers being managed */
+
+	/**
+	 * List of layers being managed
+	 * @type {Array}
+	 */
 	#layers = [];
-	
-	/** @type {number} Total cache capacity in bytes */
+
+	/**
+	 * Total cache capacity in bytes
+	 * @type {number}
+	 */
 	#capacity;
-	
-	/** @type {number} Current amount of GPU RAM used */
+
+	/**
+	 * Current amount of GPU RAM used
+	 * @type {number}
+	 */
 	#size = 0;
-	
-	/** @type {number} Current number of active HTTP requests */
+
+	/**
+	 * Current number of active HTTP requests
+	 * @type {number}
+	 */
 	#requested = 0;
-	
-	/** @type {number} Maximum concurrent HTTP requests */
+
+	/**
+	 * Maximum concurrent HTTP requests
+	 * @type {number}
+	 */
 	#maxRequest;
-	
-	/** @type {number} Maximum requests per second (0 for unlimited) */
+
+	/**
+	 * Maximum requests per second (0 for unlimited)
+	 * @type {number}
+	 */
 	#maxRequestsRate;
-	
-	/** @type {number|null} Timeout for rate limiting */
+
+	/**
+	 * Timeout for rate limiting
+	 * @type {number|null}
+	 */
 	#requestRateTimeout = null;
-	
-	/** @type {number} Timestamp of last request for rate limiting */
+
+	/**
+	 * Timestamp of last request for rate limiting
+	 * @type {number}
+	 */
 	#lastRequestTimestamp;
-	
-	/** @type {number} Maximum size of prefetched tiles in bytes */
+
+	/**
+	 * Maximum size of prefetched tiles in bytes
+	 * @type {number}
+	 */
 	#maxPrefetch;
-	
-	/** @type {number} Current amount of prefetched GPU RAM */
+
+	/**
+	 * Current amount of prefetched GPU RAM
+	 * @type {number}
+	 */
 	#prefetched = 0;
 
 	/**
@@ -49,33 +82,28 @@ class Cache {
 	 * @returns {Cache} The singleton Cache instance
 	 */
 	constructor(options = {}) {
-			// Return existing instance if available (singleton pattern)
-			if (Cache.#instance) {
-					return Cache.#instance;
-			}
-			
-			// Default configuration values
-			const defaults = {
-					capacity: 512 * (1 << 20),   // 512 MB total capacity
-					maxRequest: 6,               // Max concurrent HTTP requests
-					maxRequestsRate: 0,          // Max requests per second (0 = no limit)
-					maxPrefetch: 8 * (1 << 20),  // 8 MB max prefetch size
-			};
-			
-			// Apply options over defaults
-			const config = {...defaults, ...options};
-			
-			// Initialize properties
-			this.#capacity = config.capacity;
-			this.#maxRequest = config.maxRequest;
-			this.#maxRequestsRate = config.maxRequestsRate;
-			this.#maxPrefetch = config.maxPrefetch;
-			this.#lastRequestTimestamp = performance.now();
-			
-			// Store instance reference
-			Cache.#instance = this;
+		if (Cache.#instance) {
+			return Cache.#instance;
+		}
+
+		const defaults = {
+			capacity: 512 * (1 << 20),
+			maxRequest: 6,
+			maxRequestsRate: 0,
+			maxPrefetch: 8 * (1 << 20),
+		};
+
+		const config = { ...defaults, ...options };
+
+		this.#capacity = config.capacity;
+		this.#maxRequest = config.maxRequest;
+		this.#maxRequestsRate = config.maxRequestsRate;
+		this.#maxPrefetch = config.maxPrefetch;
+		this.#lastRequestTimestamp = performance.now();
+
+		Cache.#instance = this;
 	}
-	
+
 	/**
 	 * Gets the singleton instance with optional configuration update.
 	 * @param {Object} [options] - Configuration options to update
@@ -83,231 +111,200 @@ class Cache {
 	 * @static
 	 */
 	static getInstance(options) {
-			if (!Cache.#instance) {
-					new Cache(options);
-			} else if (options) {
-					// Update existing instance configuration if needed
-					const instance = Cache.#instance;
-					if (options.capacity !== undefined) instance.#capacity = options.capacity;
-					if (options.maxRequest !== undefined) instance.#maxRequest = options.maxRequest;
-					if (options.maxRequestsRate !== undefined) instance.#maxRequestsRate = options.maxRequestsRate;
-					if (options.maxPrefetch !== undefined) instance.#maxPrefetch = options.maxPrefetch;
-			}
-			return Cache.#instance;
+		if (!Cache.#instance) {
+			new Cache(options);
+		} else if (options) {
+			const instance = Cache.#instance;
+			if (options.capacity !== undefined) instance.#capacity = options.capacity;
+			if (options.maxRequest !== undefined) instance.#maxRequest = options.maxRequest;
+			if (options.maxRequestsRate !== undefined) instance.#maxRequestsRate = options.maxRequestsRate;
+			if (options.maxPrefetch !== undefined) instance.#maxPrefetch = options.maxPrefetch;
+		}
+		return Cache.#instance;
 	}
-	
+
 	/**
 	 * Registers a layer's tiles as candidates for downloading and initiates the update process.
 	 * @param {Layer} layer - The layer whose tiles should be considered for caching
-	 * @public
 	 */
 	setCandidates(layer) {
-			if (!this.#layers.includes(layer)) {
-					this.#layers.push(layer);
-			}
-			// Use Promise for consistent microtask scheduling
-			Promise.resolve().then(() => this.update());
+		if (!this.#layers.includes(layer)) {
+			this.#layers.push(layer);
+		}
+		Promise.resolve().then(() => this.update());
 	}
-	
+
 	/**
 	 * Checks if the cache is currently rate limited based on request count and timing.
 	 * @returns {boolean} True if rate limited, false otherwise
-	 * @private
 	 */
 	#isRateLimited() {
-			// Check if we've hit the concurrent request limit
-			if (this.#requested >= this.#maxRequest) {
-					return true;
-			}
-			
-			// If no rate limiting is configured, allow requests
-			if (this.#maxRequestsRate === 0) {
-					return false;
-			}
-			
-			// Calculate time since last request
-			const now = performance.now();
-			const period = 1000 / this.#maxRequestsRate;
-			const timeSinceLastRequest = now - this.#lastRequestTimestamp;
-			
-			// Allow request if enough time has passed
-			if (timeSinceLastRequest > period) {
-					return false;
-			}
-			
-			// Set up timeout to check again later if not already scheduled
-			if (!this.#requestRateTimeout) {
-					this.#requestRateTimeout = setTimeout(() => {
-							this.#requestRateTimeout = null;
-							this.update();
-					}, period - timeSinceLastRequest + 10);
-			}
-			
+		if (this.#requested >= this.#maxRequest) {
 			return true;
+		}
+
+		if (this.#maxRequestsRate === 0) {
+			return false;
+		}
+
+		const now = performance.now();
+		const period = 1000 / this.#maxRequestsRate;
+		const timeSinceLastRequest = now - this.#lastRequestTimestamp;
+
+		if (timeSinceLastRequest > period) {
+			return false;
+		}
+
+		if (!this.#requestRateTimeout) {
+			this.#requestRateTimeout = setTimeout(() => {
+				this.#requestRateTimeout = null;
+				this.update();
+			}, period - timeSinceLastRequest + 10);
+		}
+
+		return true;
 	}
-	
+
 	/**
 	 * Updates the cache state by processing the download queue while respecting capacity and rate limits.
-	 * @private
 	 */
 	update() {
-			// Check rate limiting first
-			if (this.#isRateLimited()) {
-					return;
+		if (this.#isRateLimited()) {
+			return;
+		}
+
+		const best = this.#findBestCandidate();
+		if (!best) {
+			return;
+		}
+
+		while (this.#size > this.#capacity) {
+			const worst = this.#findWorstTile();
+			if (!worst) {
+				console.warn("Cache management issue: No tiles available for removal");
+				break;
 			}
-			
-			// Find best candidate to download
-			const best = this.#findBestCandidate();
-			if (!best) {
-					return;
+
+			if (worst.tile.time < best.tile.time) {
+				this.#dropTile(worst.layer, worst.tile);
+			} else {
+				return;
 			}
-			
-			// Make room in cache if needed
-			while (this.#size > this.#capacity) {
-					const worst = this.#findWorstTile();
-					if (!worst) {
-							console.warn("Cache management issue: No tiles available for removal");
-							break;
-					}
-					
-					// Don't remove if the worst tile is newer than what we want to add
-					if (worst.tile.time < best.tile.time) {
-							this.#dropTile(worst.layer, worst.tile);
-					} else {
-							return; // No room for new tile without removing newer content
-					}
-			}
-			
-			// Remove the candidate from queue and load it
-			best.layer.queue.shift();
-			this.#lastRequestTimestamp = performance.now();
-			this.#loadTile(best.layer, best.tile);
+		}
+
+		best.layer.queue.shift();
+		this.#lastRequestTimestamp = performance.now();
+		this.#loadTile(best.layer, best.tile);
 	}
-	
+
 	/**
 	 * Identifies the highest priority tile that should be downloaded next.
 	 * @returns {Object|null} Object containing the best candidate layer and tile, or null if none found
-	 * @private
 	 */
 	#findBestCandidate() {
-			let best = null;
-			
-			for (const layer of this.#layers) {
-					// Remove already loaded tiles from queue
-					while (layer.queue.length > 0 && layer.tiles.has(layer.queue[0].index)) {
-							layer.queue.shift();
-					}
-					
-					if (!layer.queue.length) {
-							continue;
-					}
-					
-					const tile = layer.queue[0];
-					
-					// Prefer newer or higher priority tiles
-					if (!best || 
-							tile.time > best.tile.time + 1.0 ||  
-							tile.priority > best.tile.priority) {
-							best = { layer, tile };
-					}
+		let best = null;
+
+		for (const layer of this.#layers) {
+			while (layer.queue.length > 0 && layer.tiles.has(layer.queue[0].index)) {
+				layer.queue.shift();
 			}
-			
-			return best;
+
+			if (!layer.queue.length) {
+				continue;
+			}
+
+			const tile = layer.queue[0];
+
+			if (!best || tile.time > best.tile.time + 1.0 || tile.priority > best.tile.priority) {
+				best = { layer, tile };
+			}
+		}
+
+		return best;
 	}
-	
+
 	/**
 	 * Identifies the lowest priority tile that should be removed from cache if space is needed.
 	 * @returns {Object|null} Object containing the worst candidate layer and tile, or null if none found
-	 * @private
 	 */
 	#findWorstTile() {
-			let worst = null;
-			
-			for (const layer of this.#layers) {
-					for (const tile of layer.tiles.values()) {
-							// Skip incomplete tiles
-							if (tile.missing !== 0) {
-									continue;
-							}
-							
-							// Prefer older or lower priority tiles for removal
-							if (!worst ||
-									tile.time < worst.tile.time ||
-									(tile.time === worst.tile.time && tile.priority < worst.tile.priority)) {
-									worst = { layer, tile };
-							}
-					}
+		let worst = null;
+
+		for (const layer of this.#layers) {
+			for (const tile of layer.tiles.values()) {
+				if (tile.missing !== 0) {
+					continue;
+				}
+
+				if (!worst || tile.time < worst.tile.time || (tile.time === worst.tile.time && tile.priority < worst.tile.priority)) {
+					worst = { layer, tile };
+				}
 			}
-			
-			return worst;
+		}
+
+		return worst;
 	}
-	
+
 	/**
 	 * Initiates the loading of a tile for a specific layer.
 	 * @param {Layer} layer - The layer the tile belongs to
 	 * @param {Object} tile - The tile to be loaded
-	 * @private
 	 */
 	#loadTile(layer, tile) {
-			this.#requested++;
-			
-			// Use async/await for better readability
-			(async () => {
-					try {
-							await layer.loadTile(tile, (size) => { 
-									this.#size += size; 
-									this.#requested--; 
-									this.update(); 
-							});
-					} catch (error) {
-							console.error("Error loading tile:", error);
-							this.#requested--;
-							this.update();
-					}
-			})();
+		this.#requested++;
+
+		(async () => {
+			try {
+				await layer.loadTile(tile, (size) => {
+					this.#size += size;
+					this.#requested--;
+					this.update();
+				});
+			} catch (error) {
+				console.error("Error loading tile:", error);
+				this.#requested--;
+				this.update();
+			}
+		})();
 	}
-	
+
 	/**
 	 * Removes a tile from the cache and updates the cache size.
 	 * @param {Layer} layer - The layer the tile belongs to
 	 * @param {Object} tile - The tile to be removed
-	 * @private
 	 */
 	#dropTile(layer, tile) {
-			this.#size -= tile.size;
-			layer.dropTile(tile);
+		this.#size -= tile.size;
+		layer.dropTile(tile);
 	}
-	
+
 	/**
 	 * Removes all tiles associated with a specific layer from the cache.
 	 * @param {Layer} layer - The layer whose tiles should be flushed
-	 * @public
 	 */
 	flushLayer(layer) {
-			if (!this.#layers.includes(layer)) {
-					return;
-			}
-			
-			for (const tile of layer.tiles.values()) {
-					this.#dropTile(layer, tile);
-			}
+		if (!this.#layers.includes(layer)) {
+			return;
+		}
+
+		for (const tile of layer.tiles.values()) {
+			this.#dropTile(layer, tile);
+		}
 	}
-	
+
 	/**
 	 * Gets current cache statistics.
 	 * @returns {Object} Current cache statistics
-	 * @public
 	 */
 	getStats() {
-			return {
-					capacity: this.#capacity,
-					used: this.#size,
-					usedPercentage: (this.#size / this.#capacity) * 100,
-					activeRequests: this.#requested,
-					layers: this.#layers.length
-			};
+		return {
+			capacity: this.#capacity,
+			used: this.#size,
+			usedPercentage: (this.#size / this.#capacity) * 100,
+			activeRequests: this.#requested,
+			layers: this.#layers.length
+		};
 	}
 }
 
-// Export the class
 export { Cache };

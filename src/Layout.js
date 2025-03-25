@@ -3,8 +3,6 @@ import { addSignals } from "./Signals";
 import { Tile } from "./Tile";
 import { CoordinateSystem } from "./CoordinateSystem";
 
-// Tile level x y  index ----- tex missing() start/end (tarzoom) ----- time, priority size(byte)
-
 /**
  * @typedef {Object} TileObj
  * @property {number} level - Zoom level in the image pyramid
@@ -42,6 +40,16 @@ import { CoordinateSystem } from "./CoordinateSystem";
  */
 
 /**
+ * @event Layout#ready
+ * @description FIXME Fired when a layout is ready to be drawn (the single-resolution image is downloaded or the multi-resolution structure has been initialized)
+ */
+
+/**
+ * @event Layout#updateSize
+ * @description Fired when layout dimensions change
+ */
+
+/**
  * Layout manages image formats and tiling schemes in OpenLIME.
  * 
  * This class is responsible for:
@@ -63,8 +71,8 @@ import { CoordinateSystem } from "./CoordinateSystem";
  * - IIIF: Standard server interface
  * - TarZoom: OpenLIME's optimized format
  * 
- * @fires Layout#ready - When layout is initialized and ready for use
- * @fires Layout#updateSize - When layout dimensions change
+ * @fires Layout#ready
+ * @fires Layout#updateSize
  * 
  * @example
  * ```javascript
@@ -90,8 +98,6 @@ class Layout {
 	 * @throws {Error} If layout type is unknown or module not loaded
 	 */
 	constructor(url, type, options) {
-
-
 		if (type == 'image') {
 			this.setDefaults(type);
 			this.init(url, type, options);
@@ -153,10 +159,6 @@ class Layout {
 	 * @private
 	 */
 	setUrls(urls) {
-		/**
-		* The event is fired when a layout is ready to be drawn(the single-resolution image is downloaded or the multi-resolution structure has been initialized).
-		* @event Layout#ready
-		*/
 		this.urls = urls;
 		this.getTileURL = (rasterid, tile) => { return this.urls[rasterid]; }
 		this.status = 'ready';
@@ -196,7 +198,7 @@ class Layout {
 
 	/**
 	 * Calculates tile coordinates
-	 * @param Obj} tile - Tile to calculate coordinates for
+	 * @param {TileObj} tile - Tile to calculate coordinates for
 	 * @returns {{coords: Float32Array, tcoords: Float32Array}} Image and texture coordinates
 	 */
 	tileCoords(tile) {
@@ -226,11 +228,11 @@ class Layout {
 	/**
 	 * Determines required tiles for rendering
 	 * @param {Object} viewport - Current viewport
-	 * @param {Transform} transform - Current transform
-	 * @param {Transform} layerTransform - Layer transform
+	 * @param {Object} transform - Current transform
+	 * @param {Object} layerTransform - Layer transform
 	 * @param {number} border - Border size
 	 * @param {number} bias - Mipmap bias
-	 * @param {Map} tiles - Existing tiles
+	 * @param {Map<number, TileObj>} tiles - Existing tiles
 	 * @param {number} [maxtiles=8] - Maximum tiles to return
 	 * @returns {TileObj[]} Array of needed tiles
 	 */
@@ -248,12 +250,12 @@ class Layout {
 	/**
 	 * Gets tiles available for rendering
 	 * @param {Object} viewport - Current viewport
-	 * @param {Transform} transform - Current transform
-	 * @param {Transform} layerTransform - Layer transform
+	 * @param {Object} transform - Current transform
+	 * @param {Object} layerTransform - Layer transform
 	 * @param {number} border - Border size
 	 * @param {number} bias - Mipmap bias
-	 * @param {Map} tiles - Existing tiles
-	 * @returns {Object.<number, Tile>} Map of available tiles
+	 * @param {Map<number, TileObj>} tiles - Existing tiles
+	 * @returns {Object.<number, TileObj>} Map of available tiles
 	 */
 	available(viewport, transform, layerTransform, border, bias, tiles) {
 		//FIXME should check if image is withing the viewport (+ border)
@@ -267,8 +269,8 @@ class Layout {
 	/**
 	 * Calculates viewport bounding box
 	 * @param {Object} viewport - Viewport parameters
-	 * @param {Transform} transform - Current transform
-	 * @param {Transform} layerT - Layer transform
+	 * @param {Object} transform - Current transform
+	 * @param {Object} layerT - Layer transform
 	 * @returns {BoundingBox} Viewport bounds in image space
 	 */
 	getViewportBox(viewport, transform, layerT) {
@@ -277,7 +279,12 @@ class Layout {
 	}
 }
 
+/**
+ * Collection of layout type factories
+ * @type {Object}
+ */
 Layout.prototype.types = {}
+
 
 addSignals(Layout, 'ready', 'updateSize');
 

@@ -934,7 +934,7 @@ class UIDialog { //FIXME standalone class
  * 
  * Dialog Close Event:
  * @event UIDialog#closed
- * Emitted when dialog is closed through any means
+ * @description Emitted when dialog is closed through any means
  */
 
 addSignals(UIDialog, 'closed');

@@ -337,7 +337,7 @@ class LayoutTileImages extends Layout {
 }
 /**
  * @event Layout#ready
- * Fired when the layout is ready for rendering.
+ * @description Fired when the layout is ready for rendering.
  * This occurs when:
  * - Tile descriptors are loaded from annotation file
  * - Tile descriptors are set programmatically
@@ -345,7 +345,7 @@ class LayoutTileImages extends Layout {
 
 /**
  * @event Layout#updateSize
- * Fired when the layout size changes and scene extension needs updating.
+ * @description Fired when the layout size changes and scene extension needs updating.
  * This occurs when:
  * - Tile descriptors are loaded and bounding box is computed
  */

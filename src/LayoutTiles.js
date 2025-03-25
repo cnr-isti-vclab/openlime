@@ -716,7 +716,7 @@ class LayoutTiles extends Layout {
 
 /**
  * @event Layout#ready
- * Fired when the layout is ready for rendering.
+ * @description Fired when the layout is ready for rendering.
  * This occurs when:
  * - Single-resolution image is fully downloaded
  * - Multi-resolution structure is initialized and validated
@@ -725,7 +725,7 @@ class LayoutTiles extends Layout {
 
 /**
  * @event Layout#updateSize
- * Fired when the layout size changes and scene extension needs updating.
+ * @description Fired when the layout size changes and scene extension needs updating.
  * This occurs when:
  * - Image dimensions are determined
  * - Pyramid levels are initialized

@@ -24,17 +24,14 @@
     "copy-webpack-plugin": "^10.2.4",
     "html-webpack-plugin": "^5.5.0",
     "jsdoc": "^4.0.4",
+    "moment": "^2.30.1",
     "rollup": "^2.52.3",
     "rollup-plugin-terser": "^7.0.2",
+    "sanitize-html": "^2.15.0",
+    "taffydb": "^2.7.3",
     "webpack": "^5.70.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.4"
-  },
-  "dependencies": {
-    "@tensorflow/tfjs": "^4.2.0",
-    "moment": "^2.30.1",
-    "sanitize-html": "^2.13.1",
-    "taffydb": "^2.7.3"
   },
   "files": [
     "build/openlime.js",
