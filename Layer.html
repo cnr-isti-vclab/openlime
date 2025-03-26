@@ -56,7 +56,7 @@
 			<li class="dropdown">
 				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#pad">pad</a></li><li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li><li><a href="global.html#url">url</a></li>
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#pad">pad</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li><li><a href="global.html#url">url</a></li>
 				</ul>
 			</li>
 			
@@ -876,378 +876,6 @@ layer.addEvent(&#x27;ready&#x27;, () =&gt; {
         <h3 class="subsection-title">Methods</h3>
 
         <dl>
-            
-<hr>
-<dt>
-    <h4 class="name" id=".computeLayersBBox"><span class="type-signature">&lt;static> </span>computeLayersBBox(layers, discardHidden)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Computes combined bounding box of multiple layers</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>layers</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object.&lt;string, <a href="Layer.html">Layer</a>></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Map of layers</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>discardHidden</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Whether to ignore hidden layers</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Layer.js.html">Layer.js</a>,
-				 <a href="Layer.js.html#sunlight-1-line-402">line 402</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>Combined bounding box</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="BoundingBox.html">BoundingBox</a></span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id=".computeLayersMinScale"><span class="type-signature">&lt;static> </span>computeLayersMinScale(layers, discardHidden)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Computes minimum scale across layers</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>layers</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object.&lt;string, <a href="Layer.html">Layer</a>></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Map of layers</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>discardHidden</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Whether to ignore hidden layers</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Layer.js.html">Layer.js</a>,
-				 <a href="Layer.js.html#sunlight-1-line-344">line 344</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>Minimum scale value</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">number</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
             
 <hr>
 <dt>
@@ -4849,6 +4477,378 @@ Implements request batching, concurrent loading, and proper error handling.</p>
     
 </dd>
 
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id=".computeLayersBBox"><span class="type-signature">&lt;static> </span>computeLayersBBox(layers, discardHidden)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Computes combined bounding box of multiple layers</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>layers</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object.&lt;string, <a href="Layer.html">Layer</a>></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Map of layers</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>discardHidden</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Whether to ignore hidden layers</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Layer.js.html">Layer.js</a>,
+				 <a href="Layer.js.html#sunlight-1-line-402">line 402</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Combined bounding box</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="BoundingBox.html">BoundingBox</a></span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id=".computeLayersMinScale"><span class="type-signature">&lt;static> </span>computeLayersMinScale(layers, discardHidden)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Computes minimum scale across layers</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>layers</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object.&lt;string, <a href="Layer.html">Layer</a>></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Map of layers</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>discardHidden</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Whether to ignore hidden layers</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Layer.js.html">Layer.js</a>,
+				 <a href="Layer.js.html#sunlight-1-line-344">line 344</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Minimum scale value</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
         </dl>
     
 
@@ -5079,9 +5079,9 @@ Implements request batching, concurrent loading, and proper error handling.</p>
 
 
 <span class="jsdoc-message">
-	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
 	
-		on 2025-03-26T07:19:18+00:00
+		on 2025-03-26T10:07:28+00:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
