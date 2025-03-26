@@ -1,32 +1,66 @@
 {
   "name": "openlime",
   "version": "1.0.1",
-  "description": "Layered Image Explorer",
-  "author": "",
+  "description": "Open Layered IMage Explorer",
   "license": "GPL-3.0",
   "private": false,
-  "main": "dist/js/openlime.js",
+  "main": "dist/js/openlime.cjs.js",
   "module": "dist/js/openlime.esm.js",
+  "unpkg": "dist/js/openlime.umd.js",
+  "jsdelivr": "dist/js/openlime.umd.js",
   "exports": {
     ".": {
       "import": "./dist/js/openlime.esm.js",
-      "require": "./dist/js/openlime.js"
+      "require": "./dist/js/openlime.cjs.js",
+      "default": "./dist/js/openlime.umd.js"
     }
   },
+  "authors": [
+    {
+      "name": "Visual Computing Lab, ISTI-CNR",
+      "url": "https://vcg.isti.cnr.it/"
+    },
+    {
+      "name": "CRS4 Visual and Data-intensive Computing Group",
+      "url": "https://www.crs4.it/research/vdic/"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cnr-isti-vclab/openlime.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cnr-isti-vclab/openlime/issues"
+  },
+  "homepage": "https://cnr-isti-vclab.github.io/openlime/",
+  "keywords": [
+    "viewer",
+    "image",
+    "multiresolution",
+    "rti",
+    "brdf",
+    "lens",
+    "3d",
+    "webgl",
+    "canvas",
+    "visualization",
+    "cultural-heritage",
+    "cultural",
+    "heritage",
+    "webapp",
+    "web-app"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack-dev-server",
     "build": "webpack -c webpack.config.js --mode development",
     "rollup": "rollup -c rollup.config.js --extend",
     "nodemon": "nodemon --watch ./src --exec npm run rollup",
-    "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md"
+    "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md",
+    "update-readme": "node utils/update-readme.js",
+    "prepublishOnly": "npm run update-readme && npm run rollup && npm run doc"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cnr-isti-vclab/openlime"
-  },
-  "keywords": [],
   "devDependencies": {
+    "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-multi-entry": "^4.1.0",
     "copy-webpack-plugin": "^10.2.4",
     "html-webpack-plugin": "^5.5.0",

@@ -1,17 +1,29 @@
-import { terser } from "rollup-plugin-terser"
-import multi from '@rollup/plugin-multi-entry'
+const { terser } = require("rollup-plugin-terser");
+const multi = require("@rollup/plugin-multi-entry");
+const json = require("@rollup/plugin-json");
+const pkg = require("./package.json");
 
 function header() {
+	const banner = [
+    '// ##########################################',
+    '// OpenLIME - Open Layered IMage Explorer',
+    '// Author: CNR ISTI - Visual Computing Lab',
+		'// Author: CRS4 Visual and Data-intensive Computing Group',
+    `// ${pkg.name} v${pkg.version} - ${pkg.license} License`,
+    `// Documentation: ${pkg.homepage}`,
+		`// Repository: ${pkg.repository.url}`,
+    '// ##########################################'
+  ].join('\n');
 	return {
 		renderChunk(code) {
-			return "//license \n" + code;
+			return banner + "\n" + code;
 		}
 	};
 }
 
 const core = [
 	'./src/Util.js',
-	'./src/Canvas.js', 
+	'./src/Canvas.js',
 	'./src/Camera.js',
 	'./src/Transform.js',
 	'./src/Colormap.js',
@@ -81,34 +93,37 @@ const annotation = [
 
 const allModules = [...core, ...ui, ...rti, ...brdf, ...lens, ...annotation];
 
-export default [
+module.exports = [
 	{
 		input: {
-			include: allModules,		
+			include: allModules,
 		},
 		output: [
-			// Versione UMD minificata
 			{
 				format: 'umd',
 				name: 'OpenLIME',
 				file: 'dist/js/openlime.min.js',
-				plugins: [terser()],
+				plugins: [terser(), header()],
 				globals: {}
 			},
-			// Versione UMD non minificata
 			{
 				format: 'umd',
 				name: 'OpenLIME',
 				file: 'dist/js/openlime.js',
+				plugins: [header()],
 				globals: {}
 			},
-			// Nuova versione ESM
 			{
 				format: 'es',
 				file: 'dist/js/openlime.esm.js',
-				sourcemap: true
+				plugins: [header()]
+			},
+			{
+				format: 'cjs',
+				file: 'dist/js/openlime.cjs.js',
+				plugins: [header()]
 			}
 		],
-		plugins: [multi()]
+		plugins: [multi(), json()]
 	}
 ];
