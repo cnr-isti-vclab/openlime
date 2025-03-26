@@ -116,12 +116,108 @@
 <p><strong>OpenLime</strong> is jointly developed by <a href="https://www.crs4.it/research/visual-and-data-intensive-computing/">CRS4 Visual and Data-intensive Computing Group</a> and <a href="http://vcg.isti.cnr.it/">CNR ISTI - Visual Computing Lab</a>.</p>
 <p><strong>OpenLIME</strong> natively supports BRDF and RTI datasets, and can be easily extended for other multi-channel raster datasets, such as hyper spectral imaging or other reflectance modeling. Input data can be combined in a multi-layer visualization system using opacity and blending modes, and interactive lenses.</p>
 <p>All web image types (<em>jpg</em>, <em>png</em>, <em>gif</em>, etc...) are supported as well as the most common multi-resolution image formats (<em>deepzoom</em>, <em>zoomify</em>, <em>IIIF</em>, <em>google maps</em>), which are suitable for large images.</p>
-<p><strong>OpenLIME</strong> provides a set of ready-to-use layers that allows developers to quickly publish their datasets on the web
-or make kiosk applications. Ready-to-use layers ranging from images, to multi-channel data (such as, for example, RTI or BRDF) or the combination of multiple layers or for visualization through lenses.</p>
+<p><strong>OpenLIME</strong> provides a set of ready-to-use layers that allows developers to quickly publish their datasets on the web or make kiosk applications. Ready-to-use layers ranging from images, to multi-channel data (such as, for example, RTI or BRDF) or the combination of multiple layers or for visualization through lenses.</p>
 <p>The <strong>OpenLIME</strong> library comes with a responsive user iterface that works well with both desktop monitors and multitouch systems. Additionally, it is designed to be highly configurable, so it will be easy for the experienced developer to build their own custom interface.</p>
 <p>The library contains a convenient set of examples that can be used both to understand how the library works and as a starting point for programming with <strong>OpenLIME</strong> itself.</p>
 <p>API Docs: https://cnr-isti-vclab.github.io/openlime/</p>
-<h2 id="installing-npm">Installing npm</h2>
+<h2 id="using-openlime-in-your-project">Using OpenLIME in your project</h2>
+<h3 id="via-cdn-(recommended-for-quick-start)">Via CDN (recommended for quick start)</h3>
+<p>The easiest way to use OpenLIME is via a CDN like unpkg or jsdelivr:</p>
+<pre class="prettyprint source lang-html"><code>&lt;!-- Using unpkg -->
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/openlime@1.0.1/dist/css/skin.css&quot;>
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/openlime@1.0.1/dist/css/light.css&quot;>
+&lt;script src=&quot;https://unpkg.com/openlime@1.0.1/dist/js/openlime.min.js&quot;>&lt;/script>
+
+&lt;!-- OR using jsdelivr -->
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/openlime@1.0.1/dist/css/skin.css&quot;>
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/openlime@1.0.1/dist/css/light.css&quot;>
+&lt;script src=&quot;https://cdn.jsdelivr.net/npm/openlime@1.0.1/dist/js/openlime.min.js&quot;>&lt;/script>
+</code></pre>
+<h3 id="installing-via-npm">Installing via npm</h3>
+<p>If you're using a build system like webpack or rollup:</p>
+<pre class="prettyprint source lang-bash"><code>npm install openlime
+</code></pre>
+<p>Then import it into your project:</p>
+<h4 id="es-module-(esm)">ES Module (ESM)</h4>
+<pre class="prettyprint source lang-javascript"><code>import * as OpenLIME from 'openlime';
+
+// Or import specific components
+import { Viewer, Layer, LayerImage } from 'openlime';
+</code></pre>
+<h4 id="commonjs-(cjs)">CommonJS (CJS)</h4>
+<pre class="prettyprint source lang-javascript"><code>const OpenLIME = require('openlime');
+</code></pre>
+<h4 id="umd-(in-browser-with-module-bundler)">UMD (in browser with module bundler)</h4>
+<pre class="prettyprint source lang-javascript"><code>import OpenLIME from 'openlime';
+</code></pre>
+<h3 id="basic-usage-example">Basic Usage Example</h3>
+<p>Here's a simple example of how to create a viewer with a single image layer:</p>
+<pre class="prettyprint source lang-html"><code>&lt;!DOCTYPE html>
+&lt;html>
+&lt;head>
+  &lt;meta charset=&quot;utf-8&quot;>
+  &lt;title>OpenLIME Basic Example&lt;/title>
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/openlime@1.0.1/dist/css/lime.css&quot;>
+  &lt;style>
+    #viewer {
+      width: 100%;
+      height: 600px;
+    }
+  &lt;/style>
+&lt;/head>
+&lt;body>
+  &lt;div id=&quot;viewer&quot;>&lt;/div>
+
+  &lt;script src=&quot;https://unpkg.com/openlime@1.0.1/dist/js/openlime.min.js&quot;>&lt;/script>
+  &lt;script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Create a viewer
+      const viewer = new OpenLIME.Viewer('viewer', {
+        prefetchBorder: 1,
+        layout: 'basic'
+      });
+
+      // Create and add an image layer
+      const imageLayer = new OpenLIME.LayerImage({
+        id: 'base-image',
+        layout: 'image',
+        url: 'path/to/your/image.jpg'
+      });
+      
+      viewer.addLayer(imageLayer);
+      
+      // Add pan/zoom controller
+      const controller = new OpenLIME.ControllerPanZoom();
+      viewer.addController(controller);
+    });
+  &lt;/script>
+&lt;/body>
+&lt;/html>
+</code></pre>
+<p>For multi-resolution images:</p>
+<pre class="prettyprint source lang-javascript"><code>// Using a DeepZoom image
+const deepZoomLayer = new OpenLIME.LayerImage({
+  id: 'deepzoom-image',
+  layout: 'deepzoom',
+  url: 'path/to/your/deepzoom_files/'
+});
+
+// Using a Zoomify image
+const zoomifyLayer = new OpenLIME.LayerImage({
+  id: 'zoomify-image',
+  layout: 'zoomify',
+  url: 'path/to/your/zoomify/'
+});
+
+// Using an IIIF image
+const iiifLayer = new OpenLIME.LayerImage({
+  id: 'iiif-image',
+  layout: 'iiif',
+  url: 'https://your-iiif-server.org/your-image-id'
+});
+</code></pre>
+<h2 id="development-setup">Development Setup</h2>
+<h3 id="installing-npm">Installing npm</h3>
 <h3 id="ubuntu">Ubuntu</h3>
 <pre class="prettyprint source lang-bash"><code>sudo apt install npm
 </code></pre>
@@ -179,8 +275,8 @@ by default is <code>./dist/index.html</code>).</p>
 <pre class="prettyprint source lang-bash"><code>npm run start -- --port 8088
 </code></pre>
 <h3 id="create-a-rollup-file-to-use-with-other-servers">Create a rollup file to use with other servers</h3>
-<p>To create a rollup file that can be used with other servers, you don’t need to rely on Node.js as the server. Instead, you can embed the rollup file directly in your web page using the <code>&lt;script&gt;</code> tag. You can reference either <code>./dist/js/openlime.min.js</code> or <code>./dist/js/openlime.js</code>.</p>
-<p>In the <code>./dist/examples</code> folder, you’ll find simple <strong>openLIME</strong> web apps that demonstrate how to use this approach. These files will display correctly when served from any web server.</p>
+<p>To create a rollup file that can be used with other servers, you don't need to rely on Node.js as the server. Instead, you can embed the rollup file directly in your web page using the <code>&lt;script&gt;</code> tag. You can reference either <code>./dist/js/openlime.min.js</code> or <code>./dist/js/openlime.js</code>.</p>
+<p>In the <code>./dist/examples</code> folder, you'll find simple <strong>openLIME</strong> web apps that demonstrate how to use this approach. These files will display correctly when served from any web server.</p>
 <p>To generate the rollup files, simply run the following command:</p>
 <pre class="prettyprint source lang-bash"><code>npm run rollup
 </code></pre>
@@ -399,7 +495,7 @@ Features:</p>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a>
 	
-		on 2025-03-25T17:36:09+00:00
+		on 2025-03-26T06:14:15+00:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
