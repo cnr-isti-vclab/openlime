@@ -1,6 +1,6 @@
 # OpenLIME (Open Layered IMage Explorer)
 
-<p align="center">
+<p align="center" style="margin-top: 20px; margin-bottom: 15px;">
   <img src="https://cnr-isti-vclab.github.io/openlime/img/openlime-teaser.jpg" alt="OpenLIME Teaser" width="600">
 </p>
 
