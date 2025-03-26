@@ -55,7 +55,7 @@
     "build": "webpack -c webpack.config.js --mode development",
     "rollup": "rollup -c rollup.config.js --extend",
     "nodemon": "nodemon --watch ./src --exec npm run rollup",
-    "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md",
+    "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md && mkdir -p docs/img && cp -r jsdoc/static/img/* docs/img/",
     "update-readme": "node utils/update-readme.js",
     "prepublishOnly": "npm run update-readme && npm run rollup && npm run doc"
   },

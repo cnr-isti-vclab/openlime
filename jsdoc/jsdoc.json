@@ -14,7 +14,8 @@
         "recurse": true,
         "tutorials": "./jsdoc/tutorials",
         "readme": "./README.md",
-        "package": "./package.json"
+        "package": "./package.json",
+        "static": "./jsdoc/static"
     },
     "plugins": [
         "plugins/markdown"
