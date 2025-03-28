@@ -103,13 +103,16 @@ class ShaderRTI extends Shader {
 		if (!(this.modes.includes(mode)))
 			throw Error("Unknown mode: " + mode);
 		this.mode = mode;
+		this.needsUpdate = true;
+	}
 
-		if (mode != 'light') {
+	updateUniforms(gl) {
+		if (this.mode != 'light' && !this.uniforms.base1.value) {
 			this.lightWeights([0.612, 0.354, 0.707], 'base');
 			this.lightWeights([-0.612, 0.354, 0.707], 'base1');
 			this.lightWeights([0, -0.707, 0.707], 'base2');
 		}
-		this.needsUpdate = true;
+		super.updateUniforms(gl);
 	}
 
 	/**
