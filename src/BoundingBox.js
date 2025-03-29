@@ -128,7 +128,7 @@ class BoundingBox {
      * @returns {number} The difference between xHigh and xLow
      */
     width() {
-        return this.xHigh - this.xLow;
+        return Math.max(0, this.xHigh - this.xLow);
     }
 
     /**
@@ -136,7 +136,15 @@ class BoundingBox {
      * @returns {number} The difference between yHigh and yLow
      */
     height() {
-        return this.yHigh - this.yLow;
+        return Math.max(0, this.yHigh - this.yLow);
+    }
+
+    /**
+     * Calculates the area of the bounding box.
+     * @returns {number} The area (width × height)
+     */
+    area() {
+        return this.width() * this.height();
     }
 
     /**
@@ -164,7 +172,46 @@ class BoundingBox {
      * @returns {boolean} True if the boxes intersect, false otherwise
      */
     intersects(box) {
-        return xLow <= box.xHigh && xHigh >= box.xLow && yLow <= box.yHigh && yHigh >= box.yLow;
+        if (!box || box.isEmpty() || this.isEmpty()) {
+            return false;
+        }
+        return (
+            this.xLow <= box.xHigh &&
+            this.xHigh >= box.xLow &&
+            this.yLow <= box.yHigh &&
+            this.yHigh >= box.yLow
+        );
+    }
+
+    /**
+     * Calculates the intersection of this bounding box with another box.
+     * @param {BoundingBox} box - The other bounding box
+     * @returns {BoundingBox|null} A new bounding box representing the intersection, or null if there is no intersection
+     */
+    intersection(box) {
+        if (!this.intersects(box)) {
+            return null;
+        }
+        
+        return new BoundingBox({
+            xLow: Math.max(this.xLow, box.xLow),
+            yLow: Math.max(this.yLow, box.yLow),
+            xHigh: Math.min(this.xHigh, box.xHigh),
+            yHigh: Math.min(this.yHigh, box.yHigh)
+        });
+    }
+
+    /**
+     * Creates a clone of this bounding box.
+     * @returns {BoundingBox} A new BoundingBox instance with the same coordinates
+     */
+    clone() {
+        return new BoundingBox({
+            xLow: this.xLow,
+            yLow: this.yLow,
+            xHigh: this.xHigh,
+            yHigh: this.yHigh
+        });
     }
 
     /**

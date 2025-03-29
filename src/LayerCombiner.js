@@ -96,6 +96,33 @@ class LayerCombiner extends Layer {
 	}
 
 	/**
+	 * Cleans up WebGL resources by deleting framebuffers and textures.
+	 * Should be called before recreating buffers or when the layer is destroyed.
+	 * Prevents memory leaks by properly releasing GPU resources.
+	 * @private
+	 */
+	deleteFramebuffers() {
+		if (!this.gl) return;
+
+		// Clean up textures
+		for (let i = 0; i < this.textures.length; i++) {
+			if (this.textures[i]) {
+				this.gl.deleteTexture(this.textures[i]);
+			}
+		}
+
+		// Clean up framebuffers
+		for (let i = 0; i < this.framebuffers.length; i++) {
+			if (this.framebuffers[i]) {
+				this.gl.deleteFramebuffer(this.framebuffers[i]);
+			}
+		}
+
+		this.textures = [];
+		this.framebuffers = [];
+	}
+
+	/**
 	 * Renders the combined layers using framebuffer operations
 	 * Handles framebuffer creation, layer rendering, and final composition
 	 * @param {Transform} transform - Current view transform

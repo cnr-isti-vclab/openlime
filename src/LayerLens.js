@@ -124,20 +124,28 @@ class LayerLens extends LayerCombiner {
 	}
 
 	/**
-	 * Sets the base layer (shown outside lens)
+	 * Sets the base layer (shown inside lens)
 	 * @param {Layer} layer - Base layer instance
 	 * @fires Layer#update
 	 */
 	setBaseLayer(l) {
+		if (!l) {
+			console.warn("Attempting to set null base layer");
+			return;
+		}
 		this.layers[0] = l;
 		this.emit('update');
 	}
 
 	/**
-	 * Sets the overlay layer (shown inside lens)
+	 * Sets the overlay layer (shown outside lens)
 	 * @param {Layer} layer - Overlay layer instance
 	 */
 	setOverlayLayer(l) {
+		if (!l) {
+			console.warn("Attempting to set null overlay layer");
+			return;
+		}
 		this.layers[1] = l;
 		this.layers[1].setVisible(true);
 		this.shader.setOverlayLayerEnabled(true);
@@ -233,18 +241,17 @@ class LayerLens extends LayerCombiner {
 	draw(transform, viewport) {
 		let done = this.interpolateControls();
 
+		// Cache frequently accessed values
+		const currentCenter = this.getCurrentCenter();
+		const currentRadius = this.getRadius();
+		const borderColor = this.getBorderColor();
+
 		// Update dashboard size & pos
 		if (this.dashboard) {
-			const c = this.getCurrentCenter();
-			const r = this.getRadius();
-			this.dashboard.update(c.x, c.y, r);
-			this.oldCenter = c;
-			this.oldRadius = r;
+			this.dashboard.update(currentCenter.x, currentCenter.y, currentRadius);
+			this.oldCenter = currentCenter;
+			this.oldRadius = currentRadius;
 		}
-		// const vlens = this.getLensInViewportCoords(transform, viewport);
-		// this.shader.setLensUniforms(vlens, [viewport.w, viewport.h], this.borderColor);
-		// this.emit('draw');
-		// super.draw(transform, viewport);
 
 		for (let layer of this.layers)
 			if (layer.status != 'ready')
@@ -286,7 +293,7 @@ class LayerLens extends LayerCombiner {
 
 		// Set in the lensShader the proper lens position wrt the window viewport
 		const vl = this.getLensInViewportCoords(transform, viewport);
-		this.shader.setLensUniforms(vl, [viewport.w, viewport.h], this.getBorderColor(), this.borderEnable);
+		this.shader.setLensUniforms(vl, [viewport.w, viewport.h], borderColor, this.borderEnable);
 
 		this.prepareWebGL();
 
@@ -309,7 +316,7 @@ class LayerLens extends LayerCombiner {
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
 
 		// Restore old viewport
-		gl.viewport(viewport.x, viewport.x, viewport.dx, viewport.dy);
+		gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
 
 		return done;
 	}
