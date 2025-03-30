@@ -88,38 +88,38 @@ class Camera {
 		return viewport;
 	}
 
-	/**
+	/*
 	 * Converts canvas coordinates to scene coordinates using the specified transform.
 	 * @param {number} x - X coordinate relative to canvas
 	 * @param {number} y - Y coordinate relative to canvas
 	 * @param {Transform} transform - Transform to use for conversion
 	 * @returns {{x: number, y: number}} Coordinates in scene space relative to viewport center
 	 */
-	mapToScene(x, y, transform) {
-		//compute coords relative to the center of the viewport.
-		x -= this.viewport.w / 2;
-		y -= this.viewport.h / 2;
-		x -= transform.x;
-		y -= transform.y;
-		x /= transform.z;
-		y /= transform.z;
-		let r = Transform.rotate(x, y, -transform.a);
-		return { x: r.x, y: r.y };
-	}
+	// mapToScene(x, y, transform) {
+	// 	//compute coords relative to the center of the viewport.
+	// 	x -= this.viewport.w / 2;
+	// 	y -= this.viewport.h / 2;
+	// 	x -= transform.x;
+	// 	y -= transform.y;
+	// 	x /= transform.z;
+	// 	y /= transform.z;
+	// 	let r = Transform.rotate(x, y, -transform.a);
+	// 	return { x: r.x, y: r.y };
+	// }
 
-	/**
+	/*
 	 * Converts scene coordinates to canvas coordinates using the specified transform.
 	 * @param {number} x - X coordinate in scene space
 	 * @param {number} y - Y coordinate in scene space
 	 * @param {Transform} transform - Transform to use for conversion
 	 * @returns {{x: number, y: number}} Coordinates in canvas space
 	 */
-	sceneToCanvas(x, y, transform) {
-		let r = Transform.rotate(x, y, transform.a);
-		x = r.x * transform.z + transform.x - this.viewport.x + this.viewport.w / 2;
-		y = r.y * transform.z - transform.y + this.viewport.y + this.viewport.h / 2;
-		return { x: x, y: y };
-	}
+	// sceneToCanvas(x, y, transform) {
+	// 	let r = Transform.rotate(x, y, transform.a);
+	// 	x = r.x * transform.z + transform.x - this.viewport.x + this.viewport.w / 2;
+	// 	y = r.y * transform.z - transform.y + this.viewport.y + this.viewport.h / 2;
+	// 	return { x: x, y: y };
+	// }
 
 	/**
 	 * Sets the camera target parameters for a new position.

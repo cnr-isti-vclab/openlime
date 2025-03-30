@@ -3,7 +3,7 @@ import { Layout } from './Layout.js'
 import { Cache } from './Cache.js'
 import { BoundingBox } from './BoundingBox.js'
 import { addSignals } from './Signals.js'
-
+import { Util } from './Util.js'
 
 /**
  * @typedef {Object} LayerOptions

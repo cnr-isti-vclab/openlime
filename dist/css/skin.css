@@ -602,6 +602,13 @@ g.openlime-expand {
 	fill: yellow;
 }
 
+
+
+.openlime-button.openlime-ruler-active path[style] {
+	fill: yellow !important;
+	stroke: yellow !important;
+}
+
 .openlime-overlaymsg {
 	background: white;
 	opacity: 80%;

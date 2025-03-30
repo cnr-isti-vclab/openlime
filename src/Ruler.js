@@ -1,5 +1,6 @@
 import { Util } from './Util'
 import { Units } from './ScaleBar'
+import { CoordinateSystem } from './CoordinateSystem';
 
 
 /**
@@ -246,9 +247,10 @@ class Ruler extends Units {
 		if (!this.enabled)
 			return false;
 
-		let transform = this.camera.getCurrentTransform(performance.now())
-		let { x, y } = this.camera.mapToScene(e.layerX, e.layerY, transform);
-
+		//let transform = this.camera.getCurrentTransform(performance.now())
+		//let { x, y } = this.camera.mapToScene(e.layerX, e.layerY, transform);
+		const {x, y} = CoordinateSystem.fromViewportToScene({ x: e.layerX, y: e.layerY }, this.camera, false);
+		
 
 		if (!this.measure) {
 			this.measure = this.createMeasure(x, y);
@@ -273,8 +275,10 @@ class Ruler extends Units {
 		if (!this.enabled || !this.measure)
 			return false;
 
-		let transform = this.camera.getCurrentTransform(performance.now())
-		let { x, y } = this.camera.mapToScene(e.layerX, e.layerY, transform);
+		//let transform = this.camera.getCurrentTransform(performance.now())
+		//let { x, y } = this.camera.mapToScene(e.layerX, e.layerY, transform);
+		const {x, y} = CoordinateSystem.fromViewportToScene({ x: e.layerX, y: e.layerY }, this.camera, false);
+	
 		this.measure.x2 = x;
 		this.measure.y2 = y;
 		this.update();

@@ -393,8 +393,8 @@ class UIBasic {
 				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
 			}
 			else if (this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSize) {
-				let pixelSize = this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSizePerMM();
-				this.scalebar = new ScaleBar(pixelSize, this.viewer);
+				this.pixelSize = this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSizePerMM();
+				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
 			}
 
 			if (this.attribution) {
@@ -603,6 +603,9 @@ class UIBasic {
 	 * @private
 	 */
 	toggleRuler() {
+		const div = this.viewer.containerElement;
+		const rl = div.querySelector('.openlime-button.openlime-ruler');
+		const isActive = rl.classList.toggle('openlime-ruler-active');
 		if (!this.ruler) {
 			this.ruler = new Ruler(this.viewer, this.pixelSize);
 			this.viewer.pointerManager.onEvent(this.ruler);

@@ -336,7 +336,8 @@ class ControllerFocusContext extends ControllerLens {
     updateScale(x, y, dz) {
         const now = performance.now();
         let context = this.camera.getCurrentTransform(now);
-        const pos = this.camera.mapToScene(x, y, context);
+        const pos = CoordinateSystem.fromCanvasHtmlToScene({x,y}, this.camera, this.useGL);
+        //const pos = this.camera.mapToScene(x, y, context);
 
         const maxDeltaZoom = this.camera.maxZoom / context.z;
         const minDeltaZoom = this.camera.minZoom / context.z;
