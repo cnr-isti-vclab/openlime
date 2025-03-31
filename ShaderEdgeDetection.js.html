@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: Raster</title>
+	<title>OpenLIME Source: ShaderEdgeDetection.js</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -83,828 +83,162 @@
 <div class="row">
 
 	
-	<div class="col-md-8">
+	<div class="col-md-12">
 	
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: Raster</h1>
+		<h1 class="page-title">Source: ShaderEdgeDetection.js</h1>
+    
 <section>
-
-<header>
-    
-        <h2>
-        Raster
-        </h2>
-        
-            <div class="class-description"><p>Raster class handles image loading and texture creation for OpenLIME.
-Provides functionality for:</p>
-<ul>
-<li>Loading images from URLs or blobs</li>
-<li>Converting images to WebGL textures</li>
-<li>Handling different color formats</li>
-<li>Supporting partial content requests</li>
-<li>Managing CORS requests</li>
-<li>Creating mipmaps for large textures</li>
-</ul></div>
-        
-    
-</header>
-
-
-<article>
-    <div class="container-overview">
-    
-        
-<hr>
-<dt>
-    <h4 class="name" id="Raster"><span class="type-signature"></span>new Raster( [options])</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Creates a new Raster instance.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>options</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>Configuration options</p>
-                <h6 class="method-params-label method-subparams-label">Properties</h6>
-                
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>format</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Raster.html#Format">Raster#Format</a></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    'vec3'
-                
-                </td>
-            
-
-            <td class="description last"><p>Color format for image data:</p>
-<ul>
-<li>'vec3' for RGB images</li>
-<li>'vec4' for RGBA images</li>
-<li>'float' for coefficient data</li>
-</ul></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Raster.js.html">Raster.js</a>,
-				 <a href="Raster.js.html#sunlight-1-line-25">line 25</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-    
-    </div>
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        <dl>
-            
-<hr>
-<dt>
-    <h4 class="name" id="loadImage"><span class="type-signature">&lt;async> </span>loadImage(tile, gl)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Loads an image tile and converts it to a WebGL texture.
-Supports both full and partial content requests.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>tile</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The tile to load</p>
-                <h6 class="method-params-label method-subparams-label">Properties</h6>
-                
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>url</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>URL of the image</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>start</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>Start byte for partial requests</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>end</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>End byte for partial requests</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>gl</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">WebGLRenderingContext</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The WebGL rendering context</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Raster.js.html">Raster.js</a>,
-				 <a href="Raster.js.html#sunlight-1-line-57">line 57</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Throws:</h5>
-    
-            
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        <p>If server doesn't support partial content requests when required</p>
-        </div>
-    </dt>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">Error</span>
-
-
-
-            </dd>
-        </dl>
-    </dt>
-</dl>
-
-
-        
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>Promise resolving to [texture, size]:</p>
-<ul>
-<li>texture: WebGLTexture object</li>
-<li>size: Size of the image in bytes (width * height * components)</li>
-</ul>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;Array></span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        </dl>
-    
-
-    
-        <h3 class="subsection-title">Type Definitions</h3>
-
-        <dl>
-                
-<hr>
-<dt class="name" id="Format">
-    <h4 id="Format">Format</h4>
-
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        <p>Defines the color format for image data storage in textures and renderbuffers.</p>
-    </div>
-    
-
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">'vec3'</span>
-|
-
-<span class="param-type">'vec4'</span>
-|
-
-<span class="param-type">'float'</span>
-
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-    <h5 class="subsection-title">Properties:</h5>
-
-    <dl>
-
-<table class="props table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>vec3</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">'vec3'</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>RGB format (3 components without alpha)</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>vec4</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">'vec4'</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>RGBA format (4 components with alpha)</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>float</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">'float'</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Single-channel format for coefficient data</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-</dl>
-
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="Raster.js.html">Raster.js</a>,
-				 <a href="Raster.js.html#sunlight-1-line-7">line 7</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-</dd>
-
-            </dl>
-    
-
-    
-</article>
-
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Shader } from './Shader.js';
+
+/**
+ * ShaderEdgeDetection extends the base Shader class to implement
+ * a Sobel edge detection filter on input textures.
+ * 
+ * The shader detects edges by calculating gradients in both 
+ * horizontal and vertical directions using Sobel operators.
+ */
+class ShaderEdgeDetection extends Shader {
+  /**
+   * Creates a new EdgeDetectionShader instance.
+   * @param {Object} [options] - Configuration options passed to parent Shader
+   * @param {number} [options.threshold=0.1] - Edge detection threshold (0.0-1.0)
+   * @param {boolean} [options.colorEdges=false] - Whether to preserve edge colors
+   */
+  constructor(options = {}) {
+    // Set default options for edge detection
+    const edgeOptions = Object.assign({
+      threshold: 0.1,
+      colorEdges: false,
+      uniforms: {
+        threshold: { type: 'float', value: 0.1, needsUpdate: true },
+        colorEdges: { type: 'bool', value: false, needsUpdate: true }
+      },
+      samplers: [
+        { id: 0, name: 'kd', label: 'Color', samplers: [{ id: 0, type: 'color' }] }
+      ],
+      label: 'Edge Detection',
+      modes: ['sobel', 'prewitt'],
+      mode: 'sobel'
+    }, options);
+
+    super(edgeOptions);
+
+    // Set threshold from options
+    if (options.threshold !== undefined) {
+      this.setUniform('threshold', options.threshold);
+    }
+
+    // Set color mode from options
+    if (options.colorEdges !== undefined) {
+      this.setUniform('colorEdges', options.colorEdges);
+    }
+  }
+
+  /**
+   * Override fragment shader source to implement edge detection.
+   * This version is compatible with both WebGL 1.0 and 2.0+.
+   * @param {WebGLRenderingContext} gl - WebGL context
+   * @returns {string} Fragment shader source code
+   */
+  fragShaderSrc(gl) {
+    // Check if we're using WebGL2
+    let gl2 = !(gl instanceof WebGLRenderingContext);
+
+    return `
+uniform sampler2D kd;
+uniform float threshold;
+uniform bool colorEdges;
+
+${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
+
+// Calculate texture offset based on tile size
+vec2 texelSize = vec2(1.0) / tileSize;
+
+vec4 data() {
+  // Sample the 3x3 neighborhood around the current pixel
+  vec4 tl = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(-1, -1));
+  vec4 t  = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 0, -1));
+  vec4 tr = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 1, -1));
+  vec4 l  = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(-1,  0));
+  vec4 c  = texture${gl2 ? '' : '2D'}(kd, v_texcoord);
+  vec4 r  = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 1,  0));
+  vec4 bl = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(-1,  1));
+  vec4 b  = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 0,  1));
+  vec4 br = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 1,  1));
+  
+  // Convert to grayscale for edge detection
+  float tlGray = dot(tl.rgb, vec3(0.299, 0.587, 0.114));
+  float tGray  = dot(t.rgb, vec3(0.299, 0.587, 0.114));
+  float trGray = dot(tr.rgb, vec3(0.299, 0.587, 0.114));
+  float lGray  = dot(l.rgb, vec3(0.299, 0.587, 0.114));
+  float cGray  = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+  float rGray  = dot(r.rgb, vec3(0.299, 0.587, 0.114));
+  float blGray = dot(bl.rgb, vec3(0.299, 0.587, 0.114));
+  float bGray  = dot(b.rgb, vec3(0.299, 0.587, 0.114));
+  float brGray = dot(br.rgb, vec3(0.299, 0.587, 0.114));
+  
+  float gx, gy;
+  
+  // Different convolution kernels based on mode
+  if (${this.mode === 'sobel' ? 'true' : 'false'}) {
+      // Sobel operator
+      gx = -1.0 * tlGray + 1.0 * trGray +
+           -2.0 * lGray  + 2.0 * rGray  +
+           -1.0 * blGray + 1.0 * brGray;
+           
+      gy = -1.0 * tlGray + -2.0 * tGray + -1.0 * trGray +
+            1.0 * blGray +  2.0 * bGray +  1.0 * brGray;
+  } else {
+      // Prewitt operator
+      gx = -1.0 * tlGray + 1.0 * trGray +
+           -1.0 * lGray  + 1.0 * rGray  +
+           -1.0 * blGray + 1.0 * brGray;
+           
+      gy = -1.0 * tlGray + -1.0 * tGray + -1.0 * trGray +
+            1.0 * blGray +  1.0 * bGray +  1.0 * brGray;
+  }
+  
+  // Calculate edge magnitude
+  float g = sqrt(gx * gx + gy * gy);
+  
+  // Apply threshold
+  float edge = step(threshold, g);
+  
+  // Output either edge intensity or colored edges
+  if (colorEdges) {
+      return vec4(c.rgb * edge, c.a);
+  } else {
+      return vec4(vec3(edge), c.a);
+  }
+}`;
+  }
+
+  /**
+   * Sets the edge detection threshold.
+   * @param {number} value - Threshold value (0.0-1.0)
+   */
+  setThreshold(value) {
+    this.setUniform('threshold', value);
+  }
+
+  /**
+   * Toggles colored edges mode.
+   * @param {boolean} enabled - Whether to preserve edge colors
+   */
+  setColorEdges(enabled) {
+    this.setUniform('colorEdges', enabled);
+  }
+}
+
+export { ShaderEdgeDetection };</pre>
+    </article>
 </section>
+
 
 
 
@@ -914,10 +248,6 @@ Supports both full and partial content requests.</p>
 
 	<div class="clearfix"></div>
 
-	
-		<div class="col-md-3">
-			<div id="toc" class="col-md-3 hidden-xs hidden-sm hidden-md"></div>
-		</div>
 	
 
 </div>

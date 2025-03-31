@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: Raster</title>
+	<title>OpenLIME Class: ShaderEdgeDetection</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,25 +88,19 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: Raster</h1>
+	<h1 class="page-title">Class: ShaderEdgeDetection</h1>
 <section>
 
 <header>
     
         <h2>
-        Raster
+        ShaderEdgeDetection
         </h2>
         
-            <div class="class-description"><p>Raster class handles image loading and texture creation for OpenLIME.
-Provides functionality for:</p>
-<ul>
-<li>Loading images from URLs or blobs</li>
-<li>Converting images to WebGL textures</li>
-<li>Handling different color formats</li>
-<li>Supporting partial content requests</li>
-<li>Managing CORS requests</li>
-<li>Creating mipmaps for large textures</li>
-</ul></div>
+            <div class="class-description"><p>ShaderEdgeDetection extends the base Shader class to implement
+a Sobel edge detection filter on input textures.</p>
+<p>The shader detects edges by calculating gradients in both
+horizontal and vertical directions using Sobel operators.</p></div>
         
     
 </header>
@@ -118,7 +112,7 @@ Provides functionality for:</p>
         
 <hr>
 <dt>
-    <h4 class="name" id="Raster"><span class="type-signature"></span>new Raster( [options])</h4>
+    <h4 class="name" id="ShaderEdgeDetection"><span class="type-signature"></span>new ShaderEdgeDetection( [options])</h4>
     
     
 </dt>
@@ -126,7 +120,7 @@ Provides functionality for:</p>
 
     
     <div class="description">
-        <p>Creates a new Raster instance.</p>
+        <p>Creates a new EdgeDetectionShader instance.</p>
     </div>
     
 
@@ -190,7 +184,7 @@ Provides functionality for:</p>
 
             
 
-            <td class="description last"><p>Configuration options</p>
+            <td class="description last"><p>Configuration options passed to parent Shader</p>
                 <h6 class="method-params-label method-subparams-label">Properties</h6>
                 
 
@@ -220,13 +214,13 @@ Provides functionality for:</p>
 
         <tr>
             
-                <td class="name"><code>format</code></td>
+                <td class="name"><code>threshold</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="Raster.html#Format">Raster#Format</a></span>
+<span class="param-type">number</span>
 
 
 
@@ -248,17 +242,52 @@ Provides functionality for:</p>
             
                 <td class="default">
                 
-                    'vec3'
+                    0.1
                 
                 </td>
             
 
-            <td class="description last"><p>Color format for image data:</p>
-<ul>
-<li>'vec3' for RGB images</li>
-<li>'vec4' for RGBA images</li>
-<li>'float' for coefficient data</li>
-</ul></td>
+            <td class="description last"><p>Edge detection threshold (0.0-1.0)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>colorEdges</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last"><p>Whether to preserve edge colors</p></td>
         </tr>
 
     
@@ -309,8 +338,8 @@ Provides functionality for:</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Raster.js.html">Raster.js</a>,
-				 <a href="Raster.js.html#sunlight-1-line-25">line 25</a>
+				<a href="ShaderEdgeDetection.js.html">ShaderEdgeDetection.js</a>,
+				 <a href="ShaderEdgeDetection.js.html#sunlight-1-line-10">line 10</a>
 			</li>
 		</ul>
 	</dd>
@@ -361,7 +390,7 @@ Provides functionality for:</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="loadImage"><span class="type-signature">&lt;async> </span>loadImage(tile, gl)</h4>
+    <h4 class="name" id="fragShaderSrc"><span class="type-signature"></span>fragShaderSrc(gl)</h4>
     
     
 </dt>
@@ -369,8 +398,8 @@ Provides functionality for:</p>
 
     
     <div class="description">
-        <p>Loads an image tile and converts it to a WebGL texture.
-Supports both full and partial content requests.</p>
+        <p>Override fragment shader source to implement edge detection.
+This version is compatible with both WebGL 1.0 and 2.0+.</p>
     </div>
     
 
@@ -405,158 +434,6 @@ Supports both full and partial content requests.</p>
 
         <tr>
             
-                <td class="name"><code>tile</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The tile to load</p>
-                <h6 class="method-params-label method-subparams-label">Properties</h6>
-                
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>url</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>URL of the image</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>start</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>Start byte for partial requests</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>end</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>End byte for partial requests</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>gl</code></td>
             
 
@@ -574,7 +451,7 @@ Supports both full and partial content requests.</p>
 
             
 
-            <td class="description last"><p>The WebGL rendering context</p></td>
+            <td class="description last"><p>WebGL context</p></td>
         </tr>
 
     
@@ -618,8 +495,8 @@ Supports both full and partial content requests.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Raster.js.html">Raster.js</a>,
-				 <a href="Raster.js.html#sunlight-1-line-57">line 57</a>
+				<a href="ShaderEdgeDetection.js.html">ShaderEdgeDetection.js</a>,
+				 <a href="ShaderEdgeDetection.js.html#sunlight-1-line-53">line 53</a>
 			</li>
 		</ul>
 	</dd>
@@ -642,45 +519,13 @@ Supports both full and partial content requests.</p>
     
 
     
-    <h5>Throws:</h5>
-    
-            
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        <p>If server doesn't support partial content requests when required</p>
-        </div>
-    </dt>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">Error</span>
-
-
-
-            </dd>
-        </dl>
-    </dt>
-</dl>
-
-
-        
 
     
     <h5>Returns:</h5>
     
             
 <div class="param-desc">
-    <p>Promise resolving to [texture, size]:</p>
-<ul>
-<li>texture: WebGLTexture object</li>
-<li>size: Size of the image in bytes (width * height * components)</li>
-</ul>
+    <p>Fragment shader source code</p>
 </div>
 
 
@@ -691,7 +536,7 @@ Supports both full and partial content requests.</p>
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;Array></span>
+<span class="param-type">string</span>
 
 
 
@@ -704,55 +549,32 @@ Supports both full and partial content requests.</p>
     
 </dd>
 
-        </dl>
-    
-
-    
-        <h3 class="subsection-title">Type Definitions</h3>
-
-        <dl>
-                
+        
+            
 <hr>
-<dt class="name" id="Format">
-    <h4 id="Format">Format</h4>
-
+<dt>
+    <h4 class="name" id="setColorEdges"><span class="type-signature"></span>setColorEdges(enabled)</h4>
+    
     
 </dt>
 <dd>
+
     
     <div class="description">
-        <p>Defines the color format for image data storage in textures and renderbuffers.</p>
+        <p>Toggles colored edges mode.</p>
     </div>
     
 
     
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">'vec3'</span>
-|
 
-<span class="param-type">'vec4'</span>
-|
-
-<span class="param-type">'float'</span>
-
-
-
-            </li>
-        </ul>
     
 
     
-<dl class="details">
     
+        <h5>Parameters:</h5>
+        
 
-    <h5 class="subsection-title">Properties:</h5>
-
-    <dl>
-
-<table class="props table table-striped">
+<table class="params table table-striped">
     <thead>
     <tr>
         
@@ -774,13 +596,13 @@ Supports both full and partial content requests.</p>
 
         <tr>
             
-                <td class="name"><code>vec3</code></td>
+                <td class="name"><code>enabled</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">'vec3'</span>
+<span class="param-type">boolean</span>
 
 
 
@@ -791,62 +613,17 @@ Supports both full and partial content requests.</p>
 
             
 
-            <td class="description last"><p>RGB format (3 components without alpha)</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>vec4</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">'vec4'</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>RGBA format (4 components with alpha)</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>float</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">'float'</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Single-channel format for coefficient data</p></td>
+            <td class="description last"><p>Whether to preserve edge colors</p></td>
         </tr>
 
     
     </tbody>
 </table>
-</dl>
 
+    
+
+    
+<dl class="details">
     
 
 	
@@ -880,8 +657,8 @@ Supports both full and partial content requests.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Raster.js.html">Raster.js</a>,
-				 <a href="Raster.js.html#sunlight-1-line-7">line 7</a>
+				<a href="ShaderEdgeDetection.js.html">ShaderEdgeDetection.js</a>,
+				 <a href="ShaderEdgeDetection.js.html#sunlight-1-line-138">line 138</a>
 			</li>
 		</ul>
 	</dd>
@@ -896,9 +673,161 @@ Supports both full and partial content requests.</p>
 
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dd>
 
-            </dl>
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setThreshold"><span class="type-signature"></span>setThreshold(value)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the edge detection threshold.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Threshold value (0.0-1.0)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderEdgeDetection.js.html">ShaderEdgeDetection.js</a>,
+				 <a href="ShaderEdgeDetection.js.html#sunlight-1-line-130">line 130</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        </dl>
+    
+
     
 
     
