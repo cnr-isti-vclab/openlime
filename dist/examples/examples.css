@@ -5,10 +5,13 @@ body {
 	height: 100%;
 	font-family: "Open Sans",sans-serif;
 	overflow: hidden;
+	user-select: none; /* standard property */
+  -webkit-user-select: none; /* Safari and Chrome */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE and Edge legacy */
 }
 h1 { margin-left: 50px; }
 
 .openlime {
 	height:80%;
 }
-

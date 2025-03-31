@@ -67,7 +67,7 @@ class ShaderRTI extends Shader {
 		super({});
 
 		Object.assign(this, {
-			modes: ['light', 'normals', 'diffuse', 'specular'],
+			modes: ['light', 'normals', 'diffuse', 'gray_diffuse', 'specular'],
 			mode: 'normal',
 			type: ['ptm', 'hsh', 'sh', 'rbf', 'bln'],
 			colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
@@ -350,7 +350,11 @@ color = vec4(s * diffuse.xyz, 1);
 color = vec4(vec3(dot(light, normal)), 1);
 `;
 					break;
-
+					case 'gray_diffuse':
+							str += `
+	color = vec4(vec3(dot(light, normal)), 1);
+	`;
+						break;
 				case 'specular':
 				default: str += `
 	float s = pow(dot(light, normal), specular_exp);

@@ -43,6 +43,7 @@ const core = [
 	'./src/ShaderFilterVectorGlyph.js',
 	'./src/Shader.js',
 	'./src/ShaderCombiner.js',
+	'./src/ShaderEdgeDetection.js',
 	'./src/Controller.js',
 	'./src/Controller2D.js',
 	'./src/ControllerPanZoom.js',

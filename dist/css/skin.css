@@ -38,6 +38,7 @@
 	height: 40px;
 	padding: 15px;
 	fill: white;
+	z-index: 1000;
 }
 
 .openlime-scale>text {
@@ -260,6 +261,7 @@ g.openlime-expand {
 	font-family: "Open Sans", sans-serif;
 	font-size: 10px;
 	color: white;
+	z-index: 1000;
 }
 
 /* LAYERS MENU */
@@ -601,8 +603,6 @@ g.openlime-expand {
 .openlime-ruler text {
 	fill: yellow;
 }
-
-
 
 .openlime-button.openlime-ruler-active path[style] {
 	fill: yellow !important;

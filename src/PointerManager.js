@@ -598,7 +598,7 @@ class SinglePointerHandler {
         }
         if (e.type == "pointerup" || e.type == "pointercancel") this.isDown = false;
         if (e.type == "pointermove" && this.isDown) {
-            distance = this.distanceMM(e.clientX, e.clientY, this.oldDownPos.clientX, this.oldDownPos.clientY)
+            distance = this.distanceMM(e.clientX, e.clientY, this.oldDownPos.clientX, this.oldDownPos.clientY);
         }
 
         if (e.type == "wheel") {
@@ -623,15 +623,16 @@ class SinglePointerHandler {
                     this.originSrc = e.composedPath()[0];
                     this.timeout = setTimeout(() => {
                         this.emit(this.createOutputEvent(e, 'fingerHold'));
+                        this.status = this.stateEnum.HOLD;
                         if (e.defaultPrevented) this.status = this.stateEnum.IDLE;
                     }, this.holdTimeoutThreshold);
                 }
                 break;
             case this.stateEnum.DETECT:
-                if (e.type == 'pointercancel') { /// For Firefox
+                if (e.type == 'pointercancel') {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.IDLE;
-                    this.emit(this.createOutputEvent(e, 'fingerHold'));
+                    this.emit(this.createOutputEvent(e, 'fingerMovingEnd'));
                 } else if (e.type == 'pointermove' && distance > this.movingThreshold) {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.MOVING;
@@ -645,14 +646,23 @@ class SinglePointerHandler {
                     }, this.tapTimeoutThreshold);
                 }
                 break;
+            case this.stateEnum.HOLD:
+                if (e.type == 'pointerup' || e.type == 'pointercancel') {
+                    this.status = this.stateEnum.IDLE;
+                } else if (e.type == 'pointermove' && distance > this.movingThreshold) {
+                    this.status = this.stateEnum.MOVING;
+                    this.emit(this.createOutputEvent(e, 'fingerMovingStart'));
+                }
+                break;
             case this.stateEnum.TAPS_DETECT:
                 if (e.type == 'pointerdown') {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.DOUBLE_TAP_DETECT;
                     this.timeout = setTimeout(() => {
+                        this.status = this.stateEnum.HOLD;
                         this.emit(this.createOutputEvent(e, 'fingerHold'));
                         if (e.defaultPrevented) this.status = this.stateEnum.IDLE;
-                    }, this.tapTimeoutThreshold);
+                    }, this.holdTimeoutThreshold);
                 } else if (e.type == 'pointermove' && distance > this.movingThreshold) {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.IDLE;
@@ -664,10 +674,8 @@ class SinglePointerHandler {
                     clearTimeout(this.timeout);
                     this.status = this.stateEnum.IDLE;
                     this.emit(this.createOutputEvent(e, 'fingerDoubleTap'));
-                }
-                break;
-            case this.stateEnum.DOUBLE_TAP_DETECT:
-                if (e.type == 'pointermove' && distance > this.movingThreshold) {
+                } else if (e.type == 'pointermove' && distance > this.movingThreshold) {
+                    clearTimeout(this.timeout);
                     this.status = this.stateEnum.MOVING;
                     this.emit(this.createOutputEvent(e, 'fingerMovingStart'));
                 }
@@ -689,6 +697,7 @@ class SinglePointerHandler {
 
         this.addToHistory(e);
     }
+
 
     handleEvent(e) {
         let result = false;
