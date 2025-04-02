@@ -96,7 +96,7 @@ class ShaderRTI extends Shader {
 
 	/**
 	 * Sets the rendering mode
-	 * @param {string} mode - One of: 'light', 'normals', 'diffuse', 'specular'
+	 * @param {string} mode - One of: 'light', 'normals', 'diffuse', 'gray_diffuse', 'specular'
 	 * @throws {Error} If mode is not recognized
 	 */
 	setMode(mode) {
@@ -320,8 +320,10 @@ vec4 data() {
 `;
 			if (this.normals)
 				str += `
-	vec3 normal = (texture${gl2 ? '' : '2D'}(normals, v_texcoord).zyx *2.0) - 1.0;
-	normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
+	vec3 normal = texture(normals, v_texcoord).xyz * 2.0 - 1.0;
+	normal = normalize(normal);		
+	//vec3 normal = (texture${gl2 ? '' : '2D'}(normals, v_texcoord).zyx *2.0) - 1.0;
+	//normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
 `;
 			else
 				str += `
@@ -333,8 +335,8 @@ vec4 data() {
 `;
 			switch (this.mode) {
 				case 'normals': str += `
-	normal = (normal + 1.0)/2.0;
-	color = vec4(0.0, normal.xy, 1);
+	normal = (normal + 1.0)*0.5;
+	color = vec4(normal.xyz, 1.0);
 `;
 					break;
 
@@ -352,8 +354,8 @@ color = vec4(vec3(dot(light, normal)), 1);
 					break;
 					case 'gray_diffuse':
 							str += `
-	color = vec4(vec3(dot(light, normal)), 1);
-	`;
+color = vec4(vec3(dot(light, normal)), 1);
+`;
 						break;
 				case 'specular':
 				default: str += `
