@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: ScaleBar</title>
+	<title>OpenLIME Class: ShaderAnisotropicDiffusion</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,23 +88,20 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: ScaleBar</h1>
+	<h1 class="page-title">Class: ShaderAnisotropicDiffusion</h1>
 <section>
 
 <header>
     
         <h2>
-        ScaleBar
+        ShaderAnisotropicDiffusion
         </h2>
         
-            <div class="class-description"><p>ScaleBar class creates a visual scale bar that updates with viewer zoom level.
-Features:</p>
-<ul>
-<li>Automatic scale adjustment based on zoom</li>
-<li>Smart unit selection</li>
-<li>SVG-based visualization</li>
-<li>Configurable size and appearance</li>
-</ul></div>
+            <div class="class-description"><p>ShaderAnisotropicDiffusion extends the base Shader class to implement
+a Perona-Malik anisotropic diffusion filter to enhance inscriptions
+on metal surfaces based on normal maps.</p>
+<p>This filter preserves and enhances edges while smoothing other areas,
+making it ideal for revealing inscriptions on uneven surfaces.</p></div>
         
     
 </header>
@@ -116,7 +113,7 @@ Features:</p>
         
 <hr>
 <dt>
-    <h4 class="name" id="ScaleBar"><span class="type-signature"></span>new ScaleBar(pixelSize, viewer [, options])</h4>
+    <h4 class="name" id="ShaderAnisotropicDiffusion"><span class="type-signature"></span>new ShaderAnisotropicDiffusion( [options])</h4>
     
     
 </dt>
@@ -124,7 +121,7 @@ Features:</p>
 
     
     <div class="description">
-        <p>Creates a new ScaleBar instance.</p>
+        <p>Creates a new Anisotropic Diffusion Shader instance.</p>
     </div>
     
 
@@ -161,70 +158,6 @@ Features:</p>
 
         <tr>
             
-                <td class="name"><code>pixelSize</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>Size of a pixel in real-world units (in mm)</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>viewer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Viewer.html">Viewer</a></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>The OpenLIME viewer instance</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>options</code></td>
             
 
@@ -252,7 +185,7 @@ Features:</p>
 
             
 
-            <td class="description last"><p>Configuration options</p>
+            <td class="description last"><p>Configuration options passed to parent Shader</p>
                 <h6 class="method-params-label method-subparams-label">Properties</h6>
                 
 
@@ -282,7 +215,7 @@ Features:</p>
 
         <tr>
             
-                <td class="name"><code>width</code></td>
+                <td class="name"><code>kappa</code></td>
             
 
             <td class="type">
@@ -310,19 +243,19 @@ Features:</p>
             
                 <td class="default">
                 
-                    200
+                    15.0
                 
                 </td>
             
 
-            <td class="description last"><p>Width of the scale bar in pixels</p></td>
+            <td class="description last"><p>Diffusion conductance parameter</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>fontSize</code></td>
+                <td class="name"><code>iterations</code></td>
             
 
             <td class="type">
@@ -350,19 +283,19 @@ Features:</p>
             
                 <td class="default">
                 
-                    24
+                    3
                 
                 </td>
             
 
-            <td class="description last"><p>Font size for scale text in pixels</p></td>
+            <td class="description last"><p>Number of diffusion iterations</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>precision</code></td>
+                <td class="name"><code>lambda</code></td>
             
 
             <td class="type">
@@ -390,12 +323,52 @@ Features:</p>
             
                 <td class="default">
                 
-                    0
+                    0.25
                 
                 </td>
             
 
-            <td class="description last"><p>Number of decimal places for scale values</p></td>
+            <td class="description last"><p>Diffusion rate (0.0-0.25 for stability)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>normalStrength</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    1.0
+                
+                </td>
+            
+
+            <td class="description last"><p>Normal contribution strength</p></td>
         </tr>
 
     
@@ -413,131 +386,6 @@ Features:</p>
 
     
 <dl class="details">
-    
-
-    <h5 class="subsection-title">Properties:</h5>
-
-    <dl>
-
-<table class="props table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>svg</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">SVGElement</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Main SVG container element</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>line</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">SVGElement</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Scale bar line element</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>text</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">SVGElement</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Scale text element</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>lastScaleZoom</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Last zoom level where scale was updated</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-</dl>
-
     
 
 	
@@ -571,8 +419,8 @@ Features:</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="ScaleBar.js.html">ScaleBar.js</a>,
-				 <a href="ScaleBar.js.html#sunlight-1-line-67">line 67</a>
+				<a href="ShaderAnisotropicDiffusion.js.html">ShaderAnisotropicDiffusion.js</a>,
+				 <a href="ShaderAnisotropicDiffusion.js.html#sunlight-1-line-11">line 11</a>
 			</li>
 		</ul>
 	</dd>
@@ -605,17 +453,6 @@ Features:</p>
     </div>
 
     
-        <h3 class="subsection-title">Extends</h3>
-
-        
-
-
-    <ul>
-        <li><a href="Units.html">Units</a></li>
-    </ul>
-
-
-    
 
     
 
@@ -634,7 +471,7 @@ Features:</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="format"><span class="type-signature"></span>format(d [, unit])</h4>
+    <h4 class="name" id="fragShaderSrc"><span class="type-signature"></span>fragShaderSrc(gl)</h4>
     
     
 </dt>
@@ -642,8 +479,8 @@ Features:</p>
 
     
     <div class="description">
-        <p>Formats a measurement value with appropriate units.
-Automatically selects the best unit if none specified.</p>
+        <p>Override fragment shader source to implement anisotropic diffusion.
+This version is compatible with both WebGL 1.0 and 2.0+.</p>
     </div>
     
 
@@ -666,8 +503,6 @@ Automatically selects the best unit if none specified.</p>
         <th>Type</th>
 
         
-        <th>Argument</th>
-        
 
         
 
@@ -680,13 +515,13 @@ Automatically selects the best unit if none specified.</p>
 
         <tr>
             
-                <td class="name"><code>d</code></td>
+                <td class="name"><code>gl</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">WebGLRenderingContext</span>
 
 
 
@@ -694,52 +529,10 @@ Automatically selects the best unit if none specified.</p>
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last"><p>Value to format (in millimeters)</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>unit</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>Specific unit to use for formatting</p></td>
+            <td class="description last"><p>WebGL context</p></td>
         </tr>
 
     
@@ -757,21 +550,7 @@ Automatically selects the best unit if none specified.</p>
 	
 
 	
-	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
-	<dd class="inherited-from">
-		<ul class="dummy">
-			<li>
-				<a href="Units.html#format">Units#format</a>
-			</li>
-		</ul>
-	</dd>
-	
 
-    
-    <dt class="tag-overrides">Overrides:</dt>
-    <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="Units.html#format">Units#format</a>
-    </li></ul></dd>
     
 
     
@@ -797,8 +576,8 @@ Automatically selects the best unit if none specified.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="ScaleBar.js.html">ScaleBar.js</a>,
-				 <a href="ScaleBar.js.html#sunlight-1-line-38">line 38</a>
+				<a href="ShaderAnisotropicDiffusion.js.html">ShaderAnisotropicDiffusion.js</a>,
+				 <a href="ShaderAnisotropicDiffusion.js.html#sunlight-1-line-67">line 67</a>
 			</li>
 		</ul>
 	</dd>
@@ -827,7 +606,7 @@ Automatically selects the best unit if none specified.</p>
     
             
 <div class="param-desc">
-    <p>Formatted measurement with units (e.g., &quot;5.00 mm&quot; or &quot;1.00 m&quot;)</p>
+    <p>Fragment shader source code</p>
 </div>
 
 
@@ -849,12 +628,560 @@ Automatically selects the best unit if none specified.</p>
         
 
     
-        <h5>Example</h5>
-        
-    <pre class="sunlight-highlight-javascript">const units = new Units();
-units.format(1500);       // Returns &quot;1.50 m&quot;
-units.format(1500, &#x27;mm&#x27;); // Returns &quot;1500.00 mm&quot;</pre>
+</dd>
 
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setIterations"><span class="type-signature"></span>setIterations(value)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the number of diffusion iterations.
+More iterations produce smoother results but take longer to compute.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Number of iterations (typically 1-10)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderAnisotropicDiffusion.js.html">ShaderAnisotropicDiffusion.js</a>,
+				 <a href="ShaderAnisotropicDiffusion.js.html#sunlight-1-line-196">line 196</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setKappa"><span class="type-signature"></span>setKappa(value)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the kappa parameter which controls edge sensitivity.
+Higher values preserve fewer edges.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Kappa value (typically 5-50)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderAnisotropicDiffusion.js.html">ShaderAnisotropicDiffusion.js</a>,
+				 <a href="ShaderAnisotropicDiffusion.js.html#sunlight-1-line-187">line 187</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setLambda"><span class="type-signature"></span>setLambda(value)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the lambda parameter which controls diffusion rate.
+Should be between 0.0 and 0.25 for numerical stability.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Lambda value (0.0-0.25)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderAnisotropicDiffusion.js.html">ShaderAnisotropicDiffusion.js</a>,
+				 <a href="ShaderAnisotropicDiffusion.js.html#sunlight-1-line-205">line 205</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setNormalStrength"><span class="type-signature"></span>setNormalStrength(value)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the normal strength parameter which controls how much
+the normal map information influences the final result.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Normal strength multiplier</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderAnisotropicDiffusion.js.html">ShaderAnisotropicDiffusion.js</a>,
+				 <a href="ShaderAnisotropicDiffusion.js.html#sunlight-1-line-215">line 215</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 
     
 </dd>
