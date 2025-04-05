@@ -23,6 +23,8 @@ class Canvas {
 	 * @param {Object} [options.layers] - Layer configurations mapping layer IDs to Layer instances
 	 * @param {boolean} [options.preserveDrawingBuffer=false] - Whether to preserve WebGL buffers until manually cleared
 	 * @param {number} [options.targetfps=30] - Target frames per second for rendering
+	 * @param {boolean} [options.srgb=true] - Whether to enable sRGB color space for the output framebuffer
+	 * @param {boolean} [options.stencil=false] - Whether to enable stencil buffer support
 	 * @fires Canvas#update
 	 * @fires Canvas#updateSize
 	 * @fires Canvas#ready
@@ -40,6 +42,8 @@ class Canvas {
 			timing: [16], //records last 30 frames time from request to next draw, rolling, primed to avoid /0
 			timingLength: 5, //max number of timings.
 			overBudget: 0, //fraction of frames that took too long to render.
+			srgb: true,     // Enable sRGB color space by default
+			stencil: false, // Disable stencil buffer by default
 
 			signals: { 'update': [], 'updateSize': [], 'ready': [] }
 		});
@@ -104,7 +108,14 @@ class Canvas {
 		/* canvas = WebGLDebugUtils.makeLostContextSimulatingCanvas(canvas);
 		canvas.loseContextInNCalls(1000); */
 
-		const glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
+		const glopt = {
+			antialias: false,
+			depth: false,
+			stencil: this.stencil,
+			preserveDrawingBuffer: this.preserveDrawingBuffer,
+			colorSpace: this.srgb ? 'srgb' : 'display-p3'
+		};
+		
 		this.gl = this.gl ||
 			canvas.getContext("webgl2", glopt) ||
 			canvas.getContext("webgl", glopt) ||
@@ -112,6 +123,22 @@ class Canvas {
 
 		if (!this.gl)
 			throw "Could not create a WebGL context";
+
+		// Enable sRGB framebuffer in WebGL2
+		if (this.srgb && this.gl instanceof WebGL2RenderingContext) {
+			// Enable sRGB color conversion for the output framebuffer
+			this.gl.enable(this.gl.FRAMEBUFFER_SRGB);
+		} else if (this.srgb) {
+			// Try to get the EXT_sRGB extension for WebGL1
+			const ext = this.gl.getExtension('EXT_sRGB');
+			if (ext) {
+				console.log('Using EXT_sRGB extension for sRGB support');
+				// The extension will be used during texture creation
+				this.srgbExt = ext;
+			} else {
+				console.warn('sRGB support requested but not available in this browser/device');
+			}
+		}
 
 		canvas.addEventListener("webglcontextlost", (event) => { console.log("Context lost."); event.preventDefault(); }, false);
 		canvas.addEventListener("webglcontextrestored", () => { this.restoreWebGL(); }, false);
@@ -161,16 +188,30 @@ class Canvas {
 	}
 
 	/**
- * Restores WebGL context after loss.
- * Reinitializes shaders and textures for all layers.
- * @private
- */
+	 * Restores WebGL context after loss.
+	 * Reinitializes shaders and textures for all layers.
+	 * @private
+	 */
 	restoreWebGL() {
-		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
+		let glopt = {
+			antialias: false,
+			depth: false,
+			stencil: this.stencil,
+			preserveDrawingBuffer: this.preserveDrawingBuffer,
+			colorSpace: this.srgb ? 'srgb' : 'display-p3'
+		};
+		
 		this.gl = this.gl ||
 			this.canvasElement.getContext("webgl2", glopt) ||
 			this.canvasElement.getContext("webgl", glopt) ||
 			this.canvasElement.getContext("experimental-webgl", glopt);
+
+		// Re-enable sRGB framebuffer in WebGL2
+		if (this.srgb && this.gl instanceof WebGL2RenderingContext) {
+			this.gl.enable(this.gl.FRAMEBUFFER_SRGB);
+		} else if (this.srgb) {
+			this.srgbExt = this.gl.getExtension('EXT_sRGB');
+		}
 
 		for (let layer of Object.values(this.layers)) {
 			layer.gl = this.gl;
@@ -210,14 +251,14 @@ class Canvas {
 	}
 
 	/**
- * Removes a layer from the canvas.
- * @param {Layer} layer - Layer instance to remove
- * @example
- * const layer = new Layer(options);
- * canvas.addLayer('map', layer);
- * // ... later ...
- * canvas.removeLayer(layer);
- */
+	 * Removes a layer from the canvas.
+	 * @param {Layer} layer - Layer instance to remove
+	 * @example
+	 * const layer = new Layer(options);
+	 * canvas.addLayer('map', layer);
+	 * // ... later ...
+	 * canvas.removeLayer(layer);
+	 */
 	removeLayer(layer) {
 		layer.clear(); //order is important.
 
@@ -242,11 +283,11 @@ class Canvas {
 	}
 
 	/**
- * Renders a frame at the specified time.
- * @param {number} time - Current time in milliseconds
- * @returns {boolean} True if all animations are complete
- * @private
- */
+	 * Renders a frame at the specified time.
+	 * @param {number} time - Current time in milliseconds
+	 * @returns {boolean} True if all animations are complete
+	 * @private
+	 */
 	draw(time) {
 		let gl = this.gl;
 		let view = this.camera.glViewport();
@@ -279,10 +320,10 @@ class Canvas {
 	}
 
 	/**
- * Schedules tile downloads based on current view.
- * @param {Object} [transform] - Optional transform override, defaults to current camera transform
- * @private
- */
+	 * Schedules tile downloads based on current view.
+	 * @param {Object} [transform] - Optional transform override, defaults to current camera transform
+	 * @private
+	 */
 	prefetch(transform) {
 		if (!transform)
 			transform = this.camera.getGlCurrentTransform(performance.now());
@@ -294,6 +335,14 @@ class Canvas {
 				layer.prefetch(transform, this.camera.glViewport());
 			}
 		}
+	}
+	
+	/**
+	 * Gets the sRGB extension for WebGL 1.0 contexts
+	 * @returns {EXT_sRGB|null} The sRGB extension or null if not available/needed
+	 */
+	getSrgbExtension() {
+		return this.srgbExt || null;
 	}
 }
 
