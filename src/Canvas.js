@@ -104,8 +104,7 @@ class Canvas {
 		/* canvas = WebGLDebugUtils.makeLostContextSimulatingCanvas(canvas);
 		canvas.loseContextInNCalls(1000); */
 
-
-		let glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
+		const glopt = { antialias: false, depth: false, preserveDrawingBuffer: this.preserveDrawingBuffer };
 		this.gl = this.gl ||
 			canvas.getContext("webgl2", glopt) ||
 			canvas.getContext("webgl", glopt) ||

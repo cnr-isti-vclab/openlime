@@ -44,6 +44,7 @@ const core = [
 	'./src/Shader.js',
 	'./src/ShaderCombiner.js',
 	'./src/ShaderEdgeDetection.js',
+	'./src/ShaderAnisotropicDiffusion.js',
 	'./src/Controller.js',
 	'./src/Controller2D.js',
 	'./src/ControllerPanZoom.js',
