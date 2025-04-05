@@ -429,6 +429,86 @@ Handles layer management, WebGL context creation/restoration, and render timing.
         </tr>
 
     
+
+        <tr>
+            
+                <td class="name"><code>srgb</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"><p>Whether to enable sRGB color space for the output framebuffer</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>stencil</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last"><p>Whether to enable stencil buffer support</p></td>
+        </tr>
+
+    
     </tbody>
 </table>
 
@@ -666,7 +746,7 @@ Handles layer management, WebGL context creation/restoration, and render timing.
 		<ul class="dummy">
 			<li>
 				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-193">line 193</a>
+				 <a href="Canvas.js.html#sunlight-1-line-234">line 234</a>
 			</li>
 		</ul>
 	</dd>
@@ -726,6 +806,121 @@ Handles layer management, WebGL context creation/restoration, and render timing.
         
 
     
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getSrgbExtension"><span class="type-signature"></span>getSrgbExtension()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets the sRGB extension for WebGL 1.0 contexts</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Canvas.js.html">Canvas.js</a>,
+				 <a href="Canvas.js.html#sunlight-1-line-344">line 344</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>The sRGB extension or null if not available/needed</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">EXT_sRGB</span>
+|
+
+<span class="param-type">null</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
 
     
 </dd>
@@ -859,7 +1054,7 @@ Handles layer management, WebGL context creation/restoration, and render timing.
 		<ul class="dummy">
 			<li>
 				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-147">line 147</a>
+				 <a href="Canvas.js.html#sunlight-1-line-174">line 174</a>
 			</li>
 		</ul>
 	</dd>
@@ -1021,7 +1216,7 @@ Handles layer management, WebGL context creation/restoration, and render timing.
 		<ul class="dummy">
 			<li>
 				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-221">line 221</a>
+				 <a href="Canvas.js.html#sunlight-1-line-262">line 262</a>
 			</li>
 		</ul>
 	</dd>
@@ -1356,7 +1551,7 @@ canvas.removeLayer(layer);</pre>
 		<ul class="dummy">
 			<li>
 				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-129">line 129</a>
+				 <a href="Canvas.js.html#sunlight-1-line-156">line 156</a>
 			</li>
 		</ul>
 	</dd>
@@ -1452,7 +1647,7 @@ canvas.removeLayer(layer);</pre>
 		<ul class="dummy">
 			<li>
 				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-310">line 310</a>
+				 <a href="Canvas.js.html#sunlight-1-line-359">line 359</a>
 			</li>
 		</ul>
 	</dd>
@@ -1540,7 +1735,7 @@ canvas.removeLayer(layer);</pre>
 		<ul class="dummy">
 			<li>
 				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-300">line 300</a>
+				 <a href="Canvas.js.html#sunlight-1-line-349">line 349</a>
 			</li>
 		</ul>
 	</dd>
@@ -1628,7 +1823,7 @@ canvas.removeLayer(layer);</pre>
 		<ul class="dummy">
 			<li>
 				<a href="Canvas.js.html">Canvas.js</a>,
-				 <a href="Canvas.js.html#sunlight-1-line-305">line 305</a>
+				 <a href="Canvas.js.html#sunlight-1-line-354">line 354</a>
 			</li>
 		</ul>
 	</dd>
@@ -1705,7 +1900,7 @@ canvas.removeLayer(layer);</pre>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
 	
-		on 2025-04-05T04:48:26+00:00
+		on 2025-04-05T11:45:31+00:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
