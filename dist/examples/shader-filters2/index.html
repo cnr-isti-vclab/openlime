@@ -29,6 +29,9 @@
     const filterGray = new OpenLIME.ShaderFilterGrayscale();
     layer0.addShaderFilter(filterGray);
 
+    const filterBrightness = new OpenLIME.ShaderFilterBrightness({brightness: 1.4});
+    layer0.addShaderFilter(filterBrightness);
+
     lime.addLayer('iip', layer0);
     lime.camera.maxFixedZoom = 1;  // Disable zooming beyond 100%
 

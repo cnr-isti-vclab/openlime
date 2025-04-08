@@ -238,7 +238,7 @@ class ShaderFilterOpacity extends ShaderFilter {
      * Creates an opacity filter
      * @param {number} opacity - Initial opacity value [0-1]
      * @param {Object} [options] - Additional filter options
-     */    
+     */
     constructor(opacity, options) {
         super(options);
         this.uniforms[this.uniformName('opacity')] = { type: 'float', needsUpdate: true, size: 1, value: opacity };
@@ -262,7 +262,7 @@ class ShaderGammaFilter extends ShaderFilter {
      * Creates a gamma correction filter
      * @param {Object} [options] - Filter options
      * @param {number} [options.gamma=2.2] - Gamma correction value
-     */    
+     */
     constructor(options) {
         super(options);
         this.uniforms[this.uniformName('gamma')] = { type: 'float', needsUpdate: true, size: 1, value: 2.2 };
@@ -287,18 +287,18 @@ class ShaderFilterGrayscale extends ShaderFilter {
      * Creates a grayscale filter
      * @param {Object} [options] - Filter options
      * @param {number[]} [options.weights=[0.2126, 0.7152, 0.0722]] - RGB channel weights for luminance calculation
-     */    
+     */
     constructor(options) {
         super(options);
-        
+
         // Default weights based on human perception of colors (ITU-R BT.709)
-        this.uniforms[this.uniformName('weights')] = { 
-            type: 'vec3', 
-            needsUpdate: true, 
-            size: 3, 
-            value: [0.2126, 0.7152, 0.0722] 
+        this.uniforms[this.uniformName('weights')] = {
+            type: 'vec3',
+            needsUpdate: true,
+            size: 3,
+            value: [0.2126, 0.7152, 0.0722]
         };
-        
+
         // Add modes for different grayscale calculations
         this.modes['grayscale'] = [
             {
@@ -333,9 +333,9 @@ class ShaderFilterGrayscale extends ShaderFilter {
                 float gray;
                 
                 // Use the active grayscale mode
-                ${this.modes['grayscale'].find(m => m.id === 'luminance' && m.enable) ? 
-                    `gray = grayscaleLuminance(col.rgb, ${this.uniformName('weights')});` : 
-                    `gray = grayscaleAverage(col.rgb);`}
+                ${this.modes['grayscale'].find(m => m.id === 'luminance' && m.enable) ?
+                `gray = grayscaleLuminance(col.rgb, ${this.uniformName('weights')});` :
+                `gray = grayscaleAverage(col.rgb);`}
                 
                 // Apply grayscale conversion
                 vec3 grayRGB = vec3(gray);
@@ -343,7 +343,7 @@ class ShaderFilterGrayscale extends ShaderFilter {
                 return linear2srgb(vec4(grayRGB, col.a));
             }`;
     }
-    
+
     /**
      * Switches between grayscale calculation methods
      * @param {string} method - Either 'luminance' or 'average'
@@ -353,4 +353,107 @@ class ShaderFilterGrayscale extends ShaderFilter {
     }
 }
 
-export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity, ShaderGammaFilter , ShaderFilterGrayscale}
+/**
+ * 
+ * @extends ShaderFilter
+ * Filter that adjusts the brightness of rendered content
+ */
+class ShaderFilterBrightness extends ShaderFilter {
+    /**
+     * Creates a brightness filter
+     * @param {Object} [options] - Filter options
+     * @param {number} [options.brightness=1.0] - Brightness value (0.0-2.0, where 1.0 is normal brightness)
+     */
+    constructor(options) {
+        super(options);
+        this.uniforms[this.uniformName('brightness')] = {
+            type: 'float',
+            needsUpdate: true,
+            size: 1,
+            value: options?.brightness || 1.0
+        };
+
+        // Add modes for different brightness adjustments
+        this.modes['brightness'] = [
+            {
+                id: 'linear',
+                enable: true,
+                src: `
+                // Linear brightness adjustment
+                vec3 adjustBrightnessLinear(vec3 color, float brightness) {
+                    return color * brightness;
+                }
+                `
+            },
+            {
+                id: 'preserve_saturation',
+                enable: false,
+                src: `
+                // Brightness adjustment that preserves saturation by adjusting in HSL space
+                vec3 adjustBrightnessPreserveSaturation(vec3 color, float brightness) {
+                    // Convert RGB to HSL-like space
+                    float maxChannel = max(max(color.r, color.g), color.b);
+                    float minChannel = min(min(color.r, color.g), color.b);
+                    float luminance = (maxChannel + minChannel) / 2.0;
+                    
+                    // Skip complex HSL conversion and just scale while preserving relative color relationships
+                    if (maxChannel > 0.0) {
+                        float scaleFactor = brightness;
+                        // Adjust scale to prevent oversaturation
+                        if (brightness > 1.0) {
+                            float headroom = (1.0 - luminance) / luminance;
+                            scaleFactor = min(brightness, 1.0 + headroom);
+                        }
+                        return color * scaleFactor;
+                    }
+                    
+                    return color;
+                }
+                `
+            }
+        ];
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col) {
+                // Skip processing if fully transparent
+                if (col.a <= 0.0) return col;
+                
+                // Convert to linear space for proper brightness adjustment
+                col = srgb2linear(col);
+                vec3 adjustedColor;
+                
+                // Use the active brightness mode
+                ${this.modes['brightness'].find(m => m.id === 'linear' && m.enable) ?
+                `adjustedColor = adjustBrightnessLinear(col.rgb, ${this.uniformName('brightness')});` :
+                `adjustedColor = adjustBrightnessPreserveSaturation(col.rgb, ${this.uniformName('brightness')});`}
+                
+                // Clamp to prevent overflow
+                adjustedColor = clamp(adjustedColor, 0.0, 1.0);
+                
+                // Convert back to sRGB space
+                return linear2srgb(vec4(adjustedColor, col.a));
+            }`;
+    }
+
+    /**
+     * Sets the brightness level
+     * @param {number} value - Brightness value (0.0-2.0)
+     */
+    setBrightness(value) {
+        // Clamp value to valid range
+        const brightness = Math.max(0.0, Math.min(2.0, value));
+        this.setUniform('brightness', brightness);
+    }
+
+    /**
+     * Switches between brightness adjustment methods
+     * @param {string} method - Either 'linear' or 'preserve_saturation'
+     */
+    setBrightnessMethod(method) {
+        this.setMode('brightness', method);
+    }
+}
+
+export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity, ShaderGammaFilter, ShaderFilterGrayscale, ShaderFilterBrightness }
