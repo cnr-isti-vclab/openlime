@@ -280,16 +280,6 @@ uniform ${basetype} base1[np1];
 uniform ${basetype} base2[np1];
 `;
 
-		for (let n = 0; n < this.njpegs; n++)
-			str += `
-uniform sampler2D plane${n};
-`;
-
-		if (this.normals)
-			str += `
-uniform sampler2D normals;
-`;
-
 		if (this.colorspace == 'mycc')
 			str +=
 				`
@@ -352,11 +342,11 @@ color = vec4(s * diffuse.xyz, 1);
 color = vec4(vec3(dot(light, normal)), 1);
 `;
 					break;
-					case 'gray_diffuse':
-							str += `
+				case 'gray_diffuse':
+					str += `
 color = vec4(vec3(dot(light, normal)), 1);
 `;
-						break;
+					break;
 				case 'specular':
 				default: str += `
 	float s = pow(dot(light, normal), specular_exp);
@@ -612,7 +602,7 @@ class AdaptiveRBF {
 	weights(x, y, z) {
 		const neighbors = this.findNeighbors(x, y, z);
 
-		const meanDist =  this.smoothMinDist(neighbors);
+		const meanDist = this.smoothMinDist(neighbors);
 		const epsilon = this.alpha / meanDist;
 
 		let num = 0, denom = 0;
@@ -623,7 +613,7 @@ class AdaptiveRBF {
 			denom += w;
 		}
 
-		for(let w of weights)
+		for (let w of weights)
 			w[1] /= denom;
 		return weights;
 	}
@@ -666,7 +656,7 @@ class RBF {
 
 		const rbf = new AdaptiveRBF(samples, 8, 24);
 		return rbf.weights(lpos[0], lpos[1], lpos[2]);
-		
+
 	}
 }
 

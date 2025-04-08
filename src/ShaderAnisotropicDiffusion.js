@@ -31,7 +31,7 @@ class ShaderAnisotropicDiffusion extends Shader {
         normalStrength: { type: 'float', value: 1.2, needsUpdate: true }
       },
       samplers: [
-        { id: 0, name: 'kd', label: 'Normal Map', samplers: [{ id: 0, type: 'color' }] }
+        { id: 0, name: 'source', label: 'Normal Map', samplers: [{ id: 0, type: 'color' }] }
       ],
       label: 'Anisotropic Diffusion',
       modes: ['perona-malik', 'weickert'],
@@ -69,7 +69,6 @@ class ShaderAnisotropicDiffusion extends Shader {
     let gl2 = !(gl instanceof WebGLRenderingContext);
 
     return `
-uniform sampler2D kd;
 uniform float kappa;
 uniform int iterations;
 uniform float lambda;
@@ -97,7 +96,7 @@ float normalToGray(vec3 normal) {
 
 vec4 data() {
   // Sample the center pixel color (normal map)
-  vec4 centerColor = texture${gl2 ? '' : '2D'}(kd, v_texcoord);
+  vec4 centerColor = texture${gl2 ? '' : '2D'}source, v_texcoord);
   
   // Convert normal to working grayscale image
   // Adjust normal vector to be in [-1,1] range
@@ -119,10 +118,10 @@ vec4 data() {
     if (i >= iterations) break; // Handle dynamic loop limit
     
     // Sample the 4-connected neighborhood
-    vec3 normalN = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(0.0, -1.0)).rgb * 2.0 - 1.0;
-    vec3 normalS = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(0.0, 1.0)).rgb * 2.0 - 1.0;
-    vec3 normalE = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(1.0, 0.0)).rgb * 2.0 - 1.0;
-    vec3 normalW = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(-1.0, 0.0)).rgb * 2.0 - 1.0;
+    vec3 normalN = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(0.0, -1.0)).rgb * 2.0 - 1.0;
+    vec3 normalS = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(0.0, 1.0)).rgb * 2.0 - 1.0;
+    vec3 normalE = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(1.0, 0.0)).rgb * 2.0 - 1.0;
+    vec3 normalW = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(-1.0, 0.0)).rgb * 2.0 - 1.0;
     
     // Convert to grayscale with normalization to 0-1 range
     float n = (normalToGray(normalN) + 1.0) * 0.5;

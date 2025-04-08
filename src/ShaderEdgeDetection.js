@@ -24,7 +24,7 @@ class ShaderEdgeDetection extends Shader {
         colorEdges: { type: 'bool', value: false, needsUpdate: true }
       },
       samplers: [
-        { id: 0, name: 'kd', label: 'Color', samplers: [{ id: 0, type: 'color' }] }
+        { id: 0, name: 'source', label: 'Color', samplers: [{ id: 0, type: 'color' }] }
       ],
       label: 'Edge Detection',
       modes: ['sobel', 'prewitt'],
@@ -55,7 +55,7 @@ class ShaderEdgeDetection extends Shader {
     let gl2 = !(gl instanceof WebGLRenderingContext);
 
     return `
-uniform sampler2D kd;
+
 uniform float threshold;
 uniform bool colorEdges;
 
@@ -66,15 +66,15 @@ vec2 texelSize = vec2(1.0) / tileSize;
 
 vec4 data() {
   // Sample the 3x3 neighborhood around the current pixel
-  vec4 tl = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(-1, -1));
-  vec4 t  = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 0, -1));
-  vec4 tr = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 1, -1));
-  vec4 l  = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(-1,  0));
-  vec4 c  = texture${gl2 ? '' : '2D'}(kd, v_texcoord);
-  vec4 r  = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 1,  0));
-  vec4 bl = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2(-1,  1));
-  vec4 b  = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 0,  1));
-  vec4 br = texture${gl2 ? '' : '2D'}(kd, v_texcoord + texelSize * vec2( 1,  1));
+  vec4 tl = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(-1, -1));
+  vec4 t  = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 0, -1));
+  vec4 tr = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 1, -1));
+  vec4 l  = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(-1,  0));
+  vec4 c  = texture${gl2 ? '' : '2D'}(source, v_texcoord);
+  vec4 r  = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 1,  0));
+  vec4 bl = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(-1,  1));
+  vec4 b  = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 0,  1));
+  vec4 br = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 1,  1));
   
   // Convert to grayscale for edge detection
   float tlGray = dot(tl.rgb, vec3(0.299, 0.587, 0.114));

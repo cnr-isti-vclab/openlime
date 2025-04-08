@@ -73,9 +73,6 @@ class ShaderCombiner extends Shader {
 
 ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 
-uniform sampler2D source1;
-uniform sampler2D source2;
-
 vec4 data() {
 	vec4 c1 = texture(source1, v_texcoord);
 	vec4 c2 = texture(source2, v_texcoord);

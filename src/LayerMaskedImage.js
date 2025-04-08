@@ -83,8 +83,6 @@ class LayerMaskedImage extends Layer {
 
 			let gl2 = !(gl instanceof WebGLRenderingContext);
 			let str = `
-		
-		uniform sampler2D kd;
 
 		${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 

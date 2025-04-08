@@ -284,7 +284,7 @@ class ShaderFilterVector extends ShaderFilter {
 
             vec2 p = v_texcoord*tileSize; // point in pixel
             vec2 pc_coord = arrowTileCenterCoord(p)/tileSize; // center coordinate
-            vec4 pc_val = texture(kd, pc_coord); // [0..1] - lookup color in center
+            vec4 pc_val = texture(source, pc_coord); // [0..1] - lookup color in center
             float s = 2.0;
             float b = -1.0;
             vec2 uvc = vec2(pc_val.x*s+b, pc_val.y*s+b); // [-1..1]

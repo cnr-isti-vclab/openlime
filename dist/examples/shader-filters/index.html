@@ -33,9 +33,7 @@
     <div class="openlime"></div>
     <div id="test"></div>
     <script src="../../js/openlime.js"></script>
-    <script type="module">
-        import config from './config.json' assert {type: 'json'};
-
+    <script>
         // EPSG:4326 (WGS84) to EPSG:3857 (Web Mercatore)
         function degrees2meters(lon, lat) {
             var x = lon * 20037508.34 / 180;
@@ -50,103 +48,110 @@
             return [lon, lat]
         }
 
-        // // Create an OpenLIME canvas into .openlime
-        const lime = new OpenLIME.Viewer('.openlime');
-        lime.camera.bounded = false;
+        // Load configuration file asynchronously
+        fetch('./config.json')
+            .then(response => response.json())
+            .then(config => {
+                // Create an OpenLIME canvas into .openlime
+                const lime = new OpenLIME.Viewer('.openlime');
+                lime.camera.bounded = false;
 
-        // Create a base layer with a world map
-        // All geo-referenced images must be in the same coordinate system (EPSG:3857)
-        const mapMaxlevel = 19;
-        const mapSize = Math.pow(2, mapMaxlevel + 8);
-        const layer = new OpenLIME.Layer({
-            layout: 'google',
-            type: 'image',
-            width: mapSize,
-            height: mapSize,
-            mipmapBias: 0.4,
-            transform: { x: 0, y: 0, z: 1, a: 0 },
-            //url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-            //url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            //url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-            //url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
-            url: 'https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile//{z}/{y}/{x}'
-        });
-        lime.addLayer('Base', layer);
+                // Create a base layer with a world map
+                // All geo-referenced images must be in the same coordinate system (EPSG:3857)
+                const mapMaxlevel = 19;
+                const mapSize = Math.pow(2, mapMaxlevel + 8);
+                const layer = new OpenLIME.Layer({
+                    layout: 'google',
+                    type: 'image',
+                    width: mapSize,
+                    height: mapSize,
+                    mipmapBias: 0.4,
+                    transform: { x: 0, y: 0, z: 1, a: 0 },
+                    //url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    //url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    //url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+                    //url: 'https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
+                    url: 'https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile//{z}/{y}/{x}'
+                });
+                lime.addLayer('Base', layer);
 
-        // Create a layer with a geo-referenced image properly positioned onto the base layer.
-        const EarthCirconference = degrees2meters(360, 0)[0];
-        const EarthScale = EarthCirconference / mapSize; // Earth circonference [m] / width [pixel]
+                // Create a layer with a geo-referenced image properly positioned onto the base layer.
+                const EarthCirconference = degrees2meters(360, 0)[0];
+                const EarthScale = EarthCirconference / mapSize; // Earth circonference [m] / width [pixel]
 
-        const geoimgCenter = config.temperature.center;
-        const geoimgScale = (config.temperature.lowerRight[0] - config.temperature.upperLeft[0]) / config.temperature.width; // Width [m] / Width [pixel]
+                const geoimgCenter = config.temperature.center;
+                const geoimgScale = (config.temperature.lowerRight[0] - config.temperature.upperLeft[0]) / config.temperature.width; // Width [m] / Width [pixel]
 
-        const layerTemp = new OpenLIME.Layer({
-            debug: true,
-            layout: 'image',
-            type: 'maskedimage',
-            transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
-            url: config.temperature.url,
-            overlay: true
-        });
-        lime.addLayer('Temp', layerTemp);
+                const layerTemp = new OpenLIME.Layer({
+                    debug: true,
+                    layout: 'image',
+                    type: 'maskedimage',
+                    transform: { x: geoimgCenter[0] / EarthScale, y: geoimgCenter[1] / EarthScale, z: geoimgScale / EarthScale, a: 0 },
+                    url: config.temperature.url,
+                    overlay: true
+                });
+                lime.addLayer('Temp', layerTemp);
 
-        // Add a Colormap filter
+                // Add a Colormap filter
 
-        // Create a colormap
-        const cscaleBar = new OpenLIME.Colormap([
-            new OpenLIME.Color("rgb(0, 0, 255)"),
-            new OpenLIME.Color('rgb(255, 255, 255)'),
-            new OpenLIME.Color('rgb(125, 0, 0)'),
-            new OpenLIME.Color('rgb(200, 0, 0)'),
-            new OpenLIME.Color('rgb(255, 0, 0)'),
-            new OpenLIME.Color('rgb(0, 128, 0)'),
-        ], {
-            domain: [-10, -1, 1, 10, 20, 30],
-            type: 'bar',
-            description: config.temperature.description
-        });
+                // Create a colormap
+                const cscaleBar = new OpenLIME.Colormap([
+                    new OpenLIME.Color("rgb(0, 0, 255)"),
+                    new OpenLIME.Color('rgb(255, 255, 255)'),
+                    new OpenLIME.Color('rgb(125, 0, 0)'),
+                    new OpenLIME.Color('rgb(200, 0, 0)'),
+                    new OpenLIME.Color('rgb(255, 0, 0)'),
+                    new OpenLIME.Color('rgb(0, 128, 0)'),
+                ], {
+                    domain: [-10, -1, 1, 10, 20, 30],
+                    type: 'bar',
+                    description: config.temperature.description
+                });
 
-        const cscaleLinearTemp = new OpenLIME.Colormap([
-            new OpenLIME.Color("rgb(0, 0, 255)"),
-            new OpenLIME.Color('rgb(255, 255, 255)'),
-            new OpenLIME.Color('rgb(255, 0, 0)'),
-        ], {
-            domain: [-10, 0, 30],
-            description: config.temperature.description
-        });
+                const cscaleLinearTemp = new OpenLIME.Colormap([
+                    new OpenLIME.Color("rgb(0, 0, 255)"),
+                    new OpenLIME.Color('rgb(255, 255, 255)'),
+                    new OpenLIME.Color('rgb(255, 0, 0)'),
+                ], {
+                    domain: [-10, 0, 30],
+                    description: config.temperature.description
+                });
 
-        const colorscale = cscaleLinearTemp;
+                const colorscale = cscaleLinearTemp;
 
-        // Create the filter
-        const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: config.temperature.inDomain });
+                // Create the filter
+                const filterColormap = new OpenLIME.ShaderFilterColormap(colorscale, { inDomain: config.temperature.inDomain });
 
-        // Add the filter to the shader
-        layerTemp.addShaderFilter(filterColormap);
+                // Add the filter to the shader
+                layerTemp.addShaderFilter(filterColormap);
 
-        // Add Filter Opacity
-        const filterOpacity = new OpenLIME.ShaderFilterOpacity(1.0);
-        layerTemp.addShaderFilter(filterOpacity);
+                // Add Filter Opacity
+                const filterOpacity = new OpenLIME.ShaderFilterOpacity(1.0);
+                layerTemp.addShaderFilter(filterOpacity);
 
-        // Colormap Legend
-        const legend = new OpenLIME.ColormapLegend(lime, colorscale, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
+                // Colormap Legend
+                const legend = new OpenLIME.ColormapLegend(lime, colorscale, { class: 'openlime-legend', textColor: '#222', nticks: 8 });
 
-        // Fetch a skin (visual elements for the web page)
-        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+                // Fetch a skin (visual elements for the web page)
+                OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
-        // Create an User Interface 
-        const ui = new OpenLIME.UIBasic(lime);
-        // Remove light from the toolbar
-        ui.actions.light.display = false;
+                // Create an User Interface 
+                const ui = new OpenLIME.UIBasic(lime);
+                // Remove light from the toolbar
+                ui.actions.light.display = false;
 
-        // Add zoomin and zoomout to the toolbar
-        ui.actions.zoomin.display = true;
-        ui.actions.zoomout.display = true;
-        ui.actions.snapshot.display = true;
-        ui.pixelSize = null;
-        ui.actions.ruler.display = false;
-        ui.attribution = 'Tiles: ESRI &mdash; Data: NCEP NOAA, IISAC CNR Bologna, CRS4, UNICA';
-        ui.controlZoomMessage = "Use Ctrl + Wheel to zoom instead of scrolling";
-
+                // Add zoomin and zoomout to the toolbar
+                ui.actions.zoomin.display = true;
+                ui.actions.zoomout.display = true;
+                ui.actions.snapshot.display = true;
+                ui.pixelSize = null;
+                ui.actions.ruler.display = false;
+                ui.attribution = 'Tiles: ESRI &mdash; Data: NCEP NOAA, IISAC CNR Bologna, CRS4, UNICA';
+                ui.controlZoomMessage = "Use Ctrl + Wheel to zoom instead of scrolling";
+            })
+            .catch(error => {
+                console.error('Error loading config.json:', error);
+            });
     </script>
 </body>
 

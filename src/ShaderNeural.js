@@ -221,9 +221,6 @@ vec4 output2[${this.n / 4}];  // 52/4
 vec3 output3;
 
 in vec2 v_texcoord;
-uniform sampler2D u_texture_1;
-uniform sampler2D u_texture_2;
-uniform sampler2D u_texture_3;
 uniform vec2 lights;
 
 uniform vec4 layer1_weights[${this.c * this.n / 4}]; // 12*52/4

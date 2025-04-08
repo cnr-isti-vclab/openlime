@@ -164,11 +164,9 @@ class ShaderLens extends Shader {
     fragShaderSrc(gl) {
         let gl2 = !(gl instanceof WebGLRenderingContext);
 
-        let samplerDeclaration = `uniform sampler2D ` + this.samplers[0].name + `;`;
         let overlaySamplerCode = "";
 
         if (this.overlayLayerEnabled) { //FIXME two cases with transparence or not.
-            samplerDeclaration += `uniform sampler2D ` + this.samplers[1].name + `;`;
 
             overlaySamplerCode =
                 `vec4 c1 = texture${gl2 ? '' : '2D'}(source1, v_texcoord);
@@ -184,7 +182,6 @@ class ShaderLens extends Shader {
         }
         return `
 
-        ${samplerDeclaration}
         uniform vec4 u_lens; // [cx, cy, radius, border]
         uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
         uniform vec4 u_border_color;

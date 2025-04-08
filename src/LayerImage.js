@@ -77,7 +77,7 @@ class LayerImage extends Layer {
 
 		let shader = new Shader({
 			'label': 'Rgb',
-			'samplers': [{ id: 0, name: 'kd', type: rasterFormat }]
+			'samplers': [{ id: 0, name: 'source', type: rasterFormat }]
 		});
 
 		this.shaders = { 'standard': shader };

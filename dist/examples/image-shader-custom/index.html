@@ -32,13 +32,12 @@
                 precision highp float;
                 precision highp int;
 
-                uniform sampler2D kd;
                 uniform float u_colorFactor;
 
                 ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 
                 vec4 data() {
-                    vec4 s = texture${gl2 ? '' : '2D'}(kd, v_texcoord);
+                    vec4 s = texture${gl2 ? '' : '2D'}(source, v_texcoord);
                     vec3 lum = vec3(0.21, 0.71, 0.07); 
                     float grey = dot(s.rgb, lum.rgb);
                     return vec4(s.rgb * (1.0 - u_colorFactor) + (grey * u_colorFactor), 1.0);
@@ -56,7 +55,7 @@
                 // Instantiate the custom shader
                 const shader = new GrayscaleShader({
                     'label': 'Grayscale',
-                    'samplers': [{ id: 0, name: 'kd' }],
+                    'samplers': [{ id: 0, name: 'source' }],
                     'uniforms': {
                         u_colorFactor: {
                             type: 'float',

@@ -151,11 +151,11 @@ class LayerAnnotationImage extends LayerAnnotation {
         let samplers = [];
         let N = this.rasters.length;
         for (let i = 0; i < N; ++i) {
-            samplers.push({ id: i, name: 'kd', type: rasterFormat });
+            samplers.push({ id: i, name: 'source', type: rasterFormat });
         }
         let shader = new Shader({
             'label': 'Rgb',
-            'samplers': samplers //[{ id:0, name:'kd', type: rasterFormat }]
+            'samplers': samplers //[{ id:0, name:'source', type: rasterFormat }]
         });
 
         shader.fragShaderSrc = function (gl) {
@@ -163,12 +163,10 @@ class LayerAnnotationImage extends LayerAnnotation {
             let gl2 = !(gl instanceof WebGLRenderingContext);
             let str = `
 
-uniform sampler2D kd;
-
 ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 
 vec4 data() {
-	return texture${gl2 ? '' : '2D'}(kd, v_texcoord);
+	return texture${gl2 ? '' : '2D'}(source, v_texcoord);
 }
 `;
             return str;

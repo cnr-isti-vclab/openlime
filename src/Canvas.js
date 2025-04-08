@@ -23,7 +23,7 @@ class Canvas {
 	 * @param {Object} [options.layers] - Layer configurations mapping layer IDs to Layer instances
 	 * @param {boolean} [options.preserveDrawingBuffer=false] - Whether to preserve WebGL buffers until manually cleared
 	 * @param {number} [options.targetfps=30] - Target frames per second for rendering
-	 * @param {boolean} [options.srgb=true] - Whether to enable sRGB color space for the output framebuffer
+	 * @param {boolean} [options.srgb=true] - Whether to enable sRGB color space or display-P3 for the output framebuffer
 	 * @param {boolean} [options.stencil=false] - Whether to enable stencil buffer support
 	 * @fires Canvas#update
 	 * @fires Canvas#updateSize
@@ -124,22 +124,6 @@ class Canvas {
 		if (!this.gl)
 			throw "Could not create a WebGL context";
 
-		// Enable sRGB framebuffer in WebGL2
-		if (this.srgb && this.gl instanceof WebGL2RenderingContext) {
-			// Enable sRGB color conversion for the output framebuffer
-			this.gl.enable(this.gl.FRAMEBUFFER_SRGB);
-		} else if (this.srgb) {
-			// Try to get the EXT_sRGB extension for WebGL1
-			const ext = this.gl.getExtension('EXT_sRGB');
-			if (ext) {
-				console.log('Using EXT_sRGB extension for sRGB support');
-				// The extension will be used during texture creation
-				this.srgbExt = ext;
-			} else {
-				console.warn('sRGB support requested but not available in this browser/device');
-			}
-		}
-
 		canvas.addEventListener("webglcontextlost", (event) => { console.log("Context lost."); event.preventDefault(); }, false);
 		canvas.addEventListener("webglcontextrestored", () => { this.restoreWebGL(); }, false);
 		document.addEventListener("visibilitychange", (event) => { if (this.gl.isContextLost()) { this.restoreWebGL(); } });
@@ -205,13 +189,6 @@ class Canvas {
 			this.canvasElement.getContext("webgl2", glopt) ||
 			this.canvasElement.getContext("webgl", glopt) ||
 			this.canvasElement.getContext("experimental-webgl", glopt);
-
-		// Re-enable sRGB framebuffer in WebGL2
-		if (this.srgb && this.gl instanceof WebGL2RenderingContext) {
-			this.gl.enable(this.gl.FRAMEBUFFER_SRGB);
-		} else if (this.srgb) {
-			this.srgbExt = this.gl.getExtension('EXT_sRGB');
-		}
 
 		for (let layer of Object.values(this.layers)) {
 			layer.gl = this.gl;
@@ -337,13 +314,6 @@ class Canvas {
 		}
 	}
 	
-	/**
-	 * Gets the sRGB extension for WebGL 1.0 contexts
-	 * @returns {EXT_sRGB|null} The sRGB extension or null if not available/needed
-	 */
-	getSrgbExtension() {
-		return this.srgbExt || null;
-	}
 }
 
 /**

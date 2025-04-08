@@ -167,6 +167,43 @@ class Shader {
 		src += `precision highp float;\n`;
 		src += `precision highp int;\n`;
 		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
+
+		src += `
+// IEC 61966-2-1 specification		
+// Convert from sRGB to linear RGB
+vec3 srgb2linear(vec3 srgb) {
+    bvec3 cutoff = lessThan(srgb, vec3(0.04045));
+    vec3 higher = pow((srgb + vec3(0.055))/vec3(1.055), vec3(2.4));
+    vec3 lower = srgb/vec3(12.92);
+    
+    return mix(higher, lower, cutoff);
+}
+
+// Convert a single sRGB channel to linear
+float srgb2linear(float c) {
+    return c <= 0.04045 ? c/12.92 : pow((c + 0.055)/1.055, 2.4);
+}
+
+// Convert from linear RGB to sRGB
+vec3 linear2srgb(vec3 linear) {
+    bvec3 cutoff = lessThan(linear, vec3(0.0031308));
+    vec3 higher = vec3(1.055)*pow(linear, vec3(1.0/2.4)) - vec3(0.055);
+    vec3 lower = linear * vec3(12.92);
+    
+    return mix(higher, lower, cutoff);
+}
+
+// Convert a single linear channel to sRGB
+float linear2srgb(float c) {
+    return c <= 0.0031308 ? 12.92 * c : 1.055 * pow(c, 1.0/2.4) - 0.055;
+}
+
+		`
+
+		for (let sampler of this.samplers) {
+			src += `uniform sampler2D ${sampler.name};\n`;
+		}
+
 		src += this.fragShaderSrc() + '\n';
 
 		for (let f of this.filters) {
@@ -366,12 +403,11 @@ ${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let str = `
 
-uniform sampler2D kd;
 
 ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 
 vec4 data() {
-	return texture${gl2 ? '' : '2D'}(kd, v_texcoord);
+	return texture${gl2 ? '' : '2D'}(source, v_texcoord);
 }
 `;
 		return str;

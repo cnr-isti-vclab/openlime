@@ -160,10 +160,6 @@ class ShaderBRDF extends Shader {
 #define ISO_WARD_EXPONENT (4.0)
 
 ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
-uniform sampler2D uTexKd;
-uniform sampler2D uTexKs;
-uniform sampler2D uTexNormals;
-uniform sampler2D uTexGloss;
 
 uniform vec4 uLightInfo; // [x,y,z,w] (if .w==0 => Directional, if w==1 => Spot)
 uniform vec2 uAlphaLimits;
