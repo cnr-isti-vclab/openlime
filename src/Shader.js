@@ -179,6 +179,11 @@ vec3 srgb2linear(vec3 srgb) {
     return mix(higher, lower, cutoff);
 }
 
+// Convert from sRGB to linear RGB (vec4 version - preserves alpha)
+vec4 srgb2linear(vec4 srgb) {
+    return vec4(srgb2linear(srgb.rgb), srgb.a);
+}
+
 // Convert a single sRGB channel to linear
 float srgb2linear(float c) {
     return c <= 0.04045 ? c/12.92 : pow((c + 0.055)/1.055, 2.4);
@@ -193,6 +198,11 @@ vec3 linear2srgb(vec3 linear) {
     return mix(higher, lower, cutoff);
 }
 
+// Convert from linear RGB to sRGB (vec4 version - preserves alpha)
+vec4 linear2srgb(vec4 linear) {
+    return vec4(linear2srgb(linear.rgb), linear.a);
+}
+
 // Convert a single linear channel to sRGB
 float linear2srgb(float c) {
     return c <= 0.0031308 ? 12.92 * c : 1.055 * pow(c, 1.0/2.4) - 0.055;
@@ -203,6 +213,11 @@ float linear2srgb(float c) {
 		for (let sampler of this.samplers) {
 			src += `uniform sampler2D ${sampler.name};\n`;
 		}
+
+		for (let sampler of this.samplers) {
+			src += `uniform bool ${sampler.name}_isLinear;\n`;
+		}
+
 
 		src += this.fragShaderSrc() + '\n';
 
@@ -407,7 +422,8 @@ ${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
 
 vec4 data() {
-	return texture${gl2 ? '' : '2D'}(source, v_texcoord);
+	vec4 color = texture${gl2 ? '' : '2D'}(source, v_texcoord);
+	return linear2srgb(color);
 }
 `;
 		return str;

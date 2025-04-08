@@ -110,7 +110,7 @@ class LayerBRDF extends Layer {
 			gloss: { format: 'float', name: 'uTexGloss' }
 		};
 		for (let c in this.channels) {
-			this.rasters.push(new Raster({ format: brdfSamplersMap[c].format }));
+			this.rasters.push(new Raster({ format: brdfSamplersMap[c].format, isLinear: true }));
 			samplers.push({ 'id': id, 'name': brdfSamplersMap[c].name });
 			urls[id] = this.channels[c];
 			id++;

@@ -30,11 +30,13 @@ class Raster {
 	 *   - 'vec3' for RGB images
 	 *   - 'vec4' for RGBA images
 	 *   - 'float' for coefficient data
+	 * @param {boolean} [options.isLinear='false'] - Whether the input file is linear or sRGB
 	 */
 	constructor(options) {
 
 		Object.assign(this, {
 			format: 'vec3',
+			isLinear: false
 		});
 
 		Object.assign(this, options);
@@ -130,13 +132,13 @@ class Raster {
 	 * @property {number} height - Height of the loaded image (set after loading)
 	 */
 	loadTexture(gl, img) {
-		this.width = img.width;  //this will be useful for layout image.
+		this.width = img.width;
 		this.height = img.height;
-
 		var tex = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, tex);
-
 		let glFormat = gl.RGBA;
+		let internalFormat = gl.RGBA;
+
 		switch (this.format) {
 			case 'vec3':
 				glFormat = gl.RGB;
@@ -145,15 +147,39 @@ class Raster {
 				glFormat = gl.RGBA;
 				break;
 			case 'float':
-				glFormat = gl.LUMINANCE;
+				// Use RED instead of LUMINANCE for WebGL2
+				glFormat = gl instanceof WebGL2RenderingContext ? gl.RED : gl.LUMINANCE;
 				break;
 			default:
 				break;
 		}
 
-		gl.texImage2D(gl.TEXTURE_2D, 0, glFormat, glFormat, gl.UNSIGNED_BYTE, img);
-		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		// For WebGL2, use proper internal format for linear textures
+		if (gl instanceof WebGL2RenderingContext) {
+			if (this.format === 'float') {
+				// For float textures in WebGL2, use R8 as internal format
+				internalFormat = gl.R8;
+			} else {
+				internalFormat = this.isLinear ?
+					(glFormat === gl.RGB ? gl.RGB : gl.RGBA) :
+					(glFormat === gl.RGB ? gl.SRGB8 : gl.SRGB8_ALPHA8);
+			}
+			gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
+		}
+		// For WebGL1, use extensions if available
+		else {
+			// Check for sRGB extension
+			const srgbExt = gl.getExtension('EXT_sRGB');
+			if (!this.isLinear && srgbExt && glFormat === gl.RGB) {
+				// Use sRGB format for non-linear textures when extension is available
+				gl.texImage2D(gl.TEXTURE_2D, 0, srgbExt.SRGB_EXT, srgbExt.SRGB_EXT, gl.UNSIGNED_BYTE, img);
+			} else {
+				// Default behavior (WebGL1 without extension or linear textures)
+				gl.texImage2D(gl.TEXTURE_2D, 0, glFormat, glFormat, gl.UNSIGNED_BYTE, img);
+			}
+		}
 
+		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		//build mipmap for large images.
 		if (this.width > 1024 || this.height > 1024) {
 			gl.generateMipmap(gl.TEXTURE_2D);
@@ -161,17 +187,19 @@ class Raster {
 		} else {
 			gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 		}
-
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		// Store color space information on the texture
+		tex.isLinear = this.isLinear;
 		return tex;
 	}
 }
+
 /**
  * Example usage of Raster:
  * ```javascript
  * // Create a Raster for RGBA images
- * const raster = new Raster({ format: 'vec4' });
+ * const raster = new Raster({ format: 'vec4', isLinear: false });
  * 
  * // Load an image tile
  * const tile = {

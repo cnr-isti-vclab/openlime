@@ -277,4 +277,80 @@ class ShaderGammaFilter extends ShaderFilter {
     }
 }
 
-export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity, ShaderGammaFilter }
+/**
+ * 
+ * @extends ShaderFilter
+ * Filter that converts colors to grayscale with adjustable weights
+ */
+class ShaderFilterGrayscale extends ShaderFilter {
+    /**
+     * Creates a grayscale filter
+     * @param {Object} [options] - Filter options
+     * @param {number[]} [options.weights=[0.2126, 0.7152, 0.0722]] - RGB channel weights for luminance calculation
+     */    
+    constructor(options) {
+        super(options);
+        
+        // Default weights based on human perception of colors (ITU-R BT.709)
+        this.uniforms[this.uniformName('weights')] = { 
+            type: 'vec3', 
+            needsUpdate: true, 
+            size: 3, 
+            value: [0.2126, 0.7152, 0.0722] 
+        };
+        
+        // Add modes for different grayscale calculations
+        this.modes['grayscale'] = [
+            {
+                id: 'luminance',
+                enable: true,
+                src: `
+                // Luminance-based grayscale (perceptual)
+                float grayscaleLuminance(vec3 color, vec3 weights) {
+                    return dot(color, weights);
+                }
+                `
+            },
+            {
+                id: 'average',
+                enable: false,
+                src: `
+                // Simple average grayscale
+                float grayscaleAverage(vec3 color) {
+                    return (color.r + color.g + color.b) / 3.0;
+                }
+                `
+            }
+        ];
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col) {
+                // Skip processing if fully transparent
+                if (col.a <= 0.0) return col;
+                col = srgb2linear(col);
+                float gray;
+                
+                // Use the active grayscale mode
+                ${this.modes['grayscale'].find(m => m.id === 'luminance' && m.enable) ? 
+                    `gray = grayscaleLuminance(col.rgb, ${this.uniformName('weights')});` : 
+                    `gray = grayscaleAverage(col.rgb);`}
+                
+                // Apply grayscale conversion
+                vec3 grayRGB = vec3(gray);
+                
+                return linear2srgb(vec4(grayRGB, col.a));
+            }`;
+    }
+    
+    /**
+     * Switches between grayscale calculation methods
+     * @param {string} method - Either 'luminance' or 'average'
+     */
+    setGrayscaleMethod(method) {
+        this.setMode('grayscale', method);
+    }
+}
+
+export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity, ShaderGammaFilter , ShaderFilterGrayscale}

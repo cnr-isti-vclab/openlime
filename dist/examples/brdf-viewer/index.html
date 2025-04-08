@@ -11,8 +11,8 @@
     <style>
         html,
         body {
-            color:white;
-            background-color:black;
+            color: white;
+            background-color: black;
         }
     </style>
 
@@ -52,7 +52,7 @@
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
         // Create an User Interface 
-        const ui = new OpenLIME.UIBasic(lime);
+        const ui = new OpenLIME.UIBasic(lime, { showLightDirections: true });
 
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display = true;

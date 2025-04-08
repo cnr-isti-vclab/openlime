@@ -152,13 +152,13 @@ class LayerRTI extends Layer {
 			for (let p = 0; p < this.shader.njpegs; p++) {
 				let imageUrl = this.layout.imageUrl(url, 'plane_' + p);
 				urls.push(imageUrl);
-				let raster = new Raster({ format: 'vec3' });
+				let raster = new Raster({ format: 'vec3', isLinear: true });
 				this.rasters.push(raster);
 			}
 			if (this.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile
 				let imageUrl = this.layout.imageUrl(url, 'normals');
 				urls.push(imageUrl);
-				let raster = new Raster({ format: 'vec3' });
+				let raster = new Raster({ format: 'vec3', isLinear: true });
 				this.rasters.push(raster);
 			}
 			this.layout.setUrls(urls);
