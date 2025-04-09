@@ -838,7 +838,7 @@ class UIBasic {
 			this.updateMenu(); // Ensure menu is up to date when opening
 		}
 	}
-	
+
 	/**
 		 * Updates all menu entries
 		 * @private
@@ -874,6 +874,324 @@ class UIBasic {
 		this.updateMenu();
 		this.viewer.redraw();
 	}
+
+/**
+ * Adds a UI control for a shader uniform
+ * @param {Layer} layer - Layer containing the shader
+ * @param {string} originalUniformName - Original name of the uniform in shader or filter
+ * @param {string} uiName - Display name for the UI
+ * @param {string} uiType - Control type ('checkbox'|'line-edit'|'slider')
+ * @param {number} uiMinDisplayed - Minimum displayed value (for slider/line-edit)
+ * @param {number} uiMaxDisplayed - Maximum displayed value (for slider/line-edit)
+ * @param {number} uiMin - Minimum actual uniform value
+ * @param {number} uiMax - Maximum actual uniform value
+ * @param {number} uiNStepDisplayed - Number of steps for slider (granularity control)
+ * @returns {boolean} Whether the uniform was found and UI created
+ */
+addUniformUI(layer, originalUniformName, uiName, uiType, uiMinDisplayed=0, uiMaxDisplayed=100, uiMin=0.0, uiMax=1.0, uiNStepDisplayed=100) {
+	// Find the uniform in shader or filter
+	let uniform = null;
+	let filter = null;
+	let isInFilter = false;
+
+	// Check main shader uniforms
+	if (layer.shader && layer.shader.uniforms && layer.shader.uniforms[originalUniformName]) {
+			uniform = layer.shader.uniforms[originalUniformName];
+	} 
+	// Check filter uniforms
+	else if (layer.shader && layer.shader.filters) {
+			for (const f of layer.shader.filters) {
+					for (const [name, u] of Object.entries(f.uniforms)) {
+							if (name === originalUniformName || name === f.uniformName(originalUniformName)) {
+									uniform = u;
+									filter = f;
+									isInFilter = true;
+									break;
+							}
+					}
+					if (uniform) break;
+			}
+	}
+
+	// If uniform not found, return false
+	if (!uniform) {
+			console.warn(`Uniform '${originalUniformName}' not found in layer ${layer.id || 'unknown'}`);
+			return false;
+	}
+
+	// Create menu entry
+	const layerEntry = this.getMenuLayerEntry(layer.id);
+	if (!layerEntry) {
+			console.warn(`Layer menu entry for '${layer.id || 'unknown'}' not found`);
+			return false;
+	}
+
+	// Ensure layer entry has a list
+	if (!layerEntry.list) {
+			layerEntry.list = [];
+	}
+
+	// Check if we need to add a uniforms section
+	if (!layerEntry.uniformsSection) {
+			// First add a separator if needed (if there are mode entries)
+			const hasModes = layerEntry.list.some(entry => entry.mode);
+			if (hasModes || layerEntry.list.length > 0) {
+					layerEntry.list.push({
+							html: '<div class="openlime-uniform-separator"></div>'
+					});
+			}
+			
+			// Add uniforms section header
+			layerEntry.list.push({
+					html: '<div class="openlime-uniform-section">Parameters</div>'
+			});
+			
+			layerEntry.uniformsSection = true;
+	}
+
+	// Generate a unique ID for this control
+	const controlId = `uniform_${layer.id}_${originalUniformName.replace(/[^a-zA-Z0-9]/g, '_')}_${uiType}`;
+	
+	// Create entry based on uiType
+	const uniformEntry = {
+			id: controlId,
+			uniformName: originalUniformName,
+			uniformFilter: filter,
+			html: `<div class="openlime-uniform-container">
+							<div class="openlime-uniform-name">${uiName}</div>
+							<div class="openlime-uniform-control-wrapper" data-uniform="${originalUniformName}" data-control-type="${uiType}"></div>
+						 </div>`
+	};
+
+	// Add this entry to the layer's list of uniform controls if it doesn't exist yet
+	if (!layerEntry.uniformControls) {
+			layerEntry.uniformControls = {};
+	}
+	
+	// Get current value from uniform
+	const currentValue = uniform.value;
+	
+	// Map function to convert between UI and actual values
+	const mapToUniform = (displayedValue) => {
+			if (uiType === 'checkbox') {
+					return displayedValue;
+			} else {
+					// Convert from displayed range to actual range
+					return uiMin + (displayedValue - uiMinDisplayed) * (uiMax - uiMin) / (uiMaxDisplayed - uiMinDisplayed);
+			}
+	};
+	
+	const mapToDisplay = (uniformValue) => {
+			if (uiType === 'checkbox') {
+					return uniformValue;
+			} else {
+					// Convert from actual range to displayed range
+					return uiMinDisplayed + (uniformValue - uiMin) * (uiMaxDisplayed - uiMinDisplayed) / (uiMax - uiMin);
+			}
+	};
+
+	// Store the mapping functions and parameters for later use
+	uniformEntry.mapToUniform = mapToUniform;
+	uniformEntry.mapToDisplay = mapToDisplay;
+	uniformEntry.uiMin = uiMin;
+	uniformEntry.uiMax = uiMax;
+	uniformEntry.uiMinDisplayed = uiMinDisplayed;
+	uniformEntry.uiMaxDisplayed = uiMaxDisplayed;
+	uniformEntry.uiType = uiType;
+	
+	// Add displayed value to start
+	const displayValue = mapToDisplay(currentValue);
+
+	// Add type-specific control creation and event handling
+	uniformEntry.oncreate = () => {
+			const container = uniformEntry.element;
+			const controlWrapper = container.querySelector('.openlime-uniform-control-wrapper');
+			
+			// Store reference to this control for updating from other controls
+			if (!layerEntry.uniformControls[originalUniformName]) {
+					layerEntry.uniformControls[originalUniformName] = [];
+			}
+			layerEntry.uniformControls[originalUniformName].push({
+					id: controlId,
+					element: controlWrapper,
+					entry: uniformEntry
+			});
+
+			if (uiType === 'checkbox') {
+					// Create checkbox
+					controlWrapper.innerHTML = `
+							<label class="openlime-uniform-checkbox-wrapper">
+									<input type="checkbox" class="openlime-uniform-checkbox" ${currentValue ? 'checked' : ''}>
+									<span class="openlime-uniform-checkbox-custom"></span>
+							</label>
+					`;
+
+					// Add event listener
+					const checkbox = controlWrapper.querySelector('.openlime-uniform-checkbox');
+					checkbox.addEventListener('change', (e) => {
+							const value = e.target.checked;
+							this.updateUniformValue(layer, originalUniformName, value, filter);
+							
+							// Update other controls for the same uniform
+							this.updateRelatedControls(layerEntry, originalUniformName, value, controlId);
+					});
+			} 
+			else if (uiType === 'line-edit') {
+					// Create text input
+					controlWrapper.innerHTML = `
+							<input type="text" class="openlime-uniform-line-edit" value="${displayValue.toFixed(2)}">
+					`;
+					
+					// Add event listener
+					const input = controlWrapper.querySelector('.openlime-uniform-line-edit');
+					input.addEventListener('change', (e) => {
+							// Parse the input value as a number
+							const displayedValue = parseFloat(e.target.value);
+							
+							// Validate if it's a number
+							if (isNaN(displayedValue)) {
+									// Reset to current value if not a number
+									e.target.value = displayValue.toFixed(2);
+									return;
+							}
+							
+							// Ensure value is in displayed range
+							const clampedDisplay = Math.max(uiMinDisplayed, Math.min(uiMaxDisplayed, displayedValue));
+							
+							// Map to uniform range
+							const uniformValue = mapToUniform(clampedDisplay);
+							
+							// Update UI if value was clamped
+							if (clampedDisplay !== displayedValue) {
+									e.target.value = clampedDisplay.toFixed(2);
+							}
+							
+							this.updateUniformValue(layer, originalUniformName, uniformValue, filter);
+							
+							// Update other controls for the same uniform
+							this.updateRelatedControls(layerEntry, originalUniformName, uniformValue, controlId);
+					});
+			} 
+			else if (uiType === 'slider') {
+					// Calculate step size based on uiNStepDisplayed
+					const stepSize = uiNStepDisplayed > 0 ? 
+							((uiMaxDisplayed - uiMinDisplayed) / uiNStepDisplayed).toFixed(6) : 
+							'any';
+					
+					// Create slider with value display
+					controlWrapper.innerHTML = `
+							<div class="openlime-uniform-slider-container">
+									<input type="range" class="openlime-uniform-slider" 
+												 min="${uiMinDisplayed}" max="${uiMaxDisplayed}" 
+												 step="${stepSize}" value="${displayValue}">
+									<span class="openlime-uniform-slider-value">${displayValue.toFixed(2)}</span>
+							</div>
+					`;
+					
+					// Add event listener
+					const slider = controlWrapper.querySelector('.openlime-uniform-slider');
+					const valueDisplay = controlWrapper.querySelector('.openlime-uniform-slider-value');
+					
+					slider.addEventListener('input', (e) => {
+							const displayedValue = parseFloat(e.target.value);
+							
+							// Update value display
+							valueDisplay.textContent = displayedValue.toFixed(2);
+							
+							// Map to uniform range
+							const uniformValue = mapToUniform(displayedValue);
+							
+							this.updateUniformValue(layer, originalUniformName, uniformValue, filter);
+							
+							// Update other controls for the same uniform
+							this.updateRelatedControls(layerEntry, originalUniformName, uniformValue, controlId);
+					});
+			}
+	};
+
+	// Add entry to the layer's list
+	layerEntry.list.push(uniformEntry);
+	
+	// If the menu was already created, update it
+	if (this.layerMenu) {
+			this.updateMenu();
+	}
+	
+	return true;
+}
+
+/**
+* Updates all related controls for a uniform when one is changed
+* @param {Object} layerEntry - Layer menu entry
+* @param {string} uniformName - Name of the uniform
+* @param {*} value - New uniform value
+* @param {string} sourceControlId - ID of the control that triggered the update
+* @private
+*/
+updateRelatedControls(layerEntry, uniformName, value, sourceControlId) {
+	if (!layerEntry.uniformControls || !layerEntry.uniformControls[uniformName]) {
+			return;
+	}
+	
+	// Update all controls for this uniform except the source
+	for (const control of layerEntry.uniformControls[uniformName]) {
+			if (control.id === sourceControlId) {
+					continue; // Skip the source control
+			}
+			
+			const entry = control.entry;
+			const element = control.element;
+			
+			// Convert the actual uniform value to the displayed value for this control
+			const displayValue = entry.mapToDisplay(value);
+			
+			// Update control based on its type
+			if (entry.uiType === 'checkbox') {
+					const checkbox = element.querySelector('.openlime-uniform-checkbox');
+					if (checkbox) {
+							checkbox.checked = value;
+					}
+			} 
+			else if (entry.uiType === 'line-edit') {
+					const input = element.querySelector('.openlime-uniform-line-edit');
+					if (input) {
+							input.value = displayValue.toFixed(2);
+					}
+			} 
+			else if (entry.uiType === 'slider') {
+					const slider = element.querySelector('.openlime-uniform-slider');
+					const valueDisplay = element.querySelector('.openlime-uniform-slider-value');
+					if (slider) {
+							slider.value = displayValue;
+					}
+					if (valueDisplay) {
+							valueDisplay.textContent = displayValue.toFixed(2);
+					}
+			}
+	}
+}
+
+/**
+* Updates a uniform value in shader or filter
+* @param {Layer} layer - The layer containing the shader
+* @param {string} name - Uniform name
+* @param {*} value - New value
+* @param {ShaderFilter} [filter] - Optional filter if uniform belongs to a filter
+* @private
+*/
+updateUniformValue(layer, name, value, filter = null) {
+	if (filter) {
+			// Check if the name already includes the filter prefix
+			if (name.startsWith(`u_${filter.name}_`)) {
+					layer.shader.setUniform(name, value);
+			} else {
+					filter.setUniform(name, value);
+			}
+	} else {
+			layer.shader.setUniform(name, value);
+	}
+	layer.emit('update');
+}
 
 	/**
 	 * Hides layers menu

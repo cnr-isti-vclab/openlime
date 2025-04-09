@@ -373,6 +373,13 @@ class ShaderFilterBrightness extends ShaderFilter {
             value: options?.brightness || 1.0
         };
 
+        this.uniforms[this.uniformName('enable')] = {
+            type: 'bool',
+            needsUpdate: true,
+            size: 1,
+            value: true
+        };
+
         // Add modes for different brightness adjustments
         this.modes['brightness'] = [
             {
@@ -417,6 +424,7 @@ class ShaderFilterBrightness extends ShaderFilter {
     fragDataSrc(gl) {
         return `
             vec4 ${this.functionName()}(vec4 col) {
+                if(!${this.uniformName('enable')}) return col;
                 // Skip processing if fully transparent
                 if (col.a <= 0.0) return col;
                 

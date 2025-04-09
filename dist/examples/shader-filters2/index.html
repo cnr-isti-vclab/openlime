@@ -44,8 +44,12 @@
       enableTooltip: true
     });
 
+    ui.addUniformUI(layer0, filterBrightness.uniformName('enable'), 'enable brightness', 'checkbox');
+    ui.addUniformUI(layer0, filterBrightness.uniformName('brightness'), 'brightness', 'slider', 0, 200, 0, 2.0, 200);
+    ui.addUniformUI(layer0, filterBrightness.uniformName('brightness'), 'brightness', 'line-edit', 0, 200, 0, 2.0);
+
     // Customize our toolbar
-    ui.actions.layers.display = false;
+    ui.actions.layers.display = true;
     ui.actions.light.display = false;
     ui.actions.zoomin.display = true;
     ui.actions.zoomout.display = true;

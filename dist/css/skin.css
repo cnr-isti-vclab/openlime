@@ -271,7 +271,8 @@ g.openlime-expand {
 	display: flex;
 	flex-direction: column;
 	top: 0;
-	left: -280px; /* Start off-screen */
+	left: -280px;
+	/* Start off-screen */
 	height: 100%;
 	width: 280px;
 	max-width: 280px;
@@ -433,9 +434,10 @@ g.openlime-expand {
 	transition: max-height 0.4s ease-out;
 }
 
-.active + .openlime-list {
+.active+.openlime-list {
 	height: auto;
-	max-height: 500px; /* Large enough to contain content */
+	max-height: 500px;
+	/* Large enough to contain content */
 	margin-top: 5px;
 	margin-bottom: 10px;
 }
@@ -519,6 +521,182 @@ g.openlime-expand {
 	background-color: rgba(40, 40, 40, 0.4);
 	margin-top: 8px;
 }
+
+/* Uniform UI Controls */
+
+/* Separator between modes and uniforms */
+.openlime-uniform-separator {
+	margin: 10px 0;
+	height: 1px;
+	background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Uniforms section header */
+.openlime-uniform-section {
+	font-size: 14px;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.8);
+	margin: 15px 0 8px 0;
+	padding-left: 5px;
+	padding-bottom: 5px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Container for uniform item */
+.openlime-uniform-container {
+	margin: 8px 0;
+	padding: 6px 8px;
+	background-color: rgba(60, 60, 60, 0.3);
+	border-radius: 4px;
+}
+
+/* Uniform name */
+.openlime-uniform-name {
+	font-size: 13px;
+	margin-bottom: 5px;
+	color: #e0e0e0;
+}
+
+/* Wrapper for the actual control */
+.openlime-uniform-control-wrapper {
+	margin-top: 5px;
+	width: 100%;
+	/* Assicura che il wrapper prenda tutta la larghezza disponibile */
+}
+
+/* Line edit styling */
+.openlime-uniform-line-edit {
+	width: calc(100% - 18px);
+	/* Riduce la larghezza per tenerlo dentro il container */
+	background-color: rgba(40, 40, 40, 0.6);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 3px;
+	color: #ffffff;
+	padding: 6px 8px;
+	font-size: 12px;
+	transition: border-color 0.2s, background-color 0.2s;
+	box-sizing: border-box;
+	/* Assicura che padding non aumenti la dimensione */
+}
+
+.openlime-uniform-line-edit:focus {
+	background-color: rgba(50, 50, 50, 0.8);
+	border-color: rgba(100, 160, 220, 0.6);
+	outline: none;
+}
+
+/* Slider styling */
+.openlime-uniform-slider-container {
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
+
+.openlime-uniform-slider {
+	flex: 1;
+	height: 6px;
+	-webkit-appearance: none;
+	appearance: none;
+	background: rgba(255, 255, 255, 0.2);
+	border-radius: 3px;
+	outline: none;
+}
+
+.openlime-uniform-slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: #4CAF50;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.openlime-uniform-slider::-moz-range-thumb {
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: #4CAF50;
+	cursor: pointer;
+	border: none;
+}
+
+.openlime-uniform-slider::-webkit-slider-thumb:hover {
+	background-color: #5DBE60;
+}
+
+.openlime-uniform-slider::-moz-range-thumb:hover {
+	background-color: #5DBE60;
+}
+
+.openlime-uniform-slider-value {
+	min-width: 40px;
+	text-align: right;
+	margin-left: 10px;
+	font-size: 12px;
+	background-color: rgba(40, 40, 40, 0.6);
+	color: rgba(255, 255, 255, 0.8);
+	padding: 2px 6px;
+	border-radius: 3px;
+}
+
+/* Checkbox styling */
+.openlime-uniform-checkbox-wrapper {
+	display: inline-block;
+	position: relative;
+	cursor: pointer;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+.openlime-uniform-checkbox {
+	position: absolute;
+	opacity: 0;
+	cursor: pointer;
+	height: 0;
+	width: 0;
+}
+
+.openlime-uniform-checkbox-custom {
+	position: relative;
+	display: inline-block;
+	height: 20px;
+	width: 20px;
+	background-color: rgba(40, 40, 40, 0.6);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	border-radius: 3px;
+	transition: background-color 0.2s;
+}
+
+.openlime-uniform-checkbox:checked~.openlime-uniform-checkbox-custom {
+	background-color: rgba(76, 175, 80, 0.8);
+	border-color: rgba(255, 255, 255, 0.4);
+}
+
+.openlime-uniform-checkbox-custom:after {
+	content: "";
+	position: absolute;
+	display: none;
+	left: 7px;
+	top: 3px;
+	width: 4px;
+	height: 9px;
+	border: solid white;
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
+}
+
+.openlime-uniform-checkbox:checked~.openlime-uniform-checkbox-custom:after {
+	display: block;
+}
+
+.openlime-uniform-checkbox:focus~.openlime-uniform-checkbox-custom {
+	box-shadow: 0 0 0 2px rgba(100, 160, 220, 0.3);
+}
+
 
 /* editor */
 
