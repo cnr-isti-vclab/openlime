@@ -674,10 +674,32 @@ class UIBasic {
 			let group = 'group' in entry ? `data-group="${entry.group}"` : '';
 			let layer = 'layer' in entry ? `data-layer="${entry.layer}"` : '';
 			let mode = 'mode' in entry ? `data-mode="${entry.mode}"` : '';
-			html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry ${classes}">${entry.button}</a>`;
+
+			// Add icons for layers and modes
+			if (layer && !mode) {
+				// This is a layer button
+				html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry openlime-layer-entry ${classes}">
+							<span class="openlime-layer-icon"></span>
+							<span class="openlime-layer-name">${entry.button}</span>
+							<span class="openlime-layer-status"></span>
+					</a>`;
+			} else if (mode) {
+				// This is a mode button
+				html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry openlime-mode-entry ${classes}">
+							<span class="openlime-mode-icon"></span>
+							<span class="openlime-mode-name">${entry.button}</span>
+					</a>`;
+			} else {
+				// Regular button
+				html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry ${classes}">${entry.button}</a>`;
+			}
 		} else if ('slider' in entry) {
 			let value = ('value' in entry) ? entry['value'] : 50;
-			html += `<input type="range" min="1" max="100" value="${value}" class="openlime-slider ${classes}" ${id}>`;
+			html += `
+			<div class="openlime-slider-container" data-slider-id="${entry.id}">
+					<input type="range" min="1" max="100" value="${value}" class="openlime-slider ${classes}" ${id}>
+					<span class="openlime-slider-value">${value}</span>
+			</div>`;
 		}
 
 		if ('list' in entry) {
@@ -691,19 +713,47 @@ class UIBasic {
 	}
 
 	/**
-	 * Attaches event handlers to menu entry elements
-	 * @param {UIBasic~MenuEntry} entry - Menu entry to process
-	 * @private
-	 */
+	* Attaches event handlers to menu entry elements
+	* @param {UIBasic~MenuEntry} entry - Menu entry to process
+	* @private
+	*/
 	addEntryCallbacks(entry) {
 		entry.element = this.layerMenu.querySelector('#' + entry.id);
 		if (entry.onclick)
 			entry.element.addEventListener('click', (e) => {
 				entry.onclick();
-				//this.updateMenu();
+				// Update the slider value if it exists
+				const sliderValue = entry.element.querySelector('.openlime-slider-value');
+				if (sliderValue) {
+					const slider = entry.element.querySelector('.openlime-slider');
+					if (slider) {
+						sliderValue.textContent = slider.value;
+					}
+				}
 			});
-		if (entry.oninput)
-			entry.element.addEventListener('input', entry.oninput);
+
+		// For sliders, we need special handling
+		if (entry.element.classList.contains('openlime-slider')) {
+			const sliderContainer = entry.element.closest('.openlime-slider-container');
+			if (sliderContainer) {
+				const sliderValue = sliderContainer.querySelector('.openlime-slider-value');
+				if (sliderValue) {
+					// Set initial value
+					sliderValue.textContent = entry.element.value;
+
+					// Update value on input
+					entry.element.addEventListener('input', (e) => {
+						sliderValue.textContent = e.target.value;
+						if (entry.oninput) entry.oninput(e);
+					});
+				}
+			}
+		} else if (entry.oninput) {
+			entry.element.addEventListener('input', (e) => {
+				entry.oninput(e);
+			});
+		}
+
 		if (entry.oncreate)
 			entry.oncreate();
 
@@ -713,13 +763,23 @@ class UIBasic {
 	}
 
 	/**
-	 * Updates menu entry state
-	 * @param {UIBasic~MenuEntry} entry - Menu entry to update
-	 * @private
-	 */
+	* Updates menu entry state
+	* @param {UIBasic~MenuEntry} entry - Menu entry to update
+	* @private
+	*/
 	updateEntry(entry) {
 		let status = entry.status ? entry.status() : '';
+
+		// Update classes
 		entry.element.classList.toggle('active', status == 'active');
+
+		// Update status indicator for layer entries
+		if (entry.layer) {
+			const statusIcon = entry.element.querySelector('.openlime-layer-status');
+			if (statusIcon) {
+				statusIcon.textContent = status == 'active' ? '✓' : '';
+			}
+		}
 
 		if ('list' in entry)
 			for (let e of entry.list)
@@ -727,49 +787,65 @@ class UIBasic {
 	}
 
 	/**
-	 * Updates all menu entries
-	 * @private
-	 */
-	updateMenu() {
-		for (let entry of this.menu)
-			this.updateEntry(entry);
-	}
-
-	/**
-	 * Creates main menu structure
-	 * @private
-	 */
+	* Creates main menu structure
+	* @private
+	*/
 	createMenu() {
 		this.entry_count = 0;
-		let html = `<div class="openlime-layers-menu">`;
+		let html = `<div class="openlime-layers-menu">
+									<div class="openlime-layers-header">
+											<h2>Layer Controls</h2>
+											<button class="openlime-layers-close-btn">×</button>
+									</div>
+									<div class="openlime-layers-content">`;
 		for (let entry of this.menu) {
 			html += this.createEntry(entry);
 		}
-		html += '</div>';
-
+		html += `</div></div>`;
 
 		let template = document.createElement('template');
 		template.innerHTML = html.trim();
 		this.layerMenu = template.content.firstChild;
 		this.viewer.containerElement.appendChild(this.layerMenu);
 
+		// Add close button functionality
+		const closeBtn = this.layerMenu.querySelector('.openlime-layers-close-btn');
+		if (closeBtn) {
+			closeBtn.addEventListener('click', () => this.toggleLayers());
+		}
+
 		for (let entry of this.menu) {
 			this.addEntryCallbacks(entry);
 		}
-
-
-		/*		for(let li of document.querySelectorAll('[data-layer]'))
-					li.addEventListener('click', (e) => {
-						this.setLayer(this.viewer.canvas.layers[li.getAttribute('data-layer')]);
-					}); */
 	}
 
 	/**
-	 * Toggles layer menu visibility
-	 * @private
-	 */
+	* Toggles layer menu visibility with animation
+	* @private
+	*/
 	toggleLayers() {
-		this.layerMenu.classList.toggle('open');
+		// Add more sophisticated toggle with animation
+		if (this.layerMenu.classList.contains('open')) {
+			// Closing the menu
+			this.layerMenu.classList.add('closing');
+			setTimeout(() => {
+				this.layerMenu.classList.remove('open');
+				this.layerMenu.classList.remove('closing');
+			}, 300); // Match transition duration
+		} else {
+			// Opening the menu
+			this.layerMenu.classList.add('open');
+			this.updateMenu(); // Ensure menu is up to date when opening
+		}
+	}
+	
+	/**
+		 * Updates all menu entries
+		 * @private
+		 */
+	updateMenu() {
+		for (let entry of this.menu)
+			this.updateEntry(entry);
 	}
 
 	/**
