@@ -299,6 +299,13 @@ class ShaderFilterGrayscale extends ShaderFilter {
             value: [0.2126, 0.7152, 0.0722]
         };
 
+        this.uniforms[this.uniformName('enable')] = {
+            type: 'bool',
+            needsUpdate: true,
+            size: 1,
+            value: true
+        };
+
         // Add modes for different grayscale calculations
         this.modes['grayscale'] = [
             {
@@ -327,6 +334,7 @@ class ShaderFilterGrayscale extends ShaderFilter {
     fragDataSrc(gl) {
         return `
             vec4 ${this.functionName()}(vec4 col) {
+                if(!${this.uniformName('enable')}) return col;
                 // Skip processing if fully transparent
                 if (col.a <= 0.0) return col;
                 col = srgb2linear(col);
