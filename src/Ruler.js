@@ -188,7 +188,13 @@ class Ruler extends Units {
 		}
 		measure.text.setAttribute('x', mx);
 		measure.text.setAttribute('y', my);
-		measure.text.textContent = this.format(length * this.pixelSize);
+		let pixelSize = this.pixelSize;
+		let units = null;
+		if (!pixelSize) {
+			pixelSize = 1.0;
+			units = 'px';
+		}
+		measure.text.textContent = this.format(length * pixelSize, units);
 	}
 
 	/**
@@ -249,8 +255,8 @@ class Ruler extends Units {
 
 		//let transform = this.camera.getCurrentTransform(performance.now())
 		//let { x, y } = this.camera.mapToScene(e.layerX, e.layerY, transform);
-		const {x, y} = CoordinateSystem.fromViewportToScene({ x: e.layerX, y: e.layerY }, this.camera, false);
-		
+		const { x, y } = CoordinateSystem.fromViewportToScene({ x: e.layerX, y: e.layerY }, this.camera, false);
+
 
 		if (!this.measure) {
 			this.measure = this.createMeasure(x, y);
@@ -277,8 +283,8 @@ class Ruler extends Units {
 
 		//let transform = this.camera.getCurrentTransform(performance.now())
 		//let { x, y } = this.camera.mapToScene(e.layerX, e.layerY, transform);
-		const {x, y} = CoordinateSystem.fromViewportToScene({ x: e.layerX, y: e.layerY }, this.camera, false);
-	
+		const { x, y } = CoordinateSystem.fromViewportToScene({ x: e.layerX, y: e.layerY }, this.camera, false);
+
 		this.measure.x2 = x;
 		this.measure.y2 = y;
 		this.update();

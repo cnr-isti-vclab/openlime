@@ -38,6 +38,9 @@ class Units {
 	format(d, unit) {
 		if (d == 0)
 			return '';
+		if(unit === "px") {
+			return Math.floor(d) + unit;
+		}
 		if (unit)
 			return (d / this.allUnits[unit]).toFixed(this.precision) + unit;
 

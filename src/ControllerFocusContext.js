@@ -291,6 +291,7 @@ class ControllerFocusContext extends ControllerLens {
      * @override
      */
     mouseWheel(e) {
+        if(!this.active) return;
         const p = this.getScenePosition(e);
         this.insideLens = this.isInsideLens(p);
         const dz = e.deltaY > 0 ? this.zoomAmount : 1 / this.zoomAmount;

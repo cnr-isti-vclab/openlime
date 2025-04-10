@@ -183,6 +183,8 @@ class Viewer {
 
 		this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
 
+		this.controllers = [];
+
 	}
 
 	/**
@@ -190,6 +192,7 @@ class Viewer {
 	 * @param {Controller} controller An OpenLIME controller.
 	 */
 	addController(controller) {
+		this.controllers.push(controller);
 		this.pointerManager.onEvent(controller);
 	}
 

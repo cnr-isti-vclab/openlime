@@ -161,6 +161,7 @@ class ControllerPanZoom extends Controller {
 	 * @fires ControllerPanZoom#nowheel
 	 */
 	mouseWheel(e) {
+		if(!this.active) return;
 		if (this.controlZoom && !e.ctrlKey) {
 			this.emit('nowheel');
 			return;

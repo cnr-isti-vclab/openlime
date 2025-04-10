@@ -157,6 +157,7 @@ class ControllerLens extends Controller {
      * @override
      */
     mouseWheel(e) {
+        if(!this.active) return;
         const p = this.getScenePosition(e);
         let result = false;
         if (this.lensLayer.visible && this.isInsideLens(p).inside) {
