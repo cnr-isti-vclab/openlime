@@ -82,9 +82,10 @@ class Raster {
 				img.onload = () => { resolve(); }
 			});
 		}
-		let tex = this.loadTexture(gl, img);
+		const tex = this.loadTexture(gl, img);
 		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
-		let size = img.width * img.height * 3;
+		let nchannels = 3; // Channel is important only for tarzoom data. Tarzoom data inside format is JPG = RGB = 3 channels
+		const size = img.width * img.height * nchannels;
 		return [tex, size];
 	}
 
@@ -98,7 +99,7 @@ class Raster {
 	 * @returns {Promise<HTMLImageElement|ImageBitmap>} Promise resolving to the image
 	 */
 	async blobToImage(blob, gl) {
-		let tex, img;
+		let img;
 		if (typeof createImageBitmap != 'undefined') {
 			var isFirefox = typeof InstallTrigger !== 'undefined';
 			//firefox does not support options for this call, BUT the image is automatically flipped.
