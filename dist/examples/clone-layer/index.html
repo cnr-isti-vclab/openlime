@@ -26,7 +26,7 @@
             layout: 'deepzoom',
             type: 'image',
             //url: '../../assets/lime/deepzoom/lime.dzi'
-            url: '../../assets/lime/deepzoom/lime.dzi'
+            url: '../../assets/lime/deepzoom/lemon.dzi'
         });
         lime.addLayer('Base', layer);
 
@@ -41,6 +41,9 @@
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
+        lime.setSplitViewport(true, ["Base"], ["Enhanced Image"]);
+        //lime.setSplitViewport(false);
+        
         // Create an User Interface 
         const ui = new OpenLIME.UIBasic(lime, {
             postInit: () => {
@@ -56,7 +59,6 @@
         ui.actions.zoomin.display = true;
         ui.actions.zoomout.display = true;
 
-        ui.attribution = `Lime, photo image - by <a href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a> from <a href="https://pixabay.com/it/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Pixabay</a>`;
     </script>
 </body>
 

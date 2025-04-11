@@ -284,8 +284,19 @@ class Viewer {
 			this.redraw();
 		this.emit('draw');
 	}
-}
 
+	/**
+	 * Enables or disables split viewport mode and sets which layers appear on each side
+	 * @param {boolean} enabled - Whether split viewport mode is enabled
+	 * @param {string[]} leftLayerIds - Array of layer IDs to show on left side
+	 * @param {string[]} rightLayerIds - Array of layer IDs to show on right side
+	 * @fires Canvas#update
+	 */
+	setSplitViewport(enabled, leftLayerIds = [], rightLayerIds = []) {
+		this.canvas.setSplitViewport(enabled, leftLayerIds, rightLayerIds);
+	}
+	
+}
 addSignals(Viewer, 'draw');
 addSignals(Viewer, 'resize'); //args: viewport
 

@@ -1,8 +1,8 @@
-import { Util } from './Util'
-import { Camera } from './Camera'
-import { Layer } from './Layer'
-import { Cache } from './Cache'
-import { addSignals } from './Signals'
+import { Transform } from './Transform.js'
+import { BoundingBox } from './BoundingBox.js'
+import { addSignals } from './Signals.js'
+import { Layer } from './Layer.js'
+import { Cache } from './Cache.js'
 
 //// HELPERS
 
@@ -45,7 +45,12 @@ class Canvas {
 			srgb: true,     // Enable sRGB color space by default
 			stencil: false, // Disable stencil buffer by default
 
-			signals: { 'update': [], 'updateSize': [], 'ready': [] }
+			signals: { 'update': [], 'updateSize': [], 'ready': [] },
+
+			// Split viewport properties
+			splitViewport: false,
+			leftLayers: [],
+			rightLayers: []
 		});
 		Object.assign(this, options);
 
@@ -115,7 +120,7 @@ class Canvas {
 			preserveDrawingBuffer: this.preserveDrawingBuffer,
 			colorSpace: this.srgb ? 'srgb' : 'display-p3'
 		};
-		
+
 		this.gl = this.gl ||
 			canvas.getContext("webgl2", glopt) ||
 			canvas.getContext("webgl", glopt) ||
@@ -184,7 +189,7 @@ class Canvas {
 			preserveDrawingBuffer: this.preserveDrawingBuffer,
 			colorSpace: this.srgb ? 'srgb' : 'display-p3'
 		};
-		
+
 		this.gl = this.gl ||
 			this.canvasElement.getContext("webgl2", glopt) ||
 			this.canvasElement.getContext("webgl", glopt) ||
@@ -260,6 +265,20 @@ class Canvas {
 	}
 
 	/**
+	 * Enables or disables split viewport mode and sets which layers appear on each side
+	 * @param {boolean} enabled - Whether split viewport mode is enabled
+	 * @param {string[]} leftLayerIds - Array of layer IDs to show on left side
+	 * @param {string[]} rightLayerIds - Array of layer IDs to show on right side
+	 * @fires Canvas#update
+	 */
+	setSplitViewport(enabled, leftLayerIds = [], rightLayerIds = []) {
+		this.splitViewport = enabled;
+		this.leftLayers = leftLayerIds;
+		this.rightLayers = rightLayerIds;
+		this.emit('update');
+	}
+
+	/**
 	 * Renders a frame at the specified time.
 	 * @param {number} time - Current time in milliseconds
 	 * @returns {boolean} True if all animations are complete
@@ -277,19 +296,46 @@ class Canvas {
 		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 		gl.enable(gl.BLEND);
 
-		//TODO: getCurren shoudl redurn {position, done}
 		let pos = this.camera.getGlCurrentTransform(time);
-		//todo we could actually prefetch toward the future a little bit
 		this.prefetch(pos);
 
 		//pos layers using zindex.
 		let ordered = Object.values(this.layers).sort((a, b) => a.zindex - b.zindex);
 
-		//NOTICE: camera(pos) must be relative to the WHOLE canvas
 		let done = true;
-		for (let layer of ordered) {
-			if (layer.visible)
-				done = layer.draw(pos, view) && done;
+
+		if (this.splitViewport) {
+			// For split viewport mode, we need to enable scissor test to split the rendering area
+			gl.enable(gl.SCISSOR_TEST);
+
+			const halfWidth = Math.floor(view.dx / 2);
+
+			// Draw left side (apply scissor to left half)
+			gl.scissor(view.x, view.y, halfWidth, view.dy);
+			for (let layer of ordered) {
+				if (this.leftLayers.includes(layer.id)) {
+					// Pass the full viewport but scissor will restrict drawing
+					done = layer.draw(pos, view) && done;
+				}
+			}
+
+			// Draw right side (apply scissor to right half)
+			gl.scissor(view.x + halfWidth, view.y, view.dx - halfWidth, view.dy);
+			for (let layer of ordered) {
+				if (this.rightLayers.includes(layer.id)) {
+					// Pass the full viewport but scissor will restrict drawing
+					done = layer.draw(pos, view) && done;
+				}
+			}
+
+			// Disable scissor when done
+			gl.disable(gl.SCISSOR_TEST);
+		} else {
+			// Standard rendering for normal mode
+			for (let layer of ordered) {
+				if (layer.visible)
+					done = layer.draw(pos, view) && done;
+			}
 		}
 
 		//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
@@ -313,7 +359,7 @@ class Canvas {
 			}
 		}
 	}
-	
+
 }
 
 /**
