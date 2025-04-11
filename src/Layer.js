@@ -131,6 +131,16 @@ class Layer {
 	 * });
 	 * viewer.addLayer('edges', derivedLayer);
 	 * ```
+	 * or
+	 * ```javascript
+	 * const enhancedShader = new OpenLIME.ShaderEdgeDetection();
+   * const derivedLayer = layer.derive({
+   *     label: 'Enhanced Image'
+   * });
+   * derivedLayer.addShader('enhanced', enhancedShader);
+   * derivedLayer.setShader('enhanced');
+   * viewer.addLayer('Enhanced Image', derivedLayer);
+	 * ```
 	 */
 	derive(options = {}) {
 		// Create options for the new layer
