@@ -164,6 +164,75 @@ class Layer {
 	}
 
 	/**
+	 * Adds a shader to the layer's available shaders
+	 * @param {string} id - Unique identifier for the shader
+	 * @param {Shader} shader - Shader instance to add
+	 * @throws {Error} If shader with the same id already exists
+	 * @returns {Layer} This layer instance for method chaining
+	 * 
+	 * @example
+	 * ```javascript
+	 * const customShader = new OpenLIME.Shader({...});
+	 * layer.addShader('custom', customShader);
+	 * layer.setShader('custom');
+	 * ```
+	 */
+	addShader(id, shader) {
+		if (id in this.shaders) {
+			throw new Error(`Shader with id '${id}' already exists`);
+		}
+
+		this.shaders[id] = shader;
+
+		// If this is the first shader, set it as active
+		if (Object.keys(this.shaders).length === 1 && !this.shader) {
+			this.setShader(id);
+		}
+
+		return this;
+	}
+
+	/**
+	 * Removes a shader from the layer's available shaders
+	 * @param {string} id - Identifier of the shader to remove
+	 * @throws {Error} If shader with the specified id doesn't exist
+	 * @returns {Layer} This layer instance for method chaining
+	 * 
+	 * @example
+	 * ```javascript
+	 * // Remove a shader that's no longer needed
+	 * layer.removeShader('oldEffect');
+	 * ```
+	 */
+	removeShader(id) {
+		if (!(id in this.shaders)) {
+			throw new Error(`Shader with id '${id}' does not exist`);
+		}
+
+		// Check if removing the active shader
+		const isActive = this.shader === this.shaders[id];
+
+		// Remove the shader
+		delete this.shaders[id];
+
+		// Reset current shader if it was the active one
+		if (isActive) {
+			this.shader = null;
+
+			// Try to set another shader if any are available
+			const remainingShaders = Object.keys(this.shaders);
+			if (remainingShaders.length > 0) {
+				this.setShader(remainingShaders[0]);
+			}
+
+			// Emit update since the rendering has changed
+			this.emit('update');
+		}
+
+		return this;
+	}
+
+	/**
 	 * Adds a filter to the current shader
 	 * @param {Object} filter - Filter specification
 	 * @throws {Error} If no shader is set
@@ -1071,6 +1140,45 @@ class Layer {
 		return bytesPerPixel;
 	}
 }
+
+/**
+ * Creates a new Layer that shares tiles with this layer but uses a different shader.
+ * @param {Object} options - Options for the new layer
+ * @param {Object} [options.shaders] - Map of shaders for the new layer
+ * @param {string} [options.defaultShader] - ID of shader to set as active
+ * @param {string} [options.label] - Label for the new layer (defaults to original label)
+ * @param {number} [options.zindex] - Z-index for the new layer
+ * @returns {Layer} A new layer sharing textures with this one
+ */
+Layer.prototype.derive = function (options = {}) {
+	// Create options for the new layer
+	const derivedOptions = {
+		// Keep the same layout
+		layout: this.layout,
+		// Reference the source layer for shared tiles
+		sourceLayer: this,
+		// Inherit other properties but allow overrides
+		label: options.label || this.label,
+		zindex: options.zindex !== undefined ? options.zindex : this.zindex + 1,
+		visible: options.visible !== undefined ? options.visible : this.visible,
+		transform: options.transform || this.transform.copy(),
+		// Use provided shaders or inherit
+		shaders: options.shaders || Object.assign({}, this.shaders),
+		mipmapBias: options.mipmapBias || this.mipmapBias,
+		pixelSize: options.pixelSize || this.pixelSize,
+		debug: options.debug !== undefined ? options.debug : this.debug
+	};
+
+	// Create the new layer
+	const derivedLayer = new Layer(derivedOptions);
+
+	// Set initial shader if specified
+	if (options.defaultShader && derivedOptions.shaders[options.defaultShader]) {
+		derivedLayer.setShader(options.defaultShader);
+	}
+
+	return derivedLayer;
+};
 
 Layer.prototype.types = {}
 addSignals(Layer, 'ready', 'update', 'loaded', 'updateSize');

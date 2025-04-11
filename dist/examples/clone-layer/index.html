@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - DeepZoom Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../../css/light.css" />
+    <link rel="stylesheet" href="../examples.css" />
+
+</head>
+
+<body>
+    <h1>OpenLIME - Clone a Layer</h1>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+        lime.camera.bounded = false;
+
+        // Create an image layer and add it to the canvans
+        const layer = new OpenLIME.Layer({
+            layout: 'deepzoom',
+            type: 'image',
+            //url: '../../assets/lime/deepzoom/lime.dzi'
+            url: '../../assets/lime/deepzoom/lime.dzi'
+        });
+        lime.addLayer('Base', layer);
+
+        const enhancedShader = new OpenLIME.ShaderEdgeDetection();
+        const derivedLayer = layer.derive({
+            label: 'Enhanced Image'
+        });
+        derivedLayer.addShader('enhanced', enhancedShader);
+        derivedLayer.setShader('enhanced');
+        lime.addLayer('Enhanced Image', derivedLayer);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime, {
+            postInit: () => {
+                // Set the default layer
+                ui.setLayer(derivedLayer);
+            }
+        });
+        
+        // Remove light from the toolbar
+        ui.actions.light.display = false;
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+
+        ui.attribution = `Lime, photo image - by <a href="https://pixabay.com/it/users/shutterbug75-2077322/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Shutterbug75</a> from <a href="https://pixabay.com/it/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=1239235">Pixabay</a>`;
+    </script>
+</body>
+
+</html>
