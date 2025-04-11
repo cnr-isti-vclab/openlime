@@ -102,6 +102,66 @@ class Layer {
 		this.init(options);
 	}
 
+	/**
+	 * Creates a new Layer that shares tiles with this layer but uses a different shader.
+	 * This method allows efficient creation of derivative layers that share the same source textures,
+	 * which is useful for applying different visual effects to the same image data without duplicating resources.
+	 * 
+	 * @param {Object} [options={}] - Options for the new layer
+	 * @param {Object} [options.shaders] - Map of shaders for the new layer
+	 * @param {string} [options.defaultShader] - ID of shader to set as active
+	 * @param {string} [options.label] - Label for the new layer (defaults to original label)
+	 * @param {number} [options.zindex] - Z-index for the new layer (defaults to original + 1)
+	 * @param {boolean} [options.visible] - Layer visibility (defaults to same as original)
+	 * @param {Transform} [options.transform] - Custom transform (defaults to copy of original)
+	 * @param {number} [options.mipmapBias] - Custom mipmap bias (defaults to original value)
+	 * @param {number} [options.pixelSize] - Custom pixel size (defaults to original value)
+	 * @param {boolean} [options.debug] - Debug mode flag (defaults to original value)
+	 * @returns {Layer} A new layer sharing textures with this one
+	 * 
+	 * @example
+	 * ```javascript
+	 * // Create a derived layer with edge detection shader
+	 * const enhancedShader = new OpenLIME.ShaderEdgeDetection();
+	 * const derivedLayer = originalLayer.derive({
+	 *     label: 'Edge Detection',
+	 *     shaders: { 'edge': enhancedShader },
+	 *     defaultShader: 'edge',
+	 *     zindex: 10
+	 * });
+	 * viewer.addLayer('edges', derivedLayer);
+	 * ```
+	 */
+	derive(options = {}) {
+		// Create options for the new layer
+		const derivedOptions = {
+			// Keep the same layout
+			layout: this.layout,
+			// Reference the source layer for shared tiles
+			sourceLayer: this,
+			// Inherit other properties but allow overrides
+			label: options.label || this.label,
+			zindex: options.zindex !== undefined ? options.zindex : this.zindex + 1,
+			visible: options.visible !== undefined ? options.visible : this.visible,
+			transform: options.transform || this.transform.copy(),
+			// Use provided shaders or inherit
+			shaders: options.shaders || Object.assign({}, this.shaders),
+			mipmapBias: options.mipmapBias || this.mipmapBias,
+			pixelSize: options.pixelSize || this.pixelSize,
+			debug: options.debug !== undefined ? options.debug : this.debug
+		};
+
+		// Create the new layer
+		const derivedLayer = new Layer(derivedOptions);
+
+		// Set initial shader if specified
+		if (options.defaultShader && derivedOptions.shaders[options.defaultShader]) {
+			derivedLayer.setShader(options.defaultShader);
+		}
+
+		return derivedLayer;
+	}
+
 	/** @ignore */
 	init(options) {
 		Object.assign(this, {
@@ -1140,45 +1200,6 @@ class Layer {
 		return bytesPerPixel;
 	}
 }
-
-/**
- * Creates a new Layer that shares tiles with this layer but uses a different shader.
- * @param {Object} options - Options for the new layer
- * @param {Object} [options.shaders] - Map of shaders for the new layer
- * @param {string} [options.defaultShader] - ID of shader to set as active
- * @param {string} [options.label] - Label for the new layer (defaults to original label)
- * @param {number} [options.zindex] - Z-index for the new layer
- * @returns {Layer} A new layer sharing textures with this one
- */
-Layer.prototype.derive = function (options = {}) {
-	// Create options for the new layer
-	const derivedOptions = {
-		// Keep the same layout
-		layout: this.layout,
-		// Reference the source layer for shared tiles
-		sourceLayer: this,
-		// Inherit other properties but allow overrides
-		label: options.label || this.label,
-		zindex: options.zindex !== undefined ? options.zindex : this.zindex + 1,
-		visible: options.visible !== undefined ? options.visible : this.visible,
-		transform: options.transform || this.transform.copy(),
-		// Use provided shaders or inherit
-		shaders: options.shaders || Object.assign({}, this.shaders),
-		mipmapBias: options.mipmapBias || this.mipmapBias,
-		pixelSize: options.pixelSize || this.pixelSize,
-		debug: options.debug !== undefined ? options.debug : this.debug
-	};
-
-	// Create the new layer
-	const derivedLayer = new Layer(derivedOptions);
-
-	// Set initial shader if specified
-	if (options.defaultShader && derivedOptions.shaders[options.defaultShader]) {
-		derivedLayer.setShader(options.defaultShader);
-	}
-
-	return derivedLayer;
-};
 
 Layer.prototype.types = {}
 addSignals(Layer, 'ready', 'update', 'loaded', 'updateSize');
