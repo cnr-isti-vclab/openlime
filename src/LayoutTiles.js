@@ -115,13 +115,13 @@ class LayoutTiles extends Layout {
 	 * @fires Layout#ready
 	 * @fires Layout#updateSize
 	 */
-	setUrls(urls) {
+	async setUrls(urls) {
 		/**
 		* The event is fired when a layout is ready to be drawn(the single-resolution image is downloaded or the multi-resolution structure has been initialized).
 		* @event Layout#ready
 		*/
 		this.urls = urls;
-		(async () => {
+		try {
 			switch (this.type) {
 				case 'google': await this.initGoogle(); break;        // No Url needed
 				case 'deepzoom1px': await this.initDeepzoom(true); break;  // urls[0] only needed
@@ -135,7 +135,10 @@ class LayoutTiles extends Layout {
 			this.initBoxes();
 			this.status = 'ready';
 			this.emit('ready');
-		})().catch(e => { console.log(e); this.status = e; });
+		} catch (e) {
+			console.log(e);
+			this.status = e;
+		}
 	}
 
 	/**
