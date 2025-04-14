@@ -52,6 +52,7 @@
             z-index: 1000;
             opacity: 0.9;
             transition: opacity 0.3s;
+            box-sizing: border-box; /* Ensures padding is included in width */
         }
 
         .geo-controls:hover {
@@ -64,17 +65,25 @@
             padding-bottom: 10px;
         }
 
+        /* Modified to handle coordinate inputs */
         .input-group {
             margin-bottom: 15px;
             display: flex;
+            flex-direction: column;
             gap: 10px;
+        }
+
+        /* Special case for side-by-side inputs */
+        .input-group.coords {
+            flex-direction: column;
         }
 
         input {
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            flex: 1;
+            width: 100%;
+            box-sizing: border-box; /* Ensures padding is included in width */
         }
 
         button {
@@ -113,8 +122,8 @@
 
         .geo-info {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
+            bottom: 120px;
+            right: 20px;
             background: rgba(255, 255, 255, 0.7);
             padding: 10px;
             border-radius: 5px;
@@ -139,6 +148,11 @@
             font-weight: bold;
             color: #3498db;
         }
+
+        /* Make "Go to Location" button smaller */
+        #go-button {
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -152,13 +166,13 @@
     <div class="geo-controls">
         <h3>Geographic Navigation</h3>
 
-        <div class="input-group">
+        <div class="input-group coords">
             <input id="lat-input" type="number" step="0.0001" placeholder="Latitude">
             <input id="lon-input" type="number" step="0.0001" placeholder="Longitude">
         </div>
 
         <div class="input-group">
-            <input id="zoom-input" type="number" step="0.1" min="1" max="19" placeholder="Zoom">
+            <input id="zoom-input" type="number" step="0.1" min="0" max="19" placeholder="Zoom">
             <button id="go-button">Go to Location</button>
         </div>
 
@@ -172,7 +186,7 @@
             <button class="preset-button" data-lat="51.5074" data-lon="-0.1278" data-zoom="10">London</button>
             <button class="preset-button" data-lat="40.7128" data-lon="-74.0060" data-zoom="10">New York</button>
             <button class="preset-button" data-lat="35.6762" data-lon="139.6503" data-zoom="10">Tokyo</button>
-            <button class="preset-button" data-lat="0" data-lon="0" data-zoom="2">World Center</button>
+            <button class="preset-button" data-lat="39" data-lon="9" data-zoom="7">Pula - Sardinia</button>
         </div>
     </div>
 
@@ -186,11 +200,11 @@
     <script src="../../js/openlime.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             initializeGeoViewer();
 
             // Handle window resize
-            window.addEventListener('resize', function() {
+            window.addEventListener('resize', function () {
                 const viewerElement = document.querySelector('.openlime');
                 if (viewerElement._canvas) {
                     viewerElement._canvas.resize();
@@ -204,7 +218,7 @@
         function initializeGeoViewer() {
             // Create the OpenLIME Viewer
             const viewer = new OpenLIME.Viewer('.openlime');
-            
+
             // Define map layer with OSM tiles
             // This creates a Web Mercator projection map
             const maxZoom = 19;
@@ -224,7 +238,7 @@
             // Wait for canvas to be ready
             viewer.canvas.addEvent('ready', () => {
                 console.log('Canvas ready, initializing GeoreferenceManager');
-                
+
                 // Initialize the GeoreferenceManager
                 const geoManager = new OpenLIME.GeoreferenceManager(viewer, mapLayer);
                 window.geoManager = geoManager; // For debugging
@@ -244,10 +258,10 @@
 
                 // Set up UI elements
                 setupUI(viewer, geoManager);
-                
+
                 // Set initial position (Rome)
                 geoManager.flyTo(41.9028, 12.4964, 6);
-                
+
                 // Update input fields with initial position
                 document.getElementById('lat-input').value = 41.9028.toFixed(4);
                 document.getElementById('lon-input').value = 12.4964.toFixed(4);
@@ -282,11 +296,11 @@
                 if (position && position.lat !== undefined) {
                     // Update the camera coordinates display
                     cameraCoordinates.textContent = `Camera: Lat: ${position.lat.toFixed(6)}, Lon: ${position.lon.toFixed(6)}, Zoom: ${position.zoom.toFixed(2)}`;
-                    
+
                     // Also update input fields
-                    latInput.value = position.lat.toFixed(6);
-                    lonInput.value = position.lon.toFixed(6);
-                    zoomInput.value = position.zoom.toFixed(1);
+                    // latInput.value = position.lat.toFixed(6);
+                    // lonInput.value = position.lon.toFixed(6);
+                    // zoomInput.value = position.zoom.toFixed(1);
                 }
             }
 
@@ -297,7 +311,9 @@
                 const zoom = parseFloat(zoomInput.value);
 
                 if (!isNaN(lat) && !isNaN(lon)) {
-                    geoManager.flyTo(lat, lon, !isNaN(zoom) ? zoom : undefined);
+                    // Ensure zoom is within valid range
+                    const validZoom = !isNaN(zoom) ? Math.min(19, Math.max(0, zoom)) : undefined;
+                    geoManager.flyTo(lat, lon, validZoom);
                 }
             });
 
@@ -346,20 +362,20 @@
 
                     // Convert to WGS84 coordinates
                     const geoCoords = geoManager.canvasToGeo(x, y);
-                    
+
                     // Get current zoom level
                     const position = geoManager.getCurrentPosition();
                     const zoom = position ? position.zoom : 0;
-                    
+
                     // Display clicked coordinates with zoom
                     clickCoordinates.textContent = `Clicked: Lat: ${geoCoords.lat.toFixed(6)}, Lon: ${geoCoords.lon.toFixed(6)}, Zoom: ${zoom.toFixed(2)}`;
-                    
+            
                     // Prevent other controllers from handling this event
                     e.preventDefault();
                 },
                 priority: 1000 // high priority
             });
-            
+
             // Initialize position display
             updatePositionDisplay();
         }

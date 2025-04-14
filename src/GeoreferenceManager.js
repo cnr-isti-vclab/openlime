@@ -23,6 +23,10 @@ class GeoreferenceManager {
     this.layer = layer;
     this.earthRadius = 6378137; // Earth radius in meters (WGS84)
     this.imageSize = Math.max(this.layer.width, this.layer.height);
+    
+    // Define zoom constraints
+    this.minZoom = 0;  // Minimum zoom level
+    this.maxZoom = 19; // Maximum zoom level (from OSM)
 
     // Set up camera position methods
     this.setupViewer();
@@ -36,7 +40,10 @@ class GeoreferenceManager {
     // Add method to navigate to geographic coordinates
     this.camera.setGeoPosition = (lat, lon, zoom) => {
       const sceneCoord = this.geoToScene(lat, lon);
-      const z = zoom ? 1 / Math.pow(2, zoom) : this.camera.getCurrentTransform(performance.now()).z;
+      
+      // Constrain zoom to valid range
+      const constrainedZoom = Math.min(this.maxZoom, Math.max(this.minZoom, zoom));
+      const z = constrainedZoom !== undefined ? 1 / Math.pow(2, constrainedZoom) : this.camera.getCurrentTransform(performance.now()).z;
 
       // Notice we need to negate the coordinates and scale by z
       this.camera.setPosition(250, -sceneCoord.x * z, -sceneCoord.y * z, z, 0);
@@ -48,11 +55,15 @@ class GeoreferenceManager {
 
       // Need to negate and unscale coordinates before converting to geo
       const geo = this.sceneToGeo(-transform.x / transform.z, -transform.y / transform.z);
+      
+      // Calculate zoom level and ensure it's within valid range
+      const rawZoom = Math.log2(1 / transform.z);
+      const constrainedZoom = Math.min(this.maxZoom, Math.max(this.minZoom, rawZoom));
 
       return {
         lat: geo.lat,
         lon: geo.lon,
-        zoom: Math.log2(1 / transform.z)
+        zoom: constrainedZoom
       };
     };
   }
@@ -187,7 +198,10 @@ class GeoreferenceManager {
       throw new Error('Viewer not initialized');
     }
     const sceneCoord = this.geoToScene(lat, lon);
-    const z = 1.0 / Math.pow(2, zoom);
+    
+    // Constrain zoom to valid range
+    const constrainedZoom = Math.min(this.maxZoom, Math.max(this.minZoom, zoom));
+    const z = 1.0 / Math.pow(2, constrainedZoom);
 
     // Note that we use negative coordinates because the camera transform works that way
     this.camera.setPosition(duration, -sceneCoord.x * z, -sceneCoord.y * z, z, 0, easing);
@@ -200,11 +214,15 @@ class GeoreferenceManager {
   getCurrentPosition() {
     const transform = this.camera.getCurrentTransform(performance.now());
     const geo = this.sceneToGeo(-transform.x / transform.z, -transform.y / transform.z);
+    
+    // Calculate zoom level and ensure it's within valid range
+    const rawZoom = Math.log2(1 / transform.z);
+    const constrainedZoom = Math.min(this.maxZoom, Math.max(this.minZoom, rawZoom));
 
     return {
       lat: geo.lat,
       lon: geo.lon,
-      zoom: Math.log2(1 / transform.z)
+      zoom: constrainedZoom
     };
   }
 }
