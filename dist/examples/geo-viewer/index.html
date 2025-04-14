@@ -122,10 +122,16 @@
             z-index: 1000;
             font-size: 0.9em;
             transition: background 0.3s;
+            min-width: 250px;
         }
 
         .geo-info:hover {
             background: rgba(255, 255, 255, 0.9);
+        }
+
+        .camera-coordinates {
+            margin-bottom: 8px;
+            color: #333;
         }
 
         .click-coordinates {
@@ -172,7 +178,8 @@
 
     <!-- Geographic info display -->
     <div class="geo-info">
-        <div id="coordinates" class="coordinates"></div>
+        <div id="camera-coordinates" class="camera-coordinates">Camera: Initializing...</div>
+        <div id="click-coordinates" class="click-coordinates">Click on map to see coordinates</div>
     </div>
 
     <!-- OpenLIME Scripts -->
@@ -255,7 +262,8 @@
          */
         function setupUI(viewer, geoManager) {
             // Get UI elements
-            const coordinates = document.getElementById('coordinates');
+            const cameraCoordinates = document.getElementById('camera-coordinates');
+            const clickCoordinates = document.getElementById('click-coordinates');
             const latInput = document.getElementById('lat-input');
             const lonInput = document.getElementById('lon-input');
             const zoomInput = document.getElementById('zoom-input');
@@ -271,7 +279,15 @@
             // Update position and zoom displays
             function updatePositionDisplay() {
                 const position = geoManager.getCurrentPosition();
-                console.log(position);
+                if (position && position.lat !== undefined) {
+                    // Update the camera coordinates display
+                    cameraCoordinates.textContent = `Camera: Lat: ${position.lat.toFixed(6)}, Lon: ${position.lon.toFixed(6)}, Zoom: ${position.zoom.toFixed(2)}`;
+                    
+                    // Also update input fields
+                    latInput.value = position.lat.toFixed(6);
+                    lonInput.value = position.lon.toFixed(6);
+                    zoomInput.value = position.zoom.toFixed(1);
+                }
             }
 
             // Go to location button handler
@@ -331,8 +347,12 @@
                     // Convert to WGS84 coordinates
                     const geoCoords = geoManager.canvasToGeo(x, y);
                     
-                    // Display coordinates
-                    coordinates.textContent = `Lat: ${geoCoords.lat.toFixed(6)}, Lon: ${geoCoords.lon.toFixed(6)}`;
+                    // Get current zoom level
+                    const position = geoManager.getCurrentPosition();
+                    const zoom = position ? position.zoom : 0;
+                    
+                    // Display clicked coordinates with zoom
+                    clickCoordinates.textContent = `Clicked: Lat: ${geoCoords.lat.toFixed(6)}, Lon: ${geoCoords.lon.toFixed(6)}, Zoom: ${zoom.toFixed(2)}`;
                     
                     // Prevent other controllers from handling this event
                     e.preventDefault();

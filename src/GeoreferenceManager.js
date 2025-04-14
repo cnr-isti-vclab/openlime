@@ -33,23 +33,25 @@ class GeoreferenceManager {
    * @private
    */
   setupViewer() {
-
     // Add method to navigate to geographic coordinates
     this.camera.setGeoPosition = (lat, lon, zoom) => {
       const sceneCoord = this.geoToScene(lat, lon);
-      const z = zoom ? 1 / Math.pow(2, zoom) : camera.getCurrentTransform(performance.now()).z;
+      const z = zoom ? 1 / Math.pow(2, zoom) : this.camera.getCurrentTransform(performance.now()).z;
 
-      this.camera.setPosition(250, sceneCoord.x, sceneCoord.y, z, 0);
+      // Notice we need to negate the coordinates and scale by z
+      this.camera.setPosition(250, -sceneCoord.x * z, -sceneCoord.y * z, z, 0);
     };
 
     // Add method to get current geographic position
     this.camera.getGeoPosition = () => {
       const transform = this.camera.getCurrentTransform(performance.now());
-      const geo = this.sceneToGeo(transform.x, transform.y);
-      console.log("geo ", geo);
+
+      // Need to negate and unscale coordinates before converting to geo
+      const geo = this.sceneToGeo(-transform.x / transform.z, -transform.y / transform.z);
+
       return {
-        latitude: geo.lat,
-        longitude: geo.lon,
+        lat: geo.lat,
+        lon: geo.lon,
         zoom: Math.log2(1 / transform.z)
       };
     };
@@ -166,10 +168,9 @@ class GeoreferenceManager {
     const sceneCoord = CoordinateSystem.fromCanvasHtmlToScene(
       { x, y },
       this.camera,
-      true 
+      true
     );
     // Convert scene coordinates to geographic coordinates
-    //this.camera.setPosition(5000,sceneCoord.x, sceneCoord.y, 4, 0, 'linear');
     return this.sceneToGeo(sceneCoord.x, sceneCoord.y);
   }
 
@@ -186,22 +187,26 @@ class GeoreferenceManager {
       throw new Error('Viewer not initialized');
     }
     const sceneCoord = this.geoToScene(lat, lon);
+    const z = 1.0 / Math.pow(2, zoom);
 
-    console.log("sceneCoord: ", sceneCoord);
-    const z = 1.0/Math.pow(2,zoom);
-    this.camera.setPosition(duration,-sceneCoord.x*z, -sceneCoord.y*z, z, 0, easing);
-
-    console.log("Debug camera", this.camera);
+    // Note that we use negative coordinates because the camera transform works that way
+    this.camera.setPosition(duration, -sceneCoord.x * z, -sceneCoord.y * z, z, 0, easing);
   }
 
   /**
    * Gets the current geographic position and zoom
-   * @returns {Object} Current position {latitude, longitude, zoom}
+   * @returns {Object} Current position {lat, lon, zoom}
    */
   getCurrentPosition() {
-    return this.camera.getGeoPosition();
-  }
+    const transform = this.camera.getCurrentTransform(performance.now());
+    const geo = this.sceneToGeo(-transform.x / transform.z, -transform.y / transform.z);
 
+    return {
+      lat: geo.lat,
+      lon: geo.lon,
+      zoom: Math.log2(1 / transform.z)
+    };
+  }
 }
 
-export { GeoreferenceManager };
+export { GeoreferenceManager }
