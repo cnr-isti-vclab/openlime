@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: AudioPlayer</title>
+	<title>OpenLIME Class: GeoreferenceManager</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,18 +88,18 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: AudioPlayer</h1>
+	<h1 class="page-title">Class: GeoreferenceManager</h1>
 <section>
 
 <header>
     
         <h2>
-        AudioPlayer
+        GeoreferenceManager
         </h2>
         
-            <div class="class-description"><p>Class representing an audio player with playback control capabilities.
-Supports playing, pausing, resuming, and stopping audio files with volume control
-and playback speed adjustment.</p></div>
+            <div class="class-description"><p>GeoreferenceManager for working with geographic coordinates in OpenLIME
+Handles conversions between geographic coordinates (EPSG:4326/WGS84) and
+Web Mercator (EPSG:3857) and managing map navigation.</p></div>
         
     
 </header>
@@ -111,7 +111,7 @@ and playback speed adjustment.</p></div>
         
 <hr>
 <dt>
-    <h4 class="name" id="AudioPlayer"><span class="type-signature"></span>new AudioPlayer()</h4>
+    <h4 class="name" id="GeoreferenceManager"><span class="type-signature"></span>new GeoreferenceManager(viewer, layer)</h4>
     
     
 </dt>
@@ -119,8 +119,7 @@ and playback speed adjustment.</p></div>
 
     
     <div class="description">
-        <p>Creates an instance of AudioPlayer.
-Initializes the player with default settings and sets up signal handling for events.</p>
+        <p>Creates a new GeoreferenceManager</p>
     </div>
     
 
@@ -129,6 +128,80 @@ Initializes the player with default settings and sets up signal handling for eve
     
 
     
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>viewer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>OpenLIME Viewer instance</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>layer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Layer containing the geographic image</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
     
 
     
@@ -166,8 +239,8 @@ Initializes the player with default settings and sets up signal handling for eve
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-8">line 8</a>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-8">line 8</a>
 			</li>
 		</ul>
 	</dd>
@@ -218,7 +291,7 @@ Initializes the player with default settings and sets up signal handling for eve
             
 <hr>
 <dt>
-    <h4 class="name" id="continue"><span class="type-signature">&lt;async> </span>continue()</h4>
+    <h4 class="name" id="canvasToGeo"><span class="type-signature"></span>canvasToGeo(x, y)</h4>
     
     
 </dt>
@@ -226,119 +299,7 @@ Initializes the player with default settings and sets up signal handling for eve
 
     
     <div class="description">
-        <p>Resumes playback of a paused audio file.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-91">line 91</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>Resolves when the resumed audio playback completes.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;void></span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="emit"><span class="type-signature"></span>emit(type)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Emits an event of the specified type</p>
+        <p>Converts canvas HTML coordinates to WGS84 coordinates</p>
     </div>
     
 
@@ -373,13 +334,13 @@ Initializes the player with default settings and sets up signal handling for eve
 
         <tr>
             
-                <td class="name"><code>type</code></td>
+                <td class="name"><code>x</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">number</span>
 
 
 
@@ -390,7 +351,31 @@ Initializes the player with default settings and sets up signal handling for eve
 
             
 
-            <td class="description last"><p>The event type to emit</p></td>
+            <td class="description last"><p>X coordinate in canvas</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Y coordinate in canvas</p></td>
         </tr>
 
     
@@ -434,96 +419,8 @@ Initializes the player with default settings and sets up signal handling for eve
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-208">line 208</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="getPlayDuration"><span class="type-signature"></span>getPlayDuration()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Returns the total play duration in milliseconds.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-155">line 155</a>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-175">line 175</a>
 			</li>
 		</ul>
 	</dd>
@@ -552,7 +449,7 @@ Initializes the player with default settings and sets up signal handling for eve
     
             
 <div class="param-desc">
-    <p>Total play duration in milliseconds.</p>
+    <p>Geographic coordinates {lat, lon} in degrees</p>
 </div>
 
 
@@ -563,7 +460,7 @@ Initializes the player with default settings and sets up signal handling for eve
     </dt>
     <dd>
         
-<span class="param-type">number</span>
+<span class="param-type">Object</span>
 
 
 
@@ -580,7 +477,7 @@ Initializes the player with default settings and sets up signal handling for eve
             
 <hr>
 <dt>
-    <h4 class="name" id="pause"><span class="type-signature"></span>pause()</h4>
+    <h4 class="name" id="flyTo"><span class="type-signature"></span>flyTo(lat, lon [, zoom] [, duration] [, easing])</h4>
     
     
 </dt>
@@ -588,97 +485,7 @@ Initializes the player with default settings and sets up signal handling for eve
 
     
     <div class="description">
-        <p>Pauses the currently playing audio.
-Updates play duration when pausing.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-78">line 78</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="play"><span class="type-signature">&lt;async> </span>play(audioFile [, speed])</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Plays an audio file with optional playback speed adjustment.
-If audio is paused, it will resume playback instead of starting a new file.</p>
+        <p>Navigate to a geographic position with animation</p>
     </div>
     
 
@@ -717,13 +524,13 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
 
         <tr>
             
-                <td class="name"><code>audioFile</code></td>
+                <td class="name"><code>lat</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">number</span>
 
 
 
@@ -746,14 +553,50 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
                 </td>
             
 
-            <td class="description last"><p>The path or URL to the audio file.</p></td>
+            <td class="description last"><p>Latitude in degrees</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>speed</code></td>
+                <td class="name"><code>lon</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Longitude in degrees</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>zoom</code></td>
             
 
             <td class="type">
@@ -781,12 +624,90 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
             
                 <td class="default">
                 
-                    1.0
+                </td>
+            
+
+            <td class="description last"><p>Zoom level (optional)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>duration</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
                 
                 </td>
             
 
-            <td class="description last"><p>Playback speed multiplier (1.0 is normal speed).</p></td>
+            
+                <td class="default">
+                
+                    250
+                
+                </td>
+            
+
+            <td class="description last"><p>Animation duration in ms</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>easing</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'linear'
+                
+                </td>
+            
+
+            <td class="description last"><p>Easing function</p></td>
         </tr>
 
     
@@ -830,8 +751,170 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-32">line 32</a>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-194">line 194</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="geoToScene"><span class="type-signature"></span>geoToScene(lat, lon)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Converts WGS84 coordinates to scene coordinates</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>lat</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Latitude in degrees</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>lon</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Longitude in degrees</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-149">line 149</a>
 			</li>
 		</ul>
 	</dd>
@@ -860,7 +943,7 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
     
             
 <div class="param-desc">
-    <p>Resolves when the audio playback completes.</p>
+    <p>Scene coordinates {x, y}</p>
 </div>
 
 
@@ -871,7 +954,7 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;void></span>
+<span class="param-type">Object</span>
 
 
 
@@ -888,7 +971,7 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="setMute"><span class="type-signature"></span>setMute(b)</h4>
+    <h4 class="name" id="geoToWebMercator"><span class="type-signature"></span>geoToWebMercator(lat, lon)</h4>
     
     
 </dt>
@@ -896,8 +979,7 @@ If audio is paused, it will resume playback instead of starting a new file.</p>
 
     
     <div class="description">
-        <p>Set the mute state of the audio player.
-Stores the previous volume level when muting and restores it when unmuting.</p>
+        <p>Converts WGS84 (EPSG:4326) coordinates to Web Mercator (EPSG:3857)</p>
     </div>
     
 
@@ -932,145 +1014,7 @@ Stores the previous volume level when muting and restores it when unmuting.</p>
 
         <tr>
             
-                <td class="name"><code>b</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Whether to mute the audio playback</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-192">line 192</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="setVolume"><span class="type-signature"></span>setVolume(volume)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Sets the audio volume level.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>volume</code></td>
+                <td class="name"><code>lat</code></td>
             
 
             <td class="type">
@@ -1087,128 +1031,14 @@ Stores the previous volume level when muting and restores it when unmuting.</p>
 
             
 
-            <td class="description last"><p>Volume level between 0.0 and 1.0.</p></td>
+            <td class="description last"><p>Latitude in degrees</p></td>
         </tr>
 
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-164">line 164</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="silence"><span class="type-signature">&lt;async> </span>silence(ms)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Creates a delay in the execution flow.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>ms</code></td>
+                <td class="name"><code>lon</code></td>
             
 
             <td class="type">
@@ -1225,7 +1055,7 @@ Stores the previous volume level when muting and restores it when unmuting.</p>
 
             
 
-            <td class="description last"><p>Number of milliseconds to wait.</p></td>
+            <td class="description last"><p>Longitude in degrees</p></td>
         </tr>
 
     
@@ -1269,8 +1099,8 @@ Stores the previous volume level when muting and restores it when unmuting.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-183">line 183</a>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-75">line 75</a>
 			</li>
 		</ul>
 	</dd>
@@ -1299,7 +1129,7 @@ Stores the previous volume level when muting and restores it when unmuting.</p>
     
             
 <div class="param-desc">
-    <p>Resolves after the specified delay.</p>
+    <p>Point in Web Mercator coordinates {x, y}</p>
 </div>
 
 
@@ -1310,7 +1140,7 @@ Stores the previous volume level when muting and restores it when unmuting.</p>
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;void></span>
+<span class="param-type">Object</span>
 
 
 
@@ -1327,7 +1157,7 @@ Stores the previous volume level when muting and restores it when unmuting.</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="stop"><span class="type-signature"></span>stop()</h4>
+    <h4 class="name" id="getCurrentPosition"><span class="type-signature"></span>getCurrentPosition()</h4>
     
     
 </dt>
@@ -1335,8 +1165,7 @@ Stores the previous volume level when muting and restores it when unmuting.</p>
 
     
     <div class="description">
-        <p>Stops the current audio playback and resets all player states.
-Removes event listeners and updates final play duration.</p>
+        <p>Gets the current geographic position and zoom</p>
     </div>
     
 
@@ -1382,8 +1211,8 @@ Removes event listeners and updates final play duration.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="AudioPlayer.js.html">AudioPlayer.js</a>,
-				 <a href="AudioPlayer.js.html#sunlight-1-line-125">line 125</a>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-212">line 212</a>
 			</li>
 		</ul>
 	</dd>
@@ -1408,6 +1237,774 @@ Removes event listeners and updates final play duration.</p>
     
 
     
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Current position {lat, lon, zoom}</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="sceneToGeo"><span class="type-signature"></span>sceneToGeo(x, y)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Converts scene coordinates to WGS84 (EPSG:4326) coordinates</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>X coordinate in scene space</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Y coordinate in scene space</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-162">line 162</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Geographic coordinates {lat, lon} in degrees</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="sceneToWebMercator"><span class="type-signature"></span>sceneToWebMercator(x, y)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Converts scene coordinates to Web Mercator</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>X coordinate in scene space</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Y coordinate in scene space</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-132">line 132</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Web Mercator coordinates {x, y}</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="webMercatorToGeo"><span class="type-signature"></span>webMercatorToGeo(x, y)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Converts Web Mercator (EPSG:3857) coordinates to WGS84 (EPSG:4326)</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>X coordinate in Web Mercator</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Y coordinate in Web Mercator</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-96">line 96</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Geographic coordinates {lat, lon} in degrees</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="webMercatorToScene"><span class="type-signature"></span>webMercatorToScene(x, y)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Converts Web Mercator coordinates to Scene coordinates</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>X coordinate in Web Mercator</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Y coordinate in Web Mercator</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="GeoreferenceManager.js.html">GeoreferenceManager.js</a>,
+				 <a href="GeoreferenceManager.js.html#sunlight-1-line-114">line 114</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Scene coordinates {x, y}</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
 
     
 </dd>

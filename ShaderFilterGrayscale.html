@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Index</title>
+	<title>OpenLIME Class: ShaderFilterGrayscale</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,264 +88,13 @@
 		<div id="main">
 			
 
-	
-	
-
-
-
-    <h3>openlime 1.2.0</h3>
-
-
-
-
-
-
-
-
-
-	
-	
-
-
-
-
-
-    <section class="readme-section">
-        <article><h1 id="openlime-(open-layered-image-explorer)">OpenLIME (Open Layered IMage Explorer)</h1>
-<p align="center" style="margin-top: 20px; margin-bottom: 15px;">
-  <img src="https://cnr-isti-vclab.github.io/openlime/img/openlime-teaser.jpg" alt="OpenLIME Teaser" width="600">
-</p>
-<p><strong>OpenLIME</strong> (Open Layered IMage Explorer) is an open-source JavaScript library for the efficient display of scalable high-resolution relightable images.</p>
-<p><strong>OpenLime</strong> is jointly developed by <a href="https://www.crs4.it/research/visual-and-data-intensive-computing/">CRS4 Visual and Data-intensive Computing Group</a> and <a href="http://vcg.isti.cnr.it/">CNR ISTI - Visual Computing Lab</a>.</p>
-<p><strong>OpenLIME</strong> natively supports BRDF and RTI datasets, and can be easily extended for other multi-channel raster datasets, such as hyper spectral imaging or other reflectance modeling. Input data can be combined in a multi-layer visualization system using opacity and blending modes, and interactive lenses.</p>
-<p>All web image types (<em>jpg</em>, <em>png</em>, <em>gif</em>, etc...) are supported as well as the most common multi-resolution image formats (<em>deepzoom</em>, <em>zoomify</em>, <em>IIIF</em>, <em>google maps</em>), which are suitable for large images.</p>
-<p><strong>OpenLIME</strong> provides a set of ready-to-use layers that allows developers to quickly publish their datasets on the web or make kiosk applications. Ready-to-use layers ranging from images, to multi-channel data (such as, for example, RTI or BRDF) or the combination of multiple layers or for visualization through lenses.</p>
-<p>The <strong>OpenLIME</strong> library comes with a responsive user iterface that works well with both desktop monitors and multitouch systems. Additionally, it is designed to be highly configurable, so it will be easy for the experienced developer to build their own custom interface.</p>
-<p>The library contains a convenient set of examples that can be used both to understand how the library works and as a starting point for programming with <strong>OpenLIME</strong> itself.</p>
-<p>API Docs: https://cnr-isti-vclab.github.io/openlime/</p>
-<h2 id="using-openlime-in-your-project">Using OpenLIME in your project</h2>
-<h3 id="via-cdn-(recommended-for-quick-start)">Via CDN (recommended for quick start)</h3>
-<p>The easiest way to use OpenLIME is via a CDN like unpkg or jsdelivr:</p>
-<pre class="prettyprint source lang-html"><code>&lt;!-- Using unpkg -->
-&lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/openlime@1.2.0/dist/css/skin.css&quot;>
-&lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/openlime@1.2.0/dist/css/light.css&quot;>
-&lt;script src=&quot;https://unpkg.com/openlime@1.2.0/dist/js/openlime.min.js&quot;>&lt;/script>
-
-&lt;!-- OR using jsdelivr -->
-&lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/openlime@1.2.0/dist/css/skin.css&quot;>
-&lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/openlime@1.2.0/dist/css/light.css&quot;>
-&lt;script src=&quot;https://cdn.jsdelivr.net/npm/openlime@1.2.0/dist/js/openlime.min.js&quot;>&lt;/script>
-</code></pre>
-<h3 id="installing-via-npm">Installing via npm</h3>
-<p>If you're using a build system like webpack or rollup:</p>
-<pre class="prettyprint source lang-bash"><code>npm install openlime
-</code></pre>
-<p>Then import it into your project:</p>
-<h4 id="es-module-(esm)">ES Module (ESM)</h4>
-<pre class="prettyprint source lang-javascript"><code>import * as OpenLIME from 'openlime';
-
-// Or import specific components
-import { Viewer, Layer, LayerImage } from 'openlime';
-</code></pre>
-<h4 id="commonjs-(cjs)">CommonJS (CJS)</h4>
-<pre class="prettyprint source lang-javascript"><code>const OpenLIME = require('openlime');
-</code></pre>
-<h4 id="umd-(in-browser-with-module-bundler)">UMD (in browser with module bundler)</h4>
-<pre class="prettyprint source lang-javascript"><code>import OpenLIME from 'openlime';
-</code></pre>
-<h3 id="basic-usage-example">Basic Usage Example</h3>
-<p>Here's a simple example of how to create a viewer with a single image layer:</p>
-<pre class="prettyprint source lang-html"><code>&lt;!DOCTYPE html>
-&lt;html>
-&lt;head>
-  &lt;meta charset=&quot;utf-8&quot;>
-  &lt;title>OpenLIME Basic Example&lt;/title>
-  &lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/openlime@1.2.0/dist/css/lime.css&quot;>
-  &lt;style>
-    #viewer {
-      width: 100%;
-      height: 600px;
-    }
-  &lt;/style>
-&lt;/head>
-&lt;body>
-  &lt;div id=&quot;viewer&quot;>&lt;/div>
-
-  &lt;script src=&quot;https://unpkg.com/openlime@1.2.0/dist/js/openlime.min.js&quot;>&lt;/script>
-  &lt;script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Create a viewer
-      const viewer = new OpenLIME.Viewer('viewer', {
-        prefetchBorder: 1,
-        layout: 'basic'
-      });
-
-      // Create and add an image layer
-      const imageLayer = new OpenLIME.LayerImage({
-        id: 'base-image',
-        layout: 'image',
-        url: 'path/to/your/image.jpg'
-      });
-      
-      viewer.addLayer(imageLayer);
-      
-      // Add pan/zoom controller
-      const controller = new OpenLIME.ControllerPanZoom();
-      viewer.addController(controller);
-    });
-  &lt;/script>
-&lt;/body>
-&lt;/html>
-</code></pre>
-<p>For multi-resolution images:</p>
-<pre class="prettyprint source lang-javascript"><code>// Using a DeepZoom image
-const deepZoomLayer = new OpenLIME.LayerImage({
-  id: 'deepzoom-image',
-  layout: 'deepzoom',
-  url: 'path/to/your/deepzoom_files/'
-});
-
-// Using a Zoomify image
-const zoomifyLayer = new OpenLIME.LayerImage({
-  id: 'zoomify-image',
-  layout: 'zoomify',
-  url: 'path/to/your/zoomify/'
-});
-
-// Using an IIIF image
-const iiifLayer = new OpenLIME.LayerImage({
-  id: 'iiif-image',
-  layout: 'iiif',
-  url: 'https://your-iiif-server.org/your-image-id'
-});
-</code></pre>
-<h2 id="development-setup">Development Setup</h2>
-<h3 id="installing-npm">Installing npm</h3>
-<h3 id="ubuntu">Ubuntu</h3>
-<pre class="prettyprint source lang-bash"><code>sudo apt install npm
-</code></pre>
-<h4 id="ubuntu-18.04">Ubuntu 18.04</h4>
-<p>You might have some problem using the old npm version shipped with Ubuntu18.04, and even upgrading it. This worked for me:</p>
-<pre class="prettyprint source lang-bash"><code>sudo npm install -g npm@latest-6
-</code></pre>
-<h3 id="windows">Windows</h3>
-<p>To obtain npm for Windows, you need to download the Windows version
-of node.js from https://nodejs.org/en/download/ .
-You can download either the Windows Installer (.msi) or
-the Windows Binary (.zip).  If you download
-and expand the Windows
-Binary zip file, you will afterwards
-need to set your <code>PATH</code> variable
-to include the directory that contains the npm executable
-(this directory is the subdirectory <code>node_modules\npm\bin</code>).</p>
-<h2 id="setting-up-npm-(all-platforms)">Setting up npm (all platforms)</h2>
-<p>The following step should be performed in the <code>openlime</code>
-directory that was cloned from this repository.</p>
-<p>Before using npm, you need to install the required
-packages locally.  This only needs to be done once.
-The following command tells npm to download
-all the webpack packages (and their dependencies) listed in the
-<code>package.json</code> file.  These will be put in the <code>./node_modules</code>
-directory.</p>
-<pre class="prettyprint source lang-bash"><code>npm install
-</code></pre>
-<p>The downloaded packages include <code>rollup</code>, <code>documentation</code>,
-and <code>nodemon</code>, which will be used below.</p>
-<h2 id="using-npm-(all-platforms)">Using npm (all platforms)</h2>
-<p>These steps should be performed in the <code>openlime</code>
-directory that was cloned from this repository.</p>
-<h3 id="build-the-code">Build the code</h3>
-<p>The following command reads the javascript code in <code>./src</code>, and
-puts the transpiled webpack code in <code>./dist/main.js</code>.</p>
-<pre class="prettyprint source lang-bash"><code>npm run build
-</code></pre>
-<p>The webpack code is used, for example, by the
-<code>./dist/index.html</code> web page.</p>
-<h3 id="run-the-node.js-server">Run the node.js server</h3>
-<p>If you wish, you can run the node.js development server
-to serve your web pages.
-This server will use <code>./dist</code> as the home directory.
-The server is run in &quot;hot&quot; mode, which means that
-whenever you change a file in the <code>./src</code> directory,
-the webpack code will automatically be rebuilt, and
-your web browser will automatically refresh, to reflect
-your latest changes.</p>
-<pre class="prettyprint source lang-bash"><code>npm run start
-</code></pre>
-<p>Then access the demo app at http://localhost:8080 (which
-by default is <code>./dist/index.html</code>).</p>
-<p>If you prefer to serve from a different port, say 8088, you can call</p>
-<pre class="prettyprint source lang-bash"><code>npm run start -- --port 8088
-</code></pre>
-<h3 id="create-a-rollup-file-to-use-with-other-servers">Create a rollup file to use with other servers</h3>
-<p>To create a rollup file that can be used with other servers, you don't need to rely on Node.js as the server. Instead, you can embed the rollup file directly in your web page using the <code>&lt;script&gt;</code> tag. You can reference either <code>./dist/js/openlime.min.js</code> or <code>./dist/js/openlime.js</code>.</p>
-<p>In the <code>./dist/examples</code> folder, you'll find simple <strong>openLIME</strong> web apps that demonstrate how to use this approach. These files will display correctly when served from any web server.</p>
-<p>To generate the rollup files, simply run the following command:</p>
-<pre class="prettyprint source lang-bash"><code>npm run rollup
-</code></pre>
-<h3 id="keep-the-rollup-files-up-to-date">Keep the rollup files up to date</h3>
-<p>If you keep a <code>nodemon</code> (<strong>node</strong> <strong>mon</strong>itor) script running, it
-will automatically update the rollup files
-<code>./dist/js/openlime.min.js</code>
-and
-<code>./dist/js/openlime.js</code>
-whenever anything changes in the <code>./src</code> directory.
-Note that, unlike with the node.js server, the browser will
-not refresh automatically; you will have to do that yourself
-once the rollup files have been updated.</p>
-<pre class="prettyprint source lang-bash"><code>npm run nodemon
-</code></pre>
-<h3 id="create-documentation">Create documentation</h3>
-<p>The documentation is created from structured comments in the
-source code (in <code>./src</code>).
-Once created, it is accessible from <code>./docs/index.html</code></p>
-<pre class="prettyprint source lang-bash"><code>npm run doc
-</code></pre>
-<h3 id="customization">Customization</h3>
-<p>skin.css</p>
-<p>skin.svg</p>
-<p>Run</p>
-<pre class="prettyprint source lang-bash"><code>svgo -p 1 skin.svg -o skin.min.svg
-</code></pre>
-<p>to minimize svg.</p>
-<p>Documentation.js supports markdown syntax and JSDoc syntax.</p>
-<p>JSON example of the configuration:</p>
-<pre class="prettyprint source"><code>{
-	camera: { 
-	},
-	canvas: {
-		rasters: [
-			{
-				id:
-				name:
-				width: //optional
-				height: //optional
-				url: 
-				layout: &lt;image|google|deepzoom|zoomify|iip|iiif> //optional if can be determined from the url.
-				
-
-			}
-		]
-	},
-	overlay: {
-	}
-}
-</code></pre></article>
-    </section>
-
-
-
-
-
-
-
-	<h1 class="page-title">Index</h1>
+	<h1 class="page-title">Class: ShaderFilterGrayscale</h1>
 <section>
 
 <header>
     
         <h2>
-        Ruler.js
+        ShaderFilterGrayscale
         </h2>
         
     
@@ -356,21 +105,160 @@ Once created, it is accessible from <code>./docs/index.html</code></p>
     <div class="container-overview">
     
         
-            <div class="description"><p>Ruler module provides measurement functionality for the OpenLIME viewer.
-Allows users to measure distances in the scene with an interactive ruler tool.
-Extends the Units class to handle unit conversions and formatting.</p>
-<p>Ruler class creates an interactive measurement tool for the OpenLIME viewer.
-Features:</p>
-<ul>
-<li>Interactive distance measurement</li>
-<li>SVG-based visualization</li>
-<li>Scale-aware display</li>
-<li>Multiple measurement history</li>
-<li>Touch and mouse support</li>
-</ul></div>
+<hr>
+<dt>
+    <h4 class="name" id="ShaderFilterGrayscale"><span class="type-signature"></span>new ShaderFilterGrayscale( [options])</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Creates a grayscale filter</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
         
 
         
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Filter options</p>
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>weights</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;number></span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    [0.2126, 0.7152, 0.0722]
+                
+                </td>
+            
+
+            <td class="description last"><p>RGB channel weights for luminance calculation</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
 <dl class="details">
     
 
@@ -405,8 +293,8 @@ Features:</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Ruler.js.html">Ruler.js</a>,
-				 <a href="Ruler.js.html#sunlight-1-line-6">line 6</a>
+				<a href="ShaderFilter.js.html">ShaderFilter.js</a>,
+				 <a href="ShaderFilter.js.html#sunlight-1-line-285">line 285</a>
 			</li>
 		</ul>
 	</dd>
@@ -420,7 +308,21 @@ Features:</p>
 </dl>
 
 
-        
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
     
     </div>
 
@@ -431,7 +333,7 @@ Features:</p>
 
 
     <ul>
-        <li><a href="Units.html">Units</a></li>
+        <li><a href="ShaderFilter.html">ShaderFilter</a></li>
     </ul>
 
 
@@ -447,6 +349,920 @@ Features:</p>
 
     
 
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<hr>
+<dt>
+    <h4 class="name" id="fragDataSrc"><span class="type-signature">&lt;abstract> </span>fragDataSrc(gl)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Generates filter-specific GLSL function</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>gl</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">WebGLRenderingContext</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>WebGL context</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
+	<dd class="inherited-from">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderFilter.html#fragDataSrc">ShaderFilter#fragDataSrc</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="ShaderFilter.html#fragDataSrc">ShaderFilter#fragDataSrc</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderFilter.js.html">ShaderFilter.js</a>,
+				 <a href="ShaderFilter.js.html#sunlight-1-line-156">line 156</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>GLSL function definition</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+|
+
+<span class="param-type">null</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getSampler"><span class="type-signature"></span>getSampler(name)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Finds a sampler by name</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Base sampler name</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
+	<dd class="inherited-from">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderFilter.html#getSampler">ShaderFilter#getSampler</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="ShaderFilter.html#getSampler">ShaderFilter#getSampler</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderFilter.js.html">ShaderFilter.js</a>,
+				 <a href="ShaderFilter.js.html#sunlight-1-line-201">line 201</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Found sampler or undefined</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="ShaderFilter.html#~Sampler">ShaderFilter~Sampler</a></span>
+|
+
+<span class="param-type">undefined</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setGrayscaleMethod"><span class="type-signature"></span>setGrayscaleMethod(method)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Switches between grayscale calculation methods</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>method</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Either 'luminance' or 'average'</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderFilter.js.html">ShaderFilter.js</a>,
+				 <a href="ShaderFilter.js.html#sunlight-1-line-359">line 359</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setMode"><span class="type-signature"></span>setMode(mode, id)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the active mode for the filter</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>mode</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Mode category to modify</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Specific mode ID to enable</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
+	<dd class="inherited-from">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderFilter.html#setMode">ShaderFilter#setMode</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="ShaderFilter.html#setMode">ShaderFilter#setMode</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderFilter.js.html">ShaderFilter.js</a>,
+				 <a href="ShaderFilter.js.html#sunlight-1-line-63">line 63</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Throws:</h5>
+    
+            
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If shader not registered or mode doesn't exist</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+
+        
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setUniform"><span class="type-signature"></span>setUniform(name, value)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets a uniform variable value</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Base name of uniform variable</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+|
+
+<span class="param-type">boolean</span>
+|
+
+<span class="param-type">Array</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Value to set</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
+	<dd class="inherited-from">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderFilter.html#setUniform">ShaderFilter#setUniform</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="ShaderFilter.html#setUniform">ShaderFilter#setUniform</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderFilter.js.html">ShaderFilter.js</a>,
+				 <a href="ShaderFilter.js.html#sunlight-1-line-115">line 115</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Throws:</h5>
+    
+            
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If shader not registered</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+
+        
+
+    
+
+    
+</dd>
+
+        </dl>
     
 
     
@@ -498,7 +1314,7 @@ Features:</p>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
 	
-		on 2025-04-14T14:53:21+00:00
+		on 2025-04-14T14:53:22+00:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
