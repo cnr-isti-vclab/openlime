@@ -1,6 +1,4 @@
 import { CoordinateSystem } from "./CoordinateSystem.js";
-import { Util } from './Util.js';
-import { BoundingBox } from './BoundingBox.js';
 
 /**
  * GeoreferenceManager for working with geographic coordinates in OpenLIME
