@@ -3,54 +3,347 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLIME - Geo Viewer</title>
-    <link rel="stylesheet" href="../../css/skin.css" />
-    <link rel="stylesheet" href="../../css/light.css" />
-    <link rel="stylesheet" href="../examples.css" />
+    <title>OpenLIME - Geographic Viewer</title>
+
+    <!-- OpenLIME CSS -->
+    <link rel="stylesheet" href="../../css/skin.css">
+    <link rel="stylesheet" href="../../css/light.css">
+    <link rel="stylesheet" href="../examples.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            overflow: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin: 10px 0;
+            position: absolute;
+            width: 100%;
+            z-index: 100;
+            pointer-events: none;
+            text-shadow: 0 0 4px white;
+        }
+
+        .openlime {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .geo-controls {
+            width: 300px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            z-index: 1000;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .geo-controls:hover {
+            opacity: 1;
+        }
+
+        .geo-controls h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        button {
+            padding: 8px 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        #toggle-fullscreen {
+            background: #2ecc71;
+        }
+
+        #toggle-fullscreen:hover {
+            background: #27ae60;
+        }
+
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .preset-button {
+            flex: 1 0 calc(50% - 10px);
+            font-size: 0.9em;
+        }
+
+        .geo-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .geo-info:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .click-coordinates {
+            margin-top: 5px;
+            font-weight: bold;
+            color: #3498db;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>OpenLIME - Geo Viewer</h1>
+    <h1>OpenLIME - Geographic Viewer</h1>
+
+    <!-- Main viewer container -->
     <div class="openlime"></div>
+
+    <!-- Geographic controls panel -->
+    <div class="geo-controls">
+        <h3>Geographic Navigation</h3>
+
+        <div class="input-group">
+            <input id="lat-input" type="number" step="0.0001" placeholder="Latitude">
+            <input id="lon-input" type="number" step="0.0001" placeholder="Longitude">
+        </div>
+
+        <div class="input-group">
+            <input id="zoom-input" type="number" step="0.1" min="1" max="19" placeholder="Zoom">
+            <button id="go-button">Go to Location</button>
+        </div>
+
+        <div class="input-group">
+            <button id="toggle-fullscreen">Fullscreen</button>
+        </div>
+
+        <h4>Preset Locations:</h4>
+        <div class="preset-buttons">
+            <button class="preset-button" data-lat="41.9028" data-lon="12.4964" data-zoom="10">Rome</button>
+            <button class="preset-button" data-lat="51.5074" data-lon="-0.1278" data-zoom="10">London</button>
+            <button class="preset-button" data-lat="40.7128" data-lon="-74.0060" data-zoom="10">New York</button>
+            <button class="preset-button" data-lat="35.6762" data-lon="139.6503" data-zoom="10">Tokyo</button>
+            <button class="preset-button" data-lat="0" data-lon="0" data-zoom="2">World Center</button>
+        </div>
+    </div>
+
+    <!-- Geographic info display -->
+    <div class="geo-info">
+        <div id="coordinates" class="coordinates"></div>
+    </div>
+
+    <!-- OpenLIME Scripts -->
     <script src="../../js/openlime.js"></script>
+
     <script>
-        // Create an OpenLIME canvas into openlime
-        const lime = new OpenLIME.Viewer('.openlime');
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGeoViewer();
 
-        // Create an image layer and add it to the canvans
-        // The Google Maps format requires that the width 
-        // and height of the image be explicitly specified.
-        const l=19;
-        const layer = new OpenLIME.Layer({
-            layout: 'google',
-            type: 'image',
-			width: Math.pow(2, l+8),
-			height: Math.pow(2, l+8),
-			mipmapBias: 0.4,
-            width: 134217728,
-            height: 134217728,
-            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                const viewerElement = document.querySelector('.openlime');
+                if (viewerElement._canvas) {
+                    viewerElement._canvas.resize();
+                }
+            });
         });
-        lime.addLayer('Base', layer);
 
-        // Fetch a skin (visual elements for the web page)
-        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+        /**
+         * Initializes the geographic viewer with OpenLIME and the GeoreferenceManager
+         */
+        function initializeGeoViewer() {
+            // Create the OpenLIME Viewer
+            const viewer = new OpenLIME.Viewer('.openlime');
+            
+            // Define map layer with OSM tiles
+            // This creates a Web Mercator projection map
+            const maxZoom = 19;
+            const mapLayer = new OpenLIME.Layer({
+                layout: 'google',
+                type: 'image',
+                width: Math.pow(2, maxZoom + 8),     // Width in pixels
+                height: Math.pow(2, maxZoom + 8),    // Height in pixels
+                mipmapBias: 0.4,
+                url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: 'abc'                    // OSM subdomains for load balancing
+            });
 
-        // Create an User Interface 
-        const ui = new OpenLIME.UIBasic(lime);
+            // Add the map layer to the viewer
+            viewer.addLayer('map', mapLayer);
 
-        // Remove light from the toolbar
-        ui.actions.light.display=false;
+            // Wait for canvas to be ready
+            viewer.canvas.addEvent('ready', () => {
+                console.log('Canvas ready, initializing GeoreferenceManager');
+                
+                // Initialize the GeoreferenceManager
+                const geoManager = new OpenLIME.GeoreferenceManager(viewer, mapLayer);
+                window.geoManager = geoManager; // For debugging
 
-        // Add zoomin and zoomout to the toolbar
-        ui.actions.zoomin.display=true;
-        ui.actions.zoomout.display=true;
+                // Initialize the UI
+                const ui = new OpenLIME.UIBasic(viewer);
+                ui.actions.light.display = false;
+                ui.actions.zoomin.display = true;
+                ui.actions.zoomout.display = true;
+                ui.actions.home.display = true;
 
-        ui.attribution = `Map data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`;
+                // Add attribution
+                ui.attribution = 'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
+
+                // Initialize the skin
+                OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+                // Set up UI elements
+                setupUI(viewer, geoManager);
+                
+                // Set initial position (Rome)
+                geoManager.flyTo(41.9028, 12.4964, 6);
+                
+                // Update input fields with initial position
+                document.getElementById('lat-input').value = 41.9028.toFixed(4);
+                document.getElementById('lon-input').value = 12.4964.toFixed(4);
+                document.getElementById('zoom-input').value = 6;
+            });
+        }
+
+        /**
+         * Sets up the UI and event handlers
+         * @param {OpenLIME.Viewer} viewer - The OpenLIME viewer
+         * @param {OpenLIME.GeoreferenceManager} geoManager - The GeoreferenceManager instance
+         */
+        function setupUI(viewer, geoManager) {
+            // Get UI elements
+            const coordinates = document.getElementById('coordinates');
+            const latInput = document.getElementById('lat-input');
+            const lonInput = document.getElementById('lon-input');
+            const zoomInput = document.getElementById('zoom-input');
+            const goButton = document.getElementById('go-button');
+            const toggleFullscreenButton = document.getElementById('toggle-fullscreen');
+            const presetButtons = document.querySelectorAll('.preset-button');
+
+            // Update displays on camera movement
+            viewer.camera.addEvent('update', () => {
+                updatePositionDisplay();
+            });
+
+            // Update position and zoom displays
+            function updatePositionDisplay() {
+                const position = geoManager.getCurrentPosition();
+                console.log(position);
+            }
+
+            // Go to location button handler
+            goButton.addEventListener('click', () => {
+                const lat = parseFloat(latInput.value);
+                const lon = parseFloat(lonInput.value);
+                const zoom = parseFloat(zoomInput.value);
+
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    geoManager.flyTo(lat, lon, !isNaN(zoom) ? zoom : undefined);
+                }
+            });
+
+            // Preset location buttons
+            presetButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const lat = parseFloat(button.dataset.lat);
+                    const lon = parseFloat(button.dataset.lon);
+                    const zoom = parseFloat(button.dataset.zoom);
+                    geoManager.flyTo(lat, lon, zoom);
+
+                    latInput.value = lat.toFixed(6);
+                    lonInput.value = lon.toFixed(6);
+                    zoomInput.value = zoom;
+                });
+            });
+
+            // Toggle fullscreen
+            toggleFullscreenButton.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                    });
+                    toggleFullscreenButton.textContent = 'Exit Fullscreen';
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                        toggleFullscreenButton.textContent = 'Fullscreen';
+                    }
+                }
+            });
+
+            // Handle exit from fullscreen with ESC
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement) {
+                    toggleFullscreenButton.textContent = 'Fullscreen';
+                }
+            });
+
+            // Map click handler to get coordinates
+            viewer.pointerManager.on("fingerSingleTap", {
+                fingerSingleTap: (e) => {
+                    // Get coordinates from the click point
+                    const x = e.offsetX;
+                    const y = e.offsetY;
+
+                    // Convert to WGS84 coordinates
+                    const geoCoords = geoManager.canvasToGeo(x, y);
+                    
+                    // Display coordinates
+                    coordinates.textContent = `Lat: ${geoCoords.lat.toFixed(6)}, Lon: ${geoCoords.lon.toFixed(6)}`;
+                    
+                    // Prevent other controllers from handling this event
+                    e.preventDefault();
+                },
+                priority: 1000 // high priority
+            });
+            
+            // Initialize position display
+            updatePositionDisplay();
+        }
     </script>
 </body>
 
 </html>
-

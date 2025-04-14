@@ -52,6 +52,7 @@ const core = [
 	'./src/Viewer.js',
 	'./src/CoordinateSystem.js',
 	'./src/BoundingBox.js',
+	'./src/GeoreferenceManager.js'
 ];
 
 const ui = [
