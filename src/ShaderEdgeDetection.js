@@ -46,35 +46,34 @@ class ShaderEdgeDetection extends Shader {
 
   /**
    * Override fragment shader source to implement edge detection.
-   * This version is compatible with both WebGL 1.0 and 2.0+.
+   * This version is compatible with WebGL 2.0+.
    * @param {WebGLRenderingContext} gl - WebGL context
    * @returns {string} Fragment shader source code
    */
   fragShaderSrc(gl) {
     // Check if we're using WebGL2
-    let gl2 = !(gl instanceof WebGLRenderingContext);
 
     return `
 
 uniform float threshold;
 uniform bool colorEdges;
 
-${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
+in vec2 v_texcoord;
 
 // Calculate texture offset based on tile size
 vec2 texelSize = vec2(1.0) / tileSize;
 
 vec4 data() {
   // Sample the 3x3 neighborhood around the current pixel
-  vec4 tl = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(-1, -1));
-  vec4 t  = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 0, -1));
-  vec4 tr = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 1, -1));
-  vec4 l  = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(-1,  0));
-  vec4 c  = texture${gl2 ? '' : '2D'}(source, v_texcoord);
-  vec4 r  = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 1,  0));
-  vec4 bl = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(-1,  1));
-  vec4 b  = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 0,  1));
-  vec4 br = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2( 1,  1));
+  vec4 tl = texture(source, v_texcoord + texelSize * vec2(-1, -1));
+  vec4 t  = texture(source, v_texcoord + texelSize * vec2( 0, -1));
+  vec4 tr = texture(source, v_texcoord + texelSize * vec2( 1, -1));
+  vec4 l  = texture(source, v_texcoord + texelSize * vec2(-1,  0));
+  vec4 c  = texture(source, v_texcoord);
+  vec4 r  = texture(source, v_texcoord + texelSize * vec2( 1,  0));
+  vec4 bl = texture(source, v_texcoord + texelSize * vec2(-1,  1));
+  vec4 b  = texture(source, v_texcoord + texelSize * vec2( 0,  1));
+  vec4 br = texture(source, v_texcoord + texelSize * vec2( 1,  1));
   
   // Convert to grayscale for edge detection
   float tlGray = dot(tl.rgb, vec3(0.299, 0.587, 0.114));

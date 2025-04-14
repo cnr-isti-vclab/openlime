@@ -60,21 +60,18 @@ class ShaderAnisotropicDiffusion extends Shader {
 
   /**
    * Override fragment shader source to implement anisotropic diffusion.
-   * This version is compatible with both WebGL 1.0 and 2.0+.
+   * This version is compatible with WebGL 2.0+.
    * @param {WebGLRenderingContext} gl - WebGL context
    * @returns {string} Fragment shader source code
    */
   fragShaderSrc(gl) {
-    // Check if we're using WebGL2
-    let gl2 = !(gl instanceof WebGLRenderingContext);
-
     return `
 uniform float kappa;
 uniform int iterations;
 uniform float lambda;
 uniform float normalStrength;
 
-${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
+in vec2 v_texcoord;
 
 // Calculate texture offset based on tile size
 vec2 texelSize = vec2(1.0) / tileSize;
@@ -96,7 +93,7 @@ float normalToGray(vec3 normal) {
 
 vec4 data() {
   // Sample the center pixel color (normal map)
-  vec4 centerColor = texture${gl2 ? '' : '2D'}source, v_texcoord);
+  vec4 centerColor = texture(source, v_texcoord);
   
   // Convert normal to working grayscale image
   // Adjust normal vector to be in [-1,1] range
@@ -118,10 +115,10 @@ vec4 data() {
     if (i >= iterations) break; // Handle dynamic loop limit
     
     // Sample the 4-connected neighborhood
-    vec3 normalN = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(0.0, -1.0)).rgb * 2.0 - 1.0;
-    vec3 normalS = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(0.0, 1.0)).rgb * 2.0 - 1.0;
-    vec3 normalE = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(1.0, 0.0)).rgb * 2.0 - 1.0;
-    vec3 normalW = texture${gl2 ? '' : '2D'}(source, v_texcoord + texelSize * vec2(-1.0, 0.0)).rgb * 2.0 - 1.0;
+    vec3 normalN = texture(source, v_texcoord + texelSize * vec2(0.0, -1.0)).rgb * 2.0 - 1.0;
+    vec3 normalS = texture(source, v_texcoord + texelSize * vec2(0.0, 1.0)).rgb * 2.0 - 1.0;
+    vec3 normalE = texture(source, v_texcoord + texelSize * vec2(1.0, 0.0)).rgb * 2.0 - 1.0;
+    vec3 normalW = texture(source, v_texcoord + texelSize * vec2(-1.0, 0.0)).rgb * 2.0 - 1.0;
     
     // Convert to grayscale with normalization to 0-1 range
     float n = (normalToGray(normalN) + 1.0) * 0.5;

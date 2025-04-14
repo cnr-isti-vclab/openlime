@@ -39,7 +39,7 @@ import { ShaderFilter } from './ShaderFilter.js'
  * - Signed distance field for arrow shapes
  * - Dynamic magnitude scaling
  * - Colormap-based magnitude visualization
- * - WebGL 1.0 and 2.0 compatibility
+ * - WebGL 2.0+
  *
  * Example usage:
  * ```javascript

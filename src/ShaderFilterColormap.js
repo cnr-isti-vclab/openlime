@@ -30,7 +30,7 @@ import { ShaderFilter } from './ShaderFilter.js'
  * - Supports linear and nearest-neighbor interpolation
  * - Handles domain scaling and bias
  * - Configurable channel weight mixing
- * - WebGL 1.0 and 2.0 compatibility
+ * - WebGL 2.0+
  */
 class ShaderFilterColormap extends ShaderFilter {
     /**

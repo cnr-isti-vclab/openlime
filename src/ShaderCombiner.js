@@ -19,13 +19,13 @@ import { Shader } from './Shader.js'
 
 /**
  * ShaderCombiner module provides texture combination operations for OpenLIME.
- * Supports both WebGL 1.0 and 2.0/3.0 GLSL specifications with automatic version detection.
+ * Supports WebGL 2.0+ GLSL specifications with automatic version detection.
  * 
  * ShaderCombiner class manages the combination of two input textures using various operations.
  * Features:
  * - Multiple combination modes (first, second, mean, diff)
  * - Automatic texture sampling
- * - WebGL 1.0 and 2.0 compatibility
+ * - WebGL 2.0+
  * - Alpha channel preservation
  * 
  * @extends Shader
@@ -67,11 +67,10 @@ class ShaderCombiner extends Shader {
 	 * @private
 	 */
 	fragShaderSrc(gl) {
-		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let operation = this.operations[this.mode];
 		return `
 
-${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
+in vec2 v_texcoord;
 
 vec4 data() {
 	vec4 c1 = texture(source1, v_texcoord);
@@ -91,14 +90,13 @@ vec4 data() {
 	 * @private
 	 */
 	vertShaderSrc(gl) {
-		let gl2 = !(gl instanceof WebGLRenderingContext);
-		return `${gl2 ? '#version 300 es' : ''}
+		return `#version 300 es
 
 
-${gl2 ? 'in' : 'attribute'} vec4 a_position;
-${gl2 ? 'in' : 'attribute'} vec2 a_texcoord;
+in vec4 a_position;
+in vec2 a_texcoord;
 
-${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
+out vec2 v_texcoord;
 
 void main() {
 	gl_Position = a_position;

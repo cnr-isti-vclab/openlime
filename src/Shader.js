@@ -20,15 +20,14 @@ import { Util } from './Util.js'
 
 /**
  * Shader module provides WebGL shader program management for OpenLIME.
- * Supports both WebGL 1.0 and 2.0/3.0 GLSL specifications with automatic version detection.
+ * Supports WebGL 2.0/3.0 GLSL specifications.
  * 
  * Shader class manages WebGL shader programs.
  * Features:
- * - GLSL/ES 2.0 and 3.0 support
+ * - GLSL/ES 3.0 support
  * - Automatic uniform management
  * - Multiple shader modes
  * - Filter pipeline
- * - Automatic version selection
  */
 class Shader {
 	/**
@@ -38,13 +37,11 @@ class Shader {
 	 * @param {Object.<string,Object>} [options.uniforms={}] - Shader uniform variables
 	 * @param {string} [options.label=null] - Display label for the shader
 	 * @param {Array<string>} [options.modes=[]] - Available shader modes
-	 * @param {number} [options.version=100] - GLSL version (100 for WebGL1, 300 for WebGL2)
 	 * @param {boolean} [options.debug=false] - Enable debug output
 	 * @fires Shader#update
 	 */
 	constructor(options) {
 		Object.assign(this, {
-			version: 100,   //check for webglversion. 
 			debug: false,
 			samplers: [],
 			uniforms: {},
@@ -110,7 +107,7 @@ class Shader {
 
 	/**
 	 * Restores WebGL state after context loss.
-	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
 	 * @private
 	 */
 	restoreWebGL(gl) {
@@ -161,9 +158,7 @@ class Shader {
 
 	/** @ignore */
 	completeFragShaderSrc(gl) {
-		let gl2 = !(gl instanceof WebGLRenderingContext);
-
-		let src = `${gl2 ? '#version 300 es' : ''}\n`;
+		let src = '#version 300 es\n';
 		src += `precision highp float;\n`;
 		src += `precision highp int;\n`;
 		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
@@ -230,21 +225,20 @@ float linear2srgb(float c) {
 		}
 
 		src += `
-		${gl2 ? 'out' : ''} vec4 color;
+		out vec4 color;
 		void main() { 
 			color = data();
 			`;
 		for (let f of this.filters) {
 			src += `color=${f.functionName()}(color);\n`
 		}
-		src += `${gl2 ? '' : 'gl_FragColor = color;'}
-		}`;
+		src += `}`;
 		return src;
 	}
 
 	/**
 	 * Creates the WebGL shader program.
-	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
 	 * @private
 	 * @throws {Error} If shader compilation or linking fails
 	 */
@@ -353,7 +347,7 @@ float linear2srgb(float c) {
 
 	/**
 	 * Updates all uniform values in the GPU.
-	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
 	 * @private
 	 */
 	updateUniforms(gl) {
@@ -385,21 +379,20 @@ float linear2srgb(float c) {
 	/**
 	 * Gets vertex shader source code.
 	 * Default implementation provides basic vertex transformation and texture coordinate passing.
-	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
 	 * @returns {string} Vertex shader source code
 	 */
 	vertShaderSrc(gl) {
-		let gl2 = !(gl instanceof WebGLRenderingContext);
-		return `${gl2 ? '#version 300 es' : ''}
+		return `#version 300 es
 
 precision highp float; 
 precision highp int; 
 
 uniform mat4 u_matrix;
-${gl2 ? 'in' : 'attribute'} vec4 a_position;
-${gl2 ? 'in' : 'attribute'} vec2 a_texcoord;
+in vec4 a_position;
+in vec2 a_texcoord;
 
-${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
+out vec2 v_texcoord;
 
 			void main() {
 				gl_Position = u_matrix * a_position;
@@ -410,19 +403,16 @@ ${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
 	/**
 	 * Gets fragment shader source code.
 	 * Must be overridden in derived classes for custom shading.
-	 * @param {WebGLRenderingContext} gl - WebGL context
 	 * @returns {string} Fragment shader source code
 	 * @virtual
 	 */
-	fragShaderSrc(gl) {
-		let gl2 = !(gl instanceof WebGLRenderingContext);
+	fragShaderSrc() {
 		let str = `
 
-
-${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
+in vec2 v_texcoord;
 
 vec4 data() {
-	vec4 color = texture${gl2 ? '' : '2D'}(source, v_texcoord);
+	vec4 color = texture(source, v_texcoord);
 	return linear2srgb(color);
 }
 `;

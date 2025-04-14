@@ -148,7 +148,6 @@ class ShaderBRDF extends Shader {
 	 * @private
 	 */
 	fragShaderSrc(gl) {
-		let gl2 = !(gl instanceof WebGLRenderingContext);
 		let hasKd = this.samplers.findIndex(s => s.name == 'uTexKd') != -1 && this.mode != 'monochrome';
 		let hasGloss = this.samplers.findIndex(s => s.name == 'uTexGloss') != -1 && this.mode != 'monochrome';
 		let hasKs = this.samplers.findIndex(s => s.name == 'uTexKs') != -1;
@@ -159,7 +158,7 @@ class ShaderBRDF extends Shader {
 #define PI (3.14159265359)
 #define ISO_WARD_EXPONENT (4.0)
 
-${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
+in vec2 v_texcoord;
 
 uniform vec4 uLightInfo; // [x,y,z,w] (if .w==0 => Directional, if w==1 => Spot)
 uniform vec2 uAlphaLimits;

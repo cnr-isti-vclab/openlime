@@ -25,7 +25,7 @@ import { Shader } from "./Shader";
  * - Dynamic range computation
  * - Euler angle-based rotation control
  * - Automatic statistics computation
- * - WebGL 1.0 and 2.0 compatibility
+ * - WebGL 2.0+
  * 
  * Technical Implementation:
  * - Uses 4x4 matrices for color space transformation

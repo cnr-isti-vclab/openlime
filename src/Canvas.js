@@ -122,12 +122,10 @@ class Canvas {
 		};
 
 		this.gl = this.gl ||
-			canvas.getContext("webgl2", glopt) ||
-			canvas.getContext("webgl", glopt) ||
-			canvas.getContext("experimental-webgl", glopt);
+			canvas.getContext("webgl2", glopt);
 
 		if (!this.gl)
-			throw "Could not create a WebGL context";
+			throw new Error("Could not create a WebGL 2.0 context");
 
 		canvas.addEventListener("webglcontextlost", (event) => { console.log("Context lost."); event.preventDefault(); }, false);
 		canvas.addEventListener("webglcontextrestored", () => { this.restoreWebGL(); }, false);
@@ -190,10 +188,7 @@ class Canvas {
 			colorSpace: this.srgb ? 'srgb' : 'display-p3'
 		};
 
-		this.gl = this.gl ||
-			this.canvasElement.getContext("webgl2", glopt) ||
-			this.canvasElement.getContext("webgl", glopt) ||
-			this.canvasElement.getContext("experimental-webgl", glopt);
+		this.gl = this.gl || this.canvasElement.getContext("webgl2", glopt);
 
 		for (let layer of Object.values(this.layers)) {
 			layer.gl = this.gl;

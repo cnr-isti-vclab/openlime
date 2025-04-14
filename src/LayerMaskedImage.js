@@ -151,7 +151,7 @@ class LayerMaskedImage extends Layer {
 	 * @private
 	 */
 	/**
- * Loads a texture supporting both WebGL 1.0 and WebGL 2.0
+ * Loads a texture supporting WebGL 2.0+
  * @param {WebGLRenderingContext|WebGL2RenderingContext} gl - The WebGL context
  * @param {HTMLImageElement} img - The image to load as a texture
  * @returns {WebGLTexture} - The created texture
@@ -171,18 +171,7 @@ class LayerMaskedImage extends Layer {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-		// Check WebGL version and load the texture appropriately
-		const isWebGL2 = gl instanceof WebGL2RenderingContext;
-
-		if (isWebGL2) {
-			// In WebGL 2.0 we can use more advanced formats
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, gl.RED, gl.UNSIGNED_BYTE, img);
-			// Alternative for 16-bit data if needed:
-			// gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16UI, gl.RED_INTEGER, gl.UNSIGNED_SHORT, img);
-		} else {
-			// In WebGL 1.0 we use LUMINANCE (deprecated in WebGL 2.0 but supported for compatibility)
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gl.LUMINANCE, gl.UNSIGNED_BYTE, img);
-		}
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, gl.RED, gl.UNSIGNED_BYTE, img);
 
 		return tex;
 	}

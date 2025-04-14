@@ -33,7 +33,7 @@ import { Shader } from './Shader.js'
  * - Pixel-based distance calculations
  * - Smooth border transitions
  * - Alpha blending for overlays
- * - WebGL 1.0 and 2.0 compatibility
+ * - WebGL 2.0+
  * - Viewport coordinate mapping
  * 
  *
@@ -162,14 +162,13 @@ class ShaderLens extends Shader {
      * @private
      */
     fragShaderSrc(gl) {
-        let gl2 = !(gl instanceof WebGLRenderingContext);
 
         let overlaySamplerCode = "";
 
         if (this.overlayLayerEnabled) { //FIXME two cases with transparence or not.
 
             overlaySamplerCode =
-                `vec4 c1 = texture${gl2 ? '' : '2D'}(source1, v_texcoord);
+                `vec4 c1 = texture(source1, v_texcoord);
             if (r > u_lens.z) {
                 float k = (c1.r + c1.g + c1.b) / 3.0;
                 c1 = vec4(k, k, k, c1.a);
@@ -186,7 +185,7 @@ class ShaderLens extends Shader {
         uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
         uniform vec4 u_border_color;
         uniform bool u_border_enable;
-        ${gl2 ? 'in' : 'varying'} vec2 v_texcoord;
+        in vec2 v_texcoord;
 
         vec4 lensColor(in vec4 c_in, in vec4 c_border, in vec4 c_out,
             float r, float R, float B) {
@@ -215,7 +214,7 @@ class ShaderLens extends Shader {
             float dy = v_texcoord.y * u_width_height.y - u_lens.y;
             float r = sqrt(dx*dx + dy*dy);
 
-            vec4 c_in = texture${gl2 ? '' : '2D'}(source0, v_texcoord);
+            vec4 c_in = texture(source0, v_texcoord);
             vec4 c_out = u_border_color; c_out.a=0.0;
             
             color = lensColor(c_in, u_border_color, c_out, r, u_lens.z, u_lens.w);
@@ -234,14 +233,13 @@ class ShaderLens extends Shader {
      * @private
      */
     vertShaderSrc(gl) {
-        let gl2 = !(gl instanceof WebGLRenderingContext);
-        return `${gl2 ? '#version 300 es' : ''}
+        return `#version 300 es
  
 
-${gl2 ? 'in' : 'attribute'} vec4 a_position;
-${gl2 ? 'in' : 'attribute'} vec2 a_texcoord;
+in vec4 a_position;
+in vec2 a_texcoord;
 
-${gl2 ? 'out' : 'varying'} vec2 v_texcoord;
+out vec2 v_texcoord;
 void main() {
 	gl_Position = a_position;
     v_texcoord = a_texcoord;
