@@ -42,13 +42,37 @@ class MultispectralUI {
   initialize() {
     // Get container element
     let container;
+    let targetContainer;
+    
     if (this.options.containerId) {
       container = document.getElementById(this.options.containerId);
+      targetContainer = container;
       if (!container) {
         console.error(`Container element with ID '${this.options.containerId}' not found`);
         return;
       }
     } else if (this.options.floatingPanel) {
+      // Find OpenLIME container to use as a relative parent
+      let openlimeContainer;
+      
+      // Try to get viewer's container from the layer
+      if (this.layer.viewer && this.layer.viewer.containerElement) {
+        openlimeContainer = this.layer.viewer.containerElement;
+      } else {
+        // Fallback to looking for .openlime class
+        openlimeContainer = document.querySelector('.openlime');
+        
+        if (!openlimeContainer) {
+          console.warn('OpenLIME container not found, using body as fallback');
+          openlimeContainer = document.body;
+        }
+      }
+      
+      // Make the parent container positioned if it's not already
+      if (getComputedStyle(openlimeContainer).position === 'static') {
+        openlimeContainer.style.position = 'relative';
+      }
+      
       // Create floating container
       container = document.createElement('div');
       container.className = 'ms-controls';
@@ -66,13 +90,16 @@ class MultispectralUI {
       container.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.3)';
       container.style.fontFamily = 'Arial, sans-serif';
 
-      document.body.appendChild(container);
+      // Append to OpenLIME container instead of document.body
+      openlimeContainer.appendChild(container);
+      targetContainer = openlimeContainer;
     } else {
       console.error('No container specified and floating panel disabled');
       return;
     }
 
     this.container = container;
+    this.targetContainer = targetContainer;
 
     // Create UI components
     this.createHeader();
@@ -84,6 +111,56 @@ class MultispectralUI {
     if (this.options.showSingleBand) {
       this.createSingleBandControls();
     }
+    
+    // Update positioning on window resize
+    this.setupResizeHandler();
+  }
+  
+  /**
+   * Sets up window resize event handler to update panel positioning if needed
+   * @private
+   */
+  setupResizeHandler() {
+    // Only needed for floating panel
+    if (!this.options.floatingPanel || !this.container) return;
+    
+    // Store initial container dimensions
+    this.initialContainerRect = this.targetContainer.getBoundingClientRect();
+    
+    // Define resize handler
+    this.resizeHandler = () => {
+      // Handle potential edge case where container/targetContainer is removed from DOM
+      if (!document.contains(this.container) || !document.contains(this.targetContainer)) {
+        window.removeEventListener('resize', this.resizeHandler);
+        return;
+      }
+      
+      // Ensure the panel stays visible on resize
+      const containerRect = this.targetContainer.getBoundingClientRect();
+      const panelRect = this.container.getBoundingClientRect();
+      
+      // If the container width gets too small, adjust the panel width
+      if (containerRect.width < 300) {
+        this.container.style.width = Math.max(containerRect.width * 0.8, 150) + 'px';
+      } else {
+        // Reset to default width
+        this.container.style.width = '250px';
+      }
+      
+      // Ensure the panel is fully visible
+      const rightEdgeOffset = panelRect.right - containerRect.right;
+      if (rightEdgeOffset > 0) {
+        // Panel extends beyond right edge, adjust position
+        const currentRight = parseInt(this.container.style.right) || 10;
+        this.container.style.right = (currentRight + rightEdgeOffset + 10) + 'px';
+      }
+    };
+    
+    // Add resize listener
+    window.addEventListener('resize', this.resizeHandler);
+    
+    // Initial call to handle any existing size issues
+    this.resizeHandler();
   }
 
   /**
@@ -291,12 +368,20 @@ class MultispectralUI {
    * Destroys UI and removes from DOM
    */
   destroy() {
-    if (this.container && this.options.floatingPanel) {
-      document.body.removeChild(this.container);
+    // Remove resize event listener
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
+    }
+    
+    // Remove container from DOM if it's a floating panel
+    if (this.container && this.options.floatingPanel && this.targetContainer) {
+      this.targetContainer.removeChild(this.container);
     }
 
     this.uiElements = {};
     this.container = null;
+    this.targetContainer = null;
   }
 }
 

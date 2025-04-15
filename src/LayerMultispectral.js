@@ -94,6 +94,7 @@ class LayerMultispectral extends Layer {
     };
 
     // Load configuration
+    this.info = null;
     this.loadInfo(this.url);
   }
 
@@ -131,29 +132,29 @@ class LayerMultispectral extends Layer {
       // Need to handle embedded info.json when using IIP and TIFF image stacks
       if (this.layout.type == "iip") infoUrl = (this.server ? this.server + '?FIF=' : '') + url + "&obj=description";
 
-      const info = await Util.loadJSON(infoUrl);
+      this.info = await Util.loadJSON(infoUrl);
 
       // Check if basename is present
-      if (!info.basename) {
+      if (!this.info.basename) {
         this.status = "Error: 'basename' is required in the multispectral configuration file";
         console.error(this.status);
         return;
       }
 
       // Update layout image format and pixelSize if provided in info.json
-      if (info.format) this.layout.suffix = info.format;
-      if (info.pixelSizeInMM) this.pixelSize = info.pixelSizeInMM;
+      if (this.info.format) this.layout.suffix = this.info.format;
+      if (this.info.pixelSizeInMM) this.pixelSize = this.info.pixelSizeInMM;
 
       // Initialize shader with info
-      this.shader.init(info);
+      this.shader.init(this.info);
 
       // Set texture size if available
-      if (info.width && info.height) {
-        this.shader.setTextureSize([info.width, info.height]);
+      if (this.info.width && this.info.height) {
+        this.shader.setTextureSize([this.info.width, this.info.height]);
       }
 
       // Get basename from info
-      const baseName = info.basename;
+      const baseName = this.info.basename;
 
       // Create rasters and URLs array for each image
       const urls = [];
@@ -295,10 +296,6 @@ class LayerMultispectral extends Layer {
     }
   }
 
-  getPresetNames() {
-    return Object.keys(this.presets);
-  }
-
   /**
    * Applies a preset CTW from the presets library
    * @param {string} presetName - Name of the preset
@@ -339,7 +336,7 @@ class LayerMultispectral extends Layer {
    * @returns {string[]} Array of preset names
    */
   getAvailablePresets() {
-    return this.presets ? this.getPresetNames() : [];
+    return this.presets ? Object.keys(this.presets) : [];
   }
 
   /**

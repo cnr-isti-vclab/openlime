@@ -149,6 +149,7 @@ class UIBasic {
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 			},
 			postInit: () => { },
+			showScale: true,
 			pixelSize: null,
 			unit: null,
 			attribution: null,     //image attribution
@@ -390,12 +391,14 @@ class UIBasic {
 
 			/* Get pixel size from options if provided or from layer metadata
 			 */
-			if (this.pixelSize) {
-				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
-			}
-			else if (this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSize) {
-				this.pixelSize = this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSizePerMM();
-				this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+			if (this.showScale) {
+				if (this.pixelSize) {
+					this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+				}
+				else if (this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSize) {
+					this.pixelSize = this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSizePerMM();
+					this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+				}
 			}
 
 			if (this.attribution) {
@@ -563,7 +566,7 @@ class UIBasic {
 	 * @private
 	 */
 	setActiveControllers(on) {
-		for(let c of this.viewer.controllers) {
+		for (let c of this.viewer.controllers) {
 			c.active = on;
 		}
 	}

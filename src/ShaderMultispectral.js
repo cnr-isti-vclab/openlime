@@ -246,6 +246,7 @@ in vec2 v_texcoord;
 // Using texelFetch for precise pixel access
 float getBand(int bandIndex) {
   // Convert texture coordinates to integer pixel coordinates
+  float result = 0.0;
   ivec2 texCoord = ivec2(v_texcoord * textureSize);
   
   // Handling each possible band with constant indices
@@ -260,11 +261,11 @@ float getBand(int bandIndex) {
 
       const channelComponent = channelIndex === 0 ? 'r' : (channelIndex === 1 ? 'g' : 'b');
 
-      src += `    if (bandIndex == ${i}) return texelFetch(plane${planeIndex}, texCoord, 0).${channelComponent};\n`;
+      src += `    if (bandIndex == ${i}) result = texelFetch(plane${planeIndex}, texCoord, 0).${channelComponent};\n`;
     }
 
     src += `    
-  return 0.0; // Default return for out-of-range bands
+  return result; // Default return for out-of-range bands
 }
 
 // Check if a band has any non-zero CTW values to optimize memory access
@@ -299,9 +300,9 @@ vec4 data() {
   vec3 rgb = vec3(0.0);
   
   // Normalize weights for each channel
-  float redNorm = normalizeCTWChannel(ctwRedVec4);
-  float greenNorm = normalizeCTWChannel(ctwGreenVec4);
-  float blueNorm = normalizeCTWChannel(ctwBlueVec4);
+  //float redNorm = normalizeCTWChannel(ctwRedVec4);
+  //float greenNorm = normalizeCTWChannel(ctwGreenVec4);
+  //float blueNorm = normalizeCTWChannel(ctwBlueVec4);
   
   // Calculate linear combination for all channels with optimization
 `;
@@ -312,9 +313,9 @@ vec4 data() {
   // Band ${i} processing
   if (hasNonZeroCTW(${i})) {
       float value${i} = getBand(${i});
-      rgb.r += value${i} * ctwRedVec4[${i}].x / redNorm;
-      rgb.g += value${i} * ctwGreenVec4[${i}].x / greenNorm;
-      rgb.b += value${i} * ctwBlueVec4[${i}].x / blueNorm;
+      rgb.r += value${i} * ctwRedVec4[${i}].x;
+      rgb.g += value${i} * ctwGreenVec4[${i}].x;
+      rgb.b += value${i} * ctwBlueVec4[${i}].x;
   }`;
       }
 
