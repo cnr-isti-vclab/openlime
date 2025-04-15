@@ -52,7 +52,10 @@ const core = [
 	'./src/Viewer.js',
 	'./src/CoordinateSystem.js',
 	'./src/BoundingBox.js',
-	'./src/GeoreferenceManager.js'
+	'./src/GeoreferenceManager.js',
+	'./src/LayerMultispectral.js',
+	'./src/ShaderMultispectral.js',
+	'./src/MultispectralUI.js'
 ];
 
 const ui = [

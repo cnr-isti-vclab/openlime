@@ -50,6 +50,7 @@ class Shader {
 			modes: [],
 			mode: null, // The current mode
 			needsUpdate: true,
+			autoSamplerDeclaration: true,
 			tileSize: [0, 0]
 		});
 		addSignals(Shader, 'update');
@@ -204,15 +205,15 @@ float linear2srgb(float c) {
 }
 
 		`
+		if (this.autoSamplerDeclaration) {
+			for (let sampler of this.samplers) {
+				src += `uniform sampler2D ${sampler.name};\n`;
+			}
 
-		for (let sampler of this.samplers) {
-			src += `uniform sampler2D ${sampler.name};\n`;
+			for (let sampler of this.samplers) {
+				src += `uniform bool ${sampler.name}_isLinear;\n`;
+			}
 		}
-
-		for (let sampler of this.samplers) {
-			src += `uniform bool ${sampler.name}_isLinear;\n`;
-		}
-
 
 		src += this.fragShaderSrc() + '\n';
 
