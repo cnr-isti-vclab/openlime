@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Source: Util.js</title>
+	<title>OpenLIME Source: LayerMultispectral.js</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,414 +88,428 @@
 		<div id="main">
 			
 
-		<h1 class="page-title">Source: Util.js</h1>
+		<h1 class="page-title">Source: LayerMultispectral.js</h1>
     
 <section>
     <article>
         <pre
-            class="sunlight-highlight-javascript linenums">// HELPERS
-window.structuredClone = typeof (structuredClone) == "function" ? structuredClone : function (value) { return JSON.parse(JSON.stringify(value)); };
+            class="sunlight-highlight-javascript linenums">import { Layer } from './Layer.js'
+import { Raster } from './Raster.js'
+import { ShaderMultispectral } from './ShaderMultispectral.js'
+import { Util } from './Util.js'
 
 /**
- * Utility class providing various helper functions for OpenLIME.
- * Includes methods for SVG manipulation, file loading, image processing, and string handling.
- * 
- * 
- * @static
+ * @typedef {Object} LayerMultispectralOptions
+ * @property {string} url - URL to multispectral info.json file (required)
+ * @property {string} layout - Layout type: 'image', 'deepzoom', 'google', 'iiif', 'zoomify', 'tarzoom', 'itarzoom'
+ * @property {string} [defaultMode='single_band'] - Initial visualization mode ('rgb' or 'single_band')
+ * @property {string} [server] - IIP server URL (for IIP layout)
+ * @property {boolean} [linearRaster=true] - Whether to use linear color space for rasters (recommended for scientific accuracy)
+ * @property {string|Object} presets - Path to presets JSON file or presets object containing CTW configurations
+ * @extends LayerOptions
  */
-class Util {
 
-    /**
-     * Pads a number with leading zeros
-     * @param {number} num - Number to pad
-     * @param {number} size - Desired string length
-     * @returns {string} Zero-padded number string
-     * 
-     * @example
-     * ```javascript
-     * Util.padZeros(42, 5); // Returns "00042"
-     * ```
-     */
-    static padZeros(num, size) {
-        return num.toString().padStart(size, '0');
+/**
+ * LayerMultispectral - Advanced multispectral imagery visualization layer
+ * 
+ * This layer provides specialized handling of multispectral image data with configurable 
+ * visualization modes and interactive spectral analysis capabilities through Color Twist 
+ * Weights (CTW). It supports scientific visualization workflows for remote sensing, art analysis,
+ * medical imaging, and other multispectral applications.
+ * 
+ * Features:
+ * - Multiple visualization modes (RGB, single band)
+ * - UBO-optimized Color Twist Weights implementation for real-time spectral transformations
+ * - Preset system for common visualization configurations (false color, etc.)
+ * - Precise pixel access with texelFetch for scientific accuracy
+ * - Multiple layout systems for various tiled image formats
+ * 
+ * Technical implementation:
+ * - Uses WebGL2 features for efficient processing
+ * - Implements shader-based visualization pipeline
+ * - Supports multiple image layouts and tiling schemes
+ * 
+ * @extends Layer
+ * 
+ * @example
+ * // Create multispectral layer with deepzoom layout
+ * const msLayer = new OpenLIME.Layer({
+ *   type: 'multispectral',
+ *   url: 'path/to/info.json',
+ *   layout: 'deepzoom',
+ *   defaultMode: 'rgb',
+ *   presets: 'path/to/presets.json'
+ * });
+ * 
+ * // Add to viewer
+ * viewer.addLayer('ms', msLayer);
+ * 
+ * // Apply a preset CTW
+ * msLayer.applyPreset('falseColor');
+ */
+class LayerMultispectral extends Layer {
+  /**
+   * Creates a new LayerMultispectral instance
+   * @param {LayerMultispectralOptions} options - Configuration options
+   * @throws {Error} If rasters options is not empty (rasters are created automatically)
+   * @throws {Error} If url to info.json is not provided
+   * @throws {Error} If presets option is not provided
+   */
+  constructor(options) {
+    super(options);
+
+    if (Object.keys(this.rasters).length != 0)
+      throw new Error("Rasters options should be empty!");
+
+    if (!this.url)
+      throw new Error("Url option is required");
+
+    if (!this.presets) {
+      throw new Error("Presets option is required");
     }
+    this.loadPresets();
 
-    /**
-     * Prints source code with line numbers
-     * Useful for shader debugging
-     * @param {string} str - Source code to print
-     * @private
-     */
-    static printSrcCode(str) {
-        let result = '';
-        str.split(/\r\n|\r|\n/).forEach((line, i) => {
-            const nline = Util.padZeros(i + 1, 5);
-            result += `${nline}   ${line}\n`;
-        });
-        console.log(result);
-    }
-    
+    // Set default options
+    this.linearRaster = this.linearRaster !== undefined ? this.linearRaster : true;
+    this.defaultMode = this.defaultMode || 'single_band';
 
-    /**
-     * Creates an SVG element with optional attributes
-     * @param {string} tag - SVG element tag name
-     * @param {Object} [attributes] - Key-value pairs of attributes
-     * @returns {SVGElement} Created SVG element
-     * 
-     * @example
-     * ```javascript
-     * const circle = Util.createSVGElement('circle', {
-     *     cx: '50',
-     *     cy: '50',
-     *     r: '40'
-     * });
-     * ```
-     */
-    static createSVGElement(tag, attributes) {
-        const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-        if (attributes)
-            for (const [key, value] of Object.entries(attributes))
-                e.setAttribute(key, value);
-        return e;
-    }
+    // Create shader
+    this.shaders['multispectral'] = new ShaderMultispectral();
+    this.setShader('multispectral');
 
-    /**
-     * Parses SVG string into DOM element
-     * @param {string} text - SVG content string
-     * @returns {SVGElement} Parsed SVG element
-     * @throws {Error} If parsing fails
-     */
-    static SVGFromString(text) {
-        const parser = new DOMParser();
-        return parser.parseFromString(text, "image/svg+xml").documentElement;
-    }
-
-    /**
-     * Loads SVG file from URL
-     * @param {string} url - URL to SVG file
-     * @returns {Promise&lt;SVGElement>} Loaded and parsed SVG
-     * @throws {Error} If fetch fails or content isn't SVG
-     * 
-     * @example
-     * ```javascript
-     * const svg = await Util.loadSVG('icons/icon.svg');
-     * document.body.appendChild(svg);
-     * ```
-     */
-    static async loadSVG(url) {
-        let response = await fetch(url);
-        if (!response.ok) {
-            const message = `An error has occured: ${response.status}`;
-            throw new Error(message);
-        }
-        let data = await response.text();
-        let result = null;
-        if (Util.isSVGString(data)) {
-            result = Util.SVGFromString(data);
-        } else {
-            const message = `${url} is not an SVG file`;
-            throw new Error(message);
-        }
-        return result;
+    // Set current CTW arrays
+    this._currentCTW = {
+      red: null,
+      green: null,
+      blue: null
     };
 
-    /**
-     * Loads HTML content from URL
-     * @param {string} url - URL to HTML file
-     * @returns {Promise&lt;string>} HTML content
-     * @throws {Error} If fetch fails
-     */
-    static async loadHTML(url) {
-        let response = await fetch(url);
-        if (!response.ok) {
-            const message = `An error has occured: ${response.status}`;
-            throw new Error(message);
-        }
-        let data = await response.text();
-        return data;
-    };
+    // Load configuration
+    this.info = null;
+    this.loadInfo(this.url);
+  }
 
-    /**
-     * Loads and parses JSON from URL
-     * @param {string} url - URL to JSON file
-     * @returns {Promise&lt;Object>} Parsed JSON data
-     * @throws {Error} If fetch or parsing fails
-     */
-    static async loadJSON(url) {
-        let response = await fetch(url);
-        if (!response.ok) {
-            const message = `An error has occured: ${response.status}`;
-            throw new Error(message);
+  /**
+   * Constructs URL for image resources based on layout type
+   * 
+   * Handles different image layout conventions including deepzoom, google maps tiles,
+   * zoomify, and specialized formats like tarzoom.
+   * 
+   * @param {string} url - Base URL
+   * @param {string} filename - Base filename without extension
+   * @returns {string} Complete URL for the resource
+   * @private
+   */
+  imageUrl(url, filename) {
+    let path = this.url.substring(0, this.url.lastIndexOf('/') + 1);
+    switch (this.layout.type) {
+      case 'image': return path + filename + '.jpg'; break;
+      case 'google': return path + filename; break;
+      case 'deepzoom': return path + filename + '.dzi'; break;
+      case 'tarzoom': return path + filename + '.tzi'; break;
+      case 'itarzoom': return path + filename + '.tzi'; break;
+      case 'zoomify': return path + filename + '/ImageProperties.xml'; break;
+      case 'iip': return url; break;
+      case 'iiif': throw new Error("Unimplemented");
+      default: throw new Error("Unknown layout: " + this.layout.type);
+    }
+  }
+
+  /**
+   * Loads and processes multispectral configuration
+   * 
+   * Fetches the info.json file containing wavelength, basename, and other
+   * configuration parameters, then sets up the rasters and shader accordingly.
+   * 
+   * @param {string} url - URL to info.json
+   * @private
+   * @async
+   */
+  async loadInfo(url) {
+    try {
+      let infoUrl = url;
+      // Need to handle embedded info.json when using IIP and TIFF image stacks
+      if (this.layout.type == "iip") infoUrl = (this.server ? this.server + '?FIF=' : '') + url + "&amp;obj=description";
+
+      this.info = await Util.loadJSON(infoUrl);
+
+      // Check if basename is present
+      if (!this.info.basename) {
+        this.status = "Error: 'basename' is required in the multispectral configuration file";
+        console.error(this.status);
+        return;
+      }
+
+      // Update layout image format and pixelSize if provided in info.json
+      if (this.info.format) this.layout.suffix = this.info.format;
+      if (this.info.pixelSizeInMM) this.pixelSize = this.info.pixelSizeInMM;
+
+      // Initialize shader with info
+      this.shader.init(this.info);
+
+      // Set texture size if available
+      if (this.info.width &amp;&amp; this.info.height) {
+        this.shader.setTextureSize([this.info.width, this.info.height]);
+      }
+
+      // Get basename from info
+      const baseName = this.info.basename;
+
+      // Create rasters and URLs array for each image
+      const urls = [];
+
+      // Handle special case for itarzoom (all planes in one file)
+      if (this.layout.type === 'itarzoom') {
+        // Create a single raster for all planes
+        let raster = new Raster({ format: 'vec3', isLinear: this.linearRaster });
+        this.rasters.push(raster);
+
+        // Add a single URL for all planes
+        urls.push(this.imageUrl(url, baseName));
+      } else {
+        // Standard case: one file per image
+        for (let p = 0; p &lt; this.shader.nimg; p++) {
+          // Create raster with linear color space
+          let raster = new Raster({ format: 'vec3', isLinear: this.linearRaster });
+          this.rasters.push(raster);
+
+          // Format index with leading zeros (e.g., 00, 01, 02)
+          const indexStr = p.toString().padStart(2, '0');
+
+          // Generate URL for this image
+          urls.push(this.imageUrl(url, `${baseName}_${indexStr}`));
         }
-        let data = await response.json();
-        return data;
+      }
+
+      // Set URLs for layout
+      if (urls.length > 0) {
+        this.layout.setUrls(urls);
+      }
+
+      // Set up the shader
+      this.setMode(this.defaultMode);
+      this.initDefault();
+
+    } catch (e) {
+      console.log(e); this.status = e;
+    }
+  }
+
+  /**
+   * Loads preset definitions for Color Twist Weights
+   * 
+   * Can load presets from a URL or use directly provided preset object.
+   * Presets define predefined CTW configurations for common visualization needs.
+   * 
+   * @private
+   * @async
+   */
+  async loadPresets() {
+    if (typeof this.presets === 'string' &amp;&amp; this.presets.trim() !== '') {
+      this.presets = await Util.loadJSON(this.presets);
+    }
+    if (typeof this.presets !== 'object') {
+      throw new Error("presets not well formed");
+    }
+  }
+
+  /**
+   * Initializes default CTW based on default mode
+   * 
+   * Creates initial CTW arrays with zeros and applies default
+   * visualization settings.
+   * 
+   * @private
+   */
+  initDefault() {
+    // Create default CTW arrays
+    const nplanes = this.shader.nplanes;
+    if (!nplanes) return; // Not yet initialized
+
+    let redCTW = new Float32Array(nplanes).fill(0);
+    let greenCTW = new Float32Array(nplanes).fill(0);
+    let blueCTW = new Float32Array(nplanes).fill(0);
+
+    // Update current CTW and shader
+    this._currentCTW.red = redCTW;
+    this._currentCTW.green = greenCTW;
+    this._currentCTW.blue = blueCTW;
+
+    if (this.defaultMode === 'single-band') {
+      this.setSingleBand(0, 0);
+    }
+  }
+
+  /**
+   * Sets the visualization mode
+   * 
+   * Changes how multispectral data is visualized:
+   * - 'rgb': Uses CTW coefficients to create RGB visualization
+   * - 'single_band': Shows a single spectral band
+   * 
+   * @param {string} mode - Mode name ('rgb', 'single_band')
+   */
+  setMode(mode) {
+    if (this.shader) {
+      this.shader.setMode(mode);
+      this.emit('update');
+    }
+  }
+
+  /**
+   * Sets single band visualization
+   * 
+   * Displays a single spectral band on a specific output channel.
+   * 
+   * @param {number} bandIndex - Index of band to visualize
+   * @param {number} [channel=0] - Output channel (0=all/gray, 1=R, 2=G, 3=B)
+   */
+  setSingleBand(bandIndex, channel = 0) {
+    if (this.shader) {
+      this.shader.setSingleBand(bandIndex, channel);
+      this.emit('update');
+    }
+  }
+
+  /**
+   * Sets Color Twist Weights coefficients manually
+   * 
+   * CTW coefficients define how spectral bands are combined to create
+   * RGB visualization. Each array contains weights for each spectral band.
+   * 
+   * @param {Float32Array} redCTW - Red channel coefficients
+   * @param {Float32Array} greenCTW - Green channel coefficients
+   * @param {Float32Array} blueCTW - Blue channel coefficients
+   * @throws {Error} If arrays have incorrect length
+   */
+  setCTW(redCTW, greenCTW, blueCTW) {
+    if (!this.shader || !this.gl) return;
+
+    // Validate array lengths
+    const nplanes = this.shader.nplanes;
+    if (redCTW.length !== nplanes || greenCTW.length !== nplanes || blueCTW.length !== nplanes) {
+      throw new Error(`CTW arrays must be of length ${nplanes}`);
     }
 
-    /**
-     * Loads image from URL
-     * @param {string} url - Image URL
-     * @returns {Promise&lt;HTMLImageElement>} Loaded image
-     * @throws {Error} If image loading fails
-     */
-    static async loadImage(url) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.addEventListener('load', () => resolve(img));
-            img.addEventListener('error', (err) => reject(err));
-            img.src = url;
-        });
+    // Update current CTW
+    this._currentCTW.red = redCTW;
+    this._currentCTW.green = greenCTW;
+    this._currentCTW.blue = blueCTW;
+
+    // Update shader CTW
+    this.shader.setupCTW(this.gl, redCTW, greenCTW, blueCTW);
+
+    // Set to rgb mode
+    this.setMode('rgb');
+  }
+
+  /**
+   * Gets a preset CTW configuration by name
+   * 
+   * Retrieves the preset's red, green, and blue CTW arrays from
+   * the presets collection.
+   * 
+   * @param {string} presetName - Name of the preset
+   * @returns {Object|null} Object with red, green, blue arrays or null if not found
+   */
+  getPreset(presetName) {
+    if (presetName in this.presets) {
+      const { red, green, blue } = this.presets[presetName];
+      return { red, green, blue };
+    } else {
+      console.warn(`Preset "${presetName}" not found.`);
+      return null;
+    }
+  }
+
+  /**
+   * Applies a preset CTW from the presets library
+   * 
+   * Loads and applies a predefined set of CTW coefficients for
+   * specialized visualization (e.g., false color, vegetation analysis).
+   * 
+   * @param {string} presetName - Name of the preset
+   * @throws {Error} If preset doesn't exist
+   */
+  applyPreset(presetName) {
+    if (!this.shader) return;
+
+    // Get preset from the preset manager
+    const preset = this.getPreset(presetName);
+
+    if (!preset) {
+      throw new Error(`Preset '${presetName}' not found`);
     }
 
-    /**
-     * Appends loaded image to container
-     * @param {HTMLElement} container - Target container
-     * @param {string} url - Image URL
-     * @param {string} [imgClass] - Optional CSS class
-     * @returns {Promise&lt;void>}
-     */
-    static async appendImg(container, url, imgClass = null) {
-        const img = await Util.loadImage(url);
-        if (imgClass) img.classList.add(imgClass);
-        container.appendChild(img);
-        return img;
+    // Apply the preset
+    this.setCTW(preset.red, preset.green, preset.blue);
+  }
+
+  /**
+   * Gets the wavelength array for spectral bands
+   * 
+   * Returns the wavelength values (in nm) for each spectral band.
+   * 
+   * @returns {number[]} Array of wavelengths
+   */
+  getWavelengths() {
+    return this.shader ? this.shader.wavelength : [];
+  }
+
+  /**
+   * Gets the number of spectral bands
+   * 
+   * Returns the count of spectral planes in the multispectral dataset.
+   * 
+   * @returns {number} Number of bands
+   */
+  getBandCount() {
+    return this.shader ? this.shader.nplanes : 0;
+  }
+
+  /**
+   * Gets available presets
+   * 
+   * Returns the names of all available preset CTW configurations.
+   * 
+   * @returns {string[]} Array of preset names
+   */
+  getAvailablePresets() {
+    return this.presets ? Object.keys(this.presets) : [];
+  }
+
+  /**
+   * Prepares WebGL resources including UBO for CTW
+   * 
+   * Sets up WebGL context and ensures CTW arrays are uploaded to GPU.
+   * 
+   * @override
+   * @private
+   */
+  prepareWebGL() {
+    // Call parent implementation
+    super.prepareWebGL();
+
+    // Setup CTW if needed
+    if (this._currentCTW.red &amp;&amp; this.shader &amp;&amp; this.gl) {
+      this.shader.setupCTW(
+        this.gl,
+        this._currentCTW.red,
+        this._currentCTW.green,
+        this._currentCTW.blue
+      );
     }
-
-    /**
-      * Appends multiple images to container
-      * @param {HTMLElement} container - Target container
-      * @param {string[]} urls - Array of image URLs
-      * @param {string} [imgClass] - Optional CSS class
-      * @returns {Promise&lt;void>}
-      */
-    static async appendImgs(container, urls, imgClass = null) {
-        for (const u of urls) {
-            const img = await Util.loadImage(u);
-            if (imgClass) img.classList.add(imgClass);
-            container.appendChild(img);
-        }
-    }
-
-    /**
-     * Tests if string is valid SVG content
-     * @param {string} input - String to test
-     * @returns {boolean} True if string is valid SVG
-     */
-    static isSVGString(input) {
-        const regex = /^\s*(?:&lt;\?xml[^>]*>\s*)?(?:&lt;!doctype svg[^>]*\s*(?:\[?(?:\s*&lt;![^>]*>\s*)*\]?)*[^>]*>\s*)?(?:&lt;svg[^>]*>[^]*&lt;\/svg>|&lt;svg[^/>]*\/\s*>)\s*$/i
-        if (input == undefined || input == null)
-            return false;
-        input = input.toString().replace(/\s*&lt;!Entity\s+\S*\s*(?:"|')[^"]+(?:"|')\s*>/img, '');
-        input = input.replace(/&lt;!--([\s\S]*?)-->/g, '');
-        return Boolean(input) &amp;&amp; regex.test(input);
-    }
-
-    /**
-     * Computes Signed Distance Field from image data
-     * Implementation based on Felzenszwalb &amp; Huttenlocher algorithm
-     * 
-     * @param {Uint8Array} buffer - Input image data
-     * @param {number} w - Image width
-     * @param {number} h - Image height
-     * @param {number} [cutoff=0.25] - Distance field cutoff
-     * @param {number} [radius=8] - Maximum distance to compute
-     * @returns {Float32Array|Array} Computed distance field
-     * 
-     * Technical Details:
-     * - Uses 2D Euclidean distance transform
-     * - Separate inner/outer distance fields
-     * - Optimized grid computation
-     * - Sub-pixel accuracy
-     */
-    static computeSDF(buffer, w, h, cutoff = 0.25, radius = 8) {
-
-        // 2D Euclidean distance transform by Felzenszwalb &amp; Huttenlocher https://cs.brown.edu/~pff/dt/
-        function edt(data, width, height, f, d, v, z) {
-            for (let x = 0; x &lt; width; x++) {
-                for (let y = 0; y &lt; height; y++) {
-                    f[y] = data[y * width + x]
-                }
-                edt1d(f, d, v, z, height)
-                for (let y = 0; y &lt; height; y++) {
-                    data[y * width + x] = d[y]
-                }
-            }
-            for (let y = 0; y &lt; height; y++) {
-                for (let x = 0; x &lt; width; x++) {
-                    f[x] = data[y * width + x]
-                }
-                edt1d(f, d, v, z, width)
-                for (let x = 0; x &lt; width; x++) {
-                    data[y * width + x] = Math.sqrt(d[x])
-                }
-            }
-        }
-
-        // 1D squared distance transform
-        function edt1d(f, d, v, z, n) {
-            v[0] = 0;
-            z[0] = -INF
-            z[1] = +INF
-
-            for (let q = 1, k = 0; q &lt; n; q++) {
-                var s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k])
-                while (s &lt;= z[k]) {
-                    k--
-                    s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k])
-                }
-                k++
-                v[k] = q
-                z[k] = s
-                z[k + 1] = +INF
-            }
-
-            for (let q = 0, k = 0; q &lt; n; q++) {
-                while (z[k + 1] &lt; q) k++
-                d[q] = (q - v[k]) * (q - v[k]) + f[v[k]]
-            }
-        }
-
-        var data = new Uint8ClampedArray(buffer);
-        const INF = 1e20;
-        const size = Math.max(w, h);
-
-        // temporary arrays for the distance transform
-        const gridOuter = Array(w * h);
-        const gridInner = Array(w * h);
-        const f = Array(size);
-        const d = Array(size);
-        const z = Array(size + 1);
-        const v = Array(size);
-
-        for (let i = 0; i &lt; w * h; i++) {
-            var a = data[i] / 255.0;
-            gridOuter[i] = a === 1 ? 0 : a === 0 ? INF : Math.pow(Math.max(0, 0.5 - a), 2);
-            gridInner[i] = a === 1 ? INF : a === 0 ? 0 : Math.pow(Math.max(0, a - 0.5), 2);
-        }
-
-        edt(gridOuter, w, h, f, d, v, z)
-        edt(gridInner, w, h, f, d, v, z)
-
-        const dist = window.Float32Array ? new Float32Array(w * h) : new Array(w * h)
-
-        for (let i = 0; i &lt; w * h; i++) {
-            dist[i] = Math.min(Math.max(1 - ((gridOuter[i] - gridInner[i]) / radius + cutoff), 0), 1)
-        }
-        return dist;
-    }
-
-    /**
-     * Rasterizes SVG to ImageData
-     * @param {string} url - SVG URL
-     * @param {number[]} [size=[64,64]] - Output dimensions [width, height]
-     * @returns {Promise&lt;ImageData>} Rasterized image data
-     * 
-     * Processing steps:
-     * 1. Loads SVG file
-     * 2. Sets up canvas context
-     * 3. Handles aspect ratio
-     * 4. Centers image
-     * 5. Renders to ImageData
-     * 
-     * @example
-     * ```javascript
-     * const imageData = await Util.rasterizeSVG('icon.svg', [128, 128]);
-     * context.putImageData(imageData, 0, 0);
-     * ```
-     */
-    static async rasterizeSVG(url, size = [64, 64]) {
-        const svg = await Util.loadSVG(url);
-        const svgWidth = svg.getAttribute('width');
-        const svgHeight = svg.getAttribute('height');
-
-        const canvas = document.createElement("canvas");
-        canvas.width = size[0];
-        canvas.height = size[1];
-
-        svg.setAttributeNS(null, 'width', `100%`);
-        svg.setAttributeNS(null, 'height', `100%`);
-
-        const ctx = canvas.getContext("2d");
-        const data = (new XMLSerializer()).serializeToString(svg);
-        const DOMURL = window.URL || window.webkitURL || window;
-
-        const img = new Image();
-        const svgBlob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
-        const svgurl = DOMURL.createObjectURL(svgBlob);
-        img.src = svgurl;
-
-        return new Promise((resolve, reject) => {
-            img.onload = () => {
-                const aCanvas = size[0] / size[1];
-                const aSvg = svgWidth / svgHeight;
-                let wSvg = 0;
-                let hSvg = 0;
-                if (aSvg &lt; aCanvas) {
-                    hSvg = size[1];
-                    wSvg = hSvg * aSvg;
-                } else {
-                    wSvg = size[0];
-                    hSvg = wSvg / aSvg;
-                }
-
-                let dy = (size[1] - hSvg) * 0.5;
-                let dx = (size[0] - wSvg) * 0.5;
-
-                ctx.translate(dx, dy);
-                ctx.drawImage(img, 0, 0);
-
-                DOMURL.revokeObjectURL(svgurl);
-
-                const imageData = ctx.getImageData(0, 0, size[0], size[1]);
-
-                // const imgURI = canvas
-                //     .toDataURL('image/png')
-                //     .replace('image/png', 'image/octet-stream');
-
-                // console.log(imgURI);
-
-                resolve(imageData);
-            };
-            img.onerror = (e) => reject(e);
-        });
-    }
-
+  }
 }
 
 /**
- * Implementation Notes:
- * 
- * File Loading:
- * - Consistent error handling across loaders
- * - Promise-based async operations
- * - Resource cleanup (URL revocation)
- * 
- * SVG Processing:
- * - Namespace-aware element creation
- * - Robust SVG validation
- * - Attribute management
- * 
- * Image Processing:
- * - Canvas-based rasterization
- * - Aspect ratio preservation
- * - Memory efficient operations
- * 
- * SDF Computation:
- * - Efficient distance field generation
- * - Configurable parameters
- * - TypedArray support
- * 
- * Error Handling:
- * - Input validation
- * - Descriptive error messages
- * - Resource cleanup on failure
- * 
- * Browser Compatibility:
- * - Fallbacks for older browsers
- * - Polyfill for structuredClone
- * - Vendor prefix handling
+ * Register this layer type with the Layer factory
+ * @type {Function}
+ * @private
  */
+Layer.prototype.types['multispectral'] = (options) => { return new LayerMultispectral(options); }
 
-export { Util }</pre>
+export { LayerMultispectral }</pre>
     </article>
 </section>
 

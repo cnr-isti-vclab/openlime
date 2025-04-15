@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: LayerLens</title>
+	<title>OpenLIME Class: LayerMultispectral</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,34 +88,33 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: LayerLens</h1>
+	<h1 class="page-title">Class: LayerMultispectral</h1>
 <section>
 
 <header>
     
         <h2>
-        LayerLens
+        LayerMultispectral
         </h2>
         
-            <div class="class-description"><p>LayerLens implements a magnifying lens effect that can display content from one or two layers.
-It provides an interactive lens that can be moved and resized, showing different layer content
-inside and outside the lens area.</p>
+            <div class="class-description"><p>LayerMultispectral - Advanced multispectral imagery visualization layer</p>
+<p>This layer provides specialized handling of multispectral image data with configurable
+visualization modes and interactive spectral analysis capabilities through Color Twist
+Weights (CTW). It supports scientific visualization workflows for remote sensing, art analysis,
+medical imaging, and other multispectral applications.</p>
 <p>Features:</p>
 <ul>
-<li>Interactive lens positioning and sizing</li>
-<li>Support for base and overlay layers</li>
-<li>Animated transitions</li>
-<li>Customizable border appearance</li>
-<li>Dashboard UI integration</li>
-<li>Optimized viewport rendering</li>
+<li>Multiple visualization modes (RGB, single band)</li>
+<li>UBO-optimized Color Twist Weights implementation for real-time spectral transformations</li>
+<li>Preset system for common visualization configurations (false color, etc.)</li>
+<li>Precise pixel access with texelFetch for scientific accuracy</li>
+<li>Multiple layout systems for various tiled image formats</li>
 </ul>
-<p>Technical Details:</p>
+<p>Technical implementation:</p>
 <ul>
-<li>Uses framebuffer composition for layer blending</li>
-<li>Implements viewport optimization for performance</li>
-<li>Handles coordinate transformations between systems</li>
-<li>Supports animated parameter changes</li>
-<li>Manages WebGL resources efficiently</li>
+<li>Uses WebGL2 features for efficient processing</li>
+<li>Implements shader-based visualization pipeline</li>
+<li>Supports multiple image layouts and tiling schemes</li>
 </ul></div>
         
     
@@ -128,7 +127,7 @@ inside and outside the lens area.</p>
         
 <hr>
 <dt>
-    <h4 class="name" id="LayerLens"><span class="type-signature"></span>new LayerLens(options)</h4>
+    <h4 class="name" id="LayerMultispectral"><span class="type-signature"></span>new LayerMultispectral(options)</h4>
     
     
 </dt>
@@ -136,7 +135,7 @@ inside and outside the lens area.</p>
 
     
     <div class="description">
-        <p>Creates a new LayerLens instance</p>
+        <p>Creates a new LayerMultispectral instance</p>
     </div>
     
 
@@ -177,7 +176,7 @@ inside and outside the lens area.</p>
             <td class="type">
             
                 
-<span class="param-type"><a href="global.html#LayerLensOptions">LayerLensOptions</a></span>
+<span class="param-type"><a href="global.html#LayerMultispectralOptions">LayerMultispectralOptions</a></span>
 
 
 
@@ -232,8 +231,8 @@ inside and outside the lens area.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-61">line 61</a>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-55">line 55</a>
 			</li>
 		</ul>
 	</dd>
@@ -257,13 +256,13 @@ inside and outside the lens area.</p>
 
     
     <h5>Throws:</h5>
-    
-            
+    <ul>
+            <li>
 
 <dl>
     <dt>
         <div class="param-desc">
-        <p>If camera is not provided</p>
+        <p>If rasters options is not empty (rasters are created automatically)</p>
         </div>
     </dt>
     <dt>
@@ -282,33 +281,80 @@ inside and outside the lens area.</p>
     </dt>
 </dl>
 
-
+</li>
         
+            <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If url to info.json is not provided</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+</li>
+        
+            <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If presets option is not provided</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+</li>
+        </ul>
 
     
 
     
         <h5>Example</h5>
         
-    <pre class="sunlight-highlight-javascript">&#x60;&#x60;&#x60;javascript
-// Create lens with base layer
-const lens = new OpenLIME.LayerLens({
-  camera: viewer.camera,
-  radius: 150,
-  borderEnable: true,
-  borderColor: [0, 0, 0, 1]
+    <pre class="sunlight-highlight-javascript">// Create multispectral layer with deepzoom layout
+const msLayer = new OpenLIME.Layer({
+  type: &#x27;multispectral&#x27;,
+  url: &#x27;path/to/info.json&#x27;,
+  layout: &#x27;deepzoom&#x27;,
+  defaultMode: &#x27;rgb&#x27;,
+  presets: &#x27;path/to/presets.json&#x27;
 });
 
-// Set layers
-lens.setBaseLayer(baseLayer);
-lens.setOverlayLayer(overlayLayer);
-
-// Animate lens position
-lens.setCenter(500, 500, 1000, &#x27;ease-out&#x27;);
-
 // Add to viewer
-viewer.addLayer(&#x27;lens&#x27;, lens);
-&#x60;&#x60;&#x60;</pre>
+viewer.addLayer(&#x27;ms&#x27;, msLayer);
+
+// Apply a preset CTW
+msLayer.applyPreset(&#x27;falseColor&#x27;);</pre>
 
 
     
@@ -324,7 +370,7 @@ viewer.addLayer(&#x27;lens&#x27;, lens);
 
 
     <ul>
-        <li><a href="LayerCombiner.html">LayerCombiner</a></li>
+        <li><a href="Layer.html">Layer</a></li>
     </ul>
 
 
@@ -462,7 +508,7 @@ viewer.addLayer(&#x27;lens&#x27;, lens);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#addControl">LayerCombiner#addControl</a>
+        <a href="Layer.html#addControl">Layer#addControl</a>
     </li></ul></dd>
     
 
@@ -666,7 +712,7 @@ viewer.addLayer(&#x27;lens&#x27;, lens);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#addShader">LayerCombiner#addShader</a>
+        <a href="Layer.html#addShader">Layer#addShader</a>
     </li></ul></dd>
     
 
@@ -880,7 +926,7 @@ layer.setShader(&#x27;custom&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#addShaderFilter">LayerCombiner#addShaderFilter</a>
+        <a href="Layer.html#addShaderFilter">Layer#addShaderFilter</a>
     </li></ul></dd>
     
 
@@ -961,6 +1007,300 @@ layer.setShader(&#x27;custom&#x27;);
         
 
     
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="applyPreset"><span class="type-signature"></span>applyPreset(presetName)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Applies a preset CTW from the presets library</p>
+<p>Loads and applies a predefined set of CTW coefficients for
+specialized visualization (e.g., false color, vegetation analysis).</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>presetName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Name of the preset</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-339">line 339</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Throws:</h5>
+    
+            
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If preset doesn't exist</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+
+        
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="boundingBox"><span class="type-signature"></span>boundingBox()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets layer bounding box in scene coordinates</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
+	<dd class="inherited-from">
+		<ul class="dummy">
+			<li>
+				<a href="Layer.html#boundingBox">Layer#boundingBox</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="Layer.html#boundingBox">Layer#boundingBox</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Layer.js.html">Layer.js</a>,
+				 <a href="Layer.js.html#sunlight-1-line-521">line 521</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Bounding box</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="BoundingBox.html">BoundingBox</a></span>
+
+
+
+    </dd>
+</dl>
+
+
+        
 
     
 </dd>
@@ -1060,7 +1400,7 @@ layer.setShader(&#x27;custom&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#clearShaderFilters">LayerCombiner#clearShaderFilters</a>
+        <a href="Layer.html#clearShaderFilters">Layer#clearShaderFilters</a>
     </li></ul></dd>
     
 
@@ -1596,7 +1936,7 @@ which is useful for applying different visual effects to the same image data wit
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#derive">LayerCombiner#derive</a>
+        <a href="Layer.html#derive">Layer#derive</a>
     </li></ul></dd>
     
 
@@ -1707,7 +2047,7 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
             
 <hr>
 <dt>
-    <h4 class="name" id="getBorderColor"><span class="type-signature"></span>getBorderColor()</h4>
+    <h4 class="name" id="getAvailablePresets"><span class="type-signature"></span>getAvailablePresets()</h4>
     
     
 </dt>
@@ -1715,7 +2055,8 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
 
     
     <div class="description">
-        <p>Gets current border color</p>
+        <p>Gets available presets</p>
+<p>Returns the names of all available preset CTW configurations.</p>
     </div>
     
 
@@ -1761,8 +2102,8 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-221">line 221</a>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-382">line 382</a>
 			</li>
 		</ul>
 	</dd>
@@ -1791,7 +2132,7 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
     
             
 <div class="param-desc">
-    <p>RGBA color array</p>
+    <p>Array of preset names</p>
 </div>
 
 
@@ -1802,7 +2143,7 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
     </dt>
     <dd>
         
-<span class="param-type">Array.&lt;number></span>
+<span class="param-type">Array.&lt;string></span>
 
 
 
@@ -1819,7 +2160,7 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
             
 <hr>
 <dt>
-    <h4 class="name" id="getBorderWidth"><span class="type-signature"></span>getBorderWidth()</h4>
+    <h4 class="name" id="getBandCount"><span class="type-signature"></span>getBandCount()</h4>
     
     
 </dt>
@@ -1827,7 +2168,8 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
 
     
     <div class="description">
-        <p>Gets current border width</p>
+        <p>Gets the number of spectral bands</p>
+<p>Returns the count of spectral planes in the multispectral dataset.</p>
     </div>
     
 
@@ -1873,8 +2215,8 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-229">line 229</a>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-371">line 371</a>
 			</li>
 		</ul>
 	</dd>
@@ -1903,7 +2245,7 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
     
             
 <div class="param-desc">
-    <p>Border width in pixels</p>
+    <p>Number of bands</p>
 </div>
 
 
@@ -2023,7 +2365,7 @@ return {*} The control</p></td>
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#getControl">LayerCombiner#getControl</a>
+        <a href="Layer.html#getControl">Layer#getControl</a>
     </li></ul></dd>
     
 
@@ -2084,118 +2426,6 @@ return {*} The control</p></td>
             
 <hr>
 <dt>
-    <h4 class="name" id="getCurrentCenter"><span class="type-signature"></span>getCurrentCenter()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Gets current lens center position</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-203">line 203</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>Center position in scene coordinates</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
     <h4 class="name" id="getMode"><span class="type-signature"></span>getMode()</h4>
     
     
@@ -2237,7 +2467,7 @@ return {*} The control</p></td>
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#getMode">LayerCombiner#getMode</a>
+        <a href="Layer.html#getMode">Layer#getMode</a>
     </li></ul></dd>
     
 
@@ -2366,7 +2596,7 @@ return {*} The control</p></td>
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#getModes">LayerCombiner#getModes</a>
+        <a href="Layer.html#getModes">Layer#getModes</a>
     </li></ul></dd>
     
 
@@ -2451,7 +2681,7 @@ return {*} The control</p></td>
             
 <hr>
 <dt>
-    <h4 class="name" id="getRadius"><span class="type-signature"></span>getRadius()</h4>
+    <h4 class="name" id="getPreset"><span class="type-signature"></span>getPreset(presetName)</h4>
     
     
 </dt>
@@ -2459,7 +2689,9 @@ return {*} The control</p></td>
 
     
     <div class="description">
-        <p>Gets current lens radius</p>
+        <p>Gets a preset CTW configuration by name</p>
+<p>Retrieves the preset's red, green, and blue CTW arrays from
+the presets collection.</p>
     </div>
     
 
@@ -2468,6 +2700,56 @@ return {*} The control</p></td>
     
 
     
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>presetName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Name of the preset</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
     
 
     
@@ -2505,8 +2787,8 @@ return {*} The control</p></td>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-184">line 184</a>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-320">line 320</a>
 			</li>
 		</ul>
 	</dd>
@@ -2535,7 +2817,7 @@ return {*} The control</p></td>
     
             
 <div class="param-desc">
-    <p>Current radius in pixels</p>
+    <p>Object with red, green, blue arrays or null if not found</p>
 </div>
 
 
@@ -2546,7 +2828,10 @@ return {*} The control</p></td>
     </dt>
     <dd>
         
-<span class="param-type">number</span>
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">null</span>
 
 
 
@@ -2674,7 +2959,7 @@ return {*} The control</p></td>
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#getState">LayerCombiner#getState</a>
+        <a href="Layer.html#getState">Layer#getState</a>
     </li></ul></dd>
     
 
@@ -2759,7 +3044,7 @@ return {*} The control</p></td>
             
 <hr>
 <dt>
-    <h4 class="name" id="getTargetCenter"><span class="type-signature"></span>getTargetCenter()</h4>
+    <h4 class="name" id="getWavelengths"><span class="type-signature"></span>getWavelengths()</h4>
     
     
 </dt>
@@ -2767,7 +3052,8 @@ return {*} The control</p></td>
 
     
     <div class="description">
-        <p>Gets target lens position for ongoing animation</p>
+        <p>Gets the wavelength array for spectral bands</p>
+<p>Returns the wavelength values (in nm) for each spectral band.</p>
     </div>
     
 
@@ -2813,8 +3099,8 @@ return {*} The control</p></td>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-212">line 212</a>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-360">line 360</a>
 			</li>
 		</ul>
 	</dd>
@@ -2843,7 +3129,7 @@ return {*} The control</p></td>
     
             
 <div class="param-desc">
-    <p>Target position in scene coordinates</p>
+    <p>Array of wavelengths</p>
 </div>
 
 
@@ -2854,7 +3140,7 @@ return {*} The control</p></td>
     </dt>
     <dd>
         
-<span class="param-type">Object</span>
+<span class="param-type">Array.&lt;number></span>
 
 
 
@@ -2912,7 +3198,7 @@ return {*} The control</p></td>
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#interpolateControls">LayerCombiner#interpolateControls</a>
+        <a href="Layer.html#interpolateControls">Layer#interpolateControls</a>
     </li></ul></dd>
     
 
@@ -3307,7 +3593,7 @@ Implements request batching, concurrent loading, and proper error handling.</p>
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#loadTile">LayerCombiner#loadTile</a>
+        <a href="Layer.html#loadTile">Layer#loadTile</a>
     </li></ul></dd>
     
 
@@ -3457,7 +3743,7 @@ Implements request batching, concurrent loading, and proper error handling.</p>
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#pixelSizePerMM">LayerCombiner#pixelSizePerMM</a>
+        <a href="Layer.html#pixelSizePerMM">Layer#pixelSizePerMM</a>
     </li></ul></dd>
     
 
@@ -3534,232 +3820,6 @@ Implements request batching, concurrent loading, and proper error handling.</p>
 
 
         
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="regenerateFrameBuffers"><span class="type-signature"></span>regenerateFrameBuffers(layer)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Sets the overlay layer (shown inside lens)</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>layer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Layer.html">Layer</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Overlay layer instance</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-160">line 160</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="removeOverlayLayer"><span class="type-signature"></span>removeOverlayLayer()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Removes the overlay layer, returning to single layer mode</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-121">line 121</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
 </dd>
@@ -3859,7 +3919,7 @@ Implements request batching, concurrent loading, and proper error handling.</p>
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#removeShader">LayerCombiner#removeShader</a>
+        <a href="Layer.html#removeShader">Layer#removeShader</a>
     </li></ul></dd>
     
 
@@ -4072,7 +4132,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#removeShaderFilter">LayerCombiner#removeShaderFilter</a>
+        <a href="Layer.html#removeShaderFilter">Layer#removeShaderFilter</a>
     </li></ul></dd>
     
 
@@ -4161,7 +4221,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
             
 <hr>
 <dt>
-    <h4 class="name" id="setBaseLayer"><span class="type-signature"></span>setBaseLayer(layer)</h4>
+    <h4 class="name" id="scale"><span class="type-signature"></span>scale()</h4>
     
     
 </dt>
@@ -4169,7 +4229,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
     
     <div class="description">
-        <p>Sets the base layer (shown inside lens)</p>
+        <p>Gets layer scale</p>
     </div>
     
 
@@ -4178,56 +4238,6 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
 
     
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>layer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Layer.html">Layer</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Base layer instance</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
     
 
     
@@ -4239,7 +4249,21 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 	
 
 	
+	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
+	<dd class="inherited-from">
+		<ul class="dummy">
+			<li>
+				<a href="Layer.html#scale">Layer#scale</a>
+			</li>
+		</ul>
+	</dd>
+	
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="Layer.html#scale">Layer#scale</a>
+    </li></ul></dd>
     
 
     
@@ -4265,8 +4289,8 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-131">line 131</a>
+				<a href="Layer.js.html">Layer.js</a>,
+				 <a href="Layer.js.html#sunlight-1-line-502">line 502</a>
 			</li>
 		</ul>
 	</dd>
@@ -4283,11 +4307,6 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
 
     
-    <h5>Fires:</h5>
-    <ul>
-        <li><a href="Layer.html#event:update">Layer#event:update</a></li>
-    </ul>
-    
 
     
 
@@ -4296,6 +4315,30 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
 
     
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Current scale value</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
 
     
 </dd>
@@ -4304,7 +4347,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
             
 <hr>
 <dt>
-    <h4 class="name" id="setCenter"><span class="type-signature"></span>setCenter(x, y [, delayms] [, easing])</h4>
+    <h4 class="name" id="setCTW"><span class="type-signature"></span>setCTW(redCTW, greenCTW, blueCTW)</h4>
     
     
 </dt>
@@ -4312,7 +4355,9 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
     
     <div class="description">
-        <p>Sets lens center position with optional animation</p>
+        <p>Sets Color Twist Weights coefficients manually</p>
+<p>CTW coefficients define how spectral bands are combined to create
+RGB visualization. Each array contains weights for each spectral band.</p>
     </div>
     
 
@@ -4335,11 +4380,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
         <th>Type</th>
 
         
-        <th>Argument</th>
-        
 
-        
-        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -4351,13 +4392,13 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
         <tr>
             
-                <td class="name"><code>x</code></td>
+                <td class="name"><code>redCTW</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">Float32Array</span>
 
 
 
@@ -4365,35 +4406,23 @@ layer.removeShader(&#x27;oldEffect&#x27;);
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last"><p>X coordinate in scene space</p></td>
+            <td class="description last"><p>Red channel coefficients</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>y</code></td>
+                <td class="name"><code>greenCTW</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">Float32Array</span>
 
 
 
@@ -4401,35 +4430,23 @@ layer.removeShader(&#x27;oldEffect&#x27;);
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last"><p>Y coordinate in scene space</p></td>
+            <td class="description last"><p>Green channel coefficients</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>delayms</code></td>
+                <td class="name"><code>blueCTW</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">Float32Array</span>
 
 
 
@@ -4437,66 +4454,10 @@ layer.removeShader(&#x27;oldEffect&#x27;);
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
 
             
-                <td class="default">
-                
-                    100
-                
-                </td>
-            
 
-            <td class="description last"><p>Animation duration</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>easing</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    'linear'
-                
-                </td>
-            
-
-            <td class="description last"><p>Animation easing function</p></td>
+            <td class="description last"><p>Blue channel coefficients</p></td>
         </tr>
 
     
@@ -4540,8 +4501,8 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-195">line 195</a>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-290">line 290</a>
 			</li>
 		</ul>
 	</dd>
@@ -4564,6 +4525,34 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
 
     
+    <h5>Throws:</h5>
+    
+            
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If arrays have incorrect length</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+
+        
 
     
 
@@ -4795,7 +4784,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#setControl">LayerCombiner#setControl</a>
+        <a href="Layer.html#setControl">Layer#setControl</a>
     </li></ul></dd>
     
 
@@ -4869,7 +4858,12 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
     
     <div class="description">
-        <p>Sets shader visualization mode</p>
+        <p>Sets the visualization mode</p>
+<p>Changes how multispectral data is visualized:</p>
+<ul>
+<li>'rgb': Uses CTW coefficients to create RGB visualization</li>
+<li>'single_band': Shows a single spectral band</li>
+</ul>
     </div>
     
 
@@ -4921,7 +4915,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
             
 
-            <td class="description last"><p>Mode to set</p></td>
+            <td class="description last"><p>Mode name ('rgb', 'single_band')</p></td>
         </tr>
 
     
@@ -4939,20 +4933,11 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 	
 
 	
-	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
-	<dd class="inherited-from">
-		<ul class="dummy">
-			<li>
-				<a href="Layer.html#setMode">Layer#setMode</a>
-			</li>
-		</ul>
-	</dd>
-	
 
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#setMode">LayerCombiner#setMode</a>
+        <a href="Layer.html#setMode">Layer#setMode</a>
     </li></ul></dd>
     
 
@@ -4979,385 +4964,8 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Layer.js.html">Layer.js</a>,
-				 <a href="Layer.js.html#sunlight-1-line-450">line 450</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-    <h5>Fires:</h5>
-    <ul>
-        <li><a href="Layer.html#event:update">Layer#event:update</a></li>
-    </ul>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="setOverlayLayer"><span class="type-signature"></span>setOverlayLayer(layer)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Sets the overlay layer (shown outside lens)</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>layer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Layer.html">Layer</a></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Overlay layer instance</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-144">line 144</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="setRadius"><span class="type-signature"></span>setRadius(radius [, delayms] [, easing])</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Sets lens radius with optional animation</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>radius</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>New radius in pixels</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>delayms</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    100
-                
-                </td>
-            
-
-            <td class="description last"><p>Animation duration</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>easing</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    'linear'
-                
-                </td>
-            
-
-            <td class="description last"><p>Animation easing function</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-176">line 176</a>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-257">line 257</a>
 			</li>
 		</ul>
 	</dd>
@@ -5481,7 +5089,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#setShader">LayerCombiner#setShader</a>
+        <a href="Layer.html#setShader">Layer#setShader</a>
     </li></ul></dd>
     
 
@@ -5565,6 +5173,201 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
 
         
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setSingleBand"><span class="type-signature"></span>setSingleBand(bandIndex [, channel])</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets single band visualization</p>
+<p>Displays a single spectral band on a specific output channel.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>bandIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Index of band to visualize</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>channel</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    0
+                
+                </td>
+            
+
+            <td class="description last"><p>Output channel (0=all/gray, 1=R, 2=G, 3=B)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-272">line 272</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
 
     
 
@@ -5760,7 +5563,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#setState">LayerCombiner#setState</a>
+        <a href="Layer.html#setState">Layer#setState</a>
     </li></ul></dd>
     
 
@@ -5912,7 +5715,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#setTransform">LayerCombiner#setTransform</a>
+        <a href="Layer.html#setTransform">Layer#setTransform</a>
     </li></ul></dd>
     
 
@@ -6191,7 +5994,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#setViewport">LayerCombiner#setViewport</a>
+        <a href="Layer.html#setViewport">Layer#setViewport</a>
     </li></ul></dd>
     
 
@@ -6265,7 +6068,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
     
     <div class="description">
-        <p>Sets layer visibility and updates dashboard if present</p>
+        <p>Sets layer visibility</p>
     </div>
     
 
@@ -6348,7 +6151,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#setVisible">LayerCombiner#setVisible</a>
+        <a href="Layer.html#setVisible">Layer#setVisible</a>
     </li></ul></dd>
     
 
@@ -6375,8 +6178,8 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerLens.js.html">LayerLens.js</a>,
-				 <a href="LayerLens.js.html#sunlight-1-line-107">line 107</a>
+				<a href="Layer.js.html">Layer.js</a>,
+				 <a href="Layer.js.html#sunlight-1-line-460">line 460</a>
 			</li>
 		</ul>
 	</dd>
@@ -6505,7 +6308,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#setZindex">LayerCombiner#setZindex</a>
+        <a href="Layer.html#setZindex">Layer#setZindex</a>
     </li></ul></dd>
     
 
@@ -6620,7 +6423,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a>
+        <a href="Layer.html#event:ready">Layer#event:ready</a>
     </li></ul></dd>
     
 
@@ -6722,7 +6525,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a>
+        <a href="Layer.html#event:update">Layer#event:update</a>
     </li></ul></dd>
     
 

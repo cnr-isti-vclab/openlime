@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: ShaderNeural</title>
+	<title>OpenLIME Class: ShaderMultispectral</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,123 +88,33 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: ShaderNeural</h1>
+	<h1 class="page-title">Class: ShaderMultispectral</h1>
 <section>
 
 <header>
     
         <h2>
-        ShaderNeural
+        ShaderMultispectral
         </h2>
         
-            <div class="class-description"><p>ShaderNeural implements a WebGL-based neural network for real-time image relighting.
-Used in conjunction with LayerNeuralRTI for Neural Reflectance Transformation Imaging.</p>
+            <div class="class-description"><p>ShaderMultispectral - WebGL2 shader implementation for multispectral visualization</p>
+<p>This shader handles the real-time rendering of multispectral imagery with
+various visualization modes and Color Twist Weight (CTW) transformations.
+It leverages WebGL2 features such as Uniform Buffer Objects (UBO) for
+efficient handling of CTW coefficients and texelFetch for precise pixel access.</p>
 <p>Features:</p>
 <ul>
-<li>Three-layer neural network architecture</li>
-<li>Real-time image relighting</li>
-<li>Multiple texture plane support</li>
-<li>Configurable network parameters</li>
-<li>ELU activation function</li>
-<li>WebGL acceleration</li>
-<li>Automatic color space conversion</li>
+<li>Multiple rendering modes (RGB, single band)</li>
+<li>UBO-based Color Twist Weights for spectral transformations</li>
+<li>Direct pixel access via texelFetch for scientific precision</li>
+<li>Optimized memory access by skipping zero-weight bands</li>
+<li>Support for up to 33 spectral bands (11 RGB textures)</li>
 </ul>
-<p>Technical Implementation:</p>
+<p>Technical implementation:</p>
 <ul>
-<li>Forward pass computation in fragment shader</li>
-<li>Vectorized operations for performance</li>
-<li>Dynamic shader generation based on network size</li>
-<li>Multi-texture sampling</li>
-<li>Weight matrix management</li>
-<li>Dequantization support</li>
-</ul>
-<p>/**
-Neural Network Architecture Details</p>
-<p>The network consists of three layers:</p>
-<ol>
-<li>
-<p>Input Layer:</p>
-<ul>
-<li>Accepts coefficient planes and light direction</li>
-<li>Applies dequantization and normalization</li>
-</ul>
-</li>
-<li>
-<p>Hidden Layers:</p>
-<ul>
-<li>Two fully connected layers</li>
-<li>ELU activation function</li>
-<li>Vectorized operations for efficiency</li>
-</ul>
-</li>
-<li>
-<p>Output Layer:</p>
-<ul>
-<li>Produces final RGB/XYZ color</li>
-<li>Linear activation</li>
-</ul>
-</li>
-</ol>
-<p>Implementation Notes:</p>
-<ul>
-<li>All matrices are packed into vec4 for efficient GPU processing</li>
-<li>Network dimensions are padded to multiples of 4</li>
-<li>Uses texture sampling for coefficient input</li>
-<li>Implements forward pass only</li>
-</ul>
-<p>Example usage with LayerNeuralRTI:</p>
-<pre class="prettyprint source lang-javascript"><code>// Create neural shader
-const shader = new ShaderNeural({
-    mode: 'light',
-    nplanes: 9
-});
-
-// Configure network
-shader.setShaderInfo(samples, 9, 52, 12, 'rgb');
-
-// Update weights
-shader.setUniform('layer1_weights', weights1);
-shader.setUniform('layer1_biases', biases1);
-// ... set other layers
-
-// Set light direction
-shader.setLight([0.5, 0.3]);
-</code></pre>
-<p>Fragment Shader Implementation</p>
-<p>Key Components:</p>
-<ol>
-<li>
-<p>Input Processing:</p>
-<ul>
-<li>Texture sampling</li>
-<li>Dequantization</li>
-<li>Light direction incorporation</li>
-</ul>
-</li>
-<li>
-<p>Network Computation:</p>
-<ul>
-<li>Vectorized matrix multiplication</li>
-<li>ELU activation function</li>
-<li>Layer-wise processing</li>
-</ul>
-</li>
-<li>
-<p>Output Processing:</p>
-<ul>
-<li>Color space conversion</li>
-<li>Final color computation</li>
-</ul>
-</li>
-</ol>
-<p>Uniforms:</p>
-<ul>
-<li>{sampler2D} u_texture_[1-3] - Coefficient plane textures</li>
-<li>{vec2} lights - Light direction vector</li>
-<li>{vec4[]} layer[1-3]_weights - Layer weight matrices</li>
-<li>{vec4[]} layer[1-3]_biases - Layer bias vectors</li>
-<li>{vec3} min - Minimum values for dequantization</li>
-<li>{vec3} max - Maximum values for dequantization</li>
+<li>Efficient std140 UBO layout for CTW coefficients</li>
+<li>Loop unrolling for faster rendering</li>
+<li>Optimized band access with constant indices</li>
 </ul></div>
         
     
@@ -217,7 +127,7 @@ shader.setLight([0.5, 0.3]);
         
 <hr>
 <dt>
-    <h4 class="name" id="ShaderNeural"><span class="type-signature"></span>new ShaderNeural( [options])</h4>
+    <h4 class="name" id="ShaderMultispectral"><span class="type-signature"></span>new ShaderMultispectral( [options])</h4>
     
     
 </dt>
@@ -225,7 +135,7 @@ shader.setLight([0.5, 0.3]);
 
     
     <div class="description">
-        <p>Creates a new neural network shader</p>
+        <p>Creates a new multispectral shader</p>
     </div>
     
 
@@ -268,7 +178,7 @@ shader.setLight([0.5, 0.3]);
             <td class="type">
             
                 
-<span class="param-type">Object</span>
+<span class="param-type"><a href="global.html#ShaderMultispectralOptions">ShaderMultispectralOptions</a></span>
 
 
 
@@ -289,237 +199,7 @@ shader.setLight([0.5, 0.3]);
 
             
 
-            <td class="description last"><p>Configuration options</p>
-                <h6 class="method-params-label method-subparams-label">Properties</h6>
-                
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>modes</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;string></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    ['light']
-                
-                </td>
-            
-
-            <td class="description last"><p>Available modes</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>mode</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    'light'
-                
-                </td>
-            
-
-            <td class="description last"><p>Initial mode</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nplanes</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    null
-                
-                </td>
-            
-
-            <td class="description last"><p>Number of coefficient planes</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>scale</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    null
-                
-                </td>
-            
-
-            <td class="description last"><p>Dequantization scale factor</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>bias</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    null
-                
-                </td>
-            
-
-            <td class="description last"><p>Dequantization bias</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
+            <td class="description last"><p>Configuration options</p></td>
         </tr>
 
     
@@ -563,8 +243,8 @@ shader.setLight([0.5, 0.3]);
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="ShaderNeural.js.html">ShaderNeural.js</a>,
-				 <a href="ShaderNeural.js.html#sunlight-1-line-106">line 106</a>
+				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-32">line 32</a>
 			</li>
 		</ul>
 	</dd>
@@ -1017,6 +697,134 @@ Combines uniforms from both the base shader and all active filters into a single
             
 <hr>
 <dt>
+    <h4 class="name" id="fragShaderSrc"><span class="type-signature"></span>fragShaderSrc()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Generate fragment shader source code</p>
+<p>Creates optimized GLSL code for multispectral visualization.
+Uses constant indices and loop unrolling for performance.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
+	<dd class="inherited-from">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderMultispectral.html#fragShaderSrc">ShaderMultispectral#fragShaderSrc</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="Shader.html#fragShaderSrc">Shader#fragShaderSrc</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-255">line 255</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>GLSL fragment shader source code</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
     <h4 class="name" id="getUniform"><span class="type-signature"></span>getUniform(name)</h4>
     
     
@@ -1197,7 +1005,7 @@ Searches both shader uniforms and filter uniforms.</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="init"><span class="type-signature"></span>init()</h4>
+    <h4 class="name" id="init"><span class="type-signature"></span>init(info)</h4>
     
     
 </dt>
@@ -1205,7 +1013,9 @@ Searches both shader uniforms and filter uniforms.</p>
 
     
     <div class="description">
-        <p>Initializes default weights</p>
+        <p>Initializes shader with multispectral configuration</p>
+<p>Sets up wavelength information, calculates the number of required textures,
+and configures samplers for each texture.</p>
     </div>
     
 
@@ -1214,6 +1024,56 @@ Searches both shader uniforms and filter uniforms.</p>
     
 
     
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>info</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Multispectral configuration object from info.json</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
     
 
     
@@ -1251,8 +1111,8 @@ Searches both shader uniforms and filter uniforms.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="ShaderNeural.js.html">ShaderNeural.js</a>,
-				 <a href="ShaderNeural.js.html#sunlight-1-line-173">line 173</a>
+				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-101">line 101</a>
 			</li>
 		</ul>
 	</dd>
@@ -1442,144 +1302,6 @@ Searches both shader uniforms and filter uniforms.</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="setLight"><span class="type-signature"></span>setLight(light)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Sets the light direction for relighting</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>light</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;number></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Light direction vector [x, y]</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="ShaderNeural.js.html">ShaderNeural.js</a>,
-				 <a href="ShaderNeural.js.html#sunlight-1-line-166">line 166</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
     <h4 class="name" id="setMode"><span class="type-signature"></span>setMode(mode)</h4>
     
     
@@ -1588,7 +1310,12 @@ Searches both shader uniforms and filter uniforms.</p>
 
     
     <div class="description">
-        <p>Sets the current shader mode.</p>
+        <p>Sets the rendering mode</p>
+<p>Changes how multispectral data is visualized:</p>
+<ul>
+<li>'rgb': Uses CTW coefficients to create RGB visualization</li>
+<li>'single_band': Shows a single spectral band</li>
+</ul>
     </div>
     
 
@@ -1640,7 +1367,7 @@ Searches both shader uniforms and filter uniforms.</p>
 
             
 
-            <td class="description last"><p>Mode identifier (must be in options.modes)</p></td>
+            <td class="description last"><p>Visualization mode ('rgb', 'single_band')</p></td>
         </tr>
 
     
@@ -1657,15 +1384,6 @@ Searches both shader uniforms and filter uniforms.</p>
 
 	
 
-	
-	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
-	<dd class="inherited-from">
-		<ul class="dummy">
-			<li>
-				<a href="Shader.html#setMode">Shader#setMode</a>
-			</li>
-		</ul>
-	</dd>
 	
 
     
@@ -1698,8 +1416,8 @@ Searches both shader uniforms and filter uniforms.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="Shader.js.html">Shader.js</a>,
-				 <a href="Shader.js.html#sunlight-1-line-102">line 102</a>
+				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-81">line 81</a>
 			</li>
 		</ul>
 	</dd>
@@ -1760,7 +1478,7 @@ Searches both shader uniforms and filter uniforms.</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="setShaderInfo"><span class="type-signature"></span>setShaderInfo(samples, planes, n, c, colorspace)</h4>
+    <h4 class="name" id="setSingleBand"><span class="type-signature"></span>setSingleBand(bandIndex, outputChannel)</h4>
     
     
 </dt>
@@ -1768,7 +1486,9 @@ Searches both shader uniforms and filter uniforms.</p>
 
     
     <div class="description">
-        <p>Configures shader for specific network architecture</p>
+        <p>Sets single band view parameters</p>
+<p>Configures the shader to display a specific spectral band
+on a chosen output channel.</p>
     </div>
     
 
@@ -1793,6 +1513,8 @@ Searches both shader uniforms and filter uniforms.</p>
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -1803,31 +1525,7 @@ Searches both shader uniforms and filter uniforms.</p>
 
         <tr>
             
-                <td class="name"><code>samples</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;number></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Input samples</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>planes</code></td>
+                <td class="name"><code>bandIndex</code></td>
             
 
             <td class="type">
@@ -1843,15 +1541,19 @@ Searches both shader uniforms and filter uniforms.</p>
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last"><p>Number of coefficient planes</p></td>
+            <td class="description last"><p>Index of band to view</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>n</code></td>
+                <td class="name"><code>outputChannel</code></td>
             
 
             <td class="type">
@@ -1867,56 +1569,14 @@ Searches both shader uniforms and filter uniforms.</p>
             
 
             
-
-            <td class="description last"><p>Neurons per layer</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>c</code></td>
-            
-
-            <td class="type">
-            
+                <td class="default">
                 
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Input channels</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>colorspace</code></td>
-            
-
-            <td class="type">
-            
+                    0
                 
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
+                </td>
             
 
-            
-
-            <td class="description last"><p>Color space for processing</p></td>
+            <td class="description last"><p>Output channel (0=all/gray, 1=R, 2=G, 3=B)</p></td>
         </tr>
 
     
@@ -1960,8 +1620,176 @@ Searches both shader uniforms and filter uniforms.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="ShaderNeural.js.html">ShaderNeural.js</a>,
-				 <a href="ShaderNeural.js.html#sunlight-1-line-185">line 185</a>
+				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-224">line 224</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Throws:</h5>
+    
+            
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If band index is out of range</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+
+        
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setTextureSize"><span class="type-signature"></span>setTextureSize(size)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets texture dimensions for texelFetch calculations</p>
+<p>Provides texture dimensions to the shader for accurate
+pixel coordinate calculations.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>size</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;number></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Texture dimensions [width, height]</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-242">line 242</a>
 			</li>
 		</ul>
 	</dd>
@@ -2357,49 +2185,34 @@ Searches both shader uniforms and filter uniforms.</p>
     
 </dd>
 
-        </dl>
-    
-
-    
-        <h3 class="subsection-title">Type Definitions</h3>
-
-        <dl>
-                
+        
+            
 <hr>
-<dt class="name" id="~NetworkConfig">
-    <h4 id="~NetworkConfig">NetworkConfig</h4>
-
+<dt>
+    <h4 class="name" id="setupCTW"><span class="type-signature"></span>setupCTW(gl, redCTW, greenCTW, blueCTW)</h4>
+    
     
 </dt>
 <dd>
+
     
     <div class="description">
-        <p>Configuration for neural network weights and parameters</p>
+        <p>Sets up Uniform Buffer Object for Color Twist Weights</p>
+<p>Creates and configures a UBO for efficient handling of CTW coefficients.
+Uses WebGL2's std140 layout for optimal performance.</p>
     </div>
     
 
     
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">Object</span>
 
-
-
-            </li>
-        </ul>
     
 
     
-<dl class="details">
     
+        <h5>Parameters:</h5>
+        
 
-    <h5 class="subsection-title">Properties:</h5>
-
-    <dl>
-
-<table class="props table table-striped">
+<table class="params table table-striped">
     <thead>
     <tr>
         
@@ -2421,13 +2234,13 @@ Searches both shader uniforms and filter uniforms.</p>
 
         <tr>
             
-                <td class="name"><code>n</code></td>
+                <td class="name"><code>gl</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">WebGL2RenderingContext</span>
 
 
 
@@ -2438,20 +2251,20 @@ Searches both shader uniforms and filter uniforms.</p>
 
             
 
-            <td class="description last"><p>Number of neurons per layer (padded to multiple of 4)</p></td>
+            <td class="description last"><p>WebGL2 context</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>c</code></td>
+                <td class="name"><code>redCTW</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">Float32Array</span>
 
 
 
@@ -2462,20 +2275,20 @@ Searches both shader uniforms and filter uniforms.</p>
 
             
 
-            <td class="description last"><p>Number of input channels (padded to multiple of 4)</p></td>
+            <td class="description last"><p>Red channel CTW coefficients</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>colorspace</code></td>
+                <td class="name"><code>greenCTW</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">Float32Array</span>
 
 
 
@@ -2486,20 +2299,20 @@ Searches both shader uniforms and filter uniforms.</p>
 
             
 
-            <td class="description last"><p>Color space for processing ('rgb'|'xyz'|etc)</p></td>
+            <td class="description last"><p>Green channel CTW coefficients</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>nplanes</code></td>
+                <td class="name"><code>blueCTW</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">Float32Array</span>
 
 
 
@@ -2510,62 +2323,17 @@ Searches both shader uniforms and filter uniforms.</p>
 
             
 
-            <td class="description last"><p>Number of coefficient planes</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>scale</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Dequantization scale factor</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>bias</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Dequantization bias</p></td>
+            <td class="description last"><p>Blue channel CTW coefficients</p></td>
         </tr>
 
     
     </tbody>
 </table>
-</dl>
 
+    
+
+    
+<dl class="details">
     
 
 	
@@ -2599,8 +2367,8 @@ Searches both shader uniforms and filter uniforms.</p>
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="ShaderNeural.js.html">ShaderNeural.js</a>,
-				 <a href="ShaderNeural.js.html#sunlight-1-line-3">line 3</a>
+				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-138">line 138</a>
 			</li>
 		</ul>
 	</dd>
@@ -2615,9 +2383,200 @@ Searches both shader uniforms and filter uniforms.</p>
 
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dd>
 
-            </dl>
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="vertShaderSrc"><span class="type-signature"></span>vertShaderSrc(gl)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets vertex shader source code.
+Default implementation provides basic vertex transformation and texture coordinate passing.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>gl</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">WebGL2RenderingContext</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>WebGL2 context</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
+	<dd class="inherited-from">
+		<ul class="dummy">
+			<li>
+				<a href="Shader.html#vertShaderSrc">Shader#vertShaderSrc</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="Shader.html#vertShaderSrc">Shader#vertShaderSrc</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Shader.js.html">Shader.js</a>,
+				 <a href="Shader.js.html#sunlight-1-line-386">line 386</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Vertex shader source code</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        </dl>
+    
+
     
 
     
