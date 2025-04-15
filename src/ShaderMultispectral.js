@@ -1,56 +1,66 @@
 import { Shader } from './Shader.js'
 
 /**
- * @typedef {Object} ShaderMultispectral~Options
- * Configuration options for multispectral shader
- * @property {string} [mode='rgb'] - Initial rendering mode
- * @property {boolean} [debug=false] - Enable debug output
- * @property {number[]} [wavelength] - Array of wavelengths (in nm)
+ * @typedef {Object} ShaderMultispectralOptions
+ * @property {string} [mode='rgb'] - Initial rendering mode ('rgb' or 'single_band')
+ * @property {boolean} [debug=false] - Enable debug output in console
+ * @property {number[]} [wavelength] - Array of wavelengths in nanometers
  */
 
 /**
- * ShaderMultispectral implements visualization for multispectral imagery.
- * Supports various visualization modes and color transformations.
+ * ShaderMultispectral - WebGL2 shader implementation for multispectral visualization
+ * 
+ * This shader handles the real-time rendering of multispectral imagery with 
+ * various visualization modes and Color Twist Weight (CTW) transformations.
+ * It leverages WebGL2 features such as Uniform Buffer Objects (UBO) for
+ * efficient handling of CTW coefficients and texelFetch for precise pixel access.
  * 
  * Features:
- * - Multiple rendering modes (rgb, single band, custom)
- * - Color Twist Weights (CTW) for spectral transformations
- * - Efficient UBO implementation for CTW coefficients
- * - Real-time visualization control
+ * - Multiple rendering modes (RGB, single band)
+ * - UBO-based Color Twist Weights for spectral transformations
  * - Direct pixel access via texelFetch for scientific precision
  * - Optimized memory access by skipping zero-weight bands
+ * - Support for up to 33 spectral bands (11 RGB textures)
+ * 
+ * Technical implementation:
+ * - Efficient std140 UBO layout for CTW coefficients
+ * - Loop unrolling for faster rendering
+ * - Optimized band access with constant indices
  * 
  * @extends Shader
  */
 class ShaderMultispectral extends Shader {
   /**
    * Creates a new multispectral shader
-   * @param {ShaderMultispectral~Options} [options] - Configuration options
+   * 
+   * @param {ShaderMultispectralOptions} [options] - Configuration options
    */
   constructor(options) {
     super({
       autoSamplerDeclaration: false // We'll handle sampler declarations manually
     });
 
+    // Set default properties
     Object.assign(this, {
-      debug: true,
+      debug: false,
       modes: ['rgb', 'single_band'],
       mode: 'rgb',
       wavelength: [],
-      nplanes: 0,
-      nimg: 0,
-      blockIndex: null,
-      uboBuffer: null,
+      nplanes: 0,        // Number of spectral planes (bands)
+      nimg: 0,           // Number of images (textures)
+      blockIndex: null,  // UBO block index
+      uboBuffer: null,   // UBO buffer object
       MAX_SUPPORTED_PLANES: 33, // Maximum number of planes supported (33 bands = 11 RGB textures)
       MAX_TEXTURES: 11         // Maximum number of textures we can use
     });
 
+    // Apply user options
     Object.assign(this, options);
 
     // Set default uniforms
     this.uniforms = {
       selectedBand: { type: 'int', needsUpdate: true, value: 0 },
-      bandOutputChannel: { type: 'int', needsUpdate: true, value: 0 }, // 0=R, 1=G, 2=B
+      bandOutputChannel: { type: 'int', needsUpdate: true, value: 0 }, // 0=all/gray, 1=R, 2=G, 3=B
       textureSize: { type: 'vec2', needsUpdate: true, value: [0, 0] }
     };
 
@@ -60,7 +70,12 @@ class ShaderMultispectral extends Shader {
 
   /**
    * Sets the rendering mode
-   * @param {string} mode - One of: 'rgb', 'single_band', 'custom'
+   * 
+   * Changes how multispectral data is visualized:
+   * - 'rgb': Uses CTW coefficients to create RGB visualization
+   * - 'single_band': Shows a single spectral band
+   * 
+   * @param {string} mode - Visualization mode ('rgb', 'single_band')
    * @throws {Error} If mode is not recognized
    */
   setMode(mode) {
@@ -77,7 +92,11 @@ class ShaderMultispectral extends Shader {
 
   /**
    * Initializes shader with multispectral configuration
-   * @param {Object} info - Multispectral configuration
+   * 
+   * Sets up wavelength information, calculates the number of required textures,
+   * and configures samplers for each texture.
+   * 
+   * @param {Object} info - Multispectral configuration object from info.json
    */
   init(info) {
     if (info.wavelength) {
@@ -106,7 +125,11 @@ class ShaderMultispectral extends Shader {
   }
 
   /**
-   * Sets up UBO for Color Twist Weights
+   * Sets up Uniform Buffer Object for Color Twist Weights
+   * 
+   * Creates and configures a UBO for efficient handling of CTW coefficients.
+   * Uses WebGL2's std140 layout for optimal performance.
+   * 
    * @param {WebGL2RenderingContext} gl - WebGL2 context
    * @param {Float32Array} redCTW - Red channel CTW coefficients
    * @param {Float32Array} greenCTW - Green channel CTW coefficients
@@ -190,8 +213,13 @@ class ShaderMultispectral extends Shader {
 
   /**
    * Sets single band view parameters
+   * 
+   * Configures the shader to display a specific spectral band
+   * on a chosen output channel.
+   * 
    * @param {number} bandIndex - Index of band to view
-   * @param {number} outputChannel - Output channel (0=R, 1=G, 2=B)
+   * @param {number} outputChannel - Output channel (0=all/gray, 1=R, 2=G, 3=B)
+   * @throws {Error} If band index is out of range
    */
   setSingleBand(bandIndex, outputChannel = 0) {
     if (bandIndex < 0 || bandIndex >= this.nplanes) {
@@ -205,6 +233,10 @@ class ShaderMultispectral extends Shader {
 
   /**
    * Sets texture dimensions for texelFetch calculations
+   * 
+   * Provides texture dimensions to the shader for accurate
+   * pixel coordinate calculations.
+   * 
    * @param {number[]} size - Texture dimensions [width, height]
    */
   setTextureSize(size) {
@@ -212,9 +244,14 @@ class ShaderMultispectral extends Shader {
   }
 
   /**
-     * Override fragment shader source generation to use constant indices
-     * and optimize memory access by skipping zero-weight bands
-     */
+   * Generate fragment shader source code
+   * 
+   * Creates optimized GLSL code for multispectral visualization.
+   * Uses constant indices and loop unrolling for performance.
+   * 
+   * @override
+   * @returns {string} GLSL fragment shader source code
+   */
   fragShaderSrc() {
     // Individual texture samplers declaration
     let src = '';
@@ -362,6 +399,10 @@ vec4 data() {
 
   /**
    * Creates WebGL shader program with UBO support
+   * 
+   * Extends the base shader program creation to setup UBO bindings.
+   * 
+   * @param {WebGL2RenderingContext} gl - WebGL2 context
    * @override
    */
   createProgram(gl) {

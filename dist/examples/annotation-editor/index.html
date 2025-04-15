@@ -5,220 +5,177 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLIME - Annotation Editor</title>
+    <title>OpenLIME - Multispectral Viewer</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <link rel="stylesheet" href="../examples.css" />
     <style>
+        /* Base styles for full-screen viewer */
         html,
         body {
-            color: #3f0099;
-            font-family: Arial, sans-serif;
-            background-color: #9c98cc80;
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            font-family: "Open Sans", sans-serif;
+            overflow: hidden;
+            user-select: none;
+            /* standard property */
+            -webkit-user-select: none;
+            /* Safari and Chrome */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* IE and Edge legacy */
         }
 
-        a {
-            color: #3f0099;
-        }
-
-        .headline {
-            padding: 15px 0px 10px 0px;
-            margin-bottom: 5px;
-            margin-top: 0px;
-        }
-
+        /* Full viewport container for OpenLIME viewer */
         .openlime {
-            height: 80%;
-            top: 2px;
-            background-color: #fff;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
         }
 
-        .openlime-toolbar {
-            background-color: #766dd680;
-            border-radius: 8px;
-            flex-direction: column;
-            top: 10px;
-            bottom: auto;
-            right: 5px;
-        }
-
-        .openlime-dialog-background {
-            background-color: rgba(255, 255, 255, 0.5);
-        }
-
-        .openlime-dialog {
-            background: #766dd6ff;
-            color: white;
-        }
-
-        .openlime-customInfo.active .openlime-button-off {
-            visibility: visible !important;
-        }
-
-        .openlime-customInfo .openlime-button-off {
-            visibility: hidden !important;
-        }
-
-        .openlime-attribution {
-            left: auto;
-            right: 20px;
-            bottom: -30px;
-            /* color: darkgray; */
-        }
-
+        /* Style for attribution links */
         .openlime-attribution a {
-            color: rgb(88, 88, 88);
+            color: orange;
         }
     </style>
-
 </head>
 
 <body>
-    <!-- Web page -->
-    <h1 class="headline">OpenLIME - Annotation Editor</h1>
+    <!-- Main container for the OpenLIME viewer -->
     <div class="openlime"></div>
+
     <script src="../../js/openlime.js"></script>
     <script>
-        // Check URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const editorEnable = urlParams.has('editor')
-
-        // Create an OpenLIME canvas into openlime
+        // Initialize the OpenLIME viewer in the container
         const lime = new OpenLIME.Viewer('.openlime');
-        lime.camera.bounded = false;
 
-        // Fetch a (custom) skin. A skin is a set of visual elements for the web page.
+        /**
+         * Create a multispectral layer with the following configuration:
+         * - label: Display name for the layer
+         * - layout: Type of image tiling/organization
+         * - type: Specifies this as a multispectral layer (uses LayerMultispectral class)
+         * - url: Path to the multispectral info.json configuration file
+         * - presets: Path to the CTW presets configuration file
+         * - linearRaster: Use linear color space for scientific accuracy
+         */
+        const msLayer = new OpenLIME.Layer({
+            label: 'Oil Painting Multispectral',
+            layout: 'image',
+            type: 'multispectral',
+            url: '../../assets/multispectral/oil_painting_ms_jpg/info.json',
+            presets: '../../assets/multispectral/oil_painting_ms_jpg/presets.json',
+            linearRaster: true
+        });
+
+        // Add the multispectral layer to the viewer with id 'oilPainting'
+        lime.addLayer('oilPainting', msLayer);
+
+        // Set the URL for the UI skin (visual elements)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
-        // Create a custom dialog
-        let openlime = document.querySelector('.openlime');
-        let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
-        infoDialog.hide();
-
-        // Create an image layer and add it to the canvans
-        const layer = new OpenLIME.Layer({
-            type: 'image',
-            layout: 'deepzoom',
-            //url: 'https://ome-digipath-demo.crs4.it/ome_seadragon/deepzoom/get/7.dzi',
-            url: '../../assets/test/test.dzi'
+        /**
+         * Create the basic UI with configuration:
+         * - showScale: Disable scale display
+         * - attribution: Credit information with link to the data source
+         */
+        const ui = new OpenLIME.UIBasic(lime, {
+            showScale: false,
+            attribution: "<a href=\"https://cave.cs.columbia.edu/repository/Multispectral\">Multispectral Image Database</a><br>The Columbia Imaging and Vision Laboratory (CAVE) at Columbia University, New York, NY, USA"
         });
-        lime.addLayer('Base', layer);
 
-        // Define annotation parameters
-        let annotationServer = 'http://localhost:3000/ol';
-        const classParam = {
-            '': {  stroke: '#000', label: '' },
-            'class1': {  stroke: '#770', label: 'A' },
-            'class2': {  stroke: '#707', label: 'B' },
-            'class3': {  stroke: '#777', label: 'C' },
-            'class4': {  stroke: '#070', label: 'D' },
-            'class5': {  stroke: '#007', label: 'E' },
-            'class6': {  stroke: '#077', label: 'F' },
-        };
+        // Configure which UI controls to display in the toolbar
+        ui.actions.layers.display = false;    // Hide layer control
+        ui.actions.zoomin.display = false;    // Hide zoom in button
+        ui.actions.zoomout.display = false;   // Hide zoom out button
+        ui.actions.light.display = false;     // Hide light control
+        ui.actions.home.display = true;       // Show home/reset view button
 
-        let aOptions = {
-            label: 'Annotations',
-            layout: layer.layout,
-            type: 'svg_annotations',
-            style: ` 
-            .openlime-annotation { pointer-events:stroke; opacity: 0.7; }
-            .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+        // Initialize MultispectralUI when the layer is fully loaded
+        msLayer.addEvent('ready', () => {
+            console.log('Multispectral layer is ready!');
 
-            :focus { fill:yellow; }
-            path { fill:none; stroke-width:2; stroke:#000; vector-effect:non-scaling-stroke; pointer-events:all; }
-            path:hover { cursor:pointer; stroke:#f00; }
-            .selected { stroke-width:3; }
-            `,
-            annotations: annotationServer
-        }
-
-        if (!editorEnable) {
-            aOptions = {
-                ...aOptions,
-                onClick: (anno) => {
-                    infoDialog.setContent(`<h4>${anno.label}</h4><p>${anno.description}</p>`);
-                    infoDialog.show();
-                },
-                classes: classParam
-            }
-        }
-
-        // Create an annotation layer and add it to the canvans
-        const anno = new OpenLIME.LayerAnnotation(aOptions);
-        lime.addLayer('anno', anno);
-
-        // If editorEnable, create a SVG annotation Editor
-        if (editorEnable) {
-            const editor = new OpenLIME.EditorSvgAnnotation(lime, anno, {
-                classes: classParam
+            /**
+             * Create MultispectralUI with configuration:
+             * - floatingPanel: Create a floating control panel
+             * - showPresets: Display preset selection controls
+             * - showSingleBand: Display single band visualization controls
+             */
+            const msUI = new OpenLIME.MultispectralUI(msLayer, {
+                floatingPanel: true,
+                showPresets: true,
+                showSingleBand: true
             });
-            editor.createCallback = (anno) => { console.log("Created annotation: ", anno); processRequest(anno, 'create'); return true; };
-            editor.deleteCallback = (anno) => { console.log("Deleted annotation: ", anno); processRequest(anno, 'delete'); return true; };
-            editor.updateCallback = (anno) => { console.log("Updated annotation: ", anno); processRequest(anno, 'update'); return true; };
-        }
 
-        // Create an User Interface 
-        const ui = new OpenLIME.UIBasic(lime);
+            /**
+             * Function to setup split-screen comparison view
+             * Creates a second instance of the layer with different
+             * visualization settings for side-by-side comparison
+             */
+            const setupSplitView = () => {
+                const viewportWidth = lime.canvas.width;
 
-        // Get a subset of pre-defined actions to work on it
-        let { help, home, layers, fullscreen, light, zoomin, zoomout } = ui.actions
+                // Adjust main layer viewport to left half
+                msLayer.setViewport({
+                    x: 0,
+                    y: 0,
+                    dx: viewportWidth / 2,
+                    dy: lime.canvas.height
+                });
 
-        // Remove light from the toolbar
-        light.display = false;
+                // Create comparison layer if it doesn't exist
+                if (!lime.layers['comparison']) {
+                    // Clone the original layer with derive()
+                    const comparisonLayer = msLayer.derive({
+                        label: 'Comparison View',
+                        zindex: msLayer.zindex + 1
+                    });
 
-        // Add help, zoomin and zoomout to the toolbar
-        help.display = true;
-        zoomin.display = true;
-        zoomout.display = true;
+                    // Add to viewer with id 'comparison'
+                    lime.addLayer('comparison', comparisonLayer);
 
-        // Add configured actions to the toolbar
-        ui.actions = { help, home, layers, fullscreen, light, zoomin, zoomout };
+                    // Apply a different visualization preset
+                    comparisonLayer.applyPreset('gold');
 
-        // Add image attribution 
-        ui.attribution = `CRS4 Digital Pathology Platform - <a href="https://www.crs4.it/research/visual-and-data-intensive-computing/digital-health/">CRS4 Digital Health Research Program</a>`;
+                    // Set to right half viewport
+                    comparisonLayer.setViewport({
+                        x: viewportWidth / 2,
+                        y: 0,
+                        dx: viewportWidth / 2,
+                        dy: lime.canvas.height
+                    });
+                }
+            };
+        });
 
-        // Calback function to send http requests to the Annotation server
-        async function processRequest(anno, action) {
-            let method = "GET";
-            let url = `${annotationServer}`;
-            let body = "";
-            switch (action) {
-                case "create":
-                    method = "POST";
-                    url = `${annotationServer}`;
-                    body = JSON.stringify(anno);
-                    break;
-                case "update":
-                    method = "PUT";
-                    url = `${annotationServer}/${anno.id}`;
-                    body = JSON.stringify(anno);
-                    break;
-                case "delete":
-                    method = "DELETE";
-                    url = `${annotationServer}/${anno.id}`;
-                    body = "";
-                    break;
-                default:
-                    break;
+        /**
+         * Handle window resize events to update split-screen viewports
+         * Ensures both panels maintain correct proportions when window is resized
+         */
+        window.addEventListener('resize', () => {
+            if (lime.layers['comparison']) {
+                const viewportWidth = lime.canvas.width;
+
+                // Update main layer viewport
+                msLayer.setViewport({
+                    x: 0,
+                    y: 0,
+                    dx: viewportWidth / 2,
+                    dy: lime.canvas.height
+                });
+
+                // Update comparison layer viewport
+                lime.layers['comparison'].setViewport({
+                    x: viewportWidth / 2,
+                    y: 0,
+                    dx: viewportWidth / 2,
+                    dy: lime.canvas.height
+                });
             }
-            const response = await fetch(url, {
-                method: method,
-                mode: 'cors', // this cannot be 'no-cors'
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: body
-            });
-            if (!response.ok) {
-                const message = `An error has occured: ${response.status} ${response.statusText} `;
-                alert(message);
-                throw new Error(message);
-            }
-            let json = await response.json();
-            if (json.status == 'error')
-                alert(json.msg);
-        }
-
+        });
     </script>
 </body>
 

@@ -7,62 +7,58 @@ import { Util } from './Util.js'
  * @typedef {Object} LayerMultispectralOptions
  * @property {string} url - URL to multispectral info.json file (required)
  * @property {string} layout - Layout type: 'image', 'deepzoom', 'google', 'iiif', 'zoomify', 'tarzoom', 'itarzoom'
- * @property {string} [defaultMode='single_band'] - Initial visualization mode
+ * @property {string} [defaultMode='single_band'] - Initial visualization mode ('rgb' or 'single_band')
  * @property {string} [server] - IIP server URL (for IIP layout)
- * @property {boolean} [linearRaster=true] - Whether to use linear color space for rasters
+ * @property {boolean} [linearRaster=true] - Whether to use linear color space for rasters (recommended for scientific accuracy)
+ * @property {string|Object} presets - Path to presets JSON file or presets object containing CTW configurations
  * @extends LayerOptions
  */
 
 /**
- * LayerMultispectral implements visualization of multispectral imagery.
+ * LayerMultispectral - Advanced multispectral imagery visualization layer
  * 
- * This layer handles multispectral image data with configurable visualization modes
- * and supports interactive analysis through Color Twist Weights (CTW).
+ * This layer provides specialized handling of multispectral image data with configurable 
+ * visualization modes and interactive spectral analysis capabilities through Color Twist 
+ * Weights (CTW). It supports scientific visualization workflows for remote sensing, art analysis,
+ * medical imaging, and other multispectral applications.
  * 
  * Features:
- * - Multiple visualization modes
- * - UBO-optimized CTW implementation
- * - Built-in preset library
- * - Scientific accuracy with texelFetch
- * - Single band visualization
- * - Custom spectral transformations
+ * - Multiple visualization modes (RGB, single band)
+ * - UBO-optimized Color Twist Weights implementation for real-time spectral transformations
+ * - Preset system for common visualization configurations (false color, etc.)
+ * - Precise pixel access with texelFetch for scientific accuracy
+ * - Multiple layout systems for various tiled image formats
  * 
- * Technical Details:
- * - Efficient WebGL2 implementation
- * - Precise pixel access for scientific applications
- * - Shader-based visualization pipeline
- * - Integration with preset system
- * 
- * Data Format Support:
- * - Standard multispectral JSON configuration
- * - Multiple layout systems (deepzoom, google, iiif, etc.)
- * - Single-file tiled formats (tarzoom, itarzoom)
+ * Technical implementation:
+ * - Uses WebGL2 features for efficient processing
+ * - Implements shader-based visualization pipeline
+ * - Supports multiple image layouts and tiling schemes
  * 
  * @extends Layer
  * 
  * @example
- * ```javascript
  * // Create multispectral layer with deepzoom layout
  * const msLayer = new OpenLIME.Layer({
  *   type: 'multispectral',
  *   url: 'path/to/info.json',
  *   layout: 'deepzoom',
- *   defaultMode: 'rgb'
+ *   defaultMode: 'rgb',
+ *   presets: 'path/to/presets.json'
  * });
  * 
  * // Add to viewer
  * viewer.addLayer('ms', msLayer);
  * 
  * // Apply a preset CTW
- * msLayer.applyPreset('gold');
- * ```
+ * msLayer.applyPreset('falseColor');
  */
 class LayerMultispectral extends Layer {
   /**
    * Creates a new LayerMultispectral instance
    * @param {LayerMultispectralOptions} options - Configuration options
-   * @throws {Error} If rasters options is not empty
-   * @throws {Error} If url is not provided
+   * @throws {Error} If rasters options is not empty (rasters are created automatically)
+   * @throws {Error} If url to info.json is not provided
+   * @throws {Error} If presets option is not provided
    */
   constructor(options) {
     super(options);
@@ -100,6 +96,10 @@ class LayerMultispectral extends Layer {
 
   /**
    * Constructs URL for image resources based on layout type
+   * 
+   * Handles different image layout conventions including deepzoom, google maps tiles,
+   * zoomify, and specialized formats like tarzoom.
+   * 
    * @param {string} url - Base URL
    * @param {string} filename - Base filename without extension
    * @returns {string} Complete URL for the resource
@@ -122,6 +122,10 @@ class LayerMultispectral extends Layer {
 
   /**
    * Loads and processes multispectral configuration
+   * 
+   * Fetches the info.json file containing wavelength, basename, and other
+   * configuration parameters, then sets up the rasters and shader accordingly.
+   * 
    * @param {string} url - URL to info.json
    * @private
    * @async
@@ -187,7 +191,6 @@ class LayerMultispectral extends Layer {
         this.layout.setUrls(urls);
       }
 
-
       // Set up the shader
       this.setMode(this.defaultMode);
       this.initDefault();
@@ -198,11 +201,14 @@ class LayerMultispectral extends Layer {
   }
 
   /**
- * Loads presets
- * @param {string} url - URL to info.json
- * @private
- * @async
- */
+   * Loads preset definitions for Color Twist Weights
+   * 
+   * Can load presets from a URL or use directly provided preset object.
+   * Presets define predefined CTW configurations for common visualization needs.
+   * 
+   * @private
+   * @async
+   */
   async loadPresets() {
     if (typeof this.presets === 'string' && this.presets.trim() !== '') {
       this.presets = await Util.loadJSON(this.presets);
@@ -214,6 +220,10 @@ class LayerMultispectral extends Layer {
 
   /**
    * Initializes default CTW based on default mode
+   * 
+   * Creates initial CTW arrays with zeros and applies default
+   * visualization settings.
+   * 
    * @private
    */
   initDefault() {
@@ -233,11 +243,15 @@ class LayerMultispectral extends Layer {
     if (this.defaultMode === 'single-band') {
       this.setSingleBand(0, 0);
     }
-
   }
 
   /**
    * Sets the visualization mode
+   * 
+   * Changes how multispectral data is visualized:
+   * - 'rgb': Uses CTW coefficients to create RGB visualization
+   * - 'single_band': Shows a single spectral band
+   * 
    * @param {string} mode - Mode name ('rgb', 'single_band')
    */
   setMode(mode) {
@@ -249,8 +263,11 @@ class LayerMultispectral extends Layer {
 
   /**
    * Sets single band visualization
+   * 
+   * Displays a single spectral band on a specific output channel.
+   * 
    * @param {number} bandIndex - Index of band to visualize
-   * @param {number} [channel=0] - Output channel (0=R, 1=G, 2=B)
+   * @param {number} [channel=0] - Output channel (0=all/gray, 1=R, 2=G, 3=B)
    */
   setSingleBand(bandIndex, channel = 0) {
     if (this.shader) {
@@ -260,10 +277,15 @@ class LayerMultispectral extends Layer {
   }
 
   /**
-   * Sets CTW coefficients manually
+   * Sets Color Twist Weights coefficients manually
+   * 
+   * CTW coefficients define how spectral bands are combined to create
+   * RGB visualization. Each array contains weights for each spectral band.
+   * 
    * @param {Float32Array} redCTW - Red channel coefficients
    * @param {Float32Array} greenCTW - Green channel coefficients
    * @param {Float32Array} blueCTW - Blue channel coefficients
+   * @throws {Error} If arrays have incorrect length
    */
   setCTW(redCTW, greenCTW, blueCTW) {
     if (!this.shader || !this.gl) return;
@@ -286,6 +308,15 @@ class LayerMultispectral extends Layer {
     this.setMode('rgb');
   }
 
+  /**
+   * Gets a preset CTW configuration by name
+   * 
+   * Retrieves the preset's red, green, and blue CTW arrays from
+   * the presets collection.
+   * 
+   * @param {string} presetName - Name of the preset
+   * @returns {Object|null} Object with red, green, blue arrays or null if not found
+   */
   getPreset(presetName) {
     if (presetName in this.presets) {
       const { red, green, blue } = this.presets[presetName];
@@ -298,6 +329,10 @@ class LayerMultispectral extends Layer {
 
   /**
    * Applies a preset CTW from the presets library
+   * 
+   * Loads and applies a predefined set of CTW coefficients for
+   * specialized visualization (e.g., false color, vegetation analysis).
+   * 
    * @param {string} presetName - Name of the preset
    * @throws {Error} If preset doesn't exist
    */
@@ -316,7 +351,10 @@ class LayerMultispectral extends Layer {
   }
 
   /**
-   * Gets the wavelength array
+   * Gets the wavelength array for spectral bands
+   * 
+   * Returns the wavelength values (in nm) for each spectral band.
+   * 
    * @returns {number[]} Array of wavelengths
    */
   getWavelengths() {
@@ -325,6 +363,9 @@ class LayerMultispectral extends Layer {
 
   /**
    * Gets the number of spectral bands
+   * 
+   * Returns the count of spectral planes in the multispectral dataset.
+   * 
    * @returns {number} Number of bands
    */
   getBandCount() {
@@ -333,6 +374,9 @@ class LayerMultispectral extends Layer {
 
   /**
    * Gets available presets
+   * 
+   * Returns the names of all available preset CTW configurations.
+   * 
    * @returns {string[]} Array of preset names
    */
   getAvailablePresets() {
@@ -341,6 +385,9 @@ class LayerMultispectral extends Layer {
 
   /**
    * Prepares WebGL resources including UBO for CTW
+   * 
+   * Sets up WebGL context and ensures CTW arrays are uploaded to GPU.
+   * 
    * @override
    * @private
    */

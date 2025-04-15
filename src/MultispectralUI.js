@@ -1,15 +1,22 @@
 /**
- * Provides user interface components for interacting with multispectral visualization.
- * Integrates with LayerMultispectral to provide interactive control of visualization parameters.
+ * MultispectralUI - User interface components for multispectral visualization
+ * 
+ * Provides interactive controls for manipulating visualization parameters in
+ * the LayerMultispectral class. Features include preset selection, single band
+ * visualization controls, and adaptive UI positioning.
+ * 
+ * The UI can be configured as a floating panel or embedded within an existing
+ * container element, adapting automatically to the available space.
  */
 class MultispectralUI {
   /**
    * Creates a new MultispectralUI instance
+   * 
    * @param {LayerMultispectral} layer - Multispectral layer to control
    * @param {Object} [options] - UI configuration options
-   * @param {string} [options.containerId] - ID of container element for UI
-   * @param {boolean} [options.showPresets=true] - Whether to show preset controls
-   * @param {boolean} [options.showSingleBand=true] - Whether to show single band controls
+   * @param {string} [options.containerId] - ID of container element for UI (optional)
+   * @param {boolean} [options.showPresets=true] - Whether to show preset selection controls
+   * @param {boolean} [options.showSingleBand=true] - Whether to show single band control panel
    * @param {boolean} [options.floatingPanel=true] - Whether to create a floating panel UI
    */
   constructor(layer, options = {}) {
@@ -36,15 +43,20 @@ class MultispectralUI {
   }
 
   /**
-   * Initializes the UI
+   * Initializes the UI components
+   * 
+   * Sets up the container element, creates UI controls, and configures
+   * event handling based on the provided options.
+   * 
    * @private
    */
   initialize() {
     // Get container element
     let container;
     let targetContainer;
-    
+
     if (this.options.containerId) {
+      // Use existing container if ID provided
       container = document.getElementById(this.options.containerId);
       targetContainer = container;
       if (!container) {
@@ -52,27 +64,28 @@ class MultispectralUI {
         return;
       }
     } else if (this.options.floatingPanel) {
+      // Create floating panel if no container specified
       // Find OpenLIME container to use as a relative parent
       let openlimeContainer;
-      
+
       // Try to get viewer's container from the layer
       if (this.layer.viewer && this.layer.viewer.containerElement) {
         openlimeContainer = this.layer.viewer.containerElement;
       } else {
         // Fallback to looking for .openlime class
         openlimeContainer = document.querySelector('.openlime');
-        
+
         if (!openlimeContainer) {
           console.warn('OpenLIME container not found, using body as fallback');
           openlimeContainer = document.body;
         }
       }
-      
+
       // Make the parent container positioned if it's not already
       if (getComputedStyle(openlimeContainer).position === 'static') {
         openlimeContainer.style.position = 'relative';
       }
-      
+
       // Create floating container
       container = document.createElement('div');
       container.className = 'ms-controls';
@@ -111,22 +124,26 @@ class MultispectralUI {
     if (this.options.showSingleBand) {
       this.createSingleBandControls();
     }
-    
+
     // Update positioning on window resize
     this.setupResizeHandler();
   }
-  
+
   /**
-   * Sets up window resize event handler to update panel positioning if needed
+   * Sets up window resize event handler to update panel positioning
+   * 
+   * Ensures the UI panel remains properly positioned and sized when
+   * the window or container is resized.
+   * 
    * @private
    */
   setupResizeHandler() {
     // Only needed for floating panel
     if (!this.options.floatingPanel || !this.container) return;
-    
+
     // Store initial container dimensions
     this.initialContainerRect = this.targetContainer.getBoundingClientRect();
-    
+
     // Define resize handler
     this.resizeHandler = () => {
       // Handle potential edge case where container/targetContainer is removed from DOM
@@ -134,11 +151,11 @@ class MultispectralUI {
         window.removeEventListener('resize', this.resizeHandler);
         return;
       }
-      
+
       // Ensure the panel stays visible on resize
       const containerRect = this.targetContainer.getBoundingClientRect();
       const panelRect = this.container.getBoundingClientRect();
-      
+
       // If the container width gets too small, adjust the panel width
       if (containerRect.width < 300) {
         this.container.style.width = Math.max(containerRect.width * 0.8, 150) + 'px';
@@ -146,7 +163,7 @@ class MultispectralUI {
         // Reset to default width
         this.container.style.width = '250px';
       }
-      
+
       // Ensure the panel is fully visible
       const rightEdgeOffset = panelRect.right - containerRect.right;
       if (rightEdgeOffset > 0) {
@@ -155,16 +172,20 @@ class MultispectralUI {
         this.container.style.right = (currentRight + rightEdgeOffset + 10) + 'px';
       }
     };
-    
+
     // Add resize listener
     window.addEventListener('resize', this.resizeHandler);
-    
+
     // Initial call to handle any existing size issues
     this.resizeHandler();
   }
 
   /**
-   * Creates header UI element
+   * Creates header UI element with title and band information
+   * 
+   * Displays the title and key information about the multispectral
+   * dataset including band count and wavelength range.
+   * 
    * @private
    */
   createHeader() {
@@ -190,6 +211,10 @@ class MultispectralUI {
 
   /**
    * Creates preset selector UI element
+   * 
+   * Provides a dropdown menu for selecting predefined Color Twist Weight
+   * configurations from the available presets.
+   * 
    * @private
    */
   createPresetSelector() {
@@ -250,6 +275,10 @@ class MultispectralUI {
 
   /**
    * Creates single band visualization controls
+   * 
+   * Provides controls for selecting a specific spectral band and
+   * output channel for single-band visualization.
+   * 
    * @private
    */
   createSingleBandControls() {
@@ -365,7 +394,10 @@ class MultispectralUI {
   }
 
   /**
-   * Destroys UI and removes from DOM
+   * Destroys UI and removes elements from DOM
+   * 
+   * Cleans up all created UI elements and event listeners.
+   * Call this method before removing the layer to prevent memory leaks.
    */
   destroy() {
     // Remove resize event listener
@@ -373,7 +405,7 @@ class MultispectralUI {
       window.removeEventListener('resize', this.resizeHandler);
       this.resizeHandler = null;
     }
-    
+
     // Remove container from DOM if it's a floating panel
     if (this.container && this.options.floatingPanel && this.targetContainer) {
       this.targetContainer.removeChild(this.container);
