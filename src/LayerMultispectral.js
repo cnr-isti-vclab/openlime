@@ -476,147 +476,39 @@ class LayerMultispectral extends Layer {
   }
 
   /**
- * Get spectral data from tiled image formats
- * 
- * This method finds the correct tile for a given pixel coordinate,
- * then extracts the spectral values from it. It correctly handles
- * coordinate conversions between global image space and local tile space.
- * 
- * @param {number} x - X coordinate in image space
- * @param {number} y - Y coordinate in image space
- * @returns {number[]} Array of spectral values (0-100)
- * @private
- */
-  getTiledSpectrum(x, y) {
-    // Initialize spectrum array with zeros
+   * Gets spectrum data for a specific pixel
+   * 
+   * Uses the improved getPixelValues method from the base Layer class
+   * to obtain spectral values across all bands.
+   * 
+   * @param {number} x - X coordinate in image space
+   * @param {number} y - Y coordinate in image space  
+   * @returns {number[]} Array of spectral values (0-100)
+   */
+  getSpectrum(x, y) {
+    // Get pixel data from base Layer class method
+    const pixelData = this.getPixelValues(x, y);
+
+    // Create spectrum array for all planes
     const spectrum = new Array(this.shader.nplanes).fill(0);
 
-    // Check if coordinates are within image bounds
-    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
-      console.warn(`Coordinates out of bounds: (${x}, ${y})`);
+    // If no data was returned, return empty spectrum
+    if (!pixelData || pixelData.length === 0) {
       return spectrum;
     }
 
-    console.log(`Getting spectrum at pixel (${x}, ${y}) in image of size ${this.width}x${this.height}`);
+    // Convert pixel data to spectrum values
+    for (let i = 0; i < this.shader.nplanes; i++) {
+      const idx = Math.floor(i / 3); // Which texture contains this band
+      const pxIdx = i % 3;           // Which channel (R, G, B) in the texture
 
-    try {
-      // Create a transform to match the layer's viewport
-      const transform = this.transform.copy();
-
-      // For coordinate system alignment, we need to know in which direction Y grows
-      // In OpenLIME, origin is at center, and Y grows upward in scene coordinates
-
-      // Find all levels that might contain our coordinates
-      let foundData = false;
-
-      // Start from the highest resolution level (finest detail)
-      for (let level = this.layout.nlevels - 1; level >= 0; level--) {
-        if (foundData) break;
-
-        // Calculate tile size at this level
-        const scale = Math.pow(2, this.layout.nlevels - 1 - level);
-        const tileSize = this.layout.tilesize * scale;
-
-        // Find which tile contains our coordinates
-        // Note: The y-coordinate might need flipping depending on your coordinate system
-        const tileX = Math.floor(x / tileSize);
-        const tileY = Math.floor(y / tileSize);
-
-        console.log(`Level ${level}: Looking for tile at grid position (${tileX}, ${tileY}) with tileSize=${tileSize}`);
-
-        // Get the tile index
-        const tileIndex = this.layout.index(level, tileX, tileY);
-
-        // Check if this tile exists in our cache
-        if (this.tiles.has(tileIndex)) {
-          const tile = this.tiles.get(tileIndex);
-          console.log(`Found tile with index ${tileIndex}, missing=${tile.missing}`);
-
-          // Only proceed if the tile is fully loaded
-          if (tile.missing === 0) {
-            // Calculate local coordinates within the tile
-            // Important: These are pixel coordinates within the tile texture
-            const localX = x - (tileX * tileSize);
-            const localY = y - (tileY * tileSize);
-
-            console.log(`Local coordinates within tile: (${localX}, ${localY})`);
-
-            // Check if local coordinates are within tile bounds
-            if (localX >= 0 && localX < tileSize && localY >= 0 && localY < tileSize) {
-              // Scale local coordinates to match the actual texture dimensions
-              // The tile texture may be smaller than tileSize, especially at edges
-              const texWidth = tile.w || this.layout.tilesize;
-              const texHeight = tile.h || this.layout.tilesize;
-
-              // Scale coordinates to actual texture size
-              const texX = Math.min(Math.floor(localX * texWidth / tileSize), texWidth - 1);
-              const texY = Math.min(Math.floor(localY * texHeight / tileSize), texHeight - 1);
-
-              console.log(`Texture coordinates: (${texX}, ${texY}) in texture of size ${texWidth}x${texHeight}`);
-
-              // For each spectral band, read the corresponding pixel value
-              for (let plane = 0; plane < this.shader.nplanes; plane++) {
-                const textureIndex = Math.floor(plane / 3);
-                const channelIndex = plane % 3;
-
-                if (textureIndex < tile.tex.length && tile.tex[textureIndex]) {
-                  // Create a framebuffer for reading from the texture
-                  const framebuffer = this.gl.createFramebuffer();
-                  this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer);
-                  this.gl.framebufferTexture2D(
-                    this.gl.FRAMEBUFFER,
-                    this.gl.COLOR_ATTACHMENT0,
-                    this.gl.TEXTURE_2D,
-                    tile.tex[textureIndex],
-                    0
-                  );
-
-                  if (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE) {
-                    // Read the pixel data
-                    const pixelData = new Uint8Array(4);
-                    this.gl.readPixels(
-                      texX, texY, 1, 1,
-                      this.gl.RGBA, this.gl.UNSIGNED_BYTE,
-                      pixelData
-                    );
-
-                    // Extract the value from the appropriate channel (R, G, or B)
-                    spectrum[plane] = pixelData[channelIndex] / 255.0 * 100;
-                  }
-
-                  // Clean up
-                  this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-                  this.gl.deleteFramebuffer(framebuffer);
-                }
-              }
-
-              // Mark that we've found data
-              foundData = true;
-
-              // Check if all values are zero - this might mean we need to debug further
-              const allZeros = spectrum.every(val => val === 0);
-              if (allZeros) {
-                console.warn("All spectral values are zero - possible incorrect coordinate mapping");
-              } else {
-                console.log("Successfully retrieved spectral data:", spectrum);
-              }
-
-              // No need to check more levels if we found valid data
-              break;
-            } else {
-              console.warn(`Local coordinates (${localX}, ${localY}) outside tile bounds (0-${tileSize})`);
-            }
-          }
-        } else {
-          console.log(`Tile index ${tileIndex} not found in cache`);
+      if (idx < pixelData.length) {
+        const px = pixelData[idx];
+        if (px && pxIdx < 3) {
+          // Convert to percentage (0-100)
+          spectrum[i] = px[pxIdx] / 255.0 * 100;
         }
       }
-
-      if (!foundData) {
-        console.warn("No valid tile found containing the requested pixel");
-      }
-    } catch (e) {
-      console.error("Error getting spectral data:", e);
     }
 
     return spectrum;
