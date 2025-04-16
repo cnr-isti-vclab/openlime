@@ -13,14 +13,14 @@ import { Shader } from './Shader.js'
  * This shader handles the real-time rendering of multispectral imagery with 
  * various visualization modes and Color Twist Weight (CTW) transformations.
  * It leverages WebGL2 features such as Uniform Buffer Objects (UBO) for
- * efficient handling of CTW coefficients and texelFetch for precise pixel access.
+ * efficient handling of CTW coefficients and texture() for consistent texture sampling.
  * 
  * Features:
  * - Multiple rendering modes (RGB, single band)
  * - UBO-based Color Twist Weights for spectral transformations
- * - Direct pixel access via texelFetch for scientific precision
  * - Optimized memory access by skipping zero-weight bands
  * - Support for up to 33 spectral bands (11 RGB textures)
+ * - Compatible with both single images and tile-based formats (DeepZoom, etc.)
  * 
  * Technical implementation:
  * - Efficient std140 UBO layout for CTW coefficients
@@ -61,7 +61,6 @@ class ShaderMultispectral extends Shader {
     this.uniforms = {
       selectedBand: { type: 'int', needsUpdate: true, value: 0 },
       bandOutputChannel: { type: 'int', needsUpdate: true, value: 0 }, // 0=all/gray, 1=R, 2=G, 3=B
-      textureSize: { type: 'vec2', needsUpdate: true, value: [0, 0] }
     };
 
     // Set default mode
@@ -212,7 +211,7 @@ class ShaderMultispectral extends Shader {
   }
 
   /**
-   * Sets single band view parameters
+   * Sets single band visualization
    * 
    * Configures the shader to display a specific spectral band
    * on a chosen output channel.
@@ -232,22 +231,20 @@ class ShaderMultispectral extends Shader {
   }
 
   /**
-   * Sets texture dimensions for texelFetch calculations
+   * Sets texture dimensions for calculations
    * 
-   * Provides texture dimensions to the shader for accurate
-   * pixel coordinate calculations.
-   * 
-   * @param {number[]} size - Texture dimensions [width, height]
+   * No longer needed since we're using normalized coordinates
+   * @deprecated Use normalized texture coordinates instead
    */
   setTextureSize(size) {
-    this.setUniform('textureSize', size);
+    // No longer needed - we use normalized coordinates
   }
 
   /**
    * Generate fragment shader source code
    * 
    * Creates optimized GLSL code for multispectral visualization.
-   * Uses constant indices and loop unrolling for performance.
+   * Uses texture() with normalized coordinates instead of texelFetch.
    * 
    * @override
    * @returns {string} GLSL fragment shader source code
@@ -275,16 +272,13 @@ layout(std140) uniform CTWBlock {
 // Uniforms for single band mode
 uniform int selectedBand;
 uniform int bandOutputChannel;
-uniform vec2 textureSize;
 
 in vec2 v_texcoord;
 
 // Utility function to get a specific band from the multispectral data
-// Using texelFetch for precise pixel access
+// Using texture() with normalized coordinates for better compatibility
 float getBand(int bandIndex) {
-  // Convert texture coordinates to integer pixel coordinates
   float result = 0.0;
-  ivec2 texCoord = ivec2(v_texcoord * textureSize);
   
   // Handling each possible band with constant indices
 `;
@@ -298,7 +292,7 @@ float getBand(int bandIndex) {
 
       const channelComponent = channelIndex === 0 ? 'r' : (channelIndex === 1 ? 'g' : 'b');
 
-      src += `    if (bandIndex == ${i}) result = texelFetch(plane${planeIndex}, texCoord, 0).${channelComponent};\n`;
+      src += `    if (bandIndex == ${i}) result = texture(plane${planeIndex}, v_texcoord).${channelComponent};\n`;
     }
 
     src += `    
@@ -377,9 +371,9 @@ vec4 data() {
   
   // Output to specified channel
   vec3 rgb = vec3(value, value, value);
-  if (bandOutputChannel == 1) rgb.r = value;
-  else if (bandOutputChannel == 2) rgb.g = value;
-  else if (bandOutputChannel == 3) rgb.b = value;
+  if (bandOutputChannel == 1) rgb = vec3(value, 0.0, 0.0);
+  else if (bandOutputChannel == 2) rgb = vec3(0.0, value, 0.0);
+  else if (bandOutputChannel == 3) rgb = vec3(0.0, 0.0, value);
   
   return vec4(rgb, 1.0);
 `;

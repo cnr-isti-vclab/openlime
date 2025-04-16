@@ -82,11 +82,34 @@
     .spectral-plot-canvas-container {
       width: 100%;
       height: 300px;
+      position: relative;
     }
 
     .spectral-plot-canvas {
       width: 100%;
       height: 100%;
+    }
+
+    /* Cursor wait class */
+    .cursor-wait {
+      cursor: wait !important;
+    }
+
+    /* Loading overlay styles */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 14px;
+      border-radius: 5px;
+      z-index: 1001;
     }
   </style>
 </head>
@@ -100,6 +123,7 @@
     <div id="pixelInfo" class="spectral-plot-info">Click on image to sample</div>
     <div class="spectral-plot-canvas-container">
       <canvas id="spectralPlotCanvas" class="spectral-plot-canvas"></canvas>
+      <div id="loadingOverlay" class="loading-overlay" style="display: none;">Loading...</div>
     </div>
   </div>
 
@@ -141,9 +165,25 @@
     const spectralPlotContainer = document.getElementById('spectralPlotContainer');
     const pixelInfoElement = document.getElementById('pixelInfo');
     const spectralPlotCanvas = document.getElementById('spectralPlotCanvas');
+    const loadingOverlay = document.getElementById('loadingOverlay');
 
     // Variable for the chart instance
     let spectralChart = null;
+
+    // Loading indicator functions
+    function showLoading() {
+      document.body.classList.add('cursor-wait');
+      if (loadingOverlay) {
+        loadingOverlay.style.display = 'flex';
+      }
+    }
+
+    function hideLoading() {
+      document.body.classList.remove('cursor-wait');
+      if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+      }
+    }
 
     /**
      * Initialize the spectral plot with Chart.js
@@ -185,6 +225,13 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          animation: {
+            duration: 400, // milliseconds
+            onComplete: function() {
+              // Change cursor back to normal when animation completes
+              hideLoading();
+            }
+          },
           scales: {
             y: {
               beginAtZero: true,
@@ -250,8 +297,14 @@
       });
     }
 
+    /**
+     * Update the spectral plot with new data
+     */
     function updateSpectralPlot(position) {
       if (!spectralChart) return;
+
+      // Show loading state
+      showLoading();
 
       const wavelengths = msLayer.getWavelengths();
       const values = msLayer.getSpectrum(position.x, position.y);
@@ -333,7 +386,14 @@
         const layerbb = msLayer.boundingBox();
         const layerSize = { w: layerbb.width(), h: layerbb.height() };
         const layerT = msLayer.transform;
-        let { x, y } = OpenLIME.CoordinateSystem.fromCanvasHtmlToImage({ x: e.offsetX, y: e.offsetY }, lime.camera, layerT, layerSize, true);
+        let { x, y } = OpenLIME.CoordinateSystem.fromCanvasHtmlToImage(
+          { x: e.offsetX, y: e.offsetY }, 
+          lime.camera, 
+          layerT, 
+          layerSize, 
+          true
+        );
+        
         if ((x >= 0 && x < msLayer.width) && (y >= 0 && y < msLayer.height)) {
           // Update the chart with new spectral data
           updateSpectralPlot({ x, y });
