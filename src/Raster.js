@@ -124,23 +124,6 @@ class Raster {
 	}
 
 	/**
-	 * Returns the WebGL texture for this raster.
-	 * This method provides access to the underlying WebGL texture,
-	 * which can be used for direct pixel access or shader operations.
-	 * 
-	 * @param {WebGLRenderingContext} gl - The WebGL rendering context
-	 * @returns {WebGLTexture|null} The WebGL texture or null if not loaded
-	 */
-	getGlTile(gl) {
-		if (!this._texture) {
-			// Texture hasn't been loaded yet
-			return null;
-		}
-
-		return this._texture;
-	}
-
-	/**
 	 * Creates a WebGL texture from an image.
 	 * Handles different color formats and automatically creates mipmaps for large textures.
 	 * @private

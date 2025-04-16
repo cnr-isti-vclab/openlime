@@ -1210,206 +1210,172 @@ class Layer {
 		return bytesPerPixel;
 	}
 
-	/**
-	 * Gets pixel values for a specific pixel location
-	 * Works with both single images and tiled formats
-	 *  
-	 * @param {number} x - X coordinate in image space (0,0 at top-left)
-	 * @param {number} y - Y coordinate in image space (0,0 at top-left)
-	 * @returns {Array<Uint8Array>} Array containing RGBA values for each raster at the specified pixel
-	 * @throws {Error} If coordinates are outside image bounds or WebGL resources not available
-	 */
-	getPixelValues(x, y) {
-		// Check if shader and GL context are initialized
-		if (!this.shader) {
-			throw new Error("WebGL resources not initialized");
-		}
+/**
+ * Gets pixel values for a specific pixel location
+ * Works with both single images and tiled formats
+ *  
+ * @param {number} x - X coordinate in image space (0,0 at top-left)
+ * @param {number} y - Y coordinate in image space (0,0 at top-left)
+ * @returns {Array<Uint8Array>} Array containing RGBA values for each raster at the specified pixel
+ */
+getPixelValues(x, y) {
+  // Check if shader and GL context are initialized
+  if (!this.shader) {
+    throw new Error("WebGL resources not initialized");
+  }
 
-		if (!this.gl) {
-			console.log("Not a GL Layer");
-			return null;
-		}
+  if (!this.gl) {
+    console.log("Not a GL Layer");
+    return null;
+  }
 
-		// Ensure coordinates are integers
-		x = Math.floor(x);
-		y = Math.floor(y);
+  // Ensure coordinates are integers
+  x = Math.floor(x);
+  y = Math.floor(y);
 
-		// Check if coordinates are within image bounds
-		if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
-			console.warn(`Coordinates (${x}, ${y}) outside image bounds (${this.width}x${this.height})`);
-			return [];
-		}
+  // Check if coordinates are within image bounds
+  if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+    console.warn(`Coordinates (${x}, ${y}) outside image bounds (${this.width}x${this.height})`);
+    return [];
+  }
 
-		// For single image layouts, use simple approach
-		if (this.layout.type === 'image' || this.layout.type === 'itarzoom') {
-			return this.getPixelValuesFromImage(x, y);
-		}
-
-		// For tiled layouts, use tile-based approach
-		return this.getPixelValuesFromTiles(x, y);
-	}
-
-	/**
-	 * Gets pixel values from a single image layout
-	 * @private
-	 * @param {number} x - X coordinate in image space
-	 * @param {number} y - Y coordinate in image space
-	 * @returns {Array<Uint8Array>} Array containing RGBA values for each raster
-	 */
-	getPixelValuesFromImage(x, y) {
-		const pixelData = [];
-
-		try {
-			// Create framebuffer for reading pixel data
-			const framebuffer = this.gl.createFramebuffer();
-			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer);
-
-			// For each raster
-			for (let i = 0; i < this.rasters.length; i++) {
-				// Get the texture for this raster
-				const texture = this.rasters[i]._texture;
-				if (!texture) {
-					console.warn(`Texture for raster ${i} not available`);
-					pixelData.push(new Uint8Array([0, 0, 0, 255])); // Push empty pixel data
-					continue;
-				}
-
-				// Attach the texture to the framebuffer
-				this.gl.framebufferTexture2D(
-					this.gl.FRAMEBUFFER,
-					this.gl.COLOR_ATTACHMENT0,
-					this.gl.TEXTURE_2D,
-					texture,
-					0  // mipmap level
-				);
-
-				if (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE) {
-					// Read the pixel data
-					const pData = new Uint8Array(4); // RGBA
-					this.gl.readPixels(x, y, 1, 1, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pData);
-					pixelData.push(pData);
-				} else {
-					console.warn(`Framebuffer not complete for raster ${i}`);
-					pixelData.push(new Uint8Array([0, 0, 0, 255])); // Push empty pixel data
-				}
-			}
-
-			// Clean up
-			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-			this.gl.deleteFramebuffer(framebuffer);
-		} catch (err) {
-			console.error("Error reading pixel data:", err);
-		}
-
-		return pixelData;
-	}
-
-	/**
-	 * Gets pixel values from a tiled layout
-	 * @private
-	 * @param {number} x - X coordinate in image space
-	 * @param {number} y - Y coordinate in image space
-	 * @returns {Array<Uint8Array>} Array containing RGBA values for each raster
-	 */
-	getPixelValuesFromTiles(x, y) {
-		const pixelData = Array(this.rasters.length).fill(null);
-
-		try {
-			// Look through all available levels starting from the highest resolution
-			for (let level = this.layout.nlevels - 1; level >= 0; level--) {
-				// Calculate tile size at this level
-				const scale = Math.pow(2, this.layout.nlevels - 1 - level);
-				const tileSize = this.layout.tilesize * scale;
-
-				// Find which tile contains our coordinates
-				const tileX = Math.floor(x / tileSize);
-				const tileY = Math.floor(y / tileSize);
-
-				// Get the tile index
-				const tileIndex = this.layout.index(level, tileX, tileY);
-
-				// Check if this tile exists in our cache
-				if (this.tiles.has(tileIndex)) {
-					const tile = this.tiles.get(tileIndex);
-
-					// Only proceed if the tile is fully loaded
-					if (tile.missing === 0) {
-						// Calculate local coordinates within the tile
-						const localX = x - (tileX * tileSize);
-						const localY = y - (tileY * tileSize);
-
-						// Scale local coordinates to match the actual texture dimensions
-						const texWidth = tile.w || this.layout.tilesize;
-						const texHeight = tile.h || this.layout.tilesize;
-
-						const texX = Math.min(Math.floor(localX * texWidth / tileSize), texWidth - 1);
-						const texY = Math.min(Math.floor(localY * texHeight / tileSize), texHeight - 1);
-
-						// Create framebuffer for reading pixel data
-						const framebuffer = this.gl.createFramebuffer();
-						this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer);
-
-						let foundData = false;
-
-						// For each raster, read the corresponding texture data
-						for (let i = 0; i < this.rasters.length; i++) {
-							// If we already have data for this raster, skip
-							if (pixelData[i] !== null) continue;
-
-							// Get the texture for this raster
-							if (i < tile.tex.length && tile.tex[i]) {
-								// Attach the texture to the framebuffer
-								this.gl.framebufferTexture2D(
-									this.gl.FRAMEBUFFER,
-									this.gl.COLOR_ATTACHMENT0,
-									this.gl.TEXTURE_2D,
-									tile.tex[i],
-									0
-								);
-
-								if (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE) {
-									// Read the pixel data
-									const pData = new Uint8Array(4); // RGBA
-									this.gl.readPixels(
-										texX, texY, 1, 1,
-										this.gl.RGBA, this.gl.UNSIGNED_BYTE,
-										pData
-									);
-
-									pixelData[i] = pData;
-									foundData = true;
-								}
-							}
-						}
-
-						// Clean up
-						this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-						this.gl.deleteFramebuffer(framebuffer);
-
-						// If we found data for at least one raster, move to the next level
-						if (foundData) {
-							// If all rasters have data, we're done
-							if (pixelData.every(p => p !== null)) {
-								break;
-							}
-						}
-					}
-				}
-			}
-
-			// Fill in null values with empty pixel data
-			for (let i = 0; i < pixelData.length; i++) {
-				if (pixelData[i] === null) {
-					pixelData[i] = new Uint8Array([0, 0, 0, 255]);
-				}
-			}
-		} catch (err) {
-			console.error("Error reading pixel data from tiles:", err);
-		}
-
-		return pixelData;
-	}
-
+  // Create array to hold pixel data for each raster
+  const pixelData = Array(this.rasters.length).fill(null);
+  
+  try {
+    // Create framebuffer for reading pixel data
+    const framebuffer = this.gl.createFramebuffer();
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer);
+    
+    // Handle differently based on layout type
+    if (this.layout.type === 'image' || this.layout.type === 'itarzoom') {
+      // For image layout, all textures are in a single tile
+      const tile = this.tiles.get(0);
+      
+      if (tile && tile.missing === 0) {
+        // Read pixel data for each raster
+        for (let i = 0; i < this.rasters.length; i++) {
+          if (i < tile.tex.length && tile.tex[i]) {
+            // Attach the texture to the framebuffer
+            this.gl.framebufferTexture2D(
+              this.gl.FRAMEBUFFER,
+              this.gl.COLOR_ATTACHMENT0,
+              this.gl.TEXTURE_2D,
+              tile.tex[i],
+              0  // mipmap level
+            );
+            
+            if (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE) {
+              // Read the pixel data
+              const pData = new Uint8Array(4); // RGBA
+              this.gl.readPixels(x, y, 1, 1, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pData);
+              pixelData[i] = pData;
+            }
+          }
+        }
+      }
+    } else {
+      // For tiled layouts, find the appropriate tile
+      let foundTile = false;
+      
+      // Look through all available levels starting from the highest resolution
+      for (let level = this.layout.nlevels - 1; level >= 0; level--) {
+        // Get tile size at this level
+        const tileSize = this.layout.getTileSize();
+        const scale = Math.pow(2, this.layout.nlevels - 1 - level);
+        const scaledTileWidth = tileSize[0] * scale;
+        const scaledTileHeight = tileSize[1] * scale;
+        
+        // Find which tile contains our coordinates
+        const tileX = Math.floor(x / scaledTileWidth);
+        const tileY = Math.floor(y / scaledTileHeight);
+        
+        // Get the tile index
+        const tileIndex = this.layout.index(level, tileX, tileY);
+        
+        // Check if this tile exists in our cache
+        if (this.tiles.has(tileIndex)) {
+          const tile = this.tiles.get(tileIndex);
+          
+          // Only proceed if the tile is fully loaded
+          if (tile.missing === 0) {
+            // Calculate local coordinates within the tile
+            const localX = x - (tileX * scaledTileWidth);
+            const localY = y - (tileY * scaledTileHeight);
+            
+            // Scale local coordinates to match the actual texture dimensions
+            const texWidth = tile.w || tileSize[0];
+            const texHeight = tile.h || tileSize[1];
+            
+            const texX = Math.min(Math.floor(localX * texWidth / scaledTileWidth), texWidth - 1);
+            const texY = Math.min(Math.floor(localY * texHeight / scaledTileHeight), texHeight - 1);
+            
+            let foundPixelInTile = false;
+            
+            // For each raster, read the corresponding texture data
+            for (let i = 0; i < this.rasters.length; i++) {
+              // If we already have data for this raster, skip
+              if (pixelData[i] !== null) continue;
+              
+              // Get the texture for this raster
+              if (i < tile.tex.length && tile.tex[i]) {
+                // Attach the texture to the framebuffer
+                this.gl.framebufferTexture2D(
+                  this.gl.FRAMEBUFFER,
+                  this.gl.COLOR_ATTACHMENT0,
+                  this.gl.TEXTURE_2D,
+                  tile.tex[i],
+                  0
+                );
+                
+                if (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE) {
+                  // Read the pixel data
+                  const pData = new Uint8Array(4); // RGBA
+                  this.gl.readPixels(
+                    texX, texY, 1, 1,
+                    this.gl.RGBA, this.gl.UNSIGNED_BYTE,
+                    pData
+                  );
+                  
+                  pixelData[i] = pData;
+                  foundPixelInTile = true;
+                }
+              }
+            }
+            
+            if (foundPixelInTile) {
+              foundTile = true;
+              // If we've found a usable tile, we can stop searching further levels
+              if (pixelData.every(p => p !== null)) {
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      // If we couldn't find any appropriate tile, log a warning
+      if (!foundTile) {
+        console.warn(`No suitable tile found for coordinates (${x}, ${y})`);
+      }
+    }
+    
+    // Clean up
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    this.gl.deleteFramebuffer(framebuffer);
+    
+    // Fill any missing pixel data with default values
+    for (let i = 0; i < pixelData.length; i++) {
+      if (pixelData[i] === null) {
+        pixelData[i] = new Uint8Array([0, 0, 0, 255]);
+      }
+    }
+  } catch (err) {
+    console.error("Error reading pixel data:", err);
+  }
+  
+  return pixelData;
+}
 
 }
 

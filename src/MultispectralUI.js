@@ -259,15 +259,43 @@ class MultispectralUI {
       presetSelector.appendChild(option);
     });
 
-    // Handle selection change
-    presetSelector.addEventListener('change', () => {
+    // Add apply button for preset selection
+    const applyButton = document.createElement('button');
+    applyButton.textContent = 'Apply';
+    applyButton.style.width = '100%';
+    applyButton.style.marginTop = '5px';
+    applyButton.style.padding = '5px';
+    applyButton.style.backgroundColor = '#555';
+    applyButton.style.color = 'white';
+    applyButton.style.border = 'none';
+    applyButton.style.borderRadius = '3px';
+    applyButton.style.cursor = 'pointer';
+
+    // Function to apply the selected preset
+    const applySelectedPreset = () => {
       const selectedPreset = presetSelector.value;
       if (selectedPreset) {
         this.layer.applyPreset(selectedPreset);
+
+        // Set the layer mode to 'rgb' for preset visualization
+        if (this.layer.getMode() !== 'rgb') {
+          this.layer.setMode('rgb');
+        }
       }
+    };
+
+    // // Still keep the change event for convenience
+    // presetSelector.addEventListener('change', () => {
+    //   applySelectedPreset();
+    // });
+
+    // Add click handler for the apply button
+    applyButton.addEventListener('click', () => {
+      applySelectedPreset();
     });
 
     presetDiv.appendChild(presetSelector);
+    presetDiv.appendChild(applyButton);
     this.container.appendChild(presetDiv);
 
     this.uiElements.presetSelector = presetSelector;
