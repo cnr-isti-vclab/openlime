@@ -155,7 +155,7 @@ class LayerMultispectral extends Layer {
       // Set texture size if available
       if (this.info.width && this.info.height) {
         this.width = this.info.width;
-        this.height = this.info.width;
+        this.height = this.info.height;
         this.shader.setTextureSize([this.width, this.height]);
       }
 
@@ -417,6 +417,21 @@ class LayerMultispectral extends Layer {
     }
   }
 
+  getSpectrum(x, y) {
+    const pixelData = this.getPixelValues(x, y);
+    const spectrum = [];
+    for (let i = 0; i < this.info.nplanes; i++) {
+      const idx = Math.floor(i / 3);
+      if (idx < pixelData.length) {
+        const px = pixelData[idx];
+        const pxIdx = i % 3;
+        if (px && pxIdx < 3) {
+          spectrum.push(px[pxIdx] / 255.0 * 100);
+        }
+      }
+    }
+    return spectrum;
+  }
 }
 
 /**
