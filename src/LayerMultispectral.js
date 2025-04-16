@@ -154,7 +154,9 @@ class LayerMultispectral extends Layer {
 
       // Set texture size if available
       if (this.info.width && this.info.height) {
-        this.shader.setTextureSize([this.info.width, this.info.height]);
+        this.width = this.info.width;
+        this.height = this.info.width;
+        this.shader.setTextureSize([this.width, this.height]);
       }
 
       // Get basename from info
@@ -216,6 +218,15 @@ class LayerMultispectral extends Layer {
     if (typeof this.presets !== 'object') {
       throw new Error("presets not well formed");
     }
+  }
+
+  /**
+   * Gets info
+   * 
+   * @returns {Object|null} Object with info on multispectral dataset or null if not found
+   */
+  info() {
+    return this.info;
   }
 
   /**
@@ -405,6 +416,7 @@ class LayerMultispectral extends Layer {
       );
     }
   }
+
 }
 
 /**

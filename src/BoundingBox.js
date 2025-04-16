@@ -192,7 +192,7 @@ class BoundingBox {
         if (!this.intersects(box)) {
             return null;
         }
-        
+
         return new BoundingBox({
             xLow: Math.max(this.xLow, box.xLow),
             yLow: Math.max(this.yLow, box.yLow),
@@ -213,6 +213,39 @@ class BoundingBox {
             yHigh: this.yHigh
         });
     }
+
+    /**
+     * Checks if a point is contained within this bounding box.
+     * A point is considered inside if its coordinates are greater than or equal to 
+     * the low corner and less than or equal to the high corner.
+     * 
+     * @param {{x: number, y: number}} p - The point to check
+     * @param {number} [epsilon=0] - Optional tolerance value for boundary checks
+     * @returns {boolean} True if the point is inside the box, false otherwise
+     * 
+     * @example
+     * // Check if a point is inside a box
+     * const box = new BoundingBox({xLow: 0, yLow: 0, xHigh: 10, yHigh: 10});
+     * const point = {x: 5, y: 5};
+     * const isInside = box.containsPoint(point); // true
+     * 
+     * // Using epsilon tolerance for boundary cases
+     * const boundaryPoint = {x: 10.001, y: 10};
+     * const isInsideWithTolerance = box.containsPoint(boundaryPoint, 0.01); // true
+     */
+    containsPoint(p, epsilon = 0) {
+        if (this.isEmpty()) {
+            return false;
+        }
+
+        return (
+            p.x >= this.xLow - epsilon &&
+            p.x <= this.xHigh + epsilon &&
+            p.y >= this.yLow - epsilon &&
+            p.y <= this.yHigh + epsilon
+        );
+    };
+
 
     /**
      * Prints the bounding box coordinates to the console in a formatted string.

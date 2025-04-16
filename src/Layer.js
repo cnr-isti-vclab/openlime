@@ -134,12 +134,12 @@ class Layer {
 	 * or
 	 * ```javascript
 	 * const enhancedShader = new OpenLIME.ShaderEdgeDetection();
-   * const derivedLayer = layer.derive({
-   *     label: 'Enhanced Image'
-   * });
-   * derivedLayer.addShader('enhanced', enhancedShader);
-   * derivedLayer.setShader('enhanced');
-   * viewer.addLayer('Enhanced Image', derivedLayer);
+	 * const derivedLayer = layer.derive({
+	 *     label: 'Enhanced Image'
+	 * });
+	 * derivedLayer.addShader('enhanced', enhancedShader);
+	 * derivedLayer.setShader('enhanced');
+	 * viewer.addLayer('Enhanced Image', derivedLayer);
 	 * ```
 	 */
 	derive(options = {}) {
@@ -1209,6 +1209,105 @@ class Layer {
 
 		return bytesPerPixel;
 	}
+
+/**
+ * Gets RGBA pixel values for a specific pixel location
+ *  
+ * @param {number} x - X coordinate in image space (0,0 at top-left)
+ * @param {number} y - Y coordinate in image space (0,0 at top-left)
+ * @returns {Promise<Float32Array>} Array containing values for each band at the specified pixel
+ * @throws {Error} If coordinates are outside image bounds or WebGL resources not available
+ */
+	getPixelValues(x, y) {
+		// Check if shader and GL context are initialized
+		if (!this.shader) {
+			throw new Error("WebGL resources not initialized");
+		}
+
+		if(!this.gl) {
+			console.log("Not a GL Layer");
+			return null;
+		}
+
+		// Ensure coordinates are integers
+		x = Math.floor(x);
+		y = Math.floor(y);
+
+		// Check if coordinates are within image bounds
+		const width = this.width;
+		const height = this.height;
+		if (x < 0 || x >= width || y < 0 || y >= height) {
+			throw new Error(`Coordinates (${x}, ${y}) outside image bounds (${width}x${height})`);
+		}
+
+		// Create framebuffer for reading pixel data
+		const framebuffer = this.gl.createFramebuffer();
+		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer);
+
+		// Create a temporary renderbuffer for color attachment
+		const renderbuffer = this.gl.createRenderbuffer();
+		this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
+		this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA8, 1, 1);
+
+		// Attach renderbuffer to framebuffer
+		this.gl.framebufferRenderbuffer(
+			this.gl.FRAMEBUFFER,
+			this.gl.COLOR_ATTACHMENT0,
+			this.gl.RENDERBUFFER,
+			renderbuffer
+		);
+
+		// Check framebuffer is complete
+		if (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) !== this.gl.FRAMEBUFFER_COMPLETE) {
+			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+			this.gl.deleteFramebuffer(framebuffer);
+			this.gl.deleteRenderbuffer(renderbuffer);
+			throw new Error("Framebuffer not complete");
+		}
+
+		const pixelData = [];
+
+		try {
+			if (this.layout.type !== 'itarzoom') {
+				for (let i = 0; i < this.rasters.length; i++) {
+					// Get the texture for this band
+					const texture = this.rasters[i].getGlTile(this.gl);
+					if (!texture) {
+						console.warn(`Texture for band ${i} not available`);
+						continue;
+					}
+
+					try {
+						// Attach the texture to the framebuffer
+						this.gl.framebufferTexture2D(
+							this.gl.FRAMEBUFFER,
+							this.gl.COLOR_ATTACHMENT0,
+							this.gl.TEXTURE_2D,
+							texture,
+							0  // mipmap level
+						);
+
+						// Read the pixel data - using RGBA/UNSIGNED_BYTE which is universally supported
+						const pData = new Uint8Array(4); // RGBA
+						this.gl.readPixels(x, y, 1, 1, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pData);
+						pixelData.push(pData);
+					} catch (err) {
+						console.warn(`Error reading pixel data for band ${i}:`, err);
+					}
+				}
+			}
+		} finally {
+			// Clean up
+			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+			this.gl.deleteFramebuffer(framebuffer);
+			this.gl.deleteRenderbuffer(renderbuffer);
+		}
+
+		return pixelData;
+	}
+
+
+
 }
 
 Layer.prototype.types = {}

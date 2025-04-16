@@ -39,6 +39,8 @@ class Raster {
 			isLinear: false
 		});
 
+		this._texture = null;
+
 		Object.assign(this, options);
 	}
 
@@ -122,6 +124,23 @@ class Raster {
 	}
 
 	/**
+	 * Returns the WebGL texture for this raster.
+	 * This method provides access to the underlying WebGL texture,
+	 * which can be used for direct pixel access or shader operations.
+	 * 
+	 * @param {WebGLRenderingContext} gl - The WebGL rendering context
+	 * @returns {WebGLTexture|null} The WebGL texture or null if not loaded
+	 */
+	getGlTile(gl) {
+		if (!this._texture) {
+			// Texture hasn't been loaded yet
+			return null;
+		}
+
+		return this._texture;
+	}
+
+	/**
 	 * Creates a WebGL texture from an image.
 	 * Handles different color formats and automatically creates mipmaps for large textures.
 	 * @private
@@ -156,29 +175,17 @@ class Raster {
 		}
 
 		// For WebGL2, use proper internal format for linear textures
-		if (gl instanceof WebGL2RenderingContext) {
-			if (this.format === 'float') {
-				// For float textures in WebGL2, use R8 as internal format
-				internalFormat = gl.R8;
-			} else {
-				internalFormat = this.isLinear ?
-					(glFormat === gl.RGB ? gl.RGB : gl.RGBA) :
-					(glFormat === gl.RGB ? gl.SRGB8 : gl.SRGB8_ALPHA8);
-			}
-			gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
+
+		if (this.format === 'float') {
+			// For float textures in WebGL2, use R8 as internal format
+			internalFormat = gl.R8;
+		} else {
+			internalFormat = this.isLinear ?
+				(glFormat === gl.RGB ? gl.RGB : gl.RGBA) :
+				(glFormat === gl.RGB ? gl.SRGB8 : gl.SRGB8_ALPHA8);
 		}
-		// For WebGL1, use extensions if available
-		else {
-			// Check for sRGB extension
-			const srgbExt = gl.getExtension('EXT_sRGB');
-			if (!this.isLinear && srgbExt && glFormat === gl.RGB) {
-				// Use sRGB format for non-linear textures when extension is available
-				gl.texImage2D(gl.TEXTURE_2D, 0, srgbExt.SRGB_EXT, srgbExt.SRGB_EXT, gl.UNSIGNED_BYTE, img);
-			} else {
-				// Default behavior (WebGL1 without extension or linear textures)
-				gl.texImage2D(gl.TEXTURE_2D, 0, glFormat, glFormat, gl.UNSIGNED_BYTE, img);
-			}
-		}
+		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
+
 
 		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		//build mipmap for large images.
@@ -192,6 +199,7 @@ class Raster {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		// Store color space information on the texture
 		tex.isLinear = this.isLinear;
+		this._texture = tex;
 		return tex;
 	}
 }
