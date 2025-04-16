@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenLIME - Multispectral Viewer</title>
+  <link rel="stylesheet" href="../../css/skin.css" />
+  <link rel="stylesheet" href="../examples.css" />
+  <!-- Chart.js for spectral reflectance graph -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    html,
+    body {
+      margin: 0px;
+      padding: 0px;
+      height: 100%;
+      font-family: "Open Sans", sans-serif;
+      overflow: hidden;
+      user-select: none;
+      /* standard property */
+      -webkit-user-select: none;
+      /* Safari and Chrome */
+      -moz-user-select: none;
+      /* Firefox */
+      -ms-user-select: none;
+      /* IE and Edge legacy */
+    }
+
+    .openlime {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+    }
+
+    .openlime-attribution {
+      font-size: 12px;
+    }
+
+    .openlime-attribution a {
+      color: orange;
+    }
+
+    .ms-controls {
+      top: 20px !important;
+      right: 20px !important;
+      width: 300px !important;
+    }
+
+    /* Styles for the spectral plot container */
+    .spectral-plot-container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 400px;
+      height: auto;
+      background-color: rgba(0, 0, 0, 0.7);
+      border-radius: 5px;
+      padding: 10px;
+      color: white;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      font-family: Arial, sans-serif;
+    }
+
+    .spectral-plot-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .spectral-plot-info {
+      font-size: 12px;
+      color: #ccc;
+      margin-bottom: 10px;
+    }
+
+    .spectral-plot-canvas-container {
+      width: 100%;
+      height: 300px;
+    }
+
+    .spectral-plot-canvas {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="openlime"></div>
+
+  <!-- Container for the Spectral Reflectance chart -->
+  <div id="spectralPlotContainer" class="spectral-plot-container">
+    <div class="spectral-plot-title">Spectral Reflectance</div>
+    <div id="pixelInfo" class="spectral-plot-info">Click on image to sample</div>
+    <div class="spectral-plot-canvas-container">
+      <canvas id="spectralPlotCanvas" class="spectral-plot-canvas"></canvas>
+    </div>
+  </div>
+
+  <script src="../../js/openlime.js"></script>
+  <script>
+    // Create an OpenLIME canvas
+    const lime = new OpenLIME.Viewer('.openlime');
+
+    // Create a Multispectral layer and add it to the canvas
+    const msLayer = new OpenLIME.Layer({
+      label: 'Oil Painting Multispectral',
+      layout: 'image',
+      type: 'multispectral',
+      url: '../../assets/multispectral/oil_painting_ms_jpg/info.json',
+      presets: '../../assets/multispectral/oil_painting_ms_jpg/presets.json',
+      linearRaster: true
+    });
+
+    // Add the layer to the viewer
+    lime.addLayer('oilPainting', msLayer);
+
+    // Fetch a skin (visual elements for the web page)
+    OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+    // Create basic UI
+    const ui = new OpenLIME.UIBasic(lime, {
+      showScale: false,
+      attribution: "St. Demetrios - <a href=\"https://ormyliafoundation.gr/\">Ormylia Foundation<a>, Ormylia Halkidiki, Greece"
+    });
+
+    // Add zoom controls to the toolbar
+    ui.actions.layers.display = false;
+    ui.actions.zoomin.display = false;
+    ui.actions.zoomout.display = false;
+    ui.actions.light.display = false;
+    ui.actions.home.display = true;
+
+    // References to elements for the spectral plot
+    const spectralPlotContainer = document.getElementById('spectralPlotContainer');
+    const pixelInfoElement = document.getElementById('pixelInfo');
+    const spectralPlotCanvas = document.getElementById('spectralPlotCanvas');
+
+    // Variable for the chart instance
+    let spectralChart = null;
+
+    /**
+     * Initialize the spectral plot with Chart.js
+     */
+    function initSpectralPlot() {
+      // If we already have a chart, destroy it
+      if (spectralChart) {
+        spectralChart.destroy();
+      }
+
+      // Get wavelengths if available, or use a default range
+      let wavelengths = [];
+      if (msLayer && msLayer.getWavelengths) {
+        wavelengths = msLayer.getWavelengths();
+      } else {
+        // Default wavelength range if not available yet
+        wavelengths = Array.from({ length: 31 }, (_, i) => 400 + i * 10);
+      }
+
+      // Get min and max wavelength values
+      const minWavelength = Math.min(...wavelengths);
+      const maxWavelength = Math.max(...wavelengths);
+
+      // Create a new chart with empty data
+      spectralChart = new Chart(spectralPlotCanvas, {
+        type: 'line',
+        data: {
+          datasets: [{
+            label: 'Reflectance (%)',
+            data: Array(wavelengths.length).fill(null),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Reflectance (%)'
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.5)',
+                tickColor: 'rgba(255, 255, 255, 0.7)',
+                stepSize: 20
+              },
+              ticks: {
+                stepSize: 20
+              }
+            },
+            x: {
+              type: 'linear',
+              min: Math.floor(minWavelength/100)*100,
+              max: Math.ceil(maxWavelength/100)*100,
+              title: {
+                display: true,
+                text: 'Wavelength (nm)'
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.5)',
+                tickColor: 'rgba(255, 255, 255, 0.7)',
+                borderWidth: 1,
+                lineWidth: (ctx) => {
+                  const value = ctx.tick.value;
+                  return value % 100 === 0 ? 1.5 : 0.8; // più spesso per 100nm, più sottile altrimenti
+                }
+              },
+              ticks: {
+                stepSize: 20,
+                autoSkip: false, // disattiva l'autoskip automatico
+                callback: function (value) {
+                  return value % 100 === 0 ? value : '';
+                }
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  if (context.raw === null || context.raw.y === null) {
+                    return 'No data';
+                  }
+                  return `${Math.round(context.raw.x)}nm: ${context.raw.y.toFixed(1)}%`;
+                },
+                title: () => {
+                  return ''; // Remove the title from the tooltip
+                }
+              }
+            },
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+    function updateSpectralPlot(position) {
+      if (!spectralChart) return;
+
+      const wavelengths = msLayer.getWavelengths();
+      const values = msLayer.getSpectrum(position.x, position.y);
+      const reflectanceValues = [];
+
+      // Convert pixel data to reflectance values and pair with wavelengths
+      for (let i = 0; i < msLayer.info.nplanes; i++)
+        reflectanceValues.push({
+          x: wavelengths[i],
+          y: values[i]
+        });
+
+      // Update dataset with the new values
+      spectralChart.data.datasets[0].data = reflectanceValues;
+
+      // Update pixel information
+      if (pixelInfoElement && position) {
+        pixelInfoElement.textContent = `Pixel: x=${Math.round(position.x)}, y=${Math.round(position.y)}`;
+      }
+
+      // Update the chart
+      spectralChart.update();
+    }
+
+    // Initialize the empty chart immediately
+    initSpectralPlot();
+
+    // Create Multispectral UI when the layer is ready
+    msLayer.addEvent('ready', () => {
+      console.log('Multispectral layer is ready!');
+
+      // Create MultispectralUI with floating panel
+      const msUI = new OpenLIME.MultispectralUI(msLayer, {
+        floatingPanel: true,
+        showPresets: true,
+        showSingleBand: true
+      });
+
+      // Reinitialize the spectral plot with actual wavelengths
+      initSpectralPlot();
+
+      // Create a comparison layer for side-by-side view
+      const setupSplitView = () => {
+        const viewportWidth = lime.canvas.width;
+
+        // Adjust main layer viewport to left half
+        msLayer.setViewport({
+          x: 0,
+          y: 0,
+          dx: viewportWidth / 2,
+          dy: lime.canvas.height
+        });
+
+        // Check if comparison layer exists, if not create it
+        if (!lime.layers['comparison']) {
+          const comparisonLayer = msLayer.derive({
+            label: 'Comparison View',
+            zindex: msLayer.zindex + 1
+          });
+
+          lime.addLayer('comparison', comparisonLayer);
+          comparisonLayer.applyPreset('gold');
+
+          // Set to right half viewport
+          comparisonLayer.setViewport({
+            x: viewportWidth / 2,
+            y: 0,
+            dx: viewportWidth / 2,
+            dy: lime.canvas.height
+          });
+        }
+      };
+    });
+
+    // Handle tap/click events on the image
+    lime.pointerManager.on("fingerSingleTap", {
+      fingerSingleTap: (e) => {
+        // Get coordinates from the click point
+        const layerbb = msLayer.boundingBox();
+        const layerSize = { w: layerbb.width(), h: layerbb.height() };
+        const layerT = msLayer.transform;
+        let { x, y } = OpenLIME.CoordinateSystem.fromCanvasHtmlToImage({ x: e.offsetX, y: e.offsetY }, lime.camera, layerT, layerSize, true);
+        if ((x >= 0 && x < msLayer.width) && (y >= 0 && y < msLayer.height)) {
+          // Update the chart with new spectral data
+          updateSpectralPlot({ x, y });
+        }
+        e.preventDefault();
+      },
+      priority: 1000 // high priority
+    });
+
+    // Handle canvas resize to update viewports if needed
+    window.addEventListener('resize', () => {
+      if (lime.layers['comparison']) {
+        const viewportWidth = lime.canvas.width;
+
+        // Update main layer viewport
+        msLayer.setViewport({
+          x: 0,
+          y: 0,
+          dx: viewportWidth / 2,
+          dy: lime.canvas.height
+        });
+
+        // Update comparison layer viewport
+        lime.layers['comparison'].setViewport({
+          x: viewportWidth / 2,
+          y: 0,
+          dx: viewportWidth / 2,
+          dy: lime.canvas.height
+        });
+      }
+
+      // Resize the chart if needed
+      if (spectralChart) {
+        spectralChart.resize();
+      }
+    });
+  </script>
+</body>
+
+</html>
