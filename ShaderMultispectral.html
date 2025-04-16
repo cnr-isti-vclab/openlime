@@ -101,14 +101,14 @@
 <p>This shader handles the real-time rendering of multispectral imagery with
 various visualization modes and Color Twist Weight (CTW) transformations.
 It leverages WebGL2 features such as Uniform Buffer Objects (UBO) for
-efficient handling of CTW coefficients and texelFetch for precise pixel access.</p>
+efficient handling of CTW coefficients and texture() for consistent texture sampling.</p>
 <p>Features:</p>
 <ul>
 <li>Multiple rendering modes (RGB, single band)</li>
 <li>UBO-based Color Twist Weights for spectral transformations</li>
-<li>Direct pixel access via texelFetch for scientific precision</li>
 <li>Optimized memory access by skipping zero-weight bands</li>
 <li>Support for up to 33 spectral bands (11 RGB textures)</li>
+<li>Compatible with both single images and tile-based formats (DeepZoom, etc.)</li>
 </ul>
 <p>Technical implementation:</p>
 <ul>
@@ -707,7 +707,7 @@ Combines uniforms from both the base shader and all active filters into a single
     <div class="description">
         <p>Generate fragment shader source code</p>
 <p>Creates optimized GLSL code for multispectral visualization.
-Uses constant indices and loop unrolling for performance.</p>
+Uses texture() with normalized coordinates instead of texelFetch.</p>
     </div>
     
 
@@ -768,7 +768,7 @@ Uses constant indices and loop unrolling for performance.</p>
 		<ul class="dummy">
 			<li>
 				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
-				 <a href="ShaderMultispectral.js.html#sunlight-1-line-255">line 255</a>
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-252">line 252</a>
 			</li>
 		</ul>
 	</dd>
@@ -1112,7 +1112,7 @@ and configures samplers for each texture.</p>
 		<ul class="dummy">
 			<li>
 				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
-				 <a href="ShaderMultispectral.js.html#sunlight-1-line-101">line 101</a>
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-100">line 100</a>
 			</li>
 		</ul>
 	</dd>
@@ -1417,7 +1417,7 @@ and configures samplers for each texture.</p>
 		<ul class="dummy">
 			<li>
 				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
-				 <a href="ShaderMultispectral.js.html#sunlight-1-line-81">line 81</a>
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-80">line 80</a>
 			</li>
 		</ul>
 	</dd>
@@ -1486,7 +1486,7 @@ and configures samplers for each texture.</p>
 
     
     <div class="description">
-        <p>Sets single band view parameters</p>
+        <p>Sets single band visualization</p>
 <p>Configures the shader to display a specific spectral band
 on a chosen output channel.</p>
     </div>
@@ -1621,7 +1621,7 @@ on a chosen output channel.</p>
 		<ul class="dummy">
 			<li>
 				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
-				 <a href="ShaderMultispectral.js.html#sunlight-1-line-224">line 224</a>
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-223">line 223</a>
 			</li>
 		</ul>
 	</dd>
@@ -1682,7 +1682,7 @@ on a chosen output channel.</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="setTextureSize"><span class="type-signature"></span>setTextureSize(size)</h4>
+    <h4 class="name" id="setTextureSize"><span class="type-signature"></span>setTextureSize()</h4>
     
     
 </dt>
@@ -1690,9 +1690,8 @@ on a chosen output channel.</p>
 
     
     <div class="description">
-        <p>Sets texture dimensions for texelFetch calculations</p>
-<p>Provides texture dimensions to the shader for accurate
-pixel coordinate calculations.</p>
+        <p>Sets texture dimensions for calculations</p>
+<p>No longer needed since we're using normalized coordinates</p>
     </div>
     
 
@@ -1701,56 +1700,6 @@ pixel coordinate calculations.</p>
     
 
     
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>size</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;number></span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Texture dimensions [width, height]</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
     
 
     
@@ -1772,6 +1721,15 @@ pixel coordinate calculations.</p>
     
 
 	
+	<dt class="important tag-deprecated method-doc-label method-doc-details-label">Deprecated:</dt>
+	
+    <dd>
+        <ul class="dummy">
+            <li>Use normalized texture coordinates instead</li>
+        </ul>
+    </dd>
+    
+    
 
 	
 
@@ -1789,7 +1747,7 @@ pixel coordinate calculations.</p>
 		<ul class="dummy">
 			<li>
 				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
-				 <a href="ShaderMultispectral.js.html#sunlight-1-line-242">line 242</a>
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-239">line 239</a>
 			</li>
 		</ul>
 	</dd>
@@ -2368,7 +2326,7 @@ Uses WebGL2's std140 layout for optimal performance.</p>
 		<ul class="dummy">
 			<li>
 				<a href="ShaderMultispectral.js.html">ShaderMultispectral.js</a>,
-				 <a href="ShaderMultispectral.js.html#sunlight-1-line-138">line 138</a>
+				 <a href="ShaderMultispectral.js.html#sunlight-1-line-137">line 137</a>
 			</li>
 		</ul>
 	</dd>
@@ -2732,7 +2690,7 @@ Default implementation provides basic vertex transformation and texture coordina
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
 	
-		on 2025-04-16T13:33:30+00:00
+		on 2025-04-16T15:58:27+00:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

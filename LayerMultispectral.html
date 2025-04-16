@@ -107,8 +107,8 @@ medical imaging, and other multispectral applications.</p>
 <li>Multiple visualization modes (RGB, single band)</li>
 <li>UBO-optimized Color Twist Weights implementation for real-time spectral transformations</li>
 <li>Preset system for common visualization configurations (false color, etc.)</li>
-<li>Precise pixel access with texelFetch for scientific accuracy</li>
-<li>Multiple layout systems for various tiled image formats</li>
+<li>Support for multiple image layouts and tiling schemes</li>
+<li>Compatible with both single images and tile-based formats (DeepZoom, etc.)</li>
 </ul>
 <p>Technical implementation:</p>
 <ul>
@@ -232,7 +232,7 @@ medical imaging, and other multispectral applications.</p>
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-55">line 55</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-56">line 56</a>
 			</li>
 		</ul>
 	</dd>
@@ -1122,7 +1122,7 @@ specialized visualization (e.g., false color, vegetation analysis).</p>
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-350">line 350</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-357">line 357</a>
 			</li>
 		</ul>
 	</dd>
@@ -2103,7 +2103,7 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-393">line 393</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-400">line 400</a>
 			</li>
 		</ul>
 	</dd>
@@ -2216,7 +2216,7 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-382">line 382</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-389">line 389</a>
 			</li>
 		</ul>
 	</dd>
@@ -2689,7 +2689,8 @@ return {*} The control</p></td>
 
     
     <div class="description">
-        <p>Gets RGBA pixel values for a specific pixel location</p>
+        <p>Gets pixel values for a specific pixel location
+Works with both single images and tiled formats</p>
     </div>
     
 
@@ -2824,7 +2825,7 @@ return {*} The control</p></td>
 		<ul class="dummy">
 			<li>
 				<a href="Layer.js.html">Layer.js</a>,
-				 <a href="Layer.js.html#sunlight-1-line-1221">line 1221</a>
+				 <a href="Layer.js.html#sunlight-1-line-1222">line 1222</a>
 			</li>
 		</ul>
 	</dd>
@@ -2881,7 +2882,7 @@ return {*} The control</p></td>
     
             
 <div class="param-desc">
-    <p>Array containing values for each band at the specified pixel</p>
+    <p>Array containing RGBA values for each raster at the specified pixel</p>
 </div>
 
 
@@ -2892,7 +2893,7 @@ return {*} The control</p></td>
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;Float32Array></span>
+<span class="param-type">Array.&lt;Uint8Array></span>
 
 
 
@@ -3016,7 +3017,7 @@ the presets collection.</p>
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-331">line 331</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-338">line 338</a>
 			</li>
 		</ul>
 	</dd>
@@ -3060,6 +3061,382 @@ the presets collection.</p>
 |
 
 <span class="param-type">null</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getSpectrum"><span class="type-signature"></span>getSpectrum(x, y)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets spectrum data for a specific pixel</p>
+<p>For tiled formats, this method finds the appropriate tiles
+and reads the spectral values.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>X coordinate in image space</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Y coordinate in image space</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-437">line 437</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Array of spectral values (0-100)</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;number></span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getSpectrum"><span class="type-signature"></span>getSpectrum(x, y)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets spectrum data for a specific pixel</p>
+<p>Uses the improved getPixelValues method from the base Layer class
+to obtain spectral values across all bands.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>X coordinate in image space</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Y coordinate in image space</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-488">line 488</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Array of spectral values (0-100)</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;number></span>
 
 
 
@@ -3328,7 +3705,7 @@ the presets collection.</p>
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-371">line 371</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-378">line 378</a>
 			</li>
 		</ul>
 	</dd>
@@ -3440,7 +3817,7 @@ the presets collection.</p>
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-228">line 228</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-235">line 235</a>
 			</li>
 		</ul>
 	</dd>
@@ -4845,7 +5222,7 @@ RGB visualization. Each array contains weights for each spectral band.</p>
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-301">line 301</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-308">line 308</a>
 			</li>
 		</ul>
 	</dd>
@@ -5308,7 +5685,7 @@ RGB visualization. Each array contains weights for each spectral band.</p>
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-268">line 268</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-275">line 275</a>
 			</li>
 		</ul>
 	</dd>
@@ -5688,7 +6065,7 @@ RGB visualization. Each array contains weights for each spectral band.</p>
 		<ul class="dummy">
 			<li>
 				<a href="LayerMultispectral.js.html">LayerMultispectral.js</a>,
-				 <a href="LayerMultispectral.js.html#sunlight-1-line-283">line 283</a>
+				 <a href="LayerMultispectral.js.html#sunlight-1-line-290">line 290</a>
 			</li>
 		</ul>
 	</dd>
@@ -6973,7 +7350,7 @@ RGB visualization. Each array contains weights for each spectral band.</p>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
 	
-		on 2025-04-16T13:33:30+00:00
+		on 2025-04-16T15:58:26+00:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

@@ -97,6 +97,7 @@
 import { Raster } from './Raster.js'
 import { ShaderMultispectral } from './ShaderMultispectral.js'
 import { Util } from './Util.js'
+import { Transform } from './Transform.js'
 
 /**
  * @typedef {Object} LayerMultispectralOptions
@@ -121,8 +122,8 @@ import { Util } from './Util.js'
  * - Multiple visualization modes (RGB, single band)
  * - UBO-optimized Color Twist Weights implementation for real-time spectral transformations
  * - Preset system for common visualization configurations (false color, etc.)
- * - Precise pixel access with texelFetch for scientific accuracy
- * - Multiple layout systems for various tiled image formats
+ * - Support for multiple image layouts and tiling schemes 
+ * - Compatible with both single images and tile-based formats (DeepZoom, etc.)
  * 
  * Technical implementation:
  * - Uses WebGL2 features for efficient processing
@@ -203,13 +204,15 @@ class LayerMultispectral extends Layer {
   imageUrl(url, filename) {
     let path = this.url.substring(0, this.url.lastIndexOf('/') + 1);
     switch (this.layout.type) {
-      case 'image': return path + filename + '.jpg'; break;
-      case 'google': return path + filename; break;
-      case 'deepzoom': return path + filename + '.dzi'; break;
-      case 'tarzoom': return path + filename + '.tzi'; break;
-      case 'itarzoom': return path + filename + '.tzi'; break;
-      case 'zoomify': return path + filename + '/ImageProperties.xml'; break;
-      case 'iip': return url; break;
+      case 'image': return path + filename + '.jpg';
+      case 'google': return path + filename;
+      case 'deepzoom':
+        // Special handling for multispectral deepzoom
+        return path + filename + '.dzi';
+      case 'tarzoom': return path + filename + '.tzi';
+      case 'itarzoom': return path + filename + '.tzi';
+      case 'zoomify': return path + filename + '/ImageProperties.xml';
+      case 'iip': return url;
       case 'iiif': throw new Error("Unimplemented");
       default: throw new Error("Unknown layout: " + this.layout.type);
     }
@@ -232,6 +235,7 @@ class LayerMultispectral extends Layer {
       if (this.layout.type == "iip") infoUrl = (this.server ? this.server + '?FIF=' : '') + url + "&amp;obj=description";
 
       this.info = await Util.loadJSON(infoUrl);
+      console.log("Multispectral info loaded:", this.info);
 
       // Check if basename is present
       if (!this.info.basename) {
@@ -251,11 +255,11 @@ class LayerMultispectral extends Layer {
       if (this.info.width &amp;&amp; this.info.height) {
         this.width = this.info.width;
         this.height = this.info.height;
-        this.shader.setTextureSize([this.width, this.height]);
       }
 
       // Get basename from info
       const baseName = this.info.basename;
+      console.log("Using basename:", baseName);
 
       // Create rasters and URLs array for each image
       const urls = [];
@@ -279,7 +283,9 @@ class LayerMultispectral extends Layer {
           const indexStr = p.toString().padStart(2, '0');
 
           // Generate URL for this image
-          urls.push(this.imageUrl(url, `${baseName}_${indexStr}`));
+          const imgUrl = this.imageUrl(url, `${baseName}_${indexStr}`);
+          urls.push(imgUrl);
+          console.log(`Plane ${p} URL: ${imgUrl}`);
         }
       }
 
@@ -293,7 +299,8 @@ class LayerMultispectral extends Layer {
       this.initDefault();
 
     } catch (e) {
-      console.log(e); this.status = e;
+      console.error("Error loading multispectral info:", e);
+      this.status = e;
     }
   }
 
@@ -512,9 +519,30 @@ class LayerMultispectral extends Layer {
     }
   }
 
+  /**
+   * Gets spectrum data for a specific pixel
+   * 
+   * For tiled formats, this method finds the appropriate tiles
+   * and reads the spectral values.
+   * 
+   * @param {number} x - X coordinate in image space
+   * @param {number} y - Y coordinate in image space  
+   * @returns {number[]} Array of spectral values (0-100)
+   */
   getSpectrum(x, y) {
+    // For tiled formats, we need a special approach
+    if (this.isTiledFormat()) {
+      return this.getTiledSpectrum(x, y);
+    }
+
+    // For standard formats, use the original approach
     const pixelData = this.getPixelValues(x, y);
     const spectrum = [];
+
+    if (!pixelData || pixelData.length === 0) {
+      return new Array(this.shader.nplanes).fill(0);
+    }
+
     for (let i = 0; i &lt; this.info.nplanes; i++) {
       const idx = Math.floor(i / 3);
       if (idx &lt; pixelData.length) {
@@ -522,11 +550,65 @@ class LayerMultispectral extends Layer {
         const pxIdx = i % 3;
         if (px &amp;&amp; pxIdx &lt; 3) {
           spectrum.push(px[pxIdx] / 255.0 * 100);
+        } else {
+          spectrum.push(0);
         }
+      } else {
+        spectrum.push(0);
       }
     }
     return spectrum;
   }
+
+  /**
+   * Checks if current layout is a tiled format
+   * @private
+   * @returns {boolean} True if using a tiled format
+   */
+  isTiledFormat() {
+    const tiledFormats = ['deepzoom', 'deepzoom1px', 'google', 'zoomify', 'iiif', 'tarzoom'];
+    return tiledFormats.includes(this.layout.type);
+  }
+
+  /**
+   * Gets spectrum data for a specific pixel
+   * 
+   * Uses the improved getPixelValues method from the base Layer class
+   * to obtain spectral values across all bands.
+   * 
+   * @param {number} x - X coordinate in image space
+   * @param {number} y - Y coordinate in image space  
+   * @returns {number[]} Array of spectral values (0-100)
+   */
+  getSpectrum(x, y) {
+    // Get pixel data from base Layer class method
+    const pixelData = this.getPixelValues(x, y);
+
+    // Create spectrum array for all planes
+    const spectrum = new Array(this.shader.nplanes).fill(0);
+
+    // If no data was returned, return empty spectrum
+    if (!pixelData || pixelData.length === 0) {
+      return spectrum;
+    }
+
+    // Convert pixel data to spectrum values
+    for (let i = 0; i &lt; this.shader.nplanes; i++) {
+      const idx = Math.floor(i / 3); // Which texture contains this band
+      const pxIdx = i % 3;           // Which channel (R, G, B) in the texture
+
+      if (idx &lt; pixelData.length) {
+        const px = pixelData[idx];
+        if (px &amp;&amp; pxIdx &lt; 3) {
+          // Convert to percentage (0-100)
+          spectrum[i] = px[pxIdx] / 255.0 * 100;
+        }
+      }
+    }
+
+    return spectrum;
+  }
+
 }
 
 /**
@@ -579,7 +661,7 @@ export { LayerMultispectral }</pre>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
 	
-		on 2025-04-16T13:33:30+00:00
+		on 2025-04-16T15:58:26+00:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
