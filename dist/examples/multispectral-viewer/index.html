@@ -208,26 +208,73 @@
       const maxWavelength = Math.max(...wavelengths);
 
       // Create a new chart with empty data
+      // 1. Prima assicuriamoci che il plugin sia registrato
+      // Aggiungi questa riga prima di creare il grafico
+      // Chart.register(ChartAnnotation); 
+
+      // 2. Alternativa: Aggiungi le linee verticali come dataset aggiuntivi (non richiede plugin esterni)
       spectralChart = new Chart(spectralPlotCanvas, {
         type: 'line',
         data: {
-          datasets: [{
-            label: 'Reflectance (%)',
-            data: Array(wavelengths.length).fill(null),
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderWidth: 2,
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            tension: 0.1
-          }]
+          datasets: [
+            // Dataset principale
+            {
+              label: 'Reflectance (%)',
+              data: Array(wavelengths.length).fill(null),
+              borderColor: 'rgb(75, 192, 192)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderWidth: 2,
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              tension: 0.1
+            },
+            // Linea rossa (630nm)
+            {
+              label: 'R (630nm)',
+              data: [
+                { x: 630, y: 0 },
+                { x: 630, y: 100 }
+              ],
+              borderColor: 'rgba(255, 0, 0, 0.7)',
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0,
+              pointHoverRadius: 0
+            },
+            // Linea verde (530nm)
+            {
+              label: 'G (530nm)',
+              data: [
+                { x: 530, y: 0 },
+                { x: 530, y: 100 }
+              ],
+              borderColor: 'rgba(0, 180, 0, 0.7)',
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0,
+              pointHoverRadius: 0
+            },
+            // Linea blu (450nm)
+            {
+              label: 'B (450nm)',
+              data: [
+                { x: 450, y: 0 },
+                { x: 450, y: 100 }
+              ],
+              borderColor: 'rgba(0, 0, 255, 0.7)',
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0,
+              pointHoverRadius: 0
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           animation: {
             duration: 400, // milliseconds
-            onComplete: function() {
+            onComplete: function () {
               // Change cursor back to normal when animation completes
               hideLoading();
             }
@@ -251,8 +298,8 @@
             },
             x: {
               type: 'linear',
-              min: Math.floor(minWavelength/100)*100,
-              max: Math.ceil(maxWavelength/100)*100,
+              min: Math.floor(minWavelength / 100) * 100,
+              max: Math.ceil(maxWavelength / 100) * 100,
               title: {
                 display: true,
                 text: 'Wavelength (nm)'
@@ -279,6 +326,11 @@
             tooltip: {
               callbacks: {
                 label: (context) => {
+                  // Non mostrare tooltip per le linee RGB
+                  if (context.datasetIndex > 0) {
+                    return context.dataset.label;
+                  }
+
                   if (context.raw === null || context.raw.y === null) {
                     return 'No data';
                   }
@@ -290,7 +342,20 @@
               }
             },
             legend: {
-              display: false
+              display: true,
+              position: 'top',
+              labels: {
+                filter: function (legendItem, chartData) {
+                  // Mostra solo le etichette per le linee RGB, non per il dataset principale
+                  return legendItem.datasetIndex > 0;
+                },
+                color: 'white',
+                boxWidth: 15,
+                padding: 10,
+                font: {
+                  size: 10
+                }
+              }
             }
           }
         }
@@ -387,13 +452,13 @@
         const layerSize = { w: layerbb.width(), h: layerbb.height() };
         const layerT = msLayer.transform;
         let { x, y } = OpenLIME.CoordinateSystem.fromCanvasHtmlToImage(
-          { x: e.offsetX, y: e.offsetY }, 
-          lime.camera, 
-          layerT, 
-          layerSize, 
+          { x: e.offsetX, y: e.offsetY },
+          lime.camera,
+          layerT,
+          layerSize,
           true
         );
-        
+
         if ((x >= 0 && x < msLayer.width) && (y >= 0 && y < msLayer.height)) {
           // Update the chart with new spectral data
           updateSpectralPlot({ x, y });
