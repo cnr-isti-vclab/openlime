@@ -42,7 +42,7 @@ class ShaderMultispectral extends Shader {
 
     // Set default properties
     Object.assign(this, {
-      debug: false,
+      debug: true,
       modes: ['rgb', 'single_band'],
       mode: 'rgb',
       wavelength: [],
@@ -329,7 +329,7 @@ vec4 data() {
       src += `
   // RGB mode - Linear combination with channel-specific normalization
   vec3 rgb = vec3(0.0);
-  
+  rgb = srgb2linear(rgb);
   // Normalize weights for each channel
   //float redNorm = normalizeCTWChannel(ctwRedVec4);
   //float greenNorm = normalizeCTWChannel(ctwGreenVec4);
@@ -361,7 +361,7 @@ vec4 data() {
   //    rgb /= maxVal;
   //}
 
-  //return srgb2linear(vec4(rgb, 1.0));
+  //return linear2srgb(vec4(rgb, 1.0));
   return vec4(rgb, 1.0);
 `;
     } else if (this.mode === 'single_band') {
@@ -374,7 +374,7 @@ vec4 data() {
   if (bandOutputChannel == 1) rgb = vec3(value, 0.0, 0.0);
   else if (bandOutputChannel == 2) rgb = vec3(0.0, value, 0.0);
   else if (bandOutputChannel == 3) rgb = vec3(0.0, 0.0, value);
-  
+  //return linear2srgb(vec4(rgb, 1.0));
   return vec4(rgb, 1.0);
 `;
     } else {
