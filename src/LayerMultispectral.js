@@ -76,7 +76,7 @@ class LayerMultispectral extends Layer {
     this.loadPresets();
 
     // Set default options
-    this.linearRaster = this.linearRaster !== undefined ? this.linearRaster : true;
+    this.linearRaster = true;
     this.defaultMode = this.defaultMode || 'single_band';
 
     // Create shader

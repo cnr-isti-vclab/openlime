@@ -329,7 +329,6 @@ vec4 data() {
       src += `
   // RGB mode - Linear combination with channel-specific normalization
   vec3 rgb = vec3(0.0);
-  rgb = srgb2linear(rgb);
   // Normalize weights for each channel
   //float redNorm = normalizeCTWChannel(ctwRedVec4);
   //float greenNorm = normalizeCTWChannel(ctwGreenVec4);
@@ -351,7 +350,7 @@ vec4 data() {
       }
 
       src += `
-  
+  rgb = srgb2linear(rgb);
   // Additional normalization to ensure output is in [0,1]
   //vec3 absRgb = abs(rgb);
   //float maxVal = max(max(absRgb.r, absRgb.g), absRgb.b);
@@ -361,8 +360,8 @@ vec4 data() {
   //    rgb /= maxVal;
   //}
 
-  //return linear2srgb(vec4(rgb, 1.0));
-  return vec4(rgb, 1.0);
+  return linear2srgb(vec4(rgb, 1.0));
+  //return vec4(rgb, 1.0);
 `;
     } else if (this.mode === 'single_band') {
       src += `
