@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenLIME - HDR Image Viewer</title>
+  <link rel="stylesheet" href="../../css/skin.css" />
+  <link rel="stylesheet" href="../../css/light.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+    
+    #viewer-container {
+      position: relative;
+      width: 100%;
+      height: 80vh;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .openlime {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 5px;
+      color: white;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .slider-container {
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+    }
+
+    label {
+      display: inline-block;
+      width: 120px;
+      font-weight: 500;
+    }
+
+    select,
+    input[type="range"] {
+      width: 200px;
+      margin-right: 10px;
+    }
+    
+    .value-display {
+      min-width: 40px;
+      text-align: right;
+      font-family: monospace;
+    }
+    
+    select {
+      padding: 5px;
+      border-radius: 3px;
+      border: none;
+    }
+    
+    #debug-console {
+      height: 150px;
+      width: 100%;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      margin-top: 20px;
+      font-size: 12px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .debug-section {
+      margin-top: 15px;
+      text-align: center;
+    }
+    
+    .debug-button {
+      margin: 0 5px;
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-weight: 500;
+    }
+    
+    .debug-button:hover {
+      background: #2980b9;
+    }
+    
+    footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>OpenLIME - 16-bit HDR TIFF Viewer</h1>
+  
+  <div id="viewer-container">
+    <div class="openlime"></div>
+
+    <div class="controls">
+      <div class="slider-container">
+        <label for="exposure">Exposure:</label>
+        <input type="range" id="exposure" min="-10" max="10" step="0.1" value="0">
+        <span id="exposure-value" class="value-display">0.0</span>
+      </div>
+      <div class="slider-container">
+        <label for="gamma">Gamma:</label>
+        <input type="range" id="gamma" min="0.5" max="3.0" step="0.1" value="2.2">
+        <span id="gamma-value" class="value-display">2.2</span>
+      </div>
+      <div class="slider-container">
+        <label for="white-point">White Point:</label>
+        <input type="range" id="white-point" min="0.1" max="5.0" step="0.1" value="1.0">
+        <span id="white-point-value" class="value-display">1.0</span>
+      </div>
+      <div class="slider-container">
+        <label for="tonemapping">Tone Mapping:</label>
+        <select id="tonemapping">
+          <option value="reinhard">Reinhard</option>
+          <option value="aces">ACES</option>
+          <option value="filmic">Filmic</option>
+          <option value="uncharted2">Uncharted 2</option>
+          <option value="raw">Raw</option>
+        </select>
+      </div>
+      <div class="slider-container">
+        <label for="debug-viz">Debug View:</label>
+        <input type="checkbox" id="debug-viz">
+      </div>
+    </div>
+  </div>
+  
+  <div class="debug-section">
+    <button id="check-gl" class="debug-button">Check WebGL</button>
+    <button id="check-shader" class="debug-button">Check Shader</button>
+    <button id="check-texture" class="debug-button">Check Texture</button>
+    <button id="clear-log" class="debug-button">Clear Log</button>
+  </div>
+  
+  <div id="debug-console">Initializing HDR viewer...</div>
+
+  <footer>
+    Powered by OpenLIME - HDR Module - r002fc3e2t.tiff © Sample image
+  </footer>
+
+  <!-- Load tiff.js for 16-bit TIFF support -->
+  <script src="https://cdn.jsdelivr.net/npm/tiff.js@2.0.0/dist/tiff.min.js"></script>
+
+  <!-- Load OpenLIME -->
+  <script src="../../js/openlime.js"></script>
+  
+  <!-- Include the TIFF loader as a script (not a module) -->
+  <script src="tiffLoader.js"></script>
+
+  <script>
+    // Console logger that outputs to UI
+    const logger = {
+      log: function(...args) {
+        const message = args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg) : arg
+        ).join(' ');
+        
+        const debugConsole = document.getElementById('debug-console');
+        const timestamp = new Date().toLocaleTimeString();
+        debugConsole.innerHTML += `[${timestamp}] ${message}\n`;
+        debugConsole.scrollTop = debugConsole.scrollHeight;
+        
+        console.log(...args);
+      },
+      error: function(...args) {
+        const message = args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg) : arg
+        ).join(' ');
+        
+        const debugConsole = document.getElementById('debug-console');
+        const timestamp = new Date().toLocaleTimeString();
+        debugConsole.innerHTML += `[${timestamp}] ERROR: ${message}\n`;
+        debugConsole.scrollTop = debugConsole.scrollHeight;
+        
+        console.error(...args);
+      }
+    };
+
+    // Verify TIFF accessibility
+    logger.log("Checking TIFF asset:", '../../assets/hdr/raise/r002fc3e2t.tiff');
+
+    fetch('../../assets/hdr/raise/r002fc3e2t.tiff')
+      .then(response => {
+        if (response.ok) {
+          logger.log("TIFF file is accessible");
+          initializeViewer();
+        } else {
+          logger.error("TIFF file not found!");
+          throw new Error("TIFF file not found");
+        }
+      })
+      .catch(error => {
+        logger.error("Error accessing TIFF file:", error);
+        // Try to initialize with fallback anyway
+        initializeViewer();
+      });
+
+    // Initialize the HDR viewer
+    function initializeViewer() {
+      logger.log("Creating OpenLIME viewer...");
+      
+      // Create main viewer
+      const lime = new OpenLIME.Viewer('.openlime');
+      
+      // Create HDR layer with debug enabled
+      logger.log("Creating HDR layer...");
+      const hdrLayer = new OpenLIME.LayerHDR({
+        url: '../../assets/hdr/raise/r002fc3e2t.tiff',
+        label: 'HDR TIFF Image',
+        visible: true,
+        format: 'rgb16ui',  // Use rgb16ui for 16-bit RGB unsigned integer data
+        debug: true,  // Enable debug output
+        dataLoader: async (tile, gl, options) => {
+          logger.log("Data loader called for:", tile.url);
+          try {
+            // Use our tiffLoader
+            return await tiffLoader(tile, gl, { debug: true });
+          } catch (error) {
+            logger.error("TIFF loading error:", error);
+            
+            // Create a fallback test image (red square)
+            const width = 256;
+            const height = 256;
+            const channels = 3;
+            const data = new Uint16Array(width * height * channels);
+            
+            // Fill with red (at 16-bit scale)
+            for (let i = 0; i < data.length; i += 3) {
+              data[i] = 65535;    // R (full intensity in 16-bit)
+              data[i + 1] = 0;    // G
+              data[i + 2] = 0;    // B
+            }
+            
+            logger.log("Created fallback red test image");
+            
+            return {
+              data: data,
+              width: width,
+              height: height,
+              channels: channels
+            };
+          }
+        },
+        hdrOptions: {
+          exposure: 0.0,
+          gamma: 2.2,
+          toneMapping: 'reinhard',
+          autoExposure: false
+        }
+      });
+      
+      // Add layer to viewer
+      lime.addLayer('HDR', hdrLayer);
+      
+      // Load skin for user interface
+      OpenLIME.Skin.setUrl('../../skin/skin.svg');
+      
+      // Create the user interface
+      const ui = new OpenLIME.UIBasic(lime);
+      
+      // Configure UI options
+      ui.actions.light.display = false;
+      ui.actions.zoomin.display = true;
+      ui.actions.zoomout.display = true;
+      ui.actions.snapshot.display = true;
+      ui.actions.ruler.display = true;
+      ui.attribution = 'r002fc3e2t.tiff © Sample HDR image';
+      
+      // Set up UI control handlers
+      document.getElementById('exposure').addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        document.getElementById('exposure-value').textContent = value.toFixed(1);
+        hdrLayer.setExposure(value);
+        logger.log(`Exposure set to: ${value.toFixed(1)}`);
+      });
+      
+      document.getElementById('gamma').addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        document.getElementById('gamma-value').textContent = value.toFixed(1);
+        hdrLayer.setGamma(value);
+        logger.log(`Gamma set to: ${value.toFixed(1)}`);
+      });
+      
+      document.getElementById('white-point').addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        document.getElementById('white-point-value').textContent = value.toFixed(1);
+        hdrLayer.setWhitePoint(value);
+        logger.log(`White point set to: ${value.toFixed(1)}`);
+      });
+      
+      document.getElementById('tonemapping').addEventListener('change', function() {
+        hdrLayer.setToneMapping(this.value);
+        logger.log(`Tone mapping set to: ${this.value}`);
+      });
+      
+      document.getElementById('debug-viz').addEventListener('change', function() {
+        hdrLayer.setDebugVisualization(this.checked);
+        logger.log(`Debug visualization ${this.checked ? 'enabled' : 'disabled'}`);
+      });
+      
+      // Add debug button handlers
+      document.getElementById('check-gl').addEventListener('click', function() {
+        if (!lime.canvas || !lime.canvas.gl) {
+          logger.error("WebGL context not available");
+          return;
+        }
+        
+        const gl = lime.canvas.gl;
+        logger.log("----- WebGL Context Info -----");
+        logger.log(`WebGL Version: ${gl instanceof WebGL2RenderingContext ? '2.0' : '1.0'}`);
+        logger.log(`Vendor: ${gl.getParameter(gl.VENDOR)}`);
+        logger.log(`Renderer: ${gl.getParameter(gl.RENDERER)}`);
+        logger.log(`Max Texture Size: ${gl.getParameter(gl.MAX_TEXTURE_SIZE)}`);
+        
+        // Check for required extensions
+        const extensions = [
+          'OES_texture_float',
+          'OES_texture_half_float',
+          'EXT_color_buffer_float',
+          'OES_texture_float_linear',
+          'OES_texture_half_float_linear'
+        ];
+        
+        logger.log("WebGL Extensions:");
+        extensions.forEach(ext => {
+          const supported = gl.getExtension(ext) ? 'Supported' : 'Not Supported';
+          logger.log(`- ${ext}: ${supported}`);
+        });
+      });
+      
+      document.getElementById('check-shader').addEventListener('click', function() {
+        if (!hdrLayer.shader) {
+          logger.error("Shader not available");
+          return;
+        }
+        
+        logger.log("----- Shader Info -----");
+        logger.log(`Shader Mode: ${hdrLayer.shader.mode}`);
+        logger.log(`Available Modes: ${hdrLayer.shader.modes.join(', ')}`);
+        logger.log(`Needs Update: ${hdrLayer.shader.needsUpdate}`);
+        
+        // Check uniforms
+        logger.log("Shader Uniforms:");
+        Object.entries(hdrLayer.shader.uniforms).forEach(([name, uniform]) => {
+          logger.log(`- ${name}: ${uniform.value} (type: ${uniform.type})`);
+        });
+      });
+      
+      document.getElementById('check-texture').addEventListener('click', function() {
+        if (!hdrLayer.tiles || hdrLayer.tiles.size === 0) {
+          logger.error("No tiles loaded");
+          return;
+        }
+        
+        logger.log("----- Texture Info -----");
+        logger.log(`Tiles count: ${hdrLayer.tiles.size}`);
+        
+        // Check first tile
+        let count = 0;
+        for (const [key, tile] of hdrLayer.tiles.entries()) {
+          if (count > 2) break; // Only show first few tiles
+          
+          logger.log(`Tile ${key}:`);
+          logger.log(`- Missing textures: ${tile.missing}`);
+          logger.log(`- Has textures: ${tile.tex && tile.tex.length > 0}`);
+          if (tile.tex && tile.tex.length > 0) {
+            logger.log(`- Texture count: ${tile.tex.length}`);
+          }
+          count++;
+        }
+      });
+      
+      document.getElementById('clear-log').addEventListener('click', function() {
+        document.getElementById('debug-console').innerHTML = '';
+        logger.log("Log cleared");
+      });
+      
+      // Handle layer events
+      hdrLayer.addEvent('ready', () => {
+        logger.log('HDR layer ready');
+      });
+      
+      hdrLayer.addEvent('update', () => {
+        logger.log('HDR layer update');
+      });
+      
+      hdrLayer.addEvent('loaded', () => {
+        logger.log('HDR layer fully loaded');
+      });
+      
+      // Handle errors
+      window.addEventListener('error', (event) => {
+        logger.error(`Global error: ${event.message}`);
+      });
+    }
+  </script>
+</body>
+
+</html>
