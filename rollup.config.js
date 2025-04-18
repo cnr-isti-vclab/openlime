@@ -37,6 +37,7 @@ const core = [
 	'./src/LayoutTiles.js',
 	'./src/LayoutTileImages.js',
 	'./src/Raster.js',
+	'./src/Raster16Bit.js',
 	'./src/ShaderFilter.js',
 	'./src/ShaderFilterColormap.js',
 	'./src/ShaderFilterVector.js',
@@ -55,7 +56,10 @@ const core = [
 	'./src/GeoreferenceManager.js',
 	'./src/LayerMultispectral.js',
 	'./src/ShaderMultispectral.js',
-	'./src/MultispectralUI.js'
+	'./src/MultispectralUI.js',
+	'./src/LayerHDR.js',
+	'./src/LayoutHDR.js',
+	'./src/ShaderHDR.js'
 ];
 
 const ui = [
