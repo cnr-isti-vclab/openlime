@@ -280,16 +280,22 @@ class LayerLens extends LayerCombiner {
 			this.layout.height = viewport.h;
 			this.createFramebuffers();
 		}
+		
 		var b = [0, 0, 0, 0];
 		gl.clearColor(b[0], b[1], b[2], b[3]);
+
+		// Save the active framebuffer from Canvas before drawing
+		const activeFramebuffer = this.canvas.getActiveFramebuffer();
 
 		// Draw the layers only within the viewport enclosing the lens
 		for (let i = 0; i < this.layers.length; i++) {
 			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
 			gl.clear(gl.COLOR_BUFFER_BIT);
 			this.layers[i].draw(transform, lensViewport);
-			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		}
+
+		// Restore the active framebuffer from Canvas
+		this.canvas.setActiveFramebuffer(activeFramebuffer);
 
 		// Set in the lensShader the proper lens position wrt the window viewport
 		const vl = this.getLensInViewportCoords(transform, viewport);

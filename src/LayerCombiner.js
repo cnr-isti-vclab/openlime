@@ -158,6 +158,9 @@ class LayerCombiner extends Layer {
 		var b = [0, 0, 0, 0];
 		gl.clearColor(b[0], b[1], b[2], b[3]);
 
+		// Salva il framebuffer attivo prima di iniziare le operazioni
+		const activeFramebuffer = this.canvas.getActiveFramebuffer();
+
 		//TODO optimize: render to texture ONLY if some parameters change!
 		//provider di textures... max memory and reference counting.
 
@@ -165,8 +168,10 @@ class LayerCombiner extends Layer {
 			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
 			gl.clear(gl.COLOR_BUFFER_BIT);
 			this.layers[i].draw(transform, { x: 0, y: 0, dx: w, dy: h, w: w, h: h });
-			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		}
+
+		// Ripristina il framebuffer attivo di Canvas per il rendering finale
+		this.canvas.setActiveFramebuffer(activeFramebuffer);
 
 		this.prepareWebGL();
 
@@ -180,6 +185,8 @@ class LayerCombiner extends Layer {
 			new Float32Array([-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0]),
 			new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]));
 		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+
+		// Non reimpostiamo il framebuffer a null poiché lo abbiamo già fatto con setActiveFramebuffer
 	}
 
 	/**
@@ -210,20 +217,18 @@ class LayerCombiner extends Layer {
 			const framebuffer = gl.createFramebuffer();
 			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+
+			// Verifica che il framebuffer sia completo
+			const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+			if (status !== gl.FRAMEBUFFER_COMPLETE) {
+				console.error("LayerCombiner framebuffer not complete. Status:", status);
+			}
+
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
 			this.textures[i] = texture;
 			this.framebuffers[i] = framebuffer;
 		}
-	}
-
-	//TODO release textures and framebuffers
-	/**
-	 * Cleans up framebuffer and texture resources
-	 * Should be called when resizing or destroying the layer
-	 * @private
-	 */
-	deleteFramebuffers() {
 	}
 
 	/**
