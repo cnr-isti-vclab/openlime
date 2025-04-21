@@ -260,11 +260,23 @@ class Camera {
 	/**
 	 * Gets the camera transform at a specific time.
 	 * @param {number} time - Current time in milliseconds (from performance.now())
-	 * @returns {Transform} The interpolated transform at the specified time
+	 * @returns {Transform} The interpolated transform at the specified time with isComplete flag
 	 */
 	getCurrentTransform(time) {
 		if (time > this.target.t) this.easing = 'linear';
 		return Transform.interpolate(this.source, this.target, time, this.easing);
+	}
+
+	/**
+	* Checks if the camera animation has completed.
+	* @param {Transform} currentTransform - The current transform (optional, will be calculated if not provided)
+	* @returns {boolean} True if the camera has reached its target position
+	*/
+	hasReachedTarget(currentTransform) {
+		if (!currentTransform) {
+			currentTransform = this.getCurrentTransform(performance.now());
+		}
+		return currentTransform.isComplete;
 	}
 
 	/**

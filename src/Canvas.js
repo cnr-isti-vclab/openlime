@@ -490,8 +490,8 @@ class Canvas {
 			this.drawOffscreenToCanvas();
 		}
 
-		//TODO not really an elegant solution to tell if we have reached the target, the check should be in getCurrentTransform.
-		return done && pos.t >= this.camera.target.t;
+		// Use the isComplete flag from the transform instead of direct time comparison
+		return done && pos.isComplete;
 	}
 
 	/**
