@@ -337,7 +337,6 @@ class ShaderFilterGrayscale extends ShaderFilter {
                 if(!${this.uniformName('enable')}) return col;
                 // Skip processing if fully transparent
                 if (col.a <= 0.0) return col;
-                col = srgb2linear(col);
                 float gray;
                 
                 // Use the active grayscale mode
@@ -348,7 +347,7 @@ class ShaderFilterGrayscale extends ShaderFilter {
                 // Apply grayscale conversion
                 vec3 grayRGB = vec3(gray);
                 
-                return linear2srgb(vec4(grayRGB, col.a));
+                return vec4(grayRGB, col.a);
             }`;
     }
 
@@ -437,7 +436,6 @@ class ShaderFilterBrightness extends ShaderFilter {
                 if (col.a <= 0.0) return col;
                 
                 // Convert to linear space for proper brightness adjustment
-                col = srgb2linear(col);
                 vec3 adjustedColor;
                 
                 // Use the active brightness mode
@@ -449,7 +447,7 @@ class ShaderFilterBrightness extends ShaderFilter {
                 adjustedColor = clamp(adjustedColor, 0.0, 1.0);
                 
                 // Convert back to sRGB space
-                return linear2srgb(vec4(adjustedColor, col.a));
+                return vec4(adjustedColor, col.a);
             }`;
     }
 

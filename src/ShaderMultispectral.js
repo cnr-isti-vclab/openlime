@@ -295,7 +295,8 @@ float getBand(int bandIndex) {
       src += `    if (bandIndex == ${i}) result = texture(plane${planeIndex}, v_texcoord).${channelComponent};\n`;
     }
 
-    src += `    
+    src += `
+   ${this.isLinear ? "" : "result = srgb2linear(result);"}      
   return result; // Default return for out-of-range bands
 }
 
@@ -350,7 +351,6 @@ vec4 data() {
       }
 
       src += `
-  rgb = srgb2linear(rgb);
   // Additional normalization to ensure output is in [0,1]
   //vec3 absRgb = abs(rgb);
   //float maxVal = max(max(absRgb.r, absRgb.g), absRgb.b);
@@ -360,8 +360,7 @@ vec4 data() {
   //    rgb /= maxVal;
   //}
 
-  return linear2srgb(vec4(rgb, 1.0));
-  //return vec4(rgb, 1.0);
+  return vec4(rgb, 1.0);
 `;
     } else if (this.mode === 'single_band') {
       src += `
@@ -373,7 +372,6 @@ vec4 data() {
   if (bandOutputChannel == 1) rgb = vec3(value, 0.0, 0.0);
   else if (bandOutputChannel == 2) rgb = vec3(0.0, value, 0.0);
   else if (bandOutputChannel == 3) rgb = vec3(0.0, 0.0, value);
-  //return linear2srgb(vec4(rgb, 1.0));
   return vec4(rgb, 1.0);
 `;
     } else {

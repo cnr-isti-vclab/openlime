@@ -44,15 +44,15 @@ class ShaderAnisotropicDiffusion extends Shader {
     if (options.kappa !== undefined) {
       this.setUniform('kappa', options.kappa);
     }
-    
+
     if (options.iterations !== undefined) {
       this.setUniform('iterations', options.iterations);
     }
-    
+
     if (options.lambda !== undefined) {
       this.setUniform('lambda', options.lambda);
     }
-    
+
     if (options.normalStrength !== undefined) {
       this.setUniform('normalStrength', options.normalStrength);
     }
@@ -94,7 +94,7 @@ float normalToGray(vec3 normal) {
 vec4 data() {
   // Sample the center pixel color (normal map)
   vec4 centerColor = texture(source, v_texcoord);
-  
+  ${this.isLinear ? "" : "centerColor = srgb2linear(centerColor);"}
   // Convert normal to working grayscale image
   // Adjust normal vector to be in [-1,1] range
   vec3 normal = centerColor.rgb * 2.0 - 1.0;
@@ -115,10 +115,19 @@ vec4 data() {
     if (i >= iterations) break; // Handle dynamic loop limit
     
     // Sample the 4-connected neighborhood
-    vec3 normalN = texture(source, v_texcoord + texelSize * vec2(0.0, -1.0)).rgb * 2.0 - 1.0;
-    vec3 normalS = texture(source, v_texcoord + texelSize * vec2(0.0, 1.0)).rgb * 2.0 - 1.0;
-    vec3 normalE = texture(source, v_texcoord + texelSize * vec2(1.0, 0.0)).rgb * 2.0 - 1.0;
-    vec3 normalW = texture(source, v_texcoord + texelSize * vec2(-1.0, 0.0)).rgb * 2.0 - 1.0;
+    vec4 vN = texture(source, v_texcoord + texelSize * vec2(0.0, -1.0));
+     ${this.isLinear ? "" : "vN = srgb2linear(vN);"}
+    vec4 vS = texture(source, v_texcoord + texelSize * vec2(0.0, 1.0));
+     ${this.isLinear ? "" : "vS = srgb2linear(vS);"}
+    vec4 vE = texture(source, v_texcoord + texelSize * vec2(1.0, 0.0));
+     ${this.isLinear ? "" : "vE = srgb2linear(vE);"}
+    vec4 vW = texture(source, v_texcoord + texelSize * vec2(-1.0, 0.0));
+     ${this.isLinear ? "" : "vW = srgb2linear(vW);"}
+
+    vec3 normalN = vN.rgb * 2.0 - 1.0;
+    vec3 normalS = vS.rgb * 2.0 - 1.0;
+    vec3 normalE = vE.rgb * 2.0 - 1.0;
+    vec3 normalW = vW.rgb * 2.0 - 1.0;
     
     // Convert to grayscale with normalization to 0-1 range
     float n = (normalToGray(normalN) + 1.0) * 0.5;

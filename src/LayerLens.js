@@ -72,6 +72,8 @@ class LayerLens extends LayerCombiner {
 			borderWidth: 12,
 			borderEnable: false,
 			dashboard: null,
+			isLinear: true,
+			isSrgbSimplified: true
 		}, options);
 		super(options);
 
@@ -280,7 +282,7 @@ class LayerLens extends LayerCombiner {
 			this.layout.height = viewport.h;
 			this.createFramebuffers();
 		}
-		
+
 		var b = [0, 0, 0, 0];
 		gl.clearColor(b[0], b[1], b[2], b[3]);
 

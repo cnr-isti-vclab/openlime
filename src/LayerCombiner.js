@@ -75,6 +75,11 @@ class LayerCombiner extends Layer {
 	 * @throws {Error} If rasters option is not empty (rasters should be defined in source layers)
 	 */
 	constructor(options) {
+		options = Object.assign({
+			isLinear: true,
+			isSrgbSimplified: true
+		}, options);
+
 		super(options);
 
 		if (Object.keys(this.rasters).length != 0)

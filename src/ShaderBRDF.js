@@ -247,11 +247,12 @@ vec4 data() {
 	vec3 B = normalize(cross(N,T));
 	float spec = ward(V, L, N, T, B, alpha);
 	
-	bool applyGamma = true;
+	bool applyGamma = false;
 
 	${this.innerCode}
 
 	vec3 finalColor = applyGamma ? pow(linearColor * uBrightnessGamma[0], vec3(1.0/uBrightnessGamma[1])) : linearColor;
+
 	return vec4(finalColor, 1.0);
 }
 `;

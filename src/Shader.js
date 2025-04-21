@@ -38,9 +38,15 @@ class Shader {
 	 * @param {string} [options.label=null] - Display label for the shader
 	 * @param {Array<string>} [options.modes=[]] - Available shader modes
 	 * @param {boolean} [options.debug=false] - Enable debug output
+	 * @param {boolean} [options.isLinear=false] - Whether the shader works in linear color space
+	 * @param {boolean} [options.isSrgbSimplified=true] - Use simplified gamma 2.2 conversion instead of IEC standard
 	 * @fires Shader#update
 	 */
 	constructor(options) {
+		options = Object.assign({
+			isLinear: false,
+			isSrgbSimplified: true
+		}, options);
 		Object.assign(this, {
 			debug: false,
 			samplers: [],
@@ -117,7 +123,8 @@ class Shader {
 
 	/**
 	 * Sets tile dimensions for shader calculations.
-	 * @param {number[]} size - [width, height] of tile
+	 * @param {number[]} size - [width, height] of tile in pixels
+	 * @fires Shader#update
 	 */
 	setTileSize(sz) {
 		this.tileSize = sz;
@@ -157,14 +164,57 @@ class Shader {
 		this.emit('update');
 	}
 
-	/** @ignore */
+	/**
+	 * Builds complete fragment shader source with all necessary components.
+	 * Includes GLSL version, precision statements, conversion functions,
+	 * and incorporates filters.
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
+	 * @returns {string} Complete fragment shader source code
+	 * @private
+	 */
 	completeFragShaderSrc(gl) {
 		let src = '#version 300 es\n';
 		src += `precision highp float;\n`;
 		src += `precision highp int;\n`;
 		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
 
-		src += `
+		// Choose between simplified (gamma 2.2) or standard IEC 61966-2-1 conversion
+		if (this.isSrgbSimplified) {
+			src += `
+// Simplified sRGB to linear conversion using gamma 2.2
+// Convert from sRGB to linear RGB
+vec3 srgb2linear(vec3 srgb) {
+    return pow(srgb, vec3(2.2));
+}
+
+// Convert from sRGB to linear RGB (vec4 version - preserves alpha)
+vec4 srgb2linear(vec4 srgb) {
+    return vec4(srgb2linear(srgb.rgb), srgb.a);
+}
+
+// Convert a single sRGB channel to linear
+float srgb2linear(float c) {
+    return pow(c, 2.2);
+}
+
+// Simplified linear to sRGB conversion using gamma 1/2.2
+// Convert from linear RGB to sRGB
+vec3 linear2srgb(vec3 linear) {
+    return pow(linear, vec3(1.0/2.2));
+}
+
+// Convert from linear RGB to sRGB (vec4 version - preserves alpha)
+vec4 linear2srgb(vec4 linear) {
+    return vec4(linear2srgb(linear.rgb), linear.a);
+}
+
+// Convert a single linear channel to sRGB
+float linear2srgb(float c) {
+    return pow(c, 1.0/2.2);
+}
+`;
+		} else {
+			src += `
 // IEC 61966-2-1 specification		
 // Convert from sRGB to linear RGB
 vec3 srgb2linear(vec3 srgb) {
@@ -185,10 +235,11 @@ float srgb2linear(float c) {
     return c <= 0.04045 ? c/12.92 : pow((c + 0.055)/1.055, 2.4);
 }
 
+// IEC 61966-2-1 specification
 // Convert from linear RGB to sRGB
 vec3 linear2srgb(vec3 linear) {
     bvec3 cutoff = lessThan(linear, vec3(0.0031308));
-    vec3 higher = vec3(1.055)*pow(linear, vec3(1.0/2.4)) - vec3(0.055);
+    vec3 higher = vec3(1.055) * pow(linear, vec3(1.0/2.4)) - vec3(0.055);
     vec3 lower = linear * vec3(12.92);
     
     return mix(higher, lower, cutoff);
@@ -201,10 +252,11 @@ vec4 linear2srgb(vec4 linear) {
 
 // Convert a single linear channel to sRGB
 float linear2srgb(float c) {
-    return c <= 0.0031308 ? 12.92 * c : 1.055 * pow(c, 1.0/2.4) - 0.055;
+    return c <= 0.0031308 ? c * 12.92 : 1.055 * pow(c, 1.0/2.4) - 0.055;
 }
+`;
+		}
 
-		`
 		if (this.autoSamplerDeclaration) {
 			for (let sampler of this.samplers) {
 				src += `uniform sampler2D ${sampler.name};\n`;
@@ -226,10 +278,10 @@ float linear2srgb(float c) {
 		}
 
 		src += `
-		out vec4 color;
-		void main() { 
-			color = data();
-			`;
+	out vec4 color;
+	void main() { 
+		color = data();
+		`;
 		for (let f of this.filters) {
 			src += `color=${f.functionName()}(color);\n`
 		}
@@ -414,7 +466,8 @@ in vec2 v_texcoord;
 
 vec4 data() {
 	vec4 color = texture(source, v_texcoord);
-	return linear2srgb(color);
+	${this.isLinear ? "" : "color = srgb2linear(color);"}
+	return color;
 }
 `;
 		return str;

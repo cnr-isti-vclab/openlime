@@ -30,13 +30,11 @@ class Raster {
 	 *   - 'vec3' for RGB images
 	 *   - 'vec4' for RGBA images
 	 *   - 'float' for coefficient data
-	 * @param {boolean} [options.isLinear='false'] - Whether the input file is linear or sRGB
 	 */
 	constructor(options) {
 
 		Object.assign(this, {
-			format: 'vec3',
-			isLinear: false
+			format: 'vec3'
 		});
 
 		this._texture = null;
@@ -158,14 +156,11 @@ class Raster {
 		}
 
 		// For WebGL2, use proper internal format for linear textures
-
 		if (this.format === 'float') {
 			// For float textures in WebGL2, use R8 as internal format
 			internalFormat = gl.R8;
 		} else {
-			internalFormat = this.isLinear ?
-				(glFormat === gl.RGB ? gl.RGB : gl.RGBA) :
-				(glFormat === gl.RGB ? gl.SRGB8 : gl.SRGB8_ALPHA8);
+			internalFormat = glFormat === gl.RGB ? gl.RGB : gl.RGBA;
 		}
 		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
 
@@ -180,8 +175,6 @@ class Raster {
 		}
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		// Store color space information on the texture
-		tex.isLinear = this.isLinear;
 		this._texture = tex;
 		return tex;
 	}
@@ -191,7 +184,7 @@ class Raster {
  * Example usage of Raster:
  * ```javascript
  * // Create a Raster for RGBA images
- * const raster = new Raster({ format: 'vec4', isLinear: false });
+ * const raster = new Raster({ format: 'vec4' });
  * 
  * // Load an image tile
  * const tile = {

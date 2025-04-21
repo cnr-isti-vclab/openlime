@@ -89,6 +89,12 @@ class Layer {
 	*/
 	constructor(options) {
 		//create from derived class if type specified
+		options = Object.assign({
+			isLinear: false,
+			isSrgbSimplified: true
+		}, options);
+
+
 		if (options.type) {
 			let type = options.type;
 			delete options.type;
@@ -251,7 +257,8 @@ class Layer {
 		if (id in this.shaders) {
 			throw new Error(`Shader with id '${id}' already exists`);
 		}
-
+		shader.isLinear = this.isLinear;
+		shader.isSrgbSimplified = this.isSrgbSimplified;
 		this.shaders[id] = shader;
 
 		// If this is the first shader, set it as active
@@ -418,6 +425,8 @@ class Layer {
 		if (!id in this.shaders)
 			throw "Unknown shader: " + id;
 		this.shader = this.shaders[id];
+		this.shader.isLinear = this.isLinear;
+		this.shader.isSrgbSimplified = this.isSrgbSimplified;
 		this.setupTiles();
 		this.shader.addEvent('update', () => { this.emit('update'); });
 	}

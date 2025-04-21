@@ -44,6 +44,7 @@ class Canvas {
 			timingLength: 5, //max number of timings.
 			overBudget: 0, //fraction of frames that took too long to render.
 			srgb: true,     // Enable sRGB color space by default
+			isSrgbSimplified: true,
 			stencil: false, // Disable stencil buffer by default
 			useOffscreenFramebuffer: true, // Use offscreen framebuffer by default
 
@@ -519,16 +520,33 @@ class Canvas {
 			`;
 
 			// Fragment shader
-			const fsSource = `#version 300 es
-				precision highp float;
-				in vec2 vTexCoord;
-				uniform sampler2D uTexture;
-				out vec4 fragColor;
-				
-				void main() {
-					fragColor = texture(uTexture, vTexCoord);
-				}
-			`;
+			let fsSource = `#version 300 es
+			precision highp float;
+			in vec2 vTexCoord;
+			uniform sampler2D uTexture;
+			out vec4 fragColor;`;
+
+			if (this.isSrgbSimplified) {
+				fsSource += `
+			vec4 linear2srgb(vec4 linear) {
+				return vec4(pow(linear.rgb, vec3(1.0/2.2)), linear.a);
+			}`;
+			} else {
+				fsSource += `
+			vec4 linear2srgb(vec4 linear) {
+				bvec3 cutoff = lessThan(linear.rgb, vec3(0.0031308));
+				vec3 higher = vec3(1.055) * pow(linear.rgb, vec3(1.0/2.4)) - vec3(0.055);
+				vec3 lower = linear.rgb * vec3(12.92);
+				return vec4(mix(higher, lower, cutoff), linear.a);
+			}`;
+			}
+
+			fsSource += `
+		void main() {
+			fragColor = texture(uTexture, vTexCoord);
+			fragColor = linear2srgb(fragColor);
+			fragColor = clamp(fragColor, 0.0, 1.0);
+		}`;
 
 			// Create shader program
 			const vertexShader = this._createShader(gl, gl.VERTEX_SHADER, vsSource);
