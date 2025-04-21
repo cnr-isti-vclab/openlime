@@ -256,30 +256,38 @@ class Transform { //FIXME Add translation to P?
 	}
 
 	/**
-	 * Interpolates between two transforms
-	 * @param {Transform} source - Starting transform
-	 * @param {Transform} target - Ending transform
-	 * @param {number} time - Current time for interpolation
-	 * @param {EasingFunction} easing - Easing function type
-	 * @returns {Transform} Interpolated transform
-	 * @static
-	 * 
-	 * @example
-	 * ```javascript
-	 * const start = new Transform({x: 0, y: 0});
-	 * const end = new Transform({x: 100, y: 100});
-	 * const mid = Transform.interpolate(start, end, 500, 'ease-out');
-	 * ```
+	 * Checks if the transform has reached its target state for animation
+	 * @param {number} currentTime - Current time in milliseconds
+	 * @returns {boolean} True if animation is complete (reached target)
 	 */
+	isAtTarget(currentTime) {
+		return currentTime >= this.t;
+	}
+
+	// Also, let's modify the static interpolate method to return a flag indicating completion
+	/**
+	* Interpolates between two transforms
+	* @param {Transform} source - Starting transform
+	* @param {Transform} target - Ending transform
+	* @param {number} time - Current time for interpolation
+	* @param {EasingFunction} easing - Easing function type
+	* @returns {Transform} Interpolated transform with isComplete property
+	* @static
+	*/
 	static interpolate(source, target, time, easing) { //FIXME STATIC
 		console.assert(!isNaN(source.x));
 		console.assert(!isNaN(target.x));
 		const pos = new Transform();
 		let dt = (target.t - source.t);
+
+		// Add a property to indicate if we've reached the target
+		pos.isComplete = false;
+
 		if (time < source.t) {
 			Object.assign(pos, source);
 		} else if (time > target.t || dt < 0.001) {
 			Object.assign(pos, target);
+			pos.isComplete = true; // Mark as complete
 		} else {
 			let tt = (time - source.t) / dt;
 			switch (easing) {
@@ -293,7 +301,7 @@ class Transform { //FIXME Add translation to P?
 		pos.t = time;
 		return pos;
 	}
-
+	
 	/**
 	 * Generates WebGL projection matrix
 	 * Combines transform with viewport for rendering
