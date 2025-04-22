@@ -144,6 +144,12 @@ class Canvas {
 		canvas.addEventListener("webglcontextlost", (event) => { console.log("Context lost."); event.preventDefault(); }, false);
 		canvas.addEventListener("webglcontextrestored", () => { this.restoreWebGL(); }, false);
 		document.addEventListener("visibilitychange", (event) => { if (this.gl.isContextLost()) { this.restoreWebGL(); } });
+
+		this.hasFloatRender = !!this.gl.getExtension('EXT_color_buffer_float');
+		this.hasLinearFloat = !!this.gl.getExtension('OES_texture_float_linear');
+
+		console.log('Support for rendering to float textures:', hasFloatRender);
+		console.log('Support for linear filtering on float textures:', hasLinearFloat);
 	}
 
 	/**
