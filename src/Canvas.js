@@ -148,8 +148,8 @@ class Canvas {
 		this.hasFloatRender = !!this.gl.getExtension('EXT_color_buffer_float');
 		this.hasLinearFloat = !!this.gl.getExtension('OES_texture_float_linear');
 
-		console.log('Support for rendering to float textures:', hasFloatRender);
-		console.log('Support for linear filtering on float textures:', hasLinearFloat);
+		console.log('Support for rendering to float textures:', this.hasFloatRender);
+		console.log('Support for linear filtering on float textures:', this.hasLinearFloat);
 	}
 
 	/**
