@@ -1,125 +1,5 @@
-// Modified Shader.js with transparent caching
-// Original class structure preserved with added caching mechanism
-
 import { addSignals } from './Signals.js'
 import { Util } from './Util.js'
-
-/**
- * Internal shader cache for storing compiled programs
- * @private
- */
-const _shaderCache = {
-	programs: new Map(),
-	// Cache statistics
-	hits: 0,
-	misses: 0,
-
-	/**
-	 * Generates a cache key for a shader
-	 * @param {Shader} shader - The shader instance
-	 * @param {string} vertSrc - Vertex shader source
-	 * @param {string} fragSrc - Fragment shader source
-	 * @returns {string} Cache key
-	 */
-	generateKey(shader, vertSrc, fragSrc) {
-		// Create a cache key based on combined shader source
-		// Use a simple hash function to keep keys short
-		return Util.simpleHash(shader.mode + vertSrc + fragSrc);
-	},
-
-	/**
-	 * Gets a cached program if available
-	 * @param {Shader} shader - The shader instance
-	 * @param {WebGL2RenderingContext} gl - The WebGL context
-	 * @param {string} vertSrc - Vertex shader source
-	 * @param {string} fragSrc - Fragment shader source
-	 * @returns {WebGLProgram|null} Cached program or null if not found
-	 */
-	getProgram(shader, gl, vertSrc, fragSrc) {
-		const key = this.generateKey(shader, vertSrc, fragSrc);
-		const cached = this.programs.get(key);
-
-		if (cached && gl.isProgram(cached.program)) {
-			this.hits++;
-			return cached.program;
-		}
-
-		this.misses++;
-		return null;
-	},
-
-	/**
-	 * Stores a compiled program in the cache
-	 * @param {Shader} shader - The shader instance
-	 * @param {WebGL2RenderingContext} gl - The WebGL context
-	 * @param {string} vertSrc - Vertex shader source
-	 * @param {string} fragSrc - Fragment shader source
-	 * @param {WebGLProgram} program - The compiled WebGL program
-	 */
-	storeProgram(shader, gl, vertSrc, fragSrc, program) {
-		const key = this.generateKey(shader, vertSrc, fragSrc);
-
-		// Store with creation timestamp for potential cache management
-		this.programs.set(key, {
-			program,
-			timestamp: Date.now()
-		});
-
-		// Implement simple cache size management
-		this._manageCache();
-	},
-
-	/**
-	 * Manages cache size to prevent unbounded growth
-	 * @private
-	 */
-	_manageCache() {
-		// Limit cache to reasonable size (e.g., 50 programs)
-		const MAX_CACHE_SIZE = 50;
-
-		if (this.programs.size > MAX_CACHE_SIZE) {
-			// Find and remove oldest entries
-			let entries = Array.from(this.programs.entries());
-			entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
-
-			// Remove oldest entries
-			const toRemove = entries.slice(0, entries.length - MAX_CACHE_SIZE);
-			for (const [key] of toRemove) {
-				this.programs.delete(key);
-			}
-		}
-	},
-
-	/**
-	 * Clears the entire shader cache
-	 * @param {WebGL2RenderingContext} [gl] - The WebGL context for proper cleanup
-	 */
-	clear(gl) {
-		if (gl) {
-			// Properly delete WebGL programs
-			for (const { program } of this.programs.values()) {
-				gl.deleteProgram(program);
-			}
-		}
-
-		this.programs.clear();
-		this.hits = 0;
-		this.misses = 0;
-	},
-
-	/**
-	 * Get cache statistics
-	 * @returns {Object} Cache statistics object
-	 */
-	getStats() {
-		return {
-			size: this.programs.size,
-			hits: this.hits,
-			misses: this.misses,
-			hitRate: this.hits / (this.hits + this.misses || 1)
-		};
-	}
-};
 
 /**
 * @typedef {Object} Shader~Sampler
@@ -160,14 +40,12 @@ class Shader {
 	 * @param {boolean} [options.debug=false] - Enable debug output
 	 * @param {boolean} [options.isLinear=false] - Whether the shader works in linear color space
 	 * @param {boolean} [options.isSrgbSimplified=true] - Use simplified gamma 2.2 conversion instead of IEC standard
-	 * @param {boolean} [options.useCache=true] - Whether to use shader program caching
 	 * @fires Shader#update
 	 */
 	constructor(options) {
 		options = Object.assign({
 			isLinear: false,
-			isSrgbSimplified: true,
-			useCache: true
+			isSrgbSimplified: true
 		}, options);
 		Object.assign(this, {
 			debug: false,
@@ -179,8 +57,7 @@ class Shader {
 			mode: null, // The current mode
 			needsUpdate: true,
 			autoSamplerDeclaration: true,
-			tileSize: [0, 0],
-			useCache: true
+			tileSize: [0, 0]
 		});
 		addSignals(Shader, 'update');
 		Object.assign(this, options);
@@ -419,61 +296,38 @@ float linear2srgb(float c) {
 	 * @throws {Error} If shader compilation or linking fails
 	 */
 	createProgram(gl) {
-		// Get shader sources
-		const vertSrc = this.vertShaderSrc(gl);
-		const fragSrc = this.completeFragShaderSrc(gl);
-
-		// Check for cached program if caching is enabled
-		if (this.useCache) {
-			const cachedProgram = _shaderCache.getProgram(this, gl, vertSrc, fragSrc);
-			if (cachedProgram) {
-				if (this.program && this.program !== cachedProgram) {
-					gl.deleteProgram(this.program);
-				}
-				this.program = cachedProgram;
-				this._setupProgramLocations(gl);
-				this.needsUpdate = false;
-				return;
-			}
-		}
-
-		// Compile vertex shader
 		let vert = gl.createShader(gl.VERTEX_SHADER);
-		gl.shaderSource(vert, vertSrc);
-		gl.compileShader(vert);
+		gl.shaderSource(vert, this.vertShaderSrc(gl));
 
+		gl.compileShader(vert);
 		let compiled = gl.getShaderParameter(vert, gl.COMPILE_STATUS);
 		if (!compiled) {
-			Util.printSrcCode(vertSrc);
+			Util.printSrcCode(this.vertShaderSrc(gl))
 			console.log(gl.getShaderInfoLog(vert));
 			throw Error("Failed vertex shader compilation: see console log and ask for support.");
 		} else if (this.debug) {
-			Util.printSrcCode(vertSrc);
+			console.log("here");
+			Util.printSrcCode(this.vertShaderSrc(gl));
 		}
 
-		// Compile fragment shader
 		let frag = gl.createShader(gl.FRAGMENT_SHADER);
-		gl.shaderSource(frag, fragSrc);
+		gl.shaderSource(frag, this.completeFragShaderSrc(gl));
 		gl.compileShader(frag);
 
-		// Clean up existing program if any
 		if (this.program)
 			gl.deleteProgram(this.program);
 
 		let program = gl.createProgram();
 
-		// Check fragment shader compilation
 		gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		compiled = gl.getShaderParameter(frag, gl.COMPILE_STATUS);
 		if (!compiled) {
-			Util.printSrcCode(fragSrc);
+			Util.printSrcCode(this.completeFragShaderSrc(gl));
 			console.log(gl.getShaderInfoLog(frag));
 			throw Error("Failed fragment shader compilation: see console log and ask for support.");
 		} else if (this.debug) {
-			Util.printSrcCode(fragSrc);
+			Util.printSrcCode(this.completeFragShaderSrc(gl));
 		}
-
-		// Link the program
 		gl.attachShader(program, vert);
 		gl.attachShader(program, frag);
 		gl.linkProgram(program);
@@ -483,55 +337,36 @@ float linear2srgb(float c) {
 			throw new Error('Could not compile WebGL program. \n\n' + info);
 		}
 
+		//sampler units;
+		for (let sampler of this.samplers)
+			sampler.location = gl.getUniformLocation(program, sampler.name);
+
+		// filter samplers
+		for (let f of this.filters)
+			for (let sampler of f.samplers)
+				sampler.location = gl.getUniformLocation(program, sampler.name);
+
+		this.coordattrib = gl.getAttribLocation(program, "a_position");
+		gl.vertexAttribPointer(this.coordattrib, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.coordattrib);
+
+		this.texattrib = gl.getAttribLocation(program, "a_texcoord");
+		gl.vertexAttribPointer(this.texattrib, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.texattrib);
+
+		this.matrixlocation = gl.getUniformLocation(program, "u_matrix");
+
 		this.program = program;
-
-		// Store in cache if caching is enabled
-		if (this.useCache) {
-			_shaderCache.storeProgram(this, gl, vertSrc, fragSrc, program);
-		}
-
-		// Set up shader program locations
-		this._setupProgramLocations(gl);
-
-		// Mark as updated
 		this.needsUpdate = false;
 
-		// Reset uniform locations for updating
 		for (let uniform of Object.values(this.allUniforms())) {
 			uniform.location = null;
 			uniform.needsUpdate = true;
 		}
 
-		// Prepare filters
 		for (let f of this.filters)
 			f.prepare(gl);
-	}
 
-	/**
-	 * Sets up shader program locations after program creation or restoration from cache
-	 * @param {WebGL2RenderingContext} gl - WebGL2 context
-	 * @private
-	 */
-	_setupProgramLocations(gl) {
-		// Set sampler units
-		for (let sampler of this.samplers)
-			sampler.location = gl.getUniformLocation(this.program, sampler.name);
-
-		// Set filter samplers
-		for (let f of this.filters)
-			for (let sampler of f.samplers)
-				sampler.location = gl.getUniformLocation(this.program, sampler.name);
-
-		// Set attribute locations
-		this.coordattrib = gl.getAttribLocation(this.program, "a_position");
-		gl.vertexAttribPointer(this.coordattrib, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(this.coordattrib);
-
-		this.texattrib = gl.getAttribLocation(this.program, "a_texcoord");
-		gl.vertexAttribPointer(this.texattrib, 2, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(this.texattrib);
-
-		this.matrixlocation = gl.getUniformLocation(this.program, "u_matrix");
 	}
 
 	/**
@@ -587,7 +422,7 @@ float linear2srgb(float c) {
 					case 'bool': gl.uniform1i(uniform.location, value); break;
 					case 'mat3': gl.uniformMatrix3fv(uniform.location, false, value); break;
 					case 'mat4': gl.uniformMatrix4fv(uniform.location, false, value); break;
-					default: throw Error('Unknown uniform type: ' + uniform.type);
+					default: throw Error('Unknown uniform type: ' + u.type);
 				}
 				uniform.needsUpdate = false;
 			}
@@ -637,56 +472,7 @@ vec4 data() {
 `;
 		return str;
 	}
-
-	/**
-	 * Clears the shader cache
-	 * This static method allows clearing the cache from anywhere
-	 * @param {WebGL2RenderingContext} [gl] - The WebGL context for proper cleanup
-	 */
-	static clearCache(gl) {
-		_shaderCache.clear(gl);
-	}
-
-	/**
-	 * Gets shader cache statistics
-	 * @returns {Object} Cache statistics
-	 */
-	static getCacheStats() {
-		return _shaderCache.getStats();
-	}
-
-	/**
-	 * Enables or disables caching for this shader instance
-	 * @param {boolean} useCache - Whether to use caching
-	 */
-	setUseCache(useCache) {
-		this.useCache = useCache;
-		if (!useCache) {
-			this.needsUpdate = true;
-		}
-	}
 }
-
-/**
- * Adds a simple hash function to Util if not present
- */
-if (!Util.simpleHash) {
-	/**
-	 * Simple string hashing function
-	 * @param {string} str - String to hash
-	 * @returns {string} Hash string
-	 */
-	Util.simpleHash = function (str) {
-		let hash = 0;
-		for (let i = 0; i < str.length; i++) {
-			const char = str.charCodeAt(i);
-			hash = ((hash << 5) - hash) + char;
-			hash = hash & hash; // Convert to 32bit integer
-		}
-		return 'shader_' + Math.abs(hash).toString(16);
-	};
-}
-
 /**
  * Fired when shader state changes (uniforms, filters, etc).
  * @event Shader#update
