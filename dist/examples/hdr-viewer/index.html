@@ -18,6 +18,100 @@
       margin-top: 10px;
       position: relative;
     }
+
+    /* Stili per il pannello di controllo HDR */
+    #hdr-control-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 300px;
+      background-color: rgba(40, 40, 40, 0.85);
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      color: #fff;
+      font-family: Arial, sans-serif;
+      z-index: 1000;
+      padding: 15px;
+    }
+
+    #hdr-control-panel h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      text-align: center;
+      border-bottom: 1px solid #555;
+      padding-bottom: 10px;
+    }
+
+    .control-group {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #444;
+    }
+
+    .control-group:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .mode-selector {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .mode-button {
+      flex: 1;
+      background-color: #333;
+      border: none;
+      color: #fff;
+      padding: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .mode-button.active {
+      background-color: #4285f4;
+    }
+
+    .mode-button:first-child {
+      border-radius: 4px 0 0 4px;
+    }
+
+    .mode-button:last-child {
+      border-radius: 0 4px 4px 0;
+    }
+
+    .parameter-control {
+      margin-bottom: 10px;
+    }
+
+    .parameter-control label {
+      display: block;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .parameter-control label span {
+      color: #aaa;
+    }
+
+    .parameter-control input[type="range"] {
+      width: 100%;
+      background: #555;
+      height: 8px;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .parameter-control input[type="checkbox"] {
+      margin-right: 5px;
+    }
+
+    .checkbox-control {
+      display: flex;
+      align-items: center;
+    }
   </style>
 </head>
 
@@ -25,6 +119,50 @@
   <h1>OpenLIME - Advanced HDR Image Viewer</h1>
   <div class="openlime"></div>
 
+  <!-- Pannello di controllo HDR -->
+  <div id="hdr-control-panel">
+    <h3>HDR Controls</h3>
+
+    <div class="control-group">
+      <div class="mode-selector">
+        <button class="mode-button active" data-mode="reinhard">Reinhard</button>
+        <button class="mode-button" data-mode="aces">ACES</button>
+        <button class="mode-button" data-mode="exposure">Exposure</button>
+      </div>
+    </div>
+
+    <!-- Parametri Reinhard -->
+    <div class="control-group" id="reinhard-controls">
+      <div class="parameter-control checkbox-control">
+        <input type="checkbox" id="auto-white-point" checked>
+        <label for="auto-white-point">Auto White Point</label>
+      </div>
+      <div class="parameter-control">
+        <label for="white-point">White Point <span id="white-point-value">1.0</span></label>
+        <input type="range" id="white-point" min="0.1" max="10" step="0.1" value="1.0">
+      </div>
+      <div class="parameter-control">
+        <label for="shadow-lift">Shadow Lift <span id="shadow-lift-value">0.0</span></label>
+        <input type="range" id="shadow-lift" min="0" max="1" step="0.01" value="0">
+      </div>
+    </div>
+
+    <!-- Parametri ACES -->
+    <div class="control-group" id="aces-controls" style="display: none;">
+      <div class="parameter-control">
+        <label for="aces-contrast">Contrast <span id="aces-contrast-value">1.2</span></label>
+        <input type="range" id="aces-contrast" min="0.5" max="2.5" step="0.1" value="1.2">
+      </div>
+    </div>
+
+    <!-- Parametri Exposure -->
+    <div class="control-group" id="exposure-controls" style="display: none;">
+      <div class="parameter-control">
+        <label for="exposure">Exposure <span id="exposure-value">1.0</span></label>
+        <input type="range" id="exposure" min="0.1" max="5" step="0.1" value="1.0">
+      </div>
+    </div>
+  </div>
 
   <script src="../../js/openlime.js"></script>
   <script>
@@ -140,7 +278,6 @@
     const hdrLayer = new OpenLIME.LayerHDR(hdrOptions);
     lime.addLayer('hdr', hdrLayer);
 
-
     // Load skin for UI elements
     OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
@@ -154,44 +291,101 @@
     ui.actions.fullscreen.display = true;
     ui.actions.light.display = false;
 
-    hdrLayer.addEvent('ready', () => {
-        console.log("HDR StatInfo: ", hdrLayer.getStatInfo());
+    // HDR Control Panel
+    let hdrStatistics = null;
+    let autoWhitePoint = true;
+
+    hdrLayer.addEvent('loaded', () => {
+      console.log("HDR layer loaded");
+
+      // Get and store statistics for use in controls
+      hdrStatistics = hdrLayer.getStatInfo();
+      console.log("HDR StatInfo:", hdrStatistics);
+
+      // Update white point slider max based on statistics
+      if (hdrStatistics && hdrStatistics.maxValue) {
+        const whitePointSlider = document.getElementById('white-point');
+        whitePointSlider.max = Math.min(Math.ceil(hdrStatistics.maxValue * 1.5), 50);
+
+        // Update white point value if auto is enabled
+        if (autoWhitePoint) {
+          const newWhitePoint = hdrStatistics.maxValue || 1.0;
+          whitePointSlider.value = newWhitePoint;
+          document.getElementById('white-point-value').textContent = newWhitePoint.toFixed(2);
+        }
+      }
     });
-    // // When layer is ready, set up shader and controls
-    // hdrLayer.addEvent('ready', () => {
-    //   console.log("HDR layer ready, size:", hdrLayer.width, "x", hdrLayer.height);
 
-    //   // Create bounding box based on actual image dimensions
-    //   if (hdrLayer.layout && hdrLayer.layout.width > 0 && hdrLayer.layout.height > 0) {
-    //     const bbox = new CustomBoundingBox({
-    //       width: hdrLayer.layout.width,
-    //       height: hdrLayer.layout.height
-    //     });
+    // Set up control panel event listeners
+    document.addEventListener('DOMContentLoaded', function () {
+      // Mode selection
+      const modeButtons = document.querySelectorAll('.mode-button');
+      modeButtons.forEach(button => {
+        button.addEventListener('click', function () {
+          // Update UI
+          modeButtons.forEach(btn => btn.classList.remove('active'));
+          this.classList.add('active');
 
-    //     // Set bounding box directly in layout
-    //     hdrLayer.layout._boundingBox = bbox;
+          // Hide all control groups
+          document.querySelectorAll('.control-group[id$="-controls"]').forEach(group => {
+            group.style.display = 'none';
+          });
 
-    //     // Update camera bounding box
-    //     lime.camera.boundingBox = bbox;
+          // Show selected mode controls
+          const mode = this.dataset.mode;
+          document.getElementById(`${mode}-controls`).style.display = 'block';
 
-    //     // Fit view to image
-    //     lime.camera.fitCameraBox(0);
-    //   }
-    //   // Force a redraw
-    //   lime.draw();
-    // });
+          // Update layer mode
+          hdrLayer.setMode(mode);
+        });
+      });
 
-    // // Handle window resize
-    // window.addEventListener('resize', function () {
-    //   lime.resize();
+      // Auto White Point toggle
+      const autoWhitePointCheckbox = document.getElementById('auto-white-point');
+      autoWhitePointCheckbox.addEventListener('change', function () {
+        autoWhitePoint = this.checked;
+        document.getElementById('white-point').disabled = autoWhitePoint;
 
-    //   // Readjust image when window is resized
-    //   if (hdrLayer.layout && hdrLayer.layout.width) {
-    //     lime.camera.fitCameraBox(0);
-    //   }
+        if (autoWhitePoint && hdrStatistics && hdrStatistics.maxValue) {
+          const newWhitePoint = hdrStatistics.maxValue;
+          hdrLayer.setWhitePoint(newWhitePoint);
+          document.getElementById('white-point').value = newWhitePoint;
+          document.getElementById('white-point-value').textContent = newWhitePoint.toFixed(2);
+        }
+      });
 
-    //   lime.draw();
-    // });
+      // White Point slider
+      const whitePointSlider = document.getElementById('white-point');
+      whitePointSlider.addEventListener('input', function () {
+        const value = parseFloat(this.value);
+        document.getElementById('white-point-value').textContent = value.toFixed(2);
+        hdrLayer.setWhitePoint(value);
+      });
+
+      // Shadow Lift slider
+      const shadowLiftSlider = document.getElementById('shadow-lift');
+      shadowLiftSlider.addEventListener('input', function () {
+        const value = parseFloat(this.value);
+        document.getElementById('shadow-lift-value').textContent = value.toFixed(2);
+        hdrLayer.setShadowLift(value);
+      });
+
+      // ACES Contrast slider
+      const acesContrastSlider = document.getElementById('aces-contrast');
+      acesContrastSlider.addEventListener('input', function () {
+        const value = parseFloat(this.value);
+        document.getElementById('aces-contrast-value').textContent = value.toFixed(2);
+        hdrLayer.setAcesContrast(value);
+      });
+
+      // Exposure slider
+      const exposureSlider = document.getElementById('exposure');
+      exposureSlider.addEventListener('input', function () {
+        const value = parseFloat(this.value);
+        document.getElementById('exposure-value').textContent = value.toFixed(2);
+        hdrLayer.setExposure(value);
+      });
+    });
 
     // Attribution
     ui.attribution = `HDR Memorial image from <a href="https://www.pauldebevec.com/Research/HDR/">Paul Debevec's HDR Research</a>`;

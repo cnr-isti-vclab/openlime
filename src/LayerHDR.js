@@ -27,7 +27,7 @@ import { ShaderHDR } from './ShaderHDR.js'
  * - Uses WebGL textures for HDR image data
  * - Supports 16-bit float formats (e.g., rgba16f)
  * - Integrates with OpenLIME layout system
- * - Provides Reinhard tone mapping by default
+ * - Provides multiple tone mapping options: Reinhard, ACES, and Exposure
  * 
  * @extends Layer
  * 
@@ -53,6 +53,7 @@ class LayerHDR extends Layer {
       useHalfFloat: false,
       autoWhitePoint: true,
       debug: false,
+      mode: 'reinhard',
     }, options);
     super(options);
 
@@ -90,16 +91,26 @@ class LayerHDR extends Layer {
     let shader = new ShaderHDR({
       label: 'HDR',
       samplers: [{ id: 0, name: 'source', type: this.format }],
-      mode: this.mode,
+      mode: this.mode || 'reinhard',
+      modes: ['reinhard', 'aces', 'exposure'],
       uniforms: {
         'whitePoint': { type: 'float', needsUpdate: true, value: 1.0 },
+        'shadowLift': { type: 'float', needsUpdate: true, value: 0.0 },
+        'acesContrast': { type: 'float', needsUpdate: true, value: 1.2 },
+        'exposure': { type: 'float', needsUpdate: true, value: 1.0 }
       }
     });
 
     this.shaders = { 'hdr': shader };
     this.setShader('hdr');
 
+    // Reinhard params
     this.addControl('whitePoint', [1.0]);
+    this.addControl('shadowLift', [0.0]);
+    // ACES params
+    this.addControl('acesContrast', [1.2]);
+    // Exposure params
+    this.addControl('exposure', [1.0]);
   }
 
   /**
@@ -122,6 +133,55 @@ class LayerHDR extends Layer {
     return this.controls['whitePoint'].current.value[0];
   }
 
+
+  setShadowLift(v, delayms = 1, easing = 'linear') {
+    this.setControl('shadowLift', [v], delayms, easing);
+  }
+
+  getShadowLift() {
+    return this.controls['shadowLift'].current.value[0];
+  }
+
+  /**
+   * Sets the ACES contrast parameter for ACES tone mapping.
+   * 
+   * @param {number} v - The new ACES contrast value
+   * @param {number} [delayms=1] - Delay in milliseconds for the transition
+   * @param {string} [easing='linear'] - Easing function for the transition
+   */
+  setAcesContrast(v, delayms = 1, easing = 'linear') {
+    this.setControl('acesContrast', [v], delayms, easing);
+  }
+
+  /**
+   * Gets the current ACES contrast value.
+   * 
+   * @returns {number} The current ACES contrast value
+   */
+  getAcesContrast() {
+    return this.controls['acesContrast'].current.value[0];
+  }
+
+  /**
+   * Sets the exposure value for exposure-based tone mapping.
+   * 
+   * @param {number} v - The new exposure value
+   * @param {number} [delayms=1] - Delay in milliseconds for the transition
+   * @param {string} [easing='linear'] - Easing function for the transition
+   */
+  setExposure(v, delayms = 1, easing = 'linear') {
+    this.setControl('exposure', [v], delayms, easing);
+  }
+
+  /**
+   * Gets the current exposure value.
+   * 
+   * @returns {number} The current exposure value
+   */
+  getExposure() {
+    return this.controls['exposure'].current.value[0];
+  }
+
   /**
    * Retrieves statistical information about the raster data.
    * 
@@ -132,14 +192,22 @@ class LayerHDR extends Layer {
   }
 
   /**
-   * Interpolates control values and updates the shader with the current white point.
+   * Interpolates control values and updates the shader with the current parameters.
    * 
    * @returns {boolean} Whether the interpolation is complete
    */
-  interpolateControls() { // FIXME Wrong normalization
+  interpolateControls() {
     const done = super.interpolateControls();
     const whitePoint = this.getWhitePoint();
+    const shadowLift = this.getShadowLift();
+    const acesContrast = this.getAcesContrast();
+    const exposure = this.getExposure();
+
     this.shader.setWhitePoint(whitePoint);
+    this.shader.setShadowLift(shadowLift);
+    this.shader.setAcesContrast(acesContrast);
+    this.shader.setExposure(exposure);
+
     return done;
   }
 }
