@@ -1,3 +1,5 @@
+import { addSignals } from './Signals.js'
+
 /*
 * @fileoverview 
 * Raster module provides functionality for loading and managing image data in various formats.
@@ -86,6 +88,7 @@ class Raster {
 		//TODO 3 is not accurate for type of image, when changing from rgb to grayscale, fix this value.
 		let nchannels = 3; // Channel is important only for tarzoom data. Tarzoom data inside format is JPG = RGB = 3 channels
 		const size = img.width * img.height * nchannels;
+		this.emit('loaded');
 		return [tex, size];
 	}
 
@@ -201,4 +204,6 @@ class Raster {
  * gl.bindTexture(gl.TEXTURE_2D, texture);
  * ```
  */
+
+addSignals(Raster, 'loaded');
 export { Raster }

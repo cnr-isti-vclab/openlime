@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenLIME - Advanced HDR Viewer</title>
+  <link rel="stylesheet" href="../../css/skin.css" />
+  <link rel="stylesheet" href="../../css/light.css" />
+  <link rel="stylesheet" href="../examples.css" />
+  <script src="hdr.js"></script>
+  <style>
+    .openlime {
+      width: 100%;
+      height: calc(100vh - 140px);
+      min-height: 500px;
+      margin-top: 10px;
+      position: relative;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>OpenLIME - Advanced HDR Image Viewer</h1>
+  <div class="openlime"></div>
+
+
+  <script src="../../js/openlime.js"></script>
+  <script>
+    // Enhanced HDR loader function with advanced processing and adaptive normalization
+    function loadHDRwithHDRjs(tile, gl, options = {}) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          console.log("Loading HDR file:", tile.url);
+
+          // Load the HDR file
+          const result = await HDRjs.load(tile.url);
+
+          if (typeof result === 'string') {
+            throw new Error(result);
+          }
+
+          const { rgbFloat, width, height } = result;
+          console.log(`HDR loaded: ${width}x${height}`);
+
+          // Advanced HDR processing options
+          const percentile = options.percentile || 0.99; // 99th percentile for normalization
+
+          // Analyze the HDR data
+          const pixelCount = width * height;
+          const pixelValues = [];
+          let maxValue = 0;
+          let sumLuminance = 0;
+
+          // Find statistics and gather luminance values for percentile calculation
+          for (let i = 0; i < pixelCount; i++) {
+            const r = rgbFloat[i * 3];
+            const g = rgbFloat[i * 3 + 1];
+            const b = rgbFloat[i * 3 + 2];
+
+            // Calculate luminance (perception-based weights)
+            const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            sumLuminance += luminance;
+
+            // Track max value for absolute scaling
+            maxValue = Math.max(maxValue, r, g, b);
+
+            // Store luminance values for percentile calculation
+            pixelValues.push(luminance);
+          }
+
+          // Sort luminance values for percentile calculation
+          pixelValues.sort((a, b) => a - b);
+
+          // Calculate average luminance and 99th percentile luminance
+          const avgLuminance = sumLuminance / pixelCount;
+          const percentileIndex = Math.floor(pixelValues.length * percentile);
+          const percentileLuminance = pixelValues[percentileIndex];
+
+          console.log("HDR statistics:", {
+            maxValue: maxValue,
+            avgLuminance: avgLuminance,
+            percentileLuminance: percentileLuminance
+          });
+
+          // Convert RGB to RGBA with advanced processing
+          const floatData = new Float32Array(width * height * 4);
+
+          // Process the HDR data to RGBA
+          for (let i = 0; i < pixelCount; i++) {
+            floatData[i * 4] = rgbFloat[i * 3];
+            floatData[i * 4 + 1] = rgbFloat[i * 3 + 1];
+            floatData[i * 4 + 2] = rgbFloat[i * 3 + 2];
+            floatData[i * 4 + 3] = 1.0; // Alpha channel
+          }
+
+          resolve({
+            data: floatData,
+            width: width,
+            height: height,
+            channels: 4,
+            statistics: {
+              maxValue,
+              avgLuminance,
+              percentileLuminance
+            }
+          });
+
+        } catch (error) {
+          console.error("Error loading HDR:", error);
+          reject(error);
+        }
+      });
+    }
+
+    // Create OpenLIME viewer
+    const lime = new OpenLIME.Viewer('.openlime', {
+      autofit: true
+    });
+
+    // HDR Layer options with enhanced settings for better results
+    const hdrOptions = {
+      url: '../../assets/hdr/memorial/memorial.hdr',
+      layout: 'image',
+      dataLoader: loadHDRwithHDRjs,
+      format: 'rgba16f',
+      mode: 'reinhard', // Default to adaptive mode for challenging HDR scenes
+      zindex: 0,
+      transform: { x: 0, y: 0, z: 1 },
+      visible: true,
+      dataLoaderOptions: {
+        useHalfFloat: false,
+        percentile: 0.99,           // 99th percentile (ignores extreme highlights)
+      },
+      debug: true // Enable debug output for troubleshooting
+    };
+
+    // Create HDR layer
+    const hdrLayer = new OpenLIME.LayerHDR(hdrOptions);
+    lime.addLayer('hdr', hdrLayer);
+
+
+    // Load skin for UI elements
+    OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+    // Create basic UI
+    const ui = new OpenLIME.UIBasic(lime);
+
+    // Configure UI
+    ui.actions.zoomin.display = true;
+    ui.actions.zoomout.display = true;
+    ui.actions.home.display = true;
+    ui.actions.fullscreen.display = true;
+    ui.actions.light.display = false;
+
+    hdrLayer.addEvent('ready', () => {
+        console.log("HDR StatInfo: ", hdrLayer.getStatInfo());
+    });
+    // // When layer is ready, set up shader and controls
+    // hdrLayer.addEvent('ready', () => {
+    //   console.log("HDR layer ready, size:", hdrLayer.width, "x", hdrLayer.height);
+
+    //   // Create bounding box based on actual image dimensions
+    //   if (hdrLayer.layout && hdrLayer.layout.width > 0 && hdrLayer.layout.height > 0) {
+    //     const bbox = new CustomBoundingBox({
+    //       width: hdrLayer.layout.width,
+    //       height: hdrLayer.layout.height
+    //     });
+
+    //     // Set bounding box directly in layout
+    //     hdrLayer.layout._boundingBox = bbox;
+
+    //     // Update camera bounding box
+    //     lime.camera.boundingBox = bbox;
+
+    //     // Fit view to image
+    //     lime.camera.fitCameraBox(0);
+    //   }
+    //   // Force a redraw
+    //   lime.draw();
+    // });
+
+    // // Handle window resize
+    // window.addEventListener('resize', function () {
+    //   lime.resize();
+
+    //   // Readjust image when window is resized
+    //   if (hdrLayer.layout && hdrLayer.layout.width) {
+    //     lime.camera.fitCameraBox(0);
+    //   }
+
+    //   lime.draw();
+    // });
+
+    // Attribution
+    ui.attribution = `HDR Memorial image from <a href="https://www.pauldebevec.com/Research/HDR/">Paul Debevec's HDR Research</a>`;
+  </script>
+</body>
+
+</html>

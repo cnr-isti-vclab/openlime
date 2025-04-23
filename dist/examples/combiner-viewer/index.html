@@ -69,7 +69,11 @@
 
         // Create an User Interface 
         const ui = new OpenLIME.UIBasic(lime);
-
+        ui.createLayerControl('hdr', {
+            modes: hdrLayer.shaders?.standard?.modes || ['reinhard', 'aces', 'filmic'],
+            mode: hdrLayer.shaders?.standard?.mode || 'aces'
+        });
+        
         // Remove light from the toolbar
         ui.actions.light.display = false;
 

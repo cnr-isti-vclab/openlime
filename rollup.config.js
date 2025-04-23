@@ -55,7 +55,10 @@ const core = [
 	'./src/GeoreferenceManager.js',
 	'./src/LayerMultispectral.js',
 	'./src/ShaderMultispectral.js',
-	'./src/MultispectralUI.js'
+	'./src/MultispectralUI.js',
+	'./src/Raster16Bit.js',
+	'./src/LayerHDR.js',
+	'./src/ShaderHDR.js'
 ];
 
 const ui = [
