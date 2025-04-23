@@ -90,15 +90,8 @@ class LayerHDR extends Layer {
     // Create the HDR shader with all tone mapping parameters
     let shader = new ShaderHDR({
       label: 'HDR',
-      samplers: [{ id: 0, name: 'source', type: this.format }],
+      format: this.format,
       mode: this.mode || 'reinhard',
-      modes: ['reinhard', 'aces', 'exposure'],
-      uniforms: {
-        'whitePoint': { type: 'float', needsUpdate: true, value: 1.0 },
-        'shadowLift': { type: 'float', needsUpdate: true, value: 0.0 },
-        'acesContrast': { type: 'float', needsUpdate: true, value: 1.2 },
-        'exposure': { type: 'float', needsUpdate: true, value: 1.0 }
-      }
     });
 
     this.shaders = { 'hdr': shader };

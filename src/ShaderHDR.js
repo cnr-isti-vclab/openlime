@@ -26,17 +26,20 @@ class ShaderHDR extends Shader {
         // Set default options
         options = Object.assign({
             isLinear: true,  // Important: we work in linear space!
-            modes: ['reinhard', 'aces', 'exposure'],
-            mode: 'reinhard',
-            uniforms: {
-                'whitePoint': { type: 'float', needsUpdate: true, value: 1.0 },
-                'shadowLift': { type: 'float', needsUpdate: true, value: 0.0 },
-                'acesContrast': { type: 'float', needsUpdate: true, value: 1.6 },
-                'exposure': { type: 'float', needsUpdate: true, value: 1.0 }
-            }
+            format: 'rgba16f',
         }, options);
 
         super(options);
+
+        this.modes = ['reinhard', 'aces', 'exposure'];
+        this.mode = options.mode || 'reinhard';
+        this.uniforms = {
+            'whitePoint': { type: 'float', needsUpdate: true, value: 1.0 },
+            'shadowLift': { type: 'float', needsUpdate: true, value: 0.0 },
+            'acesContrast': { type: 'float', needsUpdate: true, value: 1.6 },
+            'exposure': { type: 'float', needsUpdate: true, value: 1.0 }
+        }
+        this.samplers.push({ id: 0, name: 'source', type: this.format });
 
         /**
          * Tone mapping operations available in the shader.
