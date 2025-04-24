@@ -1329,11 +1329,12 @@ class UIDialog { //FIXME standalone class
 
 	/**
 	 * Toggles dialog visibility
-	 * @param {boolean} [force] - Force specific state
+	 * @param {boolean} [force] - Force specific state (true = show, false = hide)
 	 */
-	toggle(force) { //FIXME Why not remove force?
-		this.element.classList.toggle('hidden', force);
-		this.visible = !this.visible; //FIXME not in sync with 'force'
+	toggle(force) {
+		const newVisibility = force === undefined ? !this.visible : force;
+		this.element.classList.toggle('hidden', !newVisibility);
+		this.visible = newVisibility;
 	}
 }
 

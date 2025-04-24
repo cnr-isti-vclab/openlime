@@ -460,17 +460,6 @@ class LayoutTiles extends Layout {
 	}
 
 	/**
-	 * Initializes single-image layout.
-	 * @private
-	 * @async
-	 */
-	async initImage() {
-		this.getTileURL = (rasterid, tile) => { return this.urls[rasterid]; }
-		this.nlevels = 1;
-		this.tilesize = 0;
-	}
-
-	/**
 	 * Initializes Google Maps layout.
 	 * @private
 	 * @async
