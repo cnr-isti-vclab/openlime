@@ -83,8 +83,6 @@ class Raster16Bit extends Raster {
     }
   }
 
-
-  
   /**
    * Gets the number of components for the current format
    * @private
