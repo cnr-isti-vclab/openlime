@@ -31,13 +31,14 @@ class ShaderHDR extends Shader {
 
         super(options);
 
-        this.modes = ['reinhard', 'aces', 'exposure'];
+        this.modes = ['reinhard', 'aces', 'exposure', 'balanced'];
         this.mode = options.mode || 'reinhard';
         this.uniforms = {
             'whitePoint': { type: 'float', needsUpdate: true, value: 1.0 },
             'shadowLift': { type: 'float', needsUpdate: true, value: 0.0 },
             'acesContrast': { type: 'float', needsUpdate: true, value: 1.6 },
-            'exposure': { type: 'float', needsUpdate: true, value: 1.0 }
+            'exposure': { type: 'float', needsUpdate: true, value: 1.0 },
+            'highlightCompression': { type: 'float', needsUpdate: true, value: 1.0 },
         }
         this.samplers.push({ id: 0, name: 'source', type: this.format });
 
@@ -81,12 +82,26 @@ class ShaderHDR extends Shader {
                 // Clamp to prevent artifacts
                 color.rgb = clamp(color.rgb, 0.0, 1.0);
             `,
-
             // Simple exposure-based tone mapping
             'exposure': `
                 // Apply exposure adjustment
                 // exposure = 1.0 means no change, > 1.0 brightens, < 1.0 darkens
                 color.rgb = vec3(1.0) - exp(-color.rgb * exposure);
+            `,
+            // New balanced operator
+            'balanced': `
+                // Lift shadows slightly to enhance details in dark areas
+                color.rgb = mix(color.rgb, pow(color.rgb, vec3(0.5)), shadowLift);
+
+                // Adaptive scaling for highlights based on highlightCompression
+                float hc = max(0.1, highlightCompression); // Avoid division by zero
+                color.rgb = color.rgb / (color.rgb + vec3(hc));
+
+                // Apply logarithmic compression for highlights
+                color.rgb = log(1.0 + color.rgb) / log(1.0 + hc);
+
+                // Clamp to prevent overexposure
+                color.rgb = clamp(color.rgb, 0.0, 1.0);
             `
         };
 
@@ -118,6 +133,7 @@ uniform float whitePoint;
 uniform float shadowLift;
 uniform float acesContrast;
 uniform float exposure;
+uniform float highlightCompression;
 
 vec4 data() {
     // Sample the HDR texture (already in linear space)
@@ -168,6 +184,15 @@ vec4 data() {
      */
     setExposure(exposure) {
         this.setUniform('exposure', exposure);
+    }
+
+    /**
+     * Sets the highlight compression parameter for the shader.
+     * 
+     * @param {number} highlightCompression - The new value for highlight compression
+     */
+    setHighlightCompression(highlightCompression) {
+        this.setUniform('highlightCompression', highlightCompression);
     }
 }
 

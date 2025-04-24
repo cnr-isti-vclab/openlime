@@ -104,6 +104,8 @@ class LayerHDR extends Layer {
     this.addControl('acesContrast', [1.2]);
     // Exposure params
     this.addControl('exposure', [1.0]);
+    // Balanced params
+    this.addControl('highlightCompression', [1.0]);
   }
 
   /**
@@ -126,11 +128,22 @@ class LayerHDR extends Layer {
     return this.controls['whitePoint'].current.value[0];
   }
 
-
+  /**
+   * Sets the shadow lift value for HDR tone mapping.
+   *
+   * @param {number} v - The new shadow lift value
+   * @param {number} [delayms=1] - Delay in milliseconds for the transition
+   * @param {string} [easing='linear'] - Easing function for the transition
+   */
   setShadowLift(v, delayms = 1, easing = 'linear') {
     this.setControl('shadowLift', [v], delayms, easing);
   }
 
+  /**
+   * Gets the current shadow lift value.
+   * 
+   * @returns {number} The current shadow lift value
+   */
   getShadowLift() {
     return this.controls['shadowLift'].current.value[0];
   }
@@ -174,6 +187,24 @@ class LayerHDR extends Layer {
   getExposure() {
     return this.controls['exposure'].current.value[0];
   }
+  /**
+   * Sets the highlight compression value for HDR tone mapping.
+   * 
+   * @param {number} v - The new highlight compression value
+   * @param {number} [delayms=1] - Delay in milliseconds for the transition
+   * @param {string} [easing='linear'] - Easing function for the transition
+   */
+  setHighlightCompression(v, delayms = 1, easing = 'linear') {
+    this.setControl('highlightCompression', [v], delayms, easing);
+  }
+  /**
+   * Gets the current highlight compression value.
+   * 
+   * @returns {number} The current highlight compression value
+   */
+  getHighlightCompression() {
+    return this.controls['highlightCompression'].current.value[0];
+  }
 
   /**
    * Retrieves statistical information about the raster data.
@@ -195,11 +226,13 @@ class LayerHDR extends Layer {
     const shadowLift = this.getShadowLift();
     const acesContrast = this.getAcesContrast();
     const exposure = this.getExposure();
+    const highlightCompression = this.getHighlightCompression();
 
     this.shader.setWhitePoint(whitePoint);
     this.shader.setShadowLift(shadowLift);
     this.shader.setAcesContrast(acesContrast);
     this.shader.setExposure(exposure);
+    this.shader.setHighlightCompression(highlightCompression);
 
     return done;
   }

@@ -119,7 +119,7 @@
   <h1>OpenLIME - Advanced HDR Image Viewer</h1>
   <div class="openlime"></div>
 
-  <!-- Pannello di controllo HDR -->
+  <!-- HDR Control Panel -->
   <div id="hdr-control-panel">
     <h3>HDR Controls</h3>
 
@@ -128,10 +128,11 @@
         <button class="mode-button active" data-mode="reinhard">Reinhard</button>
         <button class="mode-button" data-mode="aces">ACES</button>
         <button class="mode-button" data-mode="exposure">Exposure</button>
+        <button class="mode-button" data-mode="balanced">Balanced</button>
       </div>
     </div>
 
-    <!-- Parametri Reinhard -->
+    <!-- Reinhard Parameters -->
     <div class="control-group" id="reinhard-controls">
       <div class="parameter-control checkbox-control">
         <input type="checkbox" id="auto-white-point" checked>
@@ -139,7 +140,7 @@
       </div>
       <div class="parameter-control">
         <label for="white-point">White Point <span id="white-point-value">1.0</span></label>
-        <input type="range" id="white-point" min="0.1" max="10" step="0.1" value="1.0">
+        <input type="range" id="white-point" min="0.1" max="10" step="0.1" value="1.0" disabled>
       </div>
       <div class="parameter-control">
         <label for="shadow-lift">Shadow Lift <span id="shadow-lift-value">0.0</span></label>
@@ -147,7 +148,7 @@
       </div>
     </div>
 
-    <!-- Parametri ACES -->
+    <!-- ACES Parameters -->
     <div class="control-group" id="aces-controls" style="display: none;">
       <div class="parameter-control">
         <label for="aces-contrast">Contrast <span id="aces-contrast-value">1.2</span></label>
@@ -155,11 +156,19 @@
       </div>
     </div>
 
-    <!-- Parametri Exposure -->
+    <!-- Exposure Parameters -->
     <div class="control-group" id="exposure-controls" style="display: none;">
       <div class="parameter-control">
         <label for="exposure">Exposure <span id="exposure-value">1.0</span></label>
         <input type="range" id="exposure" min="0.1" max="5" step="0.1" value="1.0">
+      </div>
+    </div>
+
+    <!-- Balanced Parameters -->
+    <div class="control-group" id="balanced-controls" style="display: none;">
+      <div class="parameter-control">
+        <label for="highlight-compression">Highlight Compression <span id="highlight-compression-value">1.0</span></label>
+        <input type="range" id="highlight-compression" min="0.01" max="1.0" step="0.01" value="1.0">
       </div>
     </div>
   </div>
@@ -305,7 +314,7 @@
       // Update white point slider max based on statistics
       if (hdrStatistics && hdrStatistics.maxValue) {
         const whitePointSlider = document.getElementById('white-point');
-        whitePointSlider.max = Math.min(Math.ceil(hdrStatistics.maxValue * 1.5), 50);
+        whitePointSlider.max = Math.max(Math.ceil(hdrStatistics.maxValue * 1.5), 50);
 
         // Update white point value if auto is enabled
         if (autoWhitePoint) {
@@ -385,6 +394,19 @@
         document.getElementById('exposure-value').textContent = value.toFixed(2);
         hdrLayer.setExposure(value);
       });
+
+      // Balanced White Point slider
+      const highlightCompressionSlider = document.getElementById('highlight-compression');
+      highlightCompressionSlider.min = 0.01;
+      highlightCompressionSlider.max = 1.0; // Set the max value first
+      highlightCompressionSlider.step = 0.01;
+      highlightCompressionSlider.value = 1.0; // Set the value after setting the max
+      highlightCompressionSlider.addEventListener('input', function () {
+        const value = parseFloat(this.value);
+        document.getElementById('highlight-compression-value').textContent = value.toFixed(2);
+        hdrLayer.setHighlightCompression(value);
+      });
+
     });
 
     // Attribution
