@@ -55,28 +55,33 @@ class Raster16Bit extends Raster {
   constructor(options) {
     // Initialize with parent constructor but override defaults
     super(Object.assign({
-      format: 'rgb16ui',
-      isLinear: true,
-      debug: false
+        format: 'rgb16ui',
+        isLinear: true,
+        debug: false,
+        useHalfFloat: true,
+        flipY: false,
+        premultiplyAlpha: false,
     }, options));
 
     // Additional options specific to 16-bit handling
     Object.assign(this, {
-      useHalfFloat: true,
-      flipY: false,
-      premultiplyAlpha: false,
-      dataLoader: null,
-      dataLoaderOptions: {},
-      statInfo: {}
+        dataLoader: null,
+        dataLoaderOptions: {},
+        statInfo: {}
     });
 
     // Override with provided options
     if (options) {
-      Object.assign(this, options);
+        Object.assign(this, options);
+    }
+
+    // Check if the format is supported
+    if (!this._isFormatSupported(this.format)) {
+        throw new Error(`The format "${this.format}" is not supported by the browser.`);
     }
 
     if (this.debug) {
-      console.log(`Raster16Bit created with format: ${this.format}`);
+        console.log(`Raster16Bit created with format: ${this.format}`);
     }
   }
 
@@ -350,6 +355,57 @@ class Raster16Bit extends Raster {
 
     return { internalFormat, format, type };
   }
+
+  /**
+ * Checks if the specified format is supported by the browser.
+ * Also verifies that required WebGL extensions are available.
+ * @private
+ * @param {string} format - The format to check
+ * @returns {boolean} True if the format is supported, false otherwise
+ */
+_isFormatSupported(format) {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2');
+
+    if (!gl) {
+        console.error('WebGL2 is not supported by this browser.');
+        return false;
+    }
+
+    const formatMap = {
+        'r16f': { internalFormat: gl.R16F, requiredExtensions: ['EXT_color_buffer_float'] },
+        'rg16f': { internalFormat: gl.RG16F, requiredExtensions: ['EXT_color_buffer_float'] },
+        'rgb16f': { internalFormat: gl.RGB16F, requiredExtensions: ['EXT_color_buffer_float'] },
+        'rgba16f': { internalFormat: gl.RGBA16F, requiredExtensions: ['EXT_color_buffer_float'] },
+        'r16ui': { internalFormat: gl.R16UI, requiredExtensions: [] },
+        'rg16ui': { internalFormat: gl.RG16UI, requiredExtensions: [] },
+        'rgb16ui': { internalFormat: gl.RGB16UI, requiredExtensions: [] },
+        'rgba16ui': { internalFormat: gl.RGBA16UI, requiredExtensions: [] },
+        'r16i': { internalFormat: gl.R16I, requiredExtensions: [] },
+        'rg16i': { internalFormat: gl.RG16I, requiredExtensions: [] },
+        'rgb16i': { internalFormat: gl.RGB16I, requiredExtensions: [] },
+        'rgba16i': { internalFormat: gl.RGBA16I, requiredExtensions: [] },
+        'depth16': { internalFormat: gl.DEPTH_COMPONENT16, requiredExtensions: [] }
+    };
+
+    const formatInfo = formatMap[format];
+    if (!formatInfo) {
+        console.error(`Unknown format: ${format}`);
+        return false;
+    }
+
+    // Check for required extensions
+    for (const extension of formatInfo.requiredExtensions) {
+        if (!gl.getExtension(extension)) {
+            console.error(`Required WebGL extension "${extension}" is not supported for format "${format}".`);
+            return false;
+        }
+    }
+
+    // Check if the internal format is supported
+    const isSupported = gl.getInternalformatParameter(gl.RENDERBUFFER, formatInfo.internalFormat, gl.SAMPLES);
+    return isSupported && isSupported.length > 0;
+}
 }
 
 export { Raster16Bit };

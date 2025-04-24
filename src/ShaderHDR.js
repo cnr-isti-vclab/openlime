@@ -91,7 +91,7 @@ class ShaderHDR extends Shader {
             // New balanced operator
             'balanced': `
                 // Lift shadows slightly to enhance details in dark areas
-                color.rgb = mix(color.rgb, pow(color.rgb, vec3(0.5)), shadowLift);
+                color.rgb = mix(color.rgb, pow(color.rgb, vec3(0.5)), 0.05);
 
                 // Adaptive scaling for highlights based on highlightCompression
                 float hc = max(0.1, highlightCompression); // Avoid division by zero
