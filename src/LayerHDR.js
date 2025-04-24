@@ -7,7 +7,6 @@ import { ShaderHDR } from './ShaderHDR.js'
  * @property {string} url - URL of the image to display (required)
  * @property {string|Layout} [layout='image'] - Layout format for image display
  * @property {string} [format='rgba16f'] - Image data format for WebGL processing
- * @property {boolean} [useHalfFloat=false] - Whether to use half-float precision
  * @property {boolean} [debug=false] - Enable debug output
  * @extends LayerOptions
  */
@@ -35,8 +34,7 @@ import { ShaderHDR } from './ShaderHDR.js'
  * ```javascript
  * const hdrLayer = new OpenLIME.LayerHDR({
  *   url: 'hdr-image.hdr',
- *   format: 'rgba16f',
- *   useHalfFloat: true
+ *   format: 'rgba16f'
  * });
  * viewer.addLayer('hdr', hdrLayer);
  * ```
@@ -50,7 +48,6 @@ class LayerHDR extends Layer {
   constructor(options) {
     options = Object.assign({
       format: 'rgba16f',
-      useHalfFloat: false,
       autoWhitePoint: true,
       debug: false,
       mode: 'reinhard',
@@ -68,7 +65,6 @@ class LayerHDR extends Layer {
     const rasterOptions = {
       format: this.format,
       isLinear: true,  // HDR data is always in linear space
-      useHalfFloat: this.useHalfFloat, // Default to full float precision
       debug: this.debug
     };
     // Add custom data loader if provided

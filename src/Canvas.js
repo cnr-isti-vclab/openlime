@@ -361,6 +361,7 @@ class Canvas {
 		layer.gl = this.gl;
 		layer.canvas = this;
 		layer.overlayElement = this.overlayElement;
+		layer.isSrgbSimplified = this.isSrgbSimplified;	
 		this.layers[id] = layer;
 		this.prefetch();
 	}

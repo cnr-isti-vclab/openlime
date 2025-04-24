@@ -77,7 +77,6 @@ class LayerCombiner extends Layer {
 	constructor(options) {
 		options = Object.assign({
 			isLinear: true,
-			isSrgbSimplified: true
 		}, options);
 
 		super(options);

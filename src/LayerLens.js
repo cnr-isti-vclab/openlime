@@ -73,7 +73,6 @@ class LayerLens extends LayerCombiner {
 			borderEnable: false,
 			dashboard: null,
 			isLinear: true,
-			isSrgbSimplified: true
 		}, options);
 		super(options);
 

@@ -44,8 +44,7 @@ class Raster16Bit extends Raster {
    * Creates a new Raster16Bit instance.
    * @param {Object} [options] - Configuration options
    * @param {Raster16Bit#Format} [options.format='rgb16ui'] - 16-bit data format
-   * @param {boolean} [options.isLinear=true] - Whether the input data is linear (typically true for 16-bit data)
-   * @param {boolean} [options.useHalfFloat=true] - Use HALF_FLOAT type instead of FLOAT for better performance when applicable
+   * @param {boolean} [options.useHalfFloat=false] - Use HALF_FLOAT type instead of FLOAT for better performance when applicable
    * @param {boolean} [options.flipY=false] - Whether to flip the image vertically during loading
    * @param {boolean} [options.premultiplyAlpha=false] - Whether to premultiply alpha during loading
    * @param {DataLoaderCallback} [options.dataLoader=null] - Custom data loader callback
@@ -56,9 +55,8 @@ class Raster16Bit extends Raster {
     // Initialize with parent constructor but override defaults
     super(Object.assign({
         format: 'rgb16ui',
-        isLinear: true,
         debug: false,
-        useHalfFloat: true,
+        useHalfFloat: false,
         flipY: false,
         premultiplyAlpha: false,
     }, options));
@@ -255,7 +253,6 @@ class Raster16Bit extends Raster {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
     // Store color space information on the texture
-    tex.isLinear = this.isLinear;
     this._texture = tex;
 
     return tex;
