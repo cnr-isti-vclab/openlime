@@ -87,7 +87,7 @@ class PointerManager {
      * Creates a new PointerManager instance.
      * @param {HTMLElement} target - DOM element to attach event listeners to
      * @param {Object} [options] - Configuration options
-     * @param {number} [options.pinchMaxInterval=250] - Maximum time (ms) between touches to trigger pinch
+     * @param {number} [options.pinchMaxInterval=100] - Maximum time (ms) between touches to trigger pinch
      * @param {number} [options.idleTime=60] - Seconds of inactivity before idle event
      */
     constructor(target, options) {
@@ -95,7 +95,7 @@ class PointerManager {
         this.target = target;
 
         Object.assign(this, {
-            pinchMaxInterval: 250,        // in ms, fingerDown event max distance in time to trigger a pinch.
+            pinchMaxInterval: 100,        // in ms, fingerDown event max distance in time to trigger a pinch.
             idleTime: 60, //in seconds,
         });
 

@@ -5,7 +5,7 @@ import { Layer } from './Layer.js'
  * @property {Layer[]} layers - Array of layers to be combined (required)
  * @property {Object.<string, Shader>} [shaders] - Map of available shaders
  * @property {string} [type='combiner'] - Must be 'combiner' when using Layer factory
- * @property {boolean} [visible=true] - Whether combined output is visible
+ * @property {boolean} [visible=true] - Whether the combined output is visible
  * @extends LayerOptions
  */
 
@@ -69,207 +69,196 @@ import { Layer } from './Layer.js'
  * ```
  */
 class LayerCombiner extends Layer {
-	/**
-	 * Creates a new LayerCombiner instance
-	 * @param {LayerCombinerOptions} options - Configuration options
-	 * @throws {Error} If rasters option is not empty (rasters should be defined in source layers)
-	 */
-	constructor(options) {
-		options = Object.assign({
-			isLinear: true,
-		}, options);
+    /**
+     * Creates a new LayerCombiner instance.
+     * 
+     * @param {LayerCombinerOptions} options - Configuration options
+     * @throws {Error} If rasters option is not empty (rasters should be defined in source layers)
+     */
+    constructor(options) {
+        options = Object.assign({
+            isLinear: true,
+        }, options);
 
-		super(options);
+        super(options);
 
-		if (Object.keys(this.rasters).length != 0)
-			throw "Rasters options should be empty!";
+        if (Object.keys(this.rasters).length != 0)
+            throw "Rasters options should be empty!";
 
-		/*		let shader = new ShaderCombiner({
-					'label': 'Combiner',
-					'samplers': [{ id:0, name:'source1', type:'vec3' }, { id:1, name:'source2', type:'vec3' }],
-				});
-		
-				this.shaders = {'standard': shader };
-				this.setShader('standard'); */
+        this.textures = [];
+        this.framebuffers = [];
+        this.status = 'ready';
+    }
 
-		//todo if layers check for importjson
+    /**
+     * Cleans up WebGL resources by deleting framebuffers and textures.
+     * Should be called before recreating buffers or when the layer is destroyed.
+     * Prevents memory leaks by properly releasing GPU resources.
+     * @private
+     */
+    deleteFramebuffers() {
+        if (!this.gl) return;
 
-		this.textures = [];
-		this.framebuffers = [];
-		this.status = 'ready';
-	}
+        // Clean up textures
+        for (let i = 0; i < this.textures.length; i++) {
+            if (this.textures[i]) {
+                this.gl.deleteTexture(this.textures[i]);
+            }
+        }
 
-	/**
-	 * Cleans up WebGL resources by deleting framebuffers and textures.
-	 * Should be called before recreating buffers or when the layer is destroyed.
-	 * Prevents memory leaks by properly releasing GPU resources.
-	 * @private
-	 */
-	deleteFramebuffers() {
-		if (!this.gl) return;
+        // Clean up framebuffers
+        for (let i = 0; i < this.framebuffers.length; i++) {
+            if (this.framebuffers[i]) {
+                this.gl.deleteFramebuffer(this.framebuffers[i]);
+            }
+        }
 
-		// Clean up textures
-		for (let i = 0; i < this.textures.length; i++) {
-			if (this.textures[i]) {
-				this.gl.deleteTexture(this.textures[i]);
-			}
-		}
+        this.textures = [];
+        this.framebuffers = [];
+    }
 
-		// Clean up framebuffers
-		for (let i = 0; i < this.framebuffers.length; i++) {
-			if (this.framebuffers[i]) {
-				this.gl.deleteFramebuffer(this.framebuffers[i]);
-			}
-		}
+    /**
+     * Renders the combined layers using framebuffer operations.
+     * Handles framebuffer creation, layer rendering, and final composition.
+     * 
+     * @param {Transform} transform - Current view transform
+     * @param {Object} viewport - Current viewport parameters
+     * @param {number} viewport.x - Viewport X position
+     * @param {number} viewport.y - Viewport Y position
+     * @param {number} viewport.dx - Viewport width
+     * @param {number} viewport.dy - Viewport height
+     * @param {number} viewport.w - Total width
+     * @param {number} viewport.h - Total height
+     * @throws {Error} If shader is not specified
+     * @private
+     */
+    draw(transform, viewport) {
+        for (let layer of this.layers)
+            if (layer.status != 'ready')
+                return;
 
-		this.textures = [];
-		this.framebuffers = [];
-	}
+        if (!this.shader)
+            throw "Shader not specified!";
 
-	/**
-	 * Renders the combined layers using framebuffer operations
-	 * Handles framebuffer creation, layer rendering, and final composition
-	 * @param {Transform} transform - Current view transform
-	 * @param {Object} viewport - Current viewport parameters
-	 * @param {number} viewport.x - Viewport X position
-	 * @param {number} viewport.y - Viewport Y position
-	 * @param {number} viewport.dx - Viewport width
-	 * @param {number} viewport.dy - Viewport height
-	 * @param {number} viewport.w - Total width
-	 * @param {number} viewport.h - Total height
-	 * @throws {Error} If shader is not specified
-	 * @private
-	 */
-	draw(transform, viewport) {
-		for (let layer of this.layers)
-			if (layer.status != 'ready')
-				return;
+        let w = viewport.dx;
+        let h = viewport.dy;
 
-		if (!this.shader)
-			throw "Shader not specified!";
+        // Recreate framebuffers if viewport size changes
+        if (!this.framebuffers.length || this.layout.width != w || this.layout.height != h) {
+            this.deleteFramebuffers();
+            this.layout.width = w;
+            this.layout.height = h;
+            this.createFramebuffers();
+        }
 
-		let w = viewport.dx;
-		let h = viewport.dy;
+        let gl = this.gl;
+        var b = [0, 0, 0, 0];
+        gl.clearColor(b[0], b[1], b[2], b[3]);
 
-		if (!this.framebuffers.length || this.layout.width != w || this.layout.height != h) {
-			this.deleteFramebuffers();
-			this.layout.width = w;
-			this.layout.height = h;
-			this.createFramebuffers();
-		}
+        // Save the active framebuffer before starting operations
+        const activeFramebuffer = this.canvas.getActiveFramebuffer();
 
-		let gl = this.gl;
-		var b = [0, 0, 0, 0];
-		gl.clearColor(b[0], b[1], b[2], b[3]);
+        // Render each layer to its corresponding framebuffer
+        for (let i = 0; i < this.layers.length; i++) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            this.layers[i].draw(transform, { x: 0, y: 0, dx: w, dy: h, w: w, h: h });
+        }
 
-		// Salva il framebuffer attivo prima di iniziare le operazioni
-		const activeFramebuffer = this.canvas.getActiveFramebuffer();
+        // Restore the active framebuffer for final rendering
+        this.canvas.setActiveFramebuffer(activeFramebuffer);
 
-		//TODO optimize: render to texture ONLY if some parameters change!
-		//provider di textures... max memory and reference counting.
+        this.prepareWebGL();
 
-		for (let i = 0; i < this.layers.length; i++) {
-			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
-			gl.clear(gl.COLOR_BUFFER_BIT);
-			this.layers[i].draw(transform, { x: 0, y: 0, dx: w, dy: h, w: w, h: h });
-		}
+        // Bind textures and set shader uniforms
+        for (let i = 0; i < this.layers.length; i++) {
+            gl.uniform1i(this.shader.samplers[i].location, i);
+            gl.activeTexture(gl.TEXTURE0 + i);
+            gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
+        }
 
-		// Ripristina il framebuffer attivo di Canvas per il rendering finale
-		this.canvas.setActiveFramebuffer(activeFramebuffer);
+        // Update tile buffers and draw the final composition
+        this.updateTileBuffers(
+            new Float32Array([-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0]),
+            new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]));
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    }
 
-		this.prepareWebGL();
+    /**
+     * Creates framebuffers and textures for layer composition.
+     * Initializes WebGL resources for each input layer.
+     * @private
+     */
+    createFramebuffers() {
+        let gl = this.gl;
+        for (let i = 0; i < this.layers.length; i++) {
+            const texture = gl.createTexture();
 
-		for (let i = 0; i < this.layers.length; i++) {
-			gl.uniform1i(this.shader.samplers[i].location, i);
-			gl.activeTexture(gl.TEXTURE0 + i);
-			gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
-		}
+            gl.bindTexture(gl.TEXTURE_2D, texture);
 
-		this.updateTileBuffers(
-			new Float32Array([-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0]),
-			new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]));
-		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+            const level = 0;
+            const internalFormat = gl.RGBA;
+            const border = 0;
+            const format = gl.RGBA;
+            const type = gl.UNSIGNED_BYTE;
+            gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                this.layout.width, this.layout.height, border, format, type, null);
 
-		// Non reimpostiamo il framebuffer a null poiché lo abbiamo già fatto con setActiveFramebuffer
-	}
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-	/**
-	 * Creates framebuffers and textures for layer composition
-	 * Initializes WebGL resources for each input layer
-	 * @private
-	 */
-	createFramebuffers() {
-		let gl = this.gl;
-		for (let i = 0; i < this.layers.length; i++) {
-			//TODO for thing like lens, we might want to create SMALLER textures for some layers.
-			const texture = gl.createTexture();
+            const framebuffer = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
-			gl.bindTexture(gl.TEXTURE_2D, texture);
+            // Verify that the framebuffer is complete
+            const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+            if (status !== gl.FRAMEBUFFER_COMPLETE) {
+                console.error("LayerCombiner framebuffer not complete. Status:", status);
+            }
 
-			const level = 0;
-			const internalFormat = gl.RGBA;
-			const border = 0;
-			const format = gl.RGBA;
-			const type = gl.UNSIGNED_BYTE;
-			gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-				this.layout.width, this.layout.height, border, format, type, null);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            this.textures[i] = texture;
+            this.framebuffers[i] = framebuffer;
+        }
+    }
 
-			const framebuffer = gl.createFramebuffer();
-			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+    /**
+     * Computes the combined bounding box of all input layers.
+     * 
+     * @returns {BoundingBox} Combined bounding box
+     * @override
+     * @private
+     */
+    boundingBox() {
+        const discardHidden = false;
+        let result = Layer.computeLayersBBox(this.layers, discardHidden);
+        if (this.transform != null && this.transform != undefined) {
+            result = this.transform.transformBox(result);
+        }
+        return result;
+    }
 
-			// Verifica che il framebuffer sia completo
-			const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-			if (status !== gl.FRAMEBUFFER_COMPLETE) {
-				console.error("LayerCombiner framebuffer not complete. Status:", status);
-			}
-
-			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-			this.textures[i] = texture;
-			this.framebuffers[i] = framebuffer;
-		}
-	}
-
-	/**
-	 * Computes combined bounding box of all input layers
-	 * @returns {BoundingBox} Combined bounding box
-	 * @override
-	 * @private
-	 */
-	boundingBox() {
-		// Combiner ask the combination of all its children boxes
-		// keeping the hidden, because they could be hidden, but revealed by the combiner
-		const discardHidden = false;
-		let result = Layer.computeLayersBBox(this.layers, discardHidden);
-		if (this.transform != null && this.transform != undefined) {
-			result = this.transform.transformBox(result);
-		}
-		return result;
-	}
-
-	/**
-	 * Computes minimum scale across all input layers
-	 * @returns {number} Combined scale factor
-	 * @override
-	 * @private
-	 */
-	scale() {
-		//Combiner ask the scale of all its children
-		//keeping the hidden, because they could be hidden, but revealed by the combiner
-		const discardHidden = false;
-		let scale = Layer.computeLayersMinScale(this.layers, discardHidden);
-		scale *= this.transform.z;
-		return scale;
-	}
+    /**
+     * Computes the minimum scale across all input layers.
+     * 
+     * @returns {number} Combined scale factor
+     * @override
+     * @private
+     */
+    scale() {
+        const discardHidden = false;
+        let scale = Layer.computeLayersMinScale(this.layers, discardHidden);
+        scale *= this.transform.z;
+        return scale;
+    }
 }
 
 /**
- * Register this layer type with the Layer factory
+ * Registers this layer type with the Layer factory.
+ * 
  * @type {Function}
  * @private
  */
