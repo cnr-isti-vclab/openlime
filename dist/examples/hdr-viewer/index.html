@@ -132,16 +132,8 @@
       </div>
     </div>
 
-    <!-- Reinhard Parameters -->
+    <!-- Reinhard Parameters (White Point controls rimossi) -->
     <div class="control-group" id="reinhard-controls">
-      <div class="parameter-control checkbox-control">
-        <input type="checkbox" id="auto-white-point" checked>
-        <label for="auto-white-point">Auto White Point</label>
-      </div>
-      <div class="parameter-control">
-        <label for="white-point">White Point <span id="white-point-value">1.0</span></label>
-        <input type="range" id="white-point" min="0.1" max="10" step="0.1" value="1.0" disabled>
-      </div>
       <div class="parameter-control">
         <label for="shadow-lift">Shadow Lift <span id="shadow-lift-value">0.0</span></label>
         <input type="range" id="shadow-lift" min="0" max="1" step="0.01" value="0">
@@ -301,27 +293,12 @@
 
     // HDR Control Panel
     let hdrStatistics = null;
-    let autoWhitePoint = true;
 
     hdrLayer.addEvent('loaded', () => {
       console.log("HDR layer loaded");
-
-      // Get and store statistics for use in controls
+      // Puoi comunque usare hdrStatistics per altri controlli futuri
       hdrStatistics = hdrLayer.getStatInfo();
       console.log("HDR StatInfo:", hdrStatistics);
-
-      // Update white point slider max based on statistics
-      if (hdrStatistics && hdrStatistics.maxValue) {
-        const whitePointSlider = document.getElementById('white-point');
-        whitePointSlider.max = Math.max(Math.ceil(hdrStatistics.maxValue * 1.5), 50);
-
-        // Update white point value if auto is enabled
-        if (autoWhitePoint) {
-          const newWhitePoint = hdrStatistics.maxValue || 1.0;
-          whitePointSlider.value = newWhitePoint;
-          document.getElementById('white-point-value').textContent = newWhitePoint.toFixed(2);
-        }
-      }
     });
 
     // Set up control panel event listeners
@@ -348,29 +325,7 @@
         });
       });
 
-      // Auto White Point toggle
-      const autoWhitePointCheckbox = document.getElementById('auto-white-point');
-      autoWhitePointCheckbox.addEventListener('change', function () {
-        autoWhitePoint = this.checked;
-        document.getElementById('white-point').disabled = autoWhitePoint;
-
-        if (autoWhitePoint && hdrStatistics && hdrStatistics.maxValue) {
-          const newWhitePoint = hdrStatistics.maxValue;
-          hdrLayer.setWhitePoint(newWhitePoint);
-          document.getElementById('white-point').value = newWhitePoint;
-          document.getElementById('white-point-value').textContent = newWhitePoint.toFixed(2);
-        }
-      });
-
-      // White Point slider
-      const whitePointSlider = document.getElementById('white-point');
-      whitePointSlider.addEventListener('input', function () {
-        const value = parseFloat(this.value);
-        document.getElementById('white-point-value').textContent = value.toFixed(2);
-        hdrLayer.setWhitePoint(value);
-      });
-
-      // Shadow Lift slider
+      // Shadow Lift slider (Reinhard)
       const shadowLiftSlider = document.getElementById('shadow-lift');
       shadowLiftSlider.addEventListener('input', function () {
         const value = parseFloat(this.value);
@@ -394,18 +349,17 @@
         hdrLayer.setExposure(value);
       });
 
-      // Balanced White Point slider
+      // Balanced Highlight Compression slider
       const highlightCompressionSlider = document.getElementById('highlight-compression');
       highlightCompressionSlider.min = 0.01;
-      highlightCompressionSlider.max = 1.0; // Set the max value first
+      highlightCompressionSlider.max = 1.0;
       highlightCompressionSlider.step = 0.01;
-      highlightCompressionSlider.value = 1.0; // Set the value after setting the max
+      highlightCompressionSlider.value = 1.0;
       highlightCompressionSlider.addEventListener('input', function () {
         const value = parseFloat(this.value);
         document.getElementById('highlight-compression-value').textContent = value.toFixed(2);
         hdrLayer.setHighlightCompression(value);
       });
-
     });
 
     // Attribution
