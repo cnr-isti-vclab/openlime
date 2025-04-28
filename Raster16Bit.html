@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: EditorSvgAnnotation</title>
+	<title>OpenLIME Class: Raster16Bit</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,25 +88,23 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: EditorSvgAnnotation</h1>
+	<h1 class="page-title">Class: Raster16Bit</h1>
 <section>
 
 <header>
     
         <h2>
-        EditorSvgAnnotation
+        Raster16Bit
         </h2>
         
-            <div class="class-description"><p>EditorSvgAnnotation enables creation and editing of SVG annotations in OpenLIME.
-It provides tools for drawing various shapes and managing annotations through a user interface.</p>
-<p>Features:</p>
+            <div class="class-description"><p>Raster16Bit class extends Raster to handle 16-bit textures with WebGL 2.0.
+Provides functionality for:</p>
 <ul>
-<li>Drawing tools: point, pin, line, box, circle</li>
-<li>Annotation editing and management</li>
-<li>Custom state and data storage</li>
-<li>Integration with annotation databases through callbacks</li>
-<li>Undo/redo functionality</li>
-<li>SVG export capabilities</li>
+<li>Loading 16-bit images from URLs or blobs via custom data loaders</li>
+<li>Converting data to appropriate WebGL 2.0 texture formats</li>
+<li>Supporting various 16-bit formats (float, int, uint)</li>
+<li>Creating appropriate texture parameters for 16-bit data</li>
+<li>Support for custom data loaders for specialized formats</li>
 </ul></div>
         
     
@@ -119,7 +117,7 @@ It provides tools for drawing various shapes and managing annotations through a 
         
 <hr>
 <dt>
-    <h4 class="name" id="EditorSvgAnnotation"><span class="type-signature"></span>new EditorSvgAnnotation(viewer, layer [, options])</h4>
+    <h4 class="name" id="Raster16Bit"><span class="type-signature"></span>new Raster16Bit( [options])</h4>
     
     
 </dt>
@@ -127,7 +125,7 @@ It provides tools for drawing various shapes and managing annotations through a 
 
     
     <div class="description">
-        <p>Creates an EditorSvgAnnotation instance</p>
+        <p>Creates a new Raster16Bit instance.</p>
     </div>
     
 
@@ -160,70 +158,6 @@ It provides tools for drawing various shapes and managing annotations through a 
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>viewer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Viewer.html">Viewer</a></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>The OpenLIME viewer instance</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>layer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>The annotation layer to edit</p></td>
-        </tr>
-
     
 
         <tr>
@@ -285,49 +219,13 @@ It provides tools for drawing various shapes and managing annotations through a 
 
         <tr>
             
-                <td class="name"><code>classes</code></td>
+                <td class="name"><code>format</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Object.&lt;string, {stroke: string, label: string}></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>Annotation classes with colors and labels</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>createCallback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="global.html#crudCallback">crudCallback</a></span>
+<span class="param-type"><a href="Raster16Bit.html#Format">Raster16Bit#Format</a></span>
 
 
 
@@ -349,93 +247,19 @@ It provides tools for drawing various shapes and managing annotations through a 
             
                 <td class="default">
                 
+                    'rgb16ui'
+                
                 </td>
             
 
-            <td class="description last"><p>Called when creating annotations</p></td>
+            <td class="description last"><p>16-bit data format</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>updateCallback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="global.html#crudCallback">crudCallback</a></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>Called when updating annotations</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>deleteCallback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="global.html#crudCallback">crudCallback</a></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>Called when deleting annotations</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>enableState</code></td>
+                <td class="name"><code>useHalfFloat</code></td>
             
 
             <td class="type">
@@ -468,20 +292,20 @@ It provides tools for drawing various shapes and managing annotations through a 
                 </td>
             
 
-            <td class="description last"><p>Whether to save viewer state with annotations</p></td>
+            <td class="description last"><p>Use HALF_FLOAT type instead of FLOAT for better performance when applicable</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>customState</code></td>
+                <td class="name"><code>flipY</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="global.html#customStateCallback">customStateCallback</a></span>
+<span class="param-type">boolean</span>
 
 
 
@@ -503,23 +327,25 @@ It provides tools for drawing various shapes and managing annotations through a 
             
                 <td class="default">
                 
+                    false
+                
                 </td>
             
 
-            <td class="description last"><p>Customize saved state data</p></td>
+            <td class="description last"><p>Whether to flip the image vertically during loading</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>customData</code></td>
+                <td class="name"><code>premultiplyAlpha</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="global.html#customDataCallback">customDataCallback</a></span>
+<span class="param-type">boolean</span>
 
 
 
@@ -541,23 +367,25 @@ It provides tools for drawing various shapes and managing annotations through a 
             
                 <td class="default">
                 
+                    false
+                
                 </td>
             
 
-            <td class="description last"><p>Customize annotation data</p></td>
+            <td class="description last"><p>Whether to premultiply alpha during loading</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>selectedCallback</code></td>
+                <td class="name"><code>dataLoader</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="global.html#selectedCallback">selectedCallback</a></span>
+<span class="param-type"><a href="global.html#DataLoaderCallback">DataLoaderCallback</a></span>
 
 
 
@@ -579,17 +407,19 @@ It provides tools for drawing various shapes and managing annotations through a 
             
                 <td class="default">
                 
+                    null
+                
                 </td>
             
 
-            <td class="description last"><p>Called when annotation is selected</p></td>
+            <td class="description last"><p>Custom data loader callback</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>tools</code></td>
+                <td class="name"><code>dataLoaderOptions</code></td>
             
 
             <td class="type">
@@ -617,23 +447,25 @@ It provides tools for drawing various shapes and managing annotations through a 
             
                 <td class="default">
                 
+                    {}
+                
                 </td>
             
 
-            <td class="description last"><p>Custom tool configurations</p></td>
+            <td class="description last"><p>Options to pass to the data loader</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>priority</code></td>
+                <td class="name"><code>debug</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">boolean</span>
 
 
 
@@ -655,12 +487,12 @@ It provides tools for drawing various shapes and managing annotations through a 
             
                 <td class="default">
                 
-                    20000
+                    false
                 
                 </td>
             
 
-            <td class="description last"><p>Event handling priority</p></td>
+            <td class="description last"><p>Enable debug output</p></td>
         </tr>
 
     
@@ -711,8 +543,8 @@ It provides tools for drawing various shapes and managing annotations through a 
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="EditorSvgAnnotation.js.html">EditorSvgAnnotation.js</a>,
-				 <a href="EditorSvgAnnotation.js.html#sunlight-1-line-77">line 77</a>
+				<a href="Raster16Bit.js.html">Raster16Bit.js</a>,
+				 <a href="Raster16Bit.js.html#sunlight-1-line-42">line 42</a>
 			</li>
 		</ul>
 	</dd>
@@ -737,30 +569,6 @@ It provides tools for drawing various shapes and managing annotations through a 
     
 
     
-
-    
-        <h5>Example</h5>
-        
-    <pre class="sunlight-highlight-javascript">&#x60;&#x60;&#x60;javascript
-// Create annotation layer
-const anno = new OpenLIME.Layer(options);
-viewer.addLayer(&#x27;annotations&#x27;, anno);
-
-// Initialize editor
-const editor = new OpenLIME.EditorSvgAnnotation(viewer, anno, {
-  classes: {
-    &#x27;default&#x27;: { stroke: &#x27;#000&#x27;, label: &#x27;Default&#x27; },
-    &#x27;highlight&#x27;: { stroke: &#x27;#ff0&#x27;, label: &#x27;Highlight&#x27; }
-  }
-});
-
-// Setup callbacks
-editor.createCallback = (anno) =&gt; { 
-  console.log(&quot;Created:&quot;, anno);
-  return saveToDatabase(anno);
-};
-&#x60;&#x60;&#x60;</pre>
-
 
     
 </dd>
@@ -787,7 +595,7 @@ editor.createCallback = (anno) =&gt; {
             
 <hr>
 <dt>
-    <h4 class="name" id="createAnnotation"><span class="type-signature"></span>createAnnotation()</h4>
+    <h4 class="name" id="loadImage"><span class="type-signature">&lt;async> </span>loadImage(tile, gl)</h4>
     
     
 </dt>
@@ -795,7 +603,8 @@ editor.createCallback = (anno) =&gt; {
 
     
     <div class="description">
-        <p>Creates a new annotation</p>
+        <p>Loads a 16-bit image tile and converts it to a WebGL texture.
+Overrides parent method to handle 16-bit specific formats.</p>
     </div>
     
 
@@ -804,6 +613,208 @@ editor.createCallback = (anno) =&gt; {
     
 
     
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>tile</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The tile to load</p>
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>url</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>URL of the image</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>start</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Start byte for partial requests</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>end</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>End byte for partial requests</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>gl</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">WebGL2RenderingContext</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The WebGL2 rendering context</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
     
 
     
@@ -841,8 +852,8 @@ editor.createCallback = (anno) =&gt; {
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="EditorSvgAnnotation.js.html">EditorSvgAnnotation.js</a>,
-				 <a href="EditorSvgAnnotation.js.html#sunlight-1-line-221">line 221</a>
+				<a href="Raster16Bit.js.html">Raster16Bit.js</a>,
+				 <a href="Raster16Bit.js.html#sunlight-1-line-120">line 120</a>
 			</li>
 		</ul>
 	</dd>
@@ -865,11 +876,47 @@ editor.createCallback = (anno) =&gt; {
     
 
     
+    <h5>Throws:</h5>
+    
+            
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If context is not WebGL2</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+
+        
 
     
     <h5>Returns:</h5>
     
             
+<div class="param-desc">
+    <p>Promise resolving to [texture, size]:</p>
+<ul>
+<li>texture: WebGLTexture object</li>
+<li>size: Size of the image in bytes (width * height * components * bytesPerComponent)</li>
+</ul>
+</div>
+
 
 
 <dl>
@@ -878,439 +925,7 @@ editor.createCallback = (anno) =&gt; {
     </dt>
     <dd>
         
-<span class="param-type">void</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="deleteSelected"><span class="type-signature"></span>deleteSelected()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Deletes the selected annotation</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="EditorSvgAnnotation.js.html">EditorSvgAnnotation.js</a>,
-				 <a href="EditorSvgAnnotation.js.html#sunlight-1-line-499">line 499</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">void</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="exportAnnotations"><span class="type-signature"></span>exportAnnotations()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Exports all annotations as SVG</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="EditorSvgAnnotation.js.html">EditorSvgAnnotation.js</a>,
-				 <a href="EditorSvgAnnotation.js.html#sunlight-1-line-533">line 533</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">void</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="redo"><span class="type-signature"></span>redo()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Performs a redo operation</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="EditorSvgAnnotation.js.html">EditorSvgAnnotation.js</a>,
-				 <a href="EditorSvgAnnotation.js.html#sunlight-1-line-639">line 639</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">void</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="undo"><span class="type-signature"></span>undo()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Performs an undo operation</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
-	<dd class="tag-source">
-		<ul class="dummy">
-			<li>
-				<a href="EditorSvgAnnotation.js.html">EditorSvgAnnotation.js</a>,
-				 <a href="EditorSvgAnnotation.js.html#sunlight-1-line-612">line 612</a>
-			</li>
-		</ul>
-	</dd>
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">void</span>
+<span class="param-type">Promise.&lt;Array></span>
 
 
 
@@ -1326,6 +941,468 @@ editor.createCallback = (anno) =&gt; {
         </dl>
     
 
+    
+        <h3 class="subsection-title">Type Definitions</h3>
+
+        <dl>
+                
+<hr>
+<dt class="name" id="Format">
+    <h4 id="Format">Format</h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Defines the 16-bit format for image data storage in textures.</p>
+    </div>
+    
+
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">'r16f'</span>
+|
+
+<span class="param-type">'rg16f'</span>
+|
+
+<span class="param-type">'rgb16f'</span>
+|
+
+<span class="param-type">'rgba16f'</span>
+|
+
+<span class="param-type">'r16ui'</span>
+|
+
+<span class="param-type">'rg16ui'</span>
+|
+
+<span class="param-type">'rgb16ui'</span>
+|
+
+<span class="param-type">'rgba16ui'</span>
+|
+
+<span class="param-type">'r16i'</span>
+|
+
+<span class="param-type">'rg16i'</span>
+|
+
+<span class="param-type">'rgb16i'</span>
+|
+
+<span class="param-type">'rgba16i'</span>
+|
+
+<span class="param-type">'depth16'</span>
+
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    <dl>
+
+<table class="props table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>r16f</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'r16f'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Single-channel 16-bit floating point format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rg16f</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'rg16f'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Two-channel 16-bit floating point format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rgb16f</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'rgb16f'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Three-channel 16-bit floating point format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rgba16f</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'rgba16f'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Four-channel 16-bit floating point format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>r16ui</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'r16ui'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Single-channel 16-bit unsigned integer format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rg16ui</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'rg16ui'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Two-channel 16-bit unsigned integer format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rgb16ui</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'rgb16ui'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Three-channel 16-bit unsigned integer format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rgba16ui</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'rgba16ui'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Four-channel 16-bit unsigned integer format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>r16i</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'r16i'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Single-channel 16-bit signed integer format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rg16i</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'rg16i'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Two-channel 16-bit signed integer format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rgb16i</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'rgb16i'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Three-channel 16-bit signed integer format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rgba16i</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'rgba16i'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Four-channel 16-bit signed integer format</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>depth16</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'depth16'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>16-bit depth texture format</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+</dl>
+
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Raster16Bit.js.html">Raster16Bit.js</a>,
+				 <a href="Raster16Bit.js.html#sunlight-1-line-3">line 3</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
+            </dl>
     
 
     

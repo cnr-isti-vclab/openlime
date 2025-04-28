@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>OpenLIME Class: LayerNeuralRTI</title>
+	<title>OpenLIME Class: LayerHDR</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -88,43 +88,31 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: LayerNeuralRTI</h1>
+	<h1 class="page-title">Class: LayerHDR</h1>
 <section>
 
 <header>
     
         <h2>
-        LayerNeuralRTI
+        LayerHDR
         </h2>
         
-            <div class="class-description"><p>LayerNeuralRTI implements real-time Neural Reflectance Transformation Imaging.
-This layer uses a neural network to perform real-time relighting of images,
-offering improved quality and performance compared to traditional RTI approaches.</p>
+            <div class="class-description"><p>LayerHDR provides advanced HDR image rendering capabilities in OpenLIME.
+It is designed for high dynamic range (HDR) image processing and rendering,
+leveraging WebGL shaders and tone mapping techniques.</p>
 <p>Features:</p>
 <ul>
-<li>Neural network-based relighting</li>
-<li>Adaptive quality scaling</li>
-<li>Frame rate optimization</li>
-<li>Progressive refinement</li>
-<li>Multi-plane texture support</li>
-<li>WebGL acceleration</li>
+<li>HDR tone mapping with configurable white point</li>
+<li>WebGL-based rendering with 16-bit precision</li>
+<li>Automatic raster data management</li>
+<li>Shader-based processing for HDR compression</li>
 </ul>
 <p>Technical Details:</p>
 <ul>
-<li>Uses 3-layer neural network</li>
-<li>Supports multiple color spaces</li>
-<li>Implements adaptive tile processing</li>
-<li>Handles dynamic quality adjustment</li>
-<li>Manages frame buffer operations</li>
-<li>Coordinates light transformations</li>
-</ul>
-<p>Performance Optimizations:</p>
-<ul>
-<li>Dynamic resolution scaling</li>
-<li>FPS-based quality adjustment</li>
-<li>Progressive refinement system</li>
-<li>Tile caching</li>
-<li>Batch processing</li>
+<li>Uses WebGL textures for HDR image data</li>
+<li>Supports 16-bit float formats (e.g., rgba16f)</li>
+<li>Integrates with OpenLIME layout system</li>
+<li>Provides multiple tone mapping options: Reinhard, ACES, and Exposure</li>
 </ul></div>
         
     
@@ -137,7 +125,7 @@ offering improved quality and performance compared to traditional RTI approaches
         
 <hr>
 <dt>
-    <h4 class="name" id="LayerNeuralRTI"><span class="type-signature"></span>new LayerNeuralRTI(options)</h4>
+    <h4 class="name" id="LayerHDR"><span class="type-signature"></span>new LayerHDR(options)</h4>
     
     
 </dt>
@@ -145,7 +133,7 @@ offering improved quality and performance compared to traditional RTI approaches
 
     
     <div class="description">
-        <p>Creates a new LayerNeuralRTI instance</p>
+        <p>Creates a new LayerHDR instance.</p>
     </div>
     
 
@@ -186,7 +174,7 @@ offering improved quality and performance compared to traditional RTI approaches
             <td class="type">
             
                 
-<span class="param-type"><a href="global.html#LayerNeuralRTIOptions">LayerNeuralRTIOptions</a></span>
+<span class="param-type"><a href="global.html#LayerHDROptions">LayerHDROptions</a></span>
 
 
 
@@ -197,7 +185,7 @@ offering improved quality and performance compared to traditional RTI approaches
 
             
 
-            <td class="description last"><p>Configuration options</p></td>
+            <td class="description last"><p>Configuration options for the HDR layer</p></td>
         </tr>
 
     
@@ -241,8 +229,8 @@ offering improved quality and performance compared to traditional RTI approaches
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerNeuralRTI.js.html">LayerNeuralRTI.js</a>,
-				 <a href="LayerNeuralRTI.js.html#sunlight-1-line-66">line 66</a>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-42">line 42</a>
 			</li>
 		</ul>
 	</dd>
@@ -272,20 +260,11 @@ offering improved quality and performance compared to traditional RTI approaches
         <h5>Example</h5>
         
     <pre class="sunlight-highlight-javascript">&#x60;&#x60;&#x60;javascript
-// Create Neural RTI layer
-const neuralRTI = new OpenLIME.Layer({
-  type: &#x27;neural&#x27;,
-  url: &#x27;config.json&#x27;,
-  layout: &#x27;deepzoom&#x27;,
-  convergenceSpeed: 1.2,
-  maxTiles: 40
+const hdrLayer = new OpenLIME.LayerHDR({
+  url: &#x27;hdr-image.hdr&#x27;,
+  format: &#x27;rgba16f&#x27;
 });
-
-// Add to viewer
-viewer.addLayer(&#x27;rti&#x27;, neuralRTI);
-
-// Change light direction
-neuralRTI.setLight([0.5, 0.3], 1000);
+viewer.addLayer(&#x27;hdr&#x27;, hdrLayer);
 &#x60;&#x60;&#x60;</pre>
 
 
@@ -1811,6 +1790,118 @@ viewer.addLayer(&#x27;Enhanced Image&#x27;, derivedLayer);
             
 <hr>
 <dt>
+    <h4 class="name" id="getAcesContrast"><span class="type-signature"></span>getAcesContrast()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets the current ACES contrast value.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-163">line 163</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>The current ACES contrast value</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
     <h4 class="name" id="getControl"><span class="type-signature"></span>getControl(name)</h4>
     
     
@@ -1956,6 +2047,230 @@ return {*} The control</p></td>
     
 
     
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getExposure"><span class="type-signature"></span>getExposure()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets the current exposure value.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-183">line 183</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>The current exposure value</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getHighlightCompression"><span class="type-signature"></span>getHighlightCompression()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets the current highlight compression value.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-201">line 201</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>The current highlight compression value</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
 
     
 </dd>
@@ -2420,6 +2735,230 @@ Works with both single images and tiled formats</p>
             
 <hr>
 <dt>
+    <h4 class="name" id="getShadowLift"><span class="type-signature"></span>getShadowLift()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets the current shadow lift value.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-143">line 143</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>The current shadow lift value</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getStatInfo"><span class="type-signature"></span>getStatInfo()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Retrieves statistical information about the raster data.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-210">line 210</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>An object containing statistical information (e.g., maxValue, avgLuminance)</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
     <h4 class="name" id="getState"><span class="type-signature"></span>getState( [stateMask])</h4>
     
     
@@ -2600,6 +3139,654 @@ Works with both single images and tiled formats</p>
     <dd>
         
 <span class="param-type">Object</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getWhitePoint"><span class="type-signature"></span>getWhitePoint()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Gets the current white point value.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-123">line 123</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>The current white point value</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="interpolateControls"><span class="type-signature"></span>interpolateControls()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Interpolates control values and updates the shader with the current parameters.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="Layer.html#interpolateControls">Layer#interpolateControls</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-219">line 219</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Whether the interpolation is complete</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="loadTile"><span class="type-signature">&lt;async> </span>loadTile(tile, callback)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Loads and processes a single image tile with optimized resource management.
+Implements request batching, concurrent loading, and proper error handling.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>tile</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Tile specification object</p>
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Unique tile identifier</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>url</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Base URL for tile resource</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>start</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Start byte for partial content (for tarzoom)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>end</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>End byte for partial content (for tarzoom)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>offsets</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Object></span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Byte offsets for interleaved formats</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Completion callback(error, size)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+	<dt class="inherited-from method-doc-label method-doc-details-label">Inherited From:</dt>
+	<dd class="inherited-from">
+		<ul class="dummy">
+			<li>
+				<a href="Layer.html#loadTile">Layer#loadTile</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="Layer.html#loadTile">Layer#loadTile</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Layer.js.html">Layer.js</a>,
+				 <a href="Layer.js.html#sunlight-1-line-1023">line 1023</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Throws:</h5>
+    
+            
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If tile is already in processing queue</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+
+        
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
 
 
 
@@ -3261,6 +4448,240 @@ layer.removeShader(&#x27;oldEffect&#x27;);
             
 <hr>
 <dt>
+    <h4 class="name" id="setAcesContrast"><span class="type-signature"></span>setAcesContrast(v [, delayms] [, easing])</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the ACES contrast parameter for ACES tone mapping.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>v</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The new ACES contrast value</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>delayms</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    1
+                
+                </td>
+            
+
+            <td class="description last"><p>Delay in milliseconds for the transition</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>easing</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'linear'
+                
+                </td>
+            
+
+            <td class="description last"><p>Easing function for the transition</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-154">line 154</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
     <h4 class="name" id="setControl"><span class="type-signature"></span>setControl(name, value [, dt] [, easing])</h4>
     
     
@@ -3548,7 +4969,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
             
 <hr>
 <dt>
-    <h4 class="name" id="setLight"><span class="type-signature"></span>setLight(light [, dt])</h4>
+    <h4 class="name" id="setExposure"><span class="type-signature"></span>setExposure(v [, delayms] [, easing])</h4>
     
     
 </dt>
@@ -3556,7 +4977,7 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
     
     <div class="description">
-        <p>Sets light direction with optional animation</p>
+        <p>Sets the exposure value for exposure-based tone mapping.</p>
     </div>
     
 
@@ -3583,6 +5004,8 @@ layer.removeShader(&#x27;oldEffect&#x27;);
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -3593,13 +5016,13 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
         <tr>
             
-                <td class="name"><code>light</code></td>
+                <td class="name"><code>v</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array.&lt;number></span>
+<span class="param-type">number</span>
 
 
 
@@ -3617,15 +5040,19 @@ layer.removeShader(&#x27;oldEffect&#x27;);
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last"><p>Light direction vector [x, y]</p></td>
+            <td class="description last"><p>The new exposure value</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>dt</code></td>
+                <td class="name"><code>delayms</code></td>
             
 
             <td class="type">
@@ -3651,8 +5078,54 @@ layer.removeShader(&#x27;oldEffect&#x27;);
             
 
             
+                <td class="default">
+                
+                    1
+                
+                </td>
+            
 
-            <td class="description last"><p>Animation duration in milliseconds</p></td>
+            <td class="description last"><p>Delay in milliseconds for the transition</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>easing</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'linear'
+                
+                </td>
+            
+
+            <td class="description last"><p>Easing function for the transition</p></td>
         </tr>
 
     
@@ -3696,8 +5169,242 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 	<dd class="tag-source">
 		<ul class="dummy">
 			<li>
-				<a href="LayerNeuralRTI.js.html">LayerNeuralRTI.js</a>,
-				 <a href="LayerNeuralRTI.js.html#sunlight-1-line-115">line 115</a>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-174">line 174</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setHighlightCompression"><span class="type-signature"></span>setHighlightCompression(v [, delayms] [, easing])</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the highlight compression value for HDR tone mapping.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>v</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The new highlight compression value</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>delayms</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    1
+                
+                </td>
+            
+
+            <td class="description last"><p>Delay in milliseconds for the transition</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>easing</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'linear'
+                
+                </td>
+            
+
+            <td class="description last"><p>Easing function for the transition</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-193">line 193</a>
 			</li>
 		</ul>
 	</dd>
@@ -4062,6 +5769,240 @@ layer.removeShader(&#x27;oldEffect&#x27;);
 
 
         
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setShadowLift"><span class="type-signature"></span>setShadowLift(v [, delayms] [, easing])</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the shadow lift value for HDR tone mapping.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>v</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The new shadow lift value</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>delayms</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    1
+                
+                </td>
+            
+
+            <td class="description last"><p>Delay in milliseconds for the transition</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>easing</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'linear'
+                
+                </td>
+            
+
+            <td class="description last"><p>Easing function for the transition</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-134">line 134</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
 
     
 
@@ -4894,6 +6835,240 @@ layer.removeShader(&#x27;oldEffect&#x27;);
     <ul>
         <li><a href="Layer.html#event:update">Layer#event:update</a></li>
     </ul>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setWhitePoint"><span class="type-signature"></span>setWhitePoint(v [, delayms] [, easing])</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the white point for HDR tone mapping.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>v</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The new white point value</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>delayms</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    1
+                
+                </td>
+            
+
+            <td class="description last"><p>Delay in milliseconds for the transition</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>easing</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'linear'
+                
+                </td>
+            
+
+            <td class="description last"><p>Easing function for the transition</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="LayerHDR.js.html">LayerHDR.js</a>,
+				 <a href="LayerHDR.js.html#sunlight-1-line-114">line 114</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
     
 
     
