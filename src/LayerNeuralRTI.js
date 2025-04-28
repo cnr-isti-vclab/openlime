@@ -76,7 +76,8 @@ class LayerNeuralRTI extends Layer {
 		this.convergenceSpeed = 1.2;
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
-
+		this.activeFramebuffer = null;
+		
 		let textureUrls = [
 			null,
 			this.layout.imageUrl(this.url, 'plane_1'),
@@ -93,7 +94,7 @@ class LayerNeuralRTI extends Layer {
 
 		this.imageShader = new Shader({
 			'label': 'Rgb',
-			'samplers': [{ id: 0, name: 'kd', type: 'vec3', load: false }]
+			'samplers': [{ id: 0, name: 'source', type: 'vec3', load: false }]
 		});
 
 		this.neuralShader = new ShaderNeural();
@@ -319,8 +320,11 @@ class LayerNeuralRTI extends Layer {
 
 		if (!this.framebuffer)
 			this.framebuffer = gl.createFramebuffer();
+			
+		// Save the active framebuffer before starting operations
+		this.activeFramebuffer = this.canvas.getActiveFramebuffer();
+			
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
-
 
 		//save previous viewport
 		this.backupViewport = viewport;
@@ -346,7 +350,9 @@ class LayerNeuralRTI extends Layer {
  */
 	postRelight() {
 		let gl = this.gl;
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+		
+		// Restore the active framebuffer for final rendering
+		this.canvas.setActiveFramebuffer(this.activeFramebuffer);
 
 		//restore previous viewport
 		let v = this.backupViewport;
