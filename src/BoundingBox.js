@@ -49,7 +49,7 @@ class BoundingBox {
      * @returns {boolean} True if the box is empty, false otherwise
      */
     isEmpty() {
-        return this.xLow > this.xHigh || this.yLow > this.yHigh;
+        return this.xLow >= this.xHigh || this.yLow >= this.yHigh;
     }
 
     /**

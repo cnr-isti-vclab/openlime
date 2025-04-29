@@ -235,7 +235,7 @@ class LayerCombiner extends Layer {
     boundingBox() {
         const discardHidden = false;
         let result = Layer.computeLayersBBox(this.layers, discardHidden);
-        if (this.transform != null && this.transform != undefined) {
+        if (result && this.transform != null && this.transform != undefined) {
             result = this.transform.transformBox(result);
         }
         return result;

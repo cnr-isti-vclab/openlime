@@ -190,6 +190,7 @@
           const pixelCount = width * height;
           const pixelValues = [];
           let maxValue = 0;
+          let minValue = Number.MAX_VALUE;
           let sumLuminance = 0;
 
           // Find statistics and gather luminance values for percentile calculation
@@ -202,8 +203,9 @@
             const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
             sumLuminance += luminance;
 
-            // Track max value for absolute scaling
+            // Track max/min value for absolute scaling
             maxValue = Math.max(maxValue, r, g, b);
+            minValue = Math.min(minValue, r, g, b);
 
             // Store luminance values for percentile calculation
             pixelValues.push(luminance);
@@ -218,6 +220,7 @@
           const percentileLuminance = pixelValues[percentileIndex];
 
           console.log("HDR statistics:", {
+            minValue: minValue,
             maxValue: maxValue,
             avgLuminance: avgLuminance,
             percentileLuminance: percentileLuminance

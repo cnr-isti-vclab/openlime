@@ -361,7 +361,7 @@ class Canvas {
 		layer.gl = this.gl;
 		layer.canvas = this;
 		layer.overlayElement = this.overlayElement;
-		layer.isSrgbSimplified = this.isSrgbSimplified;	
+		layer.isSrgbSimplified = this.isSrgbSimplified;
 		this.layers[id] = layer;
 		this.prefetch();
 	}
@@ -383,57 +383,13 @@ class Canvas {
 		this.prefetch();
 	}
 
-	/**
-	 * Updates canvas size and camera bounds based on layers.
-	 * @fires Canvas#updateSize
-	 * @private
-	 */
 	updateSize() {
 		const discardHidden = false;
 		let sceneBBox = Layer.computeLayersBBox(this.layers, discardHidden);
 		let minScale = Layer.computeLayersMinScale(this.layers, discardHidden);
 
-		// Verifica se il boundingBox è valido: se xLow > xHigh o yLow > yHigh è invertito
-		if (sceneBBox != null) {
-			// Controlla se i valori sono invertiti o hanno valori estremi
-			if (sceneBBox.xLow > sceneBBox.xHigh ||
-				sceneBBox.yLow > sceneBBox.yHigh ||
-				Math.abs(sceneBBox.xLow) > 1e20 ||
-				Math.abs(sceneBBox.xHigh) > 1e20 ||
-				Math.abs(sceneBBox.yLow) > 1e20 ||
-				Math.abs(sceneBBox.yHigh) > 1e20) {
-
-				console.warn("BoundingBox non valido rilevato, tentativo di correzione");
-
-				// Prova a costruire un boundingBox corretto dalle dimensioni dei layer
-				let validBBox = null;
-				for (const id in this.layers) {
-					const layer = this.layers[id];
-					if (layer.layout && layer.layout.width > 0 && layer.layout.height > 0) {
-						// Crea un boundingBox valido basato sulle dimensioni del layout
-						if (!validBBox) validBBox = new BoundingBox();
-						validBBox.xLow = 0;
-						validBBox.yLow = 0;
-						validBBox.xHigh = layer.layout.width;
-						validBBox.yHigh = layer.layout.height;
-
-						// Applica la trasformazione del layer
-						if (layer.transform) {
-							validBBox = layer.transform.transformBox(validBBox);
-						}
-
-						break; // Usa il primo layer con dimensioni valide
-					}
-				}
-
-				// Se abbiamo trovato un boundingBox valido, usalo
-				if (validBBox) {
-					sceneBBox = validBBox;
-				}
-			}
-		}
-
-		if (sceneBBox != null && this.camera.viewport) {
+		// Only update camera bounds if we have a valid bounding box and a viewport
+		if (sceneBBox && this.camera.viewport && !sceneBBox.isEmpty()) {
 			this.camera.updateBounds(sceneBBox, minScale);
 		}
 
@@ -444,6 +400,7 @@ class Canvas {
 
 		this.emit('updateSize');
 	}
+
 
 	/**
 	 * Enables or disables split viewport mode and sets which layers appear on each side

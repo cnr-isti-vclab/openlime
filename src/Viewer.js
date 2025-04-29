@@ -118,21 +118,9 @@ class Viewer {
 	 * 3. Initializes camera
 	 * 4. Creates pointer manager
 	 * 5. Sets up resize observer
-	 * 
-	 * @example
-	 * ```javascript
-	 * // Create with options
-	 * const viewer = new OpenLIME.Viewer('.container', {
-	 *     background: '#000000',
-	 *     autofit: true,
-	 *     canvas: {
-	 *         preserveDrawingBuffer: true
-	 *     }
-	 * });
-	 * ```
 	 */
 	constructor(div, options) {
-
+		// Set default properties
 		Object.assign(this, {
 			background: null,
 			autofit: true,
@@ -140,16 +128,20 @@ class Viewer {
 			camera: new Camera(),
 			idleTime: 60 // in seconds
 		});
+
+		// Get container element
 		if (typeof (div) == 'string')
 			div = document.querySelector(div);
 
 		if (!div)
 			throw "Missing element parameter";
 
+		// Apply options
 		Object.assign(this, options);
 		if (this.background)
 			div.style.background = this.background;
 
+		// Set up DOM elements
 		this.containerElement = div;
 		this.canvasElement = div.querySelector('canvas');
 		if (!this.canvasElement) {
@@ -161,30 +153,50 @@ class Viewer {
 		this.overlayElement.classList.add('openlime-overlay');
 		this.containerElement.appendChild(this.overlayElement);
 
+		// Initialize Canvas
 		this.canvas = new Canvas(this.canvasElement, this.overlayElement, this.camera, this.canvas);
+
+		// Event handling for rendering
 		this.canvas.addEvent('update', () => { this.redraw(); });
 
-		if (this.autofit)
-			this.canvas.addEvent('updateSize', () => this.camera.fitCameraBox(0));
+		// Better handling of auto-fit functionality
+		if (this.autofit) {
+			// Only auto-fit when ALL layers are ready (this ensures we have valid bounding boxes)
+			this.canvas.addEvent('ready', () => {
+				this.camera.fitCameraBox(0);
+			});
 
+			// For updateSize events, only fit if we have at least one ready layer
+			this.canvas.addEvent('updateSize', () => {
+				const hasReadyLayers = Object.values(this.canvas.layers).some(layer => layer.status === 'ready');
+				if (hasReadyLayers) {
+					this.camera.fitCameraBox(0);
+				}
+			});
+		}
+
+		// Initialize pointer manager
 		this.pointerManager = new PointerManager(this.overlayElement, { idleTime: this.idleTime });
 
+		// Prevent context menu
 		this.canvasElement.addEventListener('contextmenu', (e) => {
 			e.preventDefault();
 			return false;
 		});
 
-		let resizeobserver = new ResizeObserver(entries => {
+		// Set up resize observer
+		this.resizeObserver = new ResizeObserver(entries => {
 			for (let entry of entries) {
 				this.resize(entry.contentRect.width, entry.contentRect.height);
 			}
 		});
-		resizeobserver.observe(this.canvasElement);
+		this.resizeObserver.observe(this.canvasElement);
 
+		// Initial resize
 		this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
 
+		// Initialize controllers array
 		this.controllers = [];
-
 	}
 
 	/**
@@ -295,7 +307,7 @@ class Viewer {
 	setSplitViewport(enabled, leftLayerIds = [], rightLayerIds = []) {
 		this.canvas.setSplitViewport(enabled, leftLayerIds, rightLayerIds);
 	}
-	
+
 }
 addSignals(Viewer, 'draw');
 addSignals(Viewer, 'resize'); //args: viewport
