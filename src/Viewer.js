@@ -193,7 +193,7 @@ class Viewer {
 		this.resizeObserver.observe(this.canvasElement);
 
 		// Initial resize
-		this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
+		//this.resize(this.canvasElement.clientWidth, this.canvasElement.clientHeight);
 
 		// Initialize controllers array
 		this.controllers = [];
