@@ -38,6 +38,7 @@ class Canvas {
 			overlayElement: null,
 			camera: camera,
 			layers: {},
+			ready: false,
 			targetfps: 30,
 			fps: 0,
 			timing: [16], //records last 30 frames time from request to next draw, rolling, primed to avoid /0
@@ -352,8 +353,10 @@ class Canvas {
 
 		layer.id = id;
 		layer.addEvent('ready', () => {
-			if (Object.values(this.layers).every(l => l.status == 'ready'))
+			if (Object.values(this.layers).every(l => l.status == 'ready')) {
+				this.ready = true;
 				this.emit('ready');
+			}
 			this.prefetch();
 		});
 		layer.addEvent('update', () => { this.emit('update'); });

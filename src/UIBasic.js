@@ -395,9 +395,20 @@ class UIBasic {
 				if (this.pixelSize) {
 					this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
 				}
-				else if (this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSize) {
-					this.pixelSize = this.viewer.canvas.layers[Object.keys(this.viewer.canvas.layers)[0]].pixelSizePerMM();
-					this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+				else {
+					let createScaleBar = () => {
+						for(const [id, layer] of Object.entries(this.viewer.canvas.layers)) {
+							this.pixelSize = layer.pixelSizePerMM();
+							if (this.pixelSize) {
+								this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+								break;
+							}
+						}
+					}
+					if(this.viewer.canvas.ready) 
+						createScaleBar();
+					else	
+						this.viewer.canvas.addEvent('ready', createScaleBar);
 				}
 			}
 
