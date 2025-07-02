@@ -126,14 +126,29 @@ class ShaderRTI extends Shader {
 
 		let x = light[0];
 		let y = light[1];
+		let z = 1.0;
+		if(this.type == 'sh') {
+			//mamp x y as lat lon to the sphere coords (xyz)
+			y = cos(light[1])
 
-		//map the square to the circle.
-		let r = Math.sqrt(x * x + y * y);
-		if (r > 1) {
-			x /= r;
-			y /= r;
+			// Convert to radians
+			let PI = 3.1415;
+			let lat = light[1] * (PI / 2.0);  // latitude ∈ [-π/2, π/2)
+			let lon = light[0] * PI;          // longitude ∈ [-π, π)
+
+			// Spherical to Cartesian
+			x = cos(lat) * cos(lon);
+			z = cos(lat) * sin(lon);
+			y = sin(lat);
+		} else {
+			//map the square to the circle.
+			let r = Math.sqrt(x * x + y * y);
+			if (r > 1) {
+				x /= r;
+				y /= r;
+			}
+			z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
 		}
-		let z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
 		light = [x, y, z];
 
 		if (this.mode == 'light')
