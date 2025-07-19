@@ -1,26 +1,54 @@
-# Express Server
+# OpenLIME Annotation Server
 
-This directory contains a NodeJS Express server for handling CRUD operations on a mysql database.
-Before using npm, you need to install the required packages locally:
-```
+This repository contains a minimal Node.js Express server that serves SVG annotations in JSON format, loaded from a static file (`anno.json`).
+
+## Installation
+
+To install the required dependencies, run:
+
+```bash
 npm install
 ```
 
-To run the server run the following command:
-```
+## Running the Server
+
+To start the server:
+
+```bash
 npm run server
 ```
-In the example the server is then accessible from http://localhost:3000/ol
 
-## DB Mysql
-If not already done, to initialize mySQL the first time you have to follow these steps (on os linux):
-If not already done, to initialize mySQL the first time you have to follow these steps (on os linux):
-1. `sudo systemctl start mysqld`
-2. `sudo mysql_secure_installation`
-3. `sudo systemctl restart mysqld`
-4. `mysql -u root -pNydROTic20`
+The server will be accessible at:
 
-After enabling mySQL and configuring the root password, the db used in the annotation-editor example is built with the command `createdb.sh`.
-This creates an user 'openlime' and a database 'openlime' which contains the table 'annotations'.
-If needed, the table can be emptied with the command `emptytable.sh`.
-You can change the default password by editing the .sh and .sql files.
+```
+http://localhost:3000/annotations
+```
+
+## Features
+
+* Exposes a single REST route:
+
+  ```
+  GET /annotations
+  ```
+
+  Returns all annotations from the `anno.json` file that are marked with `"publish": 1`.
+
+* The `anno.json` file acts as a local "database" and contains SVG annotations, each with:
+
+  * `id`, `label`, `description`, `class`, `svg`
+  * Optionally: `data` and `idx`
+
+* The `openlimedb.js` module handles loading and filtering published annotations.
+
+## Project Structure
+
+* `server.js` — Express server exposing the `/annotations` API
+* `openlimedb.js` — Module that loads and filters `anno.json`
+* `anno.json` — Annotation data store
+
+## Notes
+
+* No SQL database is required.
+* Designed for local testing or as a backend for clients such as [OpenLIME](https://github.com/CRS4/openlime).
+
