@@ -119,7 +119,7 @@ class EditorSvgAnnotation {
 				pin: {
 					template: (x, y) => {
 						return `<svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='4%' height='4%' class='pin'
-						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='7' y='8'>${this.annotation.idx}</text></svg>`;
+						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='7' y='8'>${this.annotation.data.idx}</text></svg>`;
 					}, //pin di alcazar  1. url a svg 2. txt (stringa con svg) 3. funzione(x,y) ritorna svg 4. dom (da skin).
 					tooltip: 'New pin',
 					tool: Pin
@@ -222,11 +222,11 @@ class EditorSvgAnnotation {
 		let anno = this.layer.newAnnotation();
 		if (this.customData) this.customData(anno);
 		if (this.enableState) this.setAnnotationCurrentState(anno);
-		anno.idx = this.layer.annotations.length;
+		anno.data.idx = this.layer.annotations.length;
 		anno.publish = 1;
 		anno.label = anno.description = anno.class = '';
 		let post = {
-			id: anno.id, idx: anno.idx, label: anno.label, description: anno.description, 'class': anno.class, svg: null,
+			id: anno.id, label: anno.label, description: anno.description, 'class': anno.class, svg: null,
 			publish: anno.publish, data: anno.data
 		};
 		if (this.enableState) post = { ...post, state: anno.state };
@@ -259,7 +259,6 @@ class EditorSvgAnnotation {
 			anno.class = '';
 		edit.querySelector('[name=label]').value = anno.label || '';
 		edit.querySelector('[name=description]').value = anno.description || '';
-		edit.querySelector('[name=idx]').value = anno.idx || '';
 		Object.entries(anno.data).map(k => {
 			edit.querySelector(`[name=data-data-${k[0]}]`).value = k[1] || '';
 		});
@@ -315,7 +314,6 @@ class EditorSvgAnnotation {
 			`<li data-class="${c[0]}" style="background:${c[1].stroke};">${c[1].label}</li>`).join('\n')}
 						</ul>
 					</div>
-					<label for="idx">Index:</label> <input name="idx" type="text"><br>	
 					${Object.entries(this.annotation.data).map(k => {
 				let label = k[0];
 				let str = `<label for="data-data-${k[0]}">${label}:</label> <input name="data-data-${k[0]}" type="text"><br>`
@@ -399,7 +397,7 @@ class EditorSvgAnnotation {
 		let descr = edit.querySelector('[name=description]');
 		descr.addEventListener('blur', (e) => { if (this.annotation.description != descr.value) this.saveCurrent(); this.saveAnnotation(); });
 
-		let idx = edit.querySelector('[name=idx]');
+		let idx = edit.querySelector('[name=data-data-idx]');
 		idx.addEventListener('blur', (e) => {
 			if (this.annotation.idx != idx.value) {
 				const svgPinIdx = this.annotation.elements[0];
@@ -446,7 +444,6 @@ class EditorSvgAnnotation {
 
 		anno.label = edit.querySelector('[name=label]').value || '';
 		anno.description = edit.querySelector('[name=description]').value || '';
-		anno.idx = edit.querySelector('[name=idx]').value || '0';
 		Object.entries(anno.data).map(k => {
 			anno.data[k[0]] = edit.querySelector(`[name=data-data-${k[0]}]`).value || '';
 		});
@@ -461,7 +458,7 @@ class EditorSvgAnnotation {
 			e.setAttribute('data-class', anno.class);
 
 		let post = {
-			id: anno.id, idx: anno.idx, label: anno.label, description: anno.description, class: anno.class,
+			id: anno.id, label: anno.label, description: anno.description, class: anno.class,
 			publish: anno.publish, data: anno.data
 		};
 		if (this.enableState) post = { ...post, state: anno.state };
