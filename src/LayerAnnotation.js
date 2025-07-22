@@ -104,6 +104,10 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 			alert("Failed to load annotations: " + this.annotations.msg);
 			return;
 		}
+		if (!this.annotations || this.annotations.length === 0) {
+			this.status = "No annotations found";
+			return;
+		}
 		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
 		this.annotations = this.annotations.map(a => new Annotation(a));
 		for (let a of this.annotations)
