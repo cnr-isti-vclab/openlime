@@ -1,17 +1,3 @@
-
-/**
- *  @default
- */
-let url = 'skin/skin.svg';
-
-/**
- *  @default
- */
-let pad = 5;
-
-let svg = null;
-
-
 /**
  * @typedef {Object} SkinIcon
  * A UI icon element from the skin file
@@ -75,8 +61,29 @@ let svg = null;
  */
 class Skin {
 	/**
+	 * Default skin URL
+	 * @type {string}
+	 * @default 'skin/skin.svg'
+	 */
+	static url = 'skin/skin.svg';
+
+	/**
+	 * Icon padding in SVG units
+	 * @type {number}
+	 * @default 5
+	 */
+	static pad = 5;
+
+	/**
+	 * Cached SVG element
+	 * @type {SVGElement|null}
+	 * @private
+	 */
+	static svg = null;
+
+	/**
 	 * Sets the URL for the skin SVG file
-	 * @param {string} url - Path to SVG file containing UI elements
+	 * @param {string} u - Path to SVG file containing UI elements
 	 * 
 	 * @example
 	 * ```javascript
@@ -84,7 +91,10 @@ class Skin {
 	 * Skin.setUrl('/assets/custom-skin.svg');
 	 * ```
 	 */
-	static setUrl(u) { url = u; }
+	static setUrl(u) { 
+		Skin.url = u; 
+		Skin.svg = null; // Reset cached SVG
+	}
 
 	/**
 	 * Loads and parses the skin SVG file
@@ -100,15 +110,14 @@ class Skin {
 	 * ```
 	 */
 	static async loadSvg() {
-		var response = await fetch(url);
+		var response = await fetch(Skin.url);
 		if (!response.ok) {
-			throw Error("Failed loading " + url + ": " + response.statusText);
-			return;
+			throw Error("Failed loading " + Skin.url + ": " + response.statusText);
 		}
 
 		let text = await response.text();
 		let parser = new DOMParser();
-		svg = parser.parseFromString(text, "image/svg+xml").documentElement;
+		Skin.svg = parser.parseFromString(text, "image/svg+xml").documentElement;
 	}
 
 	/**
@@ -129,9 +138,9 @@ class Skin {
 	 * ```
 	 */
 	static async getElement(selector) {
-		if (!svg)
+		if (!Skin.svg)
 			await Skin.loadSvg();
-		return svg.querySelector(selector).cloneNode(true);
+		return Skin.svg.querySelector(selector).cloneNode(true);
 	}
 
 	/**
@@ -183,7 +192,7 @@ class Skin {
 			document.body.appendChild(icon);
 			box = icon.getBBox();
 		}
-		icon.setAttribute('viewBox', `${-pad} ${-pad} ${box.width + 2 * pad} ${box.height + 2 * pad}`);
+		icon.setAttribute('viewBox', `${-Skin.pad} ${-Skin.pad} ${box.width + 2 * Skin.pad} ${box.height + 2 * Skin.pad}`);
 		icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 		container.appendChild(icon);
 		return icon;

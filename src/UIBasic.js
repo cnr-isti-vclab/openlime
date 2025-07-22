@@ -133,7 +133,7 @@ class UIBasic {
 		Object.assign(this, {
 			viewer: viewer,
 			camera: viewer.camera,
-			skin: 'skin/skin.svg',
+			skin: Skin.url || 'skin/skin.svg',
 			autoFit: true, //FIXME to be moved in the viewer?
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {

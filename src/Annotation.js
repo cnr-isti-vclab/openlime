@@ -20,6 +20,7 @@ class Annotation {
    * Creates a new Annotation instance.
    * @param {Object} [options] - Configuration options for the annotation.
    * @param {string} [options.id] - Unique identifier for the annotation. Auto-generated if not provided.
+   * @param {number} [options.idx] - Index or position of the annotation.
    * @param {string} [options.code] - A code identifier for the annotation.
    * @param {string} [options.label=''] - Display label for the annotation.
    * @param {string} [options.description] - HTML text containing a comprehensive description.
@@ -40,6 +41,7 @@ class Annotation {
   constructor(options = {}) {
     // Set default properties
     this.id = options.id ?? Annotation.generateUUID();
+    this.idx = options.idx ?? null;
     this.code = options.code ?? null;
     this.label = options.label ?? '';
     this.description = options.description ?? null;

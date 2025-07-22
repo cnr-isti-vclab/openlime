@@ -109,11 +109,27 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 			return;
 		}
 		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
-		this.annotations = this.annotations.map(a => new Annotation(a));
+		this.annotations = this.annotations.map((a, index) => {
+			// Ensure idx is set, using the array index if not provided
+			if (a.idx === undefined || a.idx === null) {
+				a.idx = index;
+			}
+			return new Annotation(a);
+		});
+		
 		for (let a of this.annotations)
 			if (a.publish != 1)
 				a.visible = false;
-		//this.annotations.sort((a, b) => a.label.localeCompare(b.label));
+		
+		// Sort by idx if available, otherwise maintain original order
+		this.annotations.sort((a, b) => {
+			if (a.idx !== null && b.idx !== null) {
+				return a.idx - b.idx;
+			}
+			// Fallback to label comparison if idx is not available
+			return (a.label || '').localeCompare(b.label || '');
+		});
+		
 		if (this.annotationsListEntry)
 			this.createAnnotationsList();
 
@@ -130,8 +146,15 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	 * @private
 	 */
 	newAnnotation(annotation) {
-		if (!annotation)
-			annotation = new Annotation();
+		if (!annotation) {
+			// Set idx to the next available index
+			const maxIdx = Math.max(...this.annotations.map(a => a.idx || 0), -1);
+			annotation = new Annotation({ idx: maxIdx + 1 });
+		} else if (annotation.idx === null || annotation.idx === undefined) {
+			// Ensure new annotations have an idx
+			const maxIdx = Math.max(...this.annotations.map(a => a.idx || 0), -1);
+			annotation.idx = maxIdx + 1;
+		}
 
 		this.annotations.push(annotation);
 		let html = this.createAnnotationEntry(annotation);
@@ -204,7 +227,8 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	 * @private
 	 */
 	createAnnotationEntry(a) {
-		return `<a href="#" data-annotation="${a.id}" class="openlime-entry ${a.visible == 0 ? 'hidden' : ''}">${a.label || ''}
+		const displayText = a.label || `Annotation ${a.idx !== null ? a.idx + 1 : ''}`;
+		return `<a href="#" data-annotation="${a.id}" class="openlime-entry ${a.visible == 0 ? 'hidden' : ''}">${displayText}
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="openlime-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="openlime-eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
 			</a>`;
@@ -218,6 +242,18 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	getAnnotationById(id) {
 		for (const anno of this.annotations)
 			if (anno.id == id)
+				return anno;
+		return null;
+	}
+
+	/**
+	 * Retrieves an annotation by its index
+	 * @param {number} idx - Annotation index
+	 * @returns {Annotation|null} The found annotation or null if not found
+	 */
+	getAnnotationByIdx(idx) {
+		for (const anno of this.annotations)
+			if (anno.idx === idx)
 				return anno;
 		return null;
 	}

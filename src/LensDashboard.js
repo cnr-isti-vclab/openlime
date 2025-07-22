@@ -144,7 +144,7 @@ class LensDashboard {
 	 * @param {LayerSvgAnnotation} layer - The SVG annotation layer to associate
 	 */
 	setLayerSvgAnnotation(layer) {
-		this.layerSvgAnnotation = l;
+		this.layerSvgAnnotation = layer;
 		this.svgElement = this.layerSvgAnnotation.svgElement;
 	}
 
