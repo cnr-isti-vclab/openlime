@@ -468,8 +468,8 @@ class EditorSvgAnnotation {
 		//anno.bbox = anno.getBBoxFromElements();
 		let serializer = new XMLSerializer();
 		post.svg = `<svg xmlns="http://www.w3.org/2000/svg">
-				${anno.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
-				</svg>`;
+			${anno.elements.map((s) => { s.classList.remove('selected'); return serializer.serializeToString(s) }).join("\n")}  
+			</svg>`;
 
 		if (this.updateCallback) {
 			let result = this.updateCallback(post);
@@ -477,15 +477,35 @@ class EditorSvgAnnotation {
 				alert("Failed to update annotation");
 				return;
 			}
-		}				//for (let c of element.children)
-		//		a.elements.push(c);
+		}
 
-		//update the entry
-		let template = document.createElement('template');
-		template.innerHTML = this.layer.createAnnotationEntry(anno);
-		let entry = template.content.firstChild;
-		//TODO find a better way to locate the entry!
-		this.layer.annotationsListEntry.element.parentElement.querySelector(`[data-annotation="${anno.id}"]`).replaceWith(entry);
+		// Recreate the entire dropdown list instead of replacing single entry
+		if (this.layer.annotationsListEntry && this.layer.annotationsListEntry.element && this.layer.annotationsListEntry.element.parentElement) {
+			const list = this.layer.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+			if (list) {
+				// Store current dropdown state
+				const selectContainer = list.querySelector('.openlime-annotations-select');
+				const wasActive = selectContainer && selectContainer.classList.contains('active');
+
+				// Cleanup previous event listeners if they exist
+				if (selectContainer && selectContainer._cleanup) {
+					selectContainer._cleanup();
+				}
+
+				// Recreate the entire annotations list
+				this.layer.createAnnotationsList();
+
+				// Restore dropdown state if it was open
+				if (wasActive) {
+					const newSelectContainer = list.querySelector('.openlime-annotations-select');
+					if (newSelectContainer) {
+						newSelectContainer.classList.add('active');
+					}
+				}
+			}
+		}
+
+		// Now setSelected will work because the dropdown has the correct structure
 		this.layer.setSelected(anno);
 	}
 

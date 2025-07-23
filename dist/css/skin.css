@@ -946,3 +946,177 @@ g.openlime-expand {
 		opacity: 0;
 	}
 }
+
+/* ANNOTATIONS DROPDOWN STYLING */
+
+/* Fix for dropdown overflow - modify container when dropdown is open */
+.openlime-layers-content.dropdown-open {
+    overflow: visible !important;
+}
+
+.openlime-annotations-select {
+    background: rgba(60, 60, 60, 0.5);
+    position: relative;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    margin: 5px 0;
+    border-radius: 6px;
+}
+
+.openlime-annotations-button {
+    position: relative;
+    background-color: rgba(60, 60, 60, 0.5);
+    padding: 8px 30px 8px 12px;
+    color: #f0f0f0;
+    font-size: 14px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.openlime-annotations-button:hover {
+    background-color: rgba(80, 80, 80, 0.8);
+}
+
+.openlime-annotations-button:after {
+    content: "";
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+    border-color: #f0f0f0 transparent transparent transparent;
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    transition: transform 0.2s;
+}
+
+.openlime-annotations-select.active .openlime-annotations-button {
+    background-color: rgba(70, 130, 180, 0.6);
+    border-radius: 6px 6px 0 0;
+}
+
+.openlime-annotations-select.active .openlime-annotations-button:after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.openlime-annotations-selected-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: calc(100% - 40px);
+}
+
+/* Dropdown menu with fixed position, limited to 10 items max */
+.openlime-annotations-menu {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background-color: rgba(50, 50, 50, 0.95);
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    /* Height for maximum 10 items (each item ~18px high) */
+    max-height: 180px;
+    overflow-y: auto;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: none; /* Remove top border to connect with button */
+}
+
+.openlime-annotations-select.active .openlime-annotations-menu {
+    display: block;
+}
+
+.openlime-annotations-option {
+    margin: 0;
+    padding: 8px 12px;
+    color: #f0f0f0;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 18px; /* Consistent height for calculation */
+}
+
+.openlime-annotations-option:last-child {
+    border-bottom: none;
+    border-radius: 0 0 6px 6px;
+}
+
+.openlime-annotations-option:hover {
+    background-color: rgba(70, 70, 70, 0.8);
+}
+
+.openlime-annotations-option.selected {
+    background-color: rgba(70, 130, 180, 0.6);
+    color: #ffffff;
+}
+
+.openlime-annotations-option.selected:hover {
+    background-color: rgba(80, 140, 190, 0.8);
+}
+
+.openlime-annotations-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 10px;
+}
+
+.openlime-annotations-visibility {
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.openlime-annotations-visibility:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Visibility icons styling */
+.openlime-annotations-option .openlime-eye,
+.openlime-annotations-option.hidden .openlime-eye-off {
+    display: block;
+}
+
+.openlime-annotations-option .openlime-eye-off,
+.openlime-annotations-option.hidden .openlime-eye {
+    display: none;
+}
+
+.openlime-annotations-option.hidden {
+    opacity: 0.5;
+}
+
+.openlime-annotations-option.hidden .openlime-annotations-text {
+    text-decoration: line-through;
+}
+
+/* Scrollbar for dropdown menu - thinner and more subtle */
+.openlime-annotations-menu::-webkit-scrollbar {
+    width: 4px;
+}
+
+.openlime-annotations-menu::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+}
+
+.openlime-annotations-menu::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.openlime-annotations-menu::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+}
