@@ -56,7 +56,7 @@ class Annotation {
     this.ready = options.ready ?? false;
     this.needsUpdate = options.needsUpdate ?? true;
     this.editing = options.editing ?? false;
-    
+    this.publish = options.publish ?? 1; 
     // Initialize elements array
     this.elements = Array.isArray(options.elements) ? options.elements : [];
   }

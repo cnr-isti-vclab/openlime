@@ -144,9 +144,9 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 			return annotation;
 		});
 		
-		// for (let a of this.annotations)
-		// 	if (a.publish != 1)
-		// 		a.visible = false;
+		for (let a of this.annotations)
+			if (a.publish != 1)
+				a.visible = false;
 		
 		// Sort by idx if available, otherwise maintain original order
 		this.annotations.sort((a, b) => {
