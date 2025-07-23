@@ -262,7 +262,7 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 		let html = `
         <div class="openlime-select openlime-annotations-select">
             <div class="openlime-select-button openlime-annotations-button">
-                <span class="openlime-annotations-selected-text">Seleziona un'annotazione</span>
+                <span class="openlime-annotations-selected-text">Select an annotation</span>
             </div>
             <ul class="openlime-select-menu openlime-annotations-menu">
                 ${this.annotations.map(a => {
@@ -539,7 +539,7 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 
 		// Reset dropdown text
 		if (selectedText) {
-			selectedText.textContent = "Seleziona un'annotazione";
+			selectedText.textContent = "Select an annotation";
 		}
 
 		// Clear internal selection
@@ -605,7 +605,7 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 
 			// Reset to default text if nothing selected
 			if (this.selected.size === 0 && selectedText) {
-				selectedText.textContent = "Seleziona un'annotazione";
+				selectedText.textContent = "Select an annotation";
 			}
 
 			this.selected.delete(anno.id);
