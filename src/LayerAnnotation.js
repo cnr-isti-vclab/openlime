@@ -140,13 +140,13 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 			if (currentIdx === undefined || currentIdx === null) {
 				this.setAnnotationIdx(annotation, index);
 			}
-			
+			annotation.published = (a.publish == 1);
 			return annotation;
 		});
 		
-		for (let a of this.annotations)
-			if (a.publish != 1)
-				a.visible = false;
+		// for (let a of this.annotations)
+		// 	if (a.publish != 1)
+		// 		a.visible = false;
 		
 		// Sort by idx if available, otherwise maintain original order
 		this.annotations.sort((a, b) => {
