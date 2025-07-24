@@ -184,6 +184,8 @@ class UIBasic {
 		entry.element.classList.toggle('active', active); */
 
 		this.menu.push({ section: "Layers" });
+		// In the constructor section, replace this block:
+
 		for (let [id, layer] of Object.entries(this.viewer.canvas.layers)) {
 			let modes = []
 			for (let m of layer.getModes()) {
@@ -191,8 +193,13 @@ class UIBasic {
 					button: m,
 					mode: m,
 					layer: id,
-					onclick: () => { layer.setMode(m); },
-					status: () => layer.getMode() == m ? 'active' : '',
+					// FIXED: use the ID to retrieve the correct layer
+					onclick: () => {
+						this.viewer.canvas.layers[id].setMode(m);
+						this.viewer.redraw(); // Force redraw to update the lens
+					},
+					// FIXED: use the ID to retrieve the correct layer
+					status: () => this.viewer.canvas.layers[id].getMode() == m ? 'active' : '',
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
@@ -201,22 +208,17 @@ class UIBasic {
 
 			let layerEntry = {
 				button: layer.label || id,
-				onclick: () => { this.setLayer(layer); },
-				status: () => layer.visible ? 'active' : '',
+				// FIXED: use the ID to retrieve the correct layer
+				onclick: () => { this.setLayer(this.viewer.canvas.layers[id]); },
+				// FIXED: use the ID to retrieve the correct layer  
+				status: () => this.viewer.canvas.layers[id].visible ? 'active' : '',
 				layer: id
 			};
 			if (modes.length > 1) layerEntry.list = modes;
 
 			if (layer.annotations) {
 				layerEntry.list = [];
-				//setTimeout(() => { 
 				layerEntry.list.push(layer.annotationsEntry());
-				//this.updateMenu();
-				//}, 1000);
-				//TODO: this could be a convenience, creating an editor which can be
-				//customized later using layer.editor.
-				//if(layer.editable) 
-				//	layer.editor = this.editor;
 			}
 			this.menu.push(layerEntry);
 		}
@@ -397,7 +399,7 @@ class UIBasic {
 				}
 				else {
 					let createScaleBar = () => {
-						for(const [id, layer] of Object.entries(this.viewer.canvas.layers)) {
+						for (const [id, layer] of Object.entries(this.viewer.canvas.layers)) {
 							this.pixelSize = layer.pixelSizePerMM();
 							if (this.pixelSize) {
 								this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
@@ -405,9 +407,9 @@ class UIBasic {
 							}
 						}
 					}
-					if(this.viewer.canvas.ready) 
+					if (this.viewer.canvas.ready)
 						createScaleBar();
-					else	
+					else
 						this.viewer.canvas.addEvent('ready', createScaleBar);
 				}
 			}
