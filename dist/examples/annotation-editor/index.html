@@ -5,177 +5,439 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenLIME - Multispectral Viewer</title>
+    <title>OpenLIME - Annotation Editor</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <link rel="stylesheet" href="../examples.css" />
     <style>
-        /* Base styles for full-screen viewer */
         html,
         body {
-            margin: 0px;
-            padding: 0px;
-            height: 100%;
-            font-family: "Open Sans", sans-serif;
-            overflow: hidden;
-            user-select: none;
-            /* standard property */
-            -webkit-user-select: none;
-            /* Safari and Chrome */
-            -moz-user-select: none;
-            /* Firefox */
-            -ms-user-select: none;
-            /* IE and Edge legacy */
+            color: #3f0099;
+            font-family: Arial, sans-serif;
+            background-color: #9c98cc80;
         }
 
-        /* Full viewport container for OpenLIME viewer */
+        a {
+            color: #3f0099;
+        }
+
+        .headline {
+            padding: 15px 0px 10px 0px;
+            margin-bottom: 5px;
+            margin-top: 0px;
+        }
+
         .openlime {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
+            height: 80%;
+            top: 2px;
+            background-color: #fff;
         }
 
-        /* Style for attribution links */
+        .openlime-toolbar {
+            background-color: #766dd680;
+            border-radius: 8px;
+            flex-direction: column;
+            top: 10px;
+            bottom: auto;
+            right: 5px;
+        }
+
+        .openlime-dialog-background {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .openlime-dialog {
+            background: #766dd6ff;
+            color: white;
+        }
+
+        .openlime-customInfo.active .openlime-button-off {
+            visibility: visible !important;
+        }
+
+        .openlime-customInfo .openlime-button-off {
+            visibility: hidden !important;
+        }
+
+        .openlime-attribution {
+            left: auto;
+            right: 20px;
+            bottom: -30px;
+        }
+
         .openlime-attribution a {
-            color: orange;
+            color: rgb(88, 88, 88);
+        }
+
+        /* Debug info styling */
+        .debug-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .debug-info.show {
+            display: block;
         }
     </style>
 </head>
 
 <body>
-    <!-- Main container for the OpenLIME viewer -->
-    <div class="openlime"></div>
+    <!-- Web page -->
+    <h1 class="headline">OpenLIME - Annotation Editor (Flask Backend)</h1>
 
+    <!-- Debug info panel -->
+    <div class="debug-info" id="debugInfo">
+        <strong>Debug Info:</strong><br>
+        <span id="debugText">Loading...</span>
+    </div>
+
+    <div class="openlime"></div>
     <script src="../../js/openlime.js"></script>
     <script>
-        // Initialize the OpenLIME viewer in the container
+        // Debug utility functions
+        function updateDebug(message) {
+            const debugText = document.getElementById('debugText');
+            const timestamp = new Date().toLocaleTimeString();
+            debugText.innerHTML = `[${timestamp}] ${message}`;
+        }
+
+        function showDebug() {
+            document.getElementById('debugInfo').classList.add('show');
+        }
+
+        function hideDebug() {
+            document.getElementById('debugInfo').classList.remove('show');
+        }
+
+        // Show debug for 5 seconds on page load
+        setTimeout(showDebug, 500);
+        setTimeout(hideDebug, 5500);
+
+        // Check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const editorEnable = urlParams.has('editor');
+        const debugEnable = urlParams.has('debug');
+
+        if (debugEnable) {
+            showDebug();
+        }
+
+        updateDebug('Initializing OpenLIME...');
+
+        // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.Viewer('.openlime');
+        lime.camera.bounded = false;
 
-        /**
-         * Create a multispectral layer with the following configuration:
-         * - label: Display name for the layer
-         * - layout: Type of image tiling/organization
-         * - type: Specifies this as a multispectral layer (uses LayerMultispectral class)
-         * - url: Path to the multispectral info.json configuration file
-         * - presets: Path to the CTW presets configuration file
-         * - linearRaster: Use linear color space for scientific accuracy
-         */
-        const msLayer = new OpenLIME.Layer({
-            label: 'Oil Painting Multispectral',
-            layout: 'image',
-            type: 'multispectral',
-            url: '../../assets/multispectral/oil_painting_ms_jpg/info.json',
-            presets: '../../assets/multispectral/oil_painting_ms_jpg/presets.json',
-            linearRaster: true
-        });
-
-        // Add the multispectral layer to the viewer with id 'oilPainting'
-        lime.addLayer('oilPainting', msLayer);
-
-        // Set the URL for the UI skin (visual elements)
+        // Fetch a (custom) skin. A skin is a set of visual elements for the web page.
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
-        /**
-         * Create the basic UI with configuration:
-         * - showScale: Disable scale display
-         * - attribution: Credit information with link to the data source
-         */
-        const ui = new OpenLIME.UIBasic(lime, {
-            showScale: false,
-            attribution: "<a href=\"https://cave.cs.columbia.edu/repository/Multispectral\">Multispectral Image Database</a><br>The Columbia Imaging and Vision Laboratory (CAVE) at Columbia University, New York, NY, USA"
+        // Create a custom dialog
+        let openlime = document.querySelector('.openlime');
+        let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
+        infoDialog.hide();
+
+        // Create an image layer and add it to the canvas
+        const layer = new OpenLIME.Layer({
+            type: 'image',
+            layout: 'deepzoom',
+            url: '../../assets/parrot/parrot.dzi'
         });
+        lime.addLayer('Base', layer);
 
-        // Configure which UI controls to display in the toolbar
-        ui.actions.layers.display = false;    // Hide layer control
-        ui.actions.zoomin.display = false;    // Hide zoom in button
-        ui.actions.zoomout.display = false;   // Hide zoom out button
-        ui.actions.light.display = false;     // Hide light control
-        ui.actions.home.display = true;       // Show home/reset view button
+        updateDebug('Base layer loaded, configuring annotations...');
 
-        // Initialize MultispectralUI when the layer is fully loaded
-        msLayer.addEvent('ready', () => {
-            console.log('Multispectral layer is ready!');
+        // Zoom to annotation function (calculates zoom from SVG geometry)
+        function zoomToAnnotation(anno) {
+            if ('state' in anno) {
+                lime.canvas.setState(anno.state, 1500, 'ease-in-out');
+            }
+            return true;
+        }
 
-            /**
-             * Create MultispectralUI with configuration:
-             * - floatingPanel: Create a floating control panel
-             * - showPresets: Display preset selection controls
-             * - showSingleBand: Display single band visualization controls
-             */
-            const msUI = new OpenLIME.MultispectralUI(msLayer, {
-                floatingPanel: true,
-                showPresets: true,
-                showSingleBand: true
-            });
-
-            /**
-             * Function to setup split-screen comparison view
-             * Creates a second instance of the layer with different
-             * visualization settings for side-by-side comparison
-             */
-            const setupSplitView = () => {
-                const viewportWidth = lime.canvas.width;
-
-                // Adjust main layer viewport to left half
-                msLayer.setViewport({
-                    x: 0,
-                    y: 0,
-                    dx: viewportWidth / 2,
-                    dy: lime.canvas.height
-                });
-
-                // Create comparison layer if it doesn't exist
-                if (!lime.layers['comparison']) {
-                    // Clone the original layer with derive()
-                    const comparisonLayer = msLayer.derive({
-                        label: 'Comparison View',
-                        zindex: msLayer.zindex + 1
-                    });
-
-                    // Add to viewer with id 'comparison'
-                    lime.addLayer('comparison', comparisonLayer);
-
-                    // Apply a different visualization preset
-                    comparisonLayer.applyPreset('gold');
-
-                    // Set to right half viewport
-                    comparisonLayer.setViewport({
-                        x: viewportWidth / 2,
-                        y: 0,
-                        dx: viewportWidth / 2,
-                        dy: lime.canvas.height
+        // Helper function to extract coordinates from SVG path data
+        function extractCoordsFromPath(pathData) {
+            const coords = [];
+            // Simple regex to extract numeric coordinates from path data
+            const matches = pathData.match(/-?\d+\.?\d*/g);
+            if (matches) {
+                for (let i = 0; i < matches.length - 1; i += 2) {
+                    coords.push({
+                        x: parseFloat(matches[i]),
+                        y: parseFloat(matches[i + 1])
                     });
                 }
-            };
-        });
+            }
+            return coords;
+        }
 
-        /**
-         * Handle window resize events to update split-screen viewports
-         * Ensures both panels maintain correct proportions when window is resized
-         */
-        window.addEventListener('resize', () => {
-            if (lime.layers['comparison']) {
-                const viewportWidth = lime.canvas.width;
+        // Define annotation parameters
+        let annotationServer = 'http://127.0.0.1:3000/ol'; // Use 127.0.0.1 instead of localhost for consistency
 
-                // Update main layer viewport
-                msLayer.setViewport({
-                    x: 0,
-                    y: 0,
-                    dx: viewportWidth / 2,
-                    dy: lime.canvas.height
-                });
+        const classParam = {
+            '': { stroke: '#000', label: '' },
+            'class1': { stroke: '#770', label: 'A' },
+            'class2': { stroke: '#707', label: 'B' },
+            'class3': { stroke: '#777', label: 'C' },
+            'class4': { stroke: '#070', label: 'D' },
+            'class5': { stroke: '#007', label: 'E' },
+            'class6': { stroke: '#077', label: 'F' },
+        };
 
-                // Update comparison layer viewport
-                lime.layers['comparison'].setViewport({
-                    x: viewportWidth / 2,
-                    y: 0,
-                    dx: viewportWidth / 2,
-                    dy: lime.canvas.height
-                });
+        let aOptions = {
+            label: 'Annotations',
+            layout: layer.layout,
+            type: 'svg_annotations',
+            style: ` 
+            .openlime-annotation { pointer-events:stroke; opacity: 0.7; }
+            .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+
+            :focus { fill:yellow; }
+            path { fill:rgba(32, 32, 32, 0.8); stroke:#aaa; stroke-width:2px; vector-effect:non-scaling-stroke; pointer-events:all; }
+            path:hover { cursor:pointer; stroke:#f00; }
+            .selected { stroke-width:3; }
+            
+            /* Pin styling */
+            .pin { cursor:pointer; fill:rgba(32, 32, 32, 0.8); stroke:#aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
+            .pin text { cursor:pointer; user-select:none; font-family:arial; stroke:none; font-size:6px; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
+            .pin.hidden { visibility:hidden; }
+            
+            /* Line styling */
+            .line { cursor:pointer; fill:none; stroke:#aaa; stroke-width:4px; vector-effect:non-scaling-stroke; }
+            .line.selected { stroke:#f00; stroke-width:6px; }
+            `,
+            annotations: annotationServer,
+            annotationUpdate: (anno, transform) => {
+                // Update pin sizes based on zoom level
+                let size = 36 / transform.z; // Base size of 36px divided by zoom level
+                if (size !== anno.previous_size) {
+                    anno.elements.forEach(e => {
+                        if (e.classList.contains('pin')) {
+                            e.setAttribute('width', size + 'px');
+                            e.setAttribute('height', size + 'px');
+                        }
+                    });
+                    anno.previous_size = size;
+                }
+            },
+            onClick: (anno) => {
+                zoomToAnnotation(anno);
+                console.log('=== ANNOTATION CLICK DEBUG ===');
+                console.log('Clicked annotation object:', anno);
+                console.log('Annotation keys:', Object.keys(anno));
+                console.log('Has state?', 'state' in anno);
+                console.log('Has bbox?', 'bbox' in anno);
+                console.log('State content:', anno.state);
+                console.log('Bbox content:', anno.bbox);
+            },
+            classes: classParam
+        };
+
+        // Create an annotation layer and add it to the canvas
+        const anno = new OpenLIME.LayerAnnotation(aOptions);
+        lime.addLayer('anno', anno);
+
+        // Add event listener for annotation loading
+        anno.addEvent('loaded', () => {
+            const count = anno.annotations ? anno.annotations.length : 0;
+            updateDebug(`Annotations loaded successfully! Count: ${count}`);
+            console.log('Annotations loaded:', anno.annotations);
+
+            // Check if annotations failed to load
+            if (!anno.annotations || anno.annotations.length === 0) {
+                updateDebug('No annotations found - check server connection');
+            } else {
+                // Debug annotation structure in detail
+                if (anno.annotations.length > 0) {
+                    const firstAnno = anno.annotations[0];
+                    console.log('First annotation structure:', firstAnno);
+                    console.log('First annotation keys:', Object.keys(firstAnno));
+                    console.log('Has state?', 'state' in firstAnno);
+                    console.log('Has bbox?', 'bbox' in firstAnno);
+                    console.log('Has id?', 'id' in firstAnno);
+                    console.log('Has label?', 'label' in firstAnno);
+
+                    if (firstAnno.state) {
+                        console.log('State content:', firstAnno.state);
+                    }
+                    if (firstAnno.bbox) {
+                        console.log('Bbox content:', firstAnno.bbox);
+                    }
+                }
+
+                // Debug pin visibility
+                setTimeout(() => {
+                    const shadow = anno.overlayElement.shadowRoot;
+                    if (shadow) {
+                        const pins = shadow.querySelectorAll('.pin');
+                        const lines = shadow.querySelectorAll('.line');
+                        updateDebug(`Found ${pins.length} pins and ${lines.length} lines in DOM`);
+
+                        // Log pin details
+                        pins.forEach((pin, index) => {
+                            const rect = pin.getBoundingClientRect();
+                            console.log(`Pin ${index}:`, {
+                                element: pin,
+                                boundingRect: rect,
+                                visibility: getComputedStyle(pin).visibility,
+                                display: getComputedStyle(pin).display,
+                                width: pin.getAttribute('width'),
+                                height: pin.getAttribute('height')
+                            });
+                        });
+                    }
+                }, 1000);
             }
         });
+        if (editorEnable) {
+            // If editorEnable, create a SVG annotation Editor
+            updateDebug('Editor mode enabled');
+            eOptions = {
+                ...aOptions,
+                enableState: true, // Enable state management for annotations
+            };
+
+            const editor = new OpenLIME.EditorSvgAnnotation(lime, anno, eOptions);
+
+            editor.createCallback = (anno) => {
+                console.log("Created annotation: ", anno);
+                updateDebug(`Creating annotation: ${anno.label || 'Unnamed'}`);
+                processRequest(anno, 'create');
+                return true;
+            };
+
+            editor.deleteCallback = (anno) => {
+                console.log("Deleted annotation: ", anno);
+                updateDebug(`Deleting annotation: ${anno.label || 'Unnamed'}`);
+                processRequest(anno, 'delete');
+                return true;
+            };
+
+            editor.updateCallback = (anno) => {
+                console.log("Updated annotation: ", anno);
+                updateDebug(`Updating annotation: ${anno.label || 'Unnamed'}`);
+                processRequest(anno, 'update');
+                return true;
+            };
+        }
+
+        // Create a User Interface 
+        const ui = new OpenLIME.UIBasic(lime);
+
+        // Get a subset of pre-defined actions to work on it
+        let { help, home, layers, fullscreen, light, zoomin, zoomout } = ui.actions;
+
+        // Remove light from the toolbar
+        light.display = false;
+
+        // Add help, zoomin and zoomout to the toolbar
+        help.display = true;
+        zoomin.display = true;
+        zoomout.display = true;
+
+        // Add configured actions to the toolbar
+        ui.actions = { help, home, layers, fullscreen, light, zoomin, zoomout };
+
+        // Add image attribution 
+        ui.attribution = `OpenLIME with Flask Backend - <a href="https://github.com/cnr-isti-vclab/openlime">OpenLIME Project</a>`;
+
+        // Callback function to send http requests to the Annotation server
+        async function processRequest(anno, action) {
+            updateDebug(`Processing ${action} request...`);
+
+            let method = "GET";
+            let url = `${annotationServer}`;
+            let body = "";
+
+            switch (action) {
+                case "create":
+                    method = "POST";
+                    url = `${annotationServer}`;
+                    body = JSON.stringify(anno);
+                    break;
+                case "update":
+                    method = "PUT";
+                    url = `${annotationServer}/${anno.id}`;
+                    body = JSON.stringify(anno);
+                    break;
+                case "delete":
+                    method = "DELETE";
+                    url = `${annotationServer}/${anno.id}`;
+                    body = "";
+                    break;
+                default:
+                    break;
+            }
+
+            try {
+                updateDebug(`Sending ${method} request to ${url}`);
+
+                const response = await fetch(url, {
+                    method: method,
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: body
+                });
+
+                if (!response.ok) {
+                    const message = `An error has occurred: ${response.status} ${response.statusText}`;
+                    updateDebug(`Request failed: ${message}`);
+                    alert(message);
+                    throw new Error(message);
+                }
+
+                let json = await response.json();
+
+                if (json.status == 'error') {
+                    updateDebug(`Server error: ${json.message}`);
+                    alert(json.message);
+                } else {
+                    updateDebug(`${action} successful`);
+                    console.log(`${action} response:`, json);
+                }
+
+            } catch (error) {
+                updateDebug(`Network error: ${error.message}`);
+                console.error('Request failed:', error);
+                alert(`Network error: ${error.message}`);
+            }
+        }
+
+        // Test server connection on page load
+        setTimeout(async () => {
+            try {
+                updateDebug('Testing server connection...');
+                const response = await fetch(annotationServer, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateDebug(`Server connected! Found ${data.length || 0} annotations`);
+                } else {
+                    updateDebug(`Server responded with status: ${response.status}`);
+                }
+            } catch (error) {
+                updateDebug(`Server connection failed: ${error.message}`);
+                console.error('Server connection test failed:', error);
+            }
+        }, 1000);
+
+        updateDebug('OpenLIME initialization complete');
     </script>
 </body>
 

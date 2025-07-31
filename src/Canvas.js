@@ -266,6 +266,7 @@ class Canvas {
 	* @param {string} [easing='linear'] - Easing function for animations
 	*/
 	setState(state, dt, easing = 'linear') {
+		if(!state || typeof state !== 'object') return;
 		if ('camera' in state) {
 			const m = state.camera;
 			this.camera.setPosition(dt, m.x, m.y, m.z, m.a, easing);

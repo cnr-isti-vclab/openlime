@@ -11,6 +11,7 @@
       "output": "dist"
     },
     "files": [
+      "build/icons/**/*",
       "**/*",
       "!node_modules/{dev-dependency-name}/**",
       "!*.map"
@@ -33,7 +34,7 @@
     "linux": {
       "target": "AppImage",
       "executableName": "openlime-electron-editor",
-      "icon": "build/icon.png",
+      "icon": "build/icons",
       "desktop": {
         "Name": "OpenLIME Editor",
         "Comment": "An Electron-based annotation editor",
