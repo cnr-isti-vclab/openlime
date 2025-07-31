@@ -10,3 +10,5 @@ dist/examples/npm-demo/assets
 dist/examples/npm-demo/skin
 scratch
 jsconfig.json
+.env 
+__pycache__

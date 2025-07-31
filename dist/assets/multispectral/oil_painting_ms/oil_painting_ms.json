@@ -1,0 +1,131 @@
+{
+  "title": "Oil Pianting",
+  "attribution": "Columbia University",
+  "url": "https://cave.cs.columbia.edu/repository/Multispectral/",
+  "dataset": [
+    {
+      "filename": "oil_painting_ms_01.png",
+      "wavelength": 400
+    },
+    {
+      "filename": "oil_painting_ms_02.png",
+      "wavelength": 410
+    },
+    {
+      "filename": "oil_painting_ms_03.png",
+      "wavelength": 420
+    },
+    {
+      "filename": "oil_painting_ms_04.png",
+      "wavelength": 430
+    },
+    {
+      "filename": "oil_painting_ms_05.png",
+      "wavelength": 440
+    },
+    {
+      "filename": "oil_painting_ms_06.png",
+      "wavelength": 450
+    },
+    {
+      "filename": "oil_painting_ms_07.png",
+      "wavelength": 460
+    },
+    {
+      "filename": "oil_painting_ms_08.png",
+      "wavelength": 470
+    },
+    {
+      "filename": "oil_painting_ms_09.png",
+      "wavelength": 480
+    },
+    {
+      "filename": "oil_painting_ms_10.png",
+      "wavelength": 490
+    },
+    {
+      "filename": "oil_painting_ms_11.png",
+      "wavelength": 500
+    },
+    {
+      "filename": "oil_painting_ms_12.png",
+      "wavelength": 510
+    },
+    {
+      "filename": "oil_painting_ms_13.png",
+      "wavelength": 520
+    },
+    {
+      "filename": "oil_painting_ms_14.png",
+      "wavelength": 530
+    },
+    {
+      "filename": "oil_painting_ms_15.png",
+      "wavelength": 540
+    },
+    {
+      "filename": "oil_painting_ms_16.png",
+      "wavelength": 550
+    },
+    {
+      "filename": "oil_painting_ms_17.png",
+      "wavelength": 560
+    },
+    {
+      "filename": "oil_painting_ms_18.png",
+      "wavelength": 570
+    },
+    {
+      "filename": "oil_painting_ms_19.png",
+      "wavelength": 580
+    },
+    {
+      "filename": "oil_painting_ms_20.png",
+      "wavelength": 590
+    },
+    {
+      "filename": "oil_painting_ms_21.png",
+      "wavelength": 600
+    },
+    {
+      "filename": "oil_painting_ms_22.png",
+      "wavelength": 610
+    },
+    {
+      "filename": "oil_painting_ms_23.png",
+      "wavelength": 620
+    },
+    {
+      "filename": "oil_painting_ms_24.png",
+      "wavelength": 630
+    },
+    {
+      "filename": "oil_painting_ms_25.png",
+      "wavelength": 640
+    },
+    {
+      "filename": "oil_painting_ms_26.png",
+      "wavelength": 650
+    },
+    {
+      "filename": "oil_painting_ms_27.png",
+      "wavelength": 660
+    },
+    {
+      "filename": "oil_painting_ms_28.png",
+      "wavelength": 670
+    },
+    {
+      "filename": "oil_painting_ms_29.png",
+      "wavelength": 680
+    },
+    {
+      "filename": "oil_painting_ms_30.png",
+      "wavelength": 690
+    },
+    {
+      "filename": "oil_painting_ms_31.png",
+      "wavelength": 700
+    }
+  ]
+}
