@@ -86,6 +86,8 @@
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.Viewer('.openlime');
         lime.camera.bounded = false;
+        lime.autofit = false;
+        //setTimeout(() => lime.redraw(), 100);
 
         // Fetch a (custom) skin. A skin is a set of visual elements for the web page.
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
@@ -108,8 +110,8 @@
             if ('state' in anno) {
                 lime.canvas.setState(anno.state, 1500, 'ease-in-out');
             }
-            infoDialog.setContent(anno.description || 'No description available');
-            infoDialog.show();
+            //infoDialog.setContent(anno.description || 'No description available');
+            //infoDialog.show();
             return true;
         }
 
@@ -388,6 +390,7 @@
         }, 1000);
 
         console.log('OpenLIME initialization complete');
+
     </script>
 </body>
 

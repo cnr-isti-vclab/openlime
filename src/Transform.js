@@ -264,44 +264,70 @@ class Transform { //FIXME Add translation to P?
 		return currentTime >= this.t;
 	}
 
-	// Also, let's modify the static interpolate method to return a flag indicating completion
 	/**
-	* Interpolates between two transforms
-	* @param {Transform} source - Starting transform
-	* @param {Transform} target - Ending transform
-	* @param {number} time - Current time for interpolation
-	* @param {EasingFunction} easing - Easing function type
-	* @returns {Transform} Interpolated transform with isComplete property
-	* @static
-	*/
-	static interpolate(source, target, time, easing) { //FIXME STATIC
+	 * Interpolates between two transforms
+	 * @param {Transform} source - Starting transform
+	 * @param {Transform} target - Ending transform
+	 * @param {number} time - Current time for interpolation
+	 * @param {EasingFunction} easing - Easing function type
+	 * @returns {Transform} Interpolated transform with isComplete property
+	 * @static
+	 */
+	static interpolate(source, target, time, easing) {
 		console.assert(!isNaN(source.x));
 		console.assert(!isNaN(target.x));
+
 		const pos = new Transform();
 		let dt = (target.t - source.t);
 
-		// Add a property to indicate if we've reached the target
-		pos.isComplete = false;
-
+		// PHASE 1: Before animation starts
 		if (time < source.t) {
-			Object.assign(pos, source);
-		} else if (time > target.t || dt < 0.001) {
-			Object.assign(pos, target);
-			pos.isComplete = true; // Mark as complete
-		} else {
-			let tt = (time - source.t) / dt;
-			switch (easing) {
-				case 'ease-out': tt = 1 - Math.pow(1 - tt, 2); break;
-				case 'ease-in-out': tt = tt < 0.5 ? 2 * tt * tt : 1 - Math.pow(-2 * tt + 2, 2) / 2; break;
-			}
-			let st = 1 - tt;
-			for (let i of ['x', 'y', 'z', 'a'])
-				pos[i] = (st * source[i] + tt * target[i]);
+			// Copy all values from source EXCEPT isComplete
+			pos.x = source.x;
+			pos.y = source.y;
+			pos.z = source.z;
+			pos.a = source.a;
+			pos.isComplete = false; // FIX: always false before start
 		}
+		// PHASE 2: After animation ends (or duration too short)
+		else if (time > target.t || dt < 0.001) {
+			// Copy all values from target EXCEPT isComplete
+			pos.x = target.x;
+			pos.y = target.y;
+			pos.z = target.z;
+			pos.a = target.a;
+			pos.isComplete = true; // FIX: always true after end
+		}
+		// PHASE 3: During animation
+		else {
+			let tt = (time - source.t) / dt;
+
+			// Apply easing
+			switch (easing) {
+				case 'ease-out':
+					tt = 1 - Math.pow(1 - tt, 2);
+					break;
+				case 'ease-in-out':
+					tt = tt < 0.5 ? 2 * tt * tt : 1 - Math.pow(-2 * tt + 2, 2) / 2;
+					break;
+				// 'linear' or default: tt remains unchanged
+			}
+
+			let st = 1 - tt;
+
+			// Interpolate all values
+			pos.x = st * source.x + tt * target.x;
+			pos.y = st * source.y + tt * target.y;
+			pos.z = st * source.z + tt * target.z;
+			pos.a = st * source.a + tt * target.a;
+
+			pos.isComplete = false; // FIX: always false during animation
+		}
+
 		pos.t = time;
 		return pos;
 	}
-	
+
 	/**
 	 * Generates WebGL projection matrix
 	 * Combines transform with viewport for rendering
