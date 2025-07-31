@@ -52,14 +52,6 @@
             height: 300px;
         }
 
-        .openlime-customInfo.active .openlime-button-off {
-            visibility: visible !important;
-        }
-
-        .openlime-customInfo .openlime-button-off {
-            visibility: hidden !important;
-        }
-
         .openlime-attribution {
             left: auto;
             right: 20px;
@@ -74,30 +66,28 @@
 
 <body>
     <!-- Web page -->
-    <h1 class="headline">OpenLIME - Annotation Editor (Flask Backend)</h1>
+    <h1 class="headline">OpenLIME - Annotation Editor</h1>
 
     <div class="openlime"></div>
     <script src="../../js/openlime.js"></script>
     <script>
-        // Check URL parameters
+        // Check URL parameters for editor mode
         const urlParams = new URLSearchParams(window.location.search);
         const editorEnable = urlParams.has('editor');
 
-        // Create an OpenLIME canvas into openlime
+        // Create OpenLIME viewer with disabled autofit to allow manual navigation
         const lime = new OpenLIME.Viewer('.openlime');
-        lime.camera.bounded = false;
-        lime.autofit = false;
-        //setTimeout(() => lime.redraw(), 100);
+        lime.camera.bounded = false;  // Allow camera to move beyond image bounds
 
-        // Fetch a (custom) skin. A skin is a set of visual elements for the web page.
+        // Load the skin for UI elements
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
-        // Create a custom dialog
+        // Create modal dialog for annotation information (optional)
         let openlime = document.querySelector('.openlime');
         let infoDialog = new OpenLIME.UIDialog(openlime, { modal: true });
         infoDialog.hide();
 
-        // Create an image layer and add it to the canvas
+        // Create base image layer
         const layer = new OpenLIME.Layer({
             type: 'image',
             layout: 'deepzoom',
@@ -105,35 +95,29 @@
         });
         lime.addLayer('Base', layer);
 
-        // Zoom to annotation function (calculates zoom from SVG geometry)
+        /**
+         * Smoothly animates camera to annotation's saved state
+         * @param {Object} anno - Annotation object with state property
+         * @returns {boolean} - Success status
+         */
         function zoomToAnnotation(anno) {
             if ('state' in anno) {
+                // Use setState to animate to the annotation's camera position
                 lime.canvas.setState(anno.state, 1500, 'ease-in-out');
+                
+                // Optionally show annotation description in dialog
+                infoDialog.setContent(anno.description || 'No description available');
+                infoDialog.show();
+                
+                return true;
             }
-            //infoDialog.setContent(anno.description || 'No description available');
-            //infoDialog.show();
-            return true;
+            return false;
         }
 
-        // Helper function to extract coordinates from SVG path data
-        function extractCoordsFromPath(pathData) {
-            const coords = [];
-            // Simple regex to extract numeric coordinates from path data
-            const matches = pathData.match(/-?\d+\.?\d*/g);
-            if (matches) {
-                for (let i = 0; i < matches.length - 1; i += 2) {
-                    coords.push({
-                        x: parseFloat(matches[i]),
-                        y: parseFloat(matches[i + 1])
-                    });
-                }
-            }
-            return coords;
-        }
+        // Configure annotation server endpoint
+        let annotationServer = 'http://127.0.0.1:3000/ol';
 
-        // Define annotation parameters
-        let annotationServer = 'http://127.0.0.1:3000/ol'; // Use 127.0.0.1 instead of localhost for consistency
-
+        // Define annotation classes with visual styling
         const classParam = {
             '': { stroke: '#000', label: '' },
             'class1': { stroke: '#770', label: 'A' },
@@ -144,174 +128,172 @@
             'class6': { stroke: '#077', label: 'F' },
         };
 
-        let aOptions = {
+        // Configure annotation layer options
+        let annotationOptions = {
             label: 'Annotations',
             layout: layer.layout,
             type: 'svg_annotations',
+            
+            // CSS styling for annotation elements
             style: ` 
-            .openlime-annotation { pointer-events:stroke; opacity: 0.7; }
-            .openlime-annotation:hover { cursor:pointer; opacity: 1.0; }
+                .openlime-annotation { 
+                    pointer-events: stroke; 
+                    opacity: 0.7; 
+                }
+                .openlime-annotation:hover { 
+                    cursor: pointer; 
+                    opacity: 1.0; 
+                }
 
-            :focus { fill:yellow; }
-            path { fill:rgba(32, 32, 32, 0.8); stroke:#aaa; stroke-width:2px; vector-effect:non-scaling-stroke; pointer-events:all; }
-            path:hover { cursor:pointer; stroke:#f00; }
-            .selected { stroke-width:3; }
-            
-            /* Pin styling */
-            .pin { cursor:pointer; fill:rgba(32, 32, 32, 0.8); stroke:#aaa; stroke-width:2px; vector-effect:non-scaling-stroke; }
-            .pin text { cursor:pointer; user-select:none; font-family:arial; stroke:none; font-size:6px; fill:#fff; alignment-baseline:middle; text-anchor:middle; }
-            .pin.hidden { visibility:hidden; }
-            
-            /* Line styling */
-            .line { cursor:pointer; fill:none; stroke:#aaa; stroke-width:4px; vector-effect:non-scaling-stroke; }
-            .line.selected { stroke:#f00; stroke-width:6px; }
+                path { 
+                    fill: rgba(32, 32, 32, 0.8); 
+                    stroke: #aaa; 
+                    stroke-width: 2px; 
+                    vector-effect: non-scaling-stroke; 
+                    pointer-events: all; 
+                }
+                path:hover { 
+                    cursor: pointer; 
+                    stroke: #f00; 
+                }
+                .selected { 
+                    stroke-width: 3; 
+                }
+                
+                /* Pin styling */
+                .pin { 
+                    cursor: pointer; 
+                    fill: rgba(32, 32, 32, 0.8); 
+                    stroke: #aaa; 
+                    stroke-width: 2px; 
+                    vector-effect: non-scaling-stroke; 
+                    width: 36px; 
+                    height: 36px;
+                }
+                .pin text { 
+                    cursor: pointer; 
+                    user-select: none; 
+                    font-family: arial; 
+                    stroke: none; 
+                    font-size: 6px; 
+                    fill: #fff; 
+                    alignment-baseline: middle; 
+                    text-anchor: middle; 
+                }
+                
+                /* Line styling */
+                .line { 
+                    cursor: pointer; 
+                    fill: none; 
+                    stroke: #aaa; 
+                    stroke-width: 4px; 
+                    vector-effect: non-scaling-stroke; 
+                }
+                .line.selected { 
+                    stroke: #f00; 
+                    stroke-width: 6px; 
+                }
             `,
+            
             annotations: annotationServer,
+            
+            // Update annotation pin sizes based on zoom level
             annotationUpdate: (anno, transform) => {
-                // Update pin sizes based on zoom level
-                let size = 36 / transform.z; // Base size of 36px divided by zoom level
+                let size = 36 / transform.z;
                 if (size !== anno.previous_size) {
-                    anno.elements.forEach(e => {
-                        if (e.classList.contains('pin')) {
-                            e.setAttribute('width', size + 'px');
-                            e.setAttribute('height', size + 'px');
+                    anno.elements.forEach(element => {
+                        if (element.classList.contains('pin')) {
+                            element.setAttribute('width', size + 'px');
+                            element.setAttribute('height', size + 'px');
                         }
                     });
                     anno.previous_size = size;
                 }
             },
+            
+            // Handle annotation clicks
             onClick: (anno) => {
                 zoomToAnnotation(anno);
-                console.log('=== ANNOTATION CLICK DEBUG ===');
-                console.log('Clicked annotation object:', anno);
-                console.log('Annotation keys:', Object.keys(anno));
-                console.log('Has state?', 'state' in anno);
-                console.log('Has bbox?', 'bbox' in anno);
-                console.log('State content:', anno.state);
-                console.log('Bbox content:', anno.bbox);
             },
+            
             classes: classParam
         };
 
-        // Create an annotation layer and add it to the canvas
-        const anno = new OpenLIME.LayerAnnotation(aOptions);
-        lime.addLayer('anno', anno);
+        // Create and add annotation layer
+        const annotationLayer = new OpenLIME.LayerAnnotation(annotationOptions);
+        lime.addLayer('annotations', annotationLayer);
 
-        // Add event listener for annotation loading
-        anno.addEvent('loaded', () => {
-            const count = anno.annotations ? anno.annotations.length : 0;
-            console.log('Annotations loaded successfully! Count:', count);
-            console.log('Annotations loaded:', anno.annotations);
-
-            // Check if annotations failed to load
-            if (!anno.annotations || anno.annotations.length === 0) {
+        // Handle annotation loading completion
+        annotationLayer.addEvent('loaded', () => {
+            const count = annotationLayer.annotations ? annotationLayer.annotations.length : 0;
+            console.log(`Loaded ${count} annotations`);
+            
+            if (count === 0) {
                 console.warn('No annotations found - check server connection');
-            } else {
-                // Debug annotation structure in detail
-                if (anno.annotations.length > 0) {
-                    const firstAnno = anno.annotations[0];
-                    console.log('First annotation structure:', firstAnno);
-                    console.log('First annotation keys:', Object.keys(firstAnno));
-                    console.log('Has state?', 'state' in firstAnno);
-                    console.log('Has bbox?', 'bbox' in firstAnno);
-                    console.log('Has id?', 'id' in firstAnno);
-                    console.log('Has label?', 'label' in firstAnno);
-
-                    if (firstAnno.state) {
-                        console.log('State content:', firstAnno.state);
-                    }
-                    if (firstAnno.bbox) {
-                        console.log('Bbox content:', firstAnno.bbox);
-                    }
-                }
-
-                // Debug pin visibility
-                setTimeout(() => {
-                    const shadow = anno.overlayElement.shadowRoot;
-                    if (shadow) {
-                        const pins = shadow.querySelectorAll('.pin');
-                        const lines = shadow.querySelectorAll('.line');
-                        console.log(`Found ${pins.length} pins and ${lines.length} lines in DOM`);
-
-                        // Log pin details
-                        pins.forEach((pin, index) => {
-                            const rect = pin.getBoundingClientRect();
-                            console.log(`Pin ${index}:`, {
-                                element: pin,
-                                boundingRect: rect,
-                                visibility: getComputedStyle(pin).visibility,
-                                display: getComputedStyle(pin).display,
-                                width: pin.getAttribute('width'),
-                                height: pin.getAttribute('height')
-                            });
-                        });
-                    }
-                }, 1000);
             }
         });
 
-        // Check if editor mode is enabled
+        // Enable editor mode if requested via URL parameter (?editor)
         if (editorEnable) {
-            // Create a SVG annotation Editor
             console.log('Editor mode enabled');
-            eOptions = {
-                ...aOptions,
-                enableState: true, // Enable state management for annotations
+            
+            // Create editor with same options plus state management
+            const editorOptions = {
+                ...annotationOptions,
+                enableState: true // Enable saving camera state with annotations
             };
 
-            const editor = new OpenLIME.EditorSvgAnnotation(lime, anno, eOptions);
+            const editor = new OpenLIME.EditorSvgAnnotation(lime, annotationLayer, editorOptions);
 
+            // Configure editor callbacks for server communication
             editor.createCallback = (anno) => {
-                console.log("Created annotation: ", anno);
+                console.log("Created annotation:", anno.id);
                 processRequest(anno, 'create');
                 return true;
             };
 
             editor.deleteCallback = (anno) => {
-                console.log("Deleted annotation: ", anno);
+                console.log("Deleted annotation:", anno.id);
                 processRequest(anno, 'delete');
                 return true;
             };
 
             editor.updateCallback = (anno) => {
-                console.log("Updated annotation: ", anno);
+                console.log("Updated annotation:", anno.id);
                 processRequest(anno, 'update');
                 return true;
             };
         }
 
-        // Create a User Interface 
+        // Create user interface with standard controls
         const ui = new OpenLIME.UIBasic(lime);
 
-        // Get a subset of pre-defined actions to work on it
-        let { help, home, layers, fullscreen, light, zoomin, zoomout } = ui.actions;
-
-        // Remove light from the toolbar
-        light.display = false;
-
-        // Add help, zoomin and zoomout to the toolbar
+        // Configure which toolbar actions to display
+        let { help, home, layers, fullscreen, zoomin, zoomout } = ui.actions;
+        
         help.display = true;
         zoomin.display = true;
         zoomout.display = true;
 
-        // Add configured actions to the toolbar
-        ui.actions = { help, home, layers, fullscreen, light, zoomin, zoomout };
+        ui.actions = { help, home, layers, fullscreen, zoomin, zoomout };
 
-        // Add image attribution 
-        ui.attribution = `OpenLIME with Flask Backend - <a href="https://github.com/cnr-isti-vclab/openlime">OpenLIME Project</a>`;
+        // Add attribution
+        ui.attribution = `OpenLIME Annotation Editor - <a href="https://github.com/cnr-isti-vclab/openlime">OpenLIME Project</a>`;
 
-        // Callback function to send http requests to the Annotation server
+        /**
+         * Handles HTTP requests to annotation server
+         * @param {Object} anno - Annotation object
+         * @param {string} action - Action type: 'create', 'update', or 'delete'
+         */
         async function processRequest(anno, action) {
-            console.log(`Processing ${action} request...`);
-
             let method = "GET";
-            let url = `${annotationServer}`;
+            let url = annotationServer;
             let body = "";
 
+            // Configure request based on action
             switch (action) {
                 case "create":
                     method = "POST";
-                    url = `${annotationServer}`;
                     body = JSON.stringify(anno);
                     break;
                 case "update":
@@ -322,15 +304,10 @@
                 case "delete":
                     method = "DELETE";
                     url = `${annotationServer}/${anno.id}`;
-                    body = "";
-                    break;
-                default:
                     break;
             }
 
             try {
-                console.log(`Sending ${method} request to ${url}`);
-
                 const response = await fetch(url, {
                     method: method,
                     mode: 'cors',
@@ -342,54 +319,28 @@
                 });
 
                 if (!response.ok) {
-                    const message = `An error has occurred: ${response.status} ${response.statusText}`;
-                    console.error(`Request failed: ${message}`);
-                    alert(message);
-                    throw new Error(message);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                let json = await response.json();
-
-                if (json.status == 'error') {
-                    console.error(`Server error: ${json.message}`);
-                    alert(json.message);
-                } else {
-                    console.log(`${action} successful`);
-                    console.log(`${action} response:`, json);
+                const result = await response.json();
+                
+                if (result.status === 'error') {
+                    throw new Error(result.message);
                 }
+
+                console.log(`${action} completed successfully`);
 
             } catch (error) {
-                console.error(`Network error: ${error.message}`);
-                console.error('Request failed:', error);
-                alert(`Network error: ${error.message}`);
+                console.error(`${action} failed:`, error.message);
+                alert(`Failed to ${action} annotation: ${error.message}`);
             }
         }
 
-        // Test server connection on page load
-        setTimeout(async () => {
-            try {
-                console.log('Testing server connection...');
-                const response = await fetch(annotationServer, {
-                    method: 'GET',
-                    mode: 'cors',
-                    headers: {
-                        'Accept': 'application/json',
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log(`Server connected! Found ${data.length || 0} annotations`);
-                } else {
-                    console.log(`Server responded with status: ${response.status}`);
-                }
-            } catch (error) {
-                console.error(`Server connection failed: ${error.message}`);
-                console.error('Server connection test failed:', error);
-            }
-        }, 1000);
-
-        console.log('OpenLIME initialization complete');
+        // Test server connection on load
+        fetch(annotationServer)
+            .then(response => response.ok ? response.json() : Promise.reject(response))
+            .then(data => console.log(`Connected to server. Found ${data.length || 0} annotations.`))
+            .catch(error => console.warn('Server connection failed:', error.status || error.message));
 
     </script>
 </body>
