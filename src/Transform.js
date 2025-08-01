@@ -282,21 +282,13 @@ class Transform { //FIXME Add translation to P?
 
 		// PHASE 1: Before animation starts
 		if (time < source.t) {
-			// Copy all values from source EXCEPT isComplete
-			pos.x = source.x;
-			pos.y = source.y;
-			pos.z = source.z;
-			pos.a = source.a;
+			Object.assign(pos, source);
 			pos.isComplete = false; // FIX: always false before start
 		}
 		// PHASE 2: After animation ends (or duration too short)
 		else if (time > target.t || dt < 0.001) {
-			// Copy all values from target EXCEPT isComplete
-			pos.x = target.x;
-			pos.y = target.y;
-			pos.z = target.z;
-			pos.a = target.a;
-			pos.isComplete = true; // FIX: always true after end
+			Object.assign(pos, target);
+			pos.isComplete = false; // FIX: always false before start
 		}
 		// PHASE 3: During animation
 		else {
