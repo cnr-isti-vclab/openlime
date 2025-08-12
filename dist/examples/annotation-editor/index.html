@@ -135,6 +135,23 @@
             layout: layer.layout,
             type: 'svg_annotations',
             pinSize: 36,
+            // Add pin size update functionality for non-editor mode
+            annotationUpdate: (anno, transform) => {
+                if(editorEnable && editor && editor.tool) {
+                    return; // Skip pin size update if editor tool is active
+                }
+                const pinSize = 36; // Same default as defined above
+                let size = pinSize / transform.z;
+                if (size !== anno.previous_pin_size) {
+                    anno.elements.forEach(element => {
+                        if (element.classList.contains('pin')) {
+                            element.setAttribute('width', size + 'px');
+                            element.setAttribute('height', size + 'px');
+                        }
+                    });
+                    anno.previous_pin_size = size;
+                }
+            },
 
             // CSS styling for annotation elements
             style: ` 
@@ -201,11 +218,8 @@
 
             // Handle annotation clicks
             onClick: (anno, ev) => {
+                // Se editor è attivo con un tool, non fare zoom
                 if (editorEnable && editor && editor.tool) {
-                    // Prevent the default click handling on SVG annotations
-                    if (ev && typeof ev.stopImmediatePropagation === 'function') {
-                        ev.stopImmediatePropagation();
-                    }
                     return;
                 }
                 zoomToAnnotation(anno);

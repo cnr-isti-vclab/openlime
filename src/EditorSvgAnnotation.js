@@ -39,7 +39,7 @@ class EditorSvgAnnotation {
 					template: (x, y, annotation, size) => {
 						const idx = annotation?.data?.idx || '?';
 						return `<svg xmlns='http://www.w3.org/2000/svg' x='${x}' y='${y}' width='${size}' height='${size}' class='pin'
-						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='9' y='10' text-anchor='middle' dominant-baseline='middle'>${idx}</text></svg>`;
+						viewBox='0 0 18 18'><path d='M 0,0 C 0,0 4,0 8,0 12,0 16,4 16,8 16,12 12,16 8,16 4,16 0,12 0,8 0,4 0,0 0,0 Z'/><text class='pin-text' x='7' y='8' text-anchor='middle' dominant-baseline='middle'>${idx}</text></svg>`;
 					},
 					tooltip: 'New pin',
 					tool: Pin
