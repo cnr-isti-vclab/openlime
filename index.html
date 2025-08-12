@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Index</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-8">
+	
+		<div id="main">
+			
+
+	
+	
+
+
+
+    <h3>openlime 1.2.2</h3>
+
+
+
+
+
+
+
+
+
+	
+	
+
+
+
+
+
+    <section class="readme-section">
+        <article><h1 id="openlime-(open-layered-image-explorer)">OpenLIME (Open Layered IMage Explorer)</h1>
+<p align="center" style="margin-top: 20px; margin-bottom: 15px;">
+  <img src="https://cnr-isti-vclab.github.io/openlime/img/openlime-teaser.jpg" alt="OpenLIME Teaser" width="600">
+</p>
+<p><strong>OpenLIME</strong> (Open Layered IMage Explorer) is an open-source JavaScript library for the efficient display of scalable high-resolution relightable images.</p>
+<p><strong>OpenLime</strong> is jointly developed by <a href="https://www.crs4.it/research/visual-and-data-intensive-computing/">CRS4 Visual and Data-intensive Computing Group</a> and <a href="http://vcg.isti.cnr.it/">CNR ISTI - Visual Computing Lab</a>.</p>
+<p><strong>OpenLIME</strong> natively supports BRDF and RTI datasets, and can be easily extended for other multi-channel raster datasets, such as hyper spectral imaging or other reflectance modeling. Input data can be combined in a multi-layer visualization system using opacity and blending modes, and interactive lenses.</p>
+<p>All web image types (<em>jpg</em>, <em>png</em>, <em>gif</em>, etc...) are supported as well as the most common multi-resolution image formats (<em>deepzoom</em>, <em>zoomify</em>, <em>IIIF</em>, <em>google maps</em>), which are suitable for large images.</p>
+<p><strong>OpenLIME</strong> provides a set of ready-to-use layers that allows developers to quickly publish their datasets on the web or make kiosk applications. Ready-to-use layers ranging from images, to multi-channel data (such as, for example, RTI or BRDF) or the combination of multiple layers or for visualization through lenses.</p>
+<p>The <strong>OpenLIME</strong> library comes with a responsive user iterface that works well with both desktop monitors and multitouch systems. Additionally, it is designed to be highly configurable, so it will be easy for the experienced developer to build their own custom interface.</p>
+<p>The library contains a convenient set of examples that can be used both to understand how the library works and as a starting point for programming with <strong>OpenLIME</strong> itself.</p>
+<p>API Docs: https://cnr-isti-vclab.github.io/openlime/</p>
+<h2 id="using-openlime-in-your-project">Using OpenLIME in your project</h2>
+<h3 id="via-cdn-(recommended-for-quick-start)">Via CDN (recommended for quick start)</h3>
+<p>The easiest way to use OpenLIME is via a CDN like unpkg or jsdelivr:</p>
+<pre class="prettyprint source lang-html"><code>&lt;!-- Using unpkg -->
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/openlime@1.2.2/dist/css/skin.css&quot;>
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/openlime@1.2.2/dist/css/light.css&quot;>
+&lt;script src=&quot;https://unpkg.com/openlime@1.2.2/dist/js/openlime.min.js&quot;>&lt;/script>
+
+&lt;!-- OR using jsdelivr -->
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/openlime@1.2.2/dist/css/skin.css&quot;>
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/openlime@1.2.2/dist/css/light.css&quot;>
+&lt;script src=&quot;https://cdn.jsdelivr.net/npm/openlime@1.2.2/dist/js/openlime.min.js&quot;>&lt;/script>
+</code></pre>
+<h3 id="installing-via-npm">Installing via npm</h3>
+<p>If you're using a build system like webpack or rollup:</p>
+<pre class="prettyprint source lang-bash"><code>npm install openlime
+</code></pre>
+<p>Then import it into your project:</p>
+<h4 id="es-module-(esm)">ES Module (ESM)</h4>
+<pre class="prettyprint source lang-javascript"><code>import * as OpenLIME from 'openlime';
+
+// Or import specific components
+import { Viewer, Layer, LayerImage } from 'openlime';
+</code></pre>
+<h4 id="commonjs-(cjs)">CommonJS (CJS)</h4>
+<pre class="prettyprint source lang-javascript"><code>const OpenLIME = require('openlime');
+</code></pre>
+<h4 id="umd-(in-browser-with-module-bundler)">UMD (in browser with module bundler)</h4>
+<pre class="prettyprint source lang-javascript"><code>import OpenLIME from 'openlime';
+</code></pre>
+<h3 id="basic-usage-example">Basic Usage Example</h3>
+<p>Here's a simple example of how to create a viewer with a single image layer:</p>
+<pre class="prettyprint source lang-html"><code>&lt;!DOCTYPE html>
+&lt;html>
+&lt;head>
+  &lt;meta charset=&quot;utf-8&quot;>
+  &lt;title>OpenLIME Basic Example&lt;/title>
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/openlime@1.2.2/dist/css/lime.css&quot;>
+  &lt;style>
+    #viewer {
+      width: 100%;
+      height: 600px;
+    }
+  &lt;/style>
+&lt;/head>
+&lt;body>
+  &lt;div id=&quot;viewer&quot;>&lt;/div>
+
+  &lt;script src=&quot;https://unpkg.com/openlime@1.2.2/dist/js/openlime.min.js&quot;>&lt;/script>
+  &lt;script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Create a viewer
+      const viewer = new OpenLIME.Viewer('viewer', {
+        prefetchBorder: 1,
+        layout: 'basic'
+      });
+
+      // Create and add an image layer
+      const imageLayer = new OpenLIME.LayerImage({
+        id: 'base-image',
+        layout: 'image',
+        url: 'path/to/your/image.jpg'
+      });
+      
+      viewer.addLayer(imageLayer);
+      
+      // Add pan/zoom controller
+      const controller = new OpenLIME.ControllerPanZoom();
+      viewer.addController(controller);
+    });
+  &lt;/script>
+&lt;/body>
+&lt;/html>
+</code></pre>
+<p>For multi-resolution images:</p>
+<pre class="prettyprint source lang-javascript"><code>// Using a DeepZoom image
+const deepZoomLayer = new OpenLIME.LayerImage({
+  id: 'deepzoom-image',
+  layout: 'deepzoom',
+  url: 'path/to/your/deepzoom_files/'
+});
+
+// Using a Zoomify image
+const zoomifyLayer = new OpenLIME.LayerImage({
+  id: 'zoomify-image',
+  layout: 'zoomify',
+  url: 'path/to/your/zoomify/'
+});
+
+// Using an IIIF image
+const iiifLayer = new OpenLIME.LayerImage({
+  id: 'iiif-image',
+  layout: 'iiif',
+  url: 'https://your-iiif-server.org/your-image-id'
+});
+</code></pre>
+<h2 id="development-setup">Development Setup</h2>
+<h3 id="installing-npm">Installing npm</h3>
+<h3 id="ubuntu">Ubuntu</h3>
+<pre class="prettyprint source lang-bash"><code>sudo apt install npm
+</code></pre>
+<h4 id="ubuntu-18.04">Ubuntu 18.04</h4>
+<p>You might have some problem using the old npm version shipped with Ubuntu18.04, and even upgrading it. This worked for me:</p>
+<pre class="prettyprint source lang-bash"><code>sudo npm install -g npm@latest-6
+</code></pre>
+<h3 id="windows">Windows</h3>
+<p>To obtain npm for Windows, you need to download the Windows version
+of node.js from https://nodejs.org/en/download/ .
+You can download either the Windows Installer (.msi) or
+the Windows Binary (.zip).  If you download
+and expand the Windows
+Binary zip file, you will afterwards
+need to set your <code>PATH</code> variable
+to include the directory that contains the npm executable
+(this directory is the subdirectory <code>node_modules\npm\bin</code>).</p>
+<h2 id="setting-up-npm-(all-platforms)">Setting up npm (all platforms)</h2>
+<p>The following step should be performed in the <code>openlime</code>
+directory that was cloned from this repository.</p>
+<p>Before using npm, you need to install the required
+packages locally.  This only needs to be done once.
+The following command tells npm to download
+all the webpack packages (and their dependencies) listed in the
+<code>package.json</code> file.  These will be put in the <code>./node_modules</code>
+directory.</p>
+<pre class="prettyprint source lang-bash"><code>npm install
+</code></pre>
+<p>The downloaded packages include <code>rollup</code>, <code>documentation</code>,
+and <code>nodemon</code>, which will be used below.</p>
+<h2 id="using-npm-(all-platforms)">Using npm (all platforms)</h2>
+<p>These steps should be performed in the <code>openlime</code>
+directory that was cloned from this repository.</p>
+<h3 id="build-the-code">Build the code</h3>
+<p>The following command reads the javascript code in <code>./src</code>, and
+puts the transpiled webpack code in <code>./dist/main.js</code>.</p>
+<pre class="prettyprint source lang-bash"><code>npm run build
+</code></pre>
+<p>The webpack code is used, for example, by the
+<code>./dist/index.html</code> web page.</p>
+<h3 id="run-the-node.js-server">Run the node.js server</h3>
+<p>If you wish, you can run the node.js development server
+to serve your web pages.
+This server will use <code>./dist</code> as the home directory.
+The server is run in &quot;hot&quot; mode, which means that
+whenever you change a file in the <code>./src</code> directory,
+the webpack code will automatically be rebuilt, and
+your web browser will automatically refresh, to reflect
+your latest changes.</p>
+<pre class="prettyprint source lang-bash"><code>npm run start
+</code></pre>
+<p>Then access the demo app at http://localhost:8080 (which
+by default is <code>./dist/index.html</code>).</p>
+<p>If you prefer to serve from a different port, say 8088, you can call</p>
+<pre class="prettyprint source lang-bash"><code>npm run start -- --port 8088
+</code></pre>
+<h3 id="create-a-rollup-file-to-use-with-other-servers">Create a rollup file to use with other servers</h3>
+<p>To create a rollup file that can be used with other servers, you don't need to rely on Node.js as the server. Instead, you can embed the rollup file directly in your web page using the <code>&lt;script&gt;</code> tag. You can reference either <code>./dist/js/openlime.min.js</code> or <code>./dist/js/openlime.js</code>.</p>
+<p>In the <code>./dist/examples</code> folder, you'll find simple <strong>openLIME</strong> web apps that demonstrate how to use this approach. These files will display correctly when served from any web server.</p>
+<p>To generate the rollup files, simply run the following command:</p>
+<pre class="prettyprint source lang-bash"><code>npm run rollup
+</code></pre>
+<h3 id="keep-the-rollup-files-up-to-date">Keep the rollup files up to date</h3>
+<p>If you keep a <code>nodemon</code> (<strong>node</strong> <strong>mon</strong>itor) script running, it
+will automatically update the rollup files
+<code>./dist/js/openlime.min.js</code>
+and
+<code>./dist/js/openlime.js</code>
+whenever anything changes in the <code>./src</code> directory.
+Note that, unlike with the node.js server, the browser will
+not refresh automatically; you will have to do that yourself
+once the rollup files have been updated.</p>
+<pre class="prettyprint source lang-bash"><code>npm run nodemon
+</code></pre>
+<h3 id="create-documentation">Create documentation</h3>
+<p>The documentation is created from structured comments in the
+source code (in <code>./src</code>).
+Once created, it is accessible from <code>./docs/index.html</code></p>
+<pre class="prettyprint source lang-bash"><code>npm run doc
+</code></pre>
+<h3 id="customization">Customization</h3>
+<p>skin.css</p>
+<p>skin.svg</p>
+<p>Run</p>
+<pre class="prettyprint source lang-bash"><code>svgo -p 1 skin.svg -o skin.min.svg
+</code></pre>
+<p>to minimize svg.</p>
+<p>Documentation.js supports markdown syntax and JSDoc syntax.</p>
+<p>JSON example of the configuration:</p>
+<pre class="prettyprint source"><code>{
+	camera: { 
+	},
+	canvas: {
+		rasters: [
+			{
+				id:
+				name:
+				width: //optional
+				height: //optional
+				url: 
+				layout: &lt;image|google|deepzoom|zoomify|iip|iiif> //optional if can be determined from the url.
+				
+
+			}
+		]
+	},
+	overlay: {
+	}
+}
+</code></pre></article>
+    </section>
+
+
+
+
+
+
+
+	<h1 class="page-title">Index</h1>
+<section>
+
+<header>
+    
+        <h2>
+        Ruler.js
+        </h2>
+        
+    
+</header>
+
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description"><p>Ruler module provides measurement functionality for the OpenLIME viewer.
+Allows users to measure distances in the scene with an interactive ruler tool.
+Extends the Units class to handle unit conversions and formatting.</p>
+<p>Ruler class creates an interactive measurement tool for the OpenLIME viewer.
+Features:</p>
+<ul>
+<li>Interactive distance measurement</li>
+<li>SVG-based visualization</li>
+<li>Scale-aware display</li>
+<li>Multiple measurement history</li>
+<li>Touch and mouse support</li>
+</ul></div>
+        
+
+        
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Ruler.js.html">Ruler.js</a>,
+				 <a href="Ruler.js.html#sunlight-1-line-6">line 6</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+        
+    
+    </div>
+
+    
+        <h3 class="subsection-title">Extends</h3>
+
+        
+
+
+    <ul>
+        <li><a href="Units.html">Units</a></li>
+    </ul>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+		<div class="col-md-3">
+			<div id="toc" class="col-md-3 hidden-xs hidden-sm hidden-md"></div>
+		</div>
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-08-12T20:14:43+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>
