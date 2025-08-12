@@ -74,6 +74,7 @@
         // Check URL parameters for editor mode
         const urlParams = new URLSearchParams(window.location.search);
         const editorEnable = urlParams.has('editor');
+        let editor = null;
 
         // Create OpenLIME viewer with disabled autofit to allow manual navigation
         const lime = new OpenLIME.Viewer('.openlime');
@@ -104,11 +105,11 @@
             if ('state' in anno) {
                 // Use setState to animate to the annotation's camera position
                 lime.canvas.setState(anno.state, 1500, 'ease-in-out');
-                
+
                 // Optionally show annotation description in dialog
                 infoDialog.setContent(anno.description || 'No description available');
                 infoDialog.show();
-                
+
                 return true;
             }
             return false;
@@ -133,7 +134,8 @@
             label: 'Annotations',
             layout: layer.layout,
             type: 'svg_annotations',
-            
+            pinSize: 36,
+
             // CSS styling for annotation elements
             style: ` 
                 .openlime-annotation { 
@@ -194,28 +196,21 @@
                     stroke-width: 6px; 
                 }
             `,
-            
+
             annotations: annotationServer,
-            
-            // Update annotation pin sizes based on zoom level
-            annotationUpdate: (anno, transform) => {
-                let size = 36 / transform.z;
-                if (size !== anno.previous_size) {
-                    anno.elements.forEach(element => {
-                        if (element.classList.contains('pin')) {
-                            element.setAttribute('width', size + 'px');
-                            element.setAttribute('height', size + 'px');
-                        }
-                    });
-                    anno.previous_size = size;
-                }
-            },
-            
+
             // Handle annotation clicks
-            onClick: (anno) => {
+            onClick: (anno, ev) => {
+                if (editorEnable && editor && editor.tool) {
+                    // Prevent the default click handling on SVG annotations
+                    if (ev && typeof ev.stopImmediatePropagation === 'function') {
+                        ev.stopImmediatePropagation();
+                    }
+                    return;
+                }
                 zoomToAnnotation(anno);
             },
-            
+
             classes: classParam
         };
 
@@ -227,7 +222,7 @@
         annotationLayer.addEvent('loaded', () => {
             const count = annotationLayer.annotations ? annotationLayer.annotations.length : 0;
             console.log(`Loaded ${count} annotations`);
-            
+
             if (count === 0) {
                 console.warn('No annotations found - check server connection');
             }
@@ -236,14 +231,14 @@
         // Enable editor mode if requested via URL parameter (?editor)
         if (editorEnable) {
             console.log('Editor mode enabled');
-            
+
             // Create editor with same options plus state management
             const editorOptions = {
                 ...annotationOptions,
                 enableState: true // Enable saving camera state with annotations
             };
 
-            const editor = new OpenLIME.EditorSvgAnnotation(lime, annotationLayer, editorOptions);
+            editor = new OpenLIME.EditorSvgAnnotation(lime, annotationLayer, editorOptions);
 
             // Configure editor callbacks for server communication
             editor.createCallback = (anno) => {
@@ -270,7 +265,7 @@
 
         // Configure which toolbar actions to display
         let { help, home, layers, fullscreen, zoomin, zoomout } = ui.actions;
-        
+
         help.display = true;
         zoomin.display = true;
         zoomout.display = true;
@@ -323,7 +318,7 @@
                 }
 
                 const result = await response.json();
-                
+
                 if (result.status === 'error') {
                     throw new Error(result.message);
                 }
