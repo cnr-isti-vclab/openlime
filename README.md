@@ -4,22 +4,41 @@
   <img src="https://cnr-isti-vclab.github.io/openlime/img/openlime-teaser.jpg" alt="OpenLIME Teaser" width="600">
 </p>
 
+We introduce **OpenLIME** (*Open Layered IMage Explorer*), an open, scalable, and flexible framework for creating web-based interactive tools to annotate and inspect large multi-layered and multi-channel standard and relightable image models. 
 
-**OpenLIME** (Open Layered IMage Explorer) is an open-source JavaScript library for the efficient display of scalable high-resolution relightable images.
+**OpenLIME** is jointly developed by [CRS4 Visual and Data-intensive Computing Group](https://www.crs4.it/en/research-and-development-sectors/vidic/) and [CNR ISTI - Visual Computing Lab](http://vcg.isti.cnr.it/). 
 
-**OpenLime** is jointly developed by [CRS4 Visual and Data-intensive Computing Group](https://www.crs4.it/research/visual-and-data-intensive-computing/) and [CNR ISTI - Visual Computing Lab](http://vcg.isti.cnr.it/). 
+**OpenLIME** is released as an open-source JavaScript library for the efficient display of scalable, high-resolution relightable images, and is accompanied by back-office tools to facilitate data preparation.
 
-**OpenLIME** natively supports BRDF and RTI datasets, and can be easily extended for other multi-channel raster datasets, such as hyper spectral imaging or other reflectance modeling. Input data can be combined in a multi-layer visualization system using opacity and blending modes, and interactive lenses.
+**OpenLIME** natively supports RGB images, multispectral images, Bidirectional Reflectance Distribution Function (BRDF), and Reflectance Transformation Imaging (RTI) datasets. It can be extended (and has been extended!) to accommodate other multi-channel raster datasets, such as neural representations. Common web image types (*jpg*, *png*, *gif*, etc...), as well as the most common multi-resolution image formats (*deepzoom*, *zoomify*, *IIIF*, *google maps*), can be used directly or composed to support more complex formats. 
 
-All web image types (*jpg*, *png*, *gif*, etc...) are supported as well as the most common multi-resolution image formats (*deepzoom*, *zoomify*, *IIIF*, *google maps*), which are suitable for large images.
+Adaptive image management and display use a data-flow approach, where images from sources of any size are efficiently streamed into screen-sized buffers that can be processed and combined using customizable WebGL shaders. 
 
-**OpenLIME** provides a set of ready-to-use layers that allows developers to quickly publish their datasets on the web or make kiosk applications. Ready-to-use layers ranging from images, to multi-channel data (such as, for example, RTI or BRDF) or the combination of multiple layers or for visualization through lenses.
+Multi-layer and multi-faceted visualizations are achieved through opacity adjustments, blending modes, and interactive lenses. 
 
-The **OpenLIME** library comes with a responsive user iterface that works well with both desktop monitors and multitouch systems. Additionally, it is designed to be highly configurable, so it will be easy for the experienced developer to build their own custom interface. 
+The released library provides a set of pre-configured layers, facilitating the rapid deployment of web-based datasets and kiosk applications. Its responsive user interface is compatible with desktop, mobile, and general multitouch environments, while its modular architecture allows for extensive customization, making it adaptable to diverse annotation and visualization needs. 
 
-The library contains a convenient set of examples that can be used both to understand how the library works and as a starting point for programming with **OpenLIME** itself.
+**OpenLime** has already been used for a variety of specific use cases (see references below), including the inspection of RTI models, the integration of novel relightable image formats, archaeological data documentation and annotation, and creation and deployment of standalone museum applications. 
+
+The released library contains a convenient set of examples that can be used both to understand how the library works and as a starting point for programming with **OpenLIME** itself.
 
 API Docs: https://cnr-isti-vclab.github.io/openlime/
+
+## References
+More information on the design and structure of **OpenLIME** is contained in our publications. We kindly ask you to cite our work if you make use of the framework or build upon its ideas.
+
+```
+@inproceedings{Ponchio:2025:OOF,
+    author = {Federico Ponchio and Fabio Bettio and Fabio Marton and Ruggero Pintus and Leonardo Righetto and Andrea Giachetti and Enrico Gobbetti},
+    title = {{OpenLIME}: An open and flexible web framework for creating and exploring complex multi-layered relightable image models},
+    booktitle = {Proc. Digital Heritage},
+    month = {September},
+    year = {2025},
+    note = {To appear},
+}
+```
+## Acknowledgments
+**OpenLIME** research and development received funding from the EU under Grant Agreement 101157364 – ECHOES and from Sardinian Regional Authorities under project XDATA (RAS Art9 LR 20/2015). Project REFLEX (PRIN2022, EU Next-GenerationEU PNRR M4C2 Inv. 1.1) contributed to supporting the study of NeuralRTI components. 
 
 ## Using OpenLIME in your project
 
@@ -144,6 +163,12 @@ const iiifLayer = new OpenLIME.LayerImage({
 
 ### Installing npm
 
+### Arch Linux / Manjaro
+
+```bash
+sudo pacman -S npm
+```
+
 ### Ubuntu
 
 ```bash
@@ -151,33 +176,19 @@ sudo apt install npm
 ```
 
 #### Ubuntu 18.04
-You might have some problem using the old npm version shipped with Ubuntu18.04, and even upgrading it. This worked for me:
+You might have some problem using the old npm version shipped with Ubuntu18.04, and even upgrading it. This worked for us:
 ```bash
 sudo npm install -g npm@latest-6
 ```
 
 ### Windows
-To obtain npm for Windows, you need to download the Windows version
-of node.js from https://nodejs.org/en/download/ .
-You can download either the Windows Installer (.msi) or
-the Windows Binary (.zip).  If you download 
-and expand the Windows
-Binary zip file, you will afterwards
-need to set your `PATH` variable
-to include the directory that contains the npm executable
-(this directory is the subdirectory `node_modules\npm\bin`).
+To obtain npm for Windows, you need to download the Windows version of node.js from https://nodejs.org/en/download/ . You can download either the Windows Installer (.msi) or the Windows Binary (.zip).  If you download  and expand the Windows Binary zip file, you will afterwards need to set your `PATH` variable to include the directory that contains the npm executable (this directory is the subdirectory `node_modules\npm\bin`).
 
 ## Setting up npm (all platforms)
 
-The following step should be performed in the `openlime`
-directory that was cloned from this repository.
+The following step should be performed in the `openlime` directory that was cloned from this repository.
 
-Before using npm, you need to install the required 
-packages locally.  This only needs to be done once.
-The following command tells npm to download
-all the webpack packages (and their dependencies) listed in the
-`package.json` file.  These will be put in the `./node_modules`
-directory.
+Before using npm, you need to install the required  packages locally. This only needs to be done once. The following command tells npm to download all the webpack packages (and their dependencies) listed in the `package.json` file.  These will be put in the `./node_modules` directory.
 
 ```bash
 npm install
@@ -188,13 +199,11 @@ and `nodemon`, which will be used below.
  
 ## Using npm (all platforms)
 
-These steps should be performed in the `openlime`
-directory that was cloned from this repository.
+These steps should be performed in the `openlime` directory that was cloned from this repository.
 
 ### Build the code
 
-The following command reads the javascript code in `./src`, and
-puts the transpiled webpack code in `./dist/main.js`.
+The following command reads the javascript code in `./src`, and puts the transpiled webpack code in `./dist/main.js`.
 ```bash
 npm run build
 ```
@@ -204,20 +213,12 @@ The webpack code is used, for example, by the
 
 ### Run the node.js server
 
-If you wish, you can run the node.js development server
-to serve your web pages.
-This server will use `./dist` as the home directory.
-The server is run in "hot" mode, which means that 
-whenever you change a file in the `./src` directory, 
-the webpack code will automatically be rebuilt, and
-your web browser will automatically refresh, to reflect
-your latest changes.
+If you wish, you can run the node.js development server to serve your web pages. This server will use `./dist` as the home directory. The server is run in "hot" mode, which means that whenever you change a file in the `./src` directory, the webpack code will automatically be rebuilt, and your web browser will automatically refresh, to reflect your latest changes.
 ```bash
 npm run start
 ```
 
-Then access the demo app at http://localhost:8080 (which
-by default is `./dist/index.html`).
+Then access the demo app at http://localhost:8080 (which by default is `./dist/index.html`).
 
 If you prefer to serve from a different port, say 8088, you can call
 ```bash
@@ -242,10 +243,7 @@ will automatically update the rollup files
 `./dist/js/openlime.min.js`
 and 
 `./dist/js/openlime.js` 
-whenever anything changes in the `./src` directory.
-Note that, unlike with the node.js server, the browser will
-not refresh automatically; you will have to do that yourself
-once the rollup files have been updated.
+whenever anything changes in the `./src` directory. Note that, unlike with the node.js server, the browser will not refresh automatically; you will have to do that yourself once the rollup files have been updated.
 
 ```bash
 npm run nodemon
@@ -253,9 +251,7 @@ npm run nodemon
 
 ### Create documentation
 
-The documentation is created from structured comments in the
-source code (in `./src`).
-Once created, it is accessible from `./docs/index.html`
+The documentation is created from structured comments in the source code (in `./src`). Once created, it is accessible from `./docs/index.html`
 
 ```bash
 npm run doc
