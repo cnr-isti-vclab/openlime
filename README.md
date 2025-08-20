@@ -25,16 +25,18 @@ The released library contains a convenient set of examples that can be used both
 API Docs: https://cnr-isti-vclab.github.io/openlime/
 
 ## References
-More information on the design and structure of **OpenLIME** is contained in our publications. We kindly ask you to cite our work if you make use of the framework or build upon its ideas.
+Further information on the design and architecture of **OpenLIME** can be found in our publications. If you use the framework or build upon its concepts, please cite our work.
 
-```
+```bibtex
 @inproceedings{Ponchio:2025:OOF,
-    author = {Federico Ponchio and Fabio Bettio and Fabio Marton and Ruggero Pintus and Leonardo Righetto and Andrea Giachetti and Enrico Gobbetti},
-    title = {{OpenLIME}: An open and flexible web framework for creating and exploring complex multi-layered relightable image models},
+    author = 	{Federico Ponchio and Fabio Bettio and Fabio Marton and
+				 Ruggero Pintus and Leonardo Righetto and Andrea Giachetti and Enrico Gobbetti},
+    title = 	{{OpenLIME}: An open and flexible web framework
+				 for creating and exploring complex multi-layered relightable image models},
     booktitle = {Proc. Digital Heritage},
-    month = {September},
-    year = {2025},
-    note = {To appear},
+    month = 	{September},
+    year = 		{2025},
+    note = 		{To appear},
 }
 ```
 ## Acknowledgments
@@ -163,25 +165,25 @@ const iiifLayer = new OpenLIME.LayerImage({
 
 ### Installing npm
 
-### Arch Linux / Manjaro
+#### Arch Linux / Manjaro
 
 ```bash
 sudo pacman -S npm
 ```
 
-### Ubuntu
+#### Ubuntu
 
 ```bash
 sudo apt install npm
 ```
 
-#### Ubuntu 18.04
+##### Ubuntu 18.04
 You might have some problem using the old npm version shipped with Ubuntu18.04, and even upgrading it. This worked for us:
 ```bash
 sudo npm install -g npm@latest-6
 ```
 
-### Windows
+#### Windows
 To obtain npm for Windows, you need to download the Windows version of node.js from https://nodejs.org/en/download/ . You can download either the Windows Installer (.msi) or the Windows Binary (.zip).  If you download  and expand the Windows Binary zip file, you will afterwards need to set your `PATH` variable to include the directory that contains the npm executable (this directory is the subdirectory `node_modules\npm\bin`).
 
 ## Setting up npm (all platforms)
@@ -213,12 +215,12 @@ The webpack code is used, for example, by the
 
 ### Run the node.js server
 
-If you wish, you can run the node.js development server to serve your web pages. This server will use `./dist` as the home directory. The server is run in "hot" mode, which means that whenever you change a file in the `./src` directory, the webpack code will automatically be rebuilt, and your web browser will automatically refresh, to reflect your latest changes.
+If you wish, you can run the node.js development server to serve your web pages. This server will use `./dist` as the home directory. The server is run in "hot" mode, which means that whenever you change a file in the `./src` directory, the webpack code will automatically be rebuilt. Your web browser will automatically refresh to reflect your latest changes.
 ```bash
 npm run start
 ```
 
-Then access the demo app at http://localhost:8080 (which by default is `./dist/index.html`).
+Then access the demo app at http://localhost:8080 (which, by default, is `./dist/index.html`).
 
 If you prefer to serve from a different port, say 8088, you can call
 ```bash
@@ -231,7 +233,7 @@ To create a rollup file that can be used with other servers, you don't need to r
 
 In the `./dist/examples` folder, you'll find simple **openLIME** web apps that demonstrate how to use this approach. These files will display correctly when served from any web server.
 
-To generate the rollup files, simply run the following command:
+To generate the rollup files, run the following command:
 ```bash
 npm run rollup
 ```
