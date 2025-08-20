@@ -27,6 +27,7 @@ API Docs: https://cnr-isti-vclab.github.io/openlime/
 ## References
 Further information on the design and architecture of **OpenLIME** can be found in our publications. If you use the framework or build upon its concepts, please cite our work.
 
+Overview and general design:
 ```bibtex
 @inproceedings{Ponchio:2025:OOF,
     author = 	{Federico Ponchio and Fabio Bettio and Fabio Marton and
@@ -39,6 +40,46 @@ Further information on the design and architecture of **OpenLIME** can be found 
     note = 		{To appear},
 }
 ```
+
+Techniques and applications:
+```bibtex
+@article{Righetto:2024:EUV,
+    author = 	{Leonardo Righetto and Mohammad Khademizadeh and Andrea Giachetti and
+				 Federico Ponchio and Davit Gigilashvili and Fabio Bettio and Enrico Gobbetti},
+    title = 	{Efficient and user-friendly visualization of neural relightable images for
+				 cultural heritage applications},
+    journal = 	{ACM Journal on Computing and Cultural Heritage (JOCCH)},
+    volume = 	{17},
+    number = 	{4},
+    pages = 	{54:1--54:24},
+    year = 		{2024},
+    doi = {10.1145/3690390},
+}
+@inproceedings{Righetto:2023:ACS,
+    author = 	{Leonardo Righetto and Arianna Traviglia and Michela {De Bernardin} and
+				 Enrico Gobbetti and Federico Ponchio and Andrea Giachetti},
+    title = 	{Ancient coins' surface inspection with web-based neural {RTI} visualization},
+    booktitle = {Optics for Arts, Architecture, and Archaeology (O3A) IX},
+    volume = 	{12620},
+    pages = 	{12620:0D},
+    publisher = {SPIE},
+    year = 		{2023},
+    doi = 		{10.1117/12.2674888},
+}
+@inproceedings{Ahsan:2022:EFU,
+    author = 	{Moonisa Ahsan and Giuliana Altea and Fabio Bettio and Marco Callieri and
+				 Antonella Camarda and Paolo Cignoni and Enrico Gobbetti and Paolo Ledda and
+				 Alessandro Lutzu and Fabio Marton and Giuseppe Mignemi and Federico Ponchio},
+    title = 	{Ebb \& Flow: Uncovering {Costantino Nivola}'s {Olivetti} Sandcast through
+				 {3D} Fabrication and Virtual Exploration},
+    booktitle = {The 20th Eurographics Workshop on Graphics and Cultural Heritage},
+    pages = 	{85--94},
+    month = 	{September},
+    year = 	{2022},
+    doi = 	{10.2312/gch.20221230},
+}
+```
+
 ## Acknowledgments
 **OpenLIME** research and development received funding from the EU under Grant Agreement 101157364 – ECHOES and from Sardinian Regional Authorities under project XDATA (RAS Art9 LR 20/2015). Project REFLEX (PRIN2022, EU Next-GenerationEU PNRR M4C2 Inv. 1.1) contributed to supporting the study of NeuralRTI components. 
 
