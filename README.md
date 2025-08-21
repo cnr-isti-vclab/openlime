@@ -8,9 +8,9 @@ We introduce **OpenLIME** (*Open Layered IMage Explorer*), an open, scalable, an
 
 **OpenLIME** is jointly developed by [CRS4 Visual and Data-intensive Computing Group](https://www.crs4.it/en/research-and-development-sectors/vidic/) and [CNR ISTI - Visual Computing Lab](http://vcg.isti.cnr.it/). 
 
-**OpenLIME** is released as an open-source JavaScript library for the efficient display of scalable, high-resolution relightable images, and is accompanied by back-office tools to facilitate data preparation.
+**OpenLIME** is released as an open-source JavaScript library and is accompanied by back-office tools to facilitate data preparation.
 
-**OpenLIME** natively supports RGB images, multispectral images, Bidirectional Reflectance Distribution Function (BRDF), and Reflectance Transformation Imaging (RTI) datasets. It can be extended (and has been extended!) to accommodate other multi-channel raster datasets, such as neural representations. Common web image types (*jpg*, *png*, *gif*, etc...), as well as the most common multi-resolution image formats (*deepzoom*, *zoomify*, *IIIF*, *google maps*), can be used directly or composed to support more complex formats. 
+It natively supports RGB images, multispectral images, Bidirectional Reflectance Distribution Function (BRDF), and Reflectance Transformation Imaging (RTI) datasets. It can be extended (and has been extended!) to accommodate other multi-channel raster datasets, such as neural representations. Common web image types (*jpg*, *png*, *gif*, etc...), as well as the most common multi-resolution image formats (*deepzoom*, *zoomify*, *IIIF*, *google maps*), can be used directly or composed to support more complex formats. 
 
 Adaptive image management and display use a data-flow approach, where images from sources of any size are efficiently streamed into screen-sized buffers that can be processed and combined using customizable WebGL shaders. 
 
@@ -256,7 +256,7 @@ The webpack code is used, for example, by the
 
 ### Run the node.js server
 
-If you wish, you can run the node.js development server to serve your web pages. This server will use `./dist` as the home directory. The server is run in "hot" mode, which means that whenever you change a file in the `./src` directory, the webpack code will automatically be rebuilt. Your web browser will automatically refresh to reflect your latest changes.
+For development, it is handy to run the node.js development server to serve your web pages. This server will use `./dist` as the home directory. The server is run in "hot" mode, which means that whenever you change a file in the `./src` directory, the webpack code will automatically be rebuilt. Your web browser will automatically refresh to reflect your latest changes.
 ```bash
 npm run start
 ```
@@ -281,8 +281,7 @@ npm run rollup
 
 ### Keep the rollup files up to date
 
-If you keep a `nodemon` (**node** **mon**itor) script running, it
-will automatically update the rollup files
+If you keep a `nodemon` (**node** **mon**itor) script running, it will automatically update the rollup files
 `./dist/js/openlime.min.js`
 and 
 `./dist/js/openlime.js` 
@@ -294,7 +293,7 @@ npm run nodemon
 
 ### Create documentation
 
-The documentation is created from structured comments in the source code (in `./src`). Once created, it is accessible from `./docs/index.html`
+The documentation is extracted from structured comments in the source code (in `./src`). Once created, it is accessible from `./docs/index.html`
 
 ```bash
 npm run doc
