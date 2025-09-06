@@ -1,17 +1,24 @@
 {
   "name": "openlime",
-  "version": "1.2.3",
+  "version": "1.2.0",
   "description": "Open Layered IMage Explorer",
   "license": "GPL-3.0",
   "private": false,
   "main": "dist/js/openlime.cjs.js",
   "module": "dist/js/openlime.esm.js",
+  "types": "dist/types/openlime.d.ts",
   "unpkg": "dist/js/openlime.umd.js",
   "jsdelivr": "dist/js/openlime.umd.js",
   "exports": {
     ".": {
-      "import": "./dist/js/openlime.esm.js",
-      "require": "./dist/js/openlime.cjs.js",
+      "import": {
+        "types": "./dist/types/openlime.d.ts",
+        "default": "./dist/js/openlime.esm.js"
+      },
+      "require": {
+        "types": "./dist/types/openlime.d.ts",
+        "default": "./dist/js/openlime.cjs.js"
+      },
       "default": "./dist/js/openlime.umd.js"
     }
   },
@@ -54,10 +61,11 @@
     "start": "webpack-dev-server",
     "build": "webpack -c webpack.config.js --mode development",
     "rollup": "rollup -c rollup.config.js --extend",
+    "build-types": "tsc --allowJs --declaration --emitDeclarationOnly --outDir dist/types dist/js/openlime.esm.js",
     "nodemon": "nodemon --watch ./src --exec npm run rollup",
     "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md && mkdir -p docs/img && cp -r jsdoc/static/img/* docs/img/",
     "update-readme": "node utils/update-readme.js",
-    "prepublishOnly": "npm run update-readme && npm run rollup && npm run doc"
+    "prepublishOnly": "npm run update-readme && npm run rollup && npm run build-types && npm run doc"
   },
   "devDependencies": {
     "@rollup/plugin-json": "^6.1.0",
@@ -78,8 +86,12 @@
     "dist/css",
     "dist/skin",
     "dist/js",
+    "dist/types",
     "LICENSE",
     "package.json",
     "README.md"
-  ]
+  ],
+  "dependencies": {
+    "tiff.js": "^1.0.0"
+  }
 }
