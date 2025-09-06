@@ -90,8 +90,5 @@
     "LICENSE",
     "package.json",
     "README.md"
-  ],
-  "dependencies": {
-    "tiff.js": "^1.0.0"
-  }
+  ]
 }
