@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: Colormap.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: Colormap.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">/**
+ * Represents a cubic spline interpolation for smooth color transitions.
+ * @private
+ */
+class Spline {
+	/**
+	 * Creates a new Spline instance.
+	 * @param {number[]} xs - X coordinates array
+	 * @param {number[]} ys - Y coordinates array
+	 */
+	constructor(xs, ys) {
+		this.xs = xs;
+		this.ys = ys;
+		this.ks = this.getNaturalKs(new Float64Array(this.xs.length));
+	}
+
+	getNaturalKs(ks) {
+		const n = this.xs.length - 1;
+		const A = Spline.zerosMat(n + 1, n + 2);
+		for (let i = 1; i &lt; n; i++ // rows
+		) {
+			A[i][i - 1] = 1 / (this.xs[i] - this.xs[i - 1]);
+			A[i][i] =
+				2 *
+				(1 / (this.xs[i] - this.xs[i - 1]) + 1 / (this.xs[i + 1] - this.xs[i]));
+			A[i][i + 1] = 1 / (this.xs[i + 1] - this.xs[i]);
+			A[i][n + 1] =
+				3 *
+				((this.ys[i] - this.ys[i - 1]) /
+					((this.xs[i] - this.xs[i - 1]) * (this.xs[i] - this.xs[i - 1])) +
+					(this.ys[i + 1] - this.ys[i]) /
+					((this.xs[i + 1] - this.xs[i]) * (this.xs[i + 1] - this.xs[i])));
+		}
+		A[0][0] = 2 / (this.xs[1] - this.xs[0]);
+		A[0][1] = 1 / (this.xs[1] - this.xs[0]);
+		A[0][n + 1] =
+			(3 * (this.ys[1] - this.ys[0])) /
+			((this.xs[1] - this.xs[0]) * (this.xs[1] - this.xs[0]));
+		A[n][n - 1] = 1 / (this.xs[n] - this.xs[n - 1]);
+		A[n][n] = 2 / (this.xs[n] - this.xs[n - 1]);
+		A[n][n + 1] =
+			(3 * (this.ys[n] - this.ys[n - 1])) /
+			((this.xs[n] - this.xs[n - 1]) * (this.xs[n] - this.xs[n - 1]));
+		return Spline.solve(A, ks);
+	}
+
+	/**
+ * Finds index of the point before the target value using binary search.
+ * Inspired by https://stackoverflow.com/a/40850313/4417327
+ * @param {number} target - Value to search for
+ * @returns {number} Index of the point before target
+ * @private
+ */
+	getIndexBefore(target) {
+		let low = 0;
+		let high = this.xs.length;
+		let mid = 0;
+		while (low &lt; high) {
+			mid = Math.floor((low + high) / 2);
+			if (this.xs[mid] &lt; target &amp;&amp; mid !== low) {
+				low = mid;
+			}
+			else if (this.xs[mid] >= target &amp;&amp; mid !== high) {
+				high = mid;
+			}
+			else {
+				high = low;
+			}
+		}
+		if (low === this.xs.length - 1) {
+			return this.xs.length - 1;
+		}
+		return low + 1;
+	}
+
+	/**
+ * Calculates interpolated value at given point.
+ * @param {number} x - Point to interpolate at
+ * @returns {number} Interpolated value
+ */
+	at(x) {
+		let i = this.getIndexBefore(x);
+		const t = (x - this.xs[i - 1]) / (this.xs[i] - this.xs[i - 1]);
+		const a = this.ks[i - 1] * (this.xs[i] - this.xs[i - 1]) -
+			(this.ys[i] - this.ys[i - 1]);
+		const b = -this.ks[i] * (this.xs[i] - this.xs[i - 1]) +
+			(this.ys[i] - this.ys[i - 1]);
+		const q = (1 - t) * this.ys[i - 1] +
+			t * this.ys[i] +
+			t * (1 - t) * (a * (1 - t) + b * t);
+		return q;
+	}
+
+	// Utilities 
+
+	static solve(A, ks) {
+		const m = A.length;
+		let h = 0;
+		let k = 0;
+		while (h &lt; m &amp;&amp; k &lt;= m) {
+			let i_max = 0;
+			let max = -Infinity;
+			for (let i = h; i &lt; m; i++) {
+				const v = Math.abs(A[i][k]);
+				if (v > max) {
+					i_max = i;
+					max = v;
+				}
+			}
+			if (A[i_max][k] === 0) {
+				k++;
+			}
+			else {
+				Spline.swapRows(A, h, i_max);
+				for (let i = h + 1; i &lt; m; i++) {
+					const f = A[i][k] / A[h][k];
+					A[i][k] = 0;
+					for (let j = k + 1; j &lt;= m; j++)
+						A[i][j] -= A[h][j] * f;
+				}
+				h++;
+				k++;
+			}
+		}
+		for (let i = m - 1; i >= 0; i-- // rows = columns
+		) {
+			var v = 0;
+			if (A[i][i]) {
+				v = A[i][m] / A[i][i];
+			}
+			ks[i] = v;
+			for (let j = i - 1; j >= 0; j-- // rows
+			) {
+				A[j][m] -= A[j][i] * v;
+				A[j][i] = 0;
+			}
+		}
+		return ks;
+	}
+
+	static zerosMat(r, c) {
+		const A = [];
+		for (let i = 0; i &lt; r; i++)
+			A.push(new Float64Array(c));
+		return A;
+	}
+
+	static swapRows(m, k, l) {
+		let p = m[k];
+		m[k] = m[l];
+		m[l] = p;
+	}
+}
+
+
+/**
+ * Represents a color in RGBA format with values normalized between 0 and 1.
+ */
+class Color {
+	/**
+	 * Creates a new Color instance.
+	 * @param {number|string} r - Red component [0.0, 1.0] or color string ('#RGB', '#RGBA', '#RRGGBB', '#RRGGBBAA', 'rgb()', 'rgba()')
+	 * @param {number} [g] - Green component [0.0, 1.0]
+	 * @param {number} [b] - Blue component [0.0, 1.0]
+	 * @param {number} [a] - Alpha component [0.0, 1.0]
+	 * @throws {Error} If string value is not a valid color format
+	 */
+	constructor(r, g = undefined, b = undefined, a = undefined) {
+		if (typeof (r) == 'string') {
+			if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(r)) {
+				let c = r.substring(1).split('');
+				if (c.length == 3) {
+					c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+				}
+				c = '0x' + c.join('') + 'FF';
+				r = Color.normalizedRGBA(c >> 24);
+				g = Color.normalizedRGBA(c >> 16);
+				b = Color.normalizedRGBA(c >> 8);
+				a = Color.normalizedRGBA(c);
+			} else if (/^#([A-Fa-f0-9]{4}){1,2}$/.test(r)) {
+				let c = r.substring(1).split('');
+				c = '0x' + c.join('');
+				r = Color.normalizedRGBA(c >> 24);
+				g = Color.normalizedRGBA(c >> 16);
+				b = Color.normalizedRGBA(c >> 8);
+				a = Color.normalizedRGBA(c);
+			} else if (/^rgb\(/.test(r)) {
+				let c = r.split("(")[1].split(")")[0];
+				c = c.split(',');
+				r = Color.clamp(c[0] / 255);
+				g = Color.clamp(c[1] / 255);
+				b = Color.clamp(c[2] / 255);
+				a = 1.0;
+			} else if (/^rgba\(/.test(r)) {
+				let c = r.split("(")[1].split(")")[0];
+				c = c.split(',');
+				r = Color.clamp(c[0] / 255);
+				g = Color.clamp(c[1] / 255);
+				b = Color.clamp(c[2] / 255);
+				a = Color.clamp(c[3] / 255);
+			} else {
+				throw Error("Value is not a color");
+			}
+		}
+		this.r = r;
+		this.g = g;
+		this.b = b;
+		this.a = a;
+	}
+
+	static clamp = (num, min = 0.0, max = 1.0) => Math.min(Math.max(num, min), max);
+
+	static hex(c) {
+		var hex = c.toString(16).toUpperCase();
+		return hex.length == 1 ? "0" + hex : hex;
+	}
+
+	static normalizedRGBA(c) {
+		return Color.clamp((c &amp; 255) / 255);
+	}
+
+	static rgbToHex(r, g, b) {
+		const rgb = b | (g &lt;&lt; 8) | (r &lt;&lt; 16);
+		return '#' + ((0x1000000 | rgb).toString(16).substring(1)).toUpperCase();
+	}
+
+	static rgbToHexa(r, g, b, a) {
+		return '#' + Color.hex(r) + Color.hex(g) + Color.hex(b) + Color.hex(a);
+	}
+
+	/**
+	 * Gets color components as an array.
+	 * @returns {number[]} Array of [r, g, b, a] values
+	 */
+
+	value() {
+		return [this.r, this.g, this.b, this.a];
+	}
+
+	/**
+	 * Converts color to RGB values [0, 255].
+	 * @returns {number[]} Array of [r, g, b] values
+	 */
+	toRGB() {
+		const rgb = [this.r * 255, this.g * 255, this.b * 255];
+		rgb.forEach((e, idx, arr) => {
+			arr[idx] = Color.clamp(Math.round(e), 0, 255);
+		});
+		return rgb;
+	}
+
+	/**
+	 * Converts color to hexadecimal string.
+	 * @returns {string} Color in '#RRGGBB' format
+	 */
+	toHex() {
+		const rgb = this.toRGB();
+		return Color.rgbToHex(rgb[0], rgb[1], rgb[2]);
+	}
+
+	/**
+	 * Converts color to hexadecimal string with alpha.
+	 * @returns {string} Color in '#RRGGBBAA' format
+	 */
+	toHexa() {
+		const rgba = this.toRGBA();
+		return Color.rgbToHexa(rgba[0], rgba[1], rgba[2], rgba[3]);
+	}
+
+	/**
+	 * Converts color to RGBA values [0-255].
+	 * @returns {number[]} Array of [r, g, b, a] values
+	 */
+	toRGBA() {
+		const rgba = [this.r * 255, this.g * 255, this.b * 255, this.a * 255];
+		rgba.forEach((e, idx, arr) => {
+			arr[idx] = Color.clamp(Math.round(e), 0, 255);
+		});
+		return rgba;
+	}
+}
+
+/**
+ * Creates a colormap for mapping numerical values to colors.
+ * Supports linear, spline, and bar interpolation between colors.
+ */
+class Colormap {
+	/**
+	 * Creates a new Colormap instance.
+	 * @param {Color[]} [colors=[black, white]] - Array of colors to interpolate between
+	 * @param {Object} [options] - Configuration options
+	 * @param {number[]} [options.domain=[0,1]] - Domain range for mapping
+	 * @param {Color} [options.lowColor] - Color for values below domain (defaults to first color)
+	 * @param {Color} [options.highColor] - Color for values above domain (defaults to last color)
+	 * @param {string} [options.description=''] - Description of the colormap
+	 * @param {('linear'|'spline'|'bar')} [options.type='linear'] - Interpolation type
+	 * @throws {Error} If colors/domain format is invalid
+	 */
+	constructor(colors = [new Color(0, 0, 0, 1), new Color(1, 1, 1, 1)], options = '') {
+		options = Object.assign({
+			domain: [0.0, 1.0],
+			lowColor: null,
+			highColor: null,
+			description: '',
+			type: 'linear'
+		}, options);
+		Object.assign(this, options);
+		const nval = colors.length;
+
+		if (!this.lowColor) this.lowColor = colors[0];
+		if (!this.highColor) this.highColor = colors[nval - 1];
+
+		const nd = this.domain.length;
+		if (nval &lt; 2 &amp;&amp; nd != 2 &amp;&amp; this.nval != nd &amp;&amp; this.domain[nd - 1] &lt;= this.domain[0]) {
+			throw Error("Colormap colors/domain bad format");
+		}
+
+		const delta = (this.domain[nd - 1] - this.domain[0]) / (nval - 1);
+		this.xarr = [];
+		this.rarr = [];
+		this.garr = [];
+		this.barr = [];
+		this.aarr = [];
+		for (let i = 0; i &lt; nval; i++) {
+			if (nd == 2)
+				this.xarr.push(this.domain[0] + i * delta);
+			else
+				this.xarr.push(this.domain[i]);
+			this.rarr.push(colors[i].r);
+			this.garr.push(colors[i].g);
+			this.barr.push(colors[i].b);
+			this.aarr.push(colors[i].a);
+		}
+		this.rspline = new Spline(this.xarr, this.rarr);
+		this.gspline = new Spline(this.xarr, this.garr);
+		this.bspline = new Spline(this.xarr, this.barr);
+		this.aspline = new Spline(this.xarr, this.aarr);
+	}
+
+	static clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
+	/**
+	 * Gets the domain range of the colormap.
+	 * @returns {number[]} Array containing [min, max] of domain
+	 */
+	rangeDomain() {
+		return [this.domain[0], this.domain[this.domain.length - 1]];
+	}
+
+	/**
+	 * Gets color for a value using bar interpolation.
+	 * @param {number} x - Value to get color for
+	 * @returns {Color} Corresponding color
+	 * @private
+	 */
+	bar(x) {
+		if (x &lt; this.xarr[0]) return this.lowColor;
+		if (x > this.xarr[this.xarr.length - 1]) return this.highColor;
+		const c = new Color(this.rarr[0], this.garr[0], this.barr[0], this.aarr[0]);
+		for (let i = 0; i &lt; this.xarr.length - 1; i++) {
+			if (x > this.xarr[i] &amp;&amp; x &lt;= this.xarr[i + 1]) {
+				c.r = this.rarr[i];
+				c.g = this.garr[i];
+				c.b = this.barr[i];
+				c.a = this.aarr[i];
+			}
+		}
+		return c;
+	}
+
+	/**
+	 * Gets color for a value using linear interpolation.
+	 * @param {number} x - Value to get color for
+	 * @returns {Color} Corresponding color
+	 * @private
+	 */
+	linear(x) {
+		if (x &lt; this.xarr[0]) return this.lowColor;
+		if (x > this.xarr[this.xarr.length - 1]) return this.highColor;
+		const c = new Color(this.rarr[0], this.garr[0], this.barr[0], this.aarr[0]);
+		for (let i = 0; i &lt; this.xarr.length - 1; i++) {
+			if (x > this.xarr[i] &amp;&amp; x &lt;= this.xarr[i + 1]) {
+				c.r = (this.rarr[i + 1] - this.rarr[i]) * (x - this.xarr[i]) / (this.xarr[i + 1] - this.xarr[i]) + this.rarr[i];
+				c.g = (this.garr[i + 1] - this.garr[i]) * (x - this.xarr[i]) / (this.xarr[i + 1] - this.xarr[i]) + this.garr[i];
+				c.b = (this.barr[i + 1] - this.barr[i]) * (x - this.xarr[i]) / (this.xarr[i + 1] - this.xarr[i]) + this.barr[i];
+				c.a = (this.aarr[i + 1] - this.aarr[i]) * (x - this.xarr[i]) / (this.xarr[i + 1] - this.xarr[i]) + this.aarr[i];
+			}
+		}
+		return c;
+	}
+
+	/**
+	 * Gets color for a value using spline interpolation.
+	 * @param {number} x - Value to get color for
+	 * @returns {Color} Corresponding color
+	 * @private
+	 */
+	spline(x) {
+		if (x &lt; this.xarr[0]) return this.lowColor;
+		if (x > this.xarr[this.xarr.length - 1]) return this.highColor;
+		return new Color(this.rspline.at(x), this.gspline.at(x), this.bspline.at(x), this.aspline.at(x));
+	}
+
+	/**
+	 * Gets color for a value using configured interpolation type.
+	 * @param {number} x - Value to get color for
+	 * @returns {Color} Corresponding color
+	 * @throws {Error} If interpolation type is invalid
+	 */
+	at(x) {
+		let result = null;
+		switch (this.type) {
+			case 'linear':
+				result = this.linear(x);
+				break;
+			case 'spline':
+				result = this.spline(x);
+				break;
+			case 'bar':
+				result = this.bar(x);
+				break;
+			default:
+				throw Error("Interpolant type not exist");
+				break;
+		}
+		return result;
+	}
+
+	/**
+	 * Samples the colormap into a buffer.
+	 * @param {number} maxSteps - Number of samples to generate
+	 * @returns {{min: number, max: number, buffer: Uint8Array}} Sample data and buffer
+	 */
+	sample(maxSteps) {
+		let min = this.xarr[0];
+		let max = this.xarr[this.xarr.length - 1];
+		//if (this.domain.length == 2) maxSteps = this.xarr.length;
+		let buffer = new Uint8Array(maxSteps * 4);
+		let delta = (max - min) / maxSteps;
+		for (let i = 0; i &lt; maxSteps; i++) {
+			let c = this.at(min + i * delta).toRGBA();
+			buffer[i * 4 + 0] = c[0];
+			buffer[i * 4 + 1] = c[1];
+			buffer[i * 4 + 2] = c[2];
+			buffer[i * 4 + 3] = c[3];
+		}
+		return { min, max, buffer };
+	}
+}
+
+/**
+ * Creates a visual legend for a colormap.
+ */
+class ColormapLegend {
+	/**
+	 * Creates a new ColormapLegend instance.
+	 * @param {Object} viewer - Viewer instance to attach legend to
+	 * @param {Colormap} colorscale - Colormap to create legend for
+	 * @param {Object} [options] - Configuration options
+	 * @param {number} [options.nticks=6] - Number of ticks/divisions in legend
+	 * @param {number} [options.legendWidth=25] - Width of legend as percentage
+	 * @param {string} [options.textColor='#fff'] - Color of text labels
+	 * @param {string} [options.class='openlime-legend'] - CSS class for legend container
+	 */
+	constructor(viewer, colorscale, options) {
+		options = Object.assign({
+			nticks: 6,
+			legendWidth: 25,
+			textColor: '#fff',
+			class: 'openlime-legend'
+		}, options);
+		Object.assign(this, options);
+		this.viewer = viewer;
+		this.colorscale = colorscale;
+
+		this.container = document.querySelector(`.${this.class}`);
+		if (!this.container) {
+			this.container = document.createElement('div');
+			this.container.classList.add(this.class);
+		}
+
+		this.scale = document.createElement('div');
+		this.scale.style = `display: flex; border-radius: 20px; height: 22px; color: ${this.textColor}; 
+		font-weight: bold; overflow: hidden; margin: 0px 2px 4px 0px; background-color: #7c7c7c; 
+		font-family: Arial,Helvetica,sans-serif; font-size:12px;
+		border: 1px solid #000;`;
+		this.container.appendChild(this.scale);
+		this.viewer.containerElement.appendChild(this.container);
+
+		const domain = colorscale.rangeDomain();
+		const legend = document.createElement('div');
+		legend.style = `display: flex; align-items: center; justify-content: center; 
+		background: ${colorscale.linear(domain[0]).toHex()}; width: ${this.legendWidth}%; margin: 0`;
+		legend.textContent = colorscale.description;
+		this.scale.appendChild(legend);
+
+		if (this.colorscale.type == 'linear') this.legendLinear();
+		if (this.colorscale.type == 'bar') this.legendBar();
+	}
+
+	/**
+	 * Creates legend for linear interpolation.
+	 * @private
+	 */
+	legendLinear() {
+		const domain = this.colorscale.rangeDomain();
+		const delta = (domain[1] - domain[0]) / this.nticks;
+		const deltaWidth = (100 - this.legendWidth) / this.nticks;
+		let vl = domain[0];
+		for (let i = 0; i &lt; this.nticks; i++) {
+			let v = domain[0] + delta * i;
+			let vr = i &lt; (this.nticks - 1) ? domain[0] + delta * (i + 0.5) : v;
+			const c = this.colorscale.at(v);
+			const cl = this.colorscale.at(vl);
+			const cr = this.colorscale.at(vr);
+			const value = document.createElement('div');
+			const bkg = `background: linear-gradient(to right, ${cl.toHex()}, ${c.toHex()}, ${cr.toHex()})`
+			value.style = `display: flex; align-items: center; justify-content: center; 
+			${bkg};	width: ${deltaWidth}%; margin: 0`;
+			value.textContent = v.toFixed(1);
+			this.scale.appendChild(value);
+			vl = vr;
+		}
+	}
+
+	/**
+	 * Creates legend for bar interpolation.
+	 * @private
+	 */
+	legendBar() {
+		const deltaWidth = (100 - this.legendWidth) / this.colorscale.domain.length;
+		for (let i = 0; i &lt; this.colorscale.xarr.length; i++) {
+			const c = new Color(this.colorscale.rarr[i], this.colorscale.garr[i], this.colorscale.barr[i], this.colorscale.aarr[i]);
+			const v = this.colorscale.xarr[i];
+			const value = document.createElement('div');
+			const bkg = `background: ${c.toHex()}`;
+			value.style = `display: flex; align-items: center; justify-content: center; 
+			${bkg};	width: ${deltaWidth}%; margin: 0`;
+			value.textContent = v.toFixed(1);
+			this.scale.appendChild(value);
+		}
+	}
+
+}
+
+export { Color, Colormap, ColormapLegend }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

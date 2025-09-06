@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: ShaderBRDF.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: ShaderBRDF.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Shader } from './Shader.js'
+
+/**
+ * A shader class implementing various BRDF (Bidirectional Reflectance Distribution Function) rendering modes.
+ * Extends the base Shader class to provide specialized material rendering capabilities.
+ * 
+ * Shader Features:
+ * - Implements the Ward BRDF model for physically-based rendering
+ * - Supports both directional and spot lights
+ * - Handles normal mapping for more detailed surface rendering
+ * - Supports different color spaces (linear and sRGB) for input textures
+ * - Multiple visualization modes for material analysis (diffuse, specular, normals, monochrome, etc.)
+ * - Configurable surface roughness range for varying material appearance
+ * - Ambient light contribution to simulate indirect light
+ * 
+ * Required Textures:
+ * - uTexKd: Diffuse color texture (optional)
+ * - uTexKs: Specular color texture (optional)
+ * - uTexNormals: Normal map for surface detail
+ * - uTexGloss: Glossiness map (optional)
+ * 
+ * @example
+ * // Create a basic BRDF shader with default settings
+ * const shader = new ShaderBRDF({});
+ * 
+ * @example
+ * // Create a BRDF shader with custom settings
+ * const shader = new ShaderBRDF({
+ *   mode: 'color',
+ *   colorspaces: { kd: 'sRGB', ks: 'linear' },
+ *   brightness: 1.2,
+ *   gamma: 2.2,
+ *   alphaLimits: [0.05, 0.4],
+ *   kAmbient: 0.03
+ * });
+ * 
+ * @extends Shader
+ */
+class ShaderBRDF extends Shader {
+	/**
+	 * Creates a new ShaderBRDF instance.
+	 * @param {Object} [options={}] - Configuration options for the shader.
+	 * @param {string} [options.mode='color'] - Rendering mode to use:
+	 *   - 'color': Full BRDF rendering using Ward model with ambient light
+	 *   - 'diffuse': Shows only diffuse component (kd)
+	 *   - 'specular': Shows only specular component (ks * spec * NdotL)
+	 *   - 'normals': Visualizes surface normals
+	 *   - 'monochrome': Renders using a single material color with diffuse lighting
+	 * @param {Object} [options.colorspaces] - Color space configurations.
+	 * @param {string} [options.colorspaces.kd='sRGB'] - Color space for diffuse texture ('linear' or 'sRGB').
+	 * @param {string} [options.colorspaces.ks='linear'] - Color space for specular texture ('linear' or 'sRGB').
+	 * @param {number} [options.brightness=1.0] - Overall brightness multiplier.
+	 * @param {number} [options.gamma=2.2] - Gamma correction value.
+	 * @param {number[]} [options.alphaLimits=[0.01, 0.5]] - Range for surface roughness [min, max].
+	 * @param {number[]} [options.monochromeMaterial=[0.80, 0.79, 0.75]] - RGB color for monochrome mode.
+	 * @param {number} [options.kAmbient=0.02] - Ambient light coefficient.
+	 * 
+	 */
+	constructor(options) {
+		super(options);
+		this.modes = ['color', 'diffuse', 'specular', 'normals', 'monochrome'];
+		this.mode = 'color';
+
+		Object.assign(this, options);
+
+		const kdCS = this.colorspaces['kd'] == 'linear' ? 0 : 1;
+		const ksCS = this.colorspaces['ks'] == 'linear' ? 0 : 1;
+
+		const brightness = options.brightness ? options.brightness : 1.0;
+		const gamma = options.gamma ? options.gamma : 2.2;
+		const alphaLimits = options.alphaLimits ? options.alphaLimits : [0.01, 0.5];
+		const monochromeMaterial = options.monochromeMaterial ? options.monochromeMaterial : [0.80, 0.79, 0.75];
+		const kAmbient = options.kAmbient ? options.kAmbient : 0.02;
+
+		this.uniforms = {
+			uLightInfo: { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
+			uAlphaLimits: { type: 'vec2', needsUpdate: true, size: 2, value: alphaLimits },
+			uBrightnessGamma: { type: 'vec2', needsUpdate: true, size: 2, value: [brightness, gamma] },
+			uInputColorSpaceKd: { type: 'int', needsUpdate: true, size: 1, value: kdCS },
+			uInputColorSpaceKs: { type: 'int', needsUpdate: true, size: 1, value: ksCS },
+			uMonochromeMaterial: { type: 'vec3', needsUpdate: true, size: 3, value: monochromeMaterial },
+			uKAmbient: { type: 'float', needsUpdate: true, size: 1, value: kAmbient },
+
+		}
+
+		this.innerCode = '';
+		this.setMode(this.mode);
+	}
+
+	/**
+	 * Sets the light properties for the shader.
+	 * 
+	 * @param {number[]} light - 4D vector containing light information
+	 * @param {number} light[0] - X coordinate of light position/direction
+	 * @param {number} light[1] - Y coordinate of light position/direction
+	 * @param {number} light[2] - Z coordinate of light position/direction
+	 * @param {number} light[3] - Light type flag (0 for directional, 1 for spot)
+	 */
+	setLight(light) {
+		// Light with 4 components (Spot: 4th==1, Dir: 4th==0)
+		this.setUniform('uLightInfo', light);
+	}
+
+
+	/**
+	 * Sets the rendering mode for the shader.
+	 * 
+	 * @param {string} mode - The rendering mode to use
+	 * @throws {Error} If an invalid mode is specified
+	 */
+	setMode(mode) {
+		this.mode = mode;
+		switch (mode) {
+			case 'color':
+				this.innerCode =
+					`vec3 linearColor = (kd + ks * spec) * NdotL;
+				linearColor += kd * uKAmbient; // HACK! adding just a bit of ambient`
+				break;
+			case 'diffuse':
+				this.innerCode =
+					`vec3 linearColor = kd;`
+				break;
+			case 'specular':
+				this.innerCode =
+					`vec3 linearColor = clamp((ks * spec) * NdotL, 0.0, 1.0);`
+				break;
+			case 'normals':
+				this.innerCode =
+					`vec3 linearColor = (N+vec3(1.))/2.;
+				applyGamma = false;`
+				break;
+			case 'monochrome':
+				this.innerCode = 'vec3 linearColor = kd * NdotL + kd * uKAmbient;'
+				break;
+			default:
+				console.log("ShaderBRDF: Unknown mode: " + mode);
+				throw Error("ShaderBRDF: Unknown mode: " + mode);
+				break;
+		}
+		this.needsUpdate = true;
+	}
+
+	/**
+	 * Generates the fragment shader source code based on current configuration.
+	 * 
+	 * @param {WebGLRenderingContext|WebGL2RenderingContext} gl - The WebGL context
+	 * @returns {string} The complete fragment shader source code
+	 * @private
+	 */
+	fragShaderSrc(gl) {
+		let hasKd = this.samplers.findIndex(s => s.name == 'uTexKd') != -1 &amp;&amp; this.mode != 'monochrome';
+		let hasGloss = this.samplers.findIndex(s => s.name == 'uTexGloss') != -1 &amp;&amp; this.mode != 'monochrome';
+		let hasKs = this.samplers.findIndex(s => s.name == 'uTexKs') != -1;
+		let str = `
+
+#define NULL_NORMAL vec3(0,0,0)
+#define SQR(x) ((x)*(x))
+#define PI (3.14159265359)
+#define ISO_WARD_EXPONENT (4.0)
+
+in vec2 v_texcoord;
+
+uniform vec4 uLightInfo; // [x,y,z,w] (if .w==0 => Directional, if w==1 => Spot)
+uniform vec2 uAlphaLimits;
+uniform vec2 uBrightnessGamma;
+uniform vec3 uMonochromeMaterial;
+uniform float uKAmbient;
+
+uniform int uInputColorSpaceKd; // 0: Linear; 1: sRGB
+uniform int uInputColorSpaceKs; // 0: Linear; 1: sRGB
+
+vec3 getNormal(const in vec2 texCoord) {
+	vec3 n = texture(uTexNormals, texCoord).xyz;
+	n = 2. * n - vec3(1.);
+	float norm = length(n);
+	if(norm &lt; 0.5) return NULL_NORMAL;
+	else return n/norm;
+}
+
+vec3 linear2sRGB(vec3 linearRGB) {
+    bvec3 cutoff = lessThan(linearRGB, vec3(0.0031308));
+    vec3 higher = vec3(1.055)*pow(linearRGB, vec3(1.0/2.4)) - vec3(0.055);
+    vec3 lower = linearRGB * vec3(12.92);
+    return mix(higher, lower, cutoff);
+}
+
+vec3 sRGB2Linear(vec3 sRGB) {
+    bvec3 cutoff = lessThan(sRGB, vec3(0.04045));
+    vec3 higher = pow((sRGB + vec3(0.055))/vec3(1.055), vec3(2.4));
+    vec3 lower = sRGB/vec3(12.92);
+    return mix(higher, lower, cutoff);
+}
+
+float ward(in vec3 V, in vec3 L, in vec3 N, in vec3 X, in vec3 Y, in float alpha) {
+
+	vec3 H = normalize(V + L);
+
+	float H_dot_N = dot(H, N);
+	float sqr_alpha_H_dot_N = SQR(alpha * H_dot_N);
+
+	if(sqr_alpha_H_dot_N &lt; 0.00001) return 0.0;
+
+	float L_dot_N_mult_N_dot_V = dot(L,N) * dot(N,V);
+	if(L_dot_N_mult_N_dot_V &lt;= 0.0) return 0.0;
+
+	float spec = 1.0 / (4.0 * PI * alpha * alpha * sqrt(L_dot_N_mult_N_dot_V));
+	
+	//float exponent = -(SQR(dot(H,X)) + SQR(dot(H,Y))) / sqr_alpha_H_dot_N; // Anisotropic
+	float exponent = -SQR(tan(acos(H_dot_N))) / SQR(alpha); // Isotropic
+	
+	spec *= exp( exponent );
+
+	return spec;
+}
+
+
+vec4 data() {
+	vec3 N = getNormal(v_texcoord);
+	if(N == NULL_NORMAL) {
+		return vec4(0.0);
+	}
+
+	vec3 L = (uLightInfo.w == 0.0) ? normalize(uLightInfo.xyz) : normalize(uLightInfo.xyz - gl_FragCoord.xyz);
+	vec3 V = vec3(0.0,0.0,1.0);
+    vec3 H = normalize(L + V);
+	float NdotL = max(dot(N,L),0.0);
+
+	vec3 kd = ${hasKd ? 'texture(uTexKd, v_texcoord).xyz' : 'uMonochromeMaterial'};
+	vec3 ks = ${hasKs ? 'texture(uTexKs, v_texcoord).xyz' : 'vec3(0.0, 0.0, 0.0)'};
+	if(uInputColorSpaceKd == 1) {
+		kd = sRGB2Linear(kd);
+	}
+	if(uInputColorSpaceKs == 1) {
+		ks = sRGB2Linear(ks);
+	}
+	kd /= PI;
+
+	float gloss = ${hasGloss ? 'texture(uTexGloss, v_texcoord).x' : '0.0'};
+	float minGloss = 1.0 - pow(uAlphaLimits[1], 1.0 / ISO_WARD_EXPONENT);
+	float maxGloss = 1.0 - pow(uAlphaLimits[0], 1.0 / ISO_WARD_EXPONENT);
+
+	float alpha = pow(1.0 - gloss * (maxGloss - minGloss) - minGloss, ISO_WARD_EXPONENT);
+	
+	
+	vec3 e = vec3(0.0,0.0,1.0);
+	vec3 T = normalize(cross(N,e));
+	vec3 B = normalize(cross(N,T));
+	float spec = ward(V, L, N, T, B, alpha);
+	
+	bool applyGamma = false;
+
+	${this.innerCode}
+
+	vec3 finalColor = applyGamma ? pow(linearColor * uBrightnessGamma[0], vec3(1.0/uBrightnessGamma[1])) : linearColor;
+
+	return vec4(finalColor, 1.0);
+}
+`;
+		return str;
+	}
+
+}
+
+export { ShaderBRDF }
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

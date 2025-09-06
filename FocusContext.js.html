@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: FocusContext.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: FocusContext.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Transform } from "./Transform";
+import { CoordinateSystem } from "./CoordinateSystem";
+
+/**
+ * @typedef {Object} Viewport
+ * @property {number} x - Viewport x position
+ * @property {number} y - Viewport y position
+ * @property {number} dx - Viewport horizontal offset
+ * @property {number} dy - Viewport vertical offset
+ * @property {number} w - Viewport width
+ * @property {number} h - Viewport height
+ */
+
+/**
+ * @typedef {Object} Focus
+ * @property {Object} position - Lens center position in dataset coordinates
+ * @property {number} position.x - X coordinate
+ * @property {number} position.y - Y coordinate
+ * @property {number} radius - Lens radius in dataset units
+ */
+
+/**
+ * FocusContext manages the focus+context visualization technique for lens-based interaction.
+ * It handles the distribution of user interactions between lens movement (focus) and camera
+ * movement (context) to maintain optimal viewing conditions.
+ * 
+ * Key responsibilities:
+ * - Maintains proper spacing between lens and viewport boundaries
+ * - Distributes pan and zoom operations between lens and camera
+ * - Ensures lens stays within valid viewport bounds
+ * - Adapts camera transform to accommodate lens position
+ * - Manages lens radius constraints
+ */
+class FocusContext {
+    /**
+     * Distributes a pan operation between lens movement and camera transform to maintain focus+context
+     * @param {Viewport} viewport - The current viewport
+     * @param {Focus} focus - The lens object to be updated
+     * @param {Transform} context - The camera transform to be updated
+     * @param {Object} delta - Pan amount in dataset pixels
+     * @param {number} delta.x - Horizontal pan amount
+     * @param {number} delta.y - Vertical pan amount
+     * @param {Object} imageSize - Dataset dimensions
+     * @param {number} imageSize.w - Dataset width
+     * @param {number} imageSize.h - Dataset height
+     */
+
+    static pan(viewport, focus, context, delta, imageSize) {
+        let txy = this.getAmountOfFocusContext(viewport, focus, context, delta);
+
+        // When t is 1: already in focus&amp;context, move only the lens.
+        // When t is 0.5: border situation, move both focus &amp; context to keep the lens steady on screen.
+        // In this case the context should be moved of deltaFocus*scale to achieve steadyness.
+        // Thus interpolate deltaContext between 0 and deltaFocus*s (with t ranging from 1 to 0.5)
+        const deltaFocus = { x: delta.x * txy.x, y: delta.y * txy.y };
+        const deltaContext = {
+            x: -deltaFocus.x * context.z * 2 * (1 - txy.x),
+            y: -deltaFocus.y * context.z * 2 * (1 - txy.y)
+        };
+        context.x += deltaContext.x;
+        context.y += deltaContext.y;
+
+        focus.position.x += deltaFocus.x;
+        focus.position.y += deltaFocus.y;
+
+        // Clamp lens position on dataset boundaries
+        if (Math.abs(focus.position.x) > imageSize.w / 2) {
+            focus.position.x = imageSize.w / 2 * Math.sign(focus.position.x);
+        }
+
+        if (Math.abs(focus.position.y) > imageSize.h / 2) {
+            focus.position.y = imageSize.h / 2 * Math.sign(focus.position.y);
+        }
+    }
+
+    /**
+     * Distributes a scale operation between lens radius and camera zoom to maintain focus+context
+     * @param {Camera} camera - The camera object containing viewport and zoom constraints
+     * @param {Focus} focus - The lens object to be updated
+     * @param {Transform} context - The camera transform to be updated
+     * @param {number} dz - Scale factor to be applied (multiplier)
+     */
+    static scale(camera, focus, context, dz) {
+        const viewport = camera.viewport;
+        const radiusRange = this.getRadiusRangeCanvas(viewport);
+
+        const r = focus.radius * context.z;
+
+        // Distribute lens scale between radius scale and context scale
+        // When radius is going outside radius boundary, scale of the inverse amounts radius and zoom scale | screen size constant
+        // When radius is changing from boundary condition to a valid one change only radius  and no change to zoom scale.
+        // From 0.5 to boundary condition, zoomScale vary is interpolated between 1 and 1/dz.
+
+        const t = Math.max(0, Math.min(1, (r - radiusRange.min) / (radiusRange.max - radiusRange.min)));
+        let zoomScaleAmount = 1;
+        if (dz > 1 &amp;&amp; t > 0.5) {
+            const t1 = (t - 0.5) * 2;
+            zoomScaleAmount = 1 * (1 - t1) + t1 / dz;
+        } else if (dz &lt; 1 &amp;&amp; t &lt; 0.5) {
+            const t1 = 2 * t;
+            zoomScaleAmount = (1 - t1) / dz + t1 * 1;
+        }
+        let radiusScaleAmount = dz;
+        const newR = r * radiusScaleAmount;
+
+        // Clamp radius
+        if (newR &lt; radiusRange.min) {
+            radiusScaleAmount = radiusRange.min / r;
+        } else if (newR > radiusRange.max) {
+            radiusScaleAmount = radiusRange.max / r;
+        }
+        // Clamp scale
+        if (context.z * zoomScaleAmount &lt; camera.minZoom) {
+            zoomScaleAmount = camera.minZoom / context.z;
+        } else if (context.z * zoomScaleAmount > camera.maxZoom) {
+            zoomScaleAmount = camera.maxZoom / context.z;
+        }
+
+        // Scale around lens center
+        context.x += focus.position.x * context.z * (1 - zoomScaleAmount);
+        context.y += focus.position.y * context.z * (1 - zoomScaleAmount);
+        context.z = context.z * zoomScaleAmount;
+        focus.radius *= radiusScaleAmount;
+    }
+
+    /**
+     * Adjusts the camera transform to ensure focus+context conditions are met for a given lens
+     * @param {Viewport} viewport - The current viewport
+     * @param {Focus} focus - The lens object
+     * @param {Transform} context - The camera transform to be updated
+     * @param {number} desiredScale - Target scale for the camera transform
+     */
+    static adaptContext(viewport, focus, context, desiredScale) {
+        // Get current projected annotation center position
+        //const pOld = context.sceneToViewportCoords(viewport, focus.position);
+        const useGL = true;
+        const pOld = CoordinateSystem.fromSceneToViewportNoCamera(focus.position, context, viewport, useGL);
+        context.z = desiredScale;
+
+        FocusContext.adaptContextScale(viewport, focus, context);
+
+        // After scale, restore projected annotation position, in order to avoid
+        // moving the annotation center outside the boundaries
+        //const pNew = context.sceneToViewportCoords(viewport, focus.position);
+        const pNew = CoordinateSystem.fromSceneToViewportNoCamera(focus.position, context, viewport, useGL);
+
+        const delta = [pNew.x - pOld.x, pNew.y - pOld.y];
+        context.x -= delta.x;
+        context.y += delta.y;
+
+        // Force annotation inside the viewport
+        FocusContext.adaptContextPosition(viewport, focus, context);
+    }
+
+    /**
+     * Adjusts camera scale to ensure projected lens fits within viewport bounds
+     * @param {Viewport} viewport - The current viewport
+     * @param {Focus} focus - The lens object
+     * @param {Transform} context - The camera transform to be updated
+     * @private
+     */
+    static adaptContextScale(viewport, focus, context) {
+        const oldZ = context.z;
+        const radiusRange = this.getRadiusRangeCanvas(viewport);
+        const focusRadiusCanvas = focus.radius * context.z;
+        let zoomScaleAmount = 1;
+        if (focusRadiusCanvas &lt; radiusRange.min) {
+            context.z = radiusRange.min / focus.radius;
+            // zoomScaleAmount = (radiusRange.min / focus.radius) / context.z;
+        } else if (focusRadiusCanvas > radiusRange.max) {
+            context.z = radiusRange.max / focus.radius;
+            // zoomScaleAmount = (radiusRange.max / focus.radius) / context.z;
+        }
+    }
+
+    /**
+     * Adjusts camera position to maintain proper focus+context conditions
+     * @param {Viewport} viewport - The current viewport
+     * @param {Focus} focus - The lens object
+     * @param {Transform} context - The camera transform to be updated
+     * @private
+     */
+    static adaptContextPosition(viewport, focus, context) {
+        const delta = this.getCanvasBorder(focus, context);
+        let box = this.getShrinkedBox(viewport, delta);
+        const useGL = true;
+        const screenP = CoordinateSystem.fromSceneToViewportNoCamera(focus.position, context, viewport, useGL);
+
+        const deltaMinX = Math.max(0, (box.xLow - screenP.x));
+        const deltaMaxX = Math.min(0, (box.xHigh - screenP.x));
+        context.x += deltaMinX != 0 ? deltaMinX : deltaMaxX;
+
+        const deltaMinY = Math.max(0, (box.yLow - screenP.y));
+        const deltaMaxY = Math.min(0, (box.yHigh - screenP.y));
+        context.y += deltaMinY != 0 ? deltaMinY : deltaMaxY;
+    }
+
+    /**
+     * Calculates focus+context distribution factors for pan operations
+     * @param {Viewport} viewport - The current viewport
+     * @param {Focus} focus - The lens object
+     * @param {Transform} context - The current camera transform
+     * @param {Object} panDir - Pan direction vector
+     * @param {number} panDir.x - Horizontal direction (-1 to 1)
+     * @param {number} panDir.y - Vertical direction (-1 to 1)
+     * @returns {Object} Distribution factors for x and y directions (0.5 to 1)
+     * @private
+     */
+    static getAmountOfFocusContext(viewport, focus, context, panDir) {
+        // Returns a value t which is used to distribute pan between focus and context. 
+        // Return a value among 0.5 and 1. 1 is full focus and context,
+        // 0.5 is borderline focus and context. 
+        const delta = this.getCanvasBorder(focus, context);
+        const box = this.getShrinkedBox(viewport, delta);
+        //  const p = context.sceneToViewportCoords(viewport, focus.position); 
+        const useGL = true;
+        const p = CoordinateSystem.fromSceneToViewportNoCamera(focus.position, context, viewport, useGL);
+
+
+        const halfCanvasW = viewport.w / 2 - delta;
+        const halfCanvasH = viewport.h / 2 - delta;
+
+        let xDistance = (panDir.x > 0 ?
+            Math.max(0, Math.min(halfCanvasW, box.xHigh - p.x)) / (halfCanvasW) :
+            Math.max(0, Math.min(halfCanvasW, p.x - box.xLow)) / (    /**
+                * Distributes a pan operation between lens movement and camera transform to maintain focus+context
+                * @param {Viewport} viewport - The current viewport
+                * @param {Focus} focus - The lens object to be updated
+                * @param {Transform} context - The camera transform to be updated
+                * @param {Object} delta - Pan amount in dataset pixels
+                * @param {number} delta.x - Horizontal pan amount
+                * @param {number} delta.y - Vertical pan amount
+                * @param {Object} imageSize - Dataset dimensions
+                * @param {number} imageSize.w - Dataset width
+                * @param {number} imageSize.h - Dataset height
+                */halfCanvasW));
+        xDistance = this.smoothstep(xDistance, 0, 0.75);
+
+        let yDistance = (panDir.y > 0 ?
+            Math.max(0, Math.min(halfCanvasH, box.yHigh - p.y)) / (halfCanvasH) :
+            Math.max(0, Math.min(halfCanvasH, p.y - box.yLow)) / (halfCanvasH));
+        yDistance = this.smoothstep(yDistance, 0, 0.75);
+
+        // Use d/2+05, because when d = 0.5 camera movement = lens movement 
+        // with the effect of the lens not moving from its canvas position.
+        const txy = { x: xDistance / 2 + 0.5, y: yDistance / 2 + 0.5 };
+        return txy;
+    }
+
+    /**
+     * Calculates minimum required distance between lens center and viewport boundary
+     * @param {Focus} focus - The lens object
+     * @param {Transform} context - The camera transform
+     * @returns {number} Minimum distance in canvas pixels
+     * @private
+     */
+    static getCanvasBorder(focus, context) {
+        // Return the min distance in canvas pixel of the lens center from the boundary.
+        const radiusFactorFromBoundary = 1.5;
+        return context.z * focus.radius * radiusFactorFromBoundary; // Distance Lens Center Canvas Border
+    }
+
+    /**
+     * Creates a viewport box shrunk by specified padding
+     * @param {Viewport} viewport - The current viewport
+     * @param {number} delta - Padding amount in pixels
+     * @returns {Object} Box with xLow, yLow, xHigh, yHigh coordinates
+     * @private
+     */
+    static getShrinkedBox(viewport, delta) {
+        // Return the viewport box in canvas pixels, shrinked of delta pixels on the min,max corners
+        const box = {
+            xLow: delta,
+            yLow: delta,
+            xHigh: viewport.w - delta,
+            yHigh: viewport.h - delta
+        };
+        return box;
+    }
+
+    /**
+     * Calculates acceptable lens radius range for current viewport
+     * @param {Viewport} viewport - The current viewport
+     * @returns {Object} Range object with min and max radius values in pixels
+     * @private
+     */
+    static getRadiusRangeCanvas(viewport) {
+        //  Returns the acceptable lens radius range in pixel for a certain viewport
+        const maxMinRadiusRatio = 3;
+        const minRadius = Math.min(viewport.w, viewport.h) * 0.1;
+        const maxRadius = minRadius * maxMinRadiusRatio;
+        return { min: minRadius, max: maxRadius };
+    }
+
+    /**
+     * Implements smoothstep interpolation between two values
+     * @param {number} x - Input value
+     * @param {number} x0 - Lower bound
+     * @param {number} x1 - Upper bound
+     * @returns {number} Smoothly interpolated value between 0 and 1
+     * @private
+     */
+    static smoothstep(x, x0, x1) {
+        // Return the smoothstep interpolation at x, between x0 and x1. 
+        if (x &lt; x0) {
+            return 0;
+        } else if (x > x1) {
+            return 1;
+        } else {
+            const t = (x - x0) / (x1 - x0);
+            return t * t * (-2 * t + 3);
+        }
+    }
+
+}
+
+export { FocusContext }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

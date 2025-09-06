@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: LayerLens.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: LayerLens.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { CoordinateSystem } from './CoordinateSystem.js';
+import { Layer } from './Layer.js'
+import { LayerCombiner } from './LayerCombiner.js'
+import { ShaderLens } from './ShaderLens.js'
+
+/**
+ * @typedef {Object} LayerLensOptions
+ * @property {boolean} [overlay=true] - Whether the lens renders as an overlay
+ * @property {number} [radius=100] - Initial lens radius in pixels
+ * @property {number[]} [borderColor=[0.078, 0.078, 0.078, 1]] - RGBA border color
+ * @property {number} [borderWidth=12] - Border width in pixels
+ * @property {boolean} [borderEnable=false] - Whether to show lens border
+ * @property {Object} [dashboard=null] - Dashboard UI component for lens control
+ * @property {Camera} camera - Camera instance (required)
+ * @extends LayerCombinerOptions
+ */
+
+/**
+ * LayerLens implements a magnifying lens effect that can display content from one or two layers.
+ * It provides an interactive lens that can be moved and resized, showing different layer content
+ * inside and outside the lens area.
+ * 
+ * Features:
+ * - Interactive lens positioning and sizing
+ * - Support for base and overlay layers
+ * - Animated transitions
+ * - Customizable border appearance
+ * - Dashboard UI integration
+ * - Optimized viewport rendering
+ * 
+ * Technical Details:
+ * - Uses framebuffer composition for layer blending
+ * - Implements viewport optimization for performance
+ * - Handles coordinate transformations between systems
+ * - Supports animated parameter changes
+ * - Manages WebGL resources efficiently
+ * 
+ * @extends LayerCombiner
+ * 
+ * @example
+ * ```javascript
+ * // Create lens with base layer
+ * const lens = new OpenLIME.LayerLens({
+ *   camera: viewer.camera,
+ *   radius: 150,
+ *   borderEnable: true,
+ *   borderColor: [0, 0, 0, 1]
+ * });
+ * 
+ * // Set layers
+ * lens.setBaseLayer(baseLayer);
+ * lens.setOverlayLayer(overlayLayer);
+ * 
+ * // Animate lens position
+ * lens.setCenter(500, 500, 1000, 'ease-out');
+ * 
+ * // Add to viewer
+ * viewer.addLayer('lens', lens);
+ * ```
+ */
+class LayerLens extends LayerCombiner {
+	/**
+	 * Creates a new LayerLens instance
+	 * @param {LayerLensOptions} options - Configuration options
+	 * @throws {Error} If camera is not provided
+	 */
+	constructor(options) {
+		options = Object.assign({
+			overlay: true,
+			radius: 100,
+			borderColor: [0.078, 0.078, 0.078, 1],
+			borderWidth: 12,
+			borderEnable: false,
+			dashboard: null,
+			isLinear: true,
+		}, options);
+		super(options);
+
+		if (!this.camera) {
+			console.log("Missing camera");
+			throw "Missing Camera"
+		}
+
+		// Shader lens currently handles up to 2 layers
+		let shader = new ShaderLens();
+		if (this.layers.length == 2) shader.setOverlayLayerEnabled(true); //FIXME Is it a mode? Control?
+		this.shaders['lens'] = shader;
+		this.setShader('lens');
+
+		this.addControl('center', [0, 0]);
+		this.addControl('radius', [this.radius, 0]);
+		this.addControl('borderColor', this.borderColor);
+		this.addControl('borderWidth', [this.borderWidth]);
+
+		this.oldRadius = -9999;
+		this.oldCenter = [-9999, -9999];
+
+		this.useGL = true;
+
+		if (this.dashboard) this.dashboard.lensLayer = this;
+	}
+
+	/**
+	 * Sets layer visibility and updates dashboard if present
+	 * @param {boolean} visible - Whether layer should be visible
+	 * @override
+	 */
+	setVisible(visible) {
+		if (this.dashboard) {
+			if (visible) {
+				this.dashboard.container.style.display = 'block';
+			} else {
+				this.dashboard.container.style.display = 'none';
+			}
+		}
+		super.setVisible(visible);
+	}
+
+	/**
+	 * Removes the overlay layer, returning to single layer mode
+	 */
+	removeOverlayLayer() {
+		this.layers.length = 1;
+		this.shader.setOverlayLayerEnabled(false);
+	}
+
+	/**
+	 * Sets the base layer (shown inside lens)
+	 * @param {Layer} layer - Base layer instance
+	 * @fires Layer#update
+	 */
+	setBaseLayer(l) {
+		if (!l) {
+			console.warn("Attempting to set null base layer");
+			return;
+		}
+		this.layers[0] = l;
+		this.emit('update');
+	}
+
+	/**
+	 * Sets the overlay layer (shown outside lens)
+	 * @param {Layer} layer - Overlay layer instance
+	 */
+	setOverlayLayer(l) {
+		if (!l) {
+			console.warn("Attempting to set null overlay layer");
+			return;
+		}
+		this.layers[1] = l;
+		this.layers[1].setVisible(true);
+		this.shader.setOverlayLayerEnabled(true);
+
+		this.regenerateFrameBuffers();
+	}
+
+	/**
+	 * Sets the overlay layer (shown inside lens)
+	 * @param {Layer} layer - Overlay layer instance
+	 */
+	regenerateFrameBuffers() {
+		// Regenerate frame buffers
+		const w = this.layout.width;
+		const h = this.layout.height;
+		this.deleteFramebuffers();
+		this.layout.width = w;
+		this.layout.height = h;
+		this.createFramebuffers();
+	}
+
+	/**
+	 * Sets lens radius with optional animation
+	 * @param {number} radius - New radius in pixels
+	 * @param {number} [delayms=100] - Animation duration
+	 * @param {string} [easing='linear'] - Animation easing function
+	 */
+	setRadius(r, delayms = 100, easing = 'linear') {
+		this.setControl('radius', [r, 0], delayms, easing);
+	}
+
+	/**
+	 * Gets current lens radius
+	 * @returns {number} Current radius in pixels
+	 */
+	getRadius() {
+		return this.controls['radius'].current.value[0];
+	}
+
+	/**
+	 * Sets lens center position with optional animation
+	 * @param {number} x - X coordinate in scene space
+	 * @param {number} y - Y coordinate in scene space
+	 * @param {number} [delayms=100] - Animation duration
+	 * @param {string} [easing='linear'] - Animation easing function
+	 */
+	setCenter(x, y, delayms = 100, easing = 'linear') {
+		this.setControl('center', [x, y], delayms, easing);
+	}
+
+	/**
+	 * Gets current lens center position
+	 * @returns {{x: number, y: number}} Center position in scene coordinates
+	 */
+	getCurrentCenter() {
+		const p = this.controls['center'].current.value;
+		return { x: p[0], y: p[1] };
+	}
+
+	/**
+	 * Gets target lens position for ongoing animation
+	 * @returns {{x: number, y: number}} Target position in scene coordinates
+	 */
+	getTargetCenter() {
+		const p = this.controls['center'].target.value;
+		return { x: p[0], y: p[1] };
+	}
+
+	/**
+	 * Gets current border color
+	 * @returns {number[]} RGBA color array
+	 */
+	getBorderColor() {
+		return this.controls['borderColor'].current.value;
+	}
+
+	/**
+	 * Gets current border width
+	 * @returns {number} Border width in pixels
+	 */
+	getBorderWidth() {
+		return this.controls['borderWidth'].current.value[0];
+	}
+
+	/**
+	 * Renders the lens effect
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport
+	 * @returns {boolean} Whether all animations are complete
+	 * @override
+	 * @private
+	 */
+	draw(transform, viewport) {
+		let done = this.interpolateControls();
+
+		// Cache frequently accessed values
+		const currentCenter = this.getCurrentCenter();
+		const currentRadius = this.getRadius();
+		const borderColor = this.getBorderColor();
+
+		// Update dashboard size &amp; pos
+		if (this.dashboard) {
+			this.dashboard.update(currentCenter.x, currentCenter.y, currentRadius);
+			this.oldCenter = currentCenter;
+			this.oldRadius = currentRadius;
+		}
+
+		for (let layer of this.layers)
+			if (layer.status != 'ready')
+				return false;
+
+		if (!this.shader)
+			throw "Shader not specified!";
+
+		let gl = this.gl;
+
+		// Draw on a restricted viewport around the lens, to lower down the number of required tiles
+		let lensViewport = this.getLensViewport(transform, viewport);
+
+		// If an overlay is present, merge its viewport with the lens one
+		let overlayViewport = this.getOverlayLayerViewport(transform, viewport);
+		if (overlayViewport != null) {
+			lensViewport = this.joinViewports(lensViewport, overlayViewport);
+		}
+
+		gl.viewport(lensViewport.x, lensViewport.y, lensViewport.dx, lensViewport.dy);
+
+		// Keep the framwbuffer to the window size in order to avoid changing at each scale event
+		if (!this.framebuffers.length || this.layout.width != viewport.w || this.layout.height != viewport.h) {
+			this.deleteFramebuffers();
+			this.layout.width = viewport.w;
+			this.layout.height = viewport.h;
+			this.createFramebuffers();
+		}
+
+		var b = [0, 0, 0, 0];
+		gl.clearColor(b[0], b[1], b[2], b[3]);
+
+		// Save the active framebuffer from Canvas before drawing
+		const activeFramebuffer = this.canvas.getActiveFramebuffer();
+
+		// Draw the layers only within the viewport enclosing the lens
+		for (let i = 0; i &lt; this.layers.length; i++) {
+			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
+			gl.clear(gl.COLOR_BUFFER_BIT);
+			this.layers[i].draw(transform, lensViewport);
+		}
+
+		// Restore the active framebuffer from Canvas
+		this.canvas.setActiveFramebuffer(activeFramebuffer);
+
+		// Set in the lensShader the proper lens position wrt the window viewport
+		const vl = this.getLensInViewportCoords(transform, viewport);
+		this.shader.setLensUniforms(vl, [viewport.w, viewport.h], borderColor, this.borderEnable);
+
+		this.prepareWebGL();
+
+		// Bind all textures and combine them with the shaderLens
+		for (let i = 0; i &lt; this.layers.length; i++) {
+			gl.uniform1i(this.shader.samplers[i].location, i);
+			gl.activeTexture(gl.TEXTURE0 + i);
+			gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
+		}
+
+		// Get texture coords of the lensViewport with respect to the framebuffer sz
+		const lx = lensViewport.x / lensViewport.w;
+		const ly = lensViewport.y / lensViewport.h;
+		const hx = (lensViewport.x + lensViewport.dx) / lensViewport.w;
+		const hy = (lensViewport.y + lensViewport.dy) / lensViewport.h;
+
+		this.updateTileBuffers(
+			new Float32Array([-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0]),
+			new Float32Array([lx, ly, lx, hy, hx, hy, hx, ly]));
+		gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+
+		// Restore old viewport
+		gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
+
+		return done;
+	}
+
+	/**
+	 * Calculates viewport region affected by lens
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport
+	 * @returns {Object} Viewport specification for lens region
+	 * @private
+	 */
+	getLensViewport(transform, viewport) {
+		const lensC = this.getCurrentCenter();
+		const l = CoordinateSystem.fromSceneToViewport(lensC, this.camera, this.useGL);
+		const r = this.getRadius() * transform.z;
+		return { x: Math.floor(l.x - r) - 1, y: Math.floor(l.y - r) - 1, dx: Math.ceil(2 * r) + 2, dy: Math.ceil(2 * r) + 2, w: viewport.w, h: viewport.h };
+	}
+
+	/**
+	 * Calculates viewport region for overlay layer
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport
+	 * @returns {Object|null} Viewport specification for overlay or null
+	 * @private
+	 */
+	getOverlayLayerViewport(transform, viewport) {
+		let result = null;
+		if (this.layers.length == 2) {
+			// Get overlay projected viewport
+			let bbox = this.layers[1].boundingBox();
+			const p0v = CoordinateSystem.fromSceneToViewport({ x: bbox.xLow, y: bbox.yLow }, this.camera, this.useGL);
+			const p1v = CoordinateSystem.fromSceneToViewport({ x: bbox.xHigh, y: bbox.yHigh }, this.camera, this.useGL);
+
+			// Intersect with window viewport
+			const x0 = Math.min(Math.max(0, Math.floor(p0v.x)), viewport.w);
+			const y0 = Math.min(Math.max(0, Math.floor(p0v.y)), viewport.h);
+			const x1 = Math.min(Math.max(0, Math.ceil(p1v.x)), viewport.w);
+			const y1 = Math.min(Math.max(0, Math.ceil(p1v.y)), viewport.h);
+
+			const width = x1 - x0;
+			const height = y1 - y0;
+			result = { x: x0, y: y0, dx: width, dy: height, w: viewport.w, h: viewport.h };
+		}
+		return result;
+	}
+
+	/**
+	 * Combines two viewport regions
+	 * @param {Object} v0 - First viewport
+	 * @param {Object} v1 - Second viewport
+	 * @returns {Object} Combined viewport encompassing both regions
+	 * @private
+	 */
+	joinViewports(v0, v1) {
+		const xm = Math.min(v0.x, v1.x);
+		const xM = Math.max(v0.x + v0.dx, v1.x + v1.dx);
+		const ym = Math.min(v0.y, v1.y);
+		const yM = Math.max(v0.y + v0.dy, v1.y + v1.dy);
+		const width = xM - xm;
+		const height = yM - ym;
+
+		return { x: xm, y: ym, dx: width, dy: height, w: v0.w, h: v0.h };
+	}
+
+	/**
+	 * Converts lens parameters to viewport coordinates
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport
+	 * @returns {number[]} [centerX, centerY, radius, borderWidth] in viewport coordinates
+	 * @private
+	 */
+	getLensInViewportCoords(transform, viewport) {
+		const lensC = this.getCurrentCenter();
+		const c = CoordinateSystem.fromSceneToViewport(lensC, this.camera, this.useGL);
+		const r = this.getRadius();
+		return [c.x, c.y, r * transform.z, this.getBorderWidth()];
+	}
+
+}
+
+/**
+ * Register this layer type with the Layer factory
+ * @type {Function}
+ * @private
+ */
+Layer.prototype.types['lens'] = (options) => { return new LayerLens(options); }
+
+export { LayerLens }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

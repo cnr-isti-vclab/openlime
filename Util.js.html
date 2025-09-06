@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: Util.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: Util.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">// HELPERS
+window.structuredClone = typeof (structuredClone) == "function" ? structuredClone : function (value) { return JSON.parse(JSON.stringify(value)); };
+
+/**
+ * Utility class providing various helper functions for OpenLIME.
+ * Includes methods for SVG manipulation, file loading, image processing, and string handling.
+ * 
+ * 
+ * @static
+ */
+class Util {
+
+    /**
+     * Pads a number with leading zeros
+     * @param {number} num - Number to pad
+     * @param {number} size - Desired string length
+     * @returns {string} Zero-padded number string
+     * 
+     * @example
+     * ```javascript
+     * Util.padZeros(42, 5); // Returns "00042"
+     * ```
+     */
+    static padZeros(num, size) {
+        return num.toString().padStart(size, '0');
+    }
+
+    /**
+     * Prints source code with line numbers
+     * Useful for shader debugging
+     * @param {string} str - Source code to print
+     * @private
+     */
+    static printSrcCode(str) {
+        let result = '';
+        str.split(/\r\n|\r|\n/).forEach((line, i) => {
+            const nline = Util.padZeros(i + 1, 5);
+            result += `${nline}   ${line}\n`;
+        });
+        console.log(result);
+    }
+    
+
+    /**
+     * Creates an SVG element with optional attributes
+     * @param {string} tag - SVG element tag name
+     * @param {Object} [attributes] - Key-value pairs of attributes
+     * @returns {SVGElement} Created SVG element
+     * 
+     * @example
+     * ```javascript
+     * const circle = Util.createSVGElement('circle', {
+     *     cx: '50',
+     *     cy: '50',
+     *     r: '40'
+     * });
+     * ```
+     */
+    static createSVGElement(tag, attributes) {
+        const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        if (attributes)
+            for (const [key, value] of Object.entries(attributes))
+                e.setAttribute(key, value);
+        return e;
+    }
+
+    /**
+     * Parses SVG string into DOM element
+     * @param {string} text - SVG content string
+     * @returns {SVGElement} Parsed SVG element
+     * @throws {Error} If parsing fails
+     */
+    static SVGFromString(text) {
+        const parser = new DOMParser();
+        return parser.parseFromString(text, "image/svg+xml").documentElement;
+    }
+
+    /**
+     * Loads SVG file from URL
+     * @param {string} url - URL to SVG file
+     * @returns {Promise&lt;SVGElement>} Loaded and parsed SVG
+     * @throws {Error} If fetch fails or content isn't SVG
+     * 
+     * @example
+     * ```javascript
+     * const svg = await Util.loadSVG('icons/icon.svg');
+     * document.body.appendChild(svg);
+     * ```
+     */
+    static async loadSVG(url) {
+        let response = await fetch(url);
+        if (!response.ok) {
+            const message = `An error has occured: ${response.status}`;
+            throw new Error(message);
+        }
+        let data = await response.text();
+        let result = null;
+        if (Util.isSVGString(data)) {
+            result = Util.SVGFromString(data);
+        } else {
+            const message = `${url} is not an SVG file`;
+            throw new Error(message);
+        }
+        return result;
+    };
+
+    /**
+     * Loads HTML content from URL
+     * @param {string} url - URL to HTML file
+     * @returns {Promise&lt;string>} HTML content
+     * @throws {Error} If fetch fails
+     */
+    static async loadHTML(url) {
+        let response = await fetch(url);
+        if (!response.ok) {
+            const message = `An error has occured: ${response.status}`;
+            throw new Error(message);
+        }
+        let data = await response.text();
+        return data;
+    };
+
+    /**
+     * Loads and parses JSON from URL
+     * @param {string} url - URL to JSON file
+     * @returns {Promise&lt;Object>} Parsed JSON data
+     * @throws {Error} If fetch or parsing fails
+     */
+    static async loadJSON(url) {
+        let response = await fetch(url);
+        if (!response.ok) {
+            const message = `An error has occured: ${response.status}`;
+            throw new Error(message);
+        }
+        let data = await response.json();
+        return data;
+    }
+
+    /**
+     * Loads image from URL
+     * @param {string} url - Image URL
+     * @returns {Promise&lt;HTMLImageElement>} Loaded image
+     * @throws {Error} If image loading fails
+     */
+    static async loadImage(url) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.addEventListener('load', () => resolve(img));
+            img.addEventListener('error', (err) => reject(err));
+            img.src = url;
+        });
+    }
+
+    /**
+     * Appends loaded image to container
+     * @param {HTMLElement} container - Target container
+     * @param {string} url - Image URL
+     * @param {string} [imgClass] - Optional CSS class
+     * @returns {Promise&lt;void>}
+     */
+    static async appendImg(container, url, imgClass = null) {
+        const img = await Util.loadImage(url);
+        if (imgClass) img.classList.add(imgClass);
+        container.appendChild(img);
+        return img;
+    }
+
+    /**
+      * Appends multiple images to container
+      * @param {HTMLElement} container - Target container
+      * @param {string[]} urls - Array of image URLs
+      * @param {string} [imgClass] - Optional CSS class
+      * @returns {Promise&lt;void>}
+      */
+    static async appendImgs(container, urls, imgClass = null) {
+        for (const u of urls) {
+            const img = await Util.loadImage(u);
+            if (imgClass) img.classList.add(imgClass);
+            container.appendChild(img);
+        }
+    }
+
+    /**
+     * Tests if string is valid SVG content
+     * @param {string} input - String to test
+     * @returns {boolean} True if string is valid SVG
+     */
+    static isSVGString(input) {
+        const regex = /^\s*(?:&lt;\?xml[^>]*>\s*)?(?:&lt;!doctype svg[^>]*\s*(?:\[?(?:\s*&lt;![^>]*>\s*)*\]?)*[^>]*>\s*)?(?:&lt;svg[^>]*>[^]*&lt;\/svg>|&lt;svg[^/>]*\/\s*>)\s*$/i
+        if (input == undefined || input == null)
+            return false;
+        input = input.toString().replace(/\s*&lt;!Entity\s+\S*\s*(?:"|')[^"]+(?:"|')\s*>/img, '');
+        input = input.replace(/&lt;!--([\s\S]*?)-->/g, '');
+        return Boolean(input) &amp;&amp; regex.test(input);
+    }
+
+    /**
+     * Computes Signed Distance Field from image data
+     * Implementation based on Felzenszwalb &amp; Huttenlocher algorithm
+     * 
+     * @param {Uint8Array} buffer - Input image data
+     * @param {number} w - Image width
+     * @param {number} h - Image height
+     * @param {number} [cutoff=0.25] - Distance field cutoff
+     * @param {number} [radius=8] - Maximum distance to compute
+     * @returns {Float32Array|Array} Computed distance field
+     * 
+     * Technical Details:
+     * - Uses 2D Euclidean distance transform
+     * - Separate inner/outer distance fields
+     * - Optimized grid computation
+     * - Sub-pixel accuracy
+     */
+    static computeSDF(buffer, w, h, cutoff = 0.25, radius = 8) {
+
+        // 2D Euclidean distance transform by Felzenszwalb &amp; Huttenlocher https://cs.brown.edu/~pff/dt/
+        function edt(data, width, height, f, d, v, z) {
+            for (let x = 0; x &lt; width; x++) {
+                for (let y = 0; y &lt; height; y++) {
+                    f[y] = data[y * width + x]
+                }
+                edt1d(f, d, v, z, height)
+                for (let y = 0; y &lt; height; y++) {
+                    data[y * width + x] = d[y]
+                }
+            }
+            for (let y = 0; y &lt; height; y++) {
+                for (let x = 0; x &lt; width; x++) {
+                    f[x] = data[y * width + x]
+                }
+                edt1d(f, d, v, z, width)
+                for (let x = 0; x &lt; width; x++) {
+                    data[y * width + x] = Math.sqrt(d[x])
+                }
+            }
+        }
+
+        // 1D squared distance transform
+        function edt1d(f, d, v, z, n) {
+            v[0] = 0;
+            z[0] = -INF
+            z[1] = +INF
+
+            for (let q = 1, k = 0; q &lt; n; q++) {
+                var s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k])
+                while (s &lt;= z[k]) {
+                    k--
+                    s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k])
+                }
+                k++
+                v[k] = q
+                z[k] = s
+                z[k + 1] = +INF
+            }
+
+            for (let q = 0, k = 0; q &lt; n; q++) {
+                while (z[k + 1] &lt; q) k++
+                d[q] = (q - v[k]) * (q - v[k]) + f[v[k]]
+            }
+        }
+
+        var data = new Uint8ClampedArray(buffer);
+        const INF = 1e20;
+        const size = Math.max(w, h);
+
+        // temporary arrays for the distance transform
+        const gridOuter = Array(w * h);
+        const gridInner = Array(w * h);
+        const f = Array(size);
+        const d = Array(size);
+        const z = Array(size + 1);
+        const v = Array(size);
+
+        for (let i = 0; i &lt; w * h; i++) {
+            var a = data[i] / 255.0;
+            gridOuter[i] = a === 1 ? 0 : a === 0 ? INF : Math.pow(Math.max(0, 0.5 - a), 2);
+            gridInner[i] = a === 1 ? INF : a === 0 ? 0 : Math.pow(Math.max(0, a - 0.5), 2);
+        }
+
+        edt(gridOuter, w, h, f, d, v, z)
+        edt(gridInner, w, h, f, d, v, z)
+
+        const dist = window.Float32Array ? new Float32Array(w * h) : new Array(w * h)
+
+        for (let i = 0; i &lt; w * h; i++) {
+            dist[i] = Math.min(Math.max(1 - ((gridOuter[i] - gridInner[i]) / radius + cutoff), 0), 1)
+        }
+        return dist;
+    }
+
+    /**
+     * Rasterizes SVG to ImageData
+     * @param {string} url - SVG URL
+     * @param {number[]} [size=[64,64]] - Output dimensions [width, height]
+     * @returns {Promise&lt;ImageData>} Rasterized image data
+     * 
+     * Processing steps:
+     * 1. Loads SVG file
+     * 2. Sets up canvas context
+     * 3. Handles aspect ratio
+     * 4. Centers image
+     * 5. Renders to ImageData
+     * 
+     * @example
+     * ```javascript
+     * const imageData = await Util.rasterizeSVG('icon.svg', [128, 128]);
+     * context.putImageData(imageData, 0, 0);
+     * ```
+     */
+    static async rasterizeSVG(url, size = [64, 64]) {
+        const svg = await Util.loadSVG(url);
+        const svgWidth = svg.getAttribute('width');
+        const svgHeight = svg.getAttribute('height');
+
+        const canvas = document.createElement("canvas");
+        canvas.width = size[0];
+        canvas.height = size[1];
+
+        svg.setAttributeNS(null, 'width', `100%`);
+        svg.setAttributeNS(null, 'height', `100%`);
+
+        const ctx = canvas.getContext("2d");
+        const data = (new XMLSerializer()).serializeToString(svg);
+        const DOMURL = window.URL || window.webkitURL || window;
+
+        const img = new Image();
+        const svgBlob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+        const svgurl = DOMURL.createObjectURL(svgBlob);
+        img.src = svgurl;
+
+        return new Promise((resolve, reject) => {
+            img.onload = () => {
+                const aCanvas = size[0] / size[1];
+                const aSvg = svgWidth / svgHeight;
+                let wSvg = 0;
+                let hSvg = 0;
+                if (aSvg &lt; aCanvas) {
+                    hSvg = size[1];
+                    wSvg = hSvg * aSvg;
+                } else {
+                    wSvg = size[0];
+                    hSvg = wSvg / aSvg;
+                }
+
+                let dy = (size[1] - hSvg) * 0.5;
+                let dx = (size[0] - wSvg) * 0.5;
+
+                ctx.translate(dx, dy);
+                ctx.drawImage(img, 0, 0);
+
+                DOMURL.revokeObjectURL(svgurl);
+
+                const imageData = ctx.getImageData(0, 0, size[0], size[1]);
+
+                // const imgURI = canvas
+                //     .toDataURL('image/png')
+                //     .replace('image/png', 'image/octet-stream');
+
+                // console.log(imgURI);
+
+                resolve(imageData);
+            };
+            img.onerror = (e) => reject(e);
+        });
+    }
+
+}
+
+/**
+ * Implementation Notes:
+ * 
+ * File Loading:
+ * - Consistent error handling across loaders
+ * - Promise-based async operations
+ * - Resource cleanup (URL revocation)
+ * 
+ * SVG Processing:
+ * - Namespace-aware element creation
+ * - Robust SVG validation
+ * - Attribute management
+ * 
+ * Image Processing:
+ * - Canvas-based rasterization
+ * - Aspect ratio preservation
+ * - Memory efficient operations
+ * 
+ * SDF Computation:
+ * - Efficient distance field generation
+ * - Configurable parameters
+ * - TypedArray support
+ * 
+ * Error Handling:
+ * - Input validation
+ * - Descriptive error messages
+ * - Resource cleanup on failure
+ * 
+ * Browser Compatibility:
+ * - Fallbacks for older browsers
+ * - Polyfill for structuredClone
+ * - Vendor prefix handling
+ */
+
+export { Util }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

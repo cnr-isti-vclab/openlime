@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: LayerNeuralRTI.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: LayerNeuralRTI.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Layer } from './Layer.js'
+import { Raster } from './Raster.js'
+import { Layout } from './Layout.js'
+import { Transform } from './Transform.js'
+import { Shader } from './Shader.js'
+import { ShaderNeural } from './ShaderNeural.js'
+
+/**
+ * @typedef {Object} LayerNeuralRTIOptions
+ * @property {string} url - URL to the Neural RTI configuration JSON
+ * @property {Layout} layout - Layout system for image loading
+ * @property {number} [convergenceSpeed=1.2] - Speed of quality convergence
+ * @property {number} [maxTiles=40] - Maximum number of tiles to process
+ * @property {string} [colorspace='rgb'] - Color space for processing
+ * @extends LayerOptions
+ */
+
+/**
+ * LayerNeuralRTI implements real-time Neural Reflectance Transformation Imaging.
+ * This layer uses a neural network to perform real-time relighting of images,
+ * offering improved quality and performance compared to traditional RTI approaches.
+ * 
+ * Features:
+ * - Neural network-based relighting
+ * - Adaptive quality scaling
+ * - Frame rate optimization
+ * - Progressive refinement
+ * - Multi-plane texture support
+ * - WebGL acceleration
+ * 
+ * Technical Details:
+ * - Uses 3-layer neural network
+ * - Supports multiple color spaces
+ * - Implements adaptive tile processing
+ * - Handles dynamic quality adjustment
+ * - Manages frame buffer operations
+ * - Coordinates light transformations
+ * 
+ * Performance Optimizations:
+ * - Dynamic resolution scaling
+ * - FPS-based quality adjustment
+ * - Progressive refinement system
+ * - Tile caching
+ * - Batch processing
+ * 
+ * @extends Layer
+ * 
+	* @example
+ * ```javascript
+ * // Create Neural RTI layer
+ * const neuralRTI = new OpenLIME.Layer({
+ *   type: 'neural',
+ *   url: 'config.json',
+ *   layout: 'deepzoom',
+ *   convergenceSpeed: 1.2,
+ *   maxTiles: 40
+ * });
+ * 
+ * // Add to viewer
+ * viewer.addLayer('rti', neuralRTI);
+ * 
+ * // Change light direction
+ * neuralRTI.setLight([0.5, 0.3], 1000);
+ * ```
+ */
+class LayerNeuralRTI extends Layer {
+	/**
+	 * Creates a new LayerNeuralRTI instance
+	 * @param {LayerNeuralRTIOptions} options - Configuration options
+	 */
+	constructor(options) {
+		super(options || {});
+		this.currentRelightFraction = 1.0; //(min: 0, max 1)
+		this.maxTiles = 40;
+		this.relighted = false;
+		this.convergenceSpeed = 1.2;
+		this.addControl('light', [0, 0]);
+		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
+		this.activeFramebuffer = null;
+		
+		let textureUrls = [
+			null,
+			this.layout.imageUrl(this.url, 'plane_1'),
+			this.layout.imageUrl(this.url, 'plane_2'),
+			this.layout.imageUrl(this.url, 'plane_3'),
+		];
+
+		this.layout.setUrls(textureUrls);
+
+		for (let url of textureUrls) {
+			let raster = new Raster({ format: 'vec3' });
+			this.rasters.push(raster);
+		}
+
+		this.imageShader = new Shader({
+			'label': 'Rgb',
+			'samplers': [{ id: 0, name: 'source', type: 'vec3', load: false }]
+		});
+
+		this.neuralShader = new ShaderNeural();
+
+		this.shaders = { 'standard': this.imageShader, 'neural': this.neuralShader };
+		this.setShader('neural');
+		this.neuralShader.setLight([0, 0]);
+
+
+		(async () => { await this.loadNeural(this.url); })();
+	}
+
+	/**
+	 * Sets light direction with optional animation
+	 * @param {number[]} light - Light direction vector [x, y]
+	 * @param {number} [dt] - Animation duration in milliseconds
+	 */
+	setLight(light, dt) {
+		this.setControl('light', light, dt);
+	}
+
+	/** @ignore */
+	loadTile(tile, callback) {
+		this.shader = this.neuralShader;
+		super.loadTile(tile, callback);
+	}
+
+	/**
+	 * Loads neural network configuration and weights
+	 * @param {string} url - URL to configuration JSON
+	 * @private
+	 * @async
+	 */
+	async loadNeural(url) {
+		await this.initialize(url);
+	}
+
+	/**
+	 * Initializes neural network parameters
+	 * @param {string} json_url - URL to configuration
+	 * @private
+	 * @async
+	 */
+	async initialize(json_url) {
+
+		const info = await this.loadJSON(json_url);
+		this.max = info.max.flat(1);
+		this.min = info.min.flat(1);
+
+		this.width = info.width;
+		this.height = info.height;
+
+		let parameters = {};
+		for (let i = 0; i &lt; 3; i++) {
+			let key = 'layer' + (i + 1);
+			parameters[key + '_weights'] = info.weights[i];//(await this.loadJSON(data_path + "/parameters/" + w + "_weights.json")).flat(1);
+			parameters[key + '_biases'] = info.biases[i]; //(await this.loadJSON(data_path + "/parameters/" + w + "_biases.json")).flat(1);
+		}
+
+		for (const [name, value] of Object.entries(parameters))
+			this.neuralShader.setUniform(name, value);
+
+		//this.neuralShader.updateUniforms(gl, this.neuralShader.program);
+		this.neuralShader.setUniform('min', this.min);
+		this.neuralShader.setUniform('max', this.max);
+
+		// make the fragment shader flexible to different network configurations
+		let n = info.samples;
+		let c = info.planes + 2;
+		while (n % 4 != 0)
+			n++;
+		while (c % 4 != 0)
+			c++;
+		this.neuralShader.setShaderInfo(info.samples, info.planes, n, c, info.colorspace);
+
+		this.networkParameters = parameters;
+	}
+
+	/** @ignore */
+	setCoords() {
+		let gl = this.gl;
+
+		let coords = new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]);
+
+		this.coords_buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.coords_buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+
+		let texCoords = new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]);
+		this.texCoords_buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoords_buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+	}
+
+
+	// little set of functions to get model, coeff and info
+	/** @ignore */
+	async loadJSON(info_file) {
+		const info_response = await fetch(info_file);
+		const info = await info_response.json();
+		return info;
+	}
+
+	/* ************************************************************************** */
+
+	/**
+	 * Renders the Neural RTI visualization
+	 * Handles quality adaptation and progressive refinement
+	 * @param {Transform} transform - Current view transform
+	 * @param {Object} viewport - Current viewport
+	 * @returns {boolean} Whether render completed
+	 * @override
+	 * @private
+	 */
+	draw(transform, viewport) {
+		//TODO this is duplicated code. move this check up 
+		if (this.status != 'ready')
+			return true;
+
+		this.worldRotation = transform.a + this.transform.a;
+
+		if (this.networkParameters !== undefined) {
+
+			let previousRelightFraction = this.relightFraction;
+			//adjust maxTiles to presserve framerate only when we had a draw which included relighting (but not a refine operation!).
+			if (this.relighted) {
+				if (this.canvas.fps > this.canvas.targetfps * 1.5) {
+					this.currentRelightFraction = Math.min(1.0, this.currentRelightFraction * this.convergenceSpeed);
+					//console.log('fps fast: ', this.canvas.fps, this.currentRelightFraction);
+				} else if (this.canvas.fps &lt; this.canvas.targetfps * 0.75) {
+					this.currentRelightFraction = Math.max(this.currentRelightFraction / this.convergenceSpeed, 1 / 128);
+					this.convergenceSpeed = Math.max(1.05, Math.pow(this.convergenceSpeed, 0.9));
+					console.log('fps slow: ', this.canvas.fps, this.currentRelightFraction);
+				}
+			}
+			//this.refine = true;
+
+			//setup final refinement
+			if (this.refineTimeout)
+				clearTimeout(this.refineTimeout);
+
+			if (this.currentRelightFraction &lt; 0.75 &amp;&amp; this.refine == false)
+				this.refineTimeout = setTimeout(() => { this.emit('update'); this.refine = true; }, Math.max(400, 4000 / this.canvas.fps));
+
+			this.relightFraction = this.refine ? 1.0 : this.currentRelightFraction;
+			this.relightFraction = Math.round(this.relightFraction * 8) / 8;
+
+			let sizeChanged = this.relightFraction != previousRelightFraction;
+
+			let w = Math.round((this.layout.tilesize || this.layout.width) * this.relightFraction);
+			let h = Math.round((this.layout.tilesize || this.layout.height) * this.relightFraction);
+
+			//console.log("Canvas fps: ", this.canvas.fps, "relighted: ", this.relighted, "Refine? ", this.refine, " fraction: ", this.relightFraction, " w: ", this.tileRelightWidth);
+			this.refine = false;
+
+			let available = this.layout.available(viewport, transform, this.transform, 0, this.mipmapBias, this.tiles);
+
+			let tiles = Object.values(available);
+			if (tiles.length == 0)
+				return;
+			if (sizeChanged)
+				for (let tile of tiles)
+					tile.neuralUpdated = false;
+
+			this.relighted = false;
+			this.totTiles = 0;
+			this.totPixels = 0;
+			for (let tile of tiles) {
+				if (tile.neuralUpdated &amp;&amp; !sizeChanged)
+					continue;
+				if (!this.relighted) {
+					this.relighted = true; //update fps next turn.
+					this.preRelight([viewport.x, viewport.y, viewport.dx, viewport.dy], w, h, sizeChanged);
+				}
+				this.relightTile(tile, w, h, sizeChanged);
+				this.totPixels += w * h;
+				this.totTiles += 1;
+			}
+			if (this.relighted)
+				this.postRelight();
+
+			this.relighted = this.relighted &amp;&amp; !this.refine; //udpate fps only if not refined.
+		}
+
+		this.shader = this.imageShader;
+		let done = super.draw(transform, viewport);
+		this.shader = this.neuralShader;
+
+		return done;
+	}
+
+	/**
+	 * Prepares WebGL resources for relighting
+	 * @param {number[]} viewport - Viewport parameters
+	 * @param {number} w - Width for processing
+	 * @param {number} h - Height for processing
+	 * @private
+	 */
+	preRelight(viewport, w, h) {
+		let gl = this.gl;
+
+		if (!this.neuralShader.program) {
+			this.neuralShader.createProgram(gl);
+			gl.useProgram(this.neuralShader.program);
+			for (var i = 0; i &lt; this.neuralShader.samplers.length; i++)
+				gl.uniform1i(this.neuralShader.samplers[i].location, i);
+		} else
+			gl.useProgram(this.neuralShader.program);
+
+		this.neuralShader.updateUniforms(gl);
+
+		if (!this.coords_buffer)
+			this.setCoords();
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.coords_buffer);
+		gl.vertexAttribPointer(this.neuralShader.position_location, 2, gl.FLOAT, false, 0, 0);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoords_buffer);
+		gl.vertexAttribPointer(this.neuralShader.texcoord_location, 2, gl.FLOAT, false, 0, 0);
+
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+		gl.enable(gl.BLEND);
+
+		if (!this.framebuffer)
+			this.framebuffer = gl.createFramebuffer();
+			
+		// Save the active framebuffer before starting operations
+		this.activeFramebuffer = this.canvas.getActiveFramebuffer();
+			
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+
+		//save previous viewport
+		this.backupViewport = viewport;
+		gl.viewport(0, 0, w, h);
+	}
+
+/**
+ * Finalizes the relighting pass and restores rendering state
+ * 
+ * This method performs cleanup after relighting operations by:
+ * 1. Unbinding the framebuffer to return to normal rendering
+ * 2. Restoring the original viewport dimensions
+ * 
+ * Technical details:
+ * - Restores WebGL rendering state
+ * - Returns framebuffer binding to default
+ * - Resets viewport to original dimensions
+ * - Must be called after all tiles have been processed
+ * 
+ * @private
+ * @see preRelight - Called at start of relighting process
+ * @see relightTile - Called for each tile during relighting
+ */
+	postRelight() {
+		let gl = this.gl;
+		
+		// Restore the active framebuffer for final rendering
+		this.canvas.setActiveFramebuffer(this.activeFramebuffer);
+
+		//restore previous viewport
+		let v = this.backupViewport;
+		this.gl.viewport(v[0], v[1], v[2], v[3]);
+	}
+
+	/**
+	 * Processes individual tile using neural network
+	 * @param {Object} tile - Tile to process
+	 * @param {number} w - Processing width
+	 * @param {number} h - Processing height
+	 * @param {boolean} sizeChanged - Whether tile size changed
+	 * @private
+	 */
+	relightTile(tile, w, h, sizeChanged) {
+		let gl = this.gl;
+
+
+		let needsCreate = tile.tex[0] == null;
+		if (needsCreate) {
+			let tex = tile.tex[0] = gl.createTexture();
+			gl.bindTexture(gl.TEXTURE_2D, tex);
+			// set the filtering so we don't need mips
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		}
+		if (sizeChanged || needsCreate) {
+			gl.bindTexture(gl.TEXTURE_2D, tile.tex[0]);
+			// define size and format of level 0
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+				w, h, 0,
+				gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+			//gl.bindTexture(gl.TEXTURE_2D, null);
+		}
+
+		for (var i = 0; i &lt; this.neuralShader.samplers.length; i++) {
+			let id = this.neuralShader.samplers[i].id;
+			gl.activeTexture(gl.TEXTURE0 + i);
+			gl.bindTexture(gl.TEXTURE_2D, tile.tex[id]);
+		}
+
+		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+			gl.TEXTURE_2D, tile.tex[0], 0);
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+
+		tile.neuralUpdated = true;
+	}
+
+	/**
+	 * Updates light direction and marks tiles for update
+	 * @returns {boolean} Whether updates are complete
+	 * @override
+	 * @private
+	 */
+	interpolateControls() {
+		let done = super.interpolateControls();
+		if (done)
+			return true;
+
+		let light = this.controls['light'].current.value;
+		let rotated = Transform.rotate(light[0], light[1], this.worldRotation * Math.PI);
+		light = [rotated.x, rotated.y];
+		this.neuralShader.setLight(light);
+
+
+		for (let [id, tile] of this.tiles)
+			tile.neuralUpdated = false;
+		return false;
+	}
+}
+
+/**
+ * Register this layer type with the Layer factory
+ * @type {Function}
+ * @private
+ */
+Layer.prototype.types['neural'] = (options) => { return new LayerNeuralRTI(options); }
+
+export { LayerNeuralRTI }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

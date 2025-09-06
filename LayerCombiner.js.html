@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: LayerCombiner.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: LayerCombiner.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Layer } from './Layer.js'
+
+/**
+ * @typedef {Object} LayerCombinerOptions
+ * @property {Layer[]} layers - Array of layers to be combined (required)
+ * @property {Object.&lt;string, Shader>} [shaders] - Map of available shaders
+ * @property {string} [type='combiner'] - Must be 'combiner' when using Layer factory
+ * @property {boolean} [visible=true] - Whether the combined output is visible
+ * @extends LayerOptions
+ */
+
+/**
+ * LayerCombiner provides functionality to combine multiple layers using framebuffer operations
+ * and custom shaders. It enables complex visual effects by compositing layers in real-time
+ * using GPU-accelerated rendering.
+ * 
+ * Features:
+ * - Real-time layer composition
+ * - Custom shader-based effects
+ * - Framebuffer management
+ * - Dynamic texture allocation
+ * - Resolution-independent rendering
+ * - GPU-accelerated compositing
+ * 
+ * Use Cases:
+ * - Layer blending and mixing
+ * - Image comparison tools
+ * - Lens effects (see {@link LayerLens})
+ * - Custom visual effects
+ * - Multi-layer compositing
+ * 
+ * Technical Details:
+ * - Creates framebuffers for each input layer
+ * - Manages WebGL textures and resources
+ * - Supports dynamic viewport resizing
+ * - Handles shader-based composition
+ * - Maintains proper resource cleanup
+ * 
+ * @extends Layer
+ * 
+ * @example
+ * ```javascript
+ * // Create two base layers
+ * const baseLayer = new OpenLIME.Layer({
+ *   type: 'image',
+ *   url: 'base.jpg'
+ * });
+ * 
+ * const overlayLayer = new OpenLIME.Layer({
+ *   type: 'image',
+ *   url: 'overlay.jpg'
+ * });
+ * 
+ * // Create combiner with custom shader
+ * const combiner = new OpenLIME.Layer({
+ *   type: 'combiner',
+ *   layers: [baseLayer, overlayLayer],
+ *   visible: true
+ * });
+ * 
+ * // Set up blend shader
+ * const shader = new OpenLIME.ShaderCombiner();
+ * shader.mode = 'blend';
+ * combiner.shaders = { 'standard': shader };
+ * combiner.setShader('standard');
+ * 
+ * // Add to viewer
+ * viewer.addLayer('combined', combiner);
+ * ```
+ */
+class LayerCombiner extends Layer {
+    /**
+     * Creates a new LayerCombiner instance.
+     * 
+     * @param {LayerCombinerOptions} options - Configuration options
+     * @throws {Error} If rasters option is not empty (rasters should be defined in source layers)
+     */
+    constructor(options) {
+        options = Object.assign({
+            isLinear: true,
+        }, options);
+
+        super(options);
+
+        if (Object.keys(this.rasters).length != 0)
+            throw "Rasters options should be empty!";
+
+        this.textures = [];
+        this.framebuffers = [];
+        this.status = 'ready';
+    }
+
+    /**
+     * Cleans up WebGL resources by deleting framebuffers and textures.
+     * Should be called before recreating buffers or when the layer is destroyed.
+     * Prevents memory leaks by properly releasing GPU resources.
+     * @private
+     */
+    deleteFramebuffers() {
+        if (!this.gl) return;
+
+        // Clean up textures
+        for (let i = 0; i &lt; this.textures.length; i++) {
+            if (this.textures[i]) {
+                this.gl.deleteTexture(this.textures[i]);
+            }
+        }
+
+        // Clean up framebuffers
+        for (let i = 0; i &lt; this.framebuffers.length; i++) {
+            if (this.framebuffers[i]) {
+                this.gl.deleteFramebuffer(this.framebuffers[i]);
+            }
+        }
+
+        this.textures = [];
+        this.framebuffers = [];
+    }
+
+    /**
+     * Renders the combined layers using framebuffer operations.
+     * Handles framebuffer creation, layer rendering, and final composition.
+     * 
+     * @param {Transform} transform - Current view transform
+     * @param {Object} viewport - Current viewport parameters
+     * @param {number} viewport.x - Viewport X position
+     * @param {number} viewport.y - Viewport Y position
+     * @param {number} viewport.dx - Viewport width
+     * @param {number} viewport.dy - Viewport height
+     * @param {number} viewport.w - Total width
+     * @param {number} viewport.h - Total height
+     * @throws {Error} If shader is not specified
+     * @private
+     */
+    draw(transform, viewport) {
+        for (let layer of this.layers)
+            if (layer.status != 'ready')
+                return;
+
+        if (!this.shader)
+            throw "Shader not specified!";
+
+        let w = viewport.dx;
+        let h = viewport.dy;
+
+        // Recreate framebuffers if viewport size changes
+        if (!this.framebuffers.length || this.layout.width != w || this.layout.height != h) {
+            this.deleteFramebuffers();
+            this.layout.width = w;
+            this.layout.height = h;
+            this.createFramebuffers();
+        }
+
+        let gl = this.gl;
+        var b = [0, 0, 0, 0];
+        gl.clearColor(b[0], b[1], b[2], b[3]);
+
+        // Save the active framebuffer before starting operations
+        const activeFramebuffer = this.canvas.getActiveFramebuffer();
+
+        // Render each layer to its corresponding framebuffer
+        for (let i = 0; i &lt; this.layers.length; i++) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            this.layers[i].draw(transform, { x: 0, y: 0, dx: w, dy: h, w: w, h: h });
+        }
+
+        // Restore the active framebuffer for final rendering
+        this.canvas.setActiveFramebuffer(activeFramebuffer);
+
+        this.prepareWebGL();
+
+        // Bind textures and set shader uniforms
+        for (let i = 0; i &lt; this.layers.length; i++) {
+            gl.uniform1i(this.shader.samplers[i].location, i);
+            gl.activeTexture(gl.TEXTURE0 + i);
+            gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
+        }
+
+        // Update tile buffers and draw the final composition
+        this.updateTileBuffers(
+            new Float32Array([-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0]),
+            new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]));
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    }
+
+    /**
+     * Creates framebuffers and textures for layer composition.
+     * Initializes WebGL resources for each input layer.
+     * @private
+     */
+    createFramebuffers() {
+        let gl = this.gl;
+        for (let i = 0; i &lt; this.layers.length; i++) {
+            const texture = gl.createTexture();
+
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+
+            const level = 0;
+            const internalFormat = gl.RGBA;
+            const border = 0;
+            const format = gl.RGBA;
+            const type = gl.UNSIGNED_BYTE;
+            gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                this.layout.width, this.layout.height, border, format, type, null);
+
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+            const framebuffer = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+
+            // Verify that the framebuffer is complete
+            const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+            if (status !== gl.FRAMEBUFFER_COMPLETE) {
+                console.error("LayerCombiner framebuffer not complete. Status:", status);
+            }
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            this.textures[i] = texture;
+            this.framebuffers[i] = framebuffer;
+        }
+    }
+
+    /**
+     * Computes the combined bounding box of all input layers.
+     * 
+     * @returns {BoundingBox} Combined bounding box
+     * @override
+     * @private
+     */
+    boundingBox() {
+        const discardHidden = false;
+        let result = Layer.computeLayersBBox(this.layers, discardHidden);
+        if (result &amp;&amp; this.transform != null &amp;&amp; this.transform != undefined) {
+            result = this.transform.transformBox(result);
+        }
+        return result;
+    }
+
+    /**
+     * Computes the minimum scale across all input layers.
+     * 
+     * @returns {number} Combined scale factor
+     * @override
+     * @private
+     */
+    scale() {
+        const discardHidden = false;
+        let scale = Layer.computeLayersMinScale(this.layers, discardHidden);
+        scale *= this.transform.z;
+        return scale;
+    }
+}
+
+/**
+ * Registers this layer type with the Layer factory.
+ * 
+ * @type {Function}
+ * @private
+ */
+Layer.prototype.types['combiner'] = (options) => { return new LayerCombiner(options); }
+
+export { LayerCombiner }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

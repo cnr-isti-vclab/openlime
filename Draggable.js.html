@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: Draggable.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: Draggable.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">/**
+ * Draggable class that enables HTML elements to be moved within a parent container.
+ * 
+ * This class creates a draggable container with a handle and attaches the specified
+ * element to it. The element can then be dragged around its parent container using
+ * the handle, providing an interactive UI element for repositioning content.
+ * 
+ * Features:
+ * - Flexible positioning using top/bottom and left/right coordinates
+ * - Customizable handle size, color, and appearance
+ * - Maintains position relative to parent container edges on window resize
+ * - Touch-enabled with pointer events support for multi-device compatibility
+ * - Smooth drag animations with visual feedback during movement
+ * - Boundary constraints within the parent container
+ * 
+ * @example
+ * // Create a draggable element at the bottom-right corner
+ * const element = document.getElementById('my-element');
+ * const parent = document.querySelector('.parent-container');
+ * const draggable = new Draggable(element, parent, {
+ *   bottom: 20,
+ *   right: 20,
+ *   handleColor: 'rgba(100, 150, 200, 0.7)'
+ * });
+ */
+class Draggable {
+    /**
+     * Creates a new Draggable instance.
+     * 
+     * @param {HTMLElement} element - The element to be made draggable
+     * @param {HTMLElement|string} parent - The parent element where the draggable container will be appended.
+     *                                     Can be either an HTMLElement or a CSS selector string
+     * @param {Object} [options={}] - Configuration options for the draggable element
+     * @param {number|null} [options.top=null] - The initial top position in pixels. Mutually exclusive with bottom
+     * @param {number|null} [options.bottom=20] - The initial bottom position in pixels. Mutually exclusive with top
+     * @param {number|null} [options.left=null] - The initial left position in pixels. Mutually exclusive with right
+     * @param {number|null} [options.right=20] - The initial right position in pixels. Mutually exclusive with left
+     * @param {number} [options.handleSize=10] - The size of the drag handle in pixels
+     * @param {number} [options.handleGap=5] - The gap between the handle and the draggable content in pixels
+     * @param {number} [options.zindex=200] - The z-index of the draggable container
+     * @param {string} [options.handleColor='#f0f0f0b3'] - The background color of the handle (supports rgba)
+     * @param {number} [options.dragOpacity=0.6] - Opacity of the element while being dragged (between 0 and 1)
+     */
+    constructor(element, parent, options = {}) {
+        // Set default options
+        this.options = {
+            top: null,
+            bottom: 20,
+            left: null,
+            right: 20,
+            handleSize: 10,
+            handleGap: 5,
+            zindex: 200,
+            handleColor: '#f0f0f0b3', // rgba(240, 240, 240, 0.7)
+            dragOpacity: 0.6
+        };
+        
+        // Merge user options with defaults
+        Object.assign(this.options, options);
+        
+        // Store element and parent references
+        this.element = element;
+        this.parent = typeof parent === 'string' ? document.querySelector(parent) : parent;
+        
+        if (!this.element || !this.parent) {
+            throw new Error('Draggable requires valid element and parent');
+        }
+        
+        // Handle positioning priority
+        if (this.options.left !== null) this.options.right = null;
+        if (this.options.top !== null) this.options.bottom = null;
+        
+        // Disable context menu globally if not already disabled
+        this.setupContextMenu();
+        
+        // Create container and handle
+        this.createElements();
+        
+        // Setup event listeners for dragging
+        this.setupDragEvents();
+        
+        // Append element to container
+        this.appendChild(this.element);
+        
+        // Setup resize handling
+        this.setupResizeHandler();
+    }
+    
+    /**
+     * Disables the context menu globally if not already disabled.
+     * @private
+     */
+    setupContextMenu() {
+        if (!window.setCtxMenu) {
+            window.addEventListener("contextmenu", e => e.preventDefault());
+            window.setCtxMenu = true;
+        }
+    }
+    
+    /**
+     * Creates the draggable container and handle elements.
+     * @private
+     */
+    createElements() {
+        const { handleGap, zindex, handleColor, handleSize } = this.options;
+        
+        // Create container element
+        this.container = document.createElement('div');
+        this.container.classList.add('openlime-draggable');
+        this.container.style.display = 'flex';
+        this.container.style.gap = `${handleGap}px`;
+        this.container.style.position = 'absolute';
+        this.container.style.zIndex = zindex;
+        this.container.style.touchAction = 'none';
+        this.container.style.visibility = 'visible';
+        
+        // Create handle element
+        this.handle = document.createElement('div');
+        this.handle.style.borderRadius = '4px';
+        this.handle.style.backgroundColor = handleColor;
+        this.handle.style.padding = '0';
+        this.handle.style.width = `${handleSize}px`;
+        this.handle.style.height = `${handleSize}px`;
+        this.handle.style.zIndex = zindex + 5;
+        this.handle.style.cursor = 'grab';
+        
+        // Assemble elements
+        this.container.appendChild(this.handle);
+        this.parent.appendChild(this.container);
+    }
+    
+    /**
+     * Sets up event listeners for window resize.
+     * @private
+     */
+    setupResizeHandler() {
+        // Use debounced resize handler to improve performance
+        let resizeTimeout;
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => this.updatePosition(), 100);
+        });
+    }
+    
+    /**
+     * Sets up the drag event listeners for the handle.
+     * Manages pointer events for drag operations.
+     * @private
+     */
+    setupDragEvents() {
+        let offsetX, offsetY;
+        let isDragging = false;
+        
+        // Use bound methods to maintain this context
+        const dragStart = (e) => {
+            e.preventDefault();
+            
+            // Set dragging state
+            isDragging = true;
+            this.container.style.opacity = this.options.dragOpacity;
+            this.handle.style.cursor = 'grabbing';
+            
+            // Calculate offsets based on pointer position
+            offsetX = e.clientX - this.container.offsetLeft;
+            offsetY = e.clientY - this.container.offsetTop;
+            
+            // Add move event listener
+            document.addEventListener("pointermove", drag);
+        };
+        
+        const drag = (e) => {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            
+            // Calculate new position
+            const newLeft = Math.max(0, Math.min(
+                e.clientX - offsetX,
+                this.parent.offsetWidth - this.container.offsetWidth
+            ));
+            
+            const newTop = Math.max(0, Math.min(
+                e.clientY - offsetY,
+                this.parent.offsetHeight - this.container.offsetHeight
+            ));
+            
+            // Update position
+            this.container.style.left = `${newLeft}px`;
+            this.container.style.top = `${newTop}px`;
+            
+            // Update the option values based on new position
+            this.options.left = newLeft;
+            this.options.right = null;
+            this.options.top = newTop;
+            this.options.bottom = null;
+        };
+        
+        const dragEnd = () => {
+            if (!isDragging) return;
+            
+            // Reset visual state
+            this.container.style.opacity = '1.0';
+            this.handle.style.cursor = 'grab';
+            
+            // Clear dragging state
+            isDragging = false;
+            
+            // Remove move event listener
+            document.removeEventListener("pointermove", drag);
+        };
+        
+        // Attach event listeners
+        this.handle.addEventListener("pointerdown", dragStart);
+        document.addEventListener("pointerup", dragEnd);
+        document.addEventListener("pointercancel", dragEnd);
+    }
+    
+    /**
+     * Appends an HTML element to the draggable container and updates its position.
+     * @param {HTMLElement} element - The element to append to the draggable container
+     * @returns {Draggable} This instance for method chaining
+     */
+    appendChild(element) {
+        if (element) {
+            // Ensure the element has proper positioning
+            element.style.position = 'unset';
+            this.container.appendChild(element);
+            this.updatePosition();
+        }
+        return this;
+    }
+    
+    /**
+     * Updates the position of the draggable container based on its current options and parent dimensions.
+     * This method is called automatically on window resize and when elements are appended.
+     * @returns {Draggable} This instance for method chaining
+     */
+    updatePosition() {
+        const containerWidth = this.container.offsetWidth;
+        const containerHeight = this.container.offsetHeight;
+        const parentWidth = this.parent.offsetWidth;
+        const parentHeight = this.parent.offsetHeight;
+        
+        let top = 0;
+        let left = 0;
+        
+        // Calculate top/bottom position
+        if (this.options.top !== null) {
+            top = this.options.top;
+        } else if (this.options.bottom !== null) {
+            top = parentHeight - this.options.bottom - containerHeight;
+        }
+        
+        // Calculate left/right position
+        if (this.options.left !== null) {
+            left = this.options.left;
+        } else if (this.options.right !== null) {
+            left = parentWidth - this.options.right - containerWidth;
+        }
+        
+        // Ensure the element stays within parent bounds
+        top = Math.max(0, Math.min(top, parentHeight - containerHeight));
+        left = Math.max(0, Math.min(left, parentWidth - containerWidth));
+        
+        // Apply position
+        this.container.style.top = `${top}px`;
+        this.container.style.left = `${left}px`;
+        
+        return this;
+    }
+    
+    /**
+     * Shows the draggable element if it's hidden.
+     * @returns {Draggable} This instance for method chaining
+     */
+    show() {
+        this.container.style.visibility = 'visible';
+        return this;
+    }
+    
+    /**
+     * Hides the draggable element.
+     * @returns {Draggable} This instance for method chaining
+     */
+    hide() {
+        this.container.style.visibility = 'hidden';
+        return this;
+    }
+    
+    /**
+     * Changes the handle color.
+     * @param {string} color - New color for the handle (hex, rgb, rgba)
+     * @returns {Draggable} This instance for method chaining
+     */
+    setHandleColor(color) {
+        this.options.handleColor = color;
+        this.handle.style.backgroundColor = color;
+        return this;
+    }
+}
+
+export { Draggable }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

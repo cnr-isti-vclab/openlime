@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: ShaderMultispectral.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: ShaderMultispectral.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Shader } from './Shader.js'
+
+/**
+ * @typedef {Object} ShaderMultispectralOptions
+ * @property {string} [mode='rgb'] - Initial rendering mode ('rgb' or 'single_band')
+ * @property {boolean} [debug=false] - Enable debug output in console
+ * @property {number[]} [wavelength] - Array of wavelengths in nanometers
+ */
+
+/**
+ * ShaderMultispectral - WebGL2 shader implementation for multispectral visualization
+ * 
+ * This shader handles the real-time rendering of multispectral imagery with 
+ * various visualization modes and Color Twist Weight (CTW) transformations.
+ * It leverages WebGL2 features such as Uniform Buffer Objects (UBO) for
+ * efficient handling of CTW coefficients and texture() for consistent texture sampling.
+ * 
+ * Features:
+ * - Multiple rendering modes (RGB, single band)
+ * - UBO-based Color Twist Weights for spectral transformations
+ * - Optimized memory access by skipping zero-weight bands
+ * - Support for up to 33 spectral bands (11 RGB textures)
+ * - Compatible with both single images and tile-based formats (DeepZoom, etc.)
+ * 
+ * Technical implementation:
+ * - Efficient std140 UBO layout for CTW coefficients
+ * - Loop unrolling for faster rendering
+ * - Optimized band access with constant indices
+ * 
+ * @extends Shader
+ */
+class ShaderMultispectral extends Shader {
+  /**
+   * Creates a new multispectral shader
+   * 
+   * @param {ShaderMultispectralOptions} [options] - Configuration options
+   */
+  constructor(options) {
+    super({
+      autoSamplerDeclaration: false // We'll handle sampler declarations manually
+    });
+
+    // Set default properties
+    Object.assign(this, {
+      debug: true,
+      modes: ['rgb', 'single_band'],
+      mode: 'rgb',
+      wavelength: [],
+      nplanes: 0,        // Number of spectral planes (bands)
+      nimg: 0,           // Number of images (textures)
+      blockIndex: null,  // UBO block index
+      uboBuffer: null,   // UBO buffer object
+      MAX_SUPPORTED_PLANES: 33, // Maximum number of planes supported (33 bands = 11 RGB textures)
+      MAX_TEXTURES: 11         // Maximum number of textures we can use
+    });
+
+    // Apply user options
+    Object.assign(this, options);
+
+    // Set default uniforms
+    this.uniforms = {
+      selectedBand: { type: 'int', needsUpdate: true, value: 0 },
+      bandOutputChannel: { type: 'int', needsUpdate: true, value: 0 }, // 0=all/gray, 1=R, 2=G, 3=B
+    };
+
+    // Set default mode
+    this.setMode(this.mode);
+  }
+
+  /**
+   * Sets the rendering mode
+   * 
+   * Changes how multispectral data is visualized:
+   * - 'rgb': Uses CTW coefficients to create RGB visualization
+   * - 'single_band': Shows a single spectral band
+   * 
+   * @param {string} mode - Visualization mode ('rgb', 'single_band')
+   * @throws {Error} If mode is not recognized
+   */
+  setMode(mode) {
+    if (!this.modes.includes(mode))
+      throw new Error("Unknown mode: " + mode);
+
+    const prevMode = this.mode;
+    this.mode = mode;
+    this.needsUpdate = true;
+
+    // Emit update event with mode information
+    this.emit('update', { mode: mode, previousMode: prevMode });
+  }
+
+  /**
+   * Initializes shader with multispectral configuration
+   * 
+   * Sets up wavelength information, calculates the number of required textures,
+   * and configures samplers for each texture.
+   * 
+   * @param {Object} info - Multispectral configuration object from info.json
+   */
+  init(info) {
+    if (info.wavelength) {
+      this.wavelength = info.wavelength;
+      this.nplanes = this.wavelength.length;
+
+      if (this.nplanes > this.MAX_SUPPORTED_PLANES) {
+        console.warn(`Warning: ${this.nplanes} planes detected, but only ${this.MAX_SUPPORTED_PLANES} are supported. Some bands will be ignored.`);
+        this.nplanes = this.MAX_SUPPORTED_PLANES;
+      }
+
+      // Calculate how many textures we need (3 bands per texture)
+      this.nimg = Math.ceil(this.nplanes / 3);
+
+      // Clear existing samplers
+      this.samplers = [];
+
+      // Create samplers for each jpeg texture (up to MAX_TEXTURES)
+      const maxTextures = Math.min(this.nimg, this.MAX_TEXTURES);
+      for (let i = 0; i &lt; maxTextures; i++) {
+        this.samplers.push({ id: i, name: `plane${i}`, type: 'vec3' });
+      }
+    }
+
+    this.needsUpdate = true;
+  }
+
+  /**
+   * Sets up Uniform Buffer Object for Color Twist Weights
+   * 
+   * Creates and configures a UBO for efficient handling of CTW coefficients.
+   * Uses WebGL2's std140 layout for optimal performance.
+   * 
+   * @param {WebGL2RenderingContext} gl - WebGL2 context
+   * @param {Float32Array} redCTW - Red channel CTW coefficients
+   * @param {Float32Array} greenCTW - Green channel CTW coefficients
+   * @param {Float32Array} blueCTW - Blue channel CTW coefficients
+   */
+  setupCTW(gl, redCTW, greenCTW, blueCTW) {
+    if (!gl) return;
+
+    // Ensure we have a valid block index
+    if (this.blockIndex === null &amp;&amp; this.program) {
+      this.blockIndex = gl.getUniformBlockIndex(this.program, "CTWBlock");
+      if (this.blockIndex === gl.INVALID_INDEX) {
+        console.error("Failed to get UBO block index for CTWBlock");
+        return;
+      }
+    }
+
+    // Create UBO if it doesn't exist
+    if (!this.uboBuffer) {
+      this.uboBuffer = gl.createBuffer();
+    }
+
+    // Calculate buffer size for std140 layout
+    // Each array in std140 needs to be aligned to 16 bytes boundaries
+    // and each element may need vec4 (16 byte) alignment
+    const elementsPerArray = this.nplanes;
+    const bytesPerElement = 4; // float32 = 4 bytes
+
+    // Calculate std140 aligned size for a single array
+    // For an array of floats in std140, each element takes up 16 bytes (vec4 alignment)
+    const arrayStride = 16; // vec4 alignment in std140
+    const alignedArraySize = arrayStride * elementsPerArray;
+
+    // Total buffer size for 3 arrays (R, G, B)
+    const uboSize = alignedArraySize * 3;
+
+    // Bind and initialize the buffer
+    gl.bindBuffer(gl.UNIFORM_BUFFER, this.uboBuffer);
+    gl.bufferData(gl.UNIFORM_BUFFER, uboSize, gl.DYNAMIC_DRAW);
+
+    // Create temporary buffers with proper std140 alignment
+    const tempBuffer = new ArrayBuffer(uboSize);
+    const float32View = new Float32Array(tempBuffer);
+
+    // Fill temp buffer with std140 layout - R values
+    for (let i = 0; i &lt; elementsPerArray; i++) {
+      // Each float is at index i*4 (because we're skipping 3 padding floats per element)
+      float32View[i * 4] = redCTW[i];
+    }
+
+    // Fill temp buffer with std140 layout - G values
+    const gOffset = alignedArraySize / 4; // offset in float32 elements
+    for (let i = 0; i &lt; elementsPerArray; i++) {
+      float32View[gOffset + i * 4] = greenCTW[i];
+    }
+
+    // Fill temp buffer with std140 layout - B values
+    const bOffset = (alignedArraySize * 2) / 4; // offset in float32 elements
+    for (let i = 0; i &lt; elementsPerArray; i++) {
+      float32View[bOffset + i * 4] = blueCTW[i];
+    }
+
+    // Upload the entire aligned buffer
+    gl.bufferSubData(gl.UNIFORM_BUFFER, 0, float32View);
+
+    // Bind the buffer to binding point 0
+    gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, this.uboBuffer);
+
+    // Link the uniform block to the binding point
+    if (this.program &amp;&amp; this.blockIndex !== gl.INVALID_INDEX) {
+      gl.uniformBlockBinding(this.program, this.blockIndex, 0);
+    }
+
+    // Store current CTW values
+    this._currentCTW = {
+      red: redCTW,
+      green: greenCTW,
+      blue: blueCTW
+    };
+  }
+
+  /**
+   * Sets single band visualization
+   * 
+   * Configures the shader to display a specific spectral band
+   * on a chosen output channel.
+   * 
+   * @param {number} bandIndex - Index of band to view
+   * @param {number} outputChannel - Output channel (0=all/gray, 1=R, 2=G, 3=B)
+   * @throws {Error} If band index is out of range
+   */
+  setSingleBand(bandIndex, outputChannel = 0) {
+    if (bandIndex &lt; 0 || bandIndex >= this.nplanes) {
+      throw new Error(`Band index ${bandIndex} out of range [0-${this.nplanes - 1}]`);
+    }
+
+    this.setUniform('selectedBand', bandIndex);
+    this.setUniform('bandOutputChannel', outputChannel);
+    this.setMode('single_band');
+  }
+
+  /**
+   * Sets texture dimensions for calculations
+   * 
+   * No longer needed since we're using normalized coordinates
+   * @deprecated Use normalized texture coordinates instead
+   */
+  setTextureSize(size) {
+    // No longer needed - we use normalized coordinates
+  }
+
+  /**
+   * Generate fragment shader source code
+   * 
+   * Creates optimized GLSL code for multispectral visualization.
+   * Uses texture() with normalized coordinates instead of texelFetch.
+   * 
+   * @override
+   * @returns {string} GLSL fragment shader source code
+   */
+  fragShaderSrc() {
+    // Individual texture samplers declaration
+    let src = '';
+
+    // Declare each texture sampler individually
+    for (let i = 0; i &lt; this.nimg &amp;&amp; i &lt; this.MAX_TEXTURES; i++) {
+      src += `uniform sampler2D plane${i};\n`;
+    }
+
+    src += `
+// UBO for Color Twist Weights (CTW)
+// std140 layout requires special alignment
+layout(std140) uniform CTWBlock {
+  // Each element in std140 array is aligned to vec4 (16 bytes)
+  // We use a vec4 instead of float to make alignment explicit
+  vec4 ctwRedVec4[${this.nplanes}];
+  vec4 ctwGreenVec4[${this.nplanes}];
+  vec4 ctwBlueVec4[${this.nplanes}];
+};
+
+// Uniforms for single band mode
+uniform int selectedBand;
+uniform int bandOutputChannel;
+
+in vec2 v_texcoord;
+
+// Utility function to get a specific band from the multispectral data
+// Using texture() with normalized coordinates for better compatibility
+float getBand(int bandIndex) {
+  float result = 0.0;
+  
+  // Handling each possible band with constant indices
+`;
+
+    // Generate band access logic with constant indices
+    for (let i = 0; i &lt; this.nplanes; i++) {
+      const planeIndex = Math.floor(i / 3);
+      const channelIndex = i % 3;
+
+      if (planeIndex >= this.MAX_TEXTURES) continue; // Skip if we exceed maximum texture units
+
+      const channelComponent = channelIndex === 0 ? 'r' : (channelIndex === 1 ? 'g' : 'b');
+
+      src += `    if (bandIndex == ${i}) result = texture(plane${planeIndex}, v_texcoord).${channelComponent};\n`;
+    }
+
+    src += `
+   ${this.isLinear ? "" : "result = srgb2linear(result);"}      
+  return result; // Default return for out-of-range bands
+}
+
+// Check if a band has any non-zero CTW values to optimize memory access
+bool hasNonZeroCTW(int bandIndex) {
+  // Access the x component of each vec4 (where we store the actual value)
+  float r = ctwRedVec4[bandIndex].x;
+  float g = ctwGreenVec4[bandIndex].x;
+  float b = ctwBlueVec4[bandIndex].x;
+  return r != 0.0 || g != 0.0 || b != 0.0;
+}
+
+// Normalize CTW for a single channel
+float normalizeCTWChannel(vec4 ctwChannel[${this.nplanes}]) {
+  float totalWeight = 0.0;
+  
+  // Compute total absolute weight for the channel
+  for (int i = 0; i &lt; ${this.nplanes}; i++) {
+      totalWeight += abs(ctwChannel[i].x);
+  }
+  
+  // Return normalization factor (avoid division by zero)
+  return totalWeight > 0.0 ? totalWeight : 1.0;
+}
+
+vec4 data() {
+`;
+
+    // RGB mode implementation with advanced normalization
+    if (this.mode === 'rgb') {
+      src += `
+  // RGB mode - Linear combination with channel-specific normalization
+  vec3 rgb = vec3(0.0);
+  // Normalize weights for each channel
+  //float redNorm = normalizeCTWChannel(ctwRedVec4);
+  //float greenNorm = normalizeCTWChannel(ctwGreenVec4);
+  //float blueNorm = normalizeCTWChannel(ctwBlueVec4);
+  
+  // Calculate linear combination for all channels with optimization
+`;
+
+      // Unroll the loop for better performance and to use constant indices
+      for (let i = 0; i &lt; this.nplanes; i++) {
+        src += `
+  // Band ${i} processing
+  if (hasNonZeroCTW(${i})) {
+      float value${i} = getBand(${i});
+      rgb.r += value${i} * ctwRedVec4[${i}].x;
+      rgb.g += value${i} * ctwGreenVec4[${i}].x;
+      rgb.b += value${i} * ctwBlueVec4[${i}].x;
+  }`;
+      }
+
+      src += `
+  // Additional normalization to ensure output is in [0,1]
+  //vec3 absRgb = abs(rgb);
+  //float maxVal = max(max(absRgb.r, absRgb.g), absRgb.b);
+  
+  // Normalize to preserve relative magnitudes and sign
+  //if (maxVal > 1.0) {
+  //    rgb /= maxVal;
+  //}
+
+  return vec4(rgb, 1.0);
+`;
+    } else if (this.mode === 'single_band') {
+      src += `
+  // Single band mode - Show one band in a specific channel
+  float value = getBand(selectedBand);
+  
+  // Output to specified channel
+  vec3 rgb = vec3(value, value, value);
+  if (bandOutputChannel == 1) rgb = vec3(value, 0.0, 0.0);
+  else if (bandOutputChannel == 2) rgb = vec3(0.0, value, 0.0);
+  else if (bandOutputChannel == 3) rgb = vec3(0.0, 0.0, value);
+  return vec4(rgb, 1.0);
+`;
+    } else {
+      // Default fallback
+      src += `
+  // Default mode fallback
+  return vec4(0.5, 0.5, 0.5, 1.0);
+`;
+    }
+
+    src += `
+}`;
+
+    return src;
+  }
+
+  /**
+   * Creates WebGL shader program with UBO support
+   * 
+   * Extends the base shader program creation to setup UBO bindings.
+   * 
+   * @param {WebGL2RenderingContext} gl - WebGL2 context
+   * @override
+   */
+  createProgram(gl) {
+    super.createProgram(gl);
+
+    // Get uniform block index for CTW
+    if (this.program) {
+      this.blockIndex = gl.getUniformBlockIndex(this.program, "CTWBlock");
+
+      // Check if UBO is supported
+      if (this.blockIndex === gl.INVALID_INDEX) {
+        console.error("Uniform block CTWBlock not found");
+      } else {
+        // Bind the block to binding point 0
+        gl.uniformBlockBinding(this.program, this.blockIndex, 0);
+      }
+    }
+  }
+}
+
+export { ShaderMultispectral }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

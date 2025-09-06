@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: LightSphereController.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: LightSphereController.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">/*
+ * @fileoverview
+ * LightSphereController module provides a spherical interface for controlling light direction.
+ * It creates a circular canvas-based UI element that allows users to interactively adjust
+ * lighting direction through pointer interactions.
+ */
+
+/**
+ * LightSphereController creates an interactive sphere UI for light direction control.
+ * Features:
+ * - Circular interface with gradient background
+ * - Pointer-based interaction for light direction
+ * - Configurable size, position, and colors
+ * - Minimum theta angle constraint
+ * - Visual feedback with gradient and marker
+ */
+class LightSphereController {
+    /**
+     * Creates a new LightSphereController instance.
+     * @param {HTMLElement|string} parent - Parent element or selector where the controller will be mounted
+     * @param {Object} [options] - Configuration options
+     * @param {number} [options.width=128] - Width of the controller in pixels
+     * @param {number} [options.height=128] - Height of the controller in pixels
+     * @param {number} [options.top=60] - Top position offset in pixels
+     * @param {number} [options.right=0] - Right position offset in pixels
+     * @param {number} [options.thetaMin=0] - Minimum theta angle in degrees (constrains interaction radius)
+     * @param {string} [options.colorSpot='#ffffff'] - Color of the central spot in the gradient
+     * @param {string} [options.colorBkg='#0000ff'] - Color of the outer edge of the gradient
+     * @param {string} [options.colorMark='#ff0000'] - Color of the position marker
+     */    
+    constructor(parent, options) {        
+        options = Object.assign({
+            width: 128,
+            height: 128,
+            top: 60,
+            right: 0,
+            thetaMin: 0,
+            colorSpot: '#ffffff',
+            colorBkg: '#0000ff',
+            colorMark: '#ff0000'
+        }, options);
+        Object.assign(this, options);
+        this.parent = parent;
+        this.layers = [];
+        if (typeof (this.parent) == 'string')
+            this.parent = document.querySelector(this.parent);
+
+        this.lightDir = [0, 0];
+
+        this.containerElement = document.createElement('div');
+        this.containerElement.style = `padding: 0; position: absolute; width: ${this.width}px; height: ${this.height}px; top:${this.top}px; right:${this.right}px; z-index: 200; touch-action: none; visibility: visible;`;
+        this.containerElement.classList.add('openlime-lsc');
+
+        const sd = (this.width * 0.5) * (1 - 0.8);
+        this.dlCanvas = document.createElement('canvas');
+        this.dlCanvas.width = this.width;
+        this.dlCanvas.height = this.height;
+        // this.dlCanvas.style = ''
+        this.dlCanvasCtx = this.dlCanvas.getContext("2d");
+        this.dlGradient = '';
+        this.containerElement.appendChild(this.dlCanvas);
+        this.parent.appendChild(this.containerElement);
+
+        this.r = this.width * 0.5;
+        this.thetaMinRad = this.thetaMin / 180.0 * Math.PI;
+        this.rmax = this.r * Math.cos(this.thetaMinRad);
+
+        this.interactLightDir(this.width * 0.5, this.height * 0.5);
+
+        this.pointerDown = false;
+        this.dlCanvas.addEventListener("pointerdown", (e) => {
+            this.pointerDown = true;
+            const rect = this.dlCanvas.getBoundingClientRect();
+            let clickPosX =
+                (this.dlCanvas.width * (e.clientX - rect.left)) /
+                rect.width;
+            let clickPosY =
+                (this.dlCanvas.height * (e.clientY - rect.top)) /
+                rect.height;
+            this.interactLightDir(clickPosX, clickPosY);
+            e.preventDefault();
+        });
+
+        this.dlCanvas.addEventListener("pointermove", (e) => {
+            if (this.pointerDown) {
+                const rect = this.dlCanvas.getBoundingClientRect();
+                let clickPosX =
+                    (this.dlCanvas.width * (e.clientX - rect.left)) /
+                    rect.width;
+                let clickPosY =
+                    (this.dlCanvas.height * (e.clientY - rect.top)) /
+                    rect.height;
+                this.interactLightDir(clickPosX, clickPosY);
+                e.preventDefault();
+            }
+        });
+
+        this.dlCanvas.addEventListener("pointerup", (e) => {
+            this.pointerDown = false;
+        });
+
+        this.dlCanvas.addEventListener("pointerout", (e) => {
+            this.pointerDown = false;
+        });
+
+    }
+
+    /**
+     * Adds a layer to be controlled by this light sphere.
+     * The layer must support light control operations.
+     * @param {Layer} layer - Layer to be controlled
+     */    
+    addLayer(l) {
+        this.layers.push(l);
+    }
+
+    /**
+     * Makes the controller visible.
+     * @returns {string} The visibility style value
+     */    
+    show() {
+        return this.containerElement.style.visibility = 'visible';
+    }
+
+    /**
+     * Hides the controller.
+     * @returns {string} The visibility style value
+     */    
+    hide() {
+        return this.containerElement.style.visibility = 'hidden';
+    }
+
+    /**
+     * Computes the radial gradient based on current light direction.
+     * Creates a gradient that provides visual feedback about the light position.
+     * @private
+     */    
+    computeGradient() {
+        const x = (this.lightDir[0] + 1.0) * this.dlCanvas.width * 0.5;
+        const y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
+        this.dlGradient = this.dlCanvasCtx.createRadialGradient(
+            x, y, this.dlCanvas.height / 8.0,
+            x, y, this.dlCanvas.width / 1.2
+        );
+        this.dlGradient.addColorStop(0, this.colorSpot);
+        this.dlGradient.addColorStop(1, this.colorBkg);
+    }
+
+    /**
+     * Handles interaction to update light direction.
+     * Converts pointer position to light direction vector while respecting constraints.
+     * @private
+     * @param {number} x - X coordinate in canvas space
+     * @param {number} y - Y coordinate in canvas space
+     */    
+    interactLightDir(x, y) {
+        let xc = x - this.r;
+        let yc = this.r - y;
+        const phy = Math.atan2(yc, xc);
+        let l = Math.sqrt(xc * xc + yc * yc);
+        l = l > this.rmax ? this.rmax : l;
+        xc = l * Math.cos(this.thetaMinRad) * Math.cos(phy);
+        yc = l * Math.cos(this.thetaMinRad) * Math.sin(phy);
+        x = xc + this.r;
+        y = this.r - yc;
+        this.lightDir[0] = 2 * (x / this.dlCanvas.width - 0.5);
+        this.lightDir[1] = 2 * (1 - y / this.dlCanvas.height - 0.5);
+        // console.log('LD ', this.lightDir);
+        for (const l of this.layers) {
+            if (l.controls.light) l.setControl('light', this.lightDir, 5);
+        }
+        this.computeGradient();
+        this.drawLightSelector(x, y);
+    }
+
+    /**
+     * Draws the light direction selector UI.
+     * Renders:
+     * - Circular background with gradient
+     * - Position marker at current light direction
+     * @private
+     * @param {number} x - X coordinate for position marker
+     * @param {number} y - Y coordinate for position marker
+     */    
+    drawLightSelector(x, y) {
+        this.dlCanvasCtx.clearRect(0, 0, this.dlCanvas.width, this.dlCanvas.height);
+        this.dlCanvasCtx.beginPath();
+
+        this.dlCanvasCtx.arc(
+            this.dlCanvas.width / 2,
+            this.dlCanvas.height / 2,
+            this.dlCanvas.width / 2,
+            0,
+            2 * Math.PI
+        );
+        this.dlCanvasCtx.fillStyle = this.dlGradient;
+        this.dlCanvasCtx.fill();
+
+        this.dlCanvasCtx.beginPath();
+        this.dlCanvasCtx.arc(x, y, this.dlCanvas.width / 30, 0, 2 * Math.PI);
+        this.dlCanvasCtx.strokeStyle = this.colorMark;
+        this.dlCanvasCtx.lineWidth = 2;
+        this.dlCanvasCtx.stroke();
+    }
+}
+/**
+ * Example usage of LightSphereController:
+ * ```javascript
+ * // Create controller with custom options
+ * const lightController = new LightSphereController('#container', {
+ *     width: 200,
+ *     height: 200,
+ *     top: 80,
+ *     right: 20,
+ *     thetaMin: 15,
+ *     colorSpot: '#ffff00',
+ *     colorBkg: '#000066',
+ *     colorMark: '#ff3333'
+ * });
+ * 
+ * // Add layers to be controlled
+ * lightController.addLayer(layer1);
+ * lightController.addLayer(layer2);
+ * 
+ * // Show/hide controller
+ * lightController.show();
+ * lightController.hide();
+ * ```
+ * 
+ * @property {number[]} lightDir - Current light direction vector [x, y]
+ * @property {HTMLElement} containerElement - Main container element
+ * @property {HTMLCanvasElement} dlCanvas - Canvas element for drawing
+ * @property {CanvasRenderingContext2D} dlCanvasCtx - Canvas 2D rendering context
+ * @property {CanvasGradient} dlGradient - Current radial gradient
+ * @property {number} r - Radius of the control sphere
+ * @property {number} thetaMinRad - Minimum theta angle in radians
+ * @property {number} rmax - Maximum interaction radius based on thetaMin
+ * @property {boolean} pointerDown - Whether pointer is currently pressed
+ * @property {Layer[]} layers - Array of layers being controlled
+ */
+
+export { LightSphereController }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

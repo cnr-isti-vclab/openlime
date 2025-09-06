@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: LayerBRDF.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: LayerBRDF.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Layer } from './Layer.js'
+import { Raster } from './Raster.js'
+import { ShaderBRDF } from './ShaderBRDF.js'
+
+/**
+ * @typedef {Object} LayerBRDFOptions
+ * @property {Object} channels - Required channels for BRDF rendering
+ * @property {string} channels.kd - URL to diffuse color map (required)
+ * @property {string} channels.ks - URL to specular color map (optional)
+ * @property {string} channels.normals - URL to normal map (required)
+ * @property {string} channels.gloss - URL to glossiness/roughness map (optional)
+ * @property {Object} [colorspaces] - Color space definitions for material properties
+ * @property {('linear'|'srgb')} [colorspaces.kd='linear'] - Color space for diffuse map
+ * @property {('linear'|'srgb')} [colorspaces.ks='linear'] - Color space for specular map
+ * @property {number} [brightness=1.0] - Overall brightness adjustment
+ * @property {number} [gamma=2.2] - Gamma correction value
+ * @property {number[]} [alphaLimits=[0.01, 0.5]] - Range for glossiness/roughness
+ * @property {number[]} [monochromeMaterial=[0.80, 0.79, 0.75]] - RGB color for monochrome rendering
+ * @property {number} [kAmbient=0.1] - Ambient light coefficient
+ * @extends LayerOptions
+ */
+
+/**
+ * LayerBRDF implements real-time BRDF (Bidirectional Reflectance Distribution Function) rendering.
+ * 
+ * The BRDF model describes how light reflects off a surface, taking into account:
+ * - Diffuse reflection (rough, matte surfaces)
+ * - Specular reflection (mirror-like reflections)
+ * - Surface normals (microscopic surface orientation)
+ * - Glossiness/roughness (surface micro-structure)
+ * 
+ * Features:
+ * - Real-time light direction control
+ * - Multiple material channels support
+ * - Customizable material properties
+ * - Interactive lighting model
+ * - Gamma correction
+ * - Ambient light component
+ * 
+ * Technical implementation:
+ * - Uses normal mapping for surface detail
+ * - Supports both linear and sRGB color spaces
+ * - Implements spherical light projection
+ * - Handles multi-channel textures
+ * - GPU-accelerated rendering
+ * 
+ * @extends Layer
+ * 
+ * @example
+ * ```javascript
+ * // Create BRDF layer with all channels
+ * const brdfLayer = new OpenLIME.LayerBRDF({
+ *   channels: {
+ *     kd: 'diffuse.jpg',
+ *     ks: 'specular.jpg',
+ *     normals: 'normals.jpg',
+ *     gloss: 'gloss.jpg'
+ *   },
+ *   colorspaces: {
+ *     kd: 'srgb',
+ *     ks: 'linear'
+ *   },
+ *   brightness: 1.2,
+ *   gamma: 2.2
+ * });
+ * 
+ * // Update light direction
+ * brdfLayer.setLight([0.5, 0.5], 500, 'ease-out');
+ * ```
+ */
+class LayerBRDF extends Layer {
+	/**
+	 * Creates a new LayerBRDF instance
+	 * @param {LayerBRDFOptions} options - Configuration options
+	 * @throws {Error} If required channels (kd, normals) are not provided
+	 * @throws {Error} If rasters option is not empty
+	 */
+	constructor(options) {
+		options = Object.assign({
+			brightness: 1.0,
+			gamma: 2.2,
+			alphaLimits: [0.01, 0.5],
+			monochromeMaterial: [0.80, 0.79, 0.75],
+			kAmbient: 0.1
+		}, options);
+		super(options);
+
+		if (Object.keys(this.rasters).length != 0)
+			throw "Rasters options should be empty!";
+
+		if (!this.channels)
+			throw "channels option is required";
+
+		if (!this.channels.kd || !this.channels.normals)
+			throw "kd and normals channels are required";
+
+		if (!this.colorspaces) {
+			console.log("LayerBRDF: missing colorspaces: force both to linear");
+			this.colorspaces['kd'] = 'linear';
+			this.colorspaces['ks'] = 'linear';
+		}
+
+		let id = 0;
+		let urls = [];
+		let samplers = [];
+		let brdfSamplersMap = {
+			kd: { format: 'vec3', name: 'uTexKd' },
+			ks: { format: 'vec3', name: 'uTexKs' },
+			normals: { format: 'vec3', name: 'uTexNormals' },
+			gloss: { format: 'float', name: 'uTexGloss' }
+		};
+		for (let c in this.channels) {
+			this.rasters.push(new Raster({ format: brdfSamplersMap[c].format, isLinear: true }));
+			samplers.push({ 'id': id, 'name': brdfSamplersMap[c].name });
+			urls[id] = this.channels[c];
+			id++;
+		}
+
+		this.layout.setUrls(urls);
+		this.addControl('light', [0, 0]); // This is a projection to the z=0 plane.
+
+		let shader = new ShaderBRDF({
+			'label': 'Rgb',
+			'samplers': samplers,
+			'colorspaces': this.colorspaces,
+			'brightness': this.brightness,
+			'gamma': this.gamma,
+			'alphaLimits': this.alphaLimits,
+			'monochromeMaterial': this.monochromeMaterial,
+			'kAmbient': this.kAmbient
+		});
+
+		this.shaders['brdf'] = shader;
+		this.setShader('brdf');
+	}
+
+	/**
+	 * Projects a 2D point onto a sphere surface
+	 * Used for converting 2D mouse/touch input to 3D light direction
+	 * @param {number[]} p - 2D point [x, y] in range [-1, 1]
+	 * @returns {number[]} 3D normalized vector [x, y, z] on sphere surface
+	 * @static
+	 */
+	static projectToSphere(p) {
+		let px = p[0];
+		let py = p[1];
+
+		let r2 = px * px + py * py;
+		if (r2 > 1.0) {
+			let r = Math.sqrt(r2);
+			px /= r;
+			py /= r;
+			r2 = 1.0;
+		}
+		let z = Math.sqrt(1 - r2);
+		return [px, py, z];
+	}
+
+	/**
+	 * Projects a 2D point onto a flattened sphere using SGI trackball algorithm.
+	 * This provides more intuitive light control by avoiding acceleration near edges.
+	 * Based on SIGGRAPH 1988 paper on SGI trackball implementation.
+	 * 
+	 * @param {number[]} p - 2D point [x, y] in range [-1, 1]
+	 * @returns {number[]} 3D normalized vector [x, y, z] on flattened sphere
+	 * @static
+	 */
+	static projectToFlattenedSphere(p) {
+		const R = 0.8; const R2 = R * R;
+		const RR = R * Math.SQRT1_2; const RR2 = RR * RR;
+
+		let px = Math.min(Math.max(p[0], -1.0), 1.0);
+		let py = Math.min(Math.max(p[1], -1.0), 1.0);
+		let z = 0.0;
+		let d2 = px * px + py * py;
+		if (d2 &lt; RR2) {
+			// Inside sphere
+			z = Math.sqrt(R2 - d2);
+		} else {
+			// On hyperbola
+			z = RR2 / Math.sqrt(d2);
+		}
+		let r = Math.sqrt(d2 + z * z);
+		return [px / r, py / r, z / r];
+	}
+
+	/**
+	 * Sets the light direction with optional animation
+	 * @param {number[]} light - 2D vector [x, y] representing light direction
+	 * @param {number} [dt] - Animation duration in milliseconds
+	 * @param {string} [easing='linear'] - Animation easing function
+	 */
+	setLight(light, dt, easing = 'linear') {
+		this.setControl('light', light, dt, easing);
+	}
+
+	/**
+	 * Updates light control interpolation and shader uniforms
+	 * @returns {boolean} Whether all interpolations are complete
+	 * @override
+	 * @private
+	 */
+	interpolateControls() { // FIXME Wrong normalization
+		let done = super.interpolateControls();
+		//		let light = LayerBRDF.projectToSphere(this.controls['light'].current.value);
+		let light = LayerBRDF.projectToFlattenedSphere(this.controls['light'].current.value);
+		this.shader.setLight([light[0], light[1], light[2], 0]);
+		return done;
+	}
+}
+
+
+/**
+ * Register this layer type with the Layer factory
+ * @type {Function}
+ * @private
+ */
+Layer.prototype.types['brdf'] = (options) => { return new LayerBRDF(options); }
+
+export { LayerBRDF }
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

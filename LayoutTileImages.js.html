@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: LayoutTileImages.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: LayoutTileImages.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Layout } from './Layout.js';
+import { BoundingBox } from './BoundingBox.js';
+import { Tile } from './Tile.js';
+import { Annotation } from './Annotation.js';
+/*
+ * @fileoverview
+ * LayoutTileImages module provides management for collections of image tiles with associated regions.
+ * This layout type is specialized for handling multiple independent image tiles, each with their own
+ * position and dimensions, rather than a regular grid of tiles like LayoutTiles.
+ */
+
+/*
+ * @typedef {Object} TileDescriptor
+ * Properties expected in tile descriptors:
+ * @property {boolean} visible - Whether the tile should be rendered
+ * @property {Object} region - Position and dimensions of the tile
+ * @property {number} region.x - X coordinate of tile's top-left corner
+ * @property {number} region.y - Y coordinate of tile's top-left corner
+ * @property {number} region.w - Width of the tile
+ * @property {number} region.h - Height of the tile
+ * @property {string} image - URL or path to the tile's image
+ * @property {number} [publish] - Publication status (1 = published)
+ */
+
+/**
+ * LayoutTileImages class manages collections of image tiles with associated regions.
+ * Each tile represents an independent image with its own position and dimensions in the layout space.
+ * Tiles can be individually shown or hidden and are loaded from annotation files or external descriptors.
+ * @extends Layout
+ */
+class LayoutTileImages extends Layout {
+	/**
+	 * Creates a new LayoutTileImages instance.
+	 * @param {string|null} url - URL to the annotation file containing tile descriptors, or null if descriptors will be set later
+	 * @param {string} type - The layout type (should be 'tile_images')
+	 * @param {Object} [options] - Configuration options inherited from Layout
+	 */
+	constructor(url, type, options) {
+		super(url, null, options);
+		this.setDefaults(type);
+		this.init(url, type, options);
+
+		// Contain array of records with at least visible,region,image (url of the image). 
+		// Can be also a pointer to annotation array set from outside with setTileDescriptors()
+		this.tileDescriptors = [];
+		this.box = new BoundingBox();
+
+		if (url != null) {
+			// Read data from annotation file
+			this.loadDescriptors(url);
+		}
+	}
+
+	/**
+	 * Gets the tile size. For this layout, tiles don't have a fixed size.
+	 * @returns {number[]} Returns [0, 0] as tiles have variable sizes
+	 */
+	getTileSize() {
+		return [0, 0];
+	}
+
+	/**
+	 * Loads tile descriptors from an annotation file.
+	 * @private
+	 * @async
+	 * @param {string} url - URL of the annotation file
+	 * @fires Layout#ready - When descriptors are loaded and processed
+	 * @fires Layout#updateSize - When bounding box is computed
+	 */
+	async loadDescriptors(url) {
+		// Load tile descriptors from annotation file
+		let response = await fetch(url);
+		if (!response.ok) {
+			this.status = "Failed loading " + url + ": " + response.statusText;
+			return;
+		}
+		this.tileDescriptors = await response.json();
+		if (this.tileDescriptors.status == 'error') {
+			alert("Failed to load annotations: " + this.tileDescriptors.msg);
+			return;
+		}
+		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
+		this.tileDescriptors = this.tileDescriptors.map(a => new Annotation(a));
+		for (let a of this.tileDescriptors) {
+			if (a.publish != 1)
+				a.visible = false;
+		}
+		this.computeBoundingBox();
+		this.emit('updateSize');
+
+		if (this.path == null) {
+			this.setPathFromUrl(url);
+		}
+
+		this.status = 'ready';
+		this.emit('ready');
+	}
+
+	/**
+	 * Computes the bounding box containing all tile regions.
+	 * Updates the layout's box property to encompass all tile regions.
+	 * @private
+	 */
+	computeBoundingBox() {
+		this.box = new BoundingBox();
+		for (let a of this.tileDescriptors) {
+			let r = a.region;
+			let b = new BoundingBox({ xLow: r.x, yLow: r.y, xHigh: r.x + r.w, yHigh: r.y + r.h });
+			this.box.mergeBox(b);
+		}
+	}
+
+	/**
+	 * Gets the layout's bounding box.
+	 * @returns {BoundingBox} The bounding box containing all tile regions
+	 */
+	boundingBox() {
+		return this.box;
+	}
+
+	/**
+	 * Sets the base path for tile URLs based on the annotation file location.
+	 * @private
+	 * @param {string} url - URL of the annotation file
+	 */
+	setPathFromUrl(url) {
+		// Assume annotations in dir of annotation.json + /annot/
+		const myArray = url.split("/");
+		const N = myArray.length;
+		this.path = "";
+		for (let i = 0; i &lt; N - 1; ++i) {
+			this.path += myArray[i] + "/";
+		}
+		this.getTileURL = (id, tile) => {
+			const url = this.path + '/' + this.tileDescriptors[tile.index].image;
+			return url;
+		}
+		//this.path += "/annot/";
+	}
+
+	/**
+	 * Sets tile descriptors programmatically instead of loading from a file.
+	 * @param {Annotation[]} tileDescriptors - Array of tile descriptors
+	 * @fires Layout#ready
+	 */
+	setTileDescriptors(tileDescriptors) {
+		this.tileDescriptors = tileDescriptors;
+
+		this.status = 'ready';
+		this.emit('ready');
+	}
+
+	/**
+	 * Gets the URL for a specific tile.
+	 * @param {number} id - Channel/raster ID
+	 * @param {TileObj} tile - Tile object
+	 * @returns {string} URL to fetch tile image
+	 */
+	getTileURL(id, tile) {
+		const url = this.path + '/' + this.tileDescriptors[id].image;
+		return url;
+	}
+
+	/**
+	 * Sets visibility for a specific tile.
+	 * @param {number} index - Index of the tile
+	 * @param {boolean} visible - Visibility state to set
+	 */
+	setTileVisible(index, visible) {
+		this.tileDescriptors[index].visible = visible;
+	}
+
+	/**
+	 * Sets visibility for all tiles.
+	 * @param {boolean} visible - Visibility state to set for all tiles
+	 */
+	setAllTilesVisible(visible) {
+		const N = this.tileCount();
+
+		for (let i = 0; i &lt; N; ++i) {
+			this.tileDescriptors[i].visible = visible;
+		}
+	}
+
+	/**
+	 * Maps tile coordinates to a linear index.
+	 * In this layout, x directly maps to the index as tiles are stored in a flat list.
+	 * @param {number} level - Zoom level (unused in this layout)
+	 * @param {number} x - X coordinate (used as index)
+	 * @param {number} y - Y coordinate (unused in this layout)
+	 * @returns {number} Linear index of the tile
+	 */
+	index(level, x, y) {
+		// Map x to index (flat list)
+		return x;
+	}
+
+	/**
+	 * Gets coordinates for a tile in both image space and texture space.
+	 * @param Obj} tile - The tile to get coordinates for
+	 * @returns {Object} Coordinate data
+	 * @returns {Float32Array} .coords - Image space coordinates [x,y,z, x,y,z, x,y,z, x,y,z]
+	 * @returns {Float32Array} .tcoords - Texture coordinates [u,v, u,v, u,v, u,v]
+	 */
+	tileCoords(tile) {
+		const r = this.tileDescriptors[tile.index].region;
+		const x0 = r.x;
+		const y0 = r.y
+		const x1 = x0 + r.w;
+		const y1 = y0 + r.h;
+
+		return {
+			coords: new Float32Array([x0, y0, 0, x0, y1, 0, x1, y1, 0, x1, y0, 0]),
+
+			//careful: here y is inverted due to textures not being flipped on load (Firefox fault!).
+			tcoords: new Float32Array([0, 1, 0, 0, 1, 0, 1, 1])
+		};
+	}
+
+	/**
+	 * Determines which tiles are needed for the current view.
+	 * @param {Viewport} viewport - Current viewport
+	 * @param {Transform} transform - Current transform
+	 * @param {Transform} layerTransform - Layer-specific transform
+	 * @param {number} border - Border size in viewport units
+	 * @param {number} bias - Resolution bias (unused in this layout)
+	 * @param {Map&lt;number,Tile>} tiles - Currently available tiles
+	 * @param {number} [maxtiles=8] - Maximum number of tiles to return
+	 * @returns {TileObj[]} Array of needed tiles sorted by distance to viewport center
+	 */
+	needed(viewport, transform, layerTransform, border, bias, tiles, maxtiles = 8) {
+		//look for needed nodes and prefetched nodes (on the pos destination
+		const box = this.getViewportBox(viewport, transform, layerTransform);
+
+		let needed = [];
+		let now = performance.now();
+
+		// Linear scan of all the potential tiles
+		const N = this.tileCount();
+		const flipY = true;
+		for (let x = 0; x &lt; N; x++) {
+			let index = this.index(0, x, 0);
+			let tile = tiles.get(index) || this.newTile(index);
+
+			if (this.intersects(box, index, flipY)) {
+				tile.time = now;
+				tile.priority = this.tileDescriptors[index].visible ? 10 : 1;
+				if (tile.missing === null)
+					needed.push(tile);
+			}
+		}
+		let c = box.center();
+		//sort tiles by distance to the center TODO: check it's correct!
+		needed.sort(function (a, b) { return Math.abs(a.x - c[0]) + Math.abs(a.y - c[1]) - Math.abs(b.x - c[0]) - Math.abs(b.y - c[1]); });
+
+		return needed;
+	}
+
+	/**
+	 * Gets tiles currently available for rendering.
+	 * @param {Viewport} viewport - Current viewport
+	 * @param {Transform} transform - Current transform
+	 * @param {Transform} layerTransform - Layer-specific transform
+	 * @param {number} border - Border size in viewport units
+	 * @param {number} bias - Resolution bias (unused in this layout)
+	 * @param {Map&lt;number,Tile>} tiles - Available tiles
+	 * @returns {Object.&lt;number,Tile>} Map of tile index to tile object for visible, loaded tiles
+	 */
+	available(viewport, transform, layerTransform, border, bias, tiles) {
+		//find box in image coordinates where (0, 0) is in the upper left corner.
+		const box = this.getViewportBox(viewport, transform, layerTransform);
+
+		let torender = [];
+
+		// Linear scan of all the potential tiles
+		const N = this.tileCount();
+		const flipY = true;
+		for (let x = 0; x &lt; N; x++) {
+			let index = this.index(0, x, 0);
+
+			if (this.tileDescriptors[index].visible &amp;&amp; this.intersects(box, index, flipY)) {
+				if (tiles.has(index)) {
+					let tile = tiles.get(index);
+					if (tile.missing == 0) {
+						torender[index] = tile;
+					}
+				}
+			}
+		}
+
+		return torender;
+	}
+
+	/**
+	 * Creates a new tile instance with properties from its descriptor.
+	 * @param {number} index - Index of the tile descriptor
+	 * @returns {TileObj} New tile instance with region and image properties
+	 */
+	newTile(index) {
+		let tile = new Tile();
+		tile.index = index;
+
+		let descriptor = this.tileDescriptors[index];
+		tile.image = descriptor.image;
+		Object.assign(tile, descriptor.region);
+		return tile;
+	}
+
+	/**
+	 * Checks if a tile's region intersects with a given box.
+	 * @private
+	 * @param {BoundingBox} box - Box to check intersection with
+	 * @param {number} index - Index of the tile to check
+	 * @param {boolean} [flipY=true] - Whether to flip Y coordinates for texture coordinate space
+	 * @returns {boolean} True if the tile intersects the box
+	 */
+	intersects(box, index, flipY = true) {
+		const r = this.tileDescriptors[index].region;
+		const xLow = r.x;
+		const yLow = r.y;
+		const xHigh = xLow + r.w;
+		const yHigh = yLow + r.h;
+		const boxYLow = flipY ? -box.yHigh : box.yLow;
+		const boxYHigh = flipY ? -box.yLow : box.yHigh;
+
+		return xLow &lt; box.xHigh &amp;&amp; yLow &lt; boxYHigh &amp;&amp; xHigh > box.xLow &amp;&amp; yHigh > boxYLow;
+	}
+
+	/**
+	 * Gets the total number of tiles in the layout.
+	 * @returns {number} Number of tile descriptors
+	 */
+	tileCount() {
+		return this.tileDescriptors.length;
+	}
+
+}
+/**
+ * @event Layout#ready
+ * @description Fired when the layout is ready for rendering.
+ * This occurs when:
+ * - Tile descriptors are loaded from annotation file
+ * - Tile descriptors are set programmatically
+ */
+
+/**
+ * @event Layout#updateSize
+ * @description Fired when the layout size changes and scene extension needs updating.
+ * This occurs when:
+ * - Tile descriptors are loaded and bounding box is computed
+ */
+
+// Register the tile_images layout type
+Layout.prototype.types['tile_images'] = (url, type, options) => { return new LayoutTileImages(url, type, options); };
+
+export { LayoutTileImages }
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

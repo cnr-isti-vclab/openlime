@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: LensDashboard.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: LensDashboard.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { CoordinateSystem } from "./CoordinateSystem";
+import { Util } from "./Util"
+
+/*
+ * @fileoverview
+ * LensDashboard module provides functionality for creating and managing an interactive lens interface
+ * in OpenLIME. It handles the lens border, SVG masking, and positioning of UI elements around the lens.
+ */
+
+/**
+ * @enum {string}
+ * Defines rendering modes for lens and background areas.
+ * @property {string} draw - "fill:white;" Shows content in the specified area
+ * @property {string} hide - "fill:black;" Hides content in the specified area
+ */
+const RenderingMode = {
+	draw: "fill:white;",
+	hide: "fill:black;"
+};
+
+/**
+ * Callback function fired by a 'click' event on a lens dashboard element.
+ * @function taskCallback
+ * @param {Event} e The DOM event.
+ */
+
+/**
+ * LensDashboard class creates an interactive container for a lens interface.
+ * It provides:
+ * - A square HTML container that moves with the lens
+ * - SVG-based circular lens border with drag interaction for resizing
+ * - Masking capabilities for controlling content visibility inside/outside the lens
+ * - Ability to add HTML elements positioned relative to the lens
+ */
+class LensDashboard {
+	/**
+	 * Creates a new LensDashboard instance.
+	 * @param {Viewer} viewer - The OpenLIME viewer instance
+	 * @param {Object} [options] - Configuration options
+	 * @param {number} [options.containerSpace=80] - Extra space around the lens for dashboard elements (in pixels)
+	 * @param {number[]} [options.borderColor=[0.078, 0.078, 0.078, 1]] - RGBA color for lens border
+	 * @param {number} [options.borderWidth=12] - Width of the lens border (in pixels)
+	 * @param {LayerSvgAnnotation} [options.layerSvgAnnotation=null] - Associated SVG annotation layer
+	 */
+	constructor(viewer, options) {
+		options = Object.assign({
+			containerSpace: 80,
+			borderColor: [0.078, 0.078, 0.078, 1],
+			borderWidth: 12,
+			layerSvgAnnotation: null
+		}, options);
+		Object.assign(this, options);
+
+		this.lensLayer = null;
+		this.viewer = viewer;
+		this.elements = [];
+		this.container = document.createElement('div');
+		this.container.style = `position: absolute; width: 50px; height: 50px; background-color: rgb(200, 0, 0, 0.0); pointer-events: none`;
+		this.container.classList.add('openlime-lens-dashboard');
+		this.viewer.containerElement.appendChild(this.container);
+
+		const col = [255.0 * this.borderColor[0], 255.0 * this.borderColor[1], 255.0 * this.borderColor[2], 255.0 * this.borderColor[3]];
+		this.lensElm = Util.createSVGElement('svg', { viewBox: `0 0 100 100` });
+		const circle = Util.createSVGElement('circle', { cx: 10, cy: 10, r: 50 });
+		circle.setAttributeNS(null, 'style', `position:absolute; visibility: visible; fill: none; stroke: rgb(${col[0]},${col[1]},${col[2]},${col[3]}); stroke-width: ${this.borderWidth}px;`);
+		circle.setAttributeNS(null, 'shape-rendering', 'geometricPrecision');
+		this.lensElm.appendChild(circle);
+		this.container.appendChild(this.lensElm);
+		this.setupCircleInteraction(circle);
+		this.lensBox = { x: 0, y: 0, r: 0, w: 0, h: 0 };
+
+		this.svgElement = null;
+		this.svgMaskId = 'openlime-image-mask';
+		this.svgMaskUrl = `url(#${this.svgMaskId})`;
+
+		this.noupdate = false;
+	}
+
+	/**
+	 * Sets up interactive lens border resizing.
+	 * Creates event listeners for pointer events to allow users to drag the lens border to resize.
+	 * @private
+	 * @param {SVGElement} circle - The SVG circle element representing the lens border
+	 */
+	setupCircleInteraction(circle) {
+		circle.style.pointerEvents = 'auto';
+		this.isCircleSelected = false;
+
+		// OffsetXY are unstable from this point (I don't know why)
+		// Thus get coordinates from clientXY
+		function getXYFromEvent(e, container) {
+			const x = e.clientX - container.offsetLeft - container.clientLeft;
+			const y = e.clientY - container.offsetTop - container.clientTop;
+			return { offsetX: x, offsetY: y };
+		}
+
+		this.viewer.containerElement.addEventListener('pointerdown', (e) => {
+			if (circle == e.target) {
+				this.isCircleSelected = true;
+				if (this.lensLayer.controllers[0]) {
+					const p = getXYFromEvent(e, this.viewer.containerElement);
+					this.lensLayer.controllers[0].zoomStart(p);
+				}
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		});
+
+		this.viewer.containerElement.addEventListener('pointermove', (e) => {
+			if (this.isCircleSelected) {
+				if (this.lensLayer.controllers[0]) {
+					const p = getXYFromEvent(e, this.viewer.containerElement);
+					this.lensLayer.controllers[0].zoomMove(p);
+				}
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		});
+
+		this.viewer.containerElement.addEventListener('pointerup', (e) => {
+			if (this.isCircleSelected) {
+				if (this.lensLayer.controllers[0]) {
+					this.lensLayer.controllers[0].zoomEnd();
+				}
+				this.isCircleSelected = false;
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		});
+	}
+
+	/**
+	 * Toggles the visibility of the dashboard UI elements.
+	 * Uses CSS classes to show/hide the interface.
+	 */
+	toggle() {
+		this.container.classList.toggle('closed');
+	}
+
+
+	/**
+	 * Associates a LayerSvgAnnotation with the dashboard.
+	 * This enables proper masking of SVG annotations within the lens area.
+	 * @param {LayerSvgAnnotation} layer - The SVG annotation layer to associate
+	 */
+	setLayerSvgAnnotation(layer) {
+		this.layerSvgAnnotation = layer;
+		this.svgElement = this.layerSvgAnnotation.svgElement;
+	}
+
+	/**
+	 * Creates SVG masking elements for the lens.
+	 * Sets up a composite mask consisting of:
+	 * - A full-viewport rectangle for the background
+	 * - A circle for the lens area
+	 * The mask controls visibility of content inside vs outside the lens.
+	 * @private
+	 */
+	createSvgLensMask() {
+		if (this.svgElement == null) this.setupSvgElement();
+		if (this.svgElement == null) return;
+
+		// Create a mask made of a rectangle (it will be set to the full viewport) for the background
+		// And a circle, corresponding to the lens. 
+		const w = 100; // The real size will be set at each frame by the update function
+		this.svgMask = Util.createSVGElement("mask", { id: this.svgMaskId });
+		this.svgGroup = Util.createSVGElement("g");
+		this.outMask = Util.createSVGElement("rect", { id: 'outside-lens-mask', x: -w / 2, y: -w / 2, width: w, height: w, style: "fill:black;" });
+		this.inMask = Util.createSVGElement("circle", { id: 'inside-lens-mask', cx: 0, cy: 0, r: w / 2, style: "fill:white;" });
+		this.svgGroup.appendChild(this.outMask);
+		this.svgGroup.appendChild(this.inMask);
+		this.svgMask.appendChild(this.svgGroup);
+		this.svgElement.appendChild(this.svgMask);
+
+		// FIXME Remove svgCheck. It's a Check, just to have an SVG element to mask
+		// this.svgCheck = Util.createSVGElement('rect', {x:-w/2, y:-w/2, width:w/2, height:w/2, style:'fill:orange; stroke:blue; stroke-width:5px;'}); //  
+		// this.svgCheck.setAttribute('mask', this.svgMaskUrl);
+		// this.svgElement.appendChild(this.svgCheck);
+		// console.log(this.svgCheck);
+	}
+
+	/**
+	 * Sets up the SVG container element for the lens.
+	 * Will either:
+	 * - Use the SVG element from an associated annotation layer
+	 * - Find an existing SVG element in the shadow DOM
+	 * - Create a new SVG element if needed
+	 * @private
+	 */
+	setupSvgElement() {
+		if (this.layerSvgAnnotation) {
+			// AnnotationLayer available, get its root svgElement
+			if (this.svgElement == null) {
+				//console.log("NULL SVG ELEMENT, take it from layerSvgAnnotation");
+				this.svgElement = this.layerSvgAnnotation.svgElement;
+			}
+		} else {
+			// No annotationLayer, search for an svgElement
+
+			// First: get shadowRoot to attach the svgElement
+			let shadowRoot = this.viewer.canvas.overlayElement.shadowRoot;
+			if (shadowRoot == null) {
+				//console.log("WARNING: null ShadowRoot, create a new one");
+				shadowRoot = this.viewer.canvas.overlayElement.attachShadow({ mode: "open" });
+			}
+
+			//console.log("WARNING: no svg element, create a new one");
+			this.svgElement = shadowRoot.querySelector('svg');
+			if (this.svgElement == null) {
+				// Not availale svg element: build a new one and attach to the tree
+				this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				this.svgElement.classList.add('openlime-svgoverlay-mask');
+				this.svgElement.setAttributeNS(null, 'style', 'pointer-events: none;');
+				shadowRoot.appendChild(this.svgElement);
+			}
+		}
+	}
+
+	/**
+	 * Applies the lens mask to an SVG element.
+	 * Elements with the mask will only be visible within the lens area
+	 * (or outside, depending on mask configuration).
+	 * @param {SVGElement} svg - The SVG element to mask
+	 */
+	setMaskOnSvgLayer(svg) {
+		svg.setAttributeNS(null, 'mask', this.svgMaskUrl);
+	}
+
+	/**
+	 * Removes the lens mask from an SVG element.
+	 * Returns the element to its normal, unmasked rendering.
+	 * @param {SVGElement} svg - The SVG element to unmask
+	 */
+	removeMaskFromSvgLayer(svg) {
+		svg.removeAttribute('mask');
+	}
+
+	/**
+	 * Adds an HTML element to the dashboard container.
+	 * The element should use absolute positioning relative to the container.
+	 * Example:
+	 * ```javascript
+	 * const button = document.createElement('button');
+	 * button.style = 'position: absolute; left: 10px; top: 10px;';
+	 * lensDashboard.append(button);
+	 * ```
+	 * @param {HTMLElement} elm - The HTML element to add
+	 */
+	append(elm) {
+		this.container.appendChild(elm);
+	}
+
+	/**
+	 * Sets the rendering mode for the lens area.
+	 * Controls whether content inside the lens is shown or hidden.
+	 * @param {RenderingMode} mode - The rendering mode to use
+	 */
+	setLensRenderingMode(mode) {
+		this.inMask.setAttributeNS(null, 'style', mode);
+	}
+
+	/**
+	 * Sets the rendering mode for the background (area outside the lens).
+	 * Controls whether content outside the lens is shown or hidden.
+	 * @param {RenderingMode} mode - The rendering mode to use
+	 */
+	setBackgroundRenderingMode(mode) {
+		this.outMask.setAttributeNS(null, 'style', mode);
+	}
+
+	/**
+	 * Updates the dashboard position and size.
+	 * Called internally when the lens moves or resizes.
+	 * @private
+	 * @param {number} x - Center X coordinate in scene space
+	 * @param {number} y - Center Y coordinate in scene space
+	 * @param {number} r - Lens radius in scene space
+	 */
+	update(x, y, r) {
+		const useGL = false;
+		const center = CoordinateSystem.fromSceneToCanvasHtml({ x: x, y: y }, this.viewer.camera, useGL);
+
+		const now = performance.now();
+		let cameraT = this.viewer.camera.getCurrentTransform(now);
+		const radius = r * cameraT.z;
+		const sizew = 2 * radius + 2 * this.containerSpace;
+		const sizeh = 2 * radius + 2 * this.containerSpace;
+		const p = { x: 0, y: 0 };
+		p.x = center.x - radius - this.containerSpace;
+		p.y = center.y - radius - this.containerSpace;
+		this.container.style.left = `${p.x}px`;
+		this.container.style.top = `${p.y}px`;
+		this.container.style.width = `${sizew}px`;
+		this.container.style.height = `${sizeh}px`;
+
+		// Lens circle
+		if (sizew != this.lensBox.w || sizeh != this.lensBox.h) {
+			const cx = Math.ceil(sizew * 0.5);
+			const cy = Math.ceil(sizeh * 0.5);
+			this.lensElm.setAttributeNS(null, 'viewBox', `0 0 ${sizew} ${sizeh}`);
+			const circle = this.lensElm.querySelector('circle');
+			circle.setAttributeNS(null, 'cx', cx);
+			circle.setAttributeNS(null, 'cy', cy);
+			circle.setAttributeNS(null, 'r', radius - 0.5 * this.borderWidth);
+		}
+
+		this.updateMask(cameraT, center, radius);
+
+		this.lensBox = {
+			x: center.x,
+			y: center.y,
+			r: radius,
+			w: sizew,
+			h: sizeh
+		}
+
+	}
+
+	/**
+	 * Updates the SVG mask position and size.
+	 * Called internally by update() to keep the mask aligned with the lens.
+	 * @private
+	 * @param {Transform} cameraT - Current camera transform
+	 * @param {Object} center - Lens center in canvas coordinates
+	 * @param {number} center.x - Center X coordinate
+	 * @param {number} center.y - Center Y coordinate
+	 * @param {number} radius - Lens radius in canvas coordinates
+	 */
+	updateMask(cameraT, center, radius) {
+		if (this.svgElement == null) { this.createSvgLensMask(); }
+		if (this.svgElement == null) return;
+
+		// Lens Mask
+		const viewport = this.viewer.camera.viewport;
+		if (this.layerSvgAnnotation != null) {
+			// Compensate the mask transform with the inverse of the annotation svgGroup transform
+			const inverse = true;
+			const invTransfStr = this.layerSvgAnnotation.getSvgGroupTransform(cameraT, inverse);
+			this.svgGroup.setAttribute("transform", invTransfStr);
+		} else {
+			// Set the viewbox.  (in the other branch it is set by the layerSvgAnnotation)
+			this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
+		}
+
+		// Set the full viewport for outer mask rectangle
+		this.outMask.setAttribute('x', -viewport.w / 2);
+		this.outMask.setAttribute('y', -viewport.h / 2);
+		this.outMask.setAttribute('width', viewport.w);
+		this.outMask.setAttribute('height', viewport.h);
+
+		// Set lens parameter for inner lens
+		this.inMask.setAttributeNS(null, 'cx', center.x - viewport.w / 2);
+		this.inMask.setAttributeNS(null, 'cy', center.y - viewport.h / 2);
+		this.inMask.setAttributeNS(null, 'r', radius - this.borderWidth - 2);
+	}
+
+}
+
+/**
+ * Example usage of LensDashboard:
+ * ```javascript
+ * const lensDashboard = new OpenLIME.LensDashboard(limeViewer, {
+ *     containerSpace: 100,
+ *     borderColor: [0.1, 0.1, 0.1, 1],
+ *     borderWidth: 10
+ * });
+ * 
+ * const lensLayer = new OpenLIME.Layer({
+ *     type: "lens",
+ *     layers: [innerLayer],
+ *     camera: limeViewer.camera,
+ *     radius: 200,
+ *     dashboard: lensDashboard,
+ *     visible: true
+ * });
+ * 
+ * const button = document.createElement('button');
+ * button.innerHTML = "Toggle Layer";
+ * button.style = `
+ *     position: absolute;
+ *     left: 10px;
+ *     top: 10px;
+ *     pointer-events: auto;
+ * `;
+ * lensDashboard.append(button);
+ * ```
+ */
+
+export { LensDashboard, RenderingMode };</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

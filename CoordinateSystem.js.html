@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: CoordinateSystem.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: CoordinateSystem.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { BoundingBox } from './BoundingBox.js';
+import { Transform } from './Transform.js'
+
+/**
+ * Contain functions to pass between different coordinate system.
+ * Here described the coordinate system in sequence
+ * - CanvasHTML: Html coordinates: 0,0 left,top to width height at bottom right (y Down)
+ * - CanvasContext: Same as Html, but scaled by devicePixelRatio (y Down) (required for WebGL, not for SVG)
+ * - Viewport: 0,0 left,bottom to (width,height) at top right (y Up)
+ * - Center: 0,0 at viewport center (y Up)
+ * - Scene: 0,0 at dataset center (y Up). The dataset is placed here through the camera transform 
+ * - Layer: 0,0 at Layer center (y Up). Layer is placed over the dataset by the layer transform
+ * - Image: 0,0 at left,top (y Down)
+ * - Layout: 0,0 at left,top (y Down). Depends on layout
+ */
+class CoordinateSystem {
+
+    /**
+     * Transform point from Viewport to CanvasHTML
+     * @param {*} p point in Viewport: 0,0 at left,bottom
+     * @param {Camera} camera Camera which contains viewport information
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns  point in CanvasHtml: 0,0 left,top
+     */
+    static fromViewportToCanvasHtml(p, camera, useGL) {
+        const viewport = this.getViewport(camera, useGL);
+        let result = this.invertY(p, viewport);
+        return useGL ? this.scale(result, 1 / window.devicePixelRatio) : result;
+    }
+
+    /**
+     * Transform point from CanvasHTML to GLViewport
+     * @param {*} p point in CanvasHtml: 0,0 left,top y Down
+     * @param {Camera} camera Camera
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns  point in GLViewport: 0,0 left,bottom, scaled by devicePixelRatio
+     */
+    static fromCanvasHtmlToViewport(p, camera, useGL) {
+        let result = useGL ? this.scale(p, window.devicePixelRatio) : p;
+        const viewport = this.getViewport(camera, useGL);
+        return this.invertY(result, viewport);
+    }
+
+
+    /**
+     * Transform a point from Viewport to Layer coordinates
+     * @param {*} p point {x,y} in Viewport (0,0 left,bottom, y Up)
+     * @param {Camera} camera camera
+     * @param {Transform} layerT layer transform
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns point in Layer coordinates (0, 0 at layer center, y Up)
+     */
+    static fromViewportToLayer(p, camera, layerT, useGL) {
+        // M = InvLayerT * InvCameraT  * Tr(-Vw/2, -Vh/2)
+        const cameraT = this.getCurrentTransform(camera, useGL);
+        const invCameraT = cameraT.inverse();
+        const invLayerT = layerT.inverse();
+        const v2c = this.getFromViewportToCenterTransform(camera, useGL);
+        const M = v2c.compose(invCameraT.compose(invLayerT)); // First apply v2c, then invCamera, then invLayer
+
+        return M.apply(p.x, p.y);
+    }
+
+    /**
+     * Transform a point from Layer to Viewport coordinates
+     * @param {*} p point {x,y} Layer (0,0 at Layer center y Up)
+     * @param {Camera} camera 
+     * @param {Transform} layerT layer transform
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns point in viewport coordinates (0,0 at left,bottom y Up)
+     */
+    static fromLayerToViewport(p, camera, layerT, useGL) {
+        const M = this.getFromLayerToViewportTransform(camera, layerT, useGL);
+        return M.apply(p.x, p.y);
+    }
+
+    /**
+     * Transform a point from Layer to Center 
+     * @param {*} p point {x,y} in Layer coordinates (0,0 at Layer center)
+     * @param {Camera} camera camera
+     * @param {Transform} layerT layer transform
+     * @returns point in Center (0, 0 at glViewport center) coordinates.
+     */
+    static fromLayerToCenter(p, camera, layerT, useGL) {
+        // M = cameraT * layerT
+        const cameraT = this.getCurrentTransform(camera, useGL);
+        const M = layerT.compose(cameraT);
+
+        return M.apply(p.x, p.y);
+    }
+
+    ////////////// CHECKED UP TO HERE ////////////////////
+
+    /**
+     * Transform a point from Layer to Image coordinates
+     * @param {*} p point {x, y} Layer coordinates (0,0 at Layer center)
+     * @param {*} layerSize {w, h} Size in pixel of the Layer
+     * @returns  Point in Image coordinates (0,0 at left,top, y Down)
+     */
+    static fromLayerToImage(p, layerSize) {
+        // InvertY * Tr(Lw/2, Lh/2)
+        let result = { x: p.x + layerSize.w / 2, y: p.y + layerSize.h / 2 };
+        return this.invertY(result, layerSize);
+    }
+
+    /**
+     * Transform a point from CanvasHtml to Scene
+     * @param {*} p point {x, y} in CanvasHtml (0,0 left,top, y Down)
+     * @param {Camera} camera camera
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns Point in Scene coordinates (0,0 at scene center, y Up)
+     */
+    static fromCanvasHtmlToScene(p, camera, useGL) {
+        // invCameraT * Tr(-Vw/2, -Vh/2) * InvertY  * [Scale(devPixRatio)]
+        let result = this.fromCanvasHtmlToViewport(p, camera, useGL);
+        const v2c = this.getFromViewportToCenterTransform(camera, useGL);
+        const invCameraT = this.getCurrentTransform(camera, useGL).inverse();
+        const M = v2c.compose(invCameraT);
+
+        return M.apply(result.x, result.y);
+    }
+
+    /**
+     * Transform a point from Scene to CanvasHtml
+     * @param {*} p point {x, y} Scene coordinates (0,0 at scene center, y Up)
+     * @param {Camera} camera camera
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns Point in CanvasHtml (0,0 left,top, y Down)
+     */
+    static fromSceneToCanvasHtml(p, camera, useGL) {
+        // invCameraT * Tr(-Vw/2, -Vh/2) * InvertY  * [Scale(devPixRatio)]
+        let result = this.fromSceneToViewport(p, camera, useGL)
+        return this.fromViewportToCanvasHtml(result, camera, useGL);
+    }
+
+    /**
+     * Transform a point from Scene to Viewport
+     * @param {*} p point {x, y} Scene coordinates (0,0 at scene center, y Up)
+     * @param {Camera} camera camera
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns Point in Viewport (0,0 left,bottom, y Up)
+     */
+    static fromSceneToViewport(p, camera, useGL) {
+        // FromCenterToViewport * CamT
+        const c2v = this.getFromViewportToCenterTransform(camera, useGL).inverse();
+        const CameraT = this.getCurrentTransform(camera, useGL);
+        const M = CameraT.compose(c2v);
+
+        return M.apply(p.x, p.y);
+    }
+
+    /**
+     * Transform a point from Scene to Viewport, using given transform and viewport
+     * @param {*} p point {x, y} Scene coordinates (0,0 at scene center, y Up)
+     * @param {Transform} cameraT camera transform
+     * @param {*} viewport viewport {x,y,dx,dy,w,h}
+     * @returns Point in Viewport (0,0 left,bottom, y Up)
+     */
+    static fromSceneToViewportNoCamera(p, cameraT, viewport) {
+        // invCameraT * Tr(-Vw/2, -Vh/2) * InvertY  * [Scale(devPixRatio)]
+        const c2v = this.getFromViewportToCenterTransformNoCamera(viewport).inverse();
+        const M = cameraT.compose(c2v);
+
+        return M.apply(p.x, p.y);
+    }
+
+    /**
+     * Transform a point from Viewport to Scene.
+     * @param {*} p point {x, y} Viewport coordinates (0,0 at left,bottom, y Up)
+     * @param {Camera} camera camera
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns Point in Viewport (0,0 at scene center, y Up)
+     */
+    static fromViewportToScene(p, camera, useGL) {
+        // invCamT * FromViewportToCenter 
+        const v2c = this.getFromViewportToCenterTransform(camera, useGL);
+        const invCameraT = this.getCurrentTransform(camera, useGL).inverse();
+        const M = v2c.compose(invCameraT);
+
+        return M.apply(p.x, p.y);
+    }
+
+    /**
+     * Transform a point from Viewport to Scene, using given transform and viewport
+     * @param {*} p point {x, y} Viewport coordinates (0,0 at left,bottom, y Up)
+     * @param {Transform} cameraT camera transform
+     * @param {*} viewport viewport {x,y,dx,dy,w,h}
+     * @returns Point in Viewport (0,0 at scene center, y Up)
+     */
+    static fromViewportToSceneNoCamera(p, cameraT, viewport) {
+        // invCamT * FromViewportToCenter 
+        const v2c = this.getFromViewportToCenterTransformNoCamera(viewport);
+        const invCameraT = cameraT.inverse();
+        const M = v2c.compose(invCameraT);
+
+        return M.apply(p.x, p.y);
+    }
+
+    /**
+     * Transform a point from CanvasHtml to Image
+     * @param {*} p  point {x, y} in CanvasHtml (0,0 left,top, y Down)
+     * @param {Camera} camera camera 
+     * @param {Transform} layerT layer transform 
+     * @param {*} layerSize  {w, h} Size in pixel of the Layer
+     * @param {bool} useGL if true apply devPixelRatio scale. Keep it false when working with SVG
+     * @returns Point in Image space (0,0 left,top of the image, y Down)
+     */
+    static fromCanvasHtmlToImage(p, camera, layerT, layerSize, useGL) {
+        // Translate(Lw/2, Lh/2) * InvLayerT * InvCameraT *  Translate(-Vw/2, -Vh/2) * invertY * [Scale(devicePixelRatio)]
+        // in other words... fromLayerToImage * invLayerT * fromCanvasHtmlToScene
+        let result = this.fromCanvasHtmlToScene(p, camera, useGL);
+        const invLayerT = layerT.inverse();
+        result = invLayerT.apply(result.x, result.y);
+        result = this.fromLayerToImage(result, layerSize);
+
+        return result;
+    }
+
+    /**
+     * Transform a box from Viewport to Image coordinates
+     * @param {BoundingBox} box in Viewport coordinates (0,0 at left,bottom, y Up)
+     * @param {Transform} cameraT camera Transform
+     * @param {*} viewport {x,y,dx,dy,w,h}
+     * @param {Transform} layerT layer transform
+     * @param {*} layerSize {w,h} layer pixel size
+     * @returns box in Image coordinates (0,0 left,top, y Dowm)
+     */
+    static fromViewportBoxToImageBox(box, cameraT, viewport, layerT, layerSize) {
+        // InvertYonImage * T(Lw/2, Lh/2) * InvL * InvCam * T(-Vw/2,-Vh/2) 
+        let V2C = new Transform({ x: -viewport.w / 2, y: -viewport.h / 2 });
+        let C2S = cameraT.inverse();
+        let S2L = layerT.inverse();
+        let L2I = new Transform({ x: layerSize.w / 2, y: layerSize.h / 2 });
+        let M = V2C.compose(C2S.compose(S2L.compose(L2I)));
+        let resultBox = new BoundingBox();
+        for (let i = 0; i &lt; 4; ++i) {
+            let p = box.corner(i);
+            p = M.apply(p.x, p.y);
+            p = CoordinateSystem.invertY(p, layerSize);
+            resultBox.mergePoint(p);
+        }
+        return resultBox;
+    }
+
+    /**
+     * Transform a box from Layer to Scene 
+     * @param {BoundingBox} box  box in Layer coordinates (0,0 at layer center)
+     * @param {Transform} layerT layer transform
+     * @returns box in Scene coordinates (0,0 at scene center)
+     */
+    static fromLayerBoxToSceneBox(box, layerT) {
+        return layerT.transformBox(box);
+    }
+
+    /**
+     * Transform a box from Scene to Layer 
+     * @param {BoundingBox} box  box in Layer coordinates (0,0 at layer center)
+     * @param {Transform} layerT layer transform
+     * @returns box in Scene coordinates (0,0 at scene center)
+     */
+    static fromSceneBoxToLayerBox(box, layerT) {
+        return layerT.inverse().transformBox(box);
+    }
+
+    /**
+     * Transform a box from Layer to Viewport coordinates
+     * @param {BoundingBox} box box in Layer coordinates (0,0 at Layer center y Up)
+     * @param {Camera} camera 
+     * @param {Transform} layerT layer transform
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns Box in Viewport coordinates (0,0 at left, bottom y Up)
+     */
+    static fromLayerBoxToViewportBox(box, camera, layerT, useGL) {
+        const M = this.getFromLayerToViewportTransform(camera, layerT, useGL);
+        return M.transformBox(box);
+    }
+
+    /**
+     * Transform a box from Layer to Viewport coordinates
+     * @param {BoundingBox} box box in Layer coordinates (0,0 at Layer center y Up)
+     * @param {Camera} camera 
+     * @param {Transform} layerT layer transform
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns Box in Viewport coordinates (0,0 at left, bottom y Up)
+     */
+    static fromViewportBoxToLayerBox(box, camera, layerT, useGL) {
+        const M = this.getFromLayerToViewportTransform(camera, layerT, useGL).inverse();
+        return M.transformBox(box);
+    }
+
+    /**
+     * Get a transform to go from viewport 0,0 at left, bottom y Up, to Center 0,0 at viewport center
+     * @param {Camera} camera camera
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns transform from Viewport to Center
+     */
+    static getFromViewportToCenterTransform(camera, useGL) {
+        const viewport = this.getViewport(camera, useGL);
+        return this.getFromViewportToCenterTransformNoCamera(viewport);
+    }
+
+    /**
+     * Get a transform to go from viewport 0,0 at left, bottom y Up, to Center 0,0 at viewport center
+     * from explicit viewport param. (Not using camera parameter here)
+     * @param {*} viewport viewport
+     * @returns transform from Viewport to Center
+     */
+    static getFromViewportToCenterTransformNoCamera(viewport) {
+        return new Transform({ x: viewport.x - viewport.w / 2, y: viewport.y - viewport.h / 2, z: 1, a: 0, t: 0 });
+    }
+
+    /**
+     * Return transform with y reflected wrt origin (y=-y)
+     * @param {Transform} t  
+     * @returns {Transform} transform, with y reflected (around 0)
+     */
+    static reflectY(t) {
+        return new Transform({ x: t.x, y: -t.y, z: t.z, a: t.a, t: t.t });
+    }
+
+    /**
+     * Get a transform to go from Layer (0,0 at Layer center y Up) to Viewport (0,0 at left,bottom y Up)
+     * @param {Camera} camera 
+     * @param {Transform} layerT layer transform
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
+     * @returns transform from Layer to Viewport
+     */
+    static getFromLayerToViewportTransform(camera, layerT, useGL) {
+        // M =  Center2Viewport * CameraT  * LayerT
+        const cameraT = this.getCurrentTransform(camera, useGL);
+        const c2v = this.getFromViewportToCenterTransform(camera, useGL).inverse();
+        const M = layerT.compose(cameraT.compose(c2v));
+        return M;
+    }
+
+    /**
+     * Get a transform to go from Layer (0,0 at Layer center y Up) to Viewport (0,0 at left,bottom y Up)
+     * @param {Transform} CameraT camera transform
+     * @param {viewport} viewport {x,y,dx,dy,w,h} viewport
+     * @param {Transform} layerT layer transform
+     * @returns transform from Layer to Viewport
+     */
+    static getFromLayerToViewportTransformNoCamera(cameraT, viewport, layerT) {
+        // M =  Center2Viewport * CameraT  * LayerT
+        const c2v = this.getFromViewportToCenterTransformNoCamera(viewport).inverse();
+        const M = layerT.compose(cameraT.compose(c2v));
+        return M;
+    }
+
+
+    /**
+     * Scale x applying f scale factor
+     * @param {*} p Point to be scaled
+     * @param {Number} f Scale factor
+     * @returns Point in CanvasContext (Scaled by devicePixelRation)
+     */
+    static scale(p, f) {
+        return { x: p.x * f, y: p.y * f };
+    }
+
+    /**
+     * Invert y with respect to viewport.h
+     * @param {*} p Point to be transformed 
+     * @param {*} viewport current viewport
+     * @returns Point with y inverted with respect to viewport.h
+     */
+    static invertY(p, viewport) {
+        return { x: p.x, y: viewport.h - p.y };
+    }
+
+    /**
+     * Return the camera viewport: scaled by devicePixelRatio if useGL is true.
+     * @param {bool} useGL True to work with WebGL, false for SVG. When true viewport scaled by devPixelRatio 
+     * @returns Viewport 
+     */
+    static getViewport(camera, useGL) {
+        return useGL ? camera.glViewport() : camera.viewport;
+    }
+
+    static getCurrentTransform(camera, useGL) {
+        let cameraT = useGL ?
+            camera.getGlCurrentTransform(performance.now()) :
+            camera.getCurrentTransform(performance.now());
+
+        return cameraT;
+    }
+}
+
+export { CoordinateSystem }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

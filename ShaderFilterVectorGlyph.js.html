@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: ShaderFilterVectorGlyph.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: ShaderFilterVectorGlyph.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Color } from './Colormap.js';
+import { ShaderFilter } from './ShaderFilter.js'
+import { Util } from './Util'
+
+// vector field https://www.shadertoy.com/view/4s23DG
+// isolines https://www.shadertoy.com/view/Ms2XWc
+
+/**
+ * @typedef {Object} ShaderFilterVectorGlyph~Options
+ * Configuration options for glyph-based vector field visualization
+ * @property {number[]} [inDomain=[]] - Input value range [min, max] for magnitude mapping
+ * @property {number} [maxSteps=256] - Number of discrete steps in the colormap texture
+ * @property {number[]} [glyphColor=[0.0, 0.0, 0.0, 1.0]] - RGBA color for glyphs when using 'col' mode
+ * @property {number} [glyphsStride=80] - Horizontal spacing between glyphs in the sprite sheet
+ * @property {number[]} [glyphsSize=[304, 64]] - Dimensions of the glyph sprite sheet [width, height]
+ */
+
+/**
+ * @typedef {Object} ShaderFilterVectorGlyph~Modes
+ * Available visualization modes
+ * @property {string} normalize - Glyph size normalization ('on'|'off')
+ * @property {string} glyph - Glyph coloring mode ('mag'|'col')
+ * @property {string} field - Background field visualization ('none'|'mag')
+ */
+
+/**
+ * ShaderFilterVectorGlyph implements sprite-based vector field visualization.
+ * Uses pre-rendered glyphs from an SVG sprite sheet for high-quality vector field representation.
+ * 
+ * @class
+ * @extends ShaderFilter
+ * @classdesc A shader filter that implements sprite-based vector field visualization.
+ * 
+ * Features:
+ * - SVG glyph-based vector field visualization
+ * - Magnitude-dependent glyph selection
+ * - Custom glyph coloring
+ * - Optional vector normalization
+ * - Background field visualization
+ * - Smooth rotation and scaling
+ * 
+ * Technical Implementation:
+ * - Sprite sheet-based glyph rendering
+ * - Dynamic glyph rotation and scaling
+ * - Automatic magnitude mapping
+ * - Alpha-based glyph composition
+ * - WebGL texture management
+ * 
+ * GLSL Implementation Constants:
+ * - GLYPH_TILE_SIZE: Spacing between glyphs (16.0)
+ * - ISQRT2: 1/sqrt(2) for magnitude normalization
+ * 
+ *
+ */
+class ShaderFilterVectorGlyph extends ShaderFilter {
+    /**
+     * Creates a new glyph-based vector field visualization filter
+     * @param {ColorScale} colorscale - Colorscale for magnitude mapping
+     * @param {string} glyphsUrl - URL to SVG sprite sheet containing glyphs
+     * @param {ShaderFilterVectorGlyph~Options} [options] - Configuration options
+     * @throws {Error} If inDomain is invalid or glyphsUrl is empty
+     * 
+     * @example
+     * ```javascript
+     * // Create with custom options
+     * const filter = new ShaderFilterVectorGlyph(colorscale, 'glyphs.svg', {
+     *     inDomain: [0, 1],
+     *     glyphsSize: [304, 64],
+     *     glyphsStride: 80,
+     *     glyphColor: [0, 0, 0, 1]
+     * });
+     * ```
+     */
+    constructor(colorscale, glyphsUrl, options) {
+        super(options);
+        options = Object.assign({
+            inDomain: [],
+            maxSteps: 256,
+            glyphColor: [0.0, 0.0, 0.0, 1.0],
+            glyphsStride: 80,
+            glyphsSize: [304, 64]
+        }, options);
+        Object.assign(this, options);
+
+        if (this.inDomain.length != 2 &amp;&amp; this.inDomain[1] &lt;= this.inDomain[0]) {
+            throw Error("inDomain bad format");
+        }
+
+        this.glyphsUrl = glyphsUrl;
+        if (this.glyphsUrl.length == 0) throw Error("glyphUrl is empty: no items to display");
+
+        this.colorscale = colorscale;
+        if (this.inDomain.length == 0) this.inDomain = this.colorscale.rangeDomain();
+
+        const cscaleDomain = this.colorscale.rangeDomain();
+
+        const scale = Math.sqrt((this.inDomain[1] * this.inDomain[1] + this.inDomain[0] * this.inDomain[0]) / (cscaleDomain[1] * cscaleDomain[1] + cscaleDomain[0] * cscaleDomain[0]));
+        const bias = 0.0;
+
+        const gap = this.glyphsStride - this.glyphsSize[1];
+        const glyphCount = Math.round((this.glyphsSize[0] + gap) / this.glyphsStride);
+
+        this.modes = {
+            normalize: [
+                { id: 'off', enable: true, src: `const bool ${this.modeName('glyphNormalize')} = false;` },
+                { id: 'on', enable: false, src: `const bool ${this.modeName('glyphNormalize')} = true;` }
+            ],
+            glyph: [
+                { id: 'mag', enable: true, src: `const int ${this.modeName('glyphColor')} = 0;` },
+                { id: 'col', enable: false, src: `const int ${this.modeName('glyphColor')} = 1;` }
+            ],
+            field: [
+                { id: 'none', enable: true, src: `const int ${this.modeName('fieldColor')} = 0;` },
+                { id: 'mag', enable: false, src: `const int ${this.modeName('fieldColor')} = 1;` }
+            ]
+        };
+
+        this.samplers = [{ name: `${this.samplerName('colormap')}` }, { name: `${this.samplerName('glyphs')}` }];
+
+
+        this.uniforms[this.uniformName('glyph_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.glyphColor };
+        this.uniforms[this.uniformName('glyph_count')] = { type: 'float', needsUpdate: true, size: 1, value: glyphCount };
+        this.uniforms[this.uniformName('glyph_wh')] = { type: 'float', needsUpdate: true, size: 1, value: this.glyphsSize[1] };
+        this.uniforms[this.uniformName('glyph_stride')] = { type: 'float', needsUpdate: true, size: 1, value: this.glyphsStride };
+
+        this.uniforms[this.uniformName('low_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.colorscale.lowColor.value() };
+        this.uniforms[this.uniformName('high_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.colorscale.highColor.value() };
+        this.uniforms[this.uniformName('scale')] = { type: 'float', needsUpdate: true, size: 1, value: scale };
+        this.uniforms[this.uniformName('bias')] = { type: 'float', needsUpdate: true, size: 1, value: bias };
+    }
+
+    /**
+     * Creates textures for glyphs and colormap.
+     * 
+     * Implementation details:
+     * 1. Glyph Texture:
+     *    - Rasterizes SVG to image buffer
+     *    - Creates and configures texture
+     *    - Sets up linear filtering
+     * 
+     * 2. Colormap Texture:
+     *    - Samples colorscale
+     *    - Creates 1D RGBA texture
+     *    - Configures appropriate filtering
+     * 
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @returns {Promise&lt;void>}
+     * @private
+     */
+    async createTextures(gl) {
+        // Glyphs
+        const glyphsBuffer = await Util.rasterizeSVG(this.glyphsUrl, this.glyphsSize);
+        const glyphsTex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, glyphsTex);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, glyphsBuffer);
+        this.getSampler('glyphs').tex = glyphsTex;
+
+        // Colormap
+        const colormap = this.colorscale.sample(this.maxSteps);
+        let textureFilter = gl.LINEAR;
+        if (this.colorscale.type == 'bar') {
+            textureFilter = gl.NEAREST;
+        }
+        const tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, textureFilter);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, textureFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.maxSteps, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, colormap.buffer);
+        this.getSampler('colormap').tex = tex;
+    }
+
+    /**
+     * Generates GLSL code for glyph-based vector field visualization.
+     * 
+     * Shader Features:
+     * - Tile-based glyph placement
+     * - Dynamic glyph rotation
+     * - Magnitude-based glyph selection
+     * - Alpha-based composition
+     * - Multiple visualization modes
+     * 
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @returns {string} GLSL function definition
+     * @private
+     */
+    fragDataSrc(gl) {
+        return `
+        // 2D vector glyph visualization
+        
+        const float GLYPH_TILE_SIZE = 16.0;
+        const float ISQRT2 = 0.70710678118; // 1/sqrt(2)
+
+        // Computes the center pixel of the tile containing pixel pos
+        vec2 glyphTileCenterCoord(vec2 pos) {
+            return (floor(pos / GLYPH_TILE_SIZE) + 0.5) * GLYPH_TILE_SIZE;
+        }
+
+        float glyph(vec2 p, vec2 v) {
+            if (${this.modeName('glyphNormalize')}) v = normalize(v);
+            
+            // Make everything relative to the center, which may be fractional
+            p -= glyphTileCenterCoord(p);
+                
+            float mag_v = length(v), mag_p = length(p);
+            
+            if (mag_v > 0.0) {
+                // Non-zero velocity case
+                vec2 dir_v = normalize(v);
+                
+                float level = floor((1.0-mag_v*ISQRT2) * ${this.uniformName('glyph_count')});
+                level = min(level, ${this.uniformName('glyph_count')} - 1.0);
+
+                mat2 rotm = mat2(
+                    dir_v[1], dir_v[0], // first column
+                    -dir_v[0], dir_v[1]  // second column
+                );
+            
+                float scaleToGlyph =  ${this.uniformName('glyph_wh')} / GLYPH_TILE_SIZE;
+                vec2 pp = rotm * p; // p on axys with origin in tile center and aligned with direction dir_v
+                pp += vec2(GLYPH_TILE_SIZE * 0.5, GLYPH_TILE_SIZE * 0.5); // pp in [0, GLYPH_TILE_SIZE]
+                pp *= scaleToGlyph; // pp in [0, glyph_wh]
+                pp.x += level * ${this.uniformName('glyph_stride')}; // apply stride
+                pp.y = ${this.uniformName('glyph_wh')} - pp.y - 1.0; // invert y-axis
+                //vec4 g = texelFetch(${this.samplerName('glyphs')}, ivec2(pp), 0);
+                float w = ${this.uniformName('glyph_stride')}*(${this.uniformName('glyph_count')} -1.0) + ${this.uniformName('glyph_wh')};
+                float h = ${this.uniformName('glyph_wh')};
+                vec2 ppnorm = pp/vec2(w,h);
+                vec4 g = texture(${this.samplerName('glyphs')}, ppnorm);
+                return 1.0-g.a;
+
+            } else {
+                // Signed distance from the center point
+                return mag_p;
+            }
+        }
+        
+        vec4 lookupColormap(float cv) {            
+            if(cv >= 1.0) 
+                return ${this.uniformName('high_color')};
+            else if(cv &lt;= 0.0) 
+                return ${this.uniformName('low_color')};
+            return texture(${this.samplerName('colormap')}, vec2(cv, 0.5));
+        }
+
+        vec4 ${this.functionName()}(vec4 col){
+            if(col.a == 0.0) return col;
+
+            vec2 p = v_texcoord*tileSize; // point in pixel
+            vec2 pc_coord = glyphTileCenterCoord(p)/tileSize; // center coordinate
+            vec4 pc_val = texture(source, pc_coord); // [0..1] - lookup color in center
+            float s = 2.0;
+            float b = -1.0;
+            vec2 uvc = vec2(pc_val.x*s+b, pc_val.y*s+b); // [-1..1]
+            vec2 uvr =  vec2(col.r*s+b, col.g*s+b); // [-1..1]
+
+            // Colors
+            float vc = length(uvc)*ISQRT2;
+            float cvc = vc*${this.uniformName('scale')} + ${this.uniformName('bias')};
+            float vr = length(uvr)*ISQRT2;
+            float cvr = vr*${this.uniformName('scale')} + ${this.uniformName('bias')};
+            vec4 cmapc = lookupColormap(cvc);
+            vec4 cmapr = lookupColormap(cvr);
+                
+            // Glyph            
+            float glyph_dist = glyph(p, uvc);
+
+            vec4 glyph_col = cmapc;
+            vec4 field_col = vec4(0.0, 0.0, 0.0, 0.0);
+
+            switch (${this.modeName('glyphColor')}) {
+                case 0:
+                    glyph_col = cmapc;
+                    break;
+                case 1:
+                    glyph_col = ${this.uniformName('glyph_color')};               
+                    break;
+            }
+
+            switch (${this.modeName('fieldColor')}) {
+                case 0:
+                    field_col = vec4(0.0, 0.0, 0.0, 0.0);
+                    break;
+                case 1:
+                    field_col = cmapr;              
+                    break;
+            }
+
+            float t = clamp(glyph_dist, 0.0, 1.0);
+            return  mix(glyph_col, field_col, t);
+        }`;
+    }
+}
+
+export { ShaderFilterVectorGlyph }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: ShaderNeural.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: ShaderNeural.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Shader } from './Shader.js'
+
+/**
+ * @typedef {Object} ShaderNeural~NetworkConfig
+ * Configuration for neural network weights and parameters
+ * @property {number} n - Number of neurons per layer (padded to multiple of 4)
+ * @property {number} c - Number of input channels (padded to multiple of 4)
+ * @property {string} colorspace - Color space for processing ('rgb'|'xyz'|etc)
+ * @property {number} nplanes - Number of coefficient planes
+ * @property {number} scale - Dequantization scale factor
+ * @property {number} bias - Dequantization bias
+ */
+
+/**
+ * ShaderNeural implements a WebGL-based neural network for real-time image relighting.
+ * Used in conjunction with LayerNeuralRTI for Neural Reflectance Transformation Imaging.
+ * 
+ * Features:
+ * - Three-layer neural network architecture
+ * - Real-time image relighting
+ * - Multiple texture plane support
+ * - Configurable network parameters
+ * - ELU activation function
+ * - WebGL acceleration
+ * - Automatic color space conversion
+ * 
+ * Technical Implementation:
+ * - Forward pass computation in fragment shader
+ * - Vectorized operations for performance
+ * - Dynamic shader generation based on network size
+ * - Multi-texture sampling
+ * - Weight matrix management
+ * - Dequantization support
+ * 
+/**
+ * Neural Network Architecture Details
+ * 
+ * The network consists of three layers:
+ * 1. Input Layer:
+ *    - Accepts coefficient planes and light direction
+ *    - Applies dequantization and normalization
+ * 
+ * 2. Hidden Layers:
+ *    - Two fully connected layers
+ *    - ELU activation function
+ *    - Vectorized operations for efficiency
+ * 
+ * 3. Output Layer:
+ *    - Produces final RGB/XYZ color
+ *    - Linear activation
+ * 
+ * Implementation Notes:
+ * - All matrices are packed into vec4 for efficient GPU processing
+ * - Network dimensions are padded to multiples of 4
+ * - Uses texture sampling for coefficient input
+ * - Implements forward pass only
+ *
+ *
+ * Example usage with LayerNeuralRTI:
+ * ```javascript
+ * // Create neural shader
+ * const shader = new ShaderNeural({
+ *     mode: 'light',
+ *     nplanes: 9
+ * });
+ * 
+ * // Configure network
+ * shader.setShaderInfo(samples, 9, 52, 12, 'rgb');
+ * 
+ * // Update weights
+ * shader.setUniform('layer1_weights', weights1);
+ * shader.setUniform('layer1_biases', biases1);
+ * // ... set other layers
+ * 
+ * // Set light direction
+ * shader.setLight([0.5, 0.3]);
+ * ```
+ *
+ * Fragment Shader Implementation
+ * 
+ * Key Components:
+ * 1. Input Processing:
+ *    - Texture sampling
+ *    - Dequantization
+ *    - Light direction incorporation
+ * 
+ * 2. Network Computation:
+ *    - Vectorized matrix multiplication
+ *    - ELU activation function
+ *    - Layer-wise processing
+ * 
+ * 3. Output Processing:
+ *    - Color space conversion
+ *    - Final color computation
+ * 
+ * Uniforms:
+ * - {sampler2D} u_texture_[1-3] - Coefficient plane textures
+ * - {vec2} lights - Light direction vector
+ * - {vec4[]} layer[1-3]_weights - Layer weight matrices
+ * - {vec4[]} layer[1-3]_biases - Layer bias vectors
+ * - {vec3} min - Minimum values for dequantization
+ * - {vec3} max - Maximum values for dequantization
+ * 
+ * @extends Shader
+ */
+class ShaderNeural extends Shader {
+	/**
+	 * Creates a new neural network shader
+	 * @param {Object} [options] - Configuration options
+	 * @param {string[]} [options.modes=['light']] - Available modes
+	 * @param {string} [options.mode='light'] - Initial mode
+	 * @param {number} [options.nplanes=null] - Number of coefficient planes
+	 * @param {number} [options.scale=null] - Dequantization scale factor
+	 * @param {number} [options.bias=null] - Dequantization bias
+	 */
+	constructor(options) {
+		super({});
+
+		Object.assign(this, {
+			modes: ['light'],
+			mode: 'light',
+
+			nplanes: null,	 //number of coefficient planes
+
+			scale: null,	  //factor and bias are used to dequantize coefficient planes.
+			bias: null,
+
+		});
+		Object.assign(this, options);
+
+		this.samplers = [
+			{ id: 1, name: 'u_texture_1', type: 'vec3' },
+			{ id: 2, name: 'u_texture_2', type: 'vec3' },
+			{ id: 3, name: 'u_texture_3', type: 'vec3' }
+		];
+
+		this.uniforms = {
+			lights: { type: 'vec2', needsUpdate: true, size: 2, value: [0.0, 0.0] },
+			min: { type: 'vec3', needsUpdate: true, size: 3, value: [0, 0, 0] },
+			max: { type: 'vec3', needsUpdate: true, size: 3, value: [1, 1, 1] },
+			layer1_weights: { type: 'vec4', needsUpdate: true, size: this.c * this.n / 4 },
+			layer1_biases: { type: 'vec4', needsUpdate: true, size: this.n / 4 },
+			layer2_weights: { type: 'vec4', needsUpdate: true, size: this.n * this.n / 4 },
+			layer2_biases: { type: 'vec4', needsUpdate: true, size: this.n / 4 },
+			layer3_weights: { type: 'vec4', needsUpdate: true, size: this.n * 3 / 4 },
+			layer3_biases: { type: 'vec3', needsUpdate: true, size: 1 },
+		};
+	}
+
+	/**
+	 * Creates WebGL program and retrieves attribute locations
+	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @override
+	 * @private
+	 */
+	createProgram(gl) {
+		super.createProgram(gl);
+		this.position_location = gl.getAttribLocation(this.program, "a_position");
+		this.texcoord_location = gl.getAttribLocation(this.program, "a_texcoord");
+	}
+
+	/**
+	 * Sets the light direction for relighting
+	 * @param {number[]} light - Light direction vector [x, y]
+	 */
+	setLight(light) {
+		this.setUniform('lights', light);
+	}
+
+	/**
+	 * Initializes default weights
+	 */
+	init() {
+		this.lightWeights([0, 0, 1], 'base');
+	}
+
+	/**
+	 * Configures shader for specific network architecture
+	 * @param {number[]} samples - Input samples
+	 * @param {number} planes - Number of coefficient planes
+	 * @param {number} n - Neurons per layer
+	 * @param {number} c - Input channels
+	 * @param {string} colorspace - Color space for processing
+	 */
+	setShaderInfo(samples, planes, n, c, colorspace) {
+		this.samples = samples;
+		this.planes = planes;
+		this.n = n;
+		this.c = c;
+		this.colorspace = colorspace;
+	}
+
+	/**
+	 * Generates vertex shader source code
+	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @returns {string} Vertex shader source
+	 * @private
+	 */
+	vertShaderSrc(gl) {
+		return `#version 300 es
+in vec2 a_position;
+in vec2 a_texcoord;
+out vec2 v_texcoord;
+void main() {
+	gl_Position = vec4(a_position, 0.0, 1.0);
+	v_texcoord = a_texcoord;
+}`;
+	}
+
+	/**
+	 * Generates fragment shader source code implementing neural network
+	 * @param {WebGLRenderingContext} gl - WebGL context
+	 * @returns {string} Fragment shader source
+	 * @private
+	 */
+	fragShaderSrc(gl) {
+		return `
+vec4 inputs[${this.c / 4}];    // 12/4
+vec4 output1[${this.n / 4}];  // 52/4
+vec4 output2[${this.n / 4}];  // 52/4
+vec3 output3;
+
+in vec2 v_texcoord;
+uniform vec2 lights;
+
+uniform vec4 layer1_weights[${this.c * this.n / 4}]; // 12*52/4
+uniform vec4 layer1_biases[${this.n / 4}];  // 52/4
+uniform vec4 layer2_weights[${this.n * this.n / 4}]; // 52*52/4
+uniform vec4 layer2_biases[${this.n / 4}];  // 52/4
+uniform vec4 layer3_weights[${this.n * 3 / 4}];  // 52*3/4
+uniform vec3 layer3_biases;
+
+uniform vec3 min[${this.planes / 3}];
+uniform vec3 max[${this.planes / 3}];
+
+float elu(float a){
+	return (a > 0.0) ? a : (exp(a) - 1.0);
+}
+
+
+vec4 relightCoeff(vec3 color_1, vec3 color_2, vec3 color_3) {
+	// Rescaling features
+    color_1 = color_1 * (max[0] - min[0]) + min[0];
+    color_2 = color_2 * (max[1] - min[1]) + min[1];
+    color_3 = color_3 * (max[2] - min[2]) + min[2];
+
+	// building input
+	inputs[0] = vec4(color_1, color_2.x);
+	inputs[1] = vec4(color_2.yz, color_3.xy);
+	inputs[2] = vec4(color_3.z, lights, 0.0);
+
+	float sum = 0.0;
+
+	// layer 1 - 11 x 49
+	for (int i=0; i &lt; ${this.n}; i++){
+		sum = 0.0;
+		for (int j=0; j &lt; ${this.c / 4}; j++){
+			sum += dot(inputs[j], layer1_weights[${this.c / 4}*i+j]);
+		}
+		output1[i/4][i%4] = elu(sum + layer1_biases[i/4][i%4]);
+	}
+	
+	// layer 2 - 49 x 49
+	for (int i=0; i &lt; ${this.n}; i++){
+		sum = 0.0;
+		for (int j=0; j &lt; ${this.n / 4}; j++){
+			sum += dot(output1[j], layer2_weights[${this.n / 4}*i+j]);
+		}
+		output2[i/4][i%4] = elu(sum + layer2_biases[i/4][i%4]);
+	}
+
+	// layer 3 - 49 x 3
+	for (int i=0; i &lt; 3; i++){
+		sum = 0.0;
+		for (int j=0; j &lt; ${this.n / 4}; j++){
+			sum += dot(output2[j], layer3_weights[${this.n / 4}*i+j]);
+		}
+		output3[i] = sum + layer3_biases[i];
+	}
+	return vec4(output3.${this.colorspace}, 1.0);
+}
+
+vec4 relight(vec2 v) {
+	vec3 color_1 = texture(u_texture_1, v).${this.colorspace};
+	vec3 color_2 = texture(u_texture_2, v).${this.colorspace};
+	vec3 color_3 = texture(u_texture_3, v).${this.colorspace};
+	return relightCoeff(color_1, color_2, color_3);
+}
+
+
+vec4 data() {
+	return relight(v_texcoord);
+}
+vec4 data1() {
+	vec2 uv = v_texcoord;
+	bool showDiff = false;
+	bool showA = false;
+	if(v_texcoord.x > 0.5) {
+		showDiff = true;
+		uv.x -= 0.5;
+	}
+	if(v_texcoord.y > 0.5) {
+		showA = true;
+		uv.y -= 0.5;
+	}
+	vec2 o = floor(uv*128.0)/128.0;
+	float step = 1.0/256.0;
+
+	vec4 a = vec4(0, 0, 0, 0);
+	vec3 color_1 = vec3(0, 0, 0);
+	vec3 color_2 = vec3(0, 0, 0);
+	vec3 color_3 = vec3(0, 0, 0);
+
+	for(float y = 0.0; y &lt;= step; y = y + step) {
+		for(float x = 0.0; x &lt;= step; x = x + step) {
+			vec2 d = o + vec2(x, y);
+			a += 0.25*relight(d);
+
+			color_1 += texture(u_texture_1, d).${this.colorspace};
+			color_2 += texture(u_texture_2, d).${this.colorspace};
+			color_3 += texture(u_texture_3, d).${this.colorspace};
+		}
+	}
+	vec4 b = relightCoeff(0.25*color_1, 0.25*color_2, 0.25*color_3);
+	float diff = 255.0*length((a - b).xyz);
+	if(showDiff) {
+		if(diff &lt; 10.0) {
+			return vec4(0.0, 0.0, 0.0, 1.0);
+		} else if (diff &lt; 20.0) {
+			return vec4(0.0, 0.0, 1.0, 1.0);
+		} else if(diff &lt; 40.0) {
+			return vec4(0.0, 1.0, 0.0, 1.0);
+		} else
+			return vec4(1.0, 0.0, 0.0, 1.0);
+	} 
+	if(showA)
+		return a;
+	return b;
+}
+
+		`;
+	}
+}
+
+export { ShaderNeural }
+
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

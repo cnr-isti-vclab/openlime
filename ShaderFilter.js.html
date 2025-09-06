@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: ShaderFilter.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: ShaderFilter.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">/**
+ * @typedef {Object} ShaderFilter~Mode
+ * A shader filter mode configuration
+ * @property {string} id - Unique identifier for the mode
+ * @property {boolean} enable - Whether the mode is active
+ * @property {string} src - GLSL source code for the mode
+ */
+
+/**
+ * @typedef {Object} ShaderFilter~Sampler
+ * A texture sampler used by the filter
+ * @property {string} name - Unique name for the sampler
+ * @property {WebGLTexture} [texture] - Associated WebGL texture
+ * @property {WebGLUniformLocation} [location] - GPU location for the sampler
+ */
+
+/**
+ * 
+ * Base class for WebGL shader filters in OpenLIME.
+ * Provides infrastructure for creating modular shader effects that can be chained together.
+ * 
+ * Features:
+ * - Modular filter architecture
+ * - Automatic uniform management
+ * - Dynamic mode switching
+ * - Texture sampling support
+ * - GLSL code generation
+ * - Unique naming conventions
+ * 
+ * Technical Implementation:
+ * - Generates unique names for uniforms and samplers
+ * - Manages WebGL resource lifecycle
+ * - Supports multiple filter modes
+ * - Handles shader program integration
+ */
+class ShaderFilter {
+    /**
+     * Creates a new shader filter
+     * @param {Object} [options] - Filter configuration
+     * @param {ShaderFilter~Mode} [options.modes={}] - Available filter modes
+     * @param {Object} [options.uniforms={}] - Filter uniform variables
+     * @param {Array&lt;ShaderFilter~Sampler>} [options.samplers=[]] - Texture samplers
+     */
+    constructor(options) {
+        options = Object.assign({
+        }, options);
+        Object.assign(this, options);
+        this.name = this.constructor.name;
+        this.uniforms = {};
+        this.samplers = [];
+        this.needsUpdate = true;
+        this.shader = null;
+
+        this.modes = {};
+    }
+
+    /**
+     * Sets the active mode for the filter
+     * @param {string} mode - Mode category to modify
+     * @param {string} id - Specific mode ID to enable
+     * @throws {Error} If shader not registered or mode doesn't exist
+     */
+    setMode(mode, id) {
+        if (!this.shader)
+            throw Error("Shader not registered");
+
+        if (Object.keys(this.modes).length > 0) {
+            const list = this.modes[mode];
+            if (list) {
+                list.map(a => {
+                    a.enable = a.id == id;
+                });
+                this.shader.needsUpdate = true;
+            } else {
+                throw Error(`Mode "${mode}" not exist!`);
+            }
+        }
+    }
+
+    /**
+     * Prepares filter resources for rendering
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @private
+     */
+    prepare(gl) {
+        if (this.needsUpdate)
+            if (this.createTextures) this.createTextures(gl);
+        this.needsUpdate = false;
+    }
+
+
+    /**
+     * Generates mode-specific GLSL code
+     * @returns {string} GLSL declarations for enabled modes
+     * @private
+     */
+    fragModeSrc() {
+        let src = '';
+        for (const key of Object.keys(this.modes)) {
+            for (const e of this.modes[key]) {
+                if (e.enable) {
+                    src += e.src + '\n';
+                }
+            }
+        }
+        return src;
+    }
+
+    /**
+     * Sets a uniform variable value
+     * @param {string} name - Base name of uniform variable
+     * @param {number|boolean|Array} value - Value to set
+     * @throws {Error} If shader not registered
+     */
+    setUniform(name, value) {
+        if (!this.shader) {
+            throw Error(`Shader not registered`);
+        }
+        this.shader.setUniform(this.uniformName(name), value);
+    }
+
+    /**
+     * Generates sampler declarations
+     * @returns {string} GLSL sampler declarations
+     * @private
+     */
+    fragSamplerSrc() {
+        let src = '';
+        for (let s of this.samplers) {
+            src += `
+            uniform sampler2D ${s.name};`;
+        }
+        return src;
+    }
+
+    /**
+     * Generates uniform variable declarations
+     * @returns {string} GLSL uniform declarations
+     * @private
+     */
+    fragUniformSrc() {
+        let src = '';
+        for (const [key, value] of Object.entries(this.uniforms)) {
+            src += `
+            uniform ${this.uniforms[key].type} ${key};`;
+        }
+        return src;
+    }
+
+    /**
+     * Generates filter-specific GLSL function
+     * @param {WebGLRenderingContext} gl - WebGL context
+     * @returns {string|null} GLSL function definition
+     * @virtual
+     */
+    fragDataSrc(gl) {
+        return null;
+    }
+
+    // Utility methods documentation
+    /**
+     * @returns {string} Generated function name for the filter
+     * @private
+     */
+    functionName() {
+        return this.name + "_data";
+    }
+
+    /**
+     * @param {string} name - Base sampler name
+     * @returns {string} Unique sampler identifier
+     * @private
+     */
+    samplerName(name) {
+        return `${this.name}_${name}`;
+    }
+
+    /**
+     * @param {string} name - Base uniform name
+     * @returns {string} Unique uniform identifier
+     * @private
+     */
+    uniformName(name) {
+        return `u_${this.name}_${name}`;
+    }
+
+    /**
+     * @param {string} name - Base mode name
+     * @returns {string} Unique mode identifier
+     * @private
+     */
+    modeName(name) {
+        return `m_${this.name}_${name}`;
+    }
+
+    /**
+     * Finds a sampler by name
+     * @param {string} name - Base sampler name
+     * @returns {ShaderFilter~Sampler|undefined} Found sampler or undefined
+     */
+    getSampler(name) {
+        const samplername = this.samplerName(name);
+        return this.samplers.find(e => e.name == samplername);
+    }
+}
+
+/**
+ * 
+ * @extends ShaderFilter
+ * Test filter that replaces transparent pixels with a specified color
+ */
+class ShaderFilterTest extends ShaderFilter {
+    /**
+     * Creates a test filter
+     * @param {Object} [options] - Filter options
+     * @param {number[]} [options.nodata_col=[1,1,0,1]] - Color for transparent pixels
+     */
+    constructor(options) {
+        super(options);
+        this.uniforms[this.uniformName('nodata_col')] = { type: 'vec4', needsUpdate: true, size: 4, value: [1, 1, 0, 1] };
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col){
+                return col.a > 0.0 ? col : ${this.uniformName('nodata_col')};
+            }`;
+    }
+}
+
+/**
+ * 
+ * @extends ShaderFilter
+ * Filter that modifies the opacity of rendered content
+ */
+class ShaderFilterOpacity extends ShaderFilter {
+    /**
+     * Creates an opacity filter
+     * @param {number} opacity - Initial opacity value [0-1]
+     * @param {Object} [options] - Additional filter options
+     */
+    constructor(opacity, options) {
+        super(options);
+        this.uniforms[this.uniformName('opacity')] = { type: 'float', needsUpdate: true, size: 1, value: opacity };
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col){
+                return vec4(col.rgb, col.a * ${this.uniformName('opacity')});
+            }`;
+    }
+}
+
+/**
+ * 
+ * @extends ShaderFilter
+ * Filter that applies gamma correction to colors
+ */
+class ShaderGammaFilter extends ShaderFilter {
+    /**
+     * Creates a gamma correction filter
+     * @param {Object} [options] - Filter options
+     * @param {number} [options.gamma=2.2] - Gamma correction value
+     */
+    constructor(options) {
+        super(options);
+        this.uniforms[this.uniformName('gamma')] = { type: 'float', needsUpdate: true, size: 1, value: 2.2 };
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col){
+                float igamma = 1.0/${this.uniformName('gamma')};
+                return vec4(pow(col.r, igamma), pow(col.g, igamma), pow(col.b, igamma), col.a);
+            }`;
+    }
+}
+
+/**
+ * 
+ * @extends ShaderFilter
+ * Filter that converts colors to grayscale with adjustable weights
+ */
+class ShaderFilterGrayscale extends ShaderFilter {
+    /**
+     * Creates a grayscale filter
+     * @param {Object} [options] - Filter options
+     * @param {number[]} [options.weights=[0.2126, 0.7152, 0.0722]] - RGB channel weights for luminance calculation
+     */
+    constructor(options) {
+        super(options);
+
+        // Default weights based on human perception of colors (ITU-R BT.709)
+        this.uniforms[this.uniformName('weights')] = {
+            type: 'vec3',
+            needsUpdate: true,
+            size: 3,
+            value: [0.2126, 0.7152, 0.0722]
+        };
+
+        this.uniforms[this.uniformName('enable')] = {
+            type: 'bool',
+            needsUpdate: true,
+            size: 1,
+            value: true
+        };
+
+        // Add modes for different grayscale calculations
+        this.modes['grayscale'] = [
+            {
+                id: 'luminance',
+                enable: true,
+                src: `
+                // Luminance-based grayscale (perceptual)
+                float grayscaleLuminance(vec3 color, vec3 weights) {
+                    return dot(color, weights);
+                }
+                `
+            },
+            {
+                id: 'average',
+                enable: false,
+                src: `
+                // Simple average grayscale
+                float grayscaleAverage(vec3 color) {
+                    return (color.r + color.g + color.b) / 3.0;
+                }
+                `
+            }
+        ];
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col) {
+                if(!${this.uniformName('enable')}) return col;
+                // Skip processing if fully transparent
+                if (col.a &lt;= 0.0) return col;
+                float gray;
+                
+                // Use the active grayscale mode
+                ${this.modes['grayscale'].find(m => m.id === 'luminance' &amp;&amp; m.enable) ?
+                `gray = grayscaleLuminance(col.rgb, ${this.uniformName('weights')});` :
+                `gray = grayscaleAverage(col.rgb);`}
+                
+                // Apply grayscale conversion
+                vec3 grayRGB = vec3(gray);
+                
+                return vec4(grayRGB, col.a);
+            }`;
+    }
+
+    /**
+     * Switches between grayscale calculation methods
+     * @param {string} method - Either 'luminance' or 'average'
+     */
+    setGrayscaleMethod(method) {
+        this.setMode('grayscale', method);
+    }
+}
+
+/**
+ * 
+ * @extends ShaderFilter
+ * Filter that adjusts the brightness of rendered content
+ */
+class ShaderFilterBrightness extends ShaderFilter {
+    /**
+     * Creates a brightness filter
+     * @param {Object} [options] - Filter options
+     * @param {number} [options.brightness=1.0] - Brightness value (0.0-2.0, where 1.0 is normal brightness)
+     */
+    constructor(options) {
+        super(options);
+        this.uniforms[this.uniformName('brightness')] = {
+            type: 'float',
+            needsUpdate: true,
+            size: 1,
+            value: options?.brightness || 1.0
+        };
+
+        this.uniforms[this.uniformName('enable')] = {
+            type: 'bool',
+            needsUpdate: true,
+            size: 1,
+            value: true
+        };
+
+        // Add modes for different brightness adjustments
+        this.modes['brightness'] = [
+            {
+                id: 'linear',
+                enable: true,
+                src: `
+                // Linear brightness adjustment
+                vec3 adjustBrightnessLinear(vec3 color, float brightness) {
+                    return color * brightness;
+                }
+                `
+            },
+            {
+                id: 'preserve_saturation',
+                enable: false,
+                src: `
+                // Brightness adjustment that preserves saturation by adjusting in HSL space
+                vec3 adjustBrightnessPreserveSaturation(vec3 color, float brightness) {
+                    // Convert RGB to HSL-like space
+                    float maxChannel = max(max(color.r, color.g), color.b);
+                    float minChannel = min(min(color.r, color.g), color.b);
+                    float luminance = (maxChannel + minChannel) / 2.0;
+                    
+                    // Skip complex HSL conversion and just scale while preserving relative color relationships
+                    if (maxChannel > 0.0) {
+                        float scaleFactor = brightness;
+                        // Adjust scale to prevent oversaturation
+                        if (brightness > 1.0) {
+                            float headroom = (1.0 - luminance) / luminance;
+                            scaleFactor = min(brightness, 1.0 + headroom);
+                        }
+                        return color * scaleFactor;
+                    }
+                    
+                    return color;
+                }
+                `
+            }
+        ];
+    }
+
+    fragDataSrc(gl) {
+        return `
+            vec4 ${this.functionName()}(vec4 col) {
+                if(!${this.uniformName('enable')}) return col;
+                // Skip processing if fully transparent
+                if (col.a &lt;= 0.0) return col;
+                
+                // Convert to linear space for proper brightness adjustment
+                vec3 adjustedColor;
+                
+                // Use the active brightness mode
+                ${this.modes['brightness'].find(m => m.id === 'linear' &amp;&amp; m.enable) ?
+                `adjustedColor = adjustBrightnessLinear(col.rgb, ${this.uniformName('brightness')});` :
+                `adjustedColor = adjustBrightnessPreserveSaturation(col.rgb, ${this.uniformName('brightness')});`}
+                
+                // Clamp to prevent overflow
+                adjustedColor = clamp(adjustedColor, 0.0, 1.0);
+                
+                // Convert back to sRGB space
+                return vec4(adjustedColor, col.a);
+            }`;
+    }
+
+    /**
+     * Sets the brightness level
+     * @param {number} value - Brightness value (0.0-2.0)
+     */
+    setBrightness(value) {
+        // Clamp value to valid range
+        const brightness = Math.max(0.0, Math.min(2.0, value));
+        this.setUniform('brightness', brightness);
+    }
+
+    /**
+     * Switches between brightness adjustment methods
+     * @param {string} method - Either 'linear' or 'preserve_saturation'
+     */
+    setBrightnessMethod(method) {
+        this.setMode('brightness', method);
+    }
+}
+
+export { ShaderFilter, ShaderFilterTest, ShaderFilterOpacity, ShaderGammaFilter, ShaderFilterGrayscale, ShaderFilterBrightness }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

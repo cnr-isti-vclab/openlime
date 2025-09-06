@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: LensDashboardNavigator.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: LensDashboardNavigator.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Util } from "./Util"
+import { LensDashboard } from "./LensDashboard"
+
+/*
+ * @fileoverview
+ * LensDashboardNavigator module provides an enhanced lens dashboard with navigation controls and tools.
+ * Extends the base LensDashboard with additional UI elements for camera control, lighting, and annotation navigation.
+ */
+
+/**
+ * LensDashboardNavigator class creates an interactive lens dashboard with navigation controls.
+ * Provides:
+ * - Camera movement control
+ * - Light direction control
+ * - Annotation switching and navigation
+ * - Toolbar UI elements positioned around the lens
+ * @extends LensDashboard
+ */
+class LensDashboardNavigator extends LensDashboard {
+   /**
+    * Creates a new LensDashboardNavigator instance.
+    * @param {Viewer} viewer - The OpenLIME viewer instance
+    * @param {Object} [options] - Configuration options
+    * @param {number} [options.toolboxHeight=22] - Height of the toolbox UI elements in pixels
+    * @param {number} [options.toolboxGap=5] - Gap (in px) between left and roght toolboxes
+    * @param {number} [options.angleToolbar=30] - Angle of toolbar position in degrees
+    * @param {Object} [options.actions] - Configuration for toolbar actions
+    * @param {Object} [options.actions.camera] - Camera control action
+    * @param {string} options.actions.camera.label - Action identifier
+    * @param {Function} options.actions.camera.task - Callback for camera action
+    * @param {Object} [options.actions.light] - Light control action
+    * @param {string} options.actions.light.label - Action identifier
+    * @param {Function} options.actions.light.task - Callback for light action
+    * @param {Object} [options.actions.annoswitch] - Annotation toggle action
+    * @param {string} options.actions.annoswitch.label - Action identifier
+    * @param {string} options.actions.annoswitch.type - Action type ('toggle')
+    * @param {string} options.actions.annoswitch.toggleClass - CSS class for toggle element
+    * @param {Function} options.actions.annoswitch.task - Callback for annotation toggle
+    * @param {Object} [options.actions.prev] - Previous annotation action
+    * @param {string} options.actions.prev.label - Action identifier
+    * @param {Function} options.actions.prev.task - Callback for previous action
+    * @param {Object} [options.actions.down] - Download annotation action
+    * @param {string} options.actions.down.label - Action identifier
+    * @param {Function} options.actions.down.task - Callback for download action
+    * @param {Object} [options.actions.next] - Next annotation action
+    * @param {string} options.actions.next.label - Action identifier
+    * @param {Function} options.actions.next.task - Callback for next action
+    * @param {Function} [options.updateCb] - Callback fired during lens updates
+    * @param {Function} [options.updateEndCb] - Callback fired when lens movement ends
+    */
+   constructor(viewer, options) {
+      super(viewer, options);
+      options = Object.assign({
+         toolboxHeight: 22,
+         toolboxGap: 5,
+         actions: {
+            camera: { label: 'camera', cb_task: (() => { }), task: (event) => { if (!this.actions.camera.active) this.toggleLightController(); this.actions.camera.cb_task() } },
+            light: { label: 'light', cb_task: (() => { }), task: (event) => { if (!this.actions.light.active) this.toggleLightController(); this.actions.light.cb_task() } },
+            annoswitch: { label: 'annoswitch', type: 'toggle', toggleClass: '.openlime-lens-dashboard-annoswitch-bar', task: (event) => { } },
+            prev: { label: 'prev', task: (event) => { } },
+            down: { label: 'down', task: (event) => { } },
+            next: { label: 'next', task: (event) => { } },
+         },
+         updateCb: null,
+         updateEndCb: null
+      }, options);
+      Object.assign(this, options);
+
+      this.moving = false;
+      this.delay = 400;
+      this.timeout = null; // Timeout for moving
+      this.noupdate = false;
+
+      this.angleToolbar = 30.0 * (Math.PI / 180.0);
+
+      this.container.style.display = 'block';
+      this.container.style.margin = '0';
+
+      const h1 = document.createElement('div');
+      h1.style = `text-align: center; color: #fff`;
+      h1.classList.add('openlime-lens-dashboard-toolbox-header');
+      h1.innerHTML = 'MOVE';
+
+      const h2 = document.createElement('div');
+      h2.style = `text-align: center; color: #fff`;
+      h2.classList.add('openlime-lens-dashboard-toolbox-header');
+      h2.innerHTML = 'INFO';
+
+      this.toolbox1 = document.createElement('div');
+      this.toolbox1.style = `z-index: 10; position: absolute; padding: 4px; left: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
+      this.toolbox1.classList.add('openlime-lens-dashboard-toolbox');
+      this.container.appendChild(this.toolbox1);
+      this.toolbox1.appendChild(h1);
+
+      this.toolbox2 = document.createElement('div');
+      this.toolbox2.style = `z-index: 10; position: absolute; padding: 4px; right: 0px; width: fit-content; background-color: rgb(20, 20, 20, 1.0); border-radius: 10px; gap: 8px`;
+      this.toolbox2.classList.add('openlime-lens-dashboard-toolbox');
+      this.container.appendChild(this.toolbox2);
+      this.toolbox2.appendChild(h2);
+
+      this.tools1 = document.createElement('div');
+      this.tools1.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
+      this.tools1.classList.add('openlime-lens-dashboard-toolbox-tools');
+      this.toolbox1.appendChild(this.tools1);
+
+      this.tools2 = document.createElement('div');
+      this.tools2.style = `display: flex; justify-content: center; height: ${this.toolboxHeight}px`;
+      this.tools2.classList.add('openlime-lens-dashboard-toolbox-tools');
+      this.toolbox2.appendChild(this.tools2);
+
+      // TOOLBOX ITEMS
+
+      this.actions.camera.svg = `&lt;!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+&lt;svg
+   viewBox="0 0 83.319054 83.319054"
+   version="1.1"
+   id="svg2495"
+   xml:space="preserve"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">&lt;defs
+     id="defs2492" />&lt;path
+     d="m 83.319059,41.66005 c 0,23.007824 -18.651718,41.659533 -41.659532,41.659533 C 18.651716,83.319583 -4.9557762e-6,64.667874 -4.9557762e-6,41.66005 -4.9557762e-6,18.651185 18.651716,-5.2882463e-4 41.659527,-5.2882463e-4 64.667341,-5.2882463e-4 83.319059,18.651185 83.319059,41.66005 Z"
+     style="fill:#fbfbfb;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+     id="path74"
+     class="openlime-lens-dashboard-button-bkg" />&lt;g
+     id="g1"
+     class="openlime-lens-dashboard-camera">&lt;path
+       stroke="#000000"
+       stroke-width="9.03222"
+       d="M 41.659527,5.5306402 V 32.627305 m 0,18.064443 v 27.096665"
+       id="path1"
+       style="fill:none" />&lt;path
+       stroke="#000000"
+       stroke-linecap="round"
+       stroke-linejoin="round"
+       stroke-width="9.03222"
+       d="M 30.36925,16.820917 41.659527,5.5306402 52.949804,16.820917 M 30.36925,66.498136 41.659527,77.788413 52.949804,66.498136 M 16.820917,30.36925 5.5306402,41.659527 16.820917,52.949804 M 66.498136,30.36925 77.788413,41.659527 66.498136,52.949804 M 12.304806,41.659527 h 58.709441"
+       id="path2"
+       style="fill:none" />&lt;/g>&lt;/svg>`;
+
+      this.actions.light.svg = `&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+&lt;svg
+   viewBox="0 0 83.319054 83.320114"
+   version="1.1"
+   id="svg5698"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  &lt;defs
+     id="defs5695" />
+  &lt;path
+     d="m 83.319055,41.660582 c 0,23.00782 -18.651715,41.659529 -41.659525,41.659529 C 18.65172,83.320111 -8.5009768e-7,64.668402 -8.5009768e-7,41.660582 -8.5009768e-7,18.651717 18.65172,3.1357422e-6 41.65953,3.1357422e-6 64.66734,3.1357422e-6 83.319055,18.651717 83.319055,41.660582 Z"
+     style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+     id="path74"
+     class="openlime-lens-dashboard-button-bkg" />
+  &lt;g
+     id="g1"
+     transform="matrix(1.4106801,0,0,1.4106801,-164.24813,-100.38311)"
+     class="openlime-lens-dashboard-light">
+    &lt;path
+       d="m 137.44618,117.65204 c 0.139,1.31022 5.28885,5.23911 7.37659,5.43772 2.08632,0.19826 1.80798,0.31679 3.29353,-0.15981 1.48413,-0.47554 6.21488,-3.25367 6.44772,-3.72921 0.59266,-1.21814 0.97296,-2.46098 0.46319,-3.21487 -0.51117,-0.7567 -1.39206,-0.19861 -2.31916,0.0801 -0.92745,0.27693 -4.87009,2.02282 -6.16973,2.4197 -1.01952,0.3115 -3.24661,-0.19862 -3.24661,-0.19862 0,0 11.29312,-3.73168 11.7355,-4.56247 0.46426,-0.87383 0.0924,-2.46133 -0.97437,-2.65959 -0.67945,-0.127 -15.44637,4.72228 -15.81714,5.31777 -0.37218,0.59549 -0.78952,1.26929 -0.78952,1.26929 z"
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.352778"
+       id="path90"/>
+    &lt;path
+       d="m 138.37505,106.50074 c 0,0 -0.76236,-0.18874 -1.29964,0.0801 -0.53728,0.26882 -0.27834,3.09492 -0.27834,3.09492 l 5.75204,-0.0783 c 0,0 -4.96393,1.26894 -5.42678,2.22109 -0.46461,0.9525 0.58985,2.39395 1.53106,2.61973 0.75353,0.18203 16.15475,-4.7364 16.51282,-5.15938 0.3115,-0.36653 0.51012,-2.38125 0.18627,-2.69804 -0.32527,-0.31715 -1.62349,-0.27834 -1.62349,-0.27834 0,0 -0.51117,0.0399 -0.0469,-1.38783 0.46461,-1.4291 5.38128,-7.103886 6.58707,-10.675761 1.1617,-3.440642 0.4893,-7.948436 -0.83503,-10.118725 -1.39876,-2.294466 -3.38596,-3.770489 -6.12281,-4.841169 -2.74778,-1.076325 -7.82849,-1.683808 -11.87591,-0.556683 -4.03048,1.124655 -7.16844,3.170766 -8.9983,5.873397 -1.64289,2.426405 -1.57797,7.302147 -1.02129,9.206441 0.55668,1.906058 6.2163,8.96973 6.77298,10.39742 0.55668,1.4291 0.18627,2.30117 0.18627,2.30117 z"
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.352778"
+       id="path96"/>
+  &lt;/g>
+&lt;/svg>`;
+
+      this.actions.annoswitch.svg = `&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      &lt;!-- Created with Inkscape (http://www.inkscape.org/) -->
+      
+      &lt;svg
+         viewBox="0 0 83.319054 83.320114"
+         version="1.1"
+         id="svg11415"
+         xml:space="preserve"
+         xmlns="http://www.w3.org/2000/svg"
+         xmlns:svg="http://www.w3.org/2000/svg">&lt;defs
+           id="defs11412">&lt;marker
+             style="overflow:visible"
+             id="TriangleStart"
+             refX="0"
+             refY="0"
+             orient="auto-start-reverse"
+             markerWidth="5.3244081"
+             markerHeight="6.155385"
+             viewBox="0 0 5.3244081 6.1553851"
+             preserveAspectRatio="xMidYMid">&lt;path
+               transform="scale(0.5)"
+               style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+               d="M 5.77,0 -2.88,5 V -5 Z"
+               id="path135" />&lt;/marker>&lt;marker
+             style="overflow:visible"
+             id="TriangleStart-5"
+             refX="0"
+             refY="0"
+             orient="auto-start-reverse"
+             markerWidth="5.3244081"
+             markerHeight="6.155385"
+             viewBox="0 0 5.3244081 6.1553851"
+             preserveAspectRatio="xMidYMid">&lt;path
+               transform="scale(0.5)"
+               style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+               d="M 5.77,0 -2.88,5 V -5 Z"
+               id="path135-3" />&lt;/marker>&lt;/defs>&lt;g
+           id="g327"
+           transform="translate(129.83427,13.264356)">&lt;g
+             id="g346">&lt;path
+               d="m -46.51522,28.396234 c 0,23.007813 -18.65172,41.659526 -41.65953,41.659526 -23.00782,0 -41.65952,-18.651713 -41.65952,-41.659526 0,-23.00887 18.6517,-41.66059 41.65952,-41.66059 23.00781,0 41.65953,18.65172 41.65953,41.66059 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+               id="path68"
+               class="openlime-lens-dashboard-button-bkg" />&lt;g
+               aria-label="i"
+               id="text430"
+               style="font-size:50.8px;line-height:1.25;font-family:'Palace Script MT';-inkscape-font-specification:'Palace Script MT';font-variant-ligatures:none;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+               transform="matrix(1.9896002,0,0,1.9896002,-378.32178,-41.782121)">&lt;path
+                 d="m 149.74343,19.295724 c -1.4224,1.1176 -2.5908,2.032 -3.5052,2.6416 0.3556,1.0668 0.8128,1.9304 1.9304,3.556 1.4224,-1.27 1.5748,-1.4224 3.302,-2.7432 -0.1524,-0.3048 -0.254,-0.508 -0.6604,-1.1684 -0.3048,-0.6096 -0.3556,-0.6096 -0.762,-1.6256 z m 1.9304,25.4 -0.8636,0.4572 c -3.5052,1.9304 -4.1148,2.1844 -4.7244,2.1844 -0.5588,0 -0.9144,-0.5588 -0.9144,-1.4224 0,-0.8636 0,-0.8636 1.6764,-7.5692 1.8796,-7.7216 1.8796,-7.7216 1.8796,-8.128 0,-0.3048 -0.254,-0.508 -0.6096,-0.508 -0.8636,0 -3.8608,1.6764 -8.0264,4.4704 l -0.1016,1.4224 c 3.0988,-1.6764 3.2512,-1.7272 3.7084,-1.7272 0.4064,0 0.6096,0.3048 0.6096,0.8636 0,0.7112 -0.1524,1.4224 -0.9144,4.318 -2.3876,8.8392 -2.3876,8.8392 -2.3876,10.16 0,1.2192 0.4572,2.032 1.2192,2.032 0.8636,0 2.2352,-0.6604 4.9276,-2.3876 0.9652,-0.6096 1.9304,-1.2192 2.8956,-1.8796 0.4572,-0.254 0.8128,-0.508 1.4224,-0.8636 z"
+                 style="font-weight:bold;font-family:Z003;-inkscape-font-specification:'Z003 Bold'"
+                 id="path495" />&lt;/g>&lt;path
+               style="fill:none;stroke:#000000;stroke-width:17.09477;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="M -66.121922,49.608737 -110.22757,7.1826674"
+               id="path465"
+               class="openlime-lens-dashboard-annoswitch-bar" />&lt;/g>&lt;/g>&lt;/svg>`;
+
+      this.actions.prev.svg = `&lt;svg
+               viewBox="0 0 83.319054 83.320114"
+               version="1.1"
+               id="svg11415"
+               xml:space="preserve"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg">&lt;defs
+                 id="defs11412">&lt;marker
+                   style="overflow:visible"
+                   id="TriangleStart"
+                   refX="0"
+                   refY="0"
+                   orient="auto-start-reverse"
+                   markerWidth="5.3244081"
+                   markerHeight="6.155385"
+                   viewBox="0 0 5.3244081 6.1553851"
+                   preserveAspectRatio="xMidYMid">&lt;path
+                     transform="scale(0.5)"
+                     style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+                     d="M 5.77,0 -2.88,5 V -5 Z"
+                     id="path135" />&lt;/marker>&lt;marker
+                   style="overflow:visible"
+                   id="TriangleStart-5"
+                   refX="0"
+                   refY="0"
+                   orient="auto-start-reverse"
+                   markerWidth="5.3244081"
+                   markerHeight="6.155385"
+                   viewBox="0 0 5.3244081 6.1553851"
+                   preserveAspectRatio="xMidYMid">&lt;path
+                     transform="scale(0.5)"
+                     style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+                     d="M 5.77,0 -2.88,5 V -5 Z"
+                     id="path135-3" />&lt;/marker>&lt;/defs>&lt;g
+                 id="g417"
+                 transform="matrix(3.3565779,0,0,3.3565779,129.92814,-51.220758)">&lt;g
+                   id="g335">&lt;path
+                     d="m -172.71351,100.60243 c 0,23.00781 -18.65172,41.65952 -41.65953,41.65952 -23.00782,0 -41.65952,-18.65171 -41.65952,-41.65952 0,-23.00887 18.6517,-41.66059 41.65952,-41.66059 23.00781,0 41.65953,18.65172 41.65953,41.66059 z"
+                     style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+                     id="path68"
+                     class="openlime-lens-dashboard-button-bkg"
+                     transform="matrix(0.29792248,0,0,0.29792248,37.569341,-2.3002842)" />&lt;path
+                     style="fill:#030104"
+                     d="m -35.494703,28.624414 c 0,-0.264 0.213,-0.474 0.475,-0.474 h 2.421 c 0.262,0 0.475,0.21 0.475,0.474 0,3.211 2.615,5.826 5.827,5.826 3.212,0 5.827,-2.615 5.827,-5.826 0,-3.214 -2.614,-5.826 -5.827,-5.826 -0.34,0 -0.68,0.028 -1.016,0.089 v 1.647 c 0,0.193 -0.116,0.367 -0.291,0.439 -0.181,0.073 -0.383,0.031 -0.521,-0.104 l -4.832,-3.273 c -0.184,-0.185 -0.184,-0.482 0,-0.667 l 4.833,-3.268 c 0.136,-0.136 0.338,-0.176 0.519,-0.104 0.175,0.074 0.291,0.246 0.291,0.438 v 1.487 c 0.34,-0.038 0.68,-0.057 1.016,-0.057 5.071,0 9.198,4.127 9.198,9.198 0,5.07 -4.127,9.197 -9.198,9.197 -5.07,10e-4 -9.197,-4.126 -9.197,-9.196 z"
+                     id="path415" />&lt;/g>&lt;/g>&lt;/svg>`;
+
+      this.actions.down.svg = `&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        &lt;!-- Created with Inkscape (http://www.inkscape.org/) -->
+        
+        &lt;svg
+           viewBox="0 0 83.319054 83.320114"
+           version="1.1"
+           id="svg11415"
+           xml:space="preserve"
+           xmlns="http://www.w3.org/2000/svg"
+           xmlns:svg="http://www.w3.org/2000/svg">&lt;defs
+             id="defs11412">&lt;marker
+               style="overflow:visible"
+               id="TriangleStart"
+               refX="0"
+               refY="0"
+               orient="auto-start-reverse"
+               markerWidth="5.3244081"
+               markerHeight="6.155385"
+               viewBox="0 0 5.3244081 6.1553851"
+               preserveAspectRatio="xMidYMid">&lt;path
+                 transform="scale(0.5)"
+                 style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+                 d="M 5.77,0 -2.88,5 V -5 Z"
+                 id="path135" />&lt;/marker>&lt;marker
+               style="overflow:visible"
+               id="TriangleStart-5"
+               refX="0"
+               refY="0"
+               orient="auto-start-reverse"
+               markerWidth="5.3244081"
+               markerHeight="6.155385"
+               viewBox="0 0 5.3244081 6.1553851"
+               preserveAspectRatio="xMidYMid">&lt;path
+                 transform="scale(0.5)"
+                 style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+                 d="M 5.77,0 -2.88,5 V -5 Z"
+                 id="path135-3" />&lt;/marker>&lt;/defs>&lt;g
+             id="g4652"
+             transform="translate(145.46385,95.197966)">&lt;g
+               id="g4846"
+               transform="translate(-126.60931,52.756264)">&lt;path
+                 d="m 64.464511,-106.29364 c 0,23.007813 -18.65172,41.659526 -41.65953,41.659526 -23.0078196,0 -41.659526,-18.651713 -41.659526,-41.659526 0,-23.00887 18.6517064,-41.66059 41.659526,-41.66059 23.00781,0 41.65953,18.65172 41.65953,41.66059 z"
+                 style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+                 id="path68"
+                 class="openlime-lens-dashboard-button-bkg" />&lt;g
+                 id="g2392-5"
+                 transform="matrix(0.26458333,0,0,0.26458333,-283.58108,-263.57207)">&lt;path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:40;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1072.4033,509.27736 h 171.1826"
+                   id="path351-6" />&lt;path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:30;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1185.0215,568.3701 h 59.6026"
+                   id="path351-3-2" />&lt;path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:30;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1184.2167,621.15576 h 59.6026"
+                   id="path351-3-2-0" />&lt;path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:40;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1072.4033,679.59496 h 171.1826"
+                   id="path351-3-6-7-1" />&lt;path
+                   style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:11.4448;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart-5)"
+                   d="m 1074.9115,570.87447 54.1203,-0.0275"
+                   id="path1366-2" />&lt;path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:14;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1080.0425,521.28147 v 54.87857"
+                   id="path1402-7" />&lt;path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   d="m 1150.8866,623.00688 0.3956,-5.02729"
+                   id="path2545" />&lt;path
+                   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:30;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                   d="m 1185.0215,567.71656 h 59.6026"
+                   id="path2720" />&lt;/g>&lt;/g>&lt;/g>&lt;/svg>`;
+
+      this.actions.next.svg = `&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      &lt;!-- Created with Inkscape (http://www.inkscape.org/) -->
+      
+      &lt;svg
+         viewBox="0 0 83.319054 83.320114"
+         version="1.1"
+         id="svg11415"
+         xml:space="preserve"
+         xmlns="http://www.w3.org/2000/svg"
+         xmlns:svg="http://www.w3.org/2000/svg">&lt;defs
+           id="defs11412">&lt;marker
+             style="overflow:visible"
+             id="TriangleStart"
+             refX="0"
+             refY="0"
+             orient="auto-start-reverse"
+             markerWidth="5.3244081"
+             markerHeight="6.155385"
+             viewBox="0 0 5.3244081 6.1553851"
+             preserveAspectRatio="xMidYMid">&lt;path
+               transform="scale(0.5)"
+               style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+               d="M 5.77,0 -2.88,5 V -5 Z"
+               id="path135" />&lt;/marker>&lt;/defs>&lt;g
+           id="g4652"
+           transform="translate(-12.647874,74.762541)">&lt;path
+             d="m 95.96693,-33.101955 c 0,23.007813 -18.65172,41.6595258 -41.65953,41.6595258 -23.00782,0 -41.659526,-18.6517128 -41.659526,-41.6595258 0,-23.008872 18.651706,-41.660586 41.659526,-41.660586 23.00781,0 41.65953,18.651714 41.65953,41.660586 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.352778"
+             id="path68"
+             class="openlime-lens-dashboard-button-bkg" />&lt;g
+             id="g4636"
+             transform="translate(173.74831,-50.897484)">&lt;path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:10.5833;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="m -142.08694,-4.7366002 h 45.292059"
+               id="path351" />&lt;path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:10.5833;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="m -142.08694,40.326598 h 45.292059"
+               id="path351-3-6-7" />&lt;path
+               style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3.20746;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart)"
+               d="m -136.09942,8.7192481 0.008,14.9721889"
+               id="path1366" />&lt;path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3.70417;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="M -136.07283,-1.5605128 V 24.204958"
+               id="path1402" />&lt;path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:7.9375;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="m -111.69142,24.864565 h 15.76985"
+               id="path351-3-2-0-3" />&lt;path
+               style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:7.9375;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+               d="m -111.37623,10.725444 h 15.76986"
+               id="path2720-9" />&lt;/g>&lt;/g>&lt;/svg>`;
+
+      for (let [name, action] of Object.entries(this.actions)) {
+         action.element = Util.SVGFromString(action.svg);
+         action.element.style = `height: 100%; margin: 0 5px`;
+         action.element.classList.add('openlime-lens-dashboard-button');
+         if (action.type == 'toggle') {
+            const toggleElm = action.element.querySelector(action.toggleClass);
+            toggleElm.style.visibility = `hidden`;
+            action.active = false;
+         }
+         action.element.addEventListener('pointerdown', (e) => {
+            if (action.type == 'toggle') {
+               action.active = !action.active;
+               const toggleElm = action.element.querySelector(action.toggleClass);
+               if (action.active) {
+                  toggleElm.style.visibility = `visible`;
+               } else {
+                  toggleElm.style.visibility = `hidden`;
+               }
+               this.noupdate = true;
+            }
+            action.task(e);
+            e.preventDefault();
+         });
+      }
+
+      this.tools1.appendChild(this.actions.camera.element);
+      this.tools1.appendChild(this.actions.light.element);
+      this.tools2.appendChild(this.actions.annoswitch.element);
+      this.tools2.appendChild(this.actions.prev.element);
+      this.tools2.appendChild(this.actions.down.element);
+      this.tools2.appendChild(this.actions.next.element);
+
+      // Set Camera movement active
+      this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
+      this.actions.light.active = false;
+
+      // Enable camera, light, next buttons
+      this.setActionEnabled('camera');
+      this.setActionEnabled('light');
+      this.setActionEnabled('annoswitch');
+      this.setActionEnabled('next');
+   }
+
+   /**
+    * Retrieves an action configuration by its label.
+    * @param {string} label - The action label to find
+    * @returns {Object|null} The action configuration object or null if not found
+    * @private
+    */
+   getAction(label) {
+      let result = null;
+      for (let [name, action] of Object.entries(this.actions)) {
+         if (action.label === label) {
+            result = action;
+            break;
+         }
+      }
+      return result;
+   }
+
+   /**
+    * Enables or disables a specific action button.
+    * @param {string} label - The action label to modify
+    * @param {boolean} [enable=true] - Whether to enable or disable the action
+    */
+   setActionEnabled(label, enable = true) {
+      const action = this.getAction(label);
+      if (action) {
+         action.element.classList.toggle('enabled', enable);
+      }
+   }
+
+   /**
+    * Toggles between camera and light control modes.
+    * When light control is active, modifies controller behavior for light direction adjustment.
+    * @private
+    */
+   toggleLightController() {
+      let active = this.actions.light.element.classList.toggle('openlime-lens-dashboard-light-active');
+      this.actions.light.active = active;
+      this.actions.camera.active = this.actions.camera.element.classList.toggle('openlime-lens-dashboard-camera-active');
+
+      for (let layer of Object.values(this.viewer.canvas.layers))
+         for (let c of layer.controllers)
+            if (c.control == 'light') {
+               c.active = true;
+               c.activeModifiers = active ? [0, 2, 4] : [2, 4];  //nothing, shift and alt
+            }
+   }
+
+   /**
+    * Updates the dashboard position and UI elements.
+    * @private
+    * @param {number} x - Center X coordinate in scene space
+    * @param {number} y - Center Y coordinate in scene space
+    * @param {number} r - Lens radius in scene space
+    */
+   update(x, y, r) {
+      if (this.noupdate) {
+         this.noupdate = false;
+         return;
+      }
+      super.update(x, y, r);
+      const center = {
+         x: this.lensBox.x,
+         y: this.lensBox.y
+      }
+      const radius = this.lensBox.r;
+      const sizew = this.lensBox.w;
+      const sizeh = this.lensBox.h;
+
+      // Set toolbox position
+      const tbw1 = this.toolbox1.clientWidth;
+      const tbh1 = this.toolbox1.clientHeight;
+      const tbw2 = this.toolbox2.clientWidth;
+      const tbh2 = this.toolbox2.clientHeight;
+      let cbx = radius * Math.sin(this.angleToolbar);
+      let cby = radius * Math.cos(this.angleToolbar);
+
+      let bx1 = this.containerSpace + radius - cbx - tbw1 / 2 - this.toolboxGap;
+      let by1 = this.containerSpace + radius + cby - tbh1 / 2;
+      this.toolbox1.style.left = `${bx1}px`;
+      this.toolbox1.style.top = `${by1}px`;
+
+      let bx2 = this.containerSpace + radius + cbx - tbw2 / 2 + this.toolboxGap;
+      let by2 = this.containerSpace + radius + cby - tbh2 / 2;
+      this.toolbox2.style.left = `${bx2}px`;
+      this.toolbox2.style.top = `${by2}px`;
+
+      if (this.updateCb) {
+         // updateCb(c.x, c.y, r, dashboard.w, dashboard.h, canvas.w, canvas.h) all params in canvas coordinates
+         this.updateCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
+      }
+
+      if (!this.moving) {
+         this.toggle();
+         this.moving = true;
+      }
+      if (this.timeout) clearTimeout(this.timeout);
+      this.timeout = setTimeout(() => {
+         this.toggle();
+         this.moving = false;
+         if (this.updateEndCb) this.updateEndCb(center.x, center.y, radius, sizew, sizeh, this.viewer.camera.viewport.w, this.viewer.camera.viewport.h);
+      }, this.delay);
+   }
+}
+
+export { LensDashboardNavigator }
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

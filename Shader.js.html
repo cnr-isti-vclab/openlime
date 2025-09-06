@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: Shader.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: Shader.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { addSignals } from './Signals.js'
+import { Util } from './Util.js'
+
+/**
+* @typedef {Object} Shader~Sampler
+* A reference to a 2D texture used in the shader.
+* @property {number} id - Unique identifier for the sampler
+* @property {string} name - Sampler variable name in shader program (e.g., "kd" for diffuse texture)
+* @property {string} label - Display label for UI/menus
+* @property {Array&lt;Object>} samplers - Array of raster definitions
+* @property {number} samplers[].id - Raster identifier
+* @property {string} samplers[].type - Raster type (e.g., 'color', 'normal')
+* @property {boolean} [samplers[].bind=true] - Whether sampler should be bound in prepareGL
+* @property {boolean} [samplers[].load=true] - Whether sampler should load from raster
+* @property {Array&lt;Object>} uniforms - Shader uniform variables
+* @property {string} uniforms[].type - Data type ('vec4'|'vec3'|'vec2'|'float'|'int')
+* @property {boolean} uniforms[].needsUpdate - Whether uniform needs GPU update
+* @property {number} uniforms[].value - Uniform value or array of values
+*/
+
+/**
+ * Shader module provides WebGL shader program management for OpenLIME.
+ * Supports WebGL 2.0/3.0 GLSL specifications.
+ * 
+ * Shader class manages WebGL shader programs.
+ * Features:
+ * - GLSL/ES 3.0 support
+ * - Automatic uniform management
+ * - Multiple shader modes
+ * - Filter pipeline
+ */
+class Shader {
+	/**
+	 * Creates a new Shader instance.
+	 * @param {Object} [options] - Configuration options
+	 * @param {Array&lt;Shader~Sampler>} [options.samplers=[]] - Texture sampler definitions
+	 * @param {Object.&lt;string,Object>} [options.uniforms={}] - Shader uniform variables
+	 * @param {string} [options.label=null] - Display label for the shader
+	 * @param {Array&lt;string>} [options.modes=[]] - Available shader modes
+	 * @param {boolean} [options.debug=false] - Enable debug output
+	 * @param {boolean} [options.isLinear=false] - Whether the shader works in linear color space
+	 * @param {boolean} [options.isSrgbSimplified=true] - Use simplified gamma 2.2 conversion instead of IEC standard
+	 * @fires Shader#update
+	 */
+	constructor(options) {
+		options = Object.assign({
+			isLinear: false,
+			isSrgbSimplified: true
+		}, options);
+		Object.assign(this, {
+			debug: false,
+			samplers: [],
+			uniforms: {},
+			label: null,
+			program: null,      //webgl program
+			modes: [],
+			mode: null, // The current mode
+			needsUpdate: true,
+			autoSamplerDeclaration: true,
+			tileSize: [0, 0]
+		});
+		addSignals(Shader, 'update');
+		Object.assign(this, options);
+		this.filters = [];
+	}
+
+	/**
+	 * Clears all filters from the shader pipeline.
+	 * @fires Shader#update
+	 */
+	clearFilters() {
+		this.filters = [];
+		this.needsUpdate = true;
+		this.emit('update');
+	}
+
+	/**
+	 * Adds a filter to the shader pipeline.
+	 * @param {Object} filter - Filter to add
+	 * @fires Shader#update
+	 */
+	addFilter(f) {
+		f.shader = this;
+		this.filters.push(f);
+		this.needsUpdate = true;
+		f.needsUpdate = true;
+		this.emit('update');
+	}
+
+	/**
+	 * Removes a filter from the pipeline by name.
+	 * @param {string} name - Name of filter to remove
+	 * @fires Shader#update
+	 */
+	removeFilter(name) {
+		this.filters = this.filters.filter((v) => {
+			return v.name != name;
+		});
+		this.needsUpdate = true;
+		this.emit('update');
+	}
+
+	/**
+	 * Sets the current shader mode.
+	 * @param {string} mode - Mode identifier (must be in options.modes)
+	 * @throws {Error} If mode is not recognized
+	 */
+	setMode(mode) {
+		if (this.modes.indexOf(mode) == -1)
+			throw Error("Unknown mode: " + mode);
+		this.mode = mode;
+		this.needsUpdate = true;
+	}
+
+	/**
+	 * Restores WebGL state after context loss.
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
+	 * @private
+	 */
+	restoreWebGL(gl) {
+		this.createProgram(gl);
+	}
+
+	/**
+	 * Sets tile dimensions for shader calculations.
+	 * @param {number[]} size - [width, height] of tile in pixels
+	 * @fires Shader#update
+	 */
+	setTileSize(sz) {
+		this.tileSize = sz;
+		this.needsUpdate = true;
+	}
+
+	/**
+	 * Sets a uniform variable value.
+	 * @param {string} name - Uniform variable name
+	 * @param {number|boolean|Array} value - Value to set
+	 * @throws {Error} If uniform doesn't exist
+	 * @fires Shader#update
+	 */
+	setUniform(name, value) {
+		/**
+		* The event is fired when a uniform shader variable is changed.
+		* @event Camera#update
+		*/
+		let u = this.getUniform(name);
+		if (!u)
+			throw new Error(`Unknown '${name}'. It is not a registered uniform.`);
+		if ((typeof (value) == "number" || typeof (value) == "boolean") &amp;&amp; u.value == value)
+			return;
+		if (Array.isArray(value) &amp;&amp; Array.isArray(u.value) &amp;&amp; value.length == u.value.length) {
+			let equal = true;
+			for (let i = 0; i &lt; value.length; i++)
+				if (value[i] != u.value[i]) {
+					equal = false;
+					break;
+				}
+			if (equal)
+				return;
+		}
+
+		u.value = value;
+		u.needsUpdate = true;
+		this.emit('update');
+	}
+
+	/**
+	 * Builds complete fragment shader source with all necessary components.
+	 * Includes GLSL version, precision statements, conversion functions,
+	 * and incorporates filters.
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
+	 * @returns {string} Complete fragment shader source code
+	 * @private
+	 */
+	completeFragShaderSrc(gl) {
+		let src = '#version 300 es\n';
+		src += `precision highp float;\n`;
+		src += `precision highp int;\n`;
+		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
+
+		// Choose between simplified (gamma 2.2) or standard IEC 61966-2-1 conversion
+		if (this.isSrgbSimplified) {
+			src += `
+// Simplified sRGB to linear conversion using gamma 2.2
+// Convert from sRGB to linear RGB
+vec3 srgb2linear(vec3 srgb) {
+    return pow(srgb, vec3(2.2));
+}
+
+// Convert from sRGB to linear RGB (vec4 version - preserves alpha)
+vec4 srgb2linear(vec4 srgb) {
+    return vec4(srgb2linear(srgb.rgb), srgb.a);
+}
+
+// Convert a single sRGB channel to linear
+float srgb2linear(float c) {
+    return pow(c, 2.2);
+}
+
+// Simplified linear to sRGB conversion using gamma 1/2.2
+// Convert from linear RGB to sRGB
+vec3 linear2srgb(vec3 linear) {
+    return pow(linear, vec3(1.0/2.2));
+}
+
+// Convert from linear RGB to sRGB (vec4 version - preserves alpha)
+vec4 linear2srgb(vec4 linear) {
+    return vec4(linear2srgb(linear.rgb), linear.a);
+}
+
+// Convert a single linear channel to sRGB
+float linear2srgb(float c) {
+    return pow(c, 1.0/2.2);
+}
+`;
+		} else {
+			src += `
+// IEC 61966-2-1 specification		
+// Convert from sRGB to linear RGB
+vec3 srgb2linear(vec3 srgb) {
+    bvec3 cutoff = lessThan(srgb, vec3(0.04045));
+    vec3 higher = pow((srgb + vec3(0.055))/vec3(1.055), vec3(2.4));
+    vec3 lower = srgb/vec3(12.92);
+    
+    return mix(higher, lower, cutoff);
+}
+
+// Convert from sRGB to linear RGB (vec4 version - preserves alpha)
+vec4 srgb2linear(vec4 srgb) {
+    return vec4(srgb2linear(srgb.rgb), srgb.a);
+}
+
+// Convert a single sRGB channel to linear
+float srgb2linear(float c) {
+    return c &lt;= 0.04045 ? c/12.92 : pow((c + 0.055)/1.055, 2.4);
+}
+
+// IEC 61966-2-1 specification
+// Convert from linear RGB to sRGB
+vec3 linear2srgb(vec3 linear) {
+    bvec3 cutoff = lessThan(linear, vec3(0.0031308));
+    vec3 higher = vec3(1.055) * pow(linear, vec3(1.0/2.4)) - vec3(0.055);
+    vec3 lower = linear * vec3(12.92);
+    
+    return mix(higher, lower, cutoff);
+}
+
+// Convert from linear RGB to sRGB (vec4 version - preserves alpha)
+vec4 linear2srgb(vec4 linear) {
+    return vec4(linear2srgb(linear.rgb), linear.a);
+}
+
+// Convert a single linear channel to sRGB
+float linear2srgb(float c) {
+    return c &lt;= 0.0031308 ? c * 12.92 : 1.055 * pow(c, 1.0/2.4) - 0.055;
+}
+`;
+		}
+
+		if (this.autoSamplerDeclaration) {
+			for (let sampler of this.samplers) {
+				src += `uniform sampler2D ${sampler.name};\n`;
+			}
+
+			for (let sampler of this.samplers) {
+				src += `uniform bool ${sampler.name}_isLinear;\n`;
+			}
+		}
+
+		src += this.fragShaderSrc() + '\n';
+
+		for (let f of this.filters) {
+			src += `		// Filter: ${f.name}\n`;
+			src += f.fragModeSrc() + '\n';
+			src += f.fragSamplerSrc() + '\n';
+			src += f.fragUniformSrc() + '\n';
+			src += f.fragDataSrc() + '\n\n';
+		}
+
+		src += `
+	out vec4 color;
+	void main() { 
+		color = data();
+		`;
+		for (let f of this.filters) {
+			src += `color=${f.functionName()}(color);\n`
+		}
+		src += `}`;
+		return src;
+	}
+
+	/**
+	 * Creates the WebGL shader program.
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
+	 * @private
+	 * @throws {Error} If shader compilation or linking fails
+	 */
+	createProgram(gl) {
+		let vert = gl.createShader(gl.VERTEX_SHADER);
+		gl.shaderSource(vert, this.vertShaderSrc(gl));
+
+		gl.compileShader(vert);
+		let compiled = gl.getShaderParameter(vert, gl.COMPILE_STATUS);
+		if (!compiled) {
+			Util.printSrcCode(this.vertShaderSrc(gl))
+			console.log(gl.getShaderInfoLog(vert));
+			throw Error("Failed vertex shader compilation: see console log and ask for support.");
+		} else if (this.debug) {
+			console.log("here");
+			Util.printSrcCode(this.vertShaderSrc(gl));
+		}
+
+		let frag = gl.createShader(gl.FRAGMENT_SHADER);
+		gl.shaderSource(frag, this.completeFragShaderSrc(gl));
+		gl.compileShader(frag);
+
+		if (this.program)
+			gl.deleteProgram(this.program);
+
+		let program = gl.createProgram();
+
+		gl.getShaderParameter(frag, gl.COMPILE_STATUS);
+		compiled = gl.getShaderParameter(frag, gl.COMPILE_STATUS);
+		if (!compiled) {
+			Util.printSrcCode(this.completeFragShaderSrc(gl));
+			console.log(gl.getShaderInfoLog(frag));
+			throw Error("Failed fragment shader compilation: see console log and ask for support.");
+		} else if (this.debug) {
+			Util.printSrcCode(this.completeFragShaderSrc(gl));
+		}
+		gl.attachShader(program, vert);
+		gl.attachShader(program, frag);
+		gl.linkProgram(program);
+
+		if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+			var info = gl.getProgramInfoLog(program);
+			throw new Error('Could not compile WebGL program. \n\n' + info);
+		}
+
+		//sampler units;
+		for (let sampler of this.samplers)
+			sampler.location = gl.getUniformLocation(program, sampler.name);
+
+		// filter samplers
+		for (let f of this.filters)
+			for (let sampler of f.samplers)
+				sampler.location = gl.getUniformLocation(program, sampler.name);
+
+		this.coordattrib = gl.getAttribLocation(program, "a_position");
+		gl.vertexAttribPointer(this.coordattrib, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.coordattrib);
+
+		this.texattrib = gl.getAttribLocation(program, "a_texcoord");
+		gl.vertexAttribPointer(this.texattrib, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.texattrib);
+
+		this.matrixlocation = gl.getUniformLocation(program, "u_matrix");
+
+		this.program = program;
+		this.needsUpdate = false;
+
+		for (let uniform of Object.values(this.allUniforms())) {
+			uniform.location = null;
+			uniform.needsUpdate = true;
+		}
+
+		for (let f of this.filters)
+			f.prepare(gl);
+
+	}
+
+	/**
+	 * Gets a uniform variable by name.
+	 * Searches both shader uniforms and filter uniforms.
+	 * @param {string} name - Uniform variable name
+	 * @returns {Object|undefined} Uniform object if found
+	 */
+	getUniform(name) {
+		let u = this.uniforms[name];
+		if (u) return u;
+		for (let f of this.filters) {
+			u = f.uniforms[name];
+			if (u) return u;
+		}
+		return u;
+	}
+
+	/**
+	 * Returns all uniform variables associated with the shader and its filters.
+	 * Combines uniforms from both the base shader and all active filters into a single object.
+	 * @returns {Object.&lt;string, Object>} Combined uniform variables
+	 */
+	allUniforms() {
+		const result = this.uniforms;
+		for (let f of this.filters) {
+			Object.assign(result, f.uniforms);
+		}
+		return result;
+	}
+
+	/**
+	 * Updates all uniform values in the GPU.
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
+	 * @private
+	 */
+	updateUniforms(gl) {
+		for (const [name, uniform] of Object.entries(this.allUniforms())) {
+			if (!uniform.location)
+				uniform.location = gl.getUniformLocation(this.program, name);
+
+			if (!uniform.location)  //uniform not used in program
+				continue;
+
+			if (uniform.needsUpdate) {
+				let value = uniform.value;
+				switch (uniform.type) {
+					case 'vec4': gl.uniform4fv(uniform.location, value); break;
+					case 'vec3': gl.uniform3fv(uniform.location, value); break;
+					case 'vec2': gl.uniform2fv(uniform.location, value); break;
+					case 'float': gl.uniform1f(uniform.location, value); break;
+					case 'int': gl.uniform1i(uniform.location, value); break;
+					case 'bool': gl.uniform1i(uniform.location, value); break;
+					case 'mat3': gl.uniformMatrix3fv(uniform.location, false, value); break;
+					case 'mat4': gl.uniformMatrix4fv(uniform.location, false, value); break;
+					default: throw Error('Unknown uniform type: ' + u.type);
+				}
+				uniform.needsUpdate = false;
+			}
+		}
+	}
+
+	/**
+	 * Gets vertex shader source code.
+	 * Default implementation provides basic vertex transformation and texture coordinate passing.
+	 * @param {WebGL2RenderingContext} gl - WebGL2 context
+	 * @returns {string} Vertex shader source code
+	 */
+	vertShaderSrc(gl) {
+		return `#version 300 es
+
+precision highp float; 
+precision highp int; 
+
+uniform mat4 u_matrix;
+in vec4 a_position;
+in vec2 a_texcoord;
+
+out vec2 v_texcoord;
+
+			void main() {
+				gl_Position = u_matrix * a_position;
+				v_texcoord = a_texcoord;
+			} `;
+	}
+
+	/**
+	 * Gets fragment shader source code.
+	 * Must be overridden in derived classes for custom shading.
+	 * @returns {string} Fragment shader source code
+	 * @virtual
+	 */
+	fragShaderSrc() {
+		let str = `
+
+in vec2 v_texcoord;
+
+vec4 data() {
+	vec4 color = texture(source, v_texcoord);
+	${this.isLinear ? "" : "color = srgb2linear(color);"}
+	return color;
+}
+`;
+		return str;
+	}
+}
+/**
+ * Fired when shader state changes (uniforms, filters, etc).
+ * @event Shader#update
+ */
+
+export { Shader }</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

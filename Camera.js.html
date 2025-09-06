@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: Camera.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: Camera.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Transform } from './Transform.js'
+import { BoundingBox } from './BoundingBox.js'
+import { addSignals } from './Signals.js'
+
+/**
+ * Defines a rectangular viewing region inside a canvas area.
+ * @typedef {Object} Viewport
+ * @property {number} x - X-coordinate of the lower-left corner
+ * @property {number} y - Y-coordinate of the lower-left corner
+ * @property {number} dx - Width of the viewport
+ * @property {number} dy - Height of the viewport
+ * @property {number} w - Total canvas width
+ * @property {number} h - Total canvas height
+ */
+
+/**
+ * Camera class that manages viewport parameters and camera transformations.
+ * Acts as a container for parameters needed to define the viewport and camera position,
+ * supporting smooth animations between positions using source and target transforms.
+ * 
+ * The camera maintains two Transform objects:
+ * - source: represents current position
+ * - target: represents destination position
+ * 
+ * Animation between positions is handled automatically by the OpenLIME system
+ * unless manually interrupted by user input.
+ */
+class Camera {
+	/**
+	 * Creates a new Camera instance.
+	 * @param {Object} [options] - Configuration options
+	 * @param {boolean} [options.bounded=true] - Whether to limit camera translation to scene boundaries
+	 * @param {number} [options.maxFixedZoom=2] - Maximum allowed pixel size
+	 * @param {number} [options.minScreenFraction=1] - Minimum portion of screen to show when zoomed in
+	 * @param {Transform} [options.target] - Initial target transform
+	 * @fires Camera#update
+	 */
+	constructor(options) {
+		Object.assign(this, {
+			viewport: null,
+			bounded: true,
+			minScreenFraction: 1,
+			maxFixedZoom: 2,
+			maxZoom: 2,
+			minZoom: 1,
+			boundingBox: new BoundingBox,
+		});
+		Object.assign(this, options);
+		this.target = new Transform(this.target);
+		this.source = this.target.copy();
+		this.easing = 'linear';
+	}
+
+	/**
+	 * Creates a deep copy of the camera instance.
+	 * @returns {Camera} A new Camera instance with copied properties
+	 */
+	copy() {
+		let camera = new Camera();
+		Object.assign(camera, this);
+		return camera;
+	}
+
+	/**
+	* Updates the viewport while maintaining the camera position as close as possible to the previous one.
+	* @param {Viewport} view - The new viewport in CSS coordinates
+	*/
+	setViewport(view) {
+		if (this.viewport) {
+			let rz = Math.sqrt((view.w / this.viewport.w) * (view.h / this.viewport.h));
+			this.viewport = view;
+			const { x, y, z, a } = this.target;
+			this.setPosition(0, x, y, z * rz, a);
+		} else {
+			this.viewport = view;
+		}
+	}
+
+	/**
+	 * Returns the current viewport in device coordinates (accounting for device pixel ratio).
+	 * @returns {Viewport} The current viewport scaled for device pixels
+	 */
+	glViewport() {
+		let d = window.devicePixelRatio;
+		let viewport = {};
+		for (let i in this.viewport)
+			viewport[i] = this.viewport[i] * d;
+		return viewport;
+	}
+
+	/*
+	 * Converts canvas coordinates to scene coordinates using the specified transform.
+	 * @param {number} x - X coordinate relative to canvas
+	 * @param {number} y - Y coordinate relative to canvas
+	 * @param {Transform} transform - Transform to use for conversion
+	 * @returns {{x: number, y: number}} Coordinates in scene space relative to viewport center
+	 */
+	// mapToScene(x, y, transform) {
+	// 	//compute coords relative to the center of the viewport.
+	// 	x -= this.viewport.w / 2;
+	// 	y -= this.viewport.h / 2;
+	// 	x -= transform.x;
+	// 	y -= transform.y;
+	// 	x /= transform.z;
+	// 	y /= transform.z;
+	// 	let r = Transform.rotate(x, y, -transform.a);
+	// 	return { x: r.x, y: r.y };
+	// }
+
+	/*
+	 * Converts scene coordinates to canvas coordinates using the specified transform.
+	 * @param {number} x - X coordinate in scene space
+	 * @param {number} y - Y coordinate in scene space
+	 * @param {Transform} transform - Transform to use for conversion
+	 * @returns {{x: number, y: number}} Coordinates in canvas space
+	 */
+	// sceneToCanvas(x, y, transform) {
+	// 	let r = Transform.rotate(x, y, transform.a);
+	// 	x = r.x * transform.z + transform.x - this.viewport.x + this.viewport.w / 2;
+	// 	y = r.y * transform.z - transform.y + this.viewport.y + this.viewport.h / 2;
+	// 	return { x: x, y: y };
+	// }
+
+	/**
+	 * Sets the camera target parameters for a new position.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} x - X component of translation
+	 * @param {number} y - Y component of translation
+	 * @param {number} z - Zoom factor
+	 * @param {number} a - Rotation angle in degrees
+	 * @param {string} [easing] - Easing function name for animation
+	 * @fires Camera#update
+	 */
+	setPosition(dt, x, y, z, a, easing) {
+		/**
+		* The event is fired when the camera target is changed.
+		* @event Camera#update
+		*/
+
+		// Discard events due to cursor outside window
+		//if (Math.abs(x) > 64000 || Math.abs(y) > 64000) return;
+		this.easing = easing || this.easing;
+
+		if (this.bounded) {
+			const sw = this.viewport.dx;
+			const sh = this.viewport.dy;
+
+			//
+			let xform = new Transform({ x: x, y: y, z: z, a: a, t: 0 });
+			let tbox = xform.transformBox(this.boundingBox);
+			const bw = tbox.width();
+			const bh = tbox.height();
+
+			// Screen space offset between image boundary and screen boundary
+			// Do not let transform offet go beyond this limit.
+			// if (scaled-image-size &lt; screen) it remains fully contained
+			// else the scaled-image boundary closest to the screen cannot enter the screen.
+			const dx = Math.abs(bw - sw) / 2;// + this.boundingBox.center().x- tbox.center().x;
+			x = Math.min(Math.max(-dx, x), dx);
+
+			const dy = Math.abs(bh - sh) / 2;// + this.boundingBox.center().y - tbox.center().y;
+			y = Math.min(Math.max(-dy, y), dy);
+		}
+
+		let now = performance.now();
+		this.source = this.getCurrentTransform(now);
+		//the angle needs to be interpolated in the shortest direction.
+		//target it is kept between 0 and +360, source is kept relative.
+		a = Transform.normalizeAngle(a);
+		this.source.a = Transform.normalizeAngle(this.source.a);
+		if (a - this.source.a > 180) this.source.a += 360;
+		if (this.source.a - a > 180) this.source.a -= 360;
+		Object.assign(this.target, { x: x, y: y, z: z, a: a, t: now + dt });
+		console.assert(!isNaN(this.target.x));
+		this.emit('update');
+	}
+
+	/**
+	 * Pans the camera by a specified amount in canvas coordinates.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} dx - Horizontal displacement
+	 * @param {number} dy - Vertical displacement
+	 */
+	pan(dt, dx, dy) {
+		let now = performance.now();
+		let m = this.getCurrentTransform(now);
+		m.x += dx;
+		m.y += dy;
+		this.setPosition(dt, m.x, m.y, m.z, m.a);
+	}
+
+	/**
+	 * Zooms the camera to a specific point in canvas coordinates.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} z - Target zoom level
+	 * @param {number} [x=0] - X coordinate to zoom towards
+	 * @param {number} [y=0] - Y coordinate to zoom towards
+	 */
+	zoom(dt, z, x, y) {
+		if (!x) x = 0;
+		if (!y) y = 0;
+
+		let now = performance.now();
+		let m = this.getCurrentTransform(now);
+
+		if (this.bounded) {
+			z = Math.min(Math.max(z, this.minZoom), this.maxZoom);
+		}
+
+		//x, an y should be the center of the zoom.
+		m.x += (m.x + x) * (m.z - z) / m.z;
+		m.y += (m.y + y) * (m.z - z) / m.z;
+
+		this.setPosition(dt, m.x, m.y, z, m.a);
+	}
+
+	/**
+	 * Rotates the camera around its z-axis.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} a - Rotation angle in degrees
+	 */
+	rotate(dt, a) {
+
+		let now = performance.now();
+		let m = this.getCurrentTransform(now);
+
+		this.setPosition(dt, m.x, m.y, m.z, this.target.a + a);
+	}
+
+	/**
+	 * Applies a relative zoom change at a specific point.
+	 * @param {number} dt - Animation duration in milliseconds
+	 * @param {number} dz - Relative zoom change factor
+	 * @param {number} [x=0] - X coordinate to zoom around
+	 * @param {number} [y=0] - Y coordinate to zoom around
+	 */
+	deltaZoom(dt, dz, x = 0, y = 0) {
+
+		let now = performance.now();
+		let m = this.getCurrentTransform(now);
+
+		//rapid firing wheel event need to compound.
+		//but the x, y in input are relative to the current transform.
+		dz *= this.target.z / m.z;
+
+		if (this.bounded) {
+			if (m.z * dz &lt; this.minZoom) dz = this.minZoom / m.z;
+			if (m.z * dz > this.maxZoom) dz = this.maxZoom / m.z;
+		}
+
+		//transform is x*z + dx = X , there x is positrion in scene, X on screen
+		//we want x*z*dz + dx1 = X (stay put, we need to find dx1.
+		let r = Transform.rotate(x, y, m.a);
+		m.x += r.x * m.z * (1 - dz);
+		m.y += r.y * m.z * (1 - dz);
+
+		this.setPosition(dt, m.x, m.y, m.z * dz, m.a);
+	}
+
+	/**
+	 * Gets the camera transform at a specific time.
+	 * @param {number} time - Current time in milliseconds (from performance.now())
+	 * @returns {Transform} The interpolated transform at the specified time with isComplete flag
+	 */
+	getCurrentTransform(time) {
+		if (time > this.target.t) this.easing = 'linear';
+		return Transform.interpolate(this.source, this.target, time, this.easing);
+	}
+
+	/**
+	* Checks if the camera animation has completed.
+	* @param {Transform} currentTransform - The current transform (optional, will be calculated if not provided)
+	* @returns {boolean} True if the camera has reached its target position
+	*/
+	hasReachedTarget(currentTransform) {
+		if (!currentTransform) {
+			currentTransform = this.getCurrentTransform(performance.now());
+		}
+		return currentTransform.isComplete;
+	}
+
+	/**
+	 * Gets the camera transform at a specific time in device coordinates.
+	 * @param {number} time - Current time in milliseconds (from performance.now())
+	 * @returns {Transform} The interpolated transform scaled for device pixels
+	 */
+	getGlCurrentTransform(time) {
+		const pos = this.getCurrentTransform(time);
+		pos.x *= window.devicePixelRatio;
+		pos.y *= window.devicePixelRatio;
+		pos.z *= window.devicePixelRatio;
+		return pos;
+	}
+
+	/**
+	 * Adjusts the camera to frame a specified bounding box.
+	 * @param {BoundingBox} box - The box to frame in canvas coordinates
+	 * @param {number} [dt=0] - Animation duration in milliseconds
+	 */
+	fit(box, dt) {
+		if (box.isEmpty()) return;
+		if (!dt) dt = 0;
+
+		//find if we align the topbottom borders or the leftright border.
+		let w = this.viewport.dx;
+		let h = this.viewport.dy;
+
+		let bw = box.width();
+		let bh = box.height();
+		let c = box.center();
+		let z = Math.min(w / bw, h / bh);
+
+		this.setPosition(dt, -c.x * z, -c.y * z, z, 0);
+	}
+
+	/**
+	 * Resets the camera to show the entire scene.
+	 * @param {number} dt - Animation duration in milliseconds
+	 */
+	fitCameraBox(dt) {
+		this.fit(this.boundingBox, dt);
+	}
+
+	/**
+	 * Updates the camera's boundary constraints and zoom limits.
+	 * @private
+	 * @param {BoundingBox} box - New bounding box for constraints
+	 * @param {number} minScale - Minimum scale factor
+	 */
+	updateBounds(box, minScale) {
+		this.boundingBox = box;
+		const w = this.viewport.dx;
+		const h = this.viewport.dy;
+
+		let bw = this.boundingBox.width();
+		let bh = this.boundingBox.height();
+
+		this.minZoom = Math.min(w / bw, h / bh) * this.minScreenFraction;
+		this.maxZoom = minScale > 0 ? this.maxFixedZoom / minScale : this.maxFixedZoom;
+		this.maxZoom = Math.max(this.minZoom, this.maxZoom);
+	}
+}
+
+addSignals(Camera, 'update');
+
+export { Camera }
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: ShaderAnisotropicDiffusion.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: ShaderAnisotropicDiffusion.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Shader } from './Shader.js';
+
+/**
+ * ShaderAnisotropicDiffusion extends the base Shader class to implement
+ * a Perona-Malik anisotropic diffusion filter to enhance inscriptions
+ * on metal surfaces based on normal maps.
+ * 
+ * This filter preserves and enhances edges while smoothing other areas,
+ * making it ideal for revealing inscriptions on uneven surfaces.
+ */
+class ShaderAnisotropicDiffusion extends Shader {
+  /**
+   * Creates a new Anisotropic Diffusion Shader instance.
+   * @param {Object} [options] - Configuration options passed to parent Shader
+   * @param {number} [options.kappa=15.0] - Diffusion conductance parameter
+   * @param {number} [options.iterations=3] - Number of diffusion iterations
+   * @param {number} [options.lambda=0.25] - Diffusion rate (0.0-0.25 for stability)
+   * @param {number} [options.normalStrength=1.0] - Normal contribution strength
+   */
+  constructor(options = {}) {
+    // Set default options for anisotropic diffusion
+    const diffusionOptions = Object.assign({
+      kappa: 0.03,          // Very low value to strongly preserve edges
+      iterations: 3,        // Fewer iterations to avoid over-smoothing
+      lambda: 0.1,          // Gentler diffusion
+      normalStrength: 1.2,  // Increased strength for better visibility
+      uniforms: {
+        kappa: { type: 'float', value: 0.03, needsUpdate: true },
+        iterations: { type: 'int', value: 3, needsUpdate: true },
+        lambda: { type: 'float', value: 0.1, needsUpdate: true },
+        normalStrength: { type: 'float', value: 1.2, needsUpdate: true }
+      },
+      samplers: [
+        { id: 0, name: 'source', label: 'Normal Map', samplers: [{ id: 0, type: 'color' }] }
+      ],
+      label: 'Anisotropic Diffusion',
+      modes: ['perona-malik', 'weickert'],
+      mode: 'perona-malik'
+    }, options);
+
+    super(diffusionOptions);
+
+    // Set parameters from options
+    if (options.kappa !== undefined) {
+      this.setUniform('kappa', options.kappa);
+    }
+
+    if (options.iterations !== undefined) {
+      this.setUniform('iterations', options.iterations);
+    }
+
+    if (options.lambda !== undefined) {
+      this.setUniform('lambda', options.lambda);
+    }
+
+    if (options.normalStrength !== undefined) {
+      this.setUniform('normalStrength', options.normalStrength);
+    }
+  }
+
+  /**
+   * Override fragment shader source to implement anisotropic diffusion.
+   * This version is compatible with WebGL 2.0+.
+   * @param {WebGLRenderingContext} gl - WebGL context
+   * @returns {string} Fragment shader source code
+   */
+  fragShaderSrc(gl) {
+    return `
+uniform float kappa;
+uniform int iterations;
+uniform float lambda;
+uniform float normalStrength;
+
+in vec2 v_texcoord;
+
+// Calculate texture offset based on tile size
+vec2 texelSize = vec2(1.0) / tileSize;
+
+// Edge-stopping functions from Perona-Malik algorithm
+float g1(float gradient, float k) {
+  return exp(-pow(gradient/k, 2.0));
+}
+
+float g2(float gradient, float k) {
+  return 1.0 / (1.0 + pow(gradient/k, 2.0));
+}
+
+  // Extract grayscale value from normal map, giving more weight to z component
+float normalToGray(vec3 normal) {
+  // Heavily favor the blue channel (z component) since it contains the depth information
+  return dot(normal, vec3(0.15, 0.15, 0.7));
+}
+
+vec4 data() {
+  // Sample the center pixel color (normal map)
+  vec4 centerColor = texture(source, v_texcoord);
+  ${this.isLinear ? "" : "centerColor = srgb2linear(centerColor);"}
+  // Convert normal to working grayscale image
+  // Adjust normal vector to be in [-1,1] range
+  vec3 normal = centerColor.rgb * 2.0 - 1.0;
+  normal = normalize(normal);
+  
+  // Extract grayscale value with emphasis on z component
+  // Map to 0-1 range for better visualization
+  float intensity = (normalToGray(normal) + 1.0) * 0.5;
+  
+  // Store the original intensity before diffusion for later use
+  float originalIntensity = intensity;
+  
+  // Initial image for diffusion
+  float currentIntensity = intensity;
+  
+  // Perform multiple iterations of anisotropic diffusion
+  for (int i = 0; i &lt; 20; i++) {
+    if (i >= iterations) break; // Handle dynamic loop limit
+    
+    // Sample the 4-connected neighborhood
+    vec4 vN = texture(source, v_texcoord + texelSize * vec2(0.0, -1.0));
+     ${this.isLinear ? "" : "vN = srgb2linear(vN);"}
+    vec4 vS = texture(source, v_texcoord + texelSize * vec2(0.0, 1.0));
+     ${this.isLinear ? "" : "vS = srgb2linear(vS);"}
+    vec4 vE = texture(source, v_texcoord + texelSize * vec2(1.0, 0.0));
+     ${this.isLinear ? "" : "vE = srgb2linear(vE);"}
+    vec4 vW = texture(source, v_texcoord + texelSize * vec2(-1.0, 0.0));
+     ${this.isLinear ? "" : "vW = srgb2linear(vW);"}
+
+    vec3 normalN = vN.rgb * 2.0 - 1.0;
+    vec3 normalS = vS.rgb * 2.0 - 1.0;
+    vec3 normalE = vE.rgb * 2.0 - 1.0;
+    vec3 normalW = vW.rgb * 2.0 - 1.0;
+    
+    // Convert to grayscale with normalization to 0-1 range
+    float n = (normalToGray(normalN) + 1.0) * 0.5;
+    float s = (normalToGray(normalS) + 1.0) * 0.5;
+    float e = (normalToGray(normalE) + 1.0) * 0.5;
+    float w = (normalToGray(normalW) + 1.0) * 0.5;
+    
+    // Calculate gradients (using normalized intensity values)
+    float gradN = abs(n - currentIntensity);
+    float gradS = abs(s - currentIntensity);
+    float gradE = abs(e - currentIntensity);
+    float gradW = abs(w - currentIntensity);
+    
+    // Apply edge-stopping function
+    float mode = ${this.mode === 'perona-malik' ? '1.0' : '0.0'};
+    float cN = mix(g2(gradN, kappa), g1(gradN, kappa), mode);
+    float cS = mix(g2(gradS, kappa), g1(gradS, kappa), mode);
+    float cE = mix(g2(gradE, kappa), g1(gradE, kappa), mode);
+    float cW = mix(g2(gradW, kappa), g1(gradW, kappa), mode);
+    
+    // Update intensity with weighted contributions
+    float laplacian = cN * (n - currentIntensity) +
+                     cS * (s - currentIntensity) +
+                     cE * (e - currentIntensity) +
+                     cW * (w - currentIntensity);
+                     
+    currentIntensity += lambda * laplacian;
+  }
+  
+  // Enhance contrast in the final result
+  float enhancedIntensity = currentIntensity * normalStrength;
+  
+  // Combine with original intensity to preserve details
+  float mixFactor = 0.6; // 60% diffused result, 40% original
+  enhancedIntensity = mix(originalIntensity, enhancedIntensity, mixFactor);
+  
+  // Custom contrast enhancement to bring out inscriptions
+  // Apply contrast and brightness adjustment
+  float adjustedIntensity = enhancedIntensity;
+  
+  // Invert the image for better visibility of inscriptions
+  adjustedIntensity = 1.0 - adjustedIntensity;
+  
+  // Significantly enhance brightness and contrast
+  adjustedIntensity = pow(adjustedIntensity, 0.5); // Increase brightness (gamma correction)
+  adjustedIntensity = smoothstep(0.1, 0.6, adjustedIntensity); // Enhance contrast with bigger bright areas
+  
+  // Boost brightness again
+  adjustedIntensity = adjustedIntensity * 1.3;
+  adjustedIntensity = clamp(adjustedIntensity, 0.0, 1.0);
+  
+  // Return grayscale result with good visibility
+  return vec4(vec3(adjustedIntensity), centerColor.a);
+}`;
+  }
+
+  /**
+   * Sets the kappa parameter which controls edge sensitivity.
+   * Higher values preserve fewer edges.
+   * @param {number} value - Kappa value (typically 5-50)
+   */
+  setKappa(value) {
+    this.setUniform('kappa', value);
+  }
+
+  /**
+   * Sets the number of diffusion iterations.
+   * More iterations produce smoother results but take longer to compute.
+   * @param {number} value - Number of iterations (typically 1-10)
+   */
+  setIterations(value) {
+    this.setUniform('iterations', value);
+  }
+
+  /**
+   * Sets the lambda parameter which controls diffusion rate.
+   * Should be between 0.0 and 0.25 for numerical stability.
+   * @param {number} value - Lambda value (0.0-0.25)
+   */
+  setLambda(value) {
+    value = Math.min(0.25, Math.max(0.0, value)); // Clamp for stability
+    this.setUniform('lambda', value);
+  }
+
+  /**
+   * Sets the normal strength parameter which controls how much
+   * the normal map information influences the final result.
+   * @param {number} value - Normal strength multiplier
+   */
+  setNormalStrength(value) {
+    this.setUniform('normalStrength', value);
+  }
+}
+
+export { ShaderAnisotropicDiffusion };</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

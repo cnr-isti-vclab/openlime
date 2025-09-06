@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OpenLIME Source: Raster16Bit.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/openlime.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OpenLIME</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Annotation.html">Annotation</a></li><li><a href="AudioPlayer.html">AudioPlayer</a></li><li><a href="BoundingBox.html">BoundingBox</a></li><li><a href="Cache.html">Cache</a></li><li><a href="Camera.html">Camera</a></li><li><a href="Canvas.html">Canvas</a></li><li><a href="Color.html">Color</a></li><li><a href="Colormap.html">Colormap</a></li><li><a href="ColormapLegend.html">ColormapLegend</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Controller2D.html">Controller2D</a></li><li><a href="ControllerFocusContext.html">ControllerFocusContext</a></li><li><a href="ControllerLens.html">ControllerLens</a></li><li><a href="ControllerPanZoom.html">ControllerPanZoom</a></li><li><a href="CoordinateSystem.html">CoordinateSystem</a></li><li><a href="Draggable.html">Draggable</a></li><li><a href="EditorSvgAnnotation.html">EditorSvgAnnotation</a></li><li><a href="Erase.html">Erase</a></li><li><a href="FocusContext.html">FocusContext</a></li><li><a href="GeoreferenceManager.html">GeoreferenceManager</a></li><li><a href="Layer.html">Layer</a></li><li><a href="LayerAnnotation.html">LayerAnnotation</a></li><li><a href="LayerAnnotationImage.html">LayerAnnotationImage</a></li><li><a href="LayerBRDF.html">LayerBRDF</a></li><li><a href="LayerCombiner.html">LayerCombiner</a></li><li><a href="LayerDstretch.html">LayerDstretch</a></li><li><a href="LayerHDR.html">LayerHDR</a></li><li><a href="LayerImage.html">LayerImage</a></li><li><a href="LayerLens.html">LayerLens</a></li><li><a href="LayerMaskedImage.html">LayerMaskedImage</a></li><li><a href="LayerMultispectral.html">LayerMultispectral</a></li><li><a href="LayerNeuralRTI.html">LayerNeuralRTI</a></li><li><a href="LayerRTI.html">LayerRTI</a></li><li><a href="LayerSvgAnnotation.html">LayerSvgAnnotation</a></li><li><a href="Layout.html">Layout</a></li><li><a href="LayoutTileImages.html">LayoutTileImages</a></li><li><a href="LayoutTiles.html">LayoutTiles</a></li><li><a href="LensDashboard.html">LensDashboard</a></li><li><a href="LensDashboardNavigator.html">LensDashboardNavigator</a></li><li><a href="LensDashboardNavigatorRadial.html">LensDashboardNavigatorRadial</a></li><li><a href="LightSphereController.html">LightSphereController</a></li><li><a href="MultispectralUI.html">MultispectralUI</a></li><li><a href="PointerManager.html">PointerManager</a></li><li><a href="Raster.html">Raster</a></li><li><a href="Raster16Bit.html">Raster16Bit</a></li><li><a href="Ruler.html">Ruler</a></li><li><a href="ScaleBar.html">ScaleBar</a></li><li><a href="Shader.html">Shader</a></li><li><a href="ShaderAnisotropicDiffusion.html">ShaderAnisotropicDiffusion</a></li><li><a href="ShaderBRDF.html">ShaderBRDF</a></li><li><a href="ShaderCombiner.html">ShaderCombiner</a></li><li><a href="ShaderDstretch.html">ShaderDstretch</a></li><li><a href="ShaderEdgeDetection.html">ShaderEdgeDetection</a></li><li><a href="ShaderFilter.html">ShaderFilter</a></li><li><a href="ShaderFilterBrightness.html">ShaderFilterBrightness</a></li><li><a href="ShaderFilterColormap.html">ShaderFilterColormap</a></li><li><a href="ShaderFilterGrayscale.html">ShaderFilterGrayscale</a></li><li><a href="ShaderFilterOpacity.html">ShaderFilterOpacity</a></li><li><a href="ShaderFilterTest.html">ShaderFilterTest</a></li><li><a href="ShaderFilterVector.html">ShaderFilterVector</a></li><li><a href="ShaderFilterVectorGlyph.html">ShaderFilterVectorGlyph</a></li><li><a href="ShaderGammaFilter.html">ShaderGammaFilter</a></li><li><a href="ShaderHDR.html">ShaderHDR</a></li><li><a href="ShaderLens.html">ShaderLens</a></li><li><a href="ShaderMultispectral.html">ShaderMultispectral</a></li><li><a href="ShaderNeural.html">ShaderNeural</a></li><li><a href="ShaderRTI.html">ShaderRTI</a></li><li><a href="Skin.html">Skin</a></li><li><a href="TextToSpeechPlayer.html">TextToSpeechPlayer</a></li><li><a href="Tile.html">Tile</a></li><li><a href="Transform.html">Transform</a></li><li><a href="UIBasic.html">UIBasic</a></li><li><a href="UIDialog.html">UIDialog</a></li><li><a href="Units.html">Units</a></li><li><a href="Util.html">Util</a></li><li><a href="Viewer.html">Viewer</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="Camera.html#event:update">Camera#event:update</a></li><li><a href="Canvas.html#event:ready">Canvas#event:ready</a></li><li><a href="Canvas.html#event:update">Canvas#event:update</a></li><li><a href="Canvas.html#event:updateSize">Canvas#event:updateSize</a></li><li><a href="Layer.html#event:ready">Layer#event:ready</a></li><li><a href="Layer.html#event:update">Layer#event:update</a></li><li><a href="LayerAnnotation.html#event:ready">LayerAnnotation#event:ready</a></li><li><a href="LayerAnnotation.html#event:update">LayerAnnotation#event:update</a></li><li><a href="LayerAnnotationImage.html#event:ready">LayerAnnotationImage#event:ready</a></li><li><a href="LayerAnnotationImage.html#event:update">LayerAnnotationImage#event:update</a></li><li><a href="LayerBRDF.html#event:ready">LayerBRDF#event:ready</a></li><li><a href="LayerBRDF.html#event:update">LayerBRDF#event:update</a></li><li><a href="LayerCombiner.html#event:ready">LayerCombiner#event:ready</a></li><li><a href="LayerCombiner.html#event:update">LayerCombiner#event:update</a></li><li><a href="LayerDstretch.html#event:ready">LayerDstretch#event:ready</a></li><li><a href="LayerDstretch.html#event:update">LayerDstretch#event:update</a></li><li><a href="LayerHDR.html#event:ready">LayerHDR#event:ready</a></li><li><a href="LayerHDR.html#event:update">LayerHDR#event:update</a></li><li><a href="LayerImage.html#event:ready">LayerImage#event:ready</a></li><li><a href="LayerImage.html#event:update">LayerImage#event:update</a></li><li><a href="LayerLens.html#event:ready">LayerLens#event:ready</a></li><li><a href="LayerLens.html#event:update">LayerLens#event:update</a></li><li><a href="LayerMaskedImage.html#event:ready">LayerMaskedImage#event:ready</a></li><li><a href="LayerMaskedImage.html#event:update">LayerMaskedImage#event:update</a></li><li><a href="LayerMultispectral.html#event:ready">LayerMultispectral#event:ready</a></li><li><a href="LayerMultispectral.html#event:update">LayerMultispectral#event:update</a></li><li><a href="LayerNeuralRTI.html#event:ready">LayerNeuralRTI#event:ready</a></li><li><a href="LayerNeuralRTI.html#event:update">LayerNeuralRTI#event:update</a></li><li><a href="LayerRTI.html#event:ready">LayerRTI#event:ready</a></li><li><a href="LayerRTI.html#event:update">LayerRTI#event:update</a></li><li><a href="LayerSvgAnnotation.html#event:ready">LayerSvgAnnotation#event:ready</a></li><li><a href="LayerSvgAnnotation.html#event:update">LayerSvgAnnotation#event:update</a></li><li><a href="Layout.html#event:ready">Layout#event:ready</a></li><li><a href="Layout.html#event:updateSize">Layout#event:updateSize</a></li><li><a href="LayoutTileImages.html#event:ready">LayoutTileImages#event:ready</a></li><li><a href="LayoutTileImages.html#event:updateSize">LayoutTileImages#event:updateSize</a></li><li><a href="LayoutTiles.html#event:ready">LayoutTiles#event:ready</a></li><li><a href="LayoutTiles.html#event:updateSize">LayoutTiles#event:updateSize</a></li><li><a href="Shader.html#event:update">Shader#event:update</a></li><li><a href="ShaderBRDF.html#event:update">ShaderBRDF#event:update</a></li><li><a href="ShaderCombiner.html#event:update">ShaderCombiner#event:update</a></li><li><a href="ShaderDstretch.html#event:update">ShaderDstretch#event:update</a></li><li><a href="ShaderHDR.html#event:update">ShaderHDR#event:update</a></li><li><a href="ShaderLens.html#event:update">ShaderLens#event:update</a></li><li><a href="ShaderMultispectral.html#event:update">ShaderMultispectral#event:update</a></li><li><a href="ShaderNeural.html#event:update">ShaderNeural#event:update</a></li><li><a href="ShaderRTI.html#event:update">ShaderRTI#event:update</a></li><li><a href="UIDialog.html#event:closed">UIDialog#event:closed</a></li><li><a href="Viewer.html#event:draw">Viewer#event:draw</a></li><li><a href="Viewer.html#event:resize">Viewer#event:resize</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Howto<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-getting-started.html">Getting started with OpenLIME</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#RenderingMode">RenderingMode</a></li><li><a href="global.html#addSignals">addSignals</a></li><li><a href="global.html#simplify">simplify</a></li><li><a href="global.html#smooth">smooth</a></li><li><a href="global.html#smoothToPath">smoothToPath</a></li><li><a href="global.html#taskCallback">taskCallback</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: Raster16Bit.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">import { Raster } from './Raster.js';
+
+/**
+* @typedef {('r16f'|'rg16f'|'rgb16f'|'rgba16f'|'r16ui'|'rg16ui'|'rgb16ui'|'rgba16ui'|'r16i'|'rg16i'|'rgb16i'|'rgba16i'|'depth16')} Raster16Bit#Format
+* Defines the 16-bit format for image data storage in textures.
+* @property {'r16f'} r16f - Single-channel 16-bit floating point format
+* @property {'rg16f'} rg16f - Two-channel 16-bit floating point format
+* @property {'rgb16f'} rgb16f - Three-channel 16-bit floating point format
+* @property {'rgba16f'} rgba16f - Four-channel 16-bit floating point format
+* @property {'r16ui'} r16ui - Single-channel 16-bit unsigned integer format
+* @property {'rg16ui'} rg16ui - Two-channel 16-bit unsigned integer format
+* @property {'rgb16ui'} rgb16ui - Three-channel 16-bit unsigned integer format
+* @property {'rgba16ui'} rgba16ui - Four-channel 16-bit unsigned integer format
+* @property {'r16i'} r16i - Single-channel 16-bit signed integer format
+* @property {'rg16i'} rg16i - Two-channel 16-bit signed integer format
+* @property {'rgb16i'} rgb16i - Three-channel 16-bit signed integer format
+* @property {'rgba16i'} rgba16i - Four-channel 16-bit signed integer format
+* @property {'depth16'} depth16 - 16-bit depth texture format
+*/
+
+/**
+* @typedef {Function} DataLoaderCallback
+* @param {Object} tile - The tile information object
+* @param {WebGL2RenderingContext} gl - The WebGL2 rendering context
+* @param {Object} options - Additional options for the data loader
+* @returns {Promise&lt;Object>} The loaded data object with properties:
+*   - data: TypedArray or Image data
+*   - width: Width of the image
+*   - height: Height of the image
+*   - channels: Number of channels in the data
+*/
+
+/**
+* Raster16Bit class extends Raster to handle 16-bit textures with WebGL 2.0.
+* Provides functionality for:
+* - Loading 16-bit images from URLs or blobs via custom data loaders
+* - Converting data to appropriate WebGL 2.0 texture formats
+* - Supporting various 16-bit formats (float, int, uint)
+* - Creating appropriate texture parameters for 16-bit data
+* - Support for custom data loaders for specialized formats
+*/
+class Raster16Bit extends Raster {
+  /**
+   * Creates a new Raster16Bit instance.
+   * @param {Object} [options] - Configuration options
+   * @param {Raster16Bit#Format} [options.format='rgb16ui'] - 16-bit data format
+   * @param {boolean} [options.useHalfFloat=false] - Use HALF_FLOAT type instead of FLOAT for better performance when applicable
+   * @param {boolean} [options.flipY=false] - Whether to flip the image vertically during loading
+   * @param {boolean} [options.premultiplyAlpha=false] - Whether to premultiply alpha during loading
+   * @param {DataLoaderCallback} [options.dataLoader=null] - Custom data loader callback
+   * @param {Object} [options.dataLoaderOptions={}] - Options to pass to the data loader
+   * @param {boolean} [options.debug=false] - Enable debug output
+   */
+  constructor(options) {
+    // Initialize with parent constructor but override defaults
+    super(Object.assign({
+        format: 'rgb16ui',
+        debug: false,
+        useHalfFloat: false,
+        flipY: false,
+        premultiplyAlpha: false,
+    }, options));
+
+    // Additional options specific to 16-bit handling
+    Object.assign(this, {
+        dataLoader: null,
+        dataLoaderOptions: {},
+        statInfo: {}
+    });
+
+    // Override with provided options
+    if (options) {
+        Object.assign(this, options);
+    }
+
+    // Check if the format is supported
+    if (!this._isFormatSupported(this.format)) {
+        throw new Error(`The format "${this.format}" is not supported by the browser.`);
+    }
+
+    if (this.debug) {
+        console.log(`Raster16Bit created with format: ${this.format}`);
+    }
+  }
+
+  /**
+   * Gets the number of components for the current format
+   * @private
+   * @returns {number} Number of components (1, 2, 3, or 4)
+   */
+  _getComponentCount() {
+    if (this.format.startsWith('r16') &amp;&amp; !this.format.startsWith('rg16') &amp;&amp; !this.format.startsWith('rgb16') &amp;&amp; !this.format.startsWith('rgba16')) {
+      return 1; // Single channel (r16f, r16ui, r16i)
+    } else if (this.format.startsWith('rg16')) {
+      return 2; // Two channels (rg16f, rg16ui, rg16i)
+    } else if (this.format.startsWith('rgb16')) {
+      return 3; // Three channels (rgb16f, rgb16ui, rgb16i)
+    } else if (this.format.startsWith('rgba16')) {
+      return 4; // Four channels (rgba16f, rgba16ui, rgba16i)
+    } else if (this.format === 'depth16') {
+      return 1; // Depth is single channel
+    }
+    return 1; // Default to 1 if unknown
+  }
+
+  /**
+   * Loads a 16-bit image tile and converts it to a WebGL texture.
+   * Overrides parent method to handle 16-bit specific formats.
+   * @async
+   * @param {Object} tile - The tile to load
+   * @param {string} tile.url - URL of the image
+   * @param {number} [tile.start] - Start byte for partial requests
+   * @param {number} [tile.end] - End byte for partial requests
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context
+   * @returns {Promise&lt;Array>} Promise resolving to [texture, size]:
+   *   - texture: WebGLTexture object
+   *   - size: Size of the image in bytes (width * height * components * bytesPerComponent)
+   * @throws {Error} If context is not WebGL2
+   */
+  async loadImage(tile, gl) {
+    // Ensure we have a WebGL2 context
+    if (!(gl instanceof WebGL2RenderingContext)) {
+      throw new Error("WebGL2 context is required for 16-bit textures");
+    }
+
+    if (this.debug) {
+      console.log(`Raster16Bit.loadImage called for URL: ${tile.url}`);
+    }
+
+    let imageData;
+
+    // Use the appropriate data loader
+    if (this.dataLoader) {
+      // Use custom data loader if provided
+      if (this.debug) {
+        console.log("Using custom data loader");
+      }
+
+      try {
+        imageData = await this.dataLoader(tile, gl, this.dataLoaderOptions);
+        this.statInfo.maxValue = imageData.statistics.maxValue;
+        this.statInfo.avgLuminance = imageData.statistics.avgLuminance;
+        this.statInfo.percentileLuminance = imageData.statistics.percentileLuminance;
+        this.emit('loaded');
+        if (this.debug) {
+          console.log(`Data loader returned: ${imageData.width}x${imageData.height}, ${imageData.channels} channels`);
+        }
+      } catch (error) {
+        console.error("Error in data loader:", error);
+        throw error;
+      }
+    } else {
+      // Use default parent class loading mechanism if no dataLoader provided
+      if (this.debug) {
+        console.log("Using default loader mechanism");
+      }
+
+      try {
+        let [tex, size] = await super.loadImage(tile, gl);
+
+        // Adjust size calculation for 16-bit (2 bytes per component)
+        size = this.width * this.height * this._getComponentCount() * 2;
+
+        return [tex, size];
+      } catch (error) {
+        console.error("Error in default loader:", error);
+        throw error;
+      }
+    }
+
+    // Store dimensions
+    this.width = imageData.width;
+    this.height = imageData.height;
+
+    if (this.debug) {
+      console.log(`Creating texture: ${this.width}x${this.height}`);
+    }
+
+    // Create texture from the loaded data
+    const tex = this._createTextureFromData(gl, imageData.data, imageData.width, imageData.height, imageData.channels);
+
+    // Calculate size in bytes
+    const bytesPerComponent = 2; // 16 bits = 2 bytes
+    const size = imageData.width * imageData.height * imageData.channels * bytesPerComponent;
+
+    return [tex, size];
+  }
+
+  getStatInfo() {
+    return this.statInfo;
+  }
+
+  /**
+   * Creates a WebGL2 texture from raw data.
+   * @private
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context
+   * @param {TypedArray} data - The raw pixel data
+   * @param {number} width - Width of the image
+   * @param {number} height - Height of the image
+   * @param {number} channels - Number of channels in the data
+   * @returns {WebGLTexture} The created texture
+   */
+  _createTextureFromData(gl, data, width, height, channels) {
+    if (this.debug) {
+      console.log(`Creating texture from data: ${width}x${height}, ${channels} channels, data type: ${data.constructor.name}`);
+    }
+
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+
+    // Set texture parameters
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.flipY);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+
+    // Determine format parameters based on format
+    const formatParams = this._getFormatParameters(gl, channels);
+
+    if (this.debug) {
+      console.log("Format parameters:", formatParams);
+    }
+
+    try {
+      // Upload data to texture
+      gl.texImage2D(
+        gl.TEXTURE_2D,                // target
+        0,                            // level
+        formatParams.internalFormat,  // internalformat
+        width,                        // width
+        height,                       // height
+        0,                            // border
+        formatParams.format,          // format
+        formatParams.type,            // type
+        data                          // pixels
+      );
+    } catch (error) {
+      console.error("Error creating texture:", error);
+      throw error;
+    }
+
+    // Set filtering and wrapping parameters
+    if (width > 1024 || height > 1024) {
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    }
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // Store color space information on the texture
+    this._texture = tex;
+
+    return tex;
+  }
+
+  /**
+   * Get format parameters for WebGL texture creation based on format and channels.
+   * @private
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context
+   * @param {number} channels - Number of channels in the data
+   * @returns {Object} Object with internalFormat, format, and type properties
+   */
+  _getFormatParameters(gl, channels) {
+    let internalFormat, format, type;
+
+    // Determine format parameters based on the specified format
+    if (this.format.includes('16f')) {
+      // Floating point formats
+      type = this.useHalfFloat ? gl.HALF_FLOAT : gl.FLOAT;
+
+      switch (channels) {
+        case 1:
+          internalFormat = gl.R16F;
+          format = gl.RED;
+          break;
+        case 2:
+          internalFormat = gl.RG16F;
+          format = gl.RG;
+          break;
+        case 3:
+          internalFormat = gl.RGB16F;
+          format = gl.RGB;
+          break;
+        case 4:
+          internalFormat = gl.RGBA16F;
+          format = gl.RGBA;
+          break;
+        default:
+          throw new Error(`Unsupported channel count: ${channels}`);
+      }
+    } else if (this.format.includes('16ui')) {
+      // Unsigned integer formats
+      type = gl.UNSIGNED_SHORT;
+
+      switch (channels) {
+        case 1:
+          internalFormat = gl.R16UI;
+          format = gl.RED_INTEGER;
+          break;
+        case 2:
+          internalFormat = gl.RG16UI;
+          format = gl.RG_INTEGER;
+          break;
+        case 3:
+          internalFormat = gl.RGB16UI;
+          format = gl.RGB_INTEGER;
+          break;
+        case 4:
+          internalFormat = gl.RGBA16UI;
+          format = gl.RGBA_INTEGER;
+          break;
+        default:
+          throw new Error(`Unsupported channel count: ${channels}`);
+      }
+    } else if (this.format.includes('16i')) {
+      // Signed integer formats
+      type = gl.SHORT;
+
+      switch (channels) {
+        case 1:
+          internalFormat = gl.R16I;
+          format = gl.RED_INTEGER;
+          break;
+        case 2:
+          internalFormat = gl.RG16I;
+          format = gl.RG_INTEGER;
+          break;
+        case 3:
+          internalFormat = gl.RGB16I;
+          format = gl.RGB_INTEGER;
+          break;
+        case 4:
+          internalFormat = gl.RGBA16I;
+          format = gl.RGBA_INTEGER;
+          break;
+        default:
+          throw new Error(`Unsupported channel count: ${channels}`);
+      }
+    } else if (this.format === 'depth16') {
+      // Depth texture
+      internalFormat = gl.DEPTH_COMPONENT16;
+      format = gl.DEPTH_COMPONENT;
+      type = gl.UNSIGNED_SHORT;
+    } else {
+      throw new Error(`Unsupported format: ${this.format}`);
+    }
+
+    return { internalFormat, format, type };
+  }
+
+  /**
+ * Checks if the specified format is supported by the browser.
+ * Also verifies that required WebGL extensions are available.
+ * @private
+ * @param {string} format - The format to check
+ * @returns {boolean} True if the format is supported, false otherwise
+ */
+_isFormatSupported(format) {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2');
+
+    if (!gl) {
+        console.error('WebGL2 is not supported by this browser.');
+        return false;
+    }
+
+    const formatMap = {
+        'r16f': { internalFormat: gl.R16F, requiredExtensions: ['EXT_color_buffer_float'] },
+        'rg16f': { internalFormat: gl.RG16F, requiredExtensions: ['EXT_color_buffer_float'] },
+        'rgb16f': { internalFormat: gl.RGB16F, requiredExtensions: ['EXT_color_buffer_float'] },
+        'rgba16f': { internalFormat: gl.RGBA16F, requiredExtensions: ['EXT_color_buffer_float'] },
+        'r16ui': { internalFormat: gl.R16UI, requiredExtensions: [] },
+        'rg16ui': { internalFormat: gl.RG16UI, requiredExtensions: [] },
+        'rgb16ui': { internalFormat: gl.RGB16UI, requiredExtensions: [] },
+        'rgba16ui': { internalFormat: gl.RGBA16UI, requiredExtensions: [] },
+        'r16i': { internalFormat: gl.R16I, requiredExtensions: [] },
+        'rg16i': { internalFormat: gl.RG16I, requiredExtensions: [] },
+        'rgb16i': { internalFormat: gl.RGB16I, requiredExtensions: [] },
+        'rgba16i': { internalFormat: gl.RGBA16I, requiredExtensions: [] },
+        'depth16': { internalFormat: gl.DEPTH_COMPONENT16, requiredExtensions: [] }
+    };
+
+    const formatInfo = formatMap[format];
+    if (!formatInfo) {
+        console.error(`Unknown format: ${format}`);
+        return false;
+    }
+
+    // Check for required extensions
+    for (const extension of formatInfo.requiredExtensions) {
+        if (!gl.getExtension(extension)) {
+            console.error(`Required WebGL extension "${extension}" is not supported for format "${format}".`);
+            return false;
+        }
+    }
+
+    // Check if the internal format is supported
+    const isSupported = gl.getInternalformatParameter(gl.RENDERBUFFER, formatInfo.internalFormat, gl.SAMPLES);
+    return isSupported &amp;&amp; isSupported.length > 0;
+}
+}
+
+export { Raster16Bit };</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<div class='jsdoc-message'>ISTI - CNR & CRS4 - ViC</div>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a>
+	
+		on 2025-09-06T18:51:26+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>
