@@ -2,6 +2,7 @@ node_modules
 docs
 build
 dist/js
+dist/types
 dist/database.php
 dist/examples/npm-demo/main.js
 dist/examples/npm-demo/index.html
