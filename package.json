@@ -61,7 +61,7 @@
     "start": "webpack-dev-server",
     "build": "webpack -c webpack.config.js --mode development",
     "rollup": "rollup -c rollup.config.js --extend",
-    "build-types": "tsc --allowJs --declaration --emitDeclarationOnly --outDir dist/types dist/js/openlime.esm.js",
+    "build-types": "tsc --allowJs --declaration --emitDeclarationOnly --outDir dist/types dist/js/openlime.esm.js && mv dist/types/openlime.esm.d.ts dist/types/openlime.d.ts",
     "nodemon": "nodemon --watch ./src --exec npm run rollup",
     "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md && mkdir -p docs/img && cp -r jsdoc/static/img/* docs/img/",
     "update-readme": "node utils/update-readme.js",

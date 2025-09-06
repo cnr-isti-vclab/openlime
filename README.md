@@ -91,14 +91,14 @@ The easiest way to use OpenLIME is via a CDN like unpkg or jsdelivr:
 
 ```html
 <!-- Using unpkg -->
-<link rel="stylesheet" href="https://unpkg.com/openlime@1.2.4/dist/css/skin.css">
-<link rel="stylesheet" href="https://unpkg.com/openlime@1.2.4/dist/css/light.css">
-<script src="https://unpkg.com/openlime@1.2.4/dist/js/openlime.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/openlime@1.2.5/dist/css/skin.css">
+<link rel="stylesheet" href="https://unpkg.com/openlime@1.2.5/dist/css/light.css">
+<script src="https://unpkg.com/openlime@1.2.5/dist/js/openlime.min.js"></script>
 
 <!-- OR using jsdelivr -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/openlime@1.2.4/dist/css/skin.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/openlime@1.2.4/dist/css/light.css">
-<script src="https://cdn.jsdelivr.net/npm/openlime@1.2.4/dist/js/openlime.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/openlime@1.2.5/dist/css/skin.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/openlime@1.2.5/dist/css/light.css">
+<script src="https://cdn.jsdelivr.net/npm/openlime@1.2.5/dist/js/openlime.min.js"></script>
 ```
 
 ### Installing via npm
@@ -139,7 +139,7 @@ Here's a simple example of how to create a viewer with a single image layer:
 <head>
   <meta charset="utf-8">
   <title>OpenLIME Basic Example</title>
-  <link rel="stylesheet" href="https://unpkg.com/openlime@1.2.4/dist/css/lime.css">
+  <link rel="stylesheet" href="https://unpkg.com/openlime@1.2.5/dist/css/lime.css">
   <style>
     #viewer {
       width: 100%;
@@ -150,7 +150,7 @@ Here's a simple example of how to create a viewer with a single image layer:
 <body>
   <div id="viewer"></div>
 
-  <script src="https://unpkg.com/openlime@1.2.4/dist/js/openlime.min.js"></script>
+  <script src="https://unpkg.com/openlime@1.2.5/dist/js/openlime.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       // Create a viewer
