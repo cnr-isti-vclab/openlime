@@ -223,11 +223,12 @@ class UIBasic {
 
 		let controller = new Controller2D(
 			(x, y) => {
+				let lightdir = [x, y, Math.sqrt(1 - x * x + y * y)];
 				for (let layer of lightLayers)
 					layer.setLight([x, y], 0);
 				if (this.showLightDirections)
 					this.updateLightDirections(x, y);
-				this.emit('lightdirection', [x, y, Math.sqrt(1 - x * x + y * y)]);
+				this.emit('lightdirection', lightdir);
 			}, {
 			// TODO: IS THIS OK? It was false before
 			active: false,

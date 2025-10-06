@@ -129,7 +129,6 @@ class ShaderRTI extends Shader {
 		let z = 1.0;
 		if(this.type == 'sh') {
 			//mamp x y as lat lon to the sphere coords (xyz)
-			y = cos(light[1])
 
 			// Convert to radians
 			let PI = 3.1415;
@@ -137,9 +136,9 @@ class ShaderRTI extends Shader {
 			let lon = light[0] * PI;          // longitude ∈ [-π, π)
 
 			// Spherical to Cartesian
-			x = cos(lat) * cos(lon);
-			z = cos(lat) * sin(lon);
-			y = sin(lat);
+			x = Math.cos(lat) * Math.cos(lon);
+			z = Math.cos(lat) * Math.sin(lon);
+			y = Math.sin(lat);
 		} else {
 			//map the square to the circle.
 			let r = Math.sqrt(x * x + y * y);
@@ -154,6 +153,7 @@ class ShaderRTI extends Shader {
 		if (this.mode == 'light')
 			this.lightWeights(light, 'base');
 		this.setUniform('light', light);
+		return light;
 	}
 
 	/**
@@ -588,7 +588,7 @@ class AdaptiveRBF {
 	constructor(samples, alpha = 1.0, k = 5) {
 		this.samples = samples;
 		this.alpha = alpha; //how smooth is the interpolation
-		this.beta = 2;  //filtering smooth distance (higher will result in bumpy);
+		this.beta = 1.5;  //filtering smooth distance (higher will result in bumpy);
 	}
 
 	distance(a, b) {
