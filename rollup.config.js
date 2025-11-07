@@ -61,6 +61,10 @@ const core = [
 	'./src/ShaderHDR.js'
 ];
 
+const extra = [
+	'./src/Png16Loader.js'
+];
+
 const ui = [
 	'./src/Skin.js',
 	'./src/UIBasic.js',
@@ -87,6 +91,12 @@ const rti = [
 	'./src/ShaderNeural.js'
 ];
 
+const rsc = [
+	'./src/LayerRSC.js',
+	'./src/ShaderRSc.js'
+];
+
+
 const brdf = [
 	'./src/LayerBRDF.js',
 	'./src/ShaderBRDF.js'
@@ -100,7 +110,7 @@ const annotation = [
 	'./src/EditorSvgAnnotation.js'
 ];
 
-const allModules = [...core, ...ui, ...rti, ...brdf, ...lens, ...annotation];
+const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rsc, ...lens, ...annotation];
 
 module.exports = [
 	{

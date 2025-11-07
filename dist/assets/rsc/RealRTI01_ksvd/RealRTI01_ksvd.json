@@ -1,0 +1,41 @@
+{
+     "base_path": "tmp/RealRTI01_ksvd/RealRTI01_ksvd",
+     "input_params": {
+          "deep_zoom_enabled": false,
+          "desired_coreset_size": 131072,
+          "dictionary_atom_count": 1024,
+          "dictionary_atom_image_h": 64,
+          "dictionary_atom_image_w": 64,
+          "dictionary_encoding_16_bit": true,
+          "learning_method_id": "ksvd",
+          "multiresolution_enabled": false,
+          "multiresolution_level_count": 1,
+          "remove_average": true,
+          "sparse_coding_method_id": "FOLS",
+          "sparsity": 6,
+          "sparsity_base": 3,
+          "sparsity_multiplier": 2,
+          "tolerance": 0.0,
+          "training_iteration_count": 25
+     },
+     "output_params": {
+          "average_min": 0.012804972007870674,
+          "average_range": 0.5211637020111084,
+          "coefficients_min": -1.512426495552063,
+          "coefficients_range": 3.8884239196777344,
+          "dictionary_min": -0.44530189037323,
+          "dictionary_range": 1.0164175033569336,
+          "dictionary_vector_size": 180
+     },
+     "stats_params": {
+          "PSNR_db": 44.55654855292111,
+          "PSNR_db_zfp": 38.53594863964148,
+          "emax": 0.08175741197403201,
+          "nrmse": 0.005917967453119615,
+          "rmse": 0.0058950761452984815,
+          "sparse_encoding_time_ms": 2859.0,
+          "training_time_ms": 44095.0,
+          "ymax": 0.5981131792068481,
+          "ymin": -0.3980187177658081
+     }
+}

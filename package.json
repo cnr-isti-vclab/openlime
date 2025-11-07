@@ -90,5 +90,8 @@
     "LICENSE",
     "package.json",
     "README.md"
-  ]
+  ],
+  "dependencies": {
+    "utif": "^3.1.0"
+  }
 }
