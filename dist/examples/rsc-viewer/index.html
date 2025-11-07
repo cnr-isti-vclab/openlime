@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - RTI Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+    <style>
+        html,
+        body {
+            color: white;
+            background-color: black;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>OpenLIME - RSC Viewer</h1>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+
+        // Create 4 RTI layers and add them to the canvans
+        // A RTI layer has many channels. In this example the 4 layers store 
+        // channels in 4 different ways: image, deepzoom, tarzoom and itarzoom 
+        const layer0 = new OpenLIME.Layer({
+            label: 'RealRTI01',
+            layout: 'image',
+            type: 'rsc',
+            url: '../../assets/rsc/RealRTI01_ksvd/RealRTI01_ksvd.json',
+            normals: false
+        });
+        lime.addLayer('base', layer0);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime, { showLightDirections: true });
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+        ui.actions.light.active = true;
+
+
+    </script>
+</body>
+
+</html>
