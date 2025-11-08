@@ -239,7 +239,9 @@ class Raster16Bit extends Raster {
         formatParams.type,            // type
         data                          // pixels
       );
-      console.log('glError after texImage2D:', gl.getError());
+      if (this.debug) {
+        console.log('glError after texImage2D:', gl.getError());
+      }
     } catch (error) {
       console.error("Error creating texture:", error);
       throw error;

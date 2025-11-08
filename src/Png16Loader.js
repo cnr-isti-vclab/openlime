@@ -9,7 +9,6 @@ export class Png16Loader {
   static async load(url) {
     // Decode the PNG image from URL
     const pngData = await fromURL(url);
-    console.log('PNG bit depth:', pngData.bits, 'type:', pngData.colorType, 'first bytes:', pngData.pixels.slice(0, 10));
 
     // Validate if bit depth is 16
     if (pngData.bits !== 16) {
@@ -27,9 +26,6 @@ export class Png16Loader {
         data16[i * components + c] = (src[2 * (i * components + c)] << 8) | src[2 * (i * components + c) + 1];
       }
     }
-
-    console.log('Loaded pixel data length:', data16.length);
-    console.log('First 10 pixels values:', data16.slice(0, 10));
 
     // Return image properties and native 16-bit pixel data
     return {
