@@ -62,6 +62,7 @@ class Shader {
 		addSignals(Shader, 'update');
 		Object.assign(this, options);
 		this.filters = [];
+		this.needsUpdate = true;
 	}
 
 	/**

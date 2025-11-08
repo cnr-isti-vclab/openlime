@@ -64,33 +64,16 @@ class ShaderRSC extends Shader {
 	 * ```
 	 */
 	constructor(options) {
-		super({});
+		super(options);
 
 		Object.assign(this, {
 			modes: ['light', 'normals', 'diffuse', 'gray_diffuse', 'specular'],
-			mode: 'normal',
+			mode: 'light',
 			type: ['ksvd'],
-
-			nplanes: null,     //number of coefficient planes
-			yccplanes: null,     //number of luminance planes for mycc color space
-			njpegs: null,      //number of textures needed (ceil(nplanes/3))
-			material: null,    //material parameters
-			lights: null,      //light directions (needed for rbf interpolation)
-			sigma: null,       //rbf interpolation parameter
-			ndimensions: null, //PCA dimension space (for rbf and bln)
-
-			scale: null,      //factor and bias are used to dequantize coefficient planes.
-			bias: null,
-
-			basis: null,       //PCA basis for rbf and bln
-			lweights: null    //light direction dependent coefficients to be used with coefficient planes
 		});
 		Object.assign(this, options);
-
-		if (this.relight)
-			this.init(this.relight);
-
 		this.setMode('light');
+
 	}
 
 	/**
@@ -106,6 +89,7 @@ class ShaderRSC extends Shader {
 	}
 
 	updateUniforms(gl) {
+		// DO SOMETHING IF NECESSARY
 		// if (this.mode != 'light' && !this.uniforms.base1.value) {
 		// 	this.lightWeights([0.612, 0.354, 0.707], 'base');
 		// 	this.lightWeights([-0.612, 0.354, 0.707], 'base1');
@@ -120,32 +104,24 @@ class ShaderRSC extends Shader {
 	 * @throws {Error} If shader is not initialized
 	 */
 	setLight(light) {
-		// if (!this.uniforms.light)
-		// 	throw "Shader not initialized, wait on layer ready event for setLight."
+		if (!this.uniforms.light)
+			throw "Shader not initialized, wait on layer ready event for setLight."
 
-		// let x = light[0];
-		// let y = light[1];
+		let x = light[0];
+		let y = light[1];
 
-		// //map the square to the circle.
-		// let r = Math.sqrt(x * x + y * y);
-		// if (r > 1) {
-		// 	x /= r;
-		// 	y /= r;
-		// }
-		// let z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
-		// light = [x, y, z];
+		//map the square to the circle.
+		let r = Math.sqrt(x * x + y * y);
+		if (r > 1) {
+			x /= r;
+			y /= r;
+		}
+		let z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
+		light = [x, y, z];
 
 		// if (this.mode == 'light')
 		// 	this.lightWeights(light, 'base');
-		// this.setUniform('light', light);
-	}
-
-	/**
-	 * Sets specular exponent for specular enhancement mode
-	 * @param {number} value - Specular exponent
-	 */
-	setSpecularExp(value) {
-		this.setUniform('specular_exp', value);
+		this.setUniform('light', light);
 	}
 
 	/**
@@ -157,16 +133,14 @@ class ShaderRSC extends Shader {
 	 * @param {number[]} relight.basis - Optional PCA basis
 	 */
 	init(config) {
-		this.config = {};
-		Object.assign(this.config, config);
+		this.config = config;
 
-		console.log("SHADER CONFIG: ", this.config);
-
+		// SAMPLERS
 		this.samplers = [];
-
-
 		this.samplers.push({ id: 0, name: 'avg', samplerType: 'usampler2D' });
+		this.samplers.push({ id: 1, name: 'dict', samplerType: 'usampler2D' });
 
+		// UNIFORMS
 		this.uniforms = {
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 			// specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
@@ -176,7 +150,7 @@ class ShaderRSC extends Shader {
 			// base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
 			// base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
 		}
-
+		this.needsUpdate = true;
 	}
 
 	fragShaderSrc() {
@@ -185,7 +159,7 @@ in vec2 v_texcoord;
 
 vec4 data() {
     // Use texture() for usampler2D (returns uvec4 with uint values 0-65535)
-    uvec4 raw = texture(avg, v_texcoord);
+    uvec4 raw = texture(dict, v_texcoord);
 
     // Convert from uint [0-65535] to float [0-1]
     vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;

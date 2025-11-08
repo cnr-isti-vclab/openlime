@@ -87,7 +87,7 @@ class LayerRSC extends Layer {
 		if (!this.url)
 			throw "Url option is required";
 
-		this.shaders['rsc'] = new ShaderRSC({ normals: this.normals });
+		this.shaders['rsc'] = new ShaderRSC({});
 		this.setShader('rsc');
 
 		this.addControl('light', [0, 0]);
@@ -163,35 +163,37 @@ class LayerRSC extends Layer {
 	}
 
 	static async pngLoaderToUint16(tile, gl, options) {
+		// Load the PNG using Png16Loader
 		const { width, height, data16, components } = await Png16Loader.load(tile.url);
 
 		const pixelCount = width * height;
-		const out = new Uint16Array(pixelCount * 4);
-		console.log("datalength",
-			data16.length, pixelCount * components, out.length);
+		// Prepare output buffer with 4 channels (RGBA)
+		const output = new Uint16Array(pixelCount * 4);
+
+		// Throw if length mismatch between data16 array and expected pixels * components
 		if (data16.length !== pixelCount * components) {
-			console.warn("Attenzione: data16.length e pixelCount * components non combaciano!",
-				data16.length, pixelCount * components);
+			throw new Error(`Data length mismatch: expected ${pixelCount * components}, got ${data16.length}`);
 		}
 
+		// Iterate over each pixel
 		for (let i = 0; i < pixelCount; i++) {
-			// Per debug:
-			if ((i * components + 2) >= data16.length) {
-				console.warn(`Indice fuori range a pixel ${i}:`, i * components + 2, 'data16.length:', data16.length);
-			}
+			// Extract color channels, provide default fallback values if channel missing
 			const r = data16[i * components + 0] || 65535;
 			const g = data16[i * components + 1] || 0;
 			const b = data16[i * components + 2] || 0;
-			const a = (components == 4) ? data16[i * components + 3] : 65535.0;
+			const a = (components === 4) ? data16[i * components + 3] : 65535;
 
-			out[i * 4 + 0] = r;
-			out[i * 4 + 1] = g;
-			out[i * 4 + 2] = b;
-			out[i * 4 + 3] = a;
+			// Assign to output as RGBA
+			output[i * 4 + 0] = r;
+			output[i * 4 + 1] = g;
+			output[i * 4 + 2] = b;
+			output[i * 4 + 3] = a;
 		}
-		console.log('Raster loader: Uint16Array out:', out.slice(0, 20), 'width:', width, 'height:', height, 'channels:', 4);
+
+		//console.log('Raster loader: Uint16Array output sample:', output.slice(0, 20), 'width:', width, 'height:', height, 'channels:', 4);
+
 		return {
-			data: out,
+			data: output,
 			width,
 			height,
 			channels: 4,
@@ -203,7 +205,6 @@ class LayerRSC extends Layer {
 		};
 	}
 
-
 	/**
 	 * Loads and processes RTI configuration
 	 * @param {string} url - URL to info.json
@@ -214,7 +215,7 @@ class LayerRSC extends Layer {
 		(async () => {
 
 			const json = await Util.loadJSON(url);
-			console.log(json);
+			// console.log(json);
 
 			// Update layout image format and pixelSize if provided in info.json
 			//this.layout.suffix = json.format;
@@ -231,15 +232,14 @@ class LayerRSC extends Layer {
 			const coef00path = basepath + "/" + basename + "_coef_00.png ";
 			const coef01path = basepath + "/" + basename + "_coef_01.png ";
 
-			console.log("AVG PATH: ", avgpath);
-			console.log("DICT PATH: ", dictpath);
-			console.log("IDX00 PATH: ", idx00path);
-			console.log("IDX01 PATH: ", idx01path);
-			console.log("COEF00 PATH: ", coef00path);
-			console.log("COEF01 PATH: ", coef01path);
+			// console.log("AVG PATH: ", avgpath);
+			// console.log("DICT PATH: ", dictpath);
+			// console.log("IDX00 PATH: ", idx00path);
+			// console.log("IDX01 PATH: ", idx01path);
+			// console.log("COEF00 PATH: ", coef00path);
+			// console.log("COEF01 PATH: ", coef01path);
 
 			this.shader.init(json);
-			console.log("SHADER", this.shader);
 			const urls = [];
 			this.rasters = [];
 
@@ -253,32 +253,15 @@ class LayerRSC extends Layer {
 			});
 			this.rasters.push(raster_avg);
 
-			// DICT 
-			// urls.push(dictpath);
-			// const raster_dict = new Raster16Bit({
-			// 	format: 'rgb16f',
-			// 	isLinear: true,
-			// 	debug: false,
-			// 	dataLoader: async (tile, gl, options) => {
-			// 		const { width, height, data16, components } = await Png16Loader.load(tile.url);
-			// 		const dataF = new Float32Array(data16.length);
-			// 		for (let i = 0; i < data16.length; ++i)
-			// 			dataF[i] = data16[i] / 65535.0;
-			// 		return {
-			// 			data: dataF,
-			// 			width,
-			// 			height,
-			// 			channels: components,
-			// 			statistics: {
-			// 				maxValue: null,
-			// 				avgLuminance: null,
-			// 				percentileLuminance: null
-			// 			}
-			// 		};
-			// 	}
-			// });
-			// this.rasters.push(raster_dict);
-
+			// DICT
+			urls.push(dictpath);
+			const raster_dict = new Raster16Bit({
+				format: 'rgba16ui',
+				isLinear: true,
+				debug: false,
+				dataLoader: LayerRSC.pngLoaderToUint16
+			});
+			this.rasters.push(raster_dict);
 
 			// IDX00
 			urls.push(idx00path);
