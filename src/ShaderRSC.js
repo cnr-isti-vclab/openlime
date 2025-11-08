@@ -163,12 +163,6 @@ vec4 data() {
 
     // Convert from uint [0-65535] to float [0-1]
     vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
-		//if (raw.r == 0u && raw.g == 0u && raw.b == 0u) color = vec3(1.0, 0.0, 0.0);
-
-
-    // Simple processing: mix with luminance to see the effect
-    //float luma = dot(color, vec3(0.299, 0.587, 0.114));
-    //color = mix(color, vec3(luma), 0.2);
     return vec4(color, 1.0);
 }
 `;
