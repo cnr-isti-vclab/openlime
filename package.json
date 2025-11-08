@@ -68,8 +68,10 @@
     "prepublishOnly": "npm run update-readme && npm run rollup && npm run build-types && npm run doc"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-multi-entry": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "copy-webpack-plugin": "^10.2.4",
     "html-webpack-plugin": "^5.5.0",
     "jsdoc": "^4.0.4",
@@ -92,6 +94,6 @@
     "README.md"
   ],
   "dependencies": {
-    "utif": "^3.1.0"
+    "png-es6": "^2.2.9"
   }
 }

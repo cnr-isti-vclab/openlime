@@ -156,7 +156,7 @@ class ShaderRSC extends Shader {
 	 * @param {Object} relight.material - Material parameters
 	 * @param {number[]} relight.basis - Optional PCA basis
 	 */
-	init(dictpath, config) {
+	init(config) {
 		this.config = {};
 		Object.assign(this.config, config);
 
@@ -164,7 +164,8 @@ class ShaderRSC extends Shader {
 
 		this.samplers = [];
 
-		this.samplers.push({ id: 0, name: 'avg', type: 'vec4' });
+
+		this.samplers.push({ id: 0, name: 'avg', samplerType: 'usampler2D' });
 
 		this.uniforms = {
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
@@ -181,17 +182,25 @@ class ShaderRSC extends Shader {
 	fragShaderSrc() {
 		let str = `
 in vec2 v_texcoord;
+
 vec4 data() {
-	vec4 color = texture(avg, v_texcoord);
-	${this.isLinear ? "" : "color = srgb2linear(color);"}
-	return color;
+    // Use texture() for usampler2D (returns uvec4 with uint values 0-65535)
+    uvec4 raw = texture(avg, v_texcoord);
+
+    // Convert from uint [0-65535] to float [0-1]
+    vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
+		//if (raw.r == 0u && raw.g == 0u && raw.b == 0u) color = vec3(1.0, 0.0, 0.0);
+
+
+    // Simple processing: mix with luminance to see the effect
+    //float luma = dot(color, vec3(0.299, 0.587, 0.114));
+    //color = mix(color, vec3(luma), 0.2);
+    return vec4(color, 1.0);
 }
 `;
 		return str;
 	}
 }
-
-
 
 export { ShaderRSC }
 

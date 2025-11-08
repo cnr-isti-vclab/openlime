@@ -176,6 +176,7 @@ class Shader {
 		let src = '#version 300 es\n';
 		src += `precision highp float;\n`;
 		src += `precision highp int;\n`;
+		src += `precision highp usampler2D;\n`;
 		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
 
 		// Choose between simplified (gamma 2.2) or standard IEC 61966-2-1 conversion
@@ -259,7 +260,9 @@ float linear2srgb(float c) {
 
 		if (this.autoSamplerDeclaration) {
 			for (let sampler of this.samplers) {
-				src += `uniform sampler2D ${sampler.name};\n`;
+				const samplerType = sampler.samplerType || 'sampler2D'; // default a sampler2D per compatibilità
+				src += `uniform ${samplerType} ${sampler.name};\n`;
+
 			}
 
 			for (let sampler of this.samplers) {

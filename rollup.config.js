@@ -1,3 +1,5 @@
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 const { terser } = require("rollup-plugin-terser");
 const multi = require("@rollup/plugin-multi-entry");
 const json = require("@rollup/plugin-json");
@@ -5,15 +7,15 @@ const pkg = require("./package.json");
 
 function header() {
 	const banner = [
-    '// ##########################################',
-    '// OpenLIME - Open Layered IMage Explorer',
-    '// Author: CNR ISTI - Visual Computing Lab',
+		'// ##########################################',
+		'// OpenLIME - Open Layered IMage Explorer',
+		'// Author: CNR ISTI - Visual Computing Lab',
 		'// Author: CRS4 Visual and Data-intensive Computing Group',
-    `// ${pkg.name} v${pkg.version} - ${pkg.license} License`,
-    `// Documentation: ${pkg.homepage}`,
+		`// ${pkg.name} v${pkg.version} - ${pkg.license} License`,
+		`// Documentation: ${pkg.homepage}`,
 		`// Repository: ${pkg.repository.url}`,
-    '// ##########################################'
-  ].join('\n');
+		'// ##########################################'
+	].join('\n');
 	return {
 		renderChunk(code) {
 			return banner + "\n" + code;
@@ -143,6 +145,15 @@ module.exports = [
 				plugins: [header()]
 			}
 		],
-		plugins: [multi(), json()]
+		plugins: [
+			multi(),
+			json(),
+			resolve({
+				browser: true,
+				preferBuiltins: false,
+			}),
+			// serve perché 'utif' è CommonJS
+			commonjs(),
+		]
 	}
 ];
