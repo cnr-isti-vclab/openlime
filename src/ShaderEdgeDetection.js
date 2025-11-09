@@ -19,10 +19,6 @@ class ShaderEdgeDetection extends Shader {
     const edgeOptions = Object.assign({
       threshold: 0.1,
       colorEdges: false,
-      uniforms: {
-        threshold: { type: 'float', value: 0.1, needsUpdate: true },
-        colorEdges: { type: 'bool', value: false, needsUpdate: true }
-      },
       samplers: [
         { id: 0, name: 'source', label: 'Color', samplers: [{ id: 0, type: 'color' }] }
       ],
@@ -32,6 +28,11 @@ class ShaderEdgeDetection extends Shader {
     }, options);
 
     super(edgeOptions);
+
+    this.registerUniforms({
+      threshold: { type: 'float', value: 0.1, needsUpdate: true },
+      colorEdges: { type: 'bool', value: false, needsUpdate: true }
+    });
 
     // Set threshold from options
     if (options.threshold !== undefined) {

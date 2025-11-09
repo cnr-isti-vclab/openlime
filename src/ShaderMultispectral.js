@@ -58,10 +58,10 @@ class ShaderMultispectral extends Shader {
     Object.assign(this, options);
 
     // Set default uniforms
-    this.uniforms = {
+    this.registerUniforms({
       selectedBand: { type: 'int', needsUpdate: true, value: 0 },
       bandOutputChannel: { type: 'int', needsUpdate: true, value: 0 }, // 0=all/gray, 1=R, 2=G, 3=B
-    };
+    });
 
     // Set default mode
     this.setMode(this.mode);

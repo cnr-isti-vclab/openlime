@@ -900,13 +900,35 @@ class Layer {
 	/** @ignore */
 	drawTile(tile, index) {
 		//let tiledata = this.tiles.get(tile.index);
+
 		if (tile.missing != 0)
 			throw "Attempt to draw tile still missing textures"
 
+		const gl = this.gl;
+
 		//coords and texture buffers updated once for all tiles from main draw() call
 
+		// Update standard uniform
+		const tileSize = this.layout.type === 'image' ?
+			[this.layout.width, this.layout.height] :  // Single image
+			this.layout.getTileSize();                 // Tiled system
+
+		const tileOffset = this.layout.type === 'image' ?
+			[0, 0] :                                   // Single image
+			[tile.x * tileSize[0], tile.y * tileSize[1]]; // Tiled system
+
+		// Per tile ai bordi, calcola la dimensione effettiva
+		const effectiveTileSize = [
+			Math.min(tileSize[0], this.layout.width - tileOffset[0]),
+			Math.min(tileSize[1], this.layout.height - tileOffset[1])
+		];
+
+		this.shader.setUniform('u_tileOffset', tileOffset);
+		this.shader.setUniform('u_tileSize', effectiveTileSize);
+		this.shader.setUniform('u_imageSize', [this.layout.width, this.layout.height]);
+		this.shader.updateUniforms(gl);
+
 		//bind textures
-		let gl = this.gl;
 		for (var i = 0; i < this.shader.samplers.length; i++) {
 			let id = this.shader.samplers[i].id;
 			gl.uniform1i(this.shader.samplers[i].location, i);

@@ -113,12 +113,12 @@ class ShaderLens extends Shader {
             { id: 0, name: 'source0' }, { id: 1, name: 'source1' }
         ];
 
-        this.uniforms = {
+        this.registerUniforms({
             u_lens: { type: 'vec4', needsUpdate: true, size: 4, value: [0, 0, 100, 10] },
             u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1, 1] },
             u_border_color: { type: 'vec4', needsUpdate: true, size: 4, value: [0.8, 0.8, 0.8, 1] },
             u_border_enable: { type: 'bool', needsUpdate: true, size: 1, value: false }
-        };
+        });
         this.label = "ShaderLens";
         this.needsUpdate = true;
         this.overlayLayerEnabled = false;

@@ -141,7 +141,7 @@ class ShaderRSC extends Shader {
 		//this.samplers.push({ id: 1, name: 'dict', samplerType: 'usampler2D' });
 
 		// UNIFORMS
-		this.uniforms = {
+		this.registerUniforms({
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 			// specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
 			// bias: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.bias },
@@ -149,37 +149,53 @@ class ShaderRSC extends Shader {
 			// base: { type: 'vec3', needsUpdate: true, size: this.nplanes },
 			// base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
 			// base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
-		}
+		});
 		this.needsUpdate = true;
 	}
 
 	fragShaderSrc() {
 		let str = `
-in vec2 v_texcoord;
 
 // optional static dict texture, bound by the Layer (not by tiles)
+
+in vec2 v_texcoord;
+
 uniform usampler2D dict;
 uniform vec2 u_dictSize;
 
-vec4 readDictAsColor(vec2 uv) {
-    // read raw 16-bit values
-    uvec4 raw = texture(dict, uv);
+uniform sampler2D texture8bit;
+uniform vec2 u_texture8bitSize;
 
-    // convert to float [0..1]
-    vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
 
-    return vec4(color, 1.0);
-}
+// vec4 data() {
+//     // Test: visualizza le coordinate globali come colori
+//     vec2 globalUV = getGlobalUV(v_texcoord);
+    
+//     // Rosso = globalUV.x (da sinistra=nero a destra=rosso)
+//     // Verde = globalUV.y (da sopra=nero a sotto=verde)  
+//     // Risultato atteso: nero in alto-sinistra, giallo in basso-destra
+//     return vec4(globalUV.x, globalUV.y, 0.0, 1.0);
+// }
+
+// vec4 data() {
+//     // Test: visualizza direttamente i valori degli uniform
+    
+//     // Normalizza gli offset per vedere se cambiano tra tile
+//     vec2 normalizedOffset = u_tileOffset / u_imageSize;
+    
+//     // Se gli uniform funzionano, ogni tile dovrebbe avere un colore diverso:
+//     // Tile 0: nero [0,0]
+//     // Tile 1: rosso [0.5,0]  
+//     // Tile 2: verde [0,0.6]
+//     // Tile 3: giallo [0.5,0.6]
+//     return vec4(normalizedOffset.x, normalizedOffset.y, 0.0, 1.0);
+// }
 
 vec4 data() {
-    // Use texture() for usampler2D (returns uvec4 with uint values 0-65535)
-    //uvec4 raw = texture(avg, v_texcoord);
-
-    // Convert from uint [0-65535] to float [0-1]
-    //vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
-    //return vec4(color, 1.0);
-
-		return readDictAsColor(v_texcoord);
+    // Static 8-bit texture
+    vec2 globalUV = getGlobalUV(v_texcoord);
+    vec3 staticColor = texture(texture8bit, globalUV).rgb;
+    return vec4(staticColor, 1.0);
 }
 `;
 		return str;

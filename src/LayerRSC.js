@@ -87,7 +87,7 @@ class LayerRSC extends Layer {
 		if (!this.url)
 			throw "Url option is required";
 
-		this.shaders['rsc'] = new ShaderRSC({debug: true});
+		this.shaders['rsc'] = new ShaderRSC({ debug: false });
 		this.setShader('rsc');
 
 		this.addControl('light', [0, 0]);
@@ -254,6 +254,19 @@ class LayerRSC extends Layer {
 				dataLoader: LayerRSC.pngLoaderToUint16,
 				use16Bit: true
 			});
+
+			// IMG 8bit (static texture)
+			const texture8bitPath = basepath + "/" + basename + "_coef_00.jpg";
+			await this.addStaticTexture({
+				url: texture8bitPath,
+				uniform: 'texture8bit',
+				sizeUniform: 'u_texture8bitSize',
+				format: 'vec3',
+				isLinear: true,
+				dataLoader: null,  // Usa il loader di default per JPEG
+				use16Bit: false
+			});
+
 
 			// AVG 
 			urls.push(avgpath);

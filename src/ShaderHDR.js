@@ -33,13 +33,13 @@ class ShaderHDR extends Shader {
 
         this.modes = ['reinhard', 'aces', 'exposure', 'balanced'];
         this.mode = options.mode || 'reinhard';
-        this.uniforms = {
+        this.registerUniforms({
             'whitePoint': { type: 'float', needsUpdate: true, value: 1.0 },
             'shadowLift': { type: 'float', needsUpdate: true, value: 0.0 },
             'acesContrast': { type: 'float', needsUpdate: true, value: 1.6 },
             'exposure': { type: 'float', needsUpdate: true, value: 1.0 },
             'highlightCompression': { type: 'float', needsUpdate: true, value: 1.0 },
-        }
+        });
         this.samplers.push({ id: 0, name: 'source', type: this.format });
 
         /**

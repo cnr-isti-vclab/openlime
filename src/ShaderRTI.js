@@ -197,7 +197,7 @@ class ShaderRTI extends Shader {
 			this.loadBasis(this.basis);
 
 
-		this.uniforms = {
+		this.registerUniforms({
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 			specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
 			bias: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.bias },
@@ -205,7 +205,7 @@ class ShaderRTI extends Shader {
 			base: { type: 'vec3', needsUpdate: true, size: this.nplanes },
 			base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
 			base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
-		}
+		});
 
 		this.lightWeights([0, 0, 1], 'base');
 	}

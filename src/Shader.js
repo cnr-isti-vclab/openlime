@@ -63,6 +63,37 @@ class Shader {
 		Object.assign(this, options);
 		this.filters = [];
 		this.needsUpdate = true;
+		 this.addStandardUniforms();
+	}
+
+	/**
+	 * Registers uniforms safely without overwriting existing ones
+	 * @param {Object} newUniforms - Uniforms to register
+	 * @param {boolean} [overwrite=false] - Whether to overwrite existing uniforms
+	 */
+	registerUniforms(newUniforms, overwrite = false) {
+		for (const [name, uniform] of Object.entries(newUniforms)) {
+			if (this.uniforms[name] && !overwrite) {
+				console.warn(`Uniform '${name}' already exists. Use overwrite=true to replace.`);
+				continue;
+			}
+			this.uniforms[name] = uniform;
+		}
+		this.needsUpdate = true;
+	}
+
+	/**
+	 * Adds standard uniforms available to all shaders
+	 * @private
+	 */
+	addStandardUniforms() {
+		// Marca gli uniform standard come protetti
+		const standardUniforms = {
+			u_tileOffset: { type: 'vec2', needsUpdate: true, value: [0.0, 0.0], isStandard: true },
+			u_tileSize: { type: 'vec2', needsUpdate: true, value: [1.0, 1.0], isStandard: true },
+			u_imageSize: { type: 'vec2', needsUpdate: true, value: [1.0, 1.0], isStandard: true }
+		};
+		Object.assign(this.uniforms, standardUniforms);
 	}
 
 	/**
@@ -179,6 +210,17 @@ class Shader {
 		src += `precision highp int;\n`;
 		src += `precision highp usampler2D;\n`;
 		src += `const vec2 tileSize = vec2(${this.tileSize[0]}.0, ${this.tileSize[1]}.0);\n`;
+
+    src += `
+uniform vec2 u_tileOffset;
+uniform vec2 u_tileSize; 
+uniform vec2 u_imageSize;
+
+// Helper function standard per coordinate globali
+vec2 getGlobalUV(vec2 uv) {
+    return (u_tileOffset + uv * u_tileSize) / u_imageSize;
+}
+`;
 
 		// Choose between simplified (gamma 2.2) or standard IEC 61966-2-1 conversion
 		if (this.isSrgbSimplified) {
