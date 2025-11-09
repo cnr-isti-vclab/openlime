@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<image xmlns="http://www.vips.ecs.soton.ac.uk//dzsave" date="2025-11-09T07:51:35.405763+01" version="8.17.2">
+  <properties>
+    <property>
+      <name>width</name>
+      <value type="gint">487</value>
+    </property>
+    <property>
+      <name>height</name>
+      <value type="gint">439</value>
+    </property>
+    <property>
+      <name>bands</name>
+      <value type="gint">4</value>
+    </property>
+    <property>
+      <name>xoffset</name>
+      <value type="gint">0</value>
+    </property>
+    <property>
+      <name>yoffset</name>
+      <value type="gint">0</value>
+    </property>
+    <property>
+      <name>xres</name>
+      <value type="gdouble">2.8340000000000001</value>
+    </property>
+    <property>
+      <name>yres</name>
+      <value type="gdouble">2.8340000000000001</value>
+    </property>
+    <property>
+      <name>vips-loader</name>
+      <value type="VipsRefString">pngload</value>
+    </property>
+    <property>
+      <name>bits-per-sample</name>
+      <value type="gint">8</value>
+    </property>
+    <property>
+      <name>vips-sequential</name>
+      <value type="gint">1</value>
+    </property>
+  </properties>
+</image>
