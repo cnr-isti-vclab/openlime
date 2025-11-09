@@ -87,7 +87,7 @@ class LayerRSC extends Layer {
 		if (!this.url)
 			throw "Url option is required";
 
-		this.shaders['rsc'] = new ShaderRSC({});
+		this.shaders['rsc'] = new ShaderRSC({debug: true});
 		this.setShader('rsc');
 
 		this.addControl('light', [0, 0]);
@@ -225,12 +225,13 @@ class LayerRSC extends Layer {
 			const basename = Util.basename(json.base_path);
 			const basepath = Util.dirname(url);
 
-			const avgpath = basepath + "/" + basename + "_avg.png";
+			//const avgpath = basepath + "/" + basename + "_avg.png";
+			const avgpath = basepath + "/" + basename + "_avg.dzi";
 			const dictpath = basepath + "/" + basename + "_dict.png";
-			const idx00path = basepath + "/" + basename + "_idx_00.png ";
-			const idx01path = basepath + "/" + basename + "_idx_01.png ";
-			const coef00path = basepath + "/" + basename + "_coef_00.png ";
-			const coef01path = basepath + "/" + basename + "_coef_01.png ";
+			const idx00path = basepath + "/" + basename + "_idx_00.dzi ";
+			const idx01path = basepath + "/" + basename + "_idx_01.dzi ";
+			const coef00path = basepath + "/" + basename + "_coef_00.dzi ";
+			const coef01path = basepath + "/" + basename + "_coef_01.dzi ";
 
 			// console.log("AVG PATH: ", avgpath);
 			// console.log("DICT PATH: ", dictpath);
@@ -243,6 +244,17 @@ class LayerRSC extends Layer {
 			const urls = [];
 			this.rasters = [];
 
+			// DICT (static texture)
+			await this.addStaticTexture({
+				url: dictpath,
+				uniform: 'dict',
+				sizeUniform: 'u_dictSize',
+				format: 'rgba16ui',
+				isLinear: true,
+				dataLoader: LayerRSC.pngLoaderToUint16,
+				use16Bit: true
+			});
+
 			// AVG 
 			urls.push(avgpath);
 			const raster_avg = new Raster16Bit({
@@ -252,16 +264,6 @@ class LayerRSC extends Layer {
 				dataLoader: LayerRSC.pngLoaderToUint16
 			});
 			this.rasters.push(raster_avg);
-
-			// DICT
-			urls.push(dictpath);
-			const raster_dict = new Raster16Bit({
-				format: 'rgba16ui',
-				isLinear: true,
-				debug: false,
-				dataLoader: LayerRSC.pngLoaderToUint16
-			});
-			this.rasters.push(raster_dict);
 
 			// IDX00
 			urls.push(idx00path);

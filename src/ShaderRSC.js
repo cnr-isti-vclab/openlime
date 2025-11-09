@@ -138,7 +138,7 @@ class ShaderRSC extends Shader {
 		// SAMPLERS
 		this.samplers = [];
 		this.samplers.push({ id: 0, name: 'avg', samplerType: 'usampler2D' });
-		this.samplers.push({ id: 1, name: 'dict', samplerType: 'usampler2D' });
+		//this.samplers.push({ id: 1, name: 'dict', samplerType: 'usampler2D' });
 
 		// UNIFORMS
 		this.uniforms = {
@@ -157,13 +157,29 @@ class ShaderRSC extends Shader {
 		let str = `
 in vec2 v_texcoord;
 
+// optional static dict texture, bound by the Layer (not by tiles)
+uniform usampler2D dict;
+uniform vec2 u_dictSize;
+
+vec4 readDictAsColor(vec2 uv) {
+    // read raw 16-bit values
+    uvec4 raw = texture(dict, uv);
+
+    // convert to float [0..1]
+    vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
+
+    return vec4(color, 1.0);
+}
+
 vec4 data() {
     // Use texture() for usampler2D (returns uvec4 with uint values 0-65535)
-    uvec4 raw = texture(dict, v_texcoord);
+    //uvec4 raw = texture(avg, v_texcoord);
 
     // Convert from uint [0-65535] to float [0-1]
-    vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
-    return vec4(color, 1.0);
+    //vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
+    //return vec4(color, 1.0);
+
+		return readDictAsColor(v_texcoord);
 }
 `;
 		return str;

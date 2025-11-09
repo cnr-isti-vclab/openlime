@@ -3,6 +3,9 @@ import { Layout } from './Layout.js'
 import { Cache } from './Cache.js'
 import { BoundingBox } from './BoundingBox.js'
 import { addSignals } from './Signals.js'
+import { Raster } from './Raster.js'
+import { Raster16Bit } from './Raster16Bit.js'
+
 import { Util } from './Util.js'
 
 /**
@@ -182,6 +185,7 @@ class Layer {
 	init(options) {
 		Object.assign(this, {
 			transform: new Transform(),
+			staticTextures: [], // implement static textures
 			viewport: null,
 			debug: false,
 			visible: true,
@@ -209,6 +213,8 @@ class Layer {
 			//only raster used by the shader will be loade.
 			queue: [],     //queue of tiles to be loaded.
 			requested: new Map,  //tiles requested.
+			onFirstDraw: null,
+			_didFirstDraw: false
 		});
 
 		Object.assign(this, options);
@@ -687,11 +693,119 @@ class Layer {
 	 */
 	clear() {
 		this.ibuffer = this.vbuffer = null;
+
+		// Clean up static textures
+		this.clearStaticTextures();
+
 		Cache.flushLayer(this);
 		this.tiles = new Map(); //TODO We need to drop these tile textures before clearing Map
 		this.setupTiles();
 		this.queue = [];
 		this.previouslyNeeded = false;
+	}
+
+
+	// STATIC TEXTURE	
+
+	/**
+	 * Adds a static texture to be loaded and bound globally for the layer
+	 * @param {Object} options - Static texture configuration
+	 * @param {string} options.url - URL of the texture to load
+	 * @param {string} options.uniform - Shader uniform name (e.g., "u_dict")
+	 * @param {string} [options.sizeUniform] - Optional size uniform name (e.g., "u_dictSize")
+	 * @param {string} [options.format='rgba16ui'] - Texture format
+	 * @param {boolean} [options.isLinear=true] - Whether texture is in linear color space
+	 * @param {Function} [options.dataLoader] - Custom data loader function
+	 * @param {boolean} [options.use16Bit=true] - Use Raster16Bit vs regular Raster
+	 * @returns {Promise<void>}
+	 */
+	async addStaticTexture(options) {
+		// Add to the static textures array
+		const staticTexConfig = {
+			url: options.url,
+			uniform: options.uniform,
+			sizeUniform: options.sizeUniform,
+			format: options.format || 'rgba16ui',
+			isLinear: options.isLinear !== undefined ? options.isLinear : true,
+			dataLoader: options.dataLoader,
+			use16Bit: options.use16Bit !== undefined ? options.use16Bit : true,
+			// Runtime properties
+			texture: null,
+			width: 0,
+			height: 0,
+			loaded: false
+		};
+
+		this.staticTextures.push(staticTexConfig);
+
+		// Load immediately if GL context is available
+		if (this.gl) {
+			await this.loadStaticTexture(this.staticTextures.length - 1);
+		}
+	}
+
+	/**
+	 * Loads a specific static texture by index
+	 * @private
+	 * @param {number} index - Index in staticTextures array
+	 * @returns {Promise<void>}
+	 */
+	async loadStaticTexture(index) {
+		const config = this.staticTextures[index];
+		if (!config || config.loaded) return;
+
+		try {
+			// Choose appropriate raster class - much simpler!
+			const RasterClass = config.use16Bit ? Raster16Bit : Raster;
+
+			const rasterOptions = {
+				format: config.format,
+				isLinear: config.isLinear,
+				debug: this.debug || false
+			};
+
+			if (config.dataLoader) {
+				rasterOptions.dataLoader = config.dataLoader;
+			}
+
+			const raster = new RasterClass(rasterOptions);
+			const [texture] = await raster.loadImage({ url: config.url }, this.gl);
+
+			// Update the configuration with loaded texture info
+			config.texture = texture;
+			config.width = raster.width;
+			config.height = raster.height;
+			config.loaded = true;
+
+			this.emit('update');
+		} catch (error) {
+			console.error(`Failed to load static texture ${config.url}:`, error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Removes all static textures
+	 */
+	clearStaticTextures() {
+		// Clean up WebGL textures
+		if (this.gl) {
+			for (const config of this.staticTextures) {
+				if (config.texture) {
+					this.gl.deleteTexture(config.texture);
+				}
+			}
+		}
+		this.staticTextures = [];
+	}
+
+	/**
+	 * Gets a static texture configuration by uniform name
+	 * @param {string} uniformName - Uniform name to search for
+	 * @returns {Object|undefined} Static texture configuration
+	 */
+	getStaticTexture(uniformName) {
+		return this.staticTextures.find(tex => tex.uniform === uniformName);
 	}
 
 	/*
@@ -705,6 +819,8 @@ class Layer {
 		if (this.status != 'ready')// || this.tiles.size == 0)
 			return true;
 
+		if (!this.gl) return true;
+
 		if (!this.shader)
 			throw "Shader not specified!";
 
@@ -715,7 +831,6 @@ class Layer {
 			viewport = this.viewport;
 			this.gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
 		}
-
 
 		this.prepareWebGL();
 
@@ -736,6 +851,37 @@ class Layer {
 				this.gl.activeTexture(this.gl.TEXTURE0 + iSampler);
 				this.gl.bindTexture(this.gl.TEXTURE_2D, f.samplers[i].tex);
 				iSampler++;
+			}
+		}
+
+		// Bind layer-level static textures (e.g. dict) if present
+		if (this.staticTextures && this.staticTextures.length) {
+			// start after normal samplers and filter samplers
+			// normal samplers: this.shader.samplers.length
+			// filter samplers: already advanced iSampler above
+			// so we can just continue from the current unit counter
+			let startUnit = this.shader.samplers.length;
+			const gl = this.gl;
+			for (let i = 0; i < this.staticTextures.length; i++) {
+				const st = this.staticTextures[i];
+				const unit = startUnit + i;
+
+				gl.activeTexture(gl.TEXTURE0 + unit);
+				gl.bindTexture(gl.TEXTURE_2D, st.texture);
+
+				// bind sampler uniform
+				const loc = this.shader.program
+					? gl.getUniformLocation(this.shader.program, st.uniform)
+					: null;
+				if (loc) {
+					gl.uniform1i(loc, unit);
+				}
+
+				// optional size uniform
+				if (st.sizeUniform) {
+					const l2 = gl.getUniformLocation(this.shader.program, st.sizeUniform);
+					if (l2) gl.uniform2f(l2, st.width, st.height);
+				}
 			}
 		}
 
@@ -906,9 +1052,26 @@ class Layer {
 	}
 
 	/** @ignore */
-	prepareWebGL() {
+	async prepareWebGL() {
+		const gl = this.gl;
 
-		let gl = this.gl;
+		// Run lazy init once, when GL is available
+		if (!this._didFirstDraw) {
+			// Load static textures first
+			for (let i = 0; i < this.staticTextures.length; i++) {
+				if (!this.staticTextures[i].loaded) {
+					await this.loadStaticTexture(i);
+				}
+			}
+
+			// Legacy onFirstDraw callback support (can be removed later)
+			if (typeof this.onFirstDraw === "function") {
+				// pass gl so the callback can create textures
+				this.onFirstDraw(gl);
+			}
+
+			this._didFirstDraw = true;
+		}
 
 		if (!this.ibuffer) { //this part might go into another function.
 			this.ibuffer = gl.createBuffer();
@@ -932,7 +1095,6 @@ class Layer {
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl);
 	}
-
 	/** @ignore */
 	sameNeeded(a, b) {
 		if (a.level != b.level)
