@@ -192,11 +192,21 @@ uniform vec2 u_texture8bitSize;
 // }
 
 vec4 data() {
-    // Static 8-bit texture
-    vec2 globalUV = getGlobalUV(v_texcoord);
-    vec3 staticColor = texture(texture8bit, globalUV).rgb;
-    return vec4(staticColor, 1.0);
+    // Use texture() for usampler2D (returns uvec4 with uint values 0-65535)
+    uvec4 raw = texture(avg, v_texcoord);
+
+    // Convert from uint [0-65535] to float [0-1]
+    vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
+    return vec4(color, 1.0);
 }
+
+
+// vec4 data() {
+//     // Static 8-bit texture
+//     vec2 globalUV = getGlobalUV(v_texcoord);
+//     vec3 staticColor = texture(texture8bit, globalUV).rgb;
+//     return vec4(staticColor, 1.0);
+// }
 `;
 		return str;
 	}

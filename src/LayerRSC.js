@@ -97,28 +97,6 @@ class LayerRSC extends Layer {
 	}
 
 	/**
-	 * Constructs URL for image plane resources based on layout type
-	 * @param {string} url - Base URL
-	 * @param {string} plane - Plane identifier
-	 * @returns {string} Complete URL for the resource
-	 * @private
-	 */
-	imageUrl(url, plane) {
-		let path = this.url.substring(0, this.url.lastIndexOf('/') + 1);
-		switch (this.layout.type) {
-			case 'image': return path + plane + '.jpg'; break;
-			case 'google': return path + plane; break;
-			case 'deepzoom': return path + plane + '.dzi'; break;
-			case 'tarzoom': return path + plane + '.tzi'; break;
-			case 'itarzoom': return path + 'planes.tzi'; break;
-			case 'zoomify': return path + plane + '/ImageProperties.xml'; break;
-			case 'iip': return url; break;
-			case 'iiif': throw Error("Unimplemented");
-			default: throw Error("Unknown layout: " + layout.type);
-		}
-	}
-
-	/**
 	 * Sets the light direction with optional animation
 	 * @param {number[]} light - Light direction vector [x, y]
 	 * @param {number} [dt] - Animation duration in milliseconds
@@ -206,6 +184,44 @@ class LayerRSC extends Layer {
 	}
 
 	/**
+		 * Constructs URL for RSC resources based on layout type
+		 * @param {string} url - Base URL
+		 * @returns {string} URLs for the resources
+		 * @private
+		 */
+	imageUrl(url) {
+		const basename = Util.basenameNoExt(url);
+		const basepath = Util.dirname(url);
+		switch (this.layout.type) {
+			case 'image': return {
+				dictpath: basepath + "/" + basename + "_dict.png",
+				avgpath: basepath + "/" + basename + "_avg.png",
+				idx00path: basepath + "/" + basename + "_idx_00.png",
+				idx01path: basepath + "/" + basename + "_idx_01.png",
+				coef00path: basepath + "/" + basename + "_coef_00.jpg",
+				coef01path: basepath + "/" + basename + "_coef_01.jpg"
+			}; break;
+			case 'deepzoom': return {
+				dictpath: basepath + "/" + basename + "_dict.png",
+				avgpath: basepath + "/" + basename + "_avg.dzi",
+				idx00path: basepath + "/" + basename + "_idx_00.dzi",
+				idx01path: basepath + "/" + basename + "_idx_01.dzi",
+				coef00path: basepath + "/" + basename + "_coef_00.dzi",
+				coef01path: basepath + "/" + basename + "_coef_01.dzi"
+			}; break;
+			case 'google':
+			case 'deepzoom':
+			case 'tarzoom':
+			case 'itarzoom':
+			case 'zoomify':
+			case 'iip':
+			case 'iiif': throw Error("Not yet implemented"); break;
+			default: throw Error("Unknown layout: " + layout.type);
+		}
+	}
+
+
+	/**
 	 * Loads and processes RTI configuration
 	 * @param {string} url - URL to info.json
 	 * @private
@@ -221,32 +237,15 @@ class LayerRSC extends Layer {
 			//this.layout.suffix = json.format;
 			//if (json.pixelSizeInMM) this.pixelSize = json.pixelSizeInMM;
 
-
-			const basename = Util.basename(json.base_path);
-			const basepath = Util.dirname(url);
-
-			//const avgpath = basepath + "/" + basename + "_avg.png";
-			const avgpath = basepath + "/" + basename + "_avg.dzi";
-			const dictpath = basepath + "/" + basename + "_dict.png";
-			const idx00path = basepath + "/" + basename + "_idx_00.dzi ";
-			const idx01path = basepath + "/" + basename + "_idx_01.dzi ";
-			const coef00path = basepath + "/" + basename + "_coef_00.dzi ";
-			const coef01path = basepath + "/" + basename + "_coef_01.dzi ";
-
-			// console.log("AVG PATH: ", avgpath);
-			// console.log("DICT PATH: ", dictpath);
-			// console.log("IDX00 PATH: ", idx00path);
-			// console.log("IDX01 PATH: ", idx01path);
-			// console.log("COEF00 PATH: ", coef00path);
-			// console.log("COEF01 PATH: ", coef01path);
+			const configPaths = this.imageUrl(url);
 
 			this.shader.init(json);
 			const urls = [];
 			this.rasters = [];
 
-			// DICT (static texture)
+			// DICT (static texture) 16bit rgba ui
 			await this.addStaticTexture({
-				url: dictpath,
+				url: configPaths.dictpath,
 				uniform: 'dict',
 				sizeUniform: 'u_dictSize',
 				format: 'rgba16ui',
@@ -255,7 +254,9 @@ class LayerRSC extends Layer {
 				use16Bit: true
 			});
 
-			// IMG 8bit (static texture)
+			// IMG (static texture) 8bit rgb
+			const basename = Util.basenameNoExt(url);
+			const basepath = Util.dirname(url);
 			const texture8bitPath = basepath + "/" + basename + "_coef_00.jpg";
 			await this.addStaticTexture({
 				url: texture8bitPath,
@@ -269,7 +270,7 @@ class LayerRSC extends Layer {
 
 
 			// AVG 
-			urls.push(avgpath);
+			urls.push(configPaths.avgpath);
 			const raster_avg = new Raster16Bit({
 				format: 'rgba16ui',
 				isLinear: true,
@@ -279,22 +280,22 @@ class LayerRSC extends Layer {
 			this.rasters.push(raster_avg);
 
 			// IDX00
-			urls.push(idx00path);
-			const raster_idx00 = new Raster({ format: 'vec4', isLinear: true });
+			urls.push(configPaths.idx00path);
+			const raster_idx00 = new Raster16Bit({ format: 'rgba16ui', isLinear: true, dataLoader: LayerRSC.pngLoaderToUint16});
 			this.rasters.push(raster_idx00);
 
 			// IDX01
-			urls.push(idx01path);
-			const raster_idx01 = new Raster({ format: 'vec4', isLinear: true });
+			urls.push(configPaths.idx01path);
+			const raster_idx01 = new Raster16Bit({ format: 'rgba16ui', isLinear: true, dataLoader: LayerRSC.pngLoaderToUint16});
 			this.rasters.push(raster_idx01);
 
 			// COEF00
-			urls.push(coef00path);
+			urls.push(configPaths.coef00path);
 			const raster_coef00 = new Raster({ format: 'vec4', isLinear: true });
 			this.rasters.push(raster_coef00);
 
 			// COEF01
-			urls.push(coef01path);
+			urls.push(configPaths.coef01path);
 			const raster_coef01 = new Raster({ format: 'vec4', isLinear: true });
 			this.rasters.push(raster_coef01);
 
