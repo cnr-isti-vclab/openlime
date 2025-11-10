@@ -233,8 +233,7 @@ class LayerRSC extends Layer {
 			const json = await Util.loadJSON(url);
 			// console.log(json);
 
-			// Update layout image format and pixelSize if provided in info.json
-			//this.layout.suffix = json.format;
+			this.pixelSize = 1.0;
 			//if (json.pixelSizeInMM) this.pixelSize = json.pixelSizeInMM;
 
 			const configPaths = this.imageUrl(url);
