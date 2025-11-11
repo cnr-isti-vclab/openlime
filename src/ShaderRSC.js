@@ -165,6 +165,7 @@ class ShaderRSC extends Shader {
 		this.needsUpdate = true;
 	}
 
+	// Sparse coding relighting shader part
 	sparse_coding_relight_str() {
 		let str = `// Test: visualizza le coordinate globali come colori
 vec2 globalUV = getGlobalUV(v_texcoord);
@@ -177,13 +178,36 @@ vec3 color = vec3(globalUV.x, globalUV.y, 0.0);
 		return str;
 	}
 
-	get_index_color_str(idx, param_name="color") {
+	// Return a shader string to fetch index idx and convert to 3 10 bits components stored in a var called param_name
+	get_decoded_index(idx, param_name) {
 		let str = `uvec4 val = texture(` + idx + `, v_texcoord);
-vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 255.0;
+uint decoded_uint = (val.r << 0) | (val.g << 8) | (val.b << 16) | (val.a << 24);
+uint mask = uint(1023);
+uvec3 ` + param_name + ` = uvec3((decoded_uint >> 20) & mask, (decoded_uint >> 10) & mask, decoded_uint & mask); 
 `;
+
 		return str;
 	}
 
+	// Return a shader string to fetch index idx and converted from 3 10 bits component to rgb float values
+	get_index_color_str(idx, param_name="color") {
+		let str = this.get_decoded_index(idx, "index");
+		str += `float scale = 1.0 / float(mask);
+
+bool sort = false; // Just for debugging sort indices to map triplet of indices to same colors
+if (sort) {
+	if (index.r > index.g) { uint tmp = index.r; index.r = index.g; index.g = tmp; } // swap(index.r, index,g);
+	if (index.r > index.b) { uint tmp = index.r; index.r = index.b; index.b = tmp; } // swap(index.r, index,b);
+	if (index.g > index.b) { uint tmp = index.g; index.g = index.b; index.b = tmp; } // swap(index.g, index.b);
+}
+
+vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
+`;
+
+		return str;
+	}
+
+	// Return shader string to fetch the average color dequantized and store into param_name
 	get_average_color_str(param_name="color") {
     let str = `uvec4 val = texture(avg, v_texcoord);
 vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) * average_scale + average_min;	
@@ -191,9 +215,10 @@ vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) * average_scale + average_mi
 		return str;
 	}
 
+	// Return shader string to fetch the coefficient idx (idx00 or idx01) color dequantized and store into param_name
 	get_coefficient_color_str(idx, param_name="color") {
 		let str = `vec4 val = texture(` + idx + `, v_texcoord);
-vec3 ` + param_name + ` = vec3(val.r, val.g, val.b);
+vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) * coefficients_scale + coefficients_min;
 `;
 		return str;
 	}
@@ -221,7 +246,6 @@ uniform float coefficients_min;
 uniform float coefficients_scale;
 uniform float dictionary_min;
 uniform float dictionary_scale;
-
 
 vec4 data() {
 		`;
