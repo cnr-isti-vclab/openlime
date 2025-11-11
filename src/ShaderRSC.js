@@ -67,7 +67,7 @@ class ShaderRSC extends Shader {
 		super(options);
 
 		Object.assign(this, {
-			modes: ['light', 'normals', 'diffuse', 'gray_diffuse', 'specular'],
+			modes: ['light', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
 			mode: 'light',
 			type: ['ksvd'],
 		});
@@ -138,19 +138,72 @@ class ShaderRSC extends Shader {
 		// SAMPLERS
 		this.samplers = [];
 		this.samplers.push({ id: 0, name: 'avg', samplerType: 'usampler2D' });
+		this.samplers.push({ id: 1, name: 'idx00', samplerType: 'usampler2D' });
+		this.samplers.push({ id: 2, name: 'idx01', samplerType: 'usampler2D' });
+		this.samplers.push({ id: 3, name: 'coef00', samplerType: 'sampler2D' });
+		this.samplers.push({ id: 4, name: 'coef01', samplerType: 'sampler2D' });
 		//this.samplers.push({ id: 1, name: 'dict', samplerType: 'usampler2D' });
 
 		// UNIFORMS
+		console.log("CONFIG = ", this.config);
+		const  avg_scale = this.config.output_params.average_range / 65535.0;    // integer png 16 bit
+		const dict_scale = this.config.output_params.dictionary_range / 65535.0; // integer png 16 bit
+		const coef_scale = this.config.output_params.coefficients_range; 				 // already float
+
 		this.registerUniforms({
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
-			// specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
-			// bias: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.bias },
-			// scale: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.scale },
-			// base: { type: 'vec3', needsUpdate: true, size: this.nplanes },
-			// base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
-			// base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
+
+			average_min: { type: 'float', needsUpdate: false, size: 1, value: this.config.output_params.average_min },
+			average_scale: { type: 'float', needsUpdate: false, size: 1, value: avg_scale },
+			coefficients_min: { type: 'float', needsUpdate: false, size: 1, value: this.config.output_params.coefficients_min },
+			coefficients_scale: { type: 'float', needsUpdate: false, size: 1, value: coef_scale },
+			dictionary_min: { type: 'float', needsUpdate: false, size: 1, value: this.config.output_params.dictionary_min },
+			dictionary_scale: { type: 'float', needsUpdate: false, size: 1, value: dict_scale },
+			dictionary_atom_image_w: { type: 'int', needsUpdate: false, size: 1, value: this.config.input_params.dictionary_atom_image_w },
+			dictionary_atom_image_h: { type: 'int', needsUpdate: false, size: 1, value: this.config.input_params.dictionary_atom_image_h },
 		});
 		this.needsUpdate = true;
+	}
+
+	sparse_coding_relight_str() {
+		let str = `// Test: visualizza le coordinate globali come colori
+vec2 globalUV = getGlobalUV(v_texcoord);
+
+// Rosso = globalUV.x (da sinistra=nero a destra=rosso)
+// Verde = globalUV.y (da sopra=nero a sotto=verde)  
+// Risultato atteso: nero in alto-sinistra, giallo in basso-destra
+vec3 color = vec3(globalUV.x, globalUV.y, 0.0);
+		`;
+		return str;
+	}
+
+	get_index_color_str(idx, param_name="color") {
+		let str = `uvec4 val = texture(` + idx + `, v_texcoord);
+vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 255.0;
+`;
+		return str;
+	}
+
+	get_average_color_str(param_name="color") {
+    let str = `uvec4 val = texture(avg, v_texcoord);
+vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) * average_scale + average_min;	
+`;
+		return str;
+	}
+
+	get_coefficient_color_str(idx, param_name="color") {
+		let str = `vec4 val = texture(` + idx + `, v_texcoord);
+vec3 ` + param_name + ` = vec3(val.r, val.g, val.b);
+`;
+		return str;
+	}
+
+
+	get_dictionary_color_str(param_name="color") {
+    let str = `uvec4 val = texture(dict, v_texcoord);
+vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 65535.0f;	
+`;
+		return str;
 	}
 
 	fragShaderSrc() {
@@ -162,11 +215,54 @@ in vec2 v_texcoord;
 
 uniform usampler2D dict;
 uniform vec2 u_dictSize;
+uniform float average_min;
+uniform float average_scale;
+uniform float coefficients_min;
+uniform float coefficients_scale;
+uniform float dictionary_min;
+uniform float dictionary_scale;
 
-uniform sampler2D texture8bit;
-uniform vec2 u_texture8bitSize;
+
+vec4 data() {
+		`;
+
+		switch(this.mode) {
+			case 'light' :
+				str += this.sparse_coding_relight_str();
+				break;
+			case 'avg' : 
+				str += this.get_average_color_str();
+				break;
+			case 'idx00' : 
+				str += this.get_index_color_str("idx00");
+				break;
+			case 'idx01' : 
+				str += this.get_index_color_str("idx01");
+				break;
+			case 'coef00' : 
+				str += this.get_coefficient_color_str("coef00");
+				break;
+			case 'coef01' : 
+				str += this.get_coefficient_color_str("coef01");
+				break;
+			case 'dictionary' :
+				str += this.get_dictionary_color_str();
+			break;
+		}
+
+		str += 	`
+			return vec4(color,1);
+		}
+		`;
+
+		return str;
+	}
+}
+
+export { ShaderRSC }
 
 
+// FIXME REMOVE ALL NEXT LINES
 // vec4 data() {
 //     // Test: visualizza le coordinate globali come colori
 //     vec2 globalUV = getGlobalUV(v_texcoord);
@@ -191,14 +287,20 @@ uniform vec2 u_texture8bitSize;
 //     return vec4(normalizedOffset.x, normalizedOffset.y, 0.0, 1.0);
 // }
 
-vec4 data() {
-    // Use texture() for usampler2D (returns uvec4 with uint values 0-65535)
-    uvec4 raw = texture(avg, v_texcoord);
+// vec4 data() {
+//     // Use texture() for usampler2D (returns uvec4 with uint values 0-65535)
+//     uvec4 raw = texture(avg, v_texcoord);
+//     // Convert from uint [0-65535] to float [0-1]
+//     vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
+//     return vec4(color, 1.0);
+// }
 
-    // Convert from uint [0-65535] to float [0-1]
-    vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
-    return vec4(color, 1.0);
-}
+// vec4 data() {
+//     // Use texture() for usampler2D (returns uvec4 with uint values 0-255)
+//     uvec4 val = texture(idx01, v_texcoord);
+//     vec3 color = vec3(val.r, val.g, val.b) / 255.0f;
+//     return vec4(color, 1.0);
+// }
 
 
 // vec4 data() {
@@ -207,10 +309,3 @@ vec4 data() {
 //     vec3 staticColor = texture(texture8bit, globalUV).rgb;
 //     return vec4(staticColor, 1.0);
 // }
-`;
-		return str;
-	}
-}
-
-export { ShaderRSC }
-

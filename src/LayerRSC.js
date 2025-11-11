@@ -254,20 +254,21 @@ class LayerRSC extends Layer {
 			});
 
 			// IMG (static texture) 8bit rgb
-			const basename = Util.basenameNoExt(url);
-			const basepath = Util.dirname(url);
-			const texture8bitPath = basepath + "/" + basename + "_coef_00.jpg";
-			await this.addStaticTexture({
-				url: texture8bitPath,
-				uniform: 'texture8bit',
-				sizeUniform: 'u_texture8bitSize',
-				format: 'vec3',
-				isLinear: true,
-				dataLoader: null,  // Usa il loader di default per JPEG
-				use16Bit: false
-			});
+			// const basename = Util.basenameNoExt(url);
+			// const basepath = Util.dirname(url);
+			// const texture8bitPath = basepath + "/" + basename + "_coef_00.jpg";
+			// await this.addStaticTexture({
+			// 	url: texture8bitPath,
+			// 	uniform: 'texture8bit',
+			// 	sizeUniform: 'u_texture8bitSize',
+			// 	format: 'vec3',
+			// 	isLinear: true,
+			// 	dataLoader: null,  // Usa il loader di default per JPEG
+			// 	use16Bit: false
+			// });
 
-
+			console.log(configPaths);
+			
 			// AVG 
 			urls.push(configPaths.avgpath);
 			const raster_avg = new Raster16Bit({
@@ -280,22 +281,22 @@ class LayerRSC extends Layer {
 
 			// IDX00
 			urls.push(configPaths.idx00path);
-			const raster_idx00 = new Raster16Bit({ format: 'rgba16ui', isLinear: true, dataLoader: LayerRSC.pngLoaderToUint16});
+			const raster_idx00 = new Raster({ format: 'uvec4', isLinear: true});
 			this.rasters.push(raster_idx00);
 
 			// IDX01
 			urls.push(configPaths.idx01path);
-			const raster_idx01 = new Raster16Bit({ format: 'rgba16ui', isLinear: true, dataLoader: LayerRSC.pngLoaderToUint16});
+			const raster_idx01 = new Raster({ format: 'uvec4', isLinear: true});
 			this.rasters.push(raster_idx01);
 
 			// COEF00
 			urls.push(configPaths.coef00path);
-			const raster_coef00 = new Raster({ format: 'vec4', isLinear: true });
+			const raster_coef00 = new Raster({ format: 'vec3', isLinear: true });
 			this.rasters.push(raster_coef00);
 
 			// COEF01
 			urls.push(configPaths.coef01path);
-			const raster_coef01 = new Raster({ format: 'vec4', isLinear: true });
+			const raster_coef01 = new Raster({ format: 'vec3', isLinear: true });
 			this.rasters.push(raster_coef01);
 
 			this.layout.setUrls(urls);

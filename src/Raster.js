@@ -7,10 +7,12 @@ import { addSignals } from './Signals.js'
 */
 
 /**
-* @typedef {('vec3'|'vec4'|'float')} Raster#Format
+* @typedef {('uvec3'|'uvec4'|'vec3'|'vec4'|'float')} Raster#Format
 * Defines the color format for image data storage in textures and renderbuffers.
-* @property {'vec3'} vec3 - RGB format (3 components without alpha)
-* @property {'vec4'} vec4 - RGBA format (4 components with alpha)
+* @property {'uvec3'} uvec3 - RGB format (3 components uint8 without alpha)
+* @property {'uvec4'} uvec4 - RGBA format (4 components uint8 with alpha)
+* @property {'vec3'} vec3 - RGB format (3 components float without alpha)
+* @property {'vec4'} vec4 - RGBA format (4 components float with alpha)
 * @property {'float'} float - Single-channel format for coefficient data
 */
 
@@ -145,37 +147,53 @@ class Raster {
 
 		switch (this.format) {
 			case 'vec3':
+				internalFormat = gl.RGB;
 				glFormat = gl.RGB;
 				break;
 			case 'vec4':
+				internalFormat = gl.RGBA;
 				glFormat = gl.RGBA;
+				break;
+			case 'uvec3':
+				internalFormat = gl.RGB8UI;
+				glFormat = gl.RGB_INTEGER;
+				break;
+			case 'uvec4':
+				internalFormat = gl.RGBA8UI;
+				glFormat = gl.RGBA_INTEGER;
 				break;
 			case 'float':
 				// Use RED instead of LUMINANCE for WebGL2
+				internalFormat = gl.R8;
 				glFormat = gl instanceof WebGL2RenderingContext ? gl.RED : gl.LUMINANCE;
 				break;
 			default:
 				break;
 		}
 
-		// For WebGL2, use proper internal format for linear textures
-		if (this.format === 'float') {
-			// For float textures in WebGL2, use R8 as internal format
-			internalFormat = gl.R8;
-		} else {
-			internalFormat = glFormat === gl.RGB ? gl.RGB : gl.RGBA;
-		}
 		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
 
-
-		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		//build mipmap for large images.
-		if (this.width > 1024 || this.height > 1024) {
-			gl.generateMipmap(gl.TEXTURE_2D);
-			gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-		} else {
-			gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		// Handle with LINEAR float texture, and NEAREST uint textures
+		if (this.format == 'vec3' || this.format == 'vec4' || this.format == 'float') {
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			if (this.width > 1024 || this.height > 1024) {
+				//build mipmap for large images.
+				gl.generateMipmap(gl.TEXTURE_2D);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+			} else {
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			}
+		} else if (this.format == 'uvec3' || this.format == 'uvec4') {
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+			if (this.width > 1024 || this.height > 1024) {
+				//build mipmap for large images.
+				gl.generateMipmap(gl.TEXTURE_2D);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+			} else {
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+			}
 		}
+
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		this._texture = tex;
