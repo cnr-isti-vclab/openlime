@@ -495,38 +495,65 @@ class LayoutTiles extends Layout {
 	 * @throws {Error} If unable to fetch or parse DZI file
 	 */
 	async initDeepzoom(onepixel) {
-		let url = this.urls.filter(u => u)[0];
-		var response = await fetch(url);
-		if (!response.ok) {
-			this.status = "Failed loading " + url + ": " + response.statusText;
-			throw new Error(this.status);
-		}
-		let text = await response.text();
-		let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
+		// Filter out null or undefined URLs
+		const dziUrls = this.urls.filter(u => u);
 
-		let doc = xml.documentElement;
-		this.suffix = doc.getAttribute('Format');
-		this.tilesize = parseInt(doc.getAttribute('TileSize'));
-		this.overlap = parseInt(doc.getAttribute('Overlap'));
+		// Fetch all .dzi files in parallel
+		const responses = await Promise.all(dziUrls.map(u => fetch(u)));
 
-		let size = doc.querySelector('Size');
+		// Check that all responses are OK
+		responses.forEach((response, i) => {
+			if (!response.ok) {
+				const url = dziUrls[i];
+				this.status = "Failed loading " + url + ": " + response.statusText;
+				throw new Error(this.status);
+			}
+		});
+
+		// Parse all .dzi XML documents
+		const texts = await Promise.all(responses.map(r => r.text()));
+		const parsers = texts.map(t => (new window.DOMParser()).parseFromString(t, "text/xml"));
+
+		// Extract the "Format" attribute for each raster (e.g., jpg, png, etc.)
+		this.suffixes = parsers.map(xml => {
+			const doc = xml.documentElement;
+			return doc.getAttribute('Format');
+		});
+
+		// Use the first .dzi as reference for global properties
+		const firstDoc = parsers[0].documentElement;
+		this.tilesize = parseInt(firstDoc.getAttribute('TileSize'));
+		this.overlap = parseInt(firstDoc.getAttribute('Overlap'));
+
+		const size = parsers[0].querySelector('Size');
 		this.width = parseInt(size.getAttribute('Width'));
 		this.height = parseInt(size.getAttribute('Height'));
 
-		let max = Math.max(this.width, this.height) / this.tilesize;
+		// Compute the number of levels (same for all rasters)
+		const max = Math.max(this.width, this.height) / this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.urls = this.urls.map(url => url ? url.slice(0, url.lastIndexOf(".")) + '_files/' : null);
+		// Replace each URL with its corresponding "_files/" directory
+		this.urls = this.urls.map(url => {
+			if (!url) return null;
+			return url.slice(0, url.lastIndexOf(".")) + '_files/';
+		});
+
+		// Compute skipped levels if only one pixel per tile is needed
 		this.skiplevels = 0;
 		if (onepixel)
 			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
 
+		// Define the tile URL generator, using suffix per raster
 		this.getTileURL = (rasterid, tile) => {
-			let url = this.urls[rasterid];
-			let level = tile.level + this.skiplevels;
-			return url + level + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
+			const baseUrl = this.urls[rasterid];
+			const level = tile.level + this.skiplevels;
+			const suffix = this.suffixes[rasterid];
+			return baseUrl + level + '/' + tile.x + '_' + tile.y + '.' + suffix;
 		};
 	}
+
+
 
 	/**
 	 * Initializes Tarzoom layout.
