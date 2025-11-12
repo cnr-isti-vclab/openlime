@@ -2,40 +2,44 @@
      "base_path": "tmp/RealRTI01_ksvd/RealRTI01_ksvd",
      "input_params": {
           "deep_zoom_enabled": false,
-          "desired_coreset_size": 131072,
+          "desired_coreset_fraction": 0.6399999856948853,
+          "desired_coreset_size": 8388608,
           "dictionary_atom_count": 1024,
           "dictionary_atom_image_h": 64,
           "dictionary_atom_image_w": 64,
           "dictionary_encoding_16_bit": true,
+          "dictionary_init_method_id": "CLUSTERS_MEAN",
+          "encoding_pursuit_method_id": "FOLS",
+          "is_parallel_atom_update_enabled": true,
           "learning_method_id": "ksvd",
+          "learning_pursuit_method_id": "FOLS",
           "multiresolution_enabled": false,
           "multiresolution_level_count": 1,
           "remove_average": true,
-          "sparse_coding_method_id": "FOLS",
           "sparsity": 6,
           "sparsity_base": 3,
           "sparsity_multiplier": 2,
           "tolerance": 0.0,
-          "training_iteration_count": 25
+          "training_epoch_count": 100
      },
      "output_params": {
-          "average_min": 0.012804972007870674,
-          "average_range": 0.5211637020111084,
-          "coefficients_min": -1.512426495552063,
-          "coefficients_range": 3.8884239196777344,
-          "dictionary_min": -0.44530189037323,
-          "dictionary_range": 1.0164175033569336,
-          "dictionary_vector_size": 180
+          "average_min": 0.0,
+          "average_range": 0.5250181555747986,
+          "coefficients_min": -13.051082611083984,
+          "coefficients_range": 26.273679733276367,
+          "dictionary_column_size": 180,
+          "dictionary_min": -0.5081564784049988,
+          "dictionary_range": 0.9728984832763672
      },
-     "stats_params": {
-          "PSNR_db": 44.55654855292111,
-          "PSNR_db_zfp": 38.53594863964148,
-          "emax": 0.08175741197403201,
-          "nrmse": 0.005917967453119615,
-          "rmse": 0.0058950761452984815,
-          "sparse_encoding_time_ms": 2859.0,
-          "training_time_ms": 44095.0,
-          "ymax": 0.5981131792068481,
-          "ymin": -0.3980187177658081
+     "stats": {
+          "PSNR_db": 45.045257961105875,
+          "PSNR_db_zfp": 39.02465804782625,
+          "emax": 0.09030216857528287,
+          "nrmse": 0.005594188574885974,
+          "rmse": 0.005576536948133519,
+          "sparse_encoding_time_ms": 11338.0,
+          "training_time_ms": 785029.0,
+          "ymax": 0.5981227159500122,
+          "ymin": -0.39872193336486816
      }
 }
