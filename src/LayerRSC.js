@@ -246,7 +246,7 @@ class LayerRSC extends Layer {
 			await this.addStaticTexture({
 				url: configPaths.dictpath,
 				uniform: 'dict',
-				sizeUniform: 'u_dictSize',
+				sizeUniform: 'dictionary_size',
 				format: 'rgba16ui',
 				isLinear: true,
 				dataLoader: LayerRSC.pngLoaderToUint16,
@@ -270,6 +270,8 @@ class LayerRSC extends Layer {
 			console.log(configPaths);
 			
 			// AVG 
+
+			console.log("Set Raster AVG ", configPaths.avgpath)
 			urls.push(configPaths.avgpath);
 			const raster_avg = new Raster16Bit({
 				format: 'rgba16ui',
@@ -280,21 +282,25 @@ class LayerRSC extends Layer {
 			this.rasters.push(raster_avg);
 
 			// IDX00
+			console.log("Set Raster IDX00 ", configPaths.idx00path)
 			urls.push(configPaths.idx00path);
 			const raster_idx00 = new Raster({ format: 'uvec4', isLinear: true});
 			this.rasters.push(raster_idx00);
 
 			// IDX01
+			console.log("Set Raster IDX01 ", configPaths.idx01path)
 			urls.push(configPaths.idx01path);
 			const raster_idx01 = new Raster({ format: 'uvec4', isLinear: true});
 			this.rasters.push(raster_idx01);
 
 			// COEF00
+			console.log("Set Raster COEF00", configPaths.coef00path)
 			urls.push(configPaths.coef00path);
 			const raster_coef00 = new Raster({ format: 'vec3', isLinear: true });
 			this.rasters.push(raster_coef00);
 
 			// COEF01
+			console.log("Set Raster COEF01 ", configPaths.coef01path)
 			urls.push(configPaths.coef01path);
 			const raster_coef01 = new Raster({ format: 'vec3', isLinear: true });
 			this.rasters.push(raster_coef01);
