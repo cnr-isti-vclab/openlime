@@ -267,7 +267,7 @@ class LayerRSC extends Layer {
 			await this.addStaticTexture({
 				url: configPaths.dictpath,
 				uniform: 'dict',
-				sizeUniform: 'u_dictSize',
+				sizeUniform: 'dictionary_size',
 				format: 'rgba16ui',
 				isLinear: true,
 				dataLoader: LayerRSC.pngLoaderToUint16,
@@ -277,6 +277,8 @@ class LayerRSC extends Layer {
 			console.log(configPaths);
 
 			// AVG 
+
+			console.log("Set Raster AVG ", configPaths.avgpath)
 			urls.push(configPaths.avgpath);
 			const raster_avg = new Raster16Bit({
 				format: 'rgba16ui',
