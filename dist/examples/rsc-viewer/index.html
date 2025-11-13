@@ -26,14 +26,21 @@
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.Viewer('.openlime');
 
-        // Create 4 RTI layers and add them to the canvans
-        // A RTI layer has many channels. In this example the 4 layers store 
-        // channels in 4 different ways: image, deepzoom, tarzoom and itarzoom 
+        // Relight Sparse Coding single image example derived from RealRTI/item1
+        // const layer0 = new OpenLIME.Layer({
+        //     label: 'RealRTI01',
+        //     layout: 'image',
+        //     type: 'rsc',
+        //     url: '../../assets/rsc/RealRTI01_ksvd/RealRTI01_ksvd.json',
+        //     normals: false
+        // });
+
+        // Relight Sparse Coding deepzoom example derived from RealRTI/item3
         const layer0 = new OpenLIME.Layer({
-            label: 'RealRTI01',
+            label: 'RealRTI03_dzi',
             layout: 'deepzoom',
             type: 'rsc',
-            url: '../../assets/rsc/RealRTI01_ksvd/RealRTI01_ksvd.json',
+            url: '../../assets/rsc/RealRTI03_ksvd_dzi/RealRTI03_ksvd_dzi.json',
             normals: false
         });
         lime.addLayer('base', layer0);
