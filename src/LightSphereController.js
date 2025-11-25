@@ -104,7 +104,6 @@ class LightSphereController {
             if (this.enableLightSnap && this.lightDirs && this.lightDirs.length > 0) {
                 const closestDir = this.findClosestLightDir(this.lightDir);
                 if (closestDir) {
-                    console.log("ANIM START");
                     this.animateToLightDir([closestDir[0], closestDir[1]], 200);
                 }
             }
