@@ -146,11 +146,15 @@ class ShaderRSC extends Shader {
 		}
 		
 		// UNIFORMS
+		// Average stored in 8 bit png
+		// Dictionary stored in 16 bit png
+		// Coefficients stored in 8 jpg, converted to float directly by loader
+		// Indices stored in 10 bits packed in 32 bit uvec4
 		console.log("CONFIG = ", this.config);
-		const  avg_scale = this.config.output_params.average_range / 255.0;    // integer png 16 bit
-		const dict_scale = this.config.output_params.dictionary_atlas_range / 65535.0; // integer png 16 bit
-		const coef_scale = this.config.output_params.coefficients_range; 				 // already float
-		const atom_size = [this.config.input_params.dictionary_atlas_atom_tile_w,  this.config.input_params.dictionary_atom_image_h];
+		const  avg_scale = this.config.output_params.average_range / 255.0;   
+		const dict_scale = this.config.output_params.dictionary_atlas_range / 65535.0;
+		const coef_scale = this.config.output_params.coefficients_range;
+		const atom_size = [this.config.input_params.dictionary_atlas_atom_tile_w,  this.config.input_params.dictionary_atlas_atom_tile_h];
 		const atom_count_x = this.config.input_params.dictionary_atom_count_x ? this.config.input_params.dictionary_atom_count_x : 32;
 
 		this.registerUniforms({
@@ -167,6 +171,10 @@ class ShaderRSC extends Shader {
 			sparsity_multiplier: { type: 'int', needsUpdate: false, size: 1, value: this.config.input_params.sparsity_multiplier}, 
 		});
 
+		// Print all registered uniforms to console
+		Object.entries(this.uniforms).forEach(([key, uniform]) => {
+			console.log(`${key}:`, uniform.value);
+		});
 		console.log("SHADER CODE");
 		console.log(this.fragShaderSrc());
 		
@@ -190,14 +198,6 @@ uvec3 ` + param_name + ` = uvec3((decoded_uint >> 20) & mask, (decoded_uint >> 1
 	get_index_color_str(idx, param_name="color") {
 		let str = this.get_decoded_index(idx, "index");
 		str += `float scale = 1.0 / float(mask);
-
-bool sort = false; // Just for debugging sort indices to map triplet of indices to same colors
-if (sort) {
-	if (index.r > index.g) { uint tmp = index.r; index.r = index.g; index.g = tmp; } // swap(index.r, index,g);
-	if (index.r > index.b) { uint tmp = index.r; index.r = index.b; index.b = tmp; } // swap(index.r, index,b);
-	if (index.g > index.b) { uint tmp = index.g; index.g = index.b; index.b = tmp; } // swap(index.g, index.b);
-}
-
 vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 `;
 
@@ -206,25 +206,27 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 
 	// Return shader string to fetch the average color dequantized and store into param_name
 	get_average_color_str(param_name="color") {
+		// Return color visible from the image (without scaling and min)
     let str = `uvec4 val = texture(avg, v_texcoord);
-vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) * average_scale + average_min;	
-` + param_name + ` = srgb2linear(` + param_name + `);
+vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 255.0;
 `;
 		return str;
 	}
 
 	// Return shader string to fetch the coefficient idx (idx00 or idx01) color dequantized and store into param_name
 	get_coefficient_color_str(idx, param_name="color") {
+		// Return color visible from the image (without scaling and min)
 		let str = `vec4 val = texture(` + idx + `, v_texcoord);
-vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) * coefficients_scale + coefficients_min;
+vec3 ` + param_name + ` = vec3(val.r, val.g, val.b);
 `;
 		return str;
 	}
 
 
 	get_dictionary_color_str(param_name="color") {
+	// Return shader string to fetch the coefficient idx (idx00 or idx01) color dequantized and store into param_name
     let str = `uvec4 val = texture(dict, v_texcoord);
-vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) * dictionary_scale + dictionary_min;	
+vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 65535.0;	
 `;
 		return str;
 	}
@@ -232,45 +234,29 @@ vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) * dictionary_scale + diction
 
 	// Sparse coding relighting shader part
 	sparse_coding_relight_str() {
-		let str = `// Relight Sparse Coding Shader Code
-		// vec2 globalUV = getGlobalUV(v_texcoord);
+		let str = `
+	// Relight Sparse Coding Shader Code
 
-		// Get Light Direction uv in [0..1]
-		vec2 light_dir_uv = uv_from_light_direction(light);
+	// Get Light Direction uv in [0..1]
+	vec2 light_dir_uv = uv_from_light_direction(light);
 
-		// light_dir_uv = vec2(47,16);   // Real_RTI/item1 image 59
-		// light_dir_uv = vec2(27,30);   // Real_RTI/item1 image 15
-
-		//light_dir_uv = vec2(35,28); // Real_RTI/item3 image 0
-		//light_dir_uv = vec2(39,24); // Real_RTI/item3 image 1
-		//light_dir_uv = vec2(53,21); // Real_RTI/item3 image 4
+	// Initialize result to avg
+	uvec4 uval = texture(avg, v_texcoord);
+	vec3 color = vec3(uval.r, uval.g, uval.b) * average_scale + average_min;
+`;
 		
-		// Initialize result to avg
-		uvec4 uval = texture(avg, v_texcoord);
-		vec3 color = vec3(uval.r, uval.g, uval.b) * average_scale + average_min;	
-
-		// Add sparse coding contribution of the first 3 dictionary elements, identified by the first coef and index images
-		color += contribution(coef00, idx00, light_dir_uv);
-		
-		// Add sparse coding contribution of the second 3 dictionary elements, identified by the second coef and index images
-		if (sparsity_multiplier > 1) {
-			color += contribution(coef01, idx01, light_dir_uv);
-		}
-
-		// With bigger sparsity_multiplier add more contributions here
-
-		// Color contains the result
-		color = max(color, vec3(0));
-		color = srgb2linear(color);
-
-		`;
+		const sparsity_multiplier = this.config.input_params.sparsity_multiplier;
+		for(let i = 0; i < sparsity_multiplier; ++i) {
+			const coef_name = 'coef' + Util.padZeros(i, 2);
+			const idx_name = 'idx' + Util.padZeros(i, 2);
+			str += `	color += contribution(${coef_name}, ${idx_name}, light_dir_uv);
+`;
+		}	
 		return str;
 	}
 
 	fragShaderSrc() {
 		let str = `
-
-// optional static dict texture, bound by the Layer (not by tiles)
 
 in vec2 v_texcoord;
 uniform vec3 light;
@@ -292,19 +278,23 @@ vec2 uv_from_light_direction(vec3 n) {
 	// Must reflect dir encoding used in preprocessing lumilab directions_mapping::uv_from_direction
 
 	vec2 uv = vec2(((n[0] / (1.0f + n[2])) * 0.5f + 0.5f) * dictionary_atlas_atom_tile_size.x,
-  				   ((n[1] / (1.0f + n[2])) * 0.5f + 0.5f) * dictionary_atlas_atom_tile_size.y);
+				((n[1] / (1.0f + n[2])) * 0.5f + 0.5f) * dictionary_atlas_atom_tile_size.y);
+
+	uv.x = max(0.5, min(uv.x, dictionary_atlas_atom_tile_size.x - 1.0 - 0.5));
+	uv.y = max(0.5, min(uv.y, dictionary_atlas_atom_tile_size.y - 1.0 - 0.5));
 
 	return uv;
 }
 
 vec2 dictionary_uv_from_index_tile_xy(uint tile_index, float x, float y) {
 	// Go from tile_index to tile pos in dictionary	
-  int tile_y = int(tile_index) / dictionary_atom_count_x;
+	int tile_y = int(tile_index) / dictionary_atom_count_x;
 	int tile_x = int(tile_index) - tile_y * dictionary_atom_count_x;
 	
 	// Get coordinates in [0..dictionary_size]
 	vec2 res = vec2(dictionary_atlas_atom_tile_size.x * float(tile_x) + x, 
 	                dictionary_atlas_atom_tile_size.y * float(tile_y) + y);
+
 
 	// Convert to [0..1]
 	res.x /= float(dictionary_size.x);
@@ -313,40 +303,36 @@ vec2 dictionary_uv_from_index_tile_xy(uint tile_index, float x, float y) {
 }
 
 vec3 contribution(sampler2D coef_sampler, usampler2D idx_sampler, vec2 light_dir_uv) {
-		vec3 result = vec3(0,0,0);
+	vec3 result = vec3(0,0,0);
 
-		// Read coefficients
-		vec4 coef_val = texture(coef_sampler, v_texcoord);
-		vec3 coef = vec3(coef_val.r, coef_val.g, coef_val.b)  * coefficients_scale + coefficients_min;
-		
-		// Read indices
-		uvec4 idx_val = texture(idx_sampler, v_texcoord);
-		uint decoded_uint = (idx_val.r << 0) | (idx_val.g << 8) | (idx_val.b << 16) | (idx_val.a << 24);
-		uint mask = uint(1023);
-		uvec3 idx = uvec3((decoded_uint >> 20) & mask, (decoded_uint >> 10) & mask, decoded_uint & mask); 
-	  // Debug: color = vec3(float(idx.x)/1023.0, float(idx.y)/1023.0, float(idx.z)/1023.0);
+	// Read coefficients
+	vec4 coef_val = texture(coef_sampler, v_texcoord);
+	vec3 coef = vec3(coef_val.r, coef_val.g, coef_val.b)  * coefficients_scale + coefficients_min;
 	
-		// For each of the 3 indices
-		uint v_tile_idx[3] = uint[](idx.r, idx.g, idx.b);
-		float v_coef[3] = float[](coef.r, coef.g, coef.b);
+	// Read / decode indices
+	uvec4 idx_val = texture(idx_sampler, v_texcoord);
+	uint decoded_uint = (idx_val.r << 0) | (idx_val.g << 8) | (idx_val.b << 16) | (idx_val.a << 24);
+	uint mask = uint(1023);
+	uvec3 idx = uvec3((decoded_uint >> 20) & mask, (decoded_uint >> 10) & mask, decoded_uint & mask); 
 
-		vec2 dict_uv = dictionary_uv_from_index_tile_xy(v_tile_idx[0], light_dir_uv.x, light_dir_uv.y);
-		// Debug color = vec3(dict_uv, 0);
+	// For each of the 3 indices
+	uint v_tile_idx[3] = uint[](idx.r, idx.g, idx.b);
+	float v_coef[3] = float[](coef.r, coef.g, coef.b);
 
-		for(int i = 0; i < 3; ++i) {
-		  // Convert index,light_u,light_v to x,y global index coordinates
-			vec2 dict_uv = dictionary_uv_from_index_tile_xy(v_tile_idx[i], light_dir_uv.x, light_dir_uv.y);
-			
-		  // Fetch rgb from dictionary
-		  uvec4 dict_uval = texture(dict, dict_uv);
-			vec3 dict_val = vec3(dict_uval.r, dict_uval.g, dict_uval.b) * dictionary_scale + dictionary_min;	
-			
-			// Sum linear combination of indices
-			result += dict_val * v_coef[i];
-	  }
-
-		return result;
+	for(int i = 0; i < 3; ++i) {
+		// Convert index,light_u,light_v to x,y global index coordinates
+		vec2 dict_uv = dictionary_uv_from_index_tile_xy(v_tile_idx[i], light_dir_uv.x, light_dir_uv.y);
+		
+		// Fetch rgb from dictionary
+		uvec4 dict_uval = texture(dict, dict_uv);
+		vec3 dict_val = vec3(dict_uval.r, dict_uval.g, dict_uval.b) * dictionary_scale + dictionary_min;	
+		
+		// Sum linear combination of indices
+		result += dict_val * v_coef[i];
 	}
+
+	return result;
+}
 
 vec4 data() {
 		`;
@@ -376,10 +362,10 @@ vec4 data() {
 		}
 
 		str += 	`
-
-			return vec4(color,1);
-		}
-		`;
+	color = srgb2linear(color);
+	return vec4(color,1);
+}
+`;
 
 		return str;
 	}
