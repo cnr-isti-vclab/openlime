@@ -205,12 +205,12 @@ class LayerRSC extends Layer {
 			const coefpaths = [];
 			for (let i = 0; i < multiply; i++) {
 				const s = Util.padZeros(i, 2);
-				idxpaths.push(`${basepath}/${basename}_idx_${s}${extIdx}`);
-				coefpaths.push(`${basepath}/${basename}_coef_${s}${extCoef}`);
+				idxpaths.push(`${basepath}/sparse_index_${s}${extIdx}`);
+				coefpaths.push(`${basepath}/sparse_coeff_${s}${extCoef}`);
 			}
 			return {
-				dictpath: `${basepath}/${basename}_dict${extDict}`, 
-				avgpath: `${basepath}/${basename}_avg${extAvg}`,
+				dictpath: `${basepath}/dictionary_atlas${extDict}`, 
+				avgpath: `${basepath}/avg${extAvg}`,
 				idxpaths,
 				coefpaths
 			};
@@ -219,7 +219,7 @@ class LayerRSC extends Layer {
 		switch (this.layout.type) {
 			case 'image':
 				// _avg.png, _idx_XX.png, _coef_XX.jpg
-				return makePaths('.png', '.png', '.png', '.jpg');
+				return makePaths('.png', '.jpg', '.png', '.jpg');
 
 			case 'deepzoom':
 				// tutto in .dzi
@@ -280,21 +280,18 @@ class LayerRSC extends Layer {
 
 			console.log("Set Raster AVG ", configPaths.avgpath)
 			urls.push(configPaths.avgpath);
-			const raster_avg = new Raster16Bit({
-				format: 'rgba16ui',
-				isLinear: true,
-				debug: false,
-				dataLoader: LayerRSC.pngLoaderToUint16
-			});
+			const raster_avg = new Raster({format: 'uvec3', isLinear: true});
 			this.rasters.push(raster_avg);
 
 			// IDX planes (uvec4)
+			console.log("Set Raster IDX ");
 			for (const idxPath of configPaths.idxpaths) {
 				urls.push(idxPath);
 				const raster_idx = new Raster({ format: 'uvec4', isLinear: true });
 				this.rasters.push(raster_idx);
 			}
 
+			console.log("Set Raster COEF ");
 			// COEF planes (vec3)
 			for (const coefPath of configPaths.coefpaths) {
 				urls.push(coefPath);

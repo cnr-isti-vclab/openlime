@@ -147,11 +147,11 @@ class ShaderRSC extends Shader {
 		
 		// UNIFORMS
 		console.log("CONFIG = ", this.config);
-		const  avg_scale = this.config.output_params.average_range / 65535.0;    // integer png 16 bit
-		const dict_scale = this.config.output_params.dictionary_range / 65535.0; // integer png 16 bit
+		const  avg_scale = this.config.output_params.average_range / 255.0;    // integer png 16 bit
+		const dict_scale = this.config.output_params.dictionary_atlas_range / 65535.0; // integer png 16 bit
 		const coef_scale = this.config.output_params.coefficients_range; 				 // already float
-		const atom_size = [this.config.input_params.dictionary_atom_image_w,  this.config.input_params.dictionary_atom_image_h];
-		const atom_count_x = this.config.dictionary_atom_count_x ? this.config.dictionary_atom_count_x : 32;
+		const atom_size = [this.config.input_params.dictionary_atlas_atom_tile_w,  this.config.input_params.dictionary_atom_image_h];
+		const atom_count_x = this.config.input_params.dictionary_atom_count_x ? this.config.input_params.dictionary_atom_count_x : 32;
 
 		this.registerUniforms({
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
@@ -160,9 +160,9 @@ class ShaderRSC extends Shader {
 			average_scale: { type: 'float', needsUpdate: false, size: 1, value: avg_scale },
 			coefficients_min: { type: 'float', needsUpdate: false, size: 1, value: this.config.output_params.coefficients_min },
 			coefficients_scale: { type: 'float', needsUpdate: false, size: 1, value: coef_scale },
-			dictionary_min: { type: 'float', needsUpdate: false, size: 1, value: this.config.output_params.dictionary_min },
+			dictionary_min: { type: 'float', needsUpdate: false, size: 1, value: this.config.output_params.dictionary_atlas_min },
 			dictionary_scale: { type: 'float', needsUpdate: false, size: 1, value: dict_scale },
-			dictionary_atom_size: { type: 'vec2', needsUpdate: false, size: 2, value: atom_size},
+			dictionary_atlas_atom_tile_size: { type: 'vec2', needsUpdate: false, size: 2, value: atom_size},
 			dictionary_atom_count_x: { type: 'int', needsUpdate: false, size: 1, value: atom_count_x},
 			sparsity_multiplier: { type: 'int', needsUpdate: false, size: 1, value: this.config.input_params.sparsity_multiplier}, 
 		});
@@ -174,42 +174,6 @@ class ShaderRSC extends Shader {
 		this.needsUpdate = true;
 	}
 
-	// Sparse coding relighting shader part
-	sparse_coding_relight_str() {
-		let str = `// Relight Sparse Coding Shader Code
-		// vec2 globalUV = getGlobalUV(v_texcoord);
-
-		// Get Light Direction uv in [0..1]
-		vec2 light_dir_uv = uv_from_light_direction(light);
-
-		// light_dir_uv = vec2(47,16);   // Real_RTI/item1 image 59
-		// light_dir_uv = vec2(27,30);   // Real_RTI/item1 image 15
-
-		//light_dir_uv = vec2(35,28); // Real_RTI/item3 image 0
-		//light_dir_uv = vec2(39,24); // Real_RTI/item3 image 1
-		//light_dir_uv = vec2(53,21); // Real_RTI/item3 image 4
-		
-		// Initialize result to avg
-		uvec4 uval = texture(avg, v_texcoord);
-		vec3 color = vec3(uval.r, uval.g, uval.b) * average_scale + average_min;	
-
-		// Add sparse coding contribution of the first 3 dictionary elements, identified by the first coef and index images
-		color += contribution(coef00, idx00, light_dir_uv);
-		
-		// Add sparse coding contribution of the second 3 dictionary elements, identified by the second coef and index images
-		if (sparsity_multiplier > 1) {
-			color += contribution(coef01, idx01, light_dir_uv);
-		}
-
-		// With bigger sparsity_multiplier add more contributions here
-
-		// Color contains the result
-		color = max(color, vec3(0));
-		color = srgb2linear(color);
-
-		`;
-		return str;
-	}
 
 	// Return a shader string to fetch index idx and convert to 3 10 bits components stored in a var called param_name
 	get_decoded_index(idx, param_name) {
@@ -265,6 +229,44 @@ vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) * dictionary_scale + diction
 		return str;
 	}
 
+
+	// Sparse coding relighting shader part
+	sparse_coding_relight_str() {
+		let str = `// Relight Sparse Coding Shader Code
+		// vec2 globalUV = getGlobalUV(v_texcoord);
+
+		// Get Light Direction uv in [0..1]
+		vec2 light_dir_uv = uv_from_light_direction(light);
+
+		// light_dir_uv = vec2(47,16);   // Real_RTI/item1 image 59
+		// light_dir_uv = vec2(27,30);   // Real_RTI/item1 image 15
+
+		//light_dir_uv = vec2(35,28); // Real_RTI/item3 image 0
+		//light_dir_uv = vec2(39,24); // Real_RTI/item3 image 1
+		//light_dir_uv = vec2(53,21); // Real_RTI/item3 image 4
+		
+		// Initialize result to avg
+		uvec4 uval = texture(avg, v_texcoord);
+		vec3 color = vec3(uval.r, uval.g, uval.b) * average_scale + average_min;	
+
+		// Add sparse coding contribution of the first 3 dictionary elements, identified by the first coef and index images
+		color += contribution(coef00, idx00, light_dir_uv);
+		
+		// Add sparse coding contribution of the second 3 dictionary elements, identified by the second coef and index images
+		if (sparsity_multiplier > 1) {
+			color += contribution(coef01, idx01, light_dir_uv);
+		}
+
+		// With bigger sparsity_multiplier add more contributions here
+
+		// Color contains the result
+		color = max(color, vec3(0));
+		color = srgb2linear(color);
+
+		`;
+		return str;
+	}
+
 	fragShaderSrc() {
 		let str = `
 
@@ -274,7 +276,7 @@ in vec2 v_texcoord;
 uniform vec3 light;
 uniform usampler2D dict;
 uniform vec2 dictionary_size;
-uniform vec2  dictionary_atom_size;
+uniform vec2  dictionary_atlas_atom_tile_size;
 uniform int   dictionary_atom_count_x;
 uniform int   sparsity_multiplier;
 uniform float dictionary_min;
@@ -289,8 +291,8 @@ vec2 uv_from_light_direction(vec3 n) {
 	// Convert direction to uv in [0..atom_size]
 	// Must reflect dir encoding used in preprocessing lumilab directions_mapping::uv_from_direction
 
-	vec2 uv = vec2(((n[0] / (1.0f + n[2])) * 0.5f + 0.5f) * dictionary_atom_size.x,
-  							 ((n[1] / (1.0f + n[2])) * 0.5f + 0.5f) * dictionary_atom_size.y);
+	vec2 uv = vec2(((n[0] / (1.0f + n[2])) * 0.5f + 0.5f) * dictionary_atlas_atom_tile_size.x,
+  				   ((n[1] / (1.0f + n[2])) * 0.5f + 0.5f) * dictionary_atlas_atom_tile_size.y);
 
 	return uv;
 }
@@ -301,8 +303,8 @@ vec2 dictionary_uv_from_index_tile_xy(uint tile_index, float x, float y) {
 	int tile_x = int(tile_index) - tile_y * dictionary_atom_count_x;
 	
 	// Get coordinates in [0..dictionary_size]
-	vec2 res = vec2(dictionary_atom_size.x * float(tile_x) + x, 
-	                dictionary_atom_size.y * float(tile_y) + y);
+	vec2 res = vec2(dictionary_atlas_atom_tile_size.x * float(tile_x) + x, 
+	                dictionary_atlas_atom_tile_size.y * float(tile_y) + y);
 
 	// Convert to [0..1]
 	res.x /= float(dictionary_size.x);
@@ -385,51 +387,3 @@ vec4 data() {
 
 export { ShaderRSC }
 
-
-// FIXME REMOVE ALL NEXT LINES
-// vec4 data() {
-//     // Test: visualizza le coordinate globali come colori
-//     vec2 globalUV = getGlobalUV(v_texcoord);
-    
-//     // Rosso = globalUV.x (da sinistra=nero a destra=rosso)
-//     // Verde = globalUV.y (da sopra=nero a sotto=verde)  
-//     // Risultato atteso: nero in alto-sinistra, giallo in basso-destra
-//     return vec4(globalUV.x, globalUV.y, 0.0, 1.0);
-// }
-
-// vec4 data() {
-//     // Test: visualizza direttamente i valori degli uniform
-    
-//     // Normalizza gli offset per vedere se cambiano tra tile
-//     vec2 normalizedOffset = u_tileOffset / u_imageSize;
-    
-//     // Se gli uniform funzionano, ogni tile dovrebbe avere un colore diverso:
-//     // Tile 0: nero [0,0]
-//     // Tile 1: rosso [0.5,0]  
-//     // Tile 2: verde [0,0.6]
-//     // Tile 3: giallo [0.5,0.6]
-//     return vec4(normalizedOffset.x, normalizedOffset.y, 0.0, 1.0);
-// }
-
-// vec4 data() {
-//     // Use texture() for usampler2D (returns uvec4 with uint values 0-65535)
-//     uvec4 raw = texture(avg, v_texcoord);
-//     // Convert from uint [0-65535] to float [0-1]
-//     vec3 color = vec3(raw.r, raw.g, raw.b) / 65535.0;
-//     return vec4(color, 1.0);
-// }
-
-// vec4 data() {
-//     // Use texture() for usampler2D (returns uvec4 with uint values 0-255)
-//     uvec4 val = texture(idx01, v_texcoord);
-//     vec3 color = vec3(val.r, val.g, val.b) / 255.0f;
-//     return vec4(color, 1.0);
-// }
-
-
-// vec4 data() {
-//     // Static 8-bit texture
-//     vec2 globalUV = getGlobalUV(v_texcoord);
-//     vec3 staticColor = texture(texture8bit, globalUV).rgb;
-//     return vec4(staticColor, 1.0);
-// }
