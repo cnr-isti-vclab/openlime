@@ -10,7 +10,7 @@ import { Png16Loader } from './Png16Loader.js'
 
 /**
  * @typedef {Object} LayerRSCOptions
- * @property {string} url - URL to RTI info.json file (required)
+ * @property {string} url - URL to rsc info.json file (required)
  * @property {string} layout - Layout type: 'image', 'deepzoom', 'google', 'iiif', 'zoomify', 'tarzoom', 'itarzoom'
  * @property {boolean} [normals=false] - Whether to load normal maps
  * @property {string} [server] - IIP server URL (for IIP layout)
@@ -19,62 +19,40 @@ import { Png16Loader } from './Png16Loader.js'
  */
 
 /**
- * LayerRTI implements Reflectance Transformation Imaging (RTI) visualization.
+ * LayerRSC implements Relighting Sparse Coding visualization.
  * 
- * RTI is an imaging technique that captures surface reflectance data to enable
- * interactive relighting of an object from different directions. The layer handles
- * the 'relight' data format, which consists of:
+ * RSC that reconstruct light interaction using a sparse linear combination
+ * of elements from an overcomplete dictionary.
  * 
- * - info.json: Contains RTI parameters and configuration
- * - plane_*.jpg: Series of coefficient images
- * - normals.jpg: Optional normal map (when using normals=true)
- * 
- * Features:
- * - Interactive relighting
- * - Multiple layout support
- * - Normal map integration
- * - Light direction control
- * - Animation support
- * - World rotation handling
- * 
- * Technical Details:
- * - Uses coefficient-based relighting
- * - Supports multiple image planes
- * - Handles various tiling schemes
- * - Manages WebGL resources
- * - Coordinates light transformations
- * 
- * Data Format Support:
- * - Relight JSON configuration
- * - Multiple layout systems
- * - JPEG coefficient planes
- * - Optional normal maps
- * - IIP image protocol
+ * Data Structure: 
+ * - info.json: Contains rsc parameters and configuration
+ * - dictionary_atlas.png: 16 bit RGBA texture atlas of dictionary elements
+ * - avg.jpg or avg.dzi: Average image plane
+ * - sparse_index_XX.png or sparse_index_XX.dzi: Index planes mapping pixels to dictionary elements
+ * - sparse_coeff_XX.jpg or sparse_coeff_XX.dzi: Coefficient planes with weights for dictionary elements 
  * 
  * @extends Layer
  * 
  * @example
  * ```javascript
- * // Create RTI layer with deepzoom layout
- * const rtiLayer = new OpenLIME.Layer({
- *   type: 'rti',
+ * // Create rsc layer with deepzoom layout
+ * const rscLayer = new OpenLIME.Layer({
+ *   type: 'rsc',
  *   url: 'path/to/info.json',
  *   layout: 'deepzoom',
  *   normals: true
  * });
  * 
  * // Add to viewer
- * viewer.addLayer('rti', rtiLayer);
+ * viewer.addLayer('rsc', rscLayer);
  * 
  * // Change light direction with animation
- * rtiLayer.setLight([0.5, 0.5], 1000);
+ * rscLayer.setLight([0.5, 0.5], 1000);
  * ```
- * 
- * @see {@link https://github.com/cnr-isti-vclab/relight|Relight on GitHub}
  */
 class LayerRSC extends Layer {
 	/**
-	 * Creates a new LayerRTI instance
+	 * Creates a new LayerRSC instance
 	 * @param {LayerRSCOptions} options - Configuration options
 	 * @throws {Error} If rasters options is not empty
 	 * @throws {Error} If url is not provided
@@ -186,7 +164,7 @@ class LayerRSC extends Layer {
 		};
 	}
 
-	/**
+/**
  * Constructs URLs for RSC resources based on layout type
  * @param {string} url - Base URL (typically the info.json path)
  * @param {number} multiply - number of idx/coef planes to load (input_params.sparsity_multiplier)
@@ -244,7 +222,7 @@ class LayerRSC extends Layer {
 
 
 	/**
-	 * Loads and processes RTI configuration
+	 * Loads and processes rsc configuration
 	 * @param {string} url - URL to info.json
 	 * @private
 	 * @async
@@ -314,7 +292,7 @@ class LayerRSC extends Layer {
 	}
 
 	/**
-	 * Returns the training light directions loaded from the RTI configuration.
+	 * Returns the training light directions loaded from the rsc configuration.
 	 * Each element is a triplet [x, y, z] representing a normalized
 	 * light direction on the hemisphere.
 	 *
@@ -343,7 +321,7 @@ class LayerRSC extends Layer {
 	}
 
 	/**
-	 * Renders the RTI visualization
+	 * Renders the rsc visualization
 	 * Updates world rotation and manages drawing
 	 * @param {Transform} transform - Current view transform
 	 * @param {Object} viewport - Current viewport
