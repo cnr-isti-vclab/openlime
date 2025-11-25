@@ -4,6 +4,7 @@ import { Raster16Bit } from './Raster16Bit.js'
 import { ShaderRSC } from './ShaderRSC.js'
 import { Transform } from './Transform.js'
 import { Util } from './Util.js'
+import { addSignals } from './Signals.js'
 
 import { Png16Loader } from './Png16Loader.js'
 
@@ -86,6 +87,8 @@ class LayerRSC extends Layer {
 
 		if (!this.url)
 			throw "Url option is required";
+
+		this.lightDirs_ = [];
 
 		this.shaders['rsc'] = new ShaderRSC({ debug: false });
 		this.setShader('rsc');
@@ -209,7 +212,7 @@ class LayerRSC extends Layer {
 				coefpaths.push(`${basepath}/sparse_coeff_${s}${extCoef}`);
 			}
 			return {
-				dictpath: `${basepath}/dictionary_atlas${extDict}`, 
+				dictpath: `${basepath}/dictionary_atlas${extDict}`,
 				avgpath: `${basepath}/avg${extAvg}`,
 				idxpaths,
 				coefpaths
@@ -223,7 +226,7 @@ class LayerRSC extends Layer {
 
 			case 'deepzoom':
 				// tutto in .dzi
-				return makePaths('.png','.dzi', '.dzi', '.dzi');
+				return makePaths('.png', '.dzi', '.dzi', '.dzi');
 
 			// Estendi qui quando implementerai altri layout
 			case 'google':
@@ -280,7 +283,7 @@ class LayerRSC extends Layer {
 
 			console.log("Set Raster AVG ", configPaths.avgpath)
 			urls.push(configPaths.avgpath);
-			const raster_avg = new Raster({format: 'uvec3', isLinear: true});
+			const raster_avg = new Raster({ format: 'uvec3', isLinear: true });
 			this.rasters.push(raster_avg);
 
 			// IDX planes (uvec4)
@@ -299,8 +302,26 @@ class LayerRSC extends Layer {
 				this.rasters.push(raster_coef);
 			}
 			this.layout.setUrls(urls);
+			const tld = json.input_params.training_light_directions;
+			this.lightDirs_ = Array.isArray(tld)
+				? tld
+				: [];
+
+			// Notifica che il layer è stato caricato
+			this.emit('config_ready');
 
 		})().catch(e => { console.log(e); this.status = e; });
+	}
+
+	/**
+	 * Returns the training light directions loaded from the RTI configuration.
+	 * Each element is a triplet [x, y, z] representing a normalized
+	 * light direction on the hemisphere.
+	 *
+	 * @returns {number[][]} Array of training light direction vectors.
+	 */
+	lightDirs() {
+		return this.lightDirs_;
 	}
 
 	/**
@@ -335,6 +356,8 @@ class LayerRSC extends Layer {
 		return super.draw(transform, viewport);
 	}
 }
+
+addSignals(LayerRSC, 'config_ready');
 
 /**
  * Register this layer type with the Layer factory

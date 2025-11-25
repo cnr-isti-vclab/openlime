@@ -26,15 +26,6 @@
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.Viewer('.openlime');
 
-        // Relight Sparse Coding single image example derived from RealRTI/item1
-        // const layer0 = new OpenLIME.Layer({
-        //     label: 'RealRTI01',
-        //     layout: 'image',
-        //     type: 'rsc',
-        //     url: '../../assets/rsc/RealRTI01_ksvd/RealRTI01_ksvd.json',
-        //     normals: false
-        // });
-
         // Relight Sparse Coding deepzoom example derived from RealRTI/item3
         const layer0 = new OpenLIME.Layer({
             label: 'RealRTI04',
@@ -45,12 +36,16 @@
         });
         lime.addLayer('base', layer0);
 
-        const lsc = new OpenLIME.LightSphereController('.openlime');
+        const lsc = new OpenLIME.LightSphereController('.openlime', { enableLightSnap: true });
         const draggableLsc = new OpenLIME.Draggable(
             lsc.containerElement,
             '.openlime',
             { top: 20, right: 20, handleColor: '#5a82aab3' });
-        lsc.addLayer(layer0)
+
+        layer0.addEvent('config_ready', () => {
+            lsc.addLayer(layer0);
+            console.log('Light directions loaded:', layer0.lightDirs().length);
+        });
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
@@ -65,7 +60,6 @@
         // Disable default light controller
         ui.actions.light.display = false;
         ui.actions.light.active = false;
-
 
     </script>
 </body>
