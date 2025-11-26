@@ -100,7 +100,7 @@ class LightSphereController {
         });
 
         this.dlCanvas.addEventListener("pointerup", (e) => {
-            this.pointerDown = false;            
+            this.pointerDown = false;
             // Snap to closest light direction if enabled
             if (this.enableLightMarkers && this.enableLightSnap && this.lightDirs && this.lightDirs.length > 0) {
                 const closestDir = this.findClosestLightDir(this.lightDir);
@@ -142,22 +142,26 @@ class LightSphereController {
      */
     findClosestLightDir(currentLightDir) {
         if (!this.lightDirs || this.lightDirs.length === 0) return null;
-        
+
         let minDistance = Infinity;
         let closestDir = null;
-        
+
         for (const dir of this.lightDirs) {
             const dx = currentLightDir[0] - dir[0];
             const dy = currentLightDir[1] - dir[1];
             const distance = dx * dx + dy * dy; // squared distance is sufficient for comparison
-            
+
             if (distance < minDistance) {
                 minDistance = distance;
                 closestDir = dir;
             }
         }
-        
+
         return closestDir;
+    }
+
+    static zed(x, y) {
+        return Math.sqrt(1.0 - (x ** 2 + y ** 2));
     }
 
     /**
@@ -168,34 +172,34 @@ class LightSphereController {
      */
     animateToLightDir(targetDir, duration = 200) {
         if (!targetDir) return;
-        
+
         const startDir = [...this.lightDir];
         const startTime = Date.now();
-        
+
         const animate = () => {
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            
+
             // Linear interpolation
             this.lightDir[0] = startDir[0] + (targetDir[0] - startDir[0]) * progress;
             this.lightDir[1] = startDir[1] + (targetDir[1] - startDir[1]) * progress;
-            
+            //console.log('LD ', this.lightDir, zed(this.lightDir[0], this.lightDir[1]));
             // Update layer controls
             for (const l of this.layers) {
                 if (l.controls.light) l.setControl('light', this.lightDir, 0); // No animation on layer side
             }
-            
+
             // Redraw the UI
             this.computeGradient();
             const x = (this.lightDir[0] + 1.0) * this.dlCanvas.width * 0.5;
             const y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
             this.drawLightSelector(x, y);
-            
+
             if (progress < 1) {
                 requestAnimationFrame(animate);
             }
         };
-        
+
         requestAnimationFrame(animate);
     }
 
@@ -262,7 +266,7 @@ class LightSphereController {
         y = this.r - yc;
         this.lightDir[0] = 2 * (x / this.dlCanvas.width - 0.5);
         this.lightDir[1] = 2 * (1 - y / this.dlCanvas.height - 0.5);
-        // console.log('LD ', this.lightDir);
+        console.log('LD ', this.lightDir, LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
         for (const l of this.layers) {
             if (l.controls.light) l.setControl('light', this.lightDir, 5);
         }

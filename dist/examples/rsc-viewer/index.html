@@ -26,18 +26,27 @@
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.Viewer('.openlime');
 
-        // Relight Sparse Coding deepzoom example derived from RealRTI/item3
         const layer0 = new OpenLIME.Layer({
             label: 'RealRTI04',
-            layout: 'image',
+            layout: 'deepzoom',
             type: 'rsc',
-            url: '../../assets/rsc/RealRTI04_ksvd/info.json',
+            url: '../../assets/rsc/Ghiberti_ksvd_dzi/info.json',
             normals: false
         });
         lime.addLayer('base', layer0);
 
+        // Relight Sparse Coding deepzoom example derived from RealRTI/item3
+        // const layer0 = new OpenLIME.Layer({
+        //     label: 'RealRTI04',
+        //     layout: 'image',
+        //     type: 'rsc',
+        //     url: '../../assets/rsc/RealRTI04_ksvd/info.json',
+        //     normals: false
+        // });
+        // lime.addLayer('base', layer0);
+
         const lsc = new OpenLIME.LightSphereController('.openlime',
-            { enableLightMarkers: true, enableLightSnap: true });
+            { enableLightMarkers: true, enableLightSnap: false });
         const draggableLsc = new OpenLIME.Draggable(
             lsc.containerElement,
             '.openlime',
