@@ -109,10 +109,6 @@ class LightSphereController {
             }
         });
 
-        this.dlCanvas.addEventListener("pointerout", (e) => {
-            this.pointerDown = false;
-        });
-
     }
 
     /**
