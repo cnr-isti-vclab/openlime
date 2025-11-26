@@ -36,7 +36,8 @@
         });
         lime.addLayer('base', layer0);
 
-        const lsc = new OpenLIME.LightSphereController('.openlime', { enableLightSnap: true });
+        const lsc = new OpenLIME.LightSphereController('.openlime',
+            { enableLightMarkers: true, enableLightSnap: true });
         const draggableLsc = new OpenLIME.Draggable(
             lsc.containerElement,
             '.openlime',

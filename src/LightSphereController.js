@@ -38,6 +38,7 @@ class LightSphereController {
             colorSpot: '#ffffff',
             colorBkg: '#0000ff',
             colorMark: '#ff0000',
+            enableLightMarkers: false,
             enableLightSnap: false,
             lightMarkerColor: "#3d3d3dff"
         }, options);
@@ -101,7 +102,7 @@ class LightSphereController {
         this.dlCanvas.addEventListener("pointerup", (e) => {
             this.pointerDown = false;            
             // Snap to closest light direction if enabled
-            if (this.enableLightSnap && this.lightDirs && this.lightDirs.length > 0) {
+            if (this.enableLightMarkers && this.enableLightSnap && this.lightDirs && this.lightDirs.length > 0) {
                 const closestDir = this.findClosestLightDir(this.lightDir);
                 if (closestDir) {
                     this.animateToLightDir([closestDir[0], closestDir[1]], 200);
@@ -276,7 +277,7 @@ class LightSphereController {
      * @private
      */
     drawLightDirs() {
-        if (!this.lightDirs || this.lightDirs.length === 0) return;
+        if (!this.enableLightMarkers || !this.lightDirs || this.lightDirs.length === 0) return;
 
         const ctx = this.dlCanvasCtx;
         const w = this.dlCanvas.width;
