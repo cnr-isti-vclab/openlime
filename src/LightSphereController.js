@@ -48,6 +48,8 @@ class LightSphereController {
         if (typeof (this.parent) == 'string')
             this.parent = document.querySelector(this.parent);
 
+        this.maxRadius = 1.0;
+
         this.lightDir = [0, 0];
         this.lightDirs = [];
 
@@ -124,12 +126,7 @@ class LightSphereController {
             const dirs = l.lightDirs();
             // Check if returned value is a valid array
             if (Array.isArray(dirs) && dirs.length > 0) {
-                this.lightDirs = dirs;
-                // Force a redraw to show the light directions
-                this.computeGradient();
-                const x = (this.lightDir[0] + 1.0) * this.dlCanvas.width * 0.5;
-                const y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
-                this.drawLightSelector(x, y);
+                this.setLightDirs(dirs);
             }
         }
     }
@@ -164,6 +161,10 @@ class LightSphereController {
         return Math.sqrt(1.0 - (x ** 2 + y ** 2));
     }
 
+    static radius(v) {
+        return Math.sqrt(v[0] ** 2 + v[1] ** 2);
+    }
+
     /**
      * Animates the light direction marker to a target direction with linear interpolation.
      * @param {number[]} targetDir - Target light direction [x, y] 
@@ -183,7 +184,7 @@ class LightSphereController {
             // Linear interpolation
             this.lightDir[0] = startDir[0] + (targetDir[0] - startDir[0]) * progress;
             this.lightDir[1] = startDir[1] + (targetDir[1] - startDir[1]) * progress;
-            //console.log('LD ', this.lightDir, zed(this.lightDir[0], this.lightDir[1]));
+            console.log('LD ', this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
             // Update layer controls
             for (const l of this.layers) {
                 if (l.controls.light) l.setControl('light', this.lightDir, 0); // No animation on layer side
@@ -209,7 +210,13 @@ class LightSphereController {
      */
     setLightDirs(dirs) {
         this.lightDirs = dirs || [];
-        // Trigger full redraw
+
+        if (!this.lightDirs || this.lightDirs.length == 0) return;
+
+        this.maxRadius = Math.max(
+            ...this.lightDirs.map(([x, y]) => Math.sqrt(x * x + y * y))
+        );
+
         const x = (this.lightDir[0] + 1.0) * this.dlCanvas.width * 0.5;
         const y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
         this.drawLightSelector(x, y);
@@ -266,7 +273,17 @@ class LightSphereController {
         y = this.r - yc;
         this.lightDir[0] = 2 * (x / this.dlCanvas.width - 0.5);
         this.lightDir[1] = 2 * (1 - y / this.dlCanvas.height - 0.5);
-        console.log('LD ', this.lightDir, LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
+        const r = LightSphereController.radius(this.lightDir);
+        if (r > 0 && r > this.maxRadius) {
+            const scale = this.maxRadius / r;
+            this.lightDir[0] *= scale;
+            this.lightDir[1] *= scale;
+
+            x = (this.lightDir[0] + 1.0) * this.dlCanvas.width * 0.5;
+            y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
+        }
+
+            console.log('LD ', this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
         for (const l of this.layers) {
             if (l.controls.light) l.setControl('light', this.lightDir, 5);
         }
