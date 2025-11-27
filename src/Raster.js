@@ -177,18 +177,15 @@ class Raster {
 		if (this.format == 'vec3' || this.format == 'vec4' || this.format == 'float') {
 			// If explicitly set filterLinear, use that value, otherwise default to true for float values
 			let filterLinear = this.filterLinear !== undefined ? this.filterLinear : true;
-			if (filterLinear) {
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-			} else {
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-			}
+			let selectedFilter = filterLinear ? gl.LINEAR : gl.NEAREST;
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, selectedFilter);
 
 			if (this.buildMipmaps && (this.width > 1024 || this.height > 1024)) {
 				//build mipmap for large images.
 				gl.generateMipmap(gl.TEXTURE_2D);
 				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 			} else {
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, selectedFilter) ;
 			}
 		} else if (this.format == 'uvec3' || this.format == 'uvec4') {
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);

@@ -260,7 +260,7 @@ class LayerRSC extends Layer {
 			// AVG 
 			console.log("Set Raster AVG ", configPaths.avgpath)
 			urls.push(configPaths.avgpath);
-			const raster_avg = new Raster({ format: 'vec3' });
+			const raster_avg = new Raster({ format: 'vec3', buildMipmaps: false });
 			this.rasters.push(raster_avg);
 
 			// IDX  (uvec4)
