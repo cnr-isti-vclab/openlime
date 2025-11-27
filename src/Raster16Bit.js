@@ -50,6 +50,7 @@ class Raster16Bit extends Raster {
    * @param {DataLoaderCallback} [options.dataLoader=null] - Custom data loader callback
    * @param {Object} [options.dataLoaderOptions={}] - Options to pass to the data loader
    * @param {boolean} [options.debug=false] - Enable debug output
+   * @param {boolean} [options.buildMipmaps=true] - Whether to build mipmaps for large textures
    */
   constructor(options) {
     // Initialize with parent constructor but override defaults
@@ -59,6 +60,7 @@ class Raster16Bit extends Raster {
       useHalfFloat: false,
       flipY: false,
       premultiplyAlpha: false,
+      buildMipmaps:true,
     }, options));
 
     // Additional options specific to 16-bit handling
@@ -264,7 +266,9 @@ class Raster16Bit extends Raster {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     } else {
       // Regular (float/normalized) texture: keep previous behavior
-      if (width > 1024 || height > 1024) {
+      if (this.buildMipmaps && (width > 1024 || height > 1024)) {
+				console.log("Generating mipmaps for large texture:", this.width, "x", this.height);
+
         gl.generateMipmap(gl.TEXTURE_2D);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
       } else {

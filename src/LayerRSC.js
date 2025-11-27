@@ -127,7 +127,7 @@ class LayerRSC extends Layer {
 
 		const pixelCount = width * height;
 		// Prepare output buffer with 4 channels (RGBA)
-		const output = new Uint16Array(pixelCount * 4);
+		const output = new Uint16Array(pixelCount * components);
 
 		// Throw if length mismatch between data16 array and expected pixels * components
 		if (data16.length !== pixelCount * components) {
@@ -143,10 +143,10 @@ class LayerRSC extends Layer {
 			const a = (components === 4) ? data16[i * components + 3] : 65535;
 
 			// Assign to output as RGBA
-			output[i * 4 + 0] = r;
-			output[i * 4 + 1] = g;
-			output[i * 4 + 2] = b;
-			output[i * 4 + 3] = a;
+			output[i * components + 0] = r;
+			output[i * components + 1] = g;
+			output[i * components + 2] = b;
+			output[i * components + 3] = a;
 		}
 
 		//console.log('Raster loader: Uint16Array output sample:', output.slice(0, 20), 'width:', width, 'height:', height, 'channels:', 4);
@@ -155,7 +155,7 @@ class LayerRSC extends Layer {
 			data: output,
 			width,
 			height,
-			channels: 4,
+			channels: components,
 			statistics: {
 				maxValue: null,
 				avgLuminance: null,
@@ -244,27 +244,26 @@ class LayerRSC extends Layer {
 			const urls = [];
 			this.rasters = [];
 
+			console.log("Set Raster DICT ", configPaths.dictpath)
 			// DICT (static texture) 16bit rgba ui
 			await this.addStaticTexture({
 				url: configPaths.dictpath,
 				uniform: 'dict',
 				sizeUniform: 'dictionary_size',
-				format: 'rgba16ui',
+				format: 'rgb16f',
 				isLinear: true,
-				dataLoader: LayerRSC.pngLoaderToUint16,
-				use16Bit: true
+				dataLoader: LayerRSC.pngLoaderToFloat,
+				use16Bit: true,
+				buildMipmaps: false
 			});
 
-			console.log(configPaths);
-
 			// AVG 
-
 			console.log("Set Raster AVG ", configPaths.avgpath)
 			urls.push(configPaths.avgpath);
-			const raster_avg = new Raster({ format: 'uvec3', isLinear: true });
+			const raster_avg = new Raster({ format: 'vec3', isLinear: true });
 			this.rasters.push(raster_avg);
 
-			// IDX planes (uvec4)
+			// IDX  (uvec4)
 			console.log("Set Raster IDX ");
 			for (const idxPath of configPaths.idxpaths) {
 				urls.push(idxPath);

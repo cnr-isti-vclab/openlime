@@ -176,7 +176,7 @@ class Raster {
 		// Handle with LINEAR float texture, and NEAREST uint textures
 		if (this.format == 'vec3' || this.format == 'vec4' || this.format == 'float') {
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-			if (this.width > 1024 || this.height > 1024) {
+			if (this.buildMipmaps && (this.width > 1024 || this.height > 1024)) {
 				//build mipmap for large images.
 				gl.generateMipmap(gl.TEXTURE_2D);
 				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
@@ -185,7 +185,7 @@ class Raster {
 			}
 		} else if (this.format == 'uvec3' || this.format == 'uvec4') {
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-			if (this.width > 1024 || this.height > 1024) {
+			if (this.buildMipmaps && (this.width > 1024 || this.height > 1024)) {
 				//build mipmap for large images.
 				gl.generateMipmap(gl.TEXTURE_2D);
 				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);

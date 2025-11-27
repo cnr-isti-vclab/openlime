@@ -729,6 +729,7 @@ class Layer {
 			isLinear: options.isLinear !== undefined ? options.isLinear : true,
 			dataLoader: options.dataLoader,
 			use16Bit: options.use16Bit !== undefined ? options.use16Bit : true,
+			buildMipmaps: options.buildMipmaps !== undefined ? options.buildMipmaps : true,
 			// Runtime properties
 			texture: null,
 			width: 0,
@@ -761,6 +762,7 @@ class Layer {
 			const rasterOptions = {
 				format: config.format,
 				isLinear: config.isLinear,
+				buildMipmaps: config.buildMipmaps,
 				debug: this.debug || false
 			};
 
