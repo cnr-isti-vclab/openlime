@@ -164,18 +164,18 @@ class LayerRSC extends Layer {
 		};
 	}
 
-/**
- * Constructs URLs for RSC resources based on layout type
- * @param {string} url - Base URL (typically the info.json path)
- * @param {number} multiply - number of idx/coef planes to load (input_params.sparsity_multiplier)
- * @returns {{
- *   dictpath: string,
- *   avgpath: string,
- *   idxpaths: string[],
- *   coefpaths: string[]
- * }}
- * @private
- */
+	/**
+	 * Constructs URLs for RSC resources based on layout type
+	 * @param {string} url - Base URL (typically the info.json path)
+	 * @param {number} multiply - number of idx/coef planes to load (input_params.sparsity_multiplier)
+	 * @returns {{
+	 *   dictpath: string,
+	 *   avgpath: string,
+	 *   idxpaths: string[],
+	 *   coefpaths: string[]
+	 * }}
+	 * @private
+	 */
 	imageUrl(url, multiply) {
 		const basename = Util.basenameNoExt(url);
 		const basepath = Util.dirname(url);
@@ -284,6 +284,12 @@ class LayerRSC extends Layer {
 			this.lightDirs_ = Array.isArray(tld)
 				? tld
 				: [];
+
+			// Normalization
+			this.lightDirs_ = (Array.isArray(tld) ? tld : []).map(([x, y, z]) => {
+				const n = Math.hypot(x, y, z);     // norm = sqrt(x**2+y**2+z**2)
+				return n > 0 ? [x / n, y / n, z / n] : [0, 0, 0];
+			});
 
 			// Notifica che il layer è stato caricato
 			this.emit('config_ready');
