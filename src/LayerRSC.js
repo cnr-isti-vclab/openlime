@@ -267,7 +267,7 @@ class LayerRSC extends Layer {
 			console.log("Set Raster IDX ");
 			for (const idxPath of configPaths.idxpaths) {
 				urls.push(idxPath);
-				const raster_idx = new Raster({ format: 'uvec4', buildMipmaps: false });
+				const raster_idx = new Raster({ format: 'uvec4', buildMipmaps: false, filterLinear: false });
 				this.rasters.push(raster_idx);
 			}
 
