@@ -260,14 +260,14 @@ class LayerRSC extends Layer {
 			// AVG 
 			console.log("Set Raster AVG ", configPaths.avgpath)
 			urls.push(configPaths.avgpath);
-			const raster_avg = new Raster({ format: 'vec3', isLinear: true });
+			const raster_avg = new Raster({ format: 'vec3' });
 			this.rasters.push(raster_avg);
 
 			// IDX  (uvec4)
 			console.log("Set Raster IDX ");
 			for (const idxPath of configPaths.idxpaths) {
 				urls.push(idxPath);
-				const raster_idx = new Raster({ format: 'uvec4', isLinear: true });
+				const raster_idx = new Raster({ format: 'uvec4', buildMipmaps: false });
 				this.rasters.push(raster_idx);
 			}
 
@@ -276,7 +276,7 @@ class LayerRSC extends Layer {
 			for (const coefPath of configPaths.coefpaths) {
 				urls.push(coefPath);
 				// Use coefficients with nearest filtering to avoid interpolation artifacts
-				const raster_coef = new Raster({ format: 'vec3', isLinear: true, filterLinear: false });
+				const raster_coef = new Raster({ format: 'vec3', filterLinear: false, buildMipmaps:false });
 				this.rasters.push(raster_coef);
 			}
 			this.layout.setUrls(urls);
