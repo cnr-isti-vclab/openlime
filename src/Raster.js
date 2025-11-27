@@ -36,7 +36,7 @@ class Raster {
 	 *   - 'float' for coefficient data
 	 */
 	constructor(options) {
-
+		this.filterLinear = true;
 		Object.assign(this, {
 			format: 'vec3'
 		});
@@ -126,84 +126,75 @@ class Raster {
 		return img;
 	}
 
-	/**
-	 * Creates a WebGL texture from an image.
-	 * Handles different color formats and automatically creates mipmaps for large textures.
-	 * @private
-	 * @param {WebGLRenderingContext} gl - The WebGL rendering context
-	 * @param {HTMLImageElement|ImageBitmap} img - The source image
-	 * @returns {WebGLTexture} The created texture
-	 * 
-	 * @property {number} width - Width of the loaded image (set after loading)
-	 * @property {number} height - Height of the loaded image (set after loading)
-	 */
-	loadTexture(gl, img) {
-		this.width = img.width;
-		this.height = img.height;
-		var tex = gl.createTexture();
-		gl.bindTexture(gl.TEXTURE_2D, tex);
-		let glFormat = gl.RGBA;
-		let internalFormat = gl.RGBA;
-
-		switch (this.format) {
-			case 'vec3':
-				internalFormat = gl.RGB;
-				glFormat = gl.RGB;
-				break;
-			case 'vec4':
-				internalFormat = gl.RGBA;
-				glFormat = gl.RGBA;
-				break;
-			case 'uvec3':
-				internalFormat = gl.RGB8UI;
-				glFormat = gl.RGB_INTEGER;
-				break;
-			case 'uvec4':
-				internalFormat = gl.RGBA8UI;
-				glFormat = gl.RGBA_INTEGER;
-				break;
-			case 'float':
-				// Use RED instead of LUMINANCE for WebGL2
-				internalFormat = gl.R8;
-				glFormat = gl instanceof WebGL2RenderingContext ? gl.RED : gl.LUMINANCE;
-				break;
-			default:
-				break;
-		}
-
-		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
-
-		// Handle with LINEAR float texture, and NEAREST uint textures
-		if (this.format == 'vec3' || this.format == 'vec4' || this.format == 'float') {
-			// If explicitly set filterLinear, use that value, otherwise default to true for float values
-			let filterLinear = this.filterLinear !== undefined ? this.filterLinear : true;
-			let selectedFilter = filterLinear ? gl.LINEAR : gl.NEAREST;
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, selectedFilter);
-
-			if (this.buildMipmaps && (this.width > 1024 || this.height > 1024)) {
-				//build mipmap for large images.
-				gl.generateMipmap(gl.TEXTURE_2D);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-			} else {
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, selectedFilter) ;
-			}
-		} else if (this.format == 'uvec3' || this.format == 'uvec4') {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-			if (this.buildMipmaps && (this.width > 1024 || this.height > 1024)) {
-				//build mipmap for large images.
-				gl.generateMipmap(gl.TEXTURE_2D);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-			} else {
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-			}
-		}
-
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		this._texture = tex;
-		return tex;
-	}
+/**
+ * Creates a WebGL texture from an image. Handles different color formats and automatically creates mipmaps for large textures.
+ * @private
+ * @param {WebGLRenderingContext} gl - The WebGL rendering context
+ * @param {HTMLImageElement|ImageBitmap} img - The source image
+ * @returns {WebGLTexture} The created texture
+ */
+loadTexture(gl, img) {
+    this.width = img.width;
+    this.height = img.height;
+    
+    var tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    
+    let glFormat = gl.RGBA;
+    let internalFormat = gl.RGBA;
+    
+    switch (this.format) {
+        case 'vec3':
+            internalFormat = gl.RGB;
+            glFormat = gl.RGB;
+            break;
+        case 'vec4':
+            internalFormat = gl.RGBA;
+            glFormat = gl.RGBA;
+            break;
+        case 'uvec3':
+            internalFormat = gl.RGB8UI;
+            glFormat = gl.RGB_INTEGER;
+            break;
+        case 'uvec4':
+            internalFormat = gl.RGBA8UI;
+            glFormat = gl.RGBA_INTEGER;
+            break;
+        case 'float':
+            internalFormat = gl.R8;
+            glFormat = gl instanceof WebGL2RenderingContext ? gl.RED : gl.LUMINANCE;
+            break;
+        default:
+            break;
+    }
+    
+    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
+    
+    // Logica selectedFilter chiara e leggibile come in Raster16Bit.js
+    let filterLinear = this.filterLinear !== undefined ? this.filterLinear : true;
+    
+    // Integer textures devono usare NEAREST (come in Raster16Bit)
+    const isIntegerTexture = this.format === 'uvec3' || this.format === 'uvec4';
+    const selectedFilter = isIntegerTexture ? gl.NEAREST : 
+                          (filterLinear ? gl.LINEAR : gl.NEAREST);
+    
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, selectedFilter);
+    
+    if (this.buildMipmaps && this.width >= 1024 && this.height >= 1024) {
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, 
+            isIntegerTexture ? gl.LINEAR_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR);
+    } else {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, selectedFilter);
+    }
+    
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    
+    this.texture = tex;
+    return tex;
 }
+
 
 /**
  * Example usage of Raster:
