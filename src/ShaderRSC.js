@@ -120,9 +120,6 @@ class ShaderRSC extends Shader {
 		let z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
 		light = [x, y, z];
 
-		console.log("Set light direction to ", light);
-		// if (this.mode == 'light')
-		// 	this.lightWeights(light, 'base');
 		this.setUniform('light', light);
 	}	
 
@@ -386,13 +383,9 @@ vec4 data() {
 
 		// raw sample (no scale/min)
 		vec3 dict_raw = texture(dict, dict_uv).rgb;
-		// scaled sample (your current)
-		vec3 dict_scaled = 4.0 * (dict_raw * dictionary_scale + dictionary_min);
 
 		// debug output: try each one to inspect
-		vec3 color = dict_scaled; //vec3(0.5,0.5,0.5); //vec3(dict_uv,0); //vec3(idx)/1023.0; // or dict_scaled or vec3(dict_uv,0) or vec3(idx)/1023.0
-		if (dict_scaled.r+dict_scaled.g+dict_scaled.b == 0.0)
-		 	color = vec3(1,0,0);//vec3(idx.r, idx.g, idx.b)/1023.0;//vec3(dict_uv, 0);//
+		vec3 color = dict_raw;  //vec3(dict_uv,0); //vec3(idx)/1023.0; 
 		
 	`;
 		return str;
