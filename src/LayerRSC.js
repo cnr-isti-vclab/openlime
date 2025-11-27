@@ -275,7 +275,8 @@ class LayerRSC extends Layer {
 			// COEF planes (vec3)
 			for (const coefPath of configPaths.coefpaths) {
 				urls.push(coefPath);
-				const raster_coef = new Raster({ format: 'vec3', isLinear: true });
+				// Use coefficients with nearest filtering to avoid interpolation artifacts
+				const raster_coef = new Raster({ format: 'vec3', isLinear: true, filterLinear: false });
 				this.rasters.push(raster_coef);
 			}
 			this.layout.setUrls(urls);

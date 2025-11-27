@@ -175,7 +175,14 @@ class Raster {
 
 		// Handle with LINEAR float texture, and NEAREST uint textures
 		if (this.format == 'vec3' || this.format == 'vec4' || this.format == 'float') {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			// If explicitly set filterLinear, use that value, otherwise default to true for float values
+			let filterLinear = this.filterLinear !== undefined ? this.filterLinear : true;
+			if (filterLinear) {
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			} else {
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+			}
+
 			if (this.buildMipmaps && (this.width > 1024 || this.height > 1024)) {
 				//build mipmap for large images.
 				gl.generateMipmap(gl.TEXTURE_2D);

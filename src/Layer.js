@@ -763,6 +763,7 @@ class Layer {
 				format: config.format,
 				isLinear: config.isLinear,
 				buildMipmaps: config.buildMipmaps,
+				filterLinear: config.filterLinear,
 				debug: this.debug || false
 			};
 
