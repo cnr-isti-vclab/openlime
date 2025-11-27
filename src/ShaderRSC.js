@@ -51,14 +51,14 @@ import { Util } from './Util.js'
  */
 class ShaderRSC extends Shader {
 	/**
-	 * Creates a new RTI shader
+	 * Creates a new RSC shader
 	 * @param {ShaderRSC~Options} [options] - Configuration options
 	 * 
 	 * @example
 	 * ```javascript
-	 * // Create PTM shader
+	 * // Create RSC shader
 	 * const shader = new ShaderRSC({
-	 *     type: 'ptm',
+	 *     type: 'rsc',
 	 *     colorspace: 'rgb',
 	 *     mode: 'light'
 	 * });
@@ -68,7 +68,7 @@ class ShaderRSC extends Shader {
 		super(options);
 
 		Object.assign(this, {
-			modes: ['light', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
+			modes: ['light', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'], 
 			mode: 'light',
 			type: ['ksvd'],
 		});
@@ -120,10 +120,11 @@ class ShaderRSC extends Shader {
 		let z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
 		light = [x, y, z];
 
+		console.log("Set light direction to ", light);
 		// if (this.mode == 'light')
 		// 	this.lightWeights(light, 'base');
 		this.setUniform('light', light);
-	}
+	}	
 
 	/**
 	 * Initializes shader with RTI configuration
@@ -135,7 +136,7 @@ class ShaderRSC extends Shader {
 		// SAMPLERS
 		let sampler_counter = 0;
 		this.samplers = [];
-		this.samplers.push({ id: sampler_counter++, name: 'avg', samplerType: 'usampler2D' });
+		this.samplers.push({ id: sampler_counter++, name: 'avg', samplerType: 'sampler2D' });
 		for(let i = 0; i < config.input_params.sparsity_multiplier; ++i) {
 			const sampler_name = 'idx' + Util.padZeros(i, 2);
 			this.samplers.push({ id: sampler_counter++, name: sampler_name, samplerType: 'usampler2D' });
@@ -151,8 +152,8 @@ class ShaderRSC extends Shader {
 		// Coefficients stored in 8 jpg, converted to float directly by loader
 		// Indices stored in 10 bits packed in 32 bit uvec4
 		console.log("CONFIG = ", this.config);
-		const  avg_scale = this.config.output_params.average_range / 255.0;   
-		const dict_scale = this.config.output_params.dictionary_atlas_range / 65535.0;
+		const  avg_scale = this.config.output_params.average_range ;   
+		const dict_scale = this.config.output_params.dictionary_atlas_range;
 		const coef_scale = this.config.output_params.coefficients_range;
 		const atom_size = [this.config.input_params.dictionary_atlas_atom_tile_w,  this.config.input_params.dictionary_atlas_atom_tile_h];
 		const atom_count_x = this.config.input_params.dictionary_atom_count_x ? this.config.input_params.dictionary_atom_count_x : 32;
@@ -175,8 +176,8 @@ class ShaderRSC extends Shader {
 		Object.entries(this.uniforms).forEach(([key, uniform]) => {
 			console.log(`${key}:`, uniform.value);
 		});
-		console.log("SHADER CODE");
-		console.log(this.fragShaderSrc());
+		// console.log("SHADER CODE");
+		// console.log(this.fragShaderSrc());
 		
 
 		this.needsUpdate = true;
@@ -207,8 +208,7 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 	// Return shader string to fetch the average color dequantized and store into param_name
 	get_average_color_str(param_name="color") {
 		// Return color visible from the image (without scaling and min)
-    let str = `uvec4 val = texture(avg, v_texcoord);
-vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 255.0;
+    let str = `vec3 ${param_name} = texture(avg, v_texcoord).rgb;
 `;
 		return str;
 	}
@@ -216,8 +216,7 @@ vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 255.0;
 	// Return shader string to fetch the coefficient idx (idx00 or idx01) color dequantized and store into param_name
 	get_coefficient_color_str(idx, param_name="color") {
 		// Return color visible from the image (without scaling and min)
-		let str = `vec4 val = texture(` + idx + `, v_texcoord);
-vec3 ` + param_name + ` = vec3(val.r, val.g, val.b);
+		let str = `vec3 ${param_name} = texture( ${idx}, v_texcoord).rgb;
 `;
 		return str;
 	}
@@ -225,8 +224,7 @@ vec3 ` + param_name + ` = vec3(val.r, val.g, val.b);
 
 	get_dictionary_color_str(param_name="color") {
 	// Return shader string to fetch the coefficient idx (idx00 or idx01) color dequantized and store into param_name
-    let str = `uvec4 val = texture(dict, v_texcoord);
-vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 65535.0;	
+    let str = `vec3 ${param_name} = texture(dict, v_texcoord).rgb;	
 `;
 		return str;
 	}
@@ -241,7 +239,7 @@ vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 65535.0;
 	vec2 light_dir_uv = uv_from_light_direction(light);
 
 	// Initialize result to avg
-	uvec4 uval = texture(avg, v_texcoord);
+	vec4 uval = texture(avg, v_texcoord);
 	vec3 color = vec3(uval.r, uval.g, uval.b) * average_scale + average_min;
 `;
 		
@@ -260,7 +258,7 @@ vec3 ` + param_name + ` = vec3(val.r, val.g, val.b) / 65535.0;
 
 in vec2 v_texcoord;
 uniform vec3 light;
-uniform usampler2D dict;
+uniform sampler2D dict;
 uniform vec2 dictionary_size;
 uniform vec2  dictionary_atlas_atom_tile_size;
 uniform int   dictionary_atom_count_x;
@@ -318,14 +316,13 @@ vec3 contribution(sampler2D coef_sampler, usampler2D idx_sampler, vec2 light_dir
 	// For each of the 3 indices
 	uint v_tile_idx[3] = uint[](idx.r, idx.g, idx.b);
 	float v_coef[3] = float[](coef.r, coef.g, coef.b);
-
+	
 	for(int i = 0; i < 3; ++i) {
 		// Convert index,light_u,light_v to x,y global index coordinates
 		vec2 dict_uv = dictionary_uv_from_index_tile_xy(v_tile_idx[i], light_dir_uv.x, light_dir_uv.y);
 		
 		// Fetch rgb from dictionary
-		uvec4 dict_uval = texture(dict, dict_uv);
-		vec3 dict_val = vec3(dict_uval.r, dict_uval.g, dict_uval.b) * dictionary_scale + dictionary_min;	
+		vec3 dict_val = texture(dict, dict_uv).rgb * dictionary_scale + dictionary_min;	
 		
 		// Sum linear combination of indices
 		result += dict_val * v_coef[i];
@@ -358,9 +355,14 @@ vec4 data() {
 				break;
 			case 'dictionary' :
 				str += this.get_dictionary_color_str();
-			break;
-		}
-
+				break;
+			case 'debug' :
+				str += this.get_debug_str();
+				break;			
+			default:
+				throw Error("Unknown RSC mode: " + this.mode);
+		} 
+		
 		str += 	`
 	color = srgb2linear(color);
 	return vec4(color,1);
@@ -369,6 +371,34 @@ vec4 data() {
 
 		return str;
 	}
+
+
+	get_debug_str() {
+		let str = `
+	// Debug mode: show various intermediate values
+		// in your debug fragment code:
+		vec2 light_dir_uv = uv_from_light_direction(light);
+		uvec4 idx_val = texture(idx00, v_texcoord);
+		uint decoded_uint = (idx_val.r << 0) | (idx_val.g << 8) | (idx_val.b << 16) | (idx_val.a << 24);
+		uint mask = uint(1023);
+		uvec3 idx = uvec3((decoded_uint >> 20) & mask, (decoded_uint >> 10) & mask, decoded_uint & mask);
+		vec2 dict_uv = dictionary_uv_from_index_tile_xy(idx.r, light_dir_uv.x, light_dir_uv.y); // dictionary_atlas_atom_tile_size.x/2.0, dictionary_atlas_atom_tile_size.x/2.0);//
+
+		// raw sample (no scale/min)
+		vec3 dict_raw = texture(dict, dict_uv).rgb;
+		// scaled sample (your current)
+		vec3 dict_scaled = 4.0 * (dict_raw * dictionary_scale + dictionary_min);
+
+		// debug output: try each one to inspect
+		vec3 color = dict_scaled; //vec3(0.5,0.5,0.5); //vec3(dict_uv,0); //vec3(idx)/1023.0; // or dict_scaled or vec3(dict_uv,0) or vec3(idx)/1023.0
+		if (dict_scaled.r+dict_scaled.g+dict_scaled.b == 0.0)
+		 	color = vec3(1,0,0);//vec3(idx.r, idx.g, idx.b)/1023.0;//vec3(dict_uv, 0);//
+		
+	`;
+		return str;
+	}
+
+		
 }
 
 export { ShaderRSC }
