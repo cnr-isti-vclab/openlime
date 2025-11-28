@@ -8,11 +8,14 @@
 /**
  * LightSphereController creates an interactive sphere UI for light direction control.
  * Features:
- * - Circular interface with gradient background
- * - Pointer-based interaction for light direction
+ * - Circular interface with configurable radial gradient background
+ * - Pointer-based interaction for light direction on a unit hemisphere
  * - Configurable size, position, and colors
- * - Minimum theta angle constraint
- * - Visual feedback with gradient and marker
+ * - Minimum polar angle (theta) constraint to avoid grazing angles
+ * - Optional visualization of training light directions as markers
+ * - Optional snapping to the nearest training light direction
+ * - Visual feedback with a movable marker and live-updated gradient
+ * @class
  */
 class LightSphereController {
     /**
@@ -21,12 +24,15 @@ class LightSphereController {
      * @param {Object} [options] - Configuration options
      * @param {number} [options.width=128] - Width of the controller in pixels
      * @param {number} [options.height=128] - Height of the controller in pixels
-     * @param {number} [options.top=60] - Top position offset in pixels
-     * @param {number} [options.right=0] - Right position offset in pixels
-     * @param {number} [options.thetaMin=0] - Minimum theta angle in degrees (constrains interaction radius)
-     * @param {string} [options.colorSpot='#ffffff'] - Color of the central spot in the gradient
-     * @param {string} [options.colorBkg='#0000ff'] - Color of the outer edge of the gradient
-     * @param {string} [options.colorMark='#ff0000'] - Color of the position marker
+     * @param {number} [options.top=60] - Top position offset in pixels from the top of the parent
+     * @param {number} [options.right=0] - Right position offset in pixels from the right edge of the parent
+     * @param {number} [options.thetaMin=0] - Minimum polar angle in degrees (constrains interaction radius)
+     * @param {string} [options.colorSpot='#ffffff'] - Color of the inner spot of the radial gradient
+     * @param {string} [options.colorBkg='#0000ff'] - Color of the outer edge of the radial gradient
+     * @param {string} [options.colorMark='#ff0000'] - Color of the main position marker
+     * @param {boolean} [options.enableLightMarkers=false] - Whether to draw training light directions as small markers
+     * @param {boolean} [options.enableLightSnap=false] - Whether to snap to the nearest training light direction on pointer release
+     * @param {string} [options.lightMarkerColor='#3d3d3dff'] - Fill color used for training light direction markers
      */
     constructor(parent, options) {
         options = Object.assign({
@@ -54,7 +60,8 @@ class LightSphereController {
         this.lightDirs = [];
 
         this.containerElement = document.createElement('div');
-        this.containerElement.style = `padding: 0; position: absolute; width: ${this.width}px; height: ${this.height}px; top:${this.top}px; right:${this.right}px; z-index: 200; touch-action: none; visibility: visible;`;
+        this.containerElement.style = `padding: 0; position: absolute; top: ${this.top}px; right: ${this.right}px;` +
+            `width: ${this.width}px; height: ${this.height}px; z-index: 200; touch-action: none; visibility: visible;`;
         this.containerElement.classList.add('openlime-lsc');
 
         const sd = (this.width * 0.5) * (1 - 0.8);
@@ -101,7 +108,7 @@ class LightSphereController {
             }
         });
 
-        this.dlCanvas.addEventListener("pointerup", (e) => {
+        this.dlCanvas.addEventListener("pointerup", () => {
             this.pointerDown = false;
             // Snap to closest light direction if enabled
             if (this.enableLightMarkers && this.enableLightSnap && this.lightDirs && this.lightDirs.length > 0) {
@@ -117,7 +124,9 @@ class LightSphereController {
     /**
      * Adds a layer to be controlled by this light sphere.
      * The layer must support light control operations.
-     * @param {Layer} layer - Layer to be controlled
+     * If the layer exposes a `lightDirs()` function, its directions
+     * are used as the training set for snapping and marker rendering.
+     * @param {Layer} l - Layer instance to be controlled
      */
     addLayer(l) {
         this.layers.push(l);
@@ -157,17 +166,43 @@ class LightSphereController {
         return closestDir;
     }
 
+    /**
+     * Computes the Z component of a unit-length direction on the upper hemisphere
+     * from its X and Y components.
+     * Assumes x^2 + y^2 <= 1.
+     * @param {number} x - X component in [-1, 1]
+     * @param {number} y - Y component in [-1, 1]
+     * @returns {number} Z component (non-negative) such that x^2 + y^2 + z^2 = 1
+     * @private
+     * @static
+     */
     static zed(x, y) {
         return Math.sqrt(1.0 - (x ** 2 + y ** 2));
     }
 
+    /**
+     * Computes the radial distance of the projected light direction
+     * on the z=0 plane. Given a 3D unit vector v = [x, y, z],
+     * this function returns √(x² + y²), i.e. the length of the
+     * projection of v onto the XY plane.
+     *
+     * It is used to determine how far the pointer (light cursor)
+     * lies from the center in the 2D controller, and to clamp the
+     * cursor so it never exceeds the maximum radius of the dataset
+     * (maxRadius).
+     *
+     * @param {number[]} v - Light direction projected on the selector, [x, y]
+     * @returns {number} Radial distance of v from the origin in the XY plane
+     * @static
+     * @private
+     */
     static radius(v) {
         return Math.sqrt(v[0] ** 2 + v[1] ** 2);
     }
 
     /**
      * Animates the light direction marker to a target direction with linear interpolation.
-     * @param {number[]} targetDir - Target light direction [x, y] 
+     * @param {number[]} targetDir - Target light direction [x, y]
      * @param {number} [duration=200] - Animation duration in milliseconds
      * @private
      */
@@ -205,8 +240,9 @@ class LightSphereController {
     }
 
     /**
-     * Sets the array of light directions and redraws the selector.
+     * Sets the array of training light directions and redraws the selector overlay.
      * @param {number[][]} dirs - Array of light direction triplets [x,y,z].
+     * @private
      */
     setLightDirs(dirs) {
         this.lightDirs = dirs || [];
@@ -224,7 +260,7 @@ class LightSphereController {
 
     /**
      * Makes the controller visible.
-     * @returns {string} The visibility style value
+     * @returns {string} The visibility style value ('visible')
      */
     show() {
         return this.containerElement.style.visibility = 'visible';
@@ -232,15 +268,15 @@ class LightSphereController {
 
     /**
      * Hides the controller.
-     * @returns {string} The visibility style value
+     * @returns {string} The visibility style value ('hidden')
      */
     hide() {
         return this.containerElement.style.visibility = 'hidden';
     }
 
     /**
-     * Computes the radial gradient based on current light direction.
-     * Creates a gradient that provides visual feedback about the light position.
+     * Computes the radial gradient used as background for the selector.
+     * Centered at the current light direction.
      * @private
      */
     computeGradient() {
@@ -269,30 +305,30 @@ class LightSphereController {
         l = l > this.rmax ? this.rmax : l;
         xc = l * Math.cos(this.thetaMinRad) * Math.cos(phy);
         yc = l * Math.cos(this.thetaMinRad) * Math.sin(phy);
-        x = xc + this.r;
-        y = this.r - yc;
-        this.lightDir[0] = 2 * (x / this.dlCanvas.width - 0.5);
-        this.lightDir[1] = 2 * (1 - y / this.dlCanvas.height - 0.5);
+
+        this.lightDir[0] = xc / this.r;
+        this.lightDir[1] = yc / this.r;
+
         const r = LightSphereController.radius(this.lightDir);
         if (r > 0 && r > this.maxRadius) {
-            const scale = this.maxRadius / r;
-            this.lightDir[0] *= scale;
-            this.lightDir[1] *= scale;
-
-            x = (this.lightDir[0] + 1.0) * this.dlCanvas.width * 0.5;
-            y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
+            this.lightDir[0] *= this.maxRadius / r;
+            this.lightDir[1] *= this.maxRadius / r;
         }
 
-            console.log('LD ', this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
         for (const l of this.layers) {
-            if (l.controls.light) l.setControl('light', this.lightDir, 5);
+            if (l.controls.light) l.setControl('light', this.lightDir, 100);
         }
+
+        console.log("LD ",
+            this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1])
+        );
         this.computeGradient();
         this.drawLightSelector(x, y);
     }
 
     /**
-     * Draws all light directions stored in this.lightDirs as small black circles.
+     * Draws the additional light directions provided in {@link lightDirs}
+     * as small circular markers on the selector.
      * The directions are mapped to the 2D selector space using the same
      * projection used for the main light direction marker.
      * @private
@@ -329,6 +365,7 @@ class LightSphereController {
      * Renders:
      * - Circular background with gradient
      * - Position marker at current light direction
+     * - Optional markers for training light directions
      * @private
      * @param {number} x - X coordinate for position marker
      * @param {number} y - Y coordinate for position marker
@@ -356,9 +393,12 @@ class LightSphereController {
         this.dlCanvasCtx.strokeStyle = this.colorMark;
         this.dlCanvasCtx.lineWidth = 2;
         this.dlCanvasCtx.stroke();
+        this.dlCanvasCtx.fillStyle = this.colorMark;
+        this.dlCanvasCtx.fill();
     }
 
 }
+
 /**
  * Example usage of LightSphereController:
  * ```javascript
@@ -372,33 +412,47 @@ class LightSphereController {
  *     colorSpot: '#ffff00',
  *     colorBkg: '#000066',
  *     colorMark: '#ff3333',
- *     enableLightSnap: true  // Enable snapping to nearest training light direction
+ *     enableLightMarkers: true,             // Draw all training light directions as small markers
+ *     enableLightSnap: true,                // Enable snapping to nearest training light direction
+ *     lightMarkerColor: '#3d3d3dff'         // Color used for training light direction markers
  * });
- * 
+ *
  * // Add layers to be controlled
  * lightController.addLayer(layer1);
  * lightController.addLayer(layer2);
- * 
+ *
  * // Show/hide controller
  * lightController.show();
  * lightController.hide();
- * 
+ *
  * // Enable/disable light snapping at runtime
  * lightController.enableLightSnap = true;
  * ```
- * 
- * @property {number[]} lightDir - Current light direction vector [x, y]
- * @property {number[][]} lightDirs - Array of training light directions from layers
- * @property {boolean} enableLightSnap - Whether to snap to nearest training direction on release
- * @property {HTMLElement} containerElement - Main container element
- * @property {HTMLCanvasElement} dlCanvas - Canvas element for drawing
+ *
+ * @property {HTMLElement|string} parent - Parent element or selector used to mount the controller
+ * @property {number} width - Width of the controller canvas in pixels
+ * @property {number} height - Height of the controller canvas in pixels
+ * @property {number} top - Top offset in pixels relative to the parent element
+ * @property {number} right - Right offset in pixels relative to the parent element
+ * @property {number} thetaMin - Minimum polar angle in degrees for the light direction
+ * @property {string} colorSpot - Color of the inner spot of the radial gradient
+ * @property {string} colorBkg - Color of the outer edge of the radial gradient
+ * @property {string} colorMark - Color of the main selector marker
+ * @property {boolean} enableLightMarkers - Whether training light directions are drawn as markers
+ * @property {boolean} enableLightSnap - Whether to snap to the nearest training direction on pointer release
+ * @property {string} lightMarkerColor - Fill color used for training light direction markers
+ * @property {number[]} lightDir - Current light direction vector projected to the selector [x, y]
+ * @property {number[][]} lightDirs - Array of training light directions [x, y, z] coming from attached layers
+ * @property {HTMLElement} containerElement - Main container element wrapping the canvas
+ * @property {HTMLCanvasElement} dlCanvas - Canvas element used for drawing the selector
  * @property {CanvasRenderingContext2D} dlCanvasCtx - Canvas 2D rendering context
- * @property {CanvasGradient} dlGradient - Current radial gradient
- * @property {number} r - Radius of the control sphere
- * @property {number} thetaMinRad - Minimum theta angle in radians
- * @property {number} rmax - Maximum interaction radius based on thetaMin
- * @property {boolean} pointerDown - Whether pointer is currently pressed
- * @property {Layer[]} layers - Array of layers being controlled
+ * @property {CanvasGradient} dlGradient - Current radial gradient used as background
+ * @property {number} r - Radius of the control sphere in pixels
+ * @property {number} thetaMinRad - Minimum polar angle in radians
+ * @property {number} rmax - Maximum interaction radius based on thetaMinRad
+ * @property {number} maxRadius - Maximum radius of projected training light directions in selector space
+ * @property {boolean} pointerDown - Whether the pointer is currently pressed inside the selector
+ * @property {Layer[]} layers - Array of layers that are controlled by this instance
  */
 
 export { LightSphereController }
