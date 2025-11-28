@@ -49,7 +49,7 @@ class ShaderFilter {
         this.samplers = [];
         this.needsUpdate = true;
         this.shader = null;
-
+        this.uniforms = {};
         this.modes = {};
     }
 
