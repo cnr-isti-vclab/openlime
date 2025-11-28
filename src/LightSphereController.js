@@ -76,6 +76,7 @@ class LightSphereController {
         this.pointerDown = false;
         this.dlCanvas.addEventListener("pointerdown", (e) => {
             this.pointerDown = true;
+            this.setupDocumentListeners();
             const rect = this.dlCanvas.getBoundingClientRect();
             let clickPosX =
                 (this.dlCanvas.width * (e.clientX - rect.left)) /
@@ -103,6 +104,7 @@ class LightSphereController {
 
         this.dlCanvas.addEventListener("pointerup", (e) => {
             this.pointerDown = false;
+            this.removeDocumentListeners();
             // Snap to closest light direction if enabled
             if (this.enableLightMarkers && this.enableLightSnap && this.lightDirs && this.lightDirs.length > 0) {
                 const closestDir = this.findClosestLightDir(this.lightDir);
@@ -113,6 +115,33 @@ class LightSphereController {
         });
 
     }
+
+    // Listener sul document per drag fuori dal canvas
+    setupDocumentListeners() {
+        this.docPointerMove = (e) => {
+            if (this.pointerDown) {
+                const rect = this.dlCanvas.getBoundingClientRect();
+                let clickPosX = (this.dlCanvas.width * (e.clientX - rect.left)) / rect.width;
+                let clickPosY = (this.dlCanvas.height * (e.clientY - rect.top)) / rect.height;
+                this.interactLightDir(clickPosX, clickPosY);
+                e.preventDefault();
+            }
+        };
+        this.docPointerUp = (e) => {
+            this.pointerDown = false;
+            // ... codice snapping esistente
+            this.removeDocumentListeners();
+        };
+
+        document.addEventListener('pointermove', this.docPointerMove);
+        document.addEventListener('pointerup', this.docPointerUp);
+    }
+
+    removeDocumentListeners() {
+        if (this.docPointerMove) document.removeEventListener('pointermove', this.docPointerMove);
+        if (this.docPointerUp) document.removeEventListener('pointerup', this.docPointerUp);
+    }
+
 
     /**
      * Adds a layer to be controlled by this light sphere.
@@ -283,7 +312,7 @@ class LightSphereController {
             y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
         }
 
-            console.log('LD ', this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
+        console.log('LD ', this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
         for (const l of this.layers) {
             if (l.controls.light) l.setControl('light', this.lightDir, 5);
         }
