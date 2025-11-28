@@ -104,7 +104,6 @@ class LightSphereController {
 
         this.dlCanvas.addEventListener("pointerup", (e) => {
             this.pointerDown = false;
-            this.removeDocumentListeners();
             // Snap to closest light direction if enabled
             if (this.enableLightMarkers && this.enableLightSnap && this.lightDirs && this.lightDirs.length > 0) {
                 const closestDir = this.findClosestLightDir(this.lightDir);
@@ -129,7 +128,6 @@ class LightSphereController {
         };
         this.docPointerUp = (e) => {
             this.pointerDown = false;
-            // ... codice snapping esistente
             this.removeDocumentListeners();
         };
 
