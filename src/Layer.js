@@ -10,6 +10,7 @@ import { Util } from './Util.js'
 
 /**
  * @typedef {Object} LayerOptions
+ * @property {string} [url] - URL pointing to the layer's source asset
  * @property {string|Layout} [layout='image'] - Layout/format of input raster images
  * @property {string} [type] - Identifier for specific derived layer class
  * @property {string} [id] - Unique layer identifier

@@ -8,28 +8,33 @@ import { addSignals } from './Signals'
 
 /**
  * @typedef {Object} UIAction
- * Action configuration for toolbar buttons
  * @property {string} title - Display title for the action
  * @property {boolean} display - Whether to show in toolbar
- * @property {string} [key] - Keyboard shortcut key
+ * @property {string} key - Keyboard shortcut key
  * @property {Function} task - Callback function for action
- * @property {string} [icon] - Custom SVG icon path or content
- * @property {string} [html] - HTML content for help dialog
+ * @property {string} icon - Custom SVG icon path or content
+ * @property {string} html - HTML content for help dialog
  */
 
 /**
- * @typedef {Object} MenuEntry
- * Menu configuration item
- * @property {string} [title] - Large title text
- * @property {string} [section] - Section header text
- * @property {string} [html] - Raw HTML content
- * @property {string} [button] - Button text
- * @property {string} [group] - Button group identifier
- * @property {string} [layer] - Associated layer ID
- * @property {string} [mode] - Layer visualization mode
- * @property {Function} [onclick] - Click handler
- * @property {Function} [oninput] - Input handler for sliders
- * @property {MenuEntry[]} [list] - Nested menu entries
+ * @typedef {Object<string, UIAction>} UIActions
+ * Collection of named actions used in the toolbar and UI.
+ */
+
+/**
+ * @typedef {Object} UIBasicOptions
+ * @property {UIActions} [actions] - Configurable UI actions collection
+ * @property {Object} [menu] - Menu configuration object
+ * @property {number} [pixelSize] - Pixel size for scale bar
+ * @property {string} [attribution] - Attribution HTML string
+ * @property {boolean} [autoFit] - Automatically fit camera on start
+ * // Aggiungere qui altre proprietà note di configurazione
+ */
+
+/**
+ * @class UIBasic
+ * @param {Viewer} viewer - Parent viewer instance
+ * @param {UIBasicOptions} [options] - UI configuration options
  */
 
 /**

@@ -6,11 +6,11 @@ import { addSignals } from './Signals.js'
 
 /**
  * @typedef {Object} ViewerOptions
- * Configuration options for Viewer initialization
  * @property {string} [background] - CSS background style
- * @property {boolean} [autofit=true] - Auto-fit camera to scene
- * @property {Object} [canvas={}] - Canvas configuration options
- * @property {Camera} [camera] - Custom camera instance
+ * @property {boolean} [autofit=true] - Auto-fit camera
+ * @property {Object} [canvas] - Canvas options
+ * @property {Camera} [camera] - Custom camera
+ * @property {number} [idleTime=60] - Idle timeout seconds
  */
 
 /**
