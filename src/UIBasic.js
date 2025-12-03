@@ -585,7 +585,7 @@ class UIBasic {
 	 */
 	setActiveControllers(on) {
 		for (let c of this.viewer.controllers) {
-			if(c != this.panzoom)  //panzoom is always active	
+			if (c != this.panzoom)  //panzoom is always active	
 				continue;
 			c.active = on;
 		}
@@ -876,13 +876,25 @@ class UIBasic {
 	}
 
 	/**
-		 * Updates all menu entries
-		 * @private
-		 */
+	 * Updates the visual state of all menu entries.
+	 * It is safe to call this before initialization completes:
+	 * in that case it will simply do nothing.
+	 */
 	updateMenu() {
-		for (let entry of this.menu)
+		// If the menu DOM is not created yet, just skip
+		if (!this.layerMenu) {
+			return;
+		}
+
+		for (const entry of this.menu) {
+			// If the entry DOM element is not attached yet, skip it
+			if (!entry.element) {
+				continue;
+			}
 			this.updateEntry(entry);
+		}
 	}
+
 
 	/**
 	 * Sets active layer and updates UI

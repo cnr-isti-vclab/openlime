@@ -398,8 +398,22 @@ export class Canvas {
   removeEvent(name: string, handler: (...args: any[]) => void): void;
   resize(width?: number, height?: number): void;
 
+  getState(): ViewerState;
+  setState(state: ViewerState, duration?: number, easing?: string): void;
+
   [key: string]: any;
 }
+
+export type CameraState = {
+  x: number;
+  y: number;
+  z: number;
+};
+
+export type ViewerState = {
+  camera: CameraState;
+  [key: string]: unknown;
+};
 
 export class Viewer {
   background: string | null;
