@@ -229,8 +229,8 @@ class Canvas {
 			gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, width, height);
 		}
 
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
 		gl.bindTexture(gl.TEXTURE_2D, null);
 		if (this.stencil) {
@@ -269,7 +269,7 @@ class Canvas {
 	* @param {string} [easing='linear'] - Easing function for animations
 	*/
 	setState(state, dt, easing = 'linear') {
-		if(!state || typeof state !== 'object') return;
+		if (!state || typeof state !== 'object') return;
 		if ('camera' in state) {
 			const m = state.camera;
 			this.camera.setPosition(dt, m.x, m.y, m.z, m.a, easing);
@@ -374,21 +374,48 @@ class Canvas {
 	}
 
 	/**
-	 * Removes a layer from the canvas.
-	 * @param {Layer} layer - Layer instance to remove
-	 * @example
-	 * const layer = new Layer(options);
-	 * canvas.addLayer('map', layer);
-	 * // ... later ...
-	 * canvas.removeLayer(layer);
-	 */
+ * Removes a layer from the canvas.
+ * This method clears GPU resources associated with the layer,
+ * removes it from the internal layer list, and triggers a prefetch update.
+ *
+ * @param {Layer|string|null} layer - The layer instance to remove, or its ID.
+ */
 	removeLayer(layer) {
-		layer.clear(); //order is important.
+		// Sanity check: null or undefined
+		if (!layer) {
+			console.warn("Canvas.removeLayer called with null or undefined layer.");
+			return;
+		}
 
-		delete this.layers[layer.id];
-		delete Cache.layers[layer];
+		// If a string ID is passed, resolve the actual layer instance
+		if (typeof layer === "string") {
+			const resolved = this.layers[layer];
+			if (!resolved) {
+				console.warn(`Canvas.removeLayer: no layer found with id "${layer}".`);
+				return;
+			}
+			layer = resolved;
+		}
+
+		// Extra check: missing ID property
+		if (!layer.id) {
+			console.warn("Canvas.removeLayer: layer has no 'id' property.", layer);
+		}
+
+		// Clear GPU buffers, textures, cache entries.
+		// Layer.clear() calls Cache.getInstance().flushLayer(this), so
+		// Canvas does not need to touch the cache directly.
+		layer.clear(); // Order is important.
+
+		// Remove the layer from the internal layer dictionary
+		if (this.layers && layer.id && this.layers[layer.id]) {
+			delete this.layers[layer.id];
+		}
+
+		// Update internal tile prefetch state after removal
 		this.prefetch();
 	}
+
 
 	updateSize() {
 		const discardHidden = false;

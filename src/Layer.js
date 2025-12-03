@@ -698,7 +698,8 @@ class Layer {
 		// Clean up static textures
 		this.clearStaticTextures();
 
-		Cache.flushLayer(this);
+		Cache.getInstance().flushLayer(this);
+
 		this.tiles = new Map(); //TODO We need to drop these tile textures before clearing Map
 		this.setupTiles();
 		this.queue = [];
