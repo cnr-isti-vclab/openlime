@@ -98,6 +98,7 @@ class Layout {
 	 * @throws {Error} If layout type is unknown or module not loaded
 	 */
 	constructor(url, type, options) {
+		this.error = null;
 		if (type == 'image') {
 			this.setDefaults(type);
 			this.init(url, type, options);
@@ -133,6 +134,7 @@ class Layout {
 			suffix: 'jpg',
 			urls: [],
 			status: null,
+			error: null,
 			subdomains: 'abc'
 		});
 	}
@@ -162,8 +164,19 @@ class Layout {
 		this.urls = urls;
 		this.getTileURL = (rasterid, tile) => { return this.urls[rasterid]; }
 		this.status = 'ready';
+		this.error = null;
 		this.emit('ready');
 	}
+
+  /**
+   * Marks the layout as failed and emits an error signal.
+   * @param {Error|string} err - Error object or message describing the failure.
+   */
+  setError(err) {
+    this.status = 'error';
+    this.error = err instanceof Error ? err : new Error(String(err));
+    this.emit('error', this.error);
+  }
 
 	/**
 	 * Constructs URL for specific image plane
@@ -286,6 +299,6 @@ class Layout {
 Layout.prototype.types = {}
 
 
-addSignals(Layout, 'ready', 'updateSize');
+addSignals(Layout, 'ready', 'updateSize', 'error');
 
 export { Layout }

@@ -391,18 +391,42 @@ class Layer {
 		* @event Layer#update
 		*/
 		this.layout = layout;
+		this.status = 'loading';
+		this.error = null;
 
-		let callback = () => {
+		const onReady = () => {
 			this.status = 'ready';
-			this.setupTiles(); //setup expect status to be ready!
+			this.error = null;
+			this.setupTiles(); // setup expects status to be ready
 
 			this.emit('ready');
 			this.emit('update');
 		};
-		if (layout.status == 'ready') //layout already initialized.
-			callback();
-		else
-			layout.addEvent('ready', callback);
+
+		const onError = (err) => {
+			this.status = 'error';
+			this.error = err;
+
+			/**
+			 * The event is fired when a layer fails to initialize or load its layout.
+			 * @event Layer#error
+			 * @type {Error}
+			 */
+			this.emit('error', err);
+		};
+
+		if (layout.status === 'ready') {
+			// layout already initialized
+			onReady();
+		} else if (layout.status === 'error') {
+			// layout already failed
+			onError(layout.error || layout.status);
+		} else {
+			// wait for async initialization
+			layout.addEvent('ready', onReady);
+			if (typeof layout.addEvent === 'function')
+				layout.addEvent('error', onError);
+		}
 
 		// Set signal to acknowledge change of bbox when it is known. Let this signal go up to canvas
 		this.layout.addEvent('updateSize', () => {
@@ -411,6 +435,8 @@ class Layer {
 			this.emit('updateSize');
 		});
 	}
+
+
 
 	/**
 	 * Sets the layer's transform
@@ -1588,6 +1614,6 @@ class Layer {
 }
 
 Layer.prototype.types = {}
-addSignals(Layer, 'ready', 'update', 'loaded', 'updateSize');
+addSignals(Layer, 'ready', 'update', 'loaded', 'updateSize', 'error');
 
 export { Layer }

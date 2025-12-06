@@ -134,10 +134,15 @@ class LayoutTiles extends Layout {
 			}
 			this.initBoxes();
 			this.status = 'ready';
+			this.error = null;
 			this.emit('ready');
 		} catch (e) {
-			console.log(e);
-			this.status = e;
+			console.error(e);
+			// Use Layout.setError to mark failure and emit Layout#error
+			if (typeof this.setError === 'function')
+				this.setError(e);
+			else
+				this.status = e;
 		}
 	}
 
