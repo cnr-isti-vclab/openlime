@@ -1,0 +1,87 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "title": "Image Combiner Viewer",
+    "description": "Combines two images with diff shader visualization",
+    "author": "OpenLIME User",
+    "created": "2025-12-18T10:00:00Z",
+    "tags": ["combiner", "comparison", "diff"]
+  },
+  
+  "viewer": {
+    "container": ".openlime",
+    "background": null,
+    "autofit": true,
+    "idleTime": 60
+  },
+  
+  "layers": {
+    "base": {
+      "type": "image",
+      "layout": "image",
+      "url": "assets/lime/image/lime.jpg",
+      "visible": true,
+      "zindex": 0,
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "z": 1,
+        "a": 0
+      }
+    },
+    "overlay": {
+      "type": "image",
+      "layout": "image",
+      "url": "assets/lime/image/lime_fx.jpg",
+      "visible": true,
+      "zindex": 0,
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "z": 1,
+        "a": 0
+      }
+    },
+    "combiner": {
+      "type": "combiner",
+      "visible": true,
+      "zindex": 1,
+      "layers": ["base", "overlay"],
+      "shader": "diffShader"
+    }
+  },
+  
+  "shaders": {
+    "diffShader": {
+      "type": "combiner",
+      "mode": "diff",
+      "uniforms": {}
+    }
+  },
+  
+  "controllers": [
+    {
+      "type": "pan",
+      "options": {}
+    },
+    {
+      "type": "pinch",
+      "options": {}
+    }
+  ],
+  
+  "ui": {
+    "type": "basic",
+    "skin": {
+      "url": "skin/skin.svg"
+    },
+    "actions": {
+      "light": { "display": false },
+      "zoomin": { "display": true },
+      "zoomout": { "display": true },
+      "home": { "display": true },
+      "fullscreen": { "display": true }
+    },
+    "attribution": "Lime, photo image - by <a href='https://pixabay.com/it/users/shutterbug75-2077322/'>Shutterbug75</a> from <a href='https://pixabay.com/it/'>Pixabay</a>"
+  }
+}

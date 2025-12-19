@@ -1,6 +1,7 @@
 {
 "width": 1024, "height": 1024,
 "format": "jpg",
+"layout": "image",
 "type":"ptm",
 "colorspace":"rgb",
 "pixelSizeInMM": 0.0173729,

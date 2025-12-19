@@ -1,0 +1,121 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "title": "OpenLIME - Lens Viewer",
+    "description": "Lens viewer showing lighthouse with normal map and annotations overlay in the lens",
+    "author": "Fabio Marton",
+    "created": "2025-12-18T10:30:00Z",
+    "tags": ["lens", "focus-context", "deepzoom", "overlay"]
+  },
+  
+  "viewer": {
+    "container": ".openlime",
+    "autofit": false,
+    "camera": {
+      "bounded": false
+    }
+  },
+  
+  "layers": {
+    "kdmap": {
+      "type": "image",
+      "layout": "deepzoom",
+      "url": "../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi",
+      "visible": true,
+      "zindex": 0,
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "z": 1,
+        "a": 0
+      }
+    },
+    "nomap": {
+      "type": "image",
+      "layout": "deepzoom", 
+      "url": "../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi",
+      "visible": false,
+      "zindex": 1,
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "z": 1,
+        "a": 0
+      }
+    },
+    "anno": {
+      "type": "image",
+      "layout": "image",
+      "url": "../../assets/lighthouse/image/lighthouse-anno.png",
+      "visible": false,
+      "zindex": 2,
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "z": 1,
+        "a": 0
+      }
+    },
+    "lens": {
+      "type": "lens",
+      "visible": true,
+      "zindex": 10,
+      "layers": ["nomap", "anno"],
+      "options": {
+        "radius": 200,
+        "border": 10
+      }
+    }
+  },
+  
+  "controllers": [
+    {
+      "type": "focusContext",
+      "target": "lens",
+      "options": {}
+    }
+  ],
+  
+  "ui": {
+    "type": "basic",
+    "skin": {
+      "url": "../../skin/skin.svg"
+    },
+    "actions": {
+      "light": { 
+        "display": false 
+      },
+      "zoomin": { 
+        "display": true 
+      },
+      "zoomout": { 
+        "display": true 
+      },
+      "home": { 
+        "display": true 
+      },
+      "fullscreen": { 
+        "display": true 
+      }
+    },
+    "attribution": "Cape Spartivento Lighthouse, oil on canvas, 14x18 cm, 2004 - by Fabio Marton"
+  },
+  
+  "connections": {
+    "lenses": [
+      {
+        "source": "kdmap",
+        "target": "lens", 
+        "type": "focus-context",
+        "radius": 200,
+        "border": 10
+      }
+    ],
+    "synchronization": [
+      {
+        "layers": ["kdmap", "nomap", "anno"],
+        "properties": ["camera", "transform"]
+      }
+    ]
+  }
+}
