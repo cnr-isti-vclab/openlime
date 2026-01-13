@@ -166,6 +166,7 @@ class LayerRSC extends Layer {
 
 	/**
 	 * Constructs URLs for RSC resources based on layout type
+	 * @param {Object} json - Parsed info.json content
 	 * @param {string} url - Base URL (typically the info.json path)
 	 * @param {number} multiply - number of idx/coef planes to load (input_params.sparsity_multiplier)
 	 * @returns {{
@@ -176,22 +177,28 @@ class LayerRSC extends Layer {
 	 * }}
 	 * @private
 	 */
-	imageUrl(url, multiply) {
+	imageUrl(json, url, multiply) {
 		const basename = Util.basenameNoExt(url);
 		const basepath = Util.dirname(url);
 
+		const extDict = json['input_params']['dictionary_format'];
+		const extAvg  = json['input_params']['sparse_coding_average_format'];
+		const extCoef = json['input_params']['sparse_coding_coefficient_format'];
+		const extIdx  = json['output_params']['index_format'];
+
+		console.log("Extensions: ", extDict, extAvg, extCoef, extIdx);
 		// Select extensions by layout
 		const makePaths = (extDict, extAvg, extIdx, extCoef) => {
 			const idxpaths = [];
 			const coefpaths = [];
 			for (let i = 0; i < multiply; i++) {
 				const s = Util.padZeros(i, 2);
-				idxpaths.push(`${basepath}/sparse_index_${s}${extIdx}`);
-				coefpaths.push(`${basepath}/sparse_coeff_${s}${extCoef}`);
+				idxpaths.push(`${basepath}/sparse_index_${s}.${extIdx}`);
+				coefpaths.push(`${basepath}/sparse_coeff_${s}.${extCoef}`);
 			}
 			return {
-				dictpath: `${basepath}/dictionary_atlas${extDict}`,
-				avgpath: `${basepath}/avg${extAvg}`,
+				dictpath: `${basepath}/dictionary_atlas.${extDict}`,
+				avgpath: `${basepath}/avg.${extAvg}`,
 				idxpaths,
 				coefpaths
 			};
@@ -200,11 +207,11 @@ class LayerRSC extends Layer {
 		switch (this.layout.type) {
 			case 'image':
 				// _avg.png, _idx_XX.png, _coef_XX.jpg
-				return makePaths('.png', '.jpg', '.png', '.jpg');
+				return makePaths(extDict, extAvg, extIdx, extCoef);
 
 			case 'deepzoom':
 				// tutto in .dzi
-				return makePaths('.png', '.dzi', '.dzi', '.dzi');
+				return makePaths(extDict, '.dzi', '.dzi', '.dzi');
 
 			// Estendi qui quando implementerai altri layout
 			case 'google':
@@ -230,6 +237,8 @@ class LayerRSC extends Layer {
 	loadJson(url) {
 		(async () => {
 
+			console.log("Loading RSC config from ", url);
+
 			const json = await Util.loadJSON(url);
 			// console.log(json);
 
@@ -238,24 +247,41 @@ class LayerRSC extends Layer {
 
 			const sm = json.input_params.sparsity_multiplier;
 			console.log("INPUT", json.input_params);
-			const configPaths = this.imageUrl(url, sm);
+			const configPaths = this.imageUrl(json, url, sm);
 
 			this.shader.init(json);
 			const urls = [];
 			this.rasters = [];
 
 			console.log("Set Raster DICT ", configPaths.dictpath)
-			// DICT (static texture) 16bit rgba ui
-			await this.addStaticTexture({
-				url: configPaths.dictpath,
-				uniform: 'dict',
-				sizeUniform: 'dictionary_size',
-				format: 'rgb16f',
-				isLinear: true,
-				dataLoader: LayerRSC.pngLoaderToFloat,
-				use16Bit: true,
-				buildMipmaps: false
-			});
+
+			if (json['dictionary_quantizer_bits'] && json['dictionary_quantizer_bits'] === 16) {
+				console.log("Using 16 bit dictionary texture");
+				// DICT (static texture) 16bit rgba ui
+				await this.addStaticTexture({
+					url: configPaths.dictpath,
+					uniform: 'dict',
+					sizeUniform: 'dictionary_size',
+					format: 'rgb16f',
+					isLinear: true,
+					dataLoader: LayerRSC.pngLoaderToFloat,
+					use16Bit: true,
+					buildMipmaps: false
+				});
+			} else {
+				console.log("Using 8 bit dictionary texture");
+
+				// DICT (static texture) 8bit rgba u
+				await this.addStaticTexture({
+					url: configPaths.dictpath,
+					uniform: 'dict',
+					sizeUniform: 'dictionary_size',
+					format: 'rgba',
+					isLinear: true,
+					buildMipmaps: false,
+					use16Bit: false
+				});
+			}
 
 			// AVG 
 			console.log("Set Raster AVG ", configPaths.avgpath)
@@ -280,7 +306,7 @@ class LayerRSC extends Layer {
 				this.rasters.push(raster_coef);
 			}
 			this.layout.setUrls(urls);
-			const tld = json.input_params.training_light_directions;
+			const tld = json.output_params.lights;
 			this.lightDirs_ = Array.isArray(tld)
 				? tld
 				: [];
@@ -291,6 +317,7 @@ class LayerRSC extends Layer {
 				return n > 0 ? [x / n, y / n, z / n] : [0, 0, 0];
 			});
 
+			console.log("RSC Light Directions: ", this.lightDirs_);
 			// Notifica che il layer è stato caricato
 			this.emit('config_ready');
 

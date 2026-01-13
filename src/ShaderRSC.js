@@ -149,24 +149,49 @@ class ShaderRSC extends Shader {
 		// Coefficients stored in 8 jpg, converted to float directly by loader
 		// Indices stored in 10 bits packed in 32 bit uvec4
 		console.log("CONFIG = ", this.config);
-		const  avg_scale = this.config.output_params.average_range ;   
-		const dict_scale = this.config.output_params.dictionary_atlas_range;
-		const coef_scale = this.config.output_params.coefficients_range;
+		const avg_min = [this.config.output_params.average_quantizer_min_max[0][0],
+						 this.config.output_params.average_quantizer_min_max[1][0],
+						 this.config.output_params.average_quantizer_min_max[2][0]];
+		const  avg_scale = [this.config.output_params.average_quantizer_min_max[0][1] - this.config.output_params.average_quantizer_min_max[0][0],
+								this.config.output_params.average_quantizer_min_max[1][1] - this.config.output_params.average_quantizer_min_max[1][0],
+								this.config.output_params.average_quantizer_min_max[2][1] - this.config.output_params.average_quantizer_min_max[2][0]];   
+		const dictionary_min = [this.config.output_params.dictionary_quantizer_min_max[0][0],
+									this.config.output_params.dictionary_quantizer_min_max[1][0],
+									this.config.output_params.dictionary_quantizer_min_max[2][0]];
+		const dictionary_scale = [this.config.output_params.dictionary_quantizer_min_max[0][1] - this.config.output_params.dictionary_quantizer_min_max[0][0],
+									this.config.output_params.dictionary_quantizer_min_max[1][1] - this.config.output_params.dictionary_quantizer_min_max[1][0],
+									this.config.output_params.dictionary_quantizer_min_max[2][1] - this.config.output_params.dictionary_quantizer_min_max[2][0]];
+
+		const sparsity_multiplier = this.config.input_params.sparsity_multiplier;
+		console.log("Sparsity Multiplier: ", sparsity_multiplier);
+		const sparsity = this.config.output_params.sparsity;
+		console.log("Sparsity: ", sparsity);
+		const coef_min = new Float32Array(sparsity);
+		const coef_scale = new Float32Array(sparsity);
+
+		for(let i = 0; i < sparsity; ++i) {
+			const cqmmi = this.config.output_params.coefficient_quantizer_min_max[i];
+			coef_min[i] = cqmmi[0];
+			coef_scale[i] = cqmmi[1] - cqmmi[0];
+		}
+		
+		console.log("Coefficient mins: ", coef_min);
+		console.log("Coefficient scales: ", coef_scale);
 		const atom_size = [this.config.input_params.dictionary_atlas_atom_tile_w,  this.config.input_params.dictionary_atlas_atom_tile_h];
-		const atom_count_x = this.config.input_params.dictionary_atom_count_x ? this.config.input_params.dictionary_atom_count_x : 32;
+		const atom_count_x = this.config.input_params.dictionary_atlas_atom_tile_nx ? this.config.input_params.dictionary_atlas_atom_tile_nx : 32;
 
 		this.registerUniforms({
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 
-			average_min: { type: 'float', needsUpdate: false, size: 1, value: this.config.output_params.average_min },
-			average_scale: { type: 'float', needsUpdate: false, size: 1, value: avg_scale },
-			coefficients_min: { type: 'float', needsUpdate: false, size: 1, value: this.config.output_params.coefficients_min },
-			coefficients_scale: { type: 'float', needsUpdate: false, size: 1, value: coef_scale },
-			dictionary_min: { type: 'float', needsUpdate: false, size: 1, value: this.config.output_params.dictionary_atlas_min },
-			dictionary_scale: { type: 'float', needsUpdate: false, size: 1, value: dict_scale },
-			dictionary_atlas_atom_tile_size: { type: 'vec2', needsUpdate: false, size: 2, value: atom_size},
+			average_min: { type: 'vec3', needsUpdate: false, size: 1, value: avg_min },
+			average_scale: { type: 'vec3', needsUpdate: false, size: 1, value: avg_scale },
+			coefficients_min: { type: 'vec3', needsUpdate: false, size: sparsity, value: coef_min },
+			coefficients_scale: { type: 'vec3', needsUpdate: false, size: sparsity, value: coef_scale },
+			dictionary_min: { type: 'vec3', needsUpdate: false, size: 1, value: dictionary_min },
+			dictionary_scale: { type: 'vec3', needsUpdate: false, size: 1, value: dictionary_scale },
+			dictionary_atlas_atom_tile_size: { type: 'vec2', needsUpdate: false, size: 1, value: atom_size},
 			dictionary_atom_count_x: { type: 'int', needsUpdate: false, size: 1, value: atom_count_x},
-			sparsity_multiplier: { type: 'int', needsUpdate: false, size: 1, value: this.config.input_params.sparsity_multiplier}, 
+			sparsity_multiplier: { type: 'int', needsUpdate: false, size: 1, value: sparsity_multiplier}, 
 		});
 
 		// Print all registered uniforms to console
@@ -186,7 +211,7 @@ class ShaderRSC extends Shader {
 		let str = `uvec4 val = texture(` + idx + `, v_texcoord);
 uint decoded_uint = (val.r << 0) | (val.g << 8) | (val.b << 16) | (val.a << 24);
 uint mask = uint(1023);
-uvec3 ` + param_name + ` = uvec3((decoded_uint >> 20) & mask, (decoded_uint >> 10) & mask, decoded_uint & mask); 
+uvec3 ` + param_name + ` = uvec3((decoded_uint >> 0) & mask, (decoded_uint >> 10) & mask, (decoded_uint>>20) & mask); 
 `;
 
 		return str;
@@ -211,9 +236,9 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 	}
 
 	// Return shader string to fetch the coefficient idx (idx00 or idx01) color dequantized and store into param_name
-	get_coefficient_color_str(idx, param_name="color") {
+	get_coefficient_color_str(idxstr, idx, param_name="color") {
 		// Return color visible from the image (without scaling and min)
-		let str = `vec3 ${param_name} = texture( ${idx}, v_texcoord).rgb;
+		let str = `vec3 ${param_name} = texture( ${idxstr}, v_texcoord).rgb * coefficients_scale[${idx}] + coefficients_min[${idx}];
 `;
 		return str;
 	}
@@ -221,7 +246,7 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 
 	get_dictionary_color_str(param_name="color") {
 	// Return shader string to fetch the coefficient idx (idx00 or idx01) color dequantized and store into param_name
-    let str = `vec3 ${param_name} = texture(dict, v_texcoord).rgb;	
+    let str = `vec3 ${param_name} = texture(dict, v_texcoord).rgb * average_scale + average_min;	
 `;
 		return str;
 	}
@@ -244,13 +269,14 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 		for(let i = 0; i < sparsity_multiplier; ++i) {
 			const coef_name = 'coef' + Util.padZeros(i, 2);
 			const idx_name = 'idx' + Util.padZeros(i, 2);
-			str += `	color += contribution(${coef_name}, ${idx_name}, light_dir_uv);
+			str += `	color += contribution(${i}, ${coef_name}, ${idx_name}, light_dir_uv);
 `;
 		}	
 		return str;
 	}
 
 	fragShaderSrc() {
+		const sparsity_multiplier = this.config.input_params.sparsity_multiplier;
 		let str = `
 
 in vec2 v_texcoord;
@@ -260,12 +286,12 @@ uniform vec2 dictionary_size;
 uniform vec2  dictionary_atlas_atom_tile_size;
 uniform int   dictionary_atom_count_x;
 uniform int   sparsity_multiplier;
-uniform float dictionary_min;
-uniform float dictionary_scale;
-uniform float average_min;
-uniform float average_scale;
-uniform float coefficients_min;
-uniform float coefficients_scale;
+uniform vec3 dictionary_min;
+uniform vec3 dictionary_scale;
+uniform vec3 average_min;
+uniform vec3 average_scale;
+uniform vec3 coefficients_min[${sparsity_multiplier}];
+uniform vec3 coefficients_scale[${sparsity_multiplier}];
 
 
 vec2 uv_from_light_direction(vec3 n) {
@@ -297,18 +323,18 @@ vec2 dictionary_uv_from_index_tile_xy(uint tile_index, float x, float y) {
 	return res;
 }
 
-vec3 contribution(sampler2D coef_sampler, usampler2D idx_sampler, vec2 light_dir_uv) {
+vec3 contribution(int index, sampler2D coef_sampler, usampler2D idx_sampler, vec2 light_dir_uv) {
 	vec3 result = vec3(0,0,0);
 
 	// Read coefficients
 	vec4 coef_val = texture(coef_sampler, v_texcoord);
-	vec3 coef = vec3(coef_val.r, coef_val.g, coef_val.b)  * coefficients_scale + coefficients_min;
+	vec3 coef = vec3(coef_val.r, coef_val.g, coef_val.b)  * coefficients_scale[index] + coefficients_min[index];
 	
 	// Read / decode indices
 	uvec4 idx_val = texture(idx_sampler, v_texcoord);
 	uint decoded_uint = (idx_val.r << 0) | (idx_val.g << 8) | (idx_val.b << 16) | (idx_val.a << 24);
 	uint mask = uint(1023);
-	uvec3 idx = uvec3((decoded_uint >> 20) & mask, (decoded_uint >> 10) & mask, decoded_uint & mask); 
+	uvec3 idx = uvec3((decoded_uint >> 0) & mask, (decoded_uint >> 10) & mask, (decoded_uint >> 20) & mask);
 
 	// For each of the 3 indices
 	uint v_tile_idx[3] = uint[](idx.r, idx.g, idx.b);
@@ -345,10 +371,10 @@ vec4 data() {
 				str += this.get_index_color_str("idx01");
 				break;
 			case 'coef00' : 
-				str += this.get_coefficient_color_str("coef00");
+				str += this.get_coefficient_color_str("coef00", 0);
 				break;
 			case 'coef01' : 
-				str += this.get_coefficient_color_str("coef01");
+				str += this.get_coefficient_color_str("coef01", 1);
 				break;
 			case 'dictionary' :
 				str += this.get_dictionary_color_str();
@@ -372,13 +398,14 @@ vec4 data() {
 
 	get_debug_str() {
 		let str = `
-	// Debug mode: show various intermediate values
+	    // Debug mode: show various intermediate values
+		
 		// in your debug fragment code:
 		vec2 light_dir_uv = uv_from_light_direction(light);
 		uvec4 idx_val = texture(idx00, v_texcoord);
 		uint decoded_uint = (idx_val.r << 0) | (idx_val.g << 8) | (idx_val.b << 16) | (idx_val.a << 24);
 		uint mask = uint(1023);
-		uvec3 idx = uvec3((decoded_uint >> 20) & mask, (decoded_uint >> 10) & mask, decoded_uint & mask);
+		uvec3 idx = uvec3((decoded_uint >> 0) & mask, (decoded_uint >> 10) & mask, (decoded_uint >> 20) & mask);
 		vec2 dict_uv = dictionary_uv_from_index_tile_xy(idx.r, light_dir_uv.x, light_dir_uv.y); // dictionary_atlas_atom_tile_size.x/2.0, dictionary_atlas_atom_tile_size.x/2.0);//
 
 		// raw sample (no scale/min)
@@ -386,7 +413,6 @@ vec4 data() {
 
 		// debug output: try each one to inspect
 		vec3 color = dict_raw;  //vec3(dict_uv,0); //vec3(idx)/1023.0; 
-		
 	`;
 		return str;
 	}

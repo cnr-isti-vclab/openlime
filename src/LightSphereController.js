@@ -211,7 +211,7 @@ class LightSphereController {
             // Linear interpolation
             this.lightDir[0] = startDir[0] + (targetDir[0] - startDir[0]) * progress;
             this.lightDir[1] = startDir[1] + (targetDir[1] - startDir[1]) * progress;
-            console.log('LD ', this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
+            // console.log('LD ', this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
             // Update layer controls
             for (const l of this.layers) {
                 if (l.controls.light) l.setControl('light', this.lightDir, 0); // No animation on layer side
@@ -310,7 +310,7 @@ class LightSphereController {
             y = (-this.lightDir[1] + 1.0) * this.dlCanvas.height * 0.5;
         }
 
-        console.log('LD ', this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
+        //console.log('LD ', this.lightDir[0] + ":" + this.lightDir[1] + ":" + LightSphereController.zed(this.lightDir[0], this.lightDir[1]));
         for (const l of this.layers) {
             if (l.controls.light) l.setControl('light', this.lightDir, 5);
         }

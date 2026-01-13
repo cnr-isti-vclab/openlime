@@ -11,7 +11,7 @@
     <style>
         html,
         body {
-            color: white;
+            color: rgb(143, 30, 30);
             background-color: black;
         }
     </style>
@@ -23,14 +23,16 @@
     <div class="openlime"></div>
     <script src="../../js/openlime.js"></script>
     <script>
+        console.log('Start OpenLIME version:', OpenLIME.VERSION);
+
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.Viewer('.openlime');
 
         const layer0 = new OpenLIME.Layer({
-            label: 'RealRTI04',
-            layout: 'deepzoom',
+            label: 'item1',
+            layout: 'image',
             type: 'rsc',
-            url: '../../assets/rsc/Ghiberti_ksvd_dzi/info.json',
+            url: '../../assets/rsc/item1/info.json',
             normals: false
         });
         lime.addLayer('base', layer0);
