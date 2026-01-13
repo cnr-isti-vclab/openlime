@@ -181,24 +181,24 @@ class LayerRSC extends Layer {
 		const basename = Util.basenameNoExt(url);
 		const basepath = Util.dirname(url);
 
-		const extDict = json['input_params']['dictionary_format'];
-		const extAvg  = json['input_params']['sparse_coding_average_format'];
-		const extCoef = json['input_params']['sparse_coding_coefficient_format'];
-		const extIdx  = json['output_params']['index_format'];
+		const extDict = "." + json['input_params']['dictionary_format'];
+		const extAvg  = "." + json['input_params']['sparse_coding_average_format'];
+		const extCoef = "." + json['input_params']['sparse_coding_coefficient_format'];
+		const extIdx  = "." + json['output_params']['index_format'];
 
-		console.log("Extensions: ", extDict, extAvg, extCoef, extIdx);
+		console.log("Extensions: dict", extDict, ", avg", extAvg, ", coef", extCoef, ", idx", extIdx);
 		// Select extensions by layout
 		const makePaths = (extDict, extAvg, extIdx, extCoef) => {
 			const idxpaths = [];
 			const coefpaths = [];
 			for (let i = 0; i < multiply; i++) {
 				const s = Util.padZeros(i, 2);
-				idxpaths.push(`${basepath}/sparse_index_${s}.${extIdx}`);
-				coefpaths.push(`${basepath}/sparse_coeff_${s}.${extCoef}`);
+				idxpaths.push(`${basepath}/sparse_index_${s}${extIdx}`);
+				coefpaths.push(`${basepath}/sparse_coeff_${s}${extCoef}`);
 			}
 			return {
-				dictpath: `${basepath}/dictionary_atlas.${extDict}`,
-				avgpath: `${basepath}/avg.${extAvg}`,
+				dictpath: `${basepath}/dictionary_atlas${extDict}`,
+				avgpath: `${basepath}/avg${extAvg}`,
 				idxpaths,
 				coefpaths
 			};

@@ -23,39 +23,29 @@
     <div class="openlime"></div>
     <script src="../../js/openlime.js"></script>
     <script>
-        console.log('Start OpenLIME version:', OpenLIME.VERSION);
-
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.Viewer('.openlime');
+        
+        // Create a Layer RSC from Deep Zoom Image
+        // const layer0 = new OpenLIME.Layer({
+        //     label: 'item3_dzi',
+        //     layout: 'deepzoom',
+        //     url: '../../assets/rsc/item3_dzi/info.json',
+        //     type: 'rsc',
+        //     normals: false
+        // });
 
+        // Create a Layer RSC with standard image format
         const layer0 = new OpenLIME.Layer({
             label: 'item1',
             layout: 'image',
-            type: 'rsc',
             url: '../../assets/rsc/item1/info.json',
+            type: 'rsc',
             normals: false
         });
         lime.addLayer('base', layer0);
 
-        // const layer0 = new OpenLIME.Layer({
-        //     label: 'RealRTI04',
-        //     layout: 'image',
-        //     type: 'rsc',
-        //     url: '../../assets/rsc/Ghiberti_ksvd/info.json',
-        //     normals: false
-        // });
-        // lime.addLayer('base', layer0);
-
-        // Relight Sparse Coding deepzoom example derived from RealRTI/item3
-        // const layer0 = new OpenLIME.Layer({
-        //     label: 'RealRTI04',
-        //     layout: 'image',
-        //     type: 'rsc',
-        //     url: '../../assets/rsc/RealRTI04_ksvd/info.json',
-        //     normals: false
-        // });
-        // lime.addLayer('base', layer0);
-
+        // Create a Light Sphere Controller
         const lsc = new OpenLIME.LightSphereController('.openlime',
             { enableLightMarkers: true, enableLightSnap: true });
         const draggableLsc = new OpenLIME.Draggable(

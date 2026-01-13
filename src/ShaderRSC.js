@@ -148,7 +148,6 @@ class ShaderRSC extends Shader {
 		// Dictionary stored in 16 bit png
 		// Coefficients stored in 8 jpg, converted to float directly by loader
 		// Indices stored in 10 bits packed in 32 bit uvec4
-		console.log("CONFIG = ", this.config);
 		const avg_min = [this.config.output_params.average_quantizer_min_max[0][0],
 						 this.config.output_params.average_quantizer_min_max[1][0],
 						 this.config.output_params.average_quantizer_min_max[2][0]];
@@ -163,9 +162,7 @@ class ShaderRSC extends Shader {
 									this.config.output_params.dictionary_quantizer_min_max[2][1] - this.config.output_params.dictionary_quantizer_min_max[2][0]];
 
 		const sparsity_multiplier = this.config.input_params.sparsity_multiplier;
-		console.log("Sparsity Multiplier: ", sparsity_multiplier);
 		const sparsity = this.config.output_params.sparsity;
-		console.log("Sparsity: ", sparsity);
 		const coef_min = new Float32Array(sparsity);
 		const coef_scale = new Float32Array(sparsity);
 
@@ -175,8 +172,6 @@ class ShaderRSC extends Shader {
 			coef_scale[i] = cqmmi[1] - cqmmi[0];
 		}
 		
-		console.log("Coefficient mins: ", coef_min);
-		console.log("Coefficient scales: ", coef_scale);
 		const atom_size = [this.config.input_params.dictionary_atlas_atom_tile_w,  this.config.input_params.dictionary_atlas_atom_tile_h];
 		const atom_count_x = this.config.input_params.dictionary_atlas_atom_tile_nx ? this.config.input_params.dictionary_atlas_atom_tile_nx : 32;
 
@@ -198,13 +193,12 @@ class ShaderRSC extends Shader {
 		Object.entries(this.uniforms).forEach(([key, uniform]) => {
 			console.log(`${key}:`, uniform.value);
 		});
+
 		// console.log("SHADER CODE");
 		// console.log(this.fragShaderSrc());
 		
-
 		this.needsUpdate = true;
 	}
-
 
 	// Return a shader string to fetch index idx and convert to 3 10 bits components stored in a var called param_name
 	get_decoded_index(idx, param_name) {
