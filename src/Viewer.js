@@ -253,8 +253,8 @@ class Viewer {
 	resize(width, height) {
 		if (width == 0 || height == 0) return;
 		// Test with retina display!
-		this.canvasElement.width = width * window.devicePixelRatio;
-		this.canvasElement.height = height * window.devicePixelRatio;
+		this.canvasElement.width = width; // FIXME REMOVED  * window.devicePixelRatio;
+		this.canvasElement.height = height; // FIXME REMOVED  * window.devicePixelRatio;
 
 		let view = { x: 0, y: 0, dx: width, dy: height, w: width, h: height };
 		this.camera.setViewport(view);

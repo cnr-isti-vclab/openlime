@@ -153,6 +153,13 @@ class Canvas {
 		console.log('Support for linear filtering on float textures:', this.hasLinearFloat);
 	}
 
+	canvasWidthHeight() {
+		// I don't know why, but we need to square the DPR here,
+		// canvasElement.width and height are not multiplied by DPR in Viewer.js
+		// Probably DPR is already applied somewhere else?
+		const dpr = window.devicePixelRatio ? window.devicePixelRatio * window.devicePixelRatio : 1;
+	 	return { width: this.canvasElement.width * dpr, height: this.canvasElement.height  * dpr};
+	}
 	/**
 	 * Sets up the offscreen framebuffer for rendering
 	 * @private
@@ -169,8 +176,7 @@ class Canvas {
 		gl.bindTexture(gl.TEXTURE_2D, this.offscreenTexture);
 
 		// Define size based on canvas size
-		const width = this.canvasElement.width;
-		const height = this.canvasElement.height;
+		const {width, height} = this.canvasWidthHeight();
 
 		// Initialize texture with null (we'll resize it properly in resizeOffscreenFramebuffer)
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -216,8 +222,7 @@ class Canvas {
 		if (!this.useOffscreenFramebuffer || !this.offscreenFramebuffer) return;
 
 		const gl = this.gl;
-		const width = this.canvasElement.width;
-		const height = this.canvasElement.height;
+		const {width, height} = this.canvasWidthHeight();
 
 		// Resize texture
 		gl.bindTexture(gl.TEXTURE_2D, this.offscreenTexture);
