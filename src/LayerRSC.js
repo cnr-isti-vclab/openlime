@@ -55,16 +55,12 @@ class LayerRSC extends Layer {
 	 * Creates a new LayerRSC instance
 	 * @param {LayerRSCOptions} options - Configuration options
 	 * @throws {Error} If rasters options is not empty
-	 * @throws {Error} If url is not provided
 	 */
 	constructor(options) {
 		super(options);
 
 		if (Object.keys(this.rasters).length != 0)
 			throw "Rasters options should be empty!";
-
-		if (!this.url)
-			throw "Url option is required";
 
 		this.lightDirs_ = [];
 
@@ -74,7 +70,9 @@ class LayerRSC extends Layer {
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 
-		this.loadJson(this.url);
+		if (!this.sourceLayer) {
+			this.loadJson(this.url);
+		}
 	}
 
 	/**

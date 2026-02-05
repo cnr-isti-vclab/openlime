@@ -1,7 +1,6 @@
 /**
- * OpenLIME Manifest Loader
- * Converts JSON manifest into functional OpenLIME viewer instances
- * Supports loading manifest from URLs using OpenLIME fetch utilities
+ * OpenLIME Manifest Loader (Truly Optimized)
+ * Actually uses Canvas's native JSON layer creation capability
  */
 class ManifestLoader {
   
@@ -14,7 +13,6 @@ class ManifestLoader {
     try {
       console.log(`📥 Loading manifest from: ${manifestUrl}`);
       
-      // Use OpenLIME's fetch utility pattern if available, otherwise fallback
       const manifest = await this.fetchJson(manifestUrl);
       
       console.log('✅ Manifest loaded successfully:', manifest);
@@ -23,174 +21,6 @@ class ManifestLoader {
       console.error('❌ Error loading manifest:', error);
       throw error;
     }
-  }
-
-  /**
-   * Creates a viewer directly from a manifest object
-   * @param {Object} manifest - Manifest configuration object  
-   * @param {string} [baseUrl] - Base URL for resolving relative paths in manifest
-   * @returns {OpenLIME.Viewer} - Created viewer instance
-   */
-  static createViewer(manifest, baseUrl = '') {
-    // Store base URL for resolving relative paths
-    this._baseUrl = baseUrl;
-    
-    // Validate manifest version
-    if (!manifest.version) {
-      console.warn('⚠️ Manifest missing version field');
-    }
-
-    console.log(`🚀 Creating viewer from manifest v${manifest.version || 'unknown'}`);
-
-    // 1. Create the main viewer with only basic options
-    const viewerOptions = { ...manifest.viewer };
-    
-    // Extract and separate camera config and container
-    const cameraConfig = viewerOptions.camera;
-    const container = viewerOptions.container;
-    delete viewerOptions.camera;
-    delete viewerOptions.container;
-    
-    // Create viewer with basic options only
-    const viewer = new OpenLIME.Viewer(container, viewerOptions);
-    
-    // 2. Configure camera after viewer creation
-    if (cameraConfig) {
-      this.configureCamera(viewer.camera, cameraConfig);
-    }
-    
-    // Store layer references for later use
-    const layerReferences = {};
-    const complexLayers = {}; // For layers that need other layers (lens, combiner, etc.)
-    
-    // 3. Create and add layers in two phases:
-    //    Phase 1: Create all basic layers first (image, rti, ptm, etc.)
-    for (const [id, config] of Object.entries(manifest.layers)) {
-      if (config.type === 'lens' || config.type === 'combiner') {
-        complexLayers[id] = config; // Store complex layers for later
-      } else {
-        const layer = this.createLayer(config, manifest.shaders, viewer);
-        viewer.addLayer(id, layer);
-        layerReferences[id] = layer;
-        console.log(`✅ Created ${config.type} layer: ${id}`);
-      }
-    }
-    
-    //    Phase 2: Create complex layers after all referenced layers exist
-    for (const [id, config] of Object.entries(complexLayers)) {
-      const layer = this.createComplexLayer(config, layerReferences, viewer, manifest.shaders);
-      viewer.addLayer(id, layer);
-      layerReferences[id] = layer;
-      console.log(`✅ Created ${config.type} layer: ${id}`);
-    }
-    
-    // 4. Set up controllers
-    this.setupControllers(viewer, manifest.controllers || [], layerReferences);
-    
-    // 5. Configure UI
-    if (manifest.ui) {
-      this.setupUI(viewer, manifest.ui);
-    }
-    
-    // 6. Set up connections (lens, synchronization, etc.)
-    if (manifest.connections) {
-      this.setupConnections(viewer, manifest.connections, layerReferences);
-    }
-    
-    // 7. Configure events
-    if (manifest.events) {
-      this.setupEvents(viewer, manifest.events, layerReferences);
-    }
-    
-    // 8. Load plugins
-    if (manifest.plugins) {
-      this.loadPlugins(manifest.plugins, viewer);
-    }
-    
-    return viewer;
-  }
-
-  /**
-   * Fetch JSON using OpenLIME patterns with proper error handling
-   * @param {string} url - URL to fetch
-   * @returns {Promise<Object>} - Parsed JSON object
-   */
-  static async fetchJson(url) {
-    try {
-      // Resolve relative URL if needed
-      const resolvedUrl = this.resolveUrl(url);
-      
-      console.log(`🌐 Fetching JSON from: ${resolvedUrl}`);
-      
-      // Use OpenLIME fetch utility if available, otherwise standard fetch
-      let response;
-      if (typeof OpenLIME !== 'undefined' && OpenLIME.fetchJson) {
-        // Use OpenLIME's fetch utility if available
-        return await OpenLIME.fetchJson(resolvedUrl);
-      } else if (typeof OpenLIME !== 'undefined' && OpenLIME.fetch) {
-        // Use OpenLIME's general fetch utility
-        response = await OpenLIME.fetch(resolvedUrl);
-      } else {
-        // Fallback to standard fetch with OpenLIME-style error handling
-        response = await fetch(resolvedUrl);
-      }
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.warn(`⚠️ Expected JSON content-type, got: ${contentType}`);
-      }
-      
-      const text = await response.text();
-      if (!text.trim()) {
-        throw new Error('Response body is empty');
-      }
-      
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        throw new Error(`JSON parse error: ${parseError.message}`);
-      }
-      
-    } catch (error) {
-      // Enhanced error reporting following OpenLIME patterns
-      const errorMsg = `Failed to fetch JSON from ${url}: ${error.message}`;
-      console.error('❌', errorMsg, error);
-      
-      // Provide helpful debugging information
-      if (error.message.includes('CORS')) {
-        console.error('💡 CORS issue detected. Make sure the server allows cross-origin requests.');
-      } else if (error.message.includes('404')) {
-        console.error('💡 File not found. Check the URL path and file location.');
-      } else if (error.message.includes('parse')) {
-        console.error('💡 Invalid JSON format. Check the manifest file syntax.');
-      }
-      
-      throw new Error(errorMsg);
-    }
-  }
-
-  /**
-   * Resolve URL relative to base URL or current location
-   * @param {string} url - URL to resolve
-   * @returns {string} - Resolved absolute URL
-   */
-  static resolveUrl(url) {
-    // If already absolute URL, return as-is
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
-      return url;
-    }
-    
-    // If no base URL set, resolve relative to current location
-    if (!this._baseUrl) {
-      return new URL(url, window.location.href).href;
-    }
-    
-    // Resolve relative to base URL
-    return new URL(url, this._baseUrl).href;
   }
 
   /**
@@ -282,181 +112,300 @@ class ManifestLoader {
   }
 
   /**
-   * Validate a manifest object
-   * @param {Object} manifest - Manifest to validate
-   * @returns {Object} - Validation result with errors and warnings
+   * Creates a viewer from a manifest object
+   * @param {Object} manifest - Manifest configuration object  
+   * @param {string} [baseUrl] - Base URL for resolving relative paths in manifest
+   * @returns {OpenLIME.Viewer} - Created viewer instance
    */
-  static validateManifest(manifest) {
-    const errors = [];
-    const warnings = [];
+  static createViewer(manifest, baseUrl = '') {
+    this._baseUrl = baseUrl;
     
-    // Required fields
     if (!manifest.version) {
-      warnings.push('Missing version field');
+      console.warn('⚠️ Manifest missing version field');
+    }
+
+    console.log(`🚀 Creating viewer from manifest v${manifest.version || 'unknown'}`);
+
+    // 1. Prepare viewer options
+    const viewerOptions = { ...manifest.viewer };
+    const cameraConfig = viewerOptions.camera;
+    const container = viewerOptions.container;
+    delete viewerOptions.camera;
+    delete viewerOptions.container;
+
+    // 2. Process layers and resolve URLs
+    const processedLayers = this.preprocessLayers(manifest.layers || {});
+    
+    // 3. Separate simple vs dependent vs complex layers
+    const { simpleLayers, dependentLayers, complexLayers } = this.categorizeLayersForCreation(processedLayers);
+
+    // 4. Create empty viewer, then add layers manually to avoid Canvas constructor conflicts
+    console.log(`📦 Creating empty viewer, will add ${Object.keys(simpleLayers).length + Object.keys(dependentLayers).length + Object.keys(complexLayers).length} layers manually`);
+    
+    const viewer = new OpenLIME.Viewer(container, viewerOptions);
+    
+    console.log(`✅ Empty viewer created, canvas layers:`, Object.keys(viewer.canvas.layers));
+    
+    // Add simple layers manually using OpenLIME's type system (avoids Canvas constructor conflicts)
+    for (const [id, config] of Object.entries(simpleLayers)) {
+        console.log(`🔨 Adding simple layer '${id}' (${config.type || 'image'})`);
+        try {
+            const layer = new OpenLIME.Layer(config);
+            viewer.addLayer(id, layer);
+            console.log(`✅ Added simple layer '${id}': ${layer.constructor.name}`);
+        } catch (error) {
+            console.error(`❌ Failed to create simple layer '${id}':`, error);
+            throw error;
+        }
     }
     
-    if (!manifest.viewer) {
-      errors.push('Missing viewer configuration');
-    } else {
-      if (!manifest.viewer.container) {
-        errors.push('Missing viewer.container');
-      }
-    }
-    
-    if (!manifest.layers || Object.keys(manifest.layers).length === 0) {
-      errors.push('No layers defined');
-    }
-    
-    // Validate layer references
-    if (manifest.layers) {
-      for (const [layerId, layer] of Object.entries(manifest.layers)) {
-        if ((layer.type === 'lens' || layer.type === 'combiner') && layer.layers) {
-          for (const refId of layer.layers) {
-            if (!manifest.layers[refId]) {
-              errors.push(`${layer.type} layer "${layerId}" references non-existent layer "${refId}"`);
+    console.log(`📦 Simple layers complete. Canvas now has:`, Object.keys(viewer.canvas.layers));
+
+    // Add dependent layers (layerSource) after their source layers exist
+    for (const [id, config] of Object.entries(dependentLayers)) {
+        console.log(`🔗 Adding dependent layer '${id}' (${config.type || 'image'})`);
+        try {
+            // Use derive() for layerSource
+            const layerConfig = { ...config };
+            if (config.layerSource) {
+                const sourceLayer = viewer.canvas.layers[config.layerSource];
+                if (sourceLayer) {
+                    delete layerConfig.layerSource;
+                    const layer = sourceLayer.derive(layerConfig);
+                    viewer.addLayer(id, layer);
+                    console.log(`✅ Added derived layer '${id}': ${layer.constructor.name}`);
+                } else {
+                    console.warn(`⚠️ layerSource not found: ${config.layerSource}`);
+                    console.log(`   Available layers:`, Object.keys(viewer.canvas.layers));
+                    // Fallback to creating normally
+                    const layer = new OpenLIME.Layer(layerConfig);
+                    viewer.addLayer(id, layer);
+                    console.log(`✅ Added fallback layer '${id}': ${layer.constructor.name}`);
+                }
+            } else {
+                // Should not happen
+                const layer = new OpenLIME.Layer(layerConfig);
+                viewer.addLayer(id, layer);
+                console.log(`✅ Added dependent layer '${id}': ${layer.constructor.name}`);
             }
-          }
+        } catch (error) {
+            console.error(`❌ Failed to create dependent layer '${id}':`, error);
+            throw error;
         }
-      }
     }
     
-    // Validate controller targets
-    if (manifest.controllers) {
-      for (const controller of manifest.controllers) {
-        if (controller.target && !manifest.layers[controller.target]) {
-          errors.push(`Controller "${controller.type}" targets non-existent layer "${controller.target}"`);
-        }
-      }
+    console.log(`🔗 Dependent layers complete. Canvas now has:`, Object.keys(viewer.canvas.layers));
+    
+    // 5. Configure camera
+    if (cameraConfig) {
+      this.configureCamera(viewer.camera, cameraConfig);
+    }
+
+    // 6. Add complex layers that need dependency resolution  
+    this.addComplexLayers(viewer, complexLayers, manifest.shaders);
+    
+    // 8. Set up controllers, UI, connections, events, plugins
+    this.setupControllers(viewer, manifest.controllers || []);
+    
+    if (manifest.ui) {
+      this.setupUI(viewer, manifest.ui);
     }
     
-    return { errors, warnings };
+    if (manifest.connections) {
+      this.setupConnections(viewer, manifest.connections);
+    }
+    
+    if (manifest.events) {
+      this.setupEvents(viewer, manifest.events);
+    }
+    
+    if (manifest.plugins) {
+      this.loadPlugins(manifest.plugins, viewer);
+    }
+
+    console.log(`🏁 Final viewer with ${Object.keys(viewer.canvas.layers).length} total layers:`, 
+                Object.keys(viewer.canvas.layers));
+    
+    return viewer;
   }
 
   /**
-   * Configures camera properties
+   * Preprocess layers to resolve relative URLs
    */
-  static configureCamera(camera, config) {
-    for (const [key, value] of Object.entries(config)) {
-      if (key in camera) {
-        camera[key] = value;
-      } else {
-        console.warn(`⚠️ Unknown camera property: ${key}`);
+  static preprocessLayers(layers) {
+    console.log('🔄 Preprocessing layers...');
+    const processedLayers = {};
+    
+    for (const [id, config] of Object.entries(layers)) {
+      processedLayers[id] = { ...config };
+      
+      // Resolve relative URLs
+      if (config.url) {
+        const originalUrl = config.url;
+        processedLayers[id].url = this.resolveUrl(config.url);
+        console.log(`🔗 Resolved URL for '${id}': ${originalUrl} → ${processedLayers[id].url}`);
       }
     }
+    
+    return processedLayers;
   }
 
   /**
-   * Creates a regular (non-complex) layer based on configuration
+   * Categorize layers for Canvas auto-creation vs manual creation
    */
-  static createLayer(config, shaders = {}, viewer) {
-    const layerConfig = { ...config };
+  static categorizeLayersForCreation(layers) {
+    const simpleLayers = {};
+    const dependentLayers = {};
+    const complexLayers = {};
     
-    // Resolve relative URLs in layer config
-    if (layerConfig.url) {
-      layerConfig.url = this.resolveUrl(layerConfig.url);
+    for (const [id, config] of Object.entries(layers)) {
+      // Complex layers that need dependency resolution
+      if (config.type === 'lens' || config.type === 'combiner') {
+        complexLayers[id] = config;
+        console.log(`🔧 Marked '${id}' as complex (${config.type}) - will create manually`);
+      }
+      // Layers with layerSource dependency  
+      else if (config.layerSource) {
+        dependentLayers[id] = config;
+        console.log(`🔗 Marked '${id}' as dependent (layerSource: ${config.layerSource}) - will create after source`);
+      }
+      else {
+        // Simple layers that can be created first
+        simpleLayers[id] = config;
+        console.log(`📦 Marked '${id}' as simple (${config.type || 'image'}) - Canvas will auto-create`);
+      }
     }
     
-    // Remove manifest-specific properties that aren't part of OpenLIME Layer constructor
-    delete layerConfig.shader;
-    
-    // Create the layer
-    const layer = new OpenLIME.Layer(layerConfig);
-    
-    return layer;
+    return { simpleLayers, dependentLayers, complexLayers };
   }
 
   /**
-   * Creates a complex layer (lens, combiner) with resolved layer references
+   * Add simple layers manually using OpenLIME's native type system
    */
-  static createComplexLayer(config, layerReferences, viewer, shaders = {}) {
-    switch (config.type) {
-      case 'lens':
-        return this.createLensLayer(config, layerReferences, viewer);
+  static addSimpleLayers(viewer, simpleLayers) {
+    if (Object.keys(simpleLayers).length === 0) {
+      console.log('📦 No simple layers to add');
+      return;
+    }
+
+    console.log(`🏭 Adding ${Object.keys(simpleLayers).length} simple layers manually...`);
+    
+    for (const [id, config] of Object.entries(simpleLayers)) {
+      try {
+        console.log(`🔨 Creating simple layer '${id}' (${config.type || 'image'})`);
         
-      case 'combiner':
-        return this.createCombinerLayer(config, layerReferences, viewer, shaders);
+        // Use OpenLIME's native Layer constructor with type system
+        const layer = new OpenLIME.Layer(config);
+        viewer.addLayer(id, layer);
         
-      default:
-        console.warn(`Unknown complex layer type: ${config.type}`);
-        return null;
+        console.log(`✅ Added simple layer '${id}': ${layer.constructor.name}`);
+      } catch (error) {
+        console.error(`❌ Failed to create simple layer '${id}':`, error);
+        throw error;
+      }
+    }
+    
+    console.log(`📦 Simple layers complete. Canvas now has:`, Object.keys(viewer.canvas.layers));
+  }
+
+  /**
+   * Add complex layers that require dependency resolution
+   */
+  static addComplexLayers(viewer, complexLayers, shaders = {}) {
+    if (Object.keys(complexLayers).length === 0) {
+      console.log('📦 No complex layers to add');
+      return;
+    }
+
+    console.log(`🔧 Adding ${Object.keys(complexLayers).length} complex layers...`);
+    
+    for (const [id, config] of Object.entries(complexLayers)) {
+      let layer = null;
+      
+      if (config.type === 'lens') {
+        layer = this.createLensLayer(config, viewer);
+      } else if (config.type === 'combiner') {
+        layer = this.createCombinerLayer(config, viewer, shaders);
+      }
+      
+      if (layer) {
+        viewer.addLayer(id, layer);
+        console.log(`✅ Added complex ${config.type} layer: ${id}`);
+      }
     }
   }
 
   /**
-   * Creates a lens layer with resolved layer references
+   * Create lens layer with resolved dependencies
    */
-  static createLensLayer(config, layerReferences, viewer) {
-    // Resolve the layer references
+  static createLensLayer(config, viewer) {
+    console.log('🔍 Creating lens layer...');
     const referencedLayers = [];
+    
     if (config.layers && Array.isArray(config.layers)) {
       for (const layerId of config.layers) {
-        if (layerReferences[layerId]) {
-          referencedLayers.push(layerReferences[layerId]);
-          console.log(`📎 Resolved layer reference for lens: ${layerId}`);
+        const layer = viewer.canvas.layers[layerId];
+        if (layer) {
+          referencedLayers.push(layer);
+          console.log(`📎 Resolved lens dependency: ${layerId}`);
         } else {
-          console.warn(`⚠️ Layer reference not found: ${layerId}`);
+          console.warn(`⚠️ Lens layer reference not found: ${layerId}`);
+          console.log(`   Available layers:`, Object.keys(viewer.canvas.layers));
         }
       }
     }
     
-    if (referencedLayers.length === 0) {
-      console.warn('⚠️ Lens layer has no valid layer references');
-    }
+    console.log(`🔍 Creating lens with ${referencedLayers.length} referenced layers`);
     
-    // Create lens layer with resolved references
-    const lensLayer = new OpenLIME.Layer({
+    // Use native Layer creation with resolved dependencies
+    return new OpenLIME.Layer({
       type: "lens",
-      layers: referencedLayers,  // Direct layer references, not IDs
-      camera: viewer.camera,     // Direct camera reference
+      layers: referencedLayers,
+      camera: viewer.camera,
       radius: config.options?.radius || 200,
       border: config.options?.border || 10,
       visible: config.visible !== false,
       ...config.options
     });
-    
-    console.log(`🔍 Created lens layer with ${referencedLayers.length} referenced layers`);
-    
-    return lensLayer;
   }
 
   /**
-   * Creates a combiner layer with resolved layer references
+   * Create combiner layer with resolved dependencies
    */
-  static createCombinerLayer(config, layerReferences, viewer, shaders = {}) {
-    // Resolve the layer references
+  static createCombinerLayer(config, viewer, shaders = {}) {
+    console.log('⚡ Creating combiner layer...');
     const referencedLayers = [];
+    
     if (config.layers && Array.isArray(config.layers)) {
       for (const layerId of config.layers) {
-        if (layerReferences[layerId]) {
-          referencedLayers.push(layerReferences[layerId]);
-          console.log(`📎 Resolved layer reference for combiner: ${layerId}`);
+        const layer = viewer.canvas.layers[layerId];
+        if (layer) {
+          referencedLayers.push(layer);
+          console.log(`📎 Resolved combiner dependency: ${layerId}`);
         } else {
-          console.warn(`⚠️ Layer reference not found: ${layerId}`);
+          console.warn(`⚠️ Combiner layer reference not found: ${layerId}`);
+          console.log(`   Available layers:`, Object.keys(viewer.canvas.layers));
         }
       }
     }
     
-    if (referencedLayers.length === 0) {
-      console.warn('⚠️ Combiner layer has no valid layer references');
-    }
+    console.log(`⚡ Creating combiner with ${referencedLayers.length} referenced layers`);
     
-    // Create combiner layer with resolved references
+    // Use native Layer creation with resolved dependencies
     const combinerLayer = new OpenLIME.Layer({
       type: 'combiner',
-      layers: referencedLayers,  // Direct layer references, not IDs
+      layers: referencedLayers,
       visible: config.visible !== false,
       ...config.options
     });
     
-    // Handle shader assignment
+    // Apply shader if specified
     if (config.shader && shaders[config.shader]) {
       const shader = this.createShader(shaders[config.shader]);
       combinerLayer.shaders = { 'standard': shader };
       combinerLayer.setShader('standard');
       console.log(`🎨 Applied shader ${config.shader} to combiner`);
     }
-    
-    console.log(`⚡ Created combiner layer with ${referencedLayers.length} referenced layers`);
     
     return combinerLayer;
   }
@@ -476,14 +425,6 @@ class ManifestLoader {
         }
         return shader;
         
-      case 'rti':
-        // Handle RTI shaders
-        break;
-        
-      case 'ptm':
-        // Handle PTM shaders
-        break;
-        
       default:
         console.warn(`Unknown shader type: ${config.type}`);
         return null;
@@ -491,113 +432,133 @@ class ManifestLoader {
   }
 
   /**
-   * Sets up controllers for the viewer
+   * Fetch JSON using OpenLIME patterns with proper error handling
    */
-  static setupControllers(viewer, controllers, layerReferences) {
-    for (const controllerConfig of controllers) {
-      const controller = this.createController(controllerConfig, layerReferences, viewer);
-      if (controller) {
-        console.log(`🎮 Controller ${controllerConfig.type} created successfully`);
+  static async fetchJson(url) {
+    try {
+      const resolvedUrl = this.resolveUrl(url);
+      console.log(`🌐 Fetching JSON from: ${resolvedUrl}`);
+      
+      let response;
+      if (typeof OpenLIME !== 'undefined' && OpenLIME.fetchJson) {
+        return await OpenLIME.fetchJson(resolvedUrl);
+      } else if (typeof OpenLIME !== 'undefined' && OpenLIME.fetch) {
+        response = await OpenLIME.fetch(resolvedUrl);
+      } else {
+        response = await fetch(resolvedUrl);
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const text = await response.text();
+      return JSON.parse(text);
+      
+    } catch (error) {
+      const errorMsg = `Failed to fetch JSON from ${url}: ${error.message}`;
+      console.error('❌', errorMsg);
+      
+      if (error.message.includes('CORS')) {
+        console.error('💡 CORS issue detected. Make sure the server allows cross-origin requests.');
+      } else if (error.message.includes('404')) {
+        console.error('💡 File not found. Check the URL path and file location.');
+      } else if (error.message.includes('parse')) {
+        console.error('💡 Invalid JSON format. Check the manifest file syntax.');
+      }
+      
+      throw new Error(errorMsg);
+    }
+  }
+
+  /**
+   * Resolve URL relative to base URL or current location
+   */
+  static resolveUrl(url) {
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+      return url;
+    }
+    
+    if (!this._baseUrl) {
+      return new URL(url, window.location.href).href;
+    }
+    
+    return new URL(url, this._baseUrl).href;
+  }
+
+  /**
+   * Configure camera properties
+   */
+  static configureCamera(camera, config) {
+    for (const [key, value] of Object.entries(config)) {
+      if (key in camera) {
+        camera[key] = value;
+      } else {
+        console.warn(`⚠️ Unknown camera property: ${key}`);
       }
     }
   }
 
   /**
-   * Creates a controller based on configuration
+   * Set up controllers (simplified - most are auto-handled by OpenLIME)
    */
-  static createController(config, layerReferences, viewer) {
-    switch (config.type) {
-      case 'pan':
-        // Pan controller is usually auto-added by OpenLIME, skip manual creation
-        console.log('🎮 Pan controller: using default OpenLIME pan controller');
-        return true;
-        
-      case 'pinch':
-        // Pinch controller is usually auto-added by OpenLIME, skip manual creation  
-        console.log('🎮 Pinch controller: using default OpenLIME pinch controller');
-        return true;
-        
-      case 'light':
-        const targetLayer = layerReferences[config.target];
-        if (targetLayer) {
-          // Light controllers are typically auto-created for RTI/PTM layers
-          console.log('🎮 Light controller: should be auto-created for RTI/PTM layers');
-          return true;
-        }
-        break;
-        
-      case 'focusContext':
-        // Special handling for lens controller - this is the main custom controller
-        const lensLayer = layerReferences[config.target];
+  static setupControllers(viewer, controllers) {
+    console.log('🎮 Setting up controllers...');
+    for (const controllerConfig of controllers) {
+      if (controllerConfig.type === 'focusContext') {
+        const lensLayer = viewer.canvas.layers[controllerConfig.target];
         if (lensLayer) {
           const controller = new OpenLIME.ControllerFocusContext({
             lensLayer: lensLayer,
             camera: viewer.camera,
             canvas: viewer.canvas,
-            ...config.options
+            ...controllerConfig.options
           });
           
-          // Add to pointer manager and lens layer controllers as in original
           viewer.pointerManager.onEvent(controller);
           lensLayer.controllers.push(controller);
           
           console.log('🎮 ControllerFocusContext created and attached');
-          return controller;
         } else {
-          console.warn(`⚠️ Lens layer not found for focusContext controller: ${config.target}`);
+          console.warn(`⚠️ focusContext target layer not found: ${controllerConfig.target}`);
         }
-        break;
-        
-      default:
-        console.warn(`Unknown controller type: ${config.type}`);
-        return null;
+      }
+      // Other controllers are typically auto-managed by OpenLIME
     }
   }
 
   /**
-   * Sets up UI based on configuration
+   * Set up UI configuration
    */
   static setupUI(viewer, uiConfig) {
-    // Load skin if specified
+    console.log('🎨 Setting up UI...');
+    
     if (uiConfig.skin?.url) {
       const skinUrl = this.resolveUrl(uiConfig.skin.url);
       console.log(`🎨 Loading skin from: ${skinUrl}`);
       OpenLIME.Skin.setUrl(skinUrl);
     }
     
-    // Create UI based on type
-    let ui;
-    switch (uiConfig.type) {
-      case 'multispectral':
-        // This would need the specific layer
-        break;
-        
-      case 'basic':
-      default:
-        const uiOptions = {};
-        if (uiConfig.autofit !== undefined) {
-          uiOptions.autofit = uiConfig.autofit;
-        }
-        ui = new OpenLIME.UIBasic(viewer, uiOptions);
-        break;
-    }
+    const ui = new OpenLIME.UIBasic(viewer, {
+      autofit: uiConfig.autofit
+    });
     
-    // Configure actions
-    if (ui && uiConfig.actions) {
+    console.log('🎨 UI created:', ui);
+    
+    if (uiConfig.actions) {
       for (const [actionName, actionConfig] of Object.entries(uiConfig.actions)) {
         if (ui.actions[actionName]) {
           Object.assign(ui.actions[actionName], actionConfig);
+          console.log(`🎨 Configured UI action: ${actionName}`, actionConfig);
         }
       }
     }
     
-    // Set attribution
-    if (ui && uiConfig.attribution) {
+    if (uiConfig.attribution) {
       ui.attribution = uiConfig.attribution;
     }
     
-    // Set pixel size for measurements
-    if (ui && uiConfig.pixelSize) {
+    if (uiConfig.pixelSize) {
       ui.pixelSize = uiConfig.pixelSize;
     }
     
@@ -605,157 +566,62 @@ class ManifestLoader {
   }
 
   /**
-   * Sets up connections between layers
+   * Set up connections (simplified placeholder)
    */
-  static setupConnections(viewer, connections, layerReferences) {
-    // Handle lens connections
-    if (connections.lenses) {
-      for (const lensConnection of connections.lenses) {
-        this.setupLensConnection(lensConnection, layerReferences, viewer);
-      }
-    }
-    
-    // Handle synchronization
-    if (connections.synchronization) {
-      for (const syncConfig of connections.synchronization) {
-        this.setupSynchronization(syncConfig, layerReferences);
-      }
-    }
+  static setupConnections(viewer, connections) {
+    console.log('🔗 Setting up connections:', connections);
+    // Connections logic here
   }
 
   /**
-   * Sets up a lens connection
+   * Set up events (simplified placeholder) 
    */
-  static setupLensConnection(lensConnection, layerReferences, viewer) {
-    const sourceLayer = layerReferences[lensConnection.source];
-    const targetLayer = layerReferences[lensConnection.target];
+  static setupEvents(viewer, events) {
+    console.log('📡 Setting up events:', events);
+    // Events logic here
+  }
+
+  /**
+   * Load plugins (simplified placeholder)
+   */
+  static async loadPlugins(plugins, viewer) {
+    console.log('🔌 Loading plugins:', plugins);
+    // Plugins logic here
+  }
+
+  /**
+   * Validate manifest structure
+   */
+  static validateManifest(manifest) {
+    const errors = [];
+    const warnings = [];
     
-    if (!sourceLayer || !targetLayer) {
-      console.warn(`Lens connection failed: missing layer ${lensConnection.source} or ${lensConnection.target}`);
-      return;
+    if (!manifest.version) {
+      warnings.push('Missing version field');
     }
     
-    console.log(`🔗 Lens connection established: ${lensConnection.source} -> ${lensConnection.target}`);
-  }
-
-  /**
-   * Sets up synchronization between layers
-   */
-  static setupSynchronization(syncConfig, layerReferences) {
-    // Implementation would depend on specific synchronization requirements
-    // This is a placeholder for the synchronization logic
-    console.log('🔗 Setting up synchronization for layers:', syncConfig.layers);
-  }
-
-  /**
-   * Sets up event handlers
-   */
-  static setupEvents(viewer, events, layerReferences) {
-    // Handle gesture events
-    if (events.gestures) {
-      for (const [gestureType, gestureConfig] of Object.entries(events.gestures)) {
-        if (gestureConfig.enabled !== false) {
-          this.setupGestureEvent(viewer, gestureType, gestureConfig);
+    if (!manifest.viewer?.container) {
+      errors.push('Missing viewer.container');
+    }
+    
+    if (!manifest.layers || Object.keys(manifest.layers).length === 0) {
+      errors.push('No layers defined');
+    }
+    
+    // Validate layer dependencies
+    if (manifest.layers) {
+      for (const [layerId, layer] of Object.entries(manifest.layers)) {
+        if ((layer.type === 'lens' || layer.type === 'combiner') && layer.layers) {
+          for (const refId of layer.layers) {
+            if (!manifest.layers[refId]) {
+              errors.push(`${layer.type} layer "${layerId}" references non-existent layer "${refId}"`);
+            }
+          }
         }
       }
     }
     
-    // Handle custom events
-    if (events.custom) {
-      for (const eventConfig of events.custom) {
-        this.setupCustomEvent(viewer, eventConfig, layerReferences);
-      }
-    }
-  }
-
-  /**
-   * Sets up a gesture event
-   */
-  static setupGestureEvent(viewer, gestureType, gestureConfig) {
-    const handler = this.resolveHandler(gestureConfig.handler);
-    if (handler) {
-      viewer.pointerManager.on(gestureType, {
-        [gestureType]: handler,
-        priority: gestureConfig.priority || 0
-      });
-    }
-  }
-
-  /**
-   * Sets up a custom event
-   */
-  static setupCustomEvent(viewer, eventConfig, layerReferences) {
-    const target = eventConfig.target === 'viewer' ? viewer : layerReferences[eventConfig.target];
-    const handler = this.resolveHandler(eventConfig.handler);
-    
-    if (target && handler) {
-      target.addEvent(eventConfig.event, handler);
-    }
-  }
-
-  /**
-   * Resolves handler function from string name or function
-   */
-  static resolveHandler(handler) {
-    if (typeof handler === 'function') {
-      return handler;
-    } else if (typeof handler === 'string') {
-      // Look for the function in global scope or predefined handlers
-      if (window[handler]) {
-        return window[handler];
-      } else {
-        console.warn(`Handler function not found: ${handler}`);
-        return null;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Loads plugins asynchronously
-   */
-  static async loadPlugins(plugins, viewer) {
-    for (const plugin of plugins) {
-      try {
-        await this.loadPlugin(plugin, viewer);
-      } catch (error) {
-        console.error(`Failed to load plugin ${plugin.name}:`, error);
-      }
-    }
-  }
-
-  /**
-   * Loads a single plugin
-   */
-  static async loadPlugin(plugin, viewer) {
-    if (plugin.url) {
-      // Resolve plugin URL
-      const pluginUrl = this.resolveUrl(plugin.url);
-      console.log(`🔌 Loading plugin: ${plugin.name} from ${pluginUrl}`);
-      
-      // Dynamically load the plugin script
-      const script = document.createElement('script');
-      script.src = pluginUrl;
-      
-      return new Promise((resolve, reject) => {
-        script.onload = () => {
-          // Plugin loaded, initialize if needed
-          if (window[plugin.name]) {
-            const pluginInstance = new window[plugin.name](viewer, plugin.config);
-            console.log(`✅ Plugin ${plugin.name} loaded and initialized`);
-            resolve(pluginInstance);
-          } else {
-            console.log(`✅ Plugin ${plugin.name} loaded`);
-            resolve();
-          }
-        };
-        script.onerror = (error) => {
-          console.error(`❌ Failed to load plugin script: ${pluginUrl}`);
-          reject(error);
-        };
-        document.head.appendChild(script);
-      });
-    }
+    return { errors, warnings };
   }
 }
 

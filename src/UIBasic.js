@@ -200,11 +200,14 @@ class UIBasic {
 					layer: id,
 					// FIXED: use the ID to retrieve the correct layer
 					onclick: () => {
-						this.viewer.canvas.layers[id].setMode(m);
-						this.viewer.redraw(); // Force redraw to update the lens
+						const l = this.viewer.canvas.layers[id];
+						if (l) {
+							l.setMode(m);
+							this.viewer.redraw(); // Force redraw to update the lens
+						}
 					},
 					// FIXED: use the ID to retrieve the correct layer
-					status: () => this.viewer.canvas.layers[id].getMode() == m ? 'active' : '',
+					status: () => { const l = this.viewer.canvas.layers[id]; return l && l.getMode() == m ? 'active' : ''; },
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
@@ -214,9 +217,9 @@ class UIBasic {
 			let layerEntry = {
 				button: layer.label || id,
 				// FIXED: use the ID to retrieve the correct layer
-				onclick: () => { this.setLayer(this.viewer.canvas.layers[id]); },
+				onclick: () => { const l = this.viewer.canvas.layers[id]; if (l) this.setLayer(l); },
 				// FIXED: use the ID to retrieve the correct layer  
-				status: () => this.viewer.canvas.layers[id].visible ? 'active' : '',
+				status: () => { const l = this.viewer.canvas.layers[id]; return l && l.visible ? 'active' : ''; },
 				layer: id
 			};
 			if (modes.length > 1) layerEntry.list = modes;
@@ -903,6 +906,8 @@ class UIBasic {
 	setLayer(layer_on) {
 		if (typeof layer_on == 'string')
 			layer_on = this.viewer.canvas.layers[layer_on];
+
+		if (!layer_on) return;
 
 		if (layer_on.overlay) { //just toggle
 			layer_on.setVisible(!layer_on.visible);

@@ -24,6 +24,7 @@ import { Util } from './Util.js'
  * @property {Object.<string, Shader>} [shaders] - Map of available shaders
  * @property {Controller[]} [controllers] - Array of active UI controllers
  * @property {Layer} [sourceLayer] - Layer to share tiles with
+ * @property {Layer} [layerSource] - Alias for sourceLayer (backward compatibility)
  * @property {number} [pixelSize=0.0] - Physical size of a pixel in mm
  */
 
@@ -89,7 +90,9 @@ class Layer {
 	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader}.
 	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
 	* @param {Layer} options.sourceLayer The layer from which to take the tiles (in order to avoid tile duplication).
+	* @param {Layer} [options.layerSource] Alias for sourceLayer (backward compatibility).
 	* @param {boolean} [options.debug=false] - Enable debug output
+	* @throws {Error} If url or layerSource are not provided
 	*/
 	constructor(options) {
 		//create from derived class if type specified
@@ -98,6 +101,14 @@ class Layer {
 			isSrgbSimplified: true
 		}, options);
 
+		// Backward compatibility: allow `layerSource` as an alias for `sourceLayer`.
+		// Some examples use `layerSource` to indicate a shared-resource clone layer.
+		if (options && options.layerSource && !options.sourceLayer) {
+			options.sourceLayer = options.layerSource;
+		}
+		if (options && Object.prototype.hasOwnProperty.call(options, 'layerSource')) {
+			delete options.layerSource;
+		}
 
 		if (options.type) {
 			let type = options.type;
@@ -218,8 +229,43 @@ class Layer {
 			_didFirstDraw: false
 		});
 
+		// Backward compatibility: allow `layerSource` as an alias for `sourceLayer`.
+		// When cloning layers, `sourceLayer` (or `layerSource`) allows sharing the same tile cache.
+		if (options && options.layerSource && !options.sourceLayer) {
+			options.sourceLayer = options.layerSource;
+		}
+		if (options && Object.prototype.hasOwnProperty.call(options, 'layerSource')) {
+			delete options.layerSource;
+		}
+
+		// If a source layer is provided, inherit shared resources by default unless explicitly overridden.
+		// This enables "duplicating" a layer without re-instantiating expensive resources.
+		if (options && options.sourceLayer) {
+			const s = options.sourceLayer;
+			if (options.layout === undefined) options.layout = s.layout;
+			if (options.rasters === undefined) options.rasters = s.rasters;
+			if (options.staticTextures === undefined) options.staticTextures = s.staticTextures;
+			if (options.width === undefined) options.width = s.width;
+			if (options.height === undefined) options.height = s.height;
+			if (options.pixelSize === undefined) options.pixelSize = s.pixelSize;
+			if (options.server === undefined) options.server = s.server;
+			if (options.prefetchBorder === undefined) options.prefetchBorder = s.prefetchBorder;
+			if (options.mipmapBias === undefined) options.mipmapBias = s.mipmapBias;
+		}
+
 		Object.assign(this, options);
-		if (this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
+
+		if (this.sourceLayer) {
+			this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
+			this.layout = this.sourceLayer.layout;
+			this.url = this.sourceLayer.url;
+			this.json = this.sourceLayer.json;
+			this.width = this.sourceLayer.width;
+			this.height = this.sourceLayer.height;
+			if (this.sourceLayer.rasters && this.sourceLayer.rasters.length > 0) {
+				this.rasters = this.sourceLayer.rasters.slice();
+			}
+		}
 
 		this.transform = new Transform(this.transform);
 
