@@ -242,7 +242,6 @@ class Viewer {
 		}
 	}
 
-
 	/**
 	 * Handles viewer resizing
 	 * @param {number} width - New width in CSS pixels
@@ -253,8 +252,8 @@ class Viewer {
 	resize(width, height) {
 		if (width == 0 || height == 0) return;
 		// Test with retina display!
-		this.canvasElement.width = width; // FIXME REMOVED  * window.devicePixelRatio;
-		this.canvasElement.height = height; // FIXME REMOVED  * window.devicePixelRatio;
+		this.canvasElement.width = width; 
+		this.canvasElement.height = height;
 
 		let view = { x: 0, y: 0, dx: width, dy: height, w: width, h: height };
 		this.camera.setViewport(view);

@@ -154,11 +154,7 @@ class Canvas {
 	}
 
 	canvasWidthHeight() {
-		// I don't know why, but we need to square the DPR here,
-		// canvasElement.width and height are not multiplied by DPR in Viewer.js
-		// Probably DPR is already applied somewhere else?
-		const dpr = window.devicePixelRatio ? window.devicePixelRatio * window.devicePixelRatio : 1;
-	 	return { width: this.canvasElement.width * dpr, height: this.canvasElement.height  * dpr};
+	 	return { width: this.canvasElement.width, height: this.canvasElement.height};
 	}
 	/**
 	 * Sets up the offscreen framebuffer for rendering

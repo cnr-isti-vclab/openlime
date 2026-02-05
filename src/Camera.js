@@ -77,14 +77,14 @@ class Camera {
 	}
 
 	/**
-	 * Returns the current viewport in device coordinates (accounting for device pixel ratio).
-	 * @returns {Viewport} The current viewport scaled for device pixels
+	 * Returns the current viewport in device coordinates.
+	 * Updated, viewport and glViewport are the same in our case, but this method is kept for compatibility and future adjustments.
+	 * @returns {Viewport} The current viewport
 	 */
 	glViewport() {
-		let d = window.devicePixelRatio;
 		let viewport = {};
 		for (let i in this.viewport)
-			viewport[i] = this.viewport[i] * d;
+			viewport[i] = this.viewport[i];
 		return viewport;
 	}
 
@@ -286,9 +286,9 @@ class Camera {
 	 */
 	getGlCurrentTransform(time) {
 		const pos = this.getCurrentTransform(time);
-		pos.x *= window.devicePixelRatio;
-		pos.y *= window.devicePixelRatio;
-		pos.z *= window.devicePixelRatio;
+		pos.x *= 1;
+		pos.y *= 1;
+		pos.z *= 1;
 		return pos;
 	}
 

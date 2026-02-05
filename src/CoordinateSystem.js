@@ -1,11 +1,12 @@
 import { BoundingBox } from './BoundingBox.js';
 import { Transform } from './Transform.js'
 
+// FIXME TODO REMOVE ALL USEGL PARAMETERS, SCALE AND DEVICEPIXELRATIO 
+
 /**
  * Contain functions to pass between different coordinate system.
  * Here described the coordinate system in sequence
  * - CanvasHTML: Html coordinates: 0,0 left,top to width height at bottom right (y Down)
- * - CanvasContext: Same as Html, but scaled by devicePixelRatio (y Down) (required for WebGL, not for SVG)
  * - Viewport: 0,0 left,bottom to (width,height) at top right (y Up)
  * - Center: 0,0 at viewport center (y Up)
  * - Scene: 0,0 at dataset center (y Up). The dataset is placed here through the camera transform 
@@ -26,7 +27,7 @@ class CoordinateSystem {
         const viewport = this.getViewport(camera, useGL);
         let result = {x:p.x + viewport.x, y: p.y + viewport.y};
         result = this.invertY(result, viewport);
-        return useGL ? this.scale(result, 1/window.devicePixelRatio) : result;
+        return result;
     }
 
     /**
@@ -34,10 +35,10 @@ class CoordinateSystem {
      * @param {*} p point in CanvasHtml: 0,0 left,top y Down
      * @param {Camera} camera Camera
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns  point in GLViewport: 0,0 left,bottom, scaled by devicePixelRatio
+     * @returns  point in GLViewport: 0,0 left,bottom
      */
     static fromCanvasHtmlToViewport(p, camera, useGL) {
-        let result = useGL ? this.scale(p, window.devicePixelRatio) : p;
+        let result = p;
         const viewport = this.getViewport(camera, useGL);
         result = this.invertY(result, viewport);
         result.x -= viewport.x;
@@ -210,7 +211,7 @@ class CoordinateSystem {
      * @returns Point in Image space (0,0 left,top of the image, y Down)
      */
     static fromCanvasHtmlToImage(p, camera, layerT, layerSize, useGL) {
-        // Translate(Lw/2, Lh/2) * InvLayerT * InvCameraT *  Translate(-Vw/2, -Vh/2) * invertY * [Scale(devicePixelRatio)]
+        // Translate(Lw/2, Lh/2) * InvLayerT * InvCameraT *  Translate(-Vw/2, -Vh/2) * invertY
         // in other words... fromLayerToImage * invLayerT * fromCanvasHtmlToScene
         let result = this.fromCanvasHtmlToScene(p, camera, useGL);
         const invLayerT = layerT.inverse();
@@ -356,7 +357,7 @@ class CoordinateSystem {
      * Scale x applying f scale factor
      * @param {*} p Point to be scaled
      * @param {Number} f Scale factor
-     * @returns Point in CanvasContext (Scaled by devicePixelRation)
+     * @returns Point scaled
      */
     static scale(p, f) {
         return { x: p.x * f, y: p.y * f };
