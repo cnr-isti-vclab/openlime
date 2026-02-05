@@ -58,13 +58,9 @@ class LayerDstretch extends LayerImage {
 	/**
 	 * Creates a new LayerDStretch instance
 	 * @param {LayerDStretchOptions} options - Configuration options
-	 * @throws {Error} If url option is not provided
 	 */
 	constructor(options) {
 		super(options);
-
-		if (!this.url)
-			throw "Url option is required";
 
 		this.shaders['dstretch'] = new ShaderDstretch();
 		this.setShader('dstretch');

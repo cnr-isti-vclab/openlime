@@ -1,0 +1,64 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "title": "Simple Image Viewer",
+    "description": "Basic viewer for a single image with standard controls",
+    "author": "OpenLIME User",
+    "created": "2025-12-18T10:00:00Z"
+  },
+  
+  "viewer": {
+    "container": ".openlime",
+    "background": "#f5f5f5",
+    "autofit": true,
+    "idleTime": 60,
+    "camera": {
+      "bounded": true,
+      "minZoom": 0.1,
+      "maxZoom": 10.0
+    }
+  },
+  
+  "layers": {
+    "main": {
+      "type": "image",
+      "layout": "image",
+      "url": "assets/image.jpg",
+      "visible": true,
+      "zindex": 0,
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "z": 1,
+        "a": 0
+      }
+    }
+  },
+  
+  "controllers": [
+    {
+      "type": "pan",
+      "options": {}
+    },
+    {
+      "type": "pinch",
+      "options": {}
+    }
+  ],
+  
+  "ui": {
+    "type": "basic",
+    "skin": {
+      "url": "skin/skin.svg"
+    },
+    "actions": {
+      "light": { "display": false },
+      "zoomin": { "display": true },
+      "zoomout": { "display": true },
+      "home": { "display": true },
+      "fullscreen": { "display": true },
+      "snapshot": { "display": true }
+    },
+    "attribution": "Sample image for OpenLIME viewer"
+  }
+}

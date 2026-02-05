@@ -158,6 +158,7 @@ class ShaderRTI extends Shader {
 	 * @param {number[]} relight.basis - Optional PCA basis
 	 */
 	init(relight) {
+		this.json = relight;
 		Object.assign(this, relight);
 		if (this.colorspace == 'mycc')
 			this.nplanes = this.yccplanes[0] + this.yccplanes[1] + this.yccplanes[2];

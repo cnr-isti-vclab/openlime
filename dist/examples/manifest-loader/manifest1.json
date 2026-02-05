@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "title": "Multi-Manifest Demo",
+    "description": "First manifest for multi-manifest loading test",
+    "author": "OpenLIME",
+    "created": "2026-02-05T10:00:00Z"
+  },
+  "viewer": {
+    "container": ".openlime",
+    "autofit": true,
+    "camera": {
+      "bounded": true
+    }
+  },
+  "layers": {
+    "base": {
+      "type": "image",
+      "layout": "deepzoom",
+      "url": "../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi",
+      "visible": true,
+      "zindex": 0,
+      "label": "Lighthouse Base"
+    }
+  },
+  "ui": {
+    "type": "basic",
+    "skin": {
+      "url": "../../skin/skin.svg"
+    },
+    "actions": {
+      "layers": { "display": true },
+      "zoomin": { "display": true },
+      "zoomout": { "display": true },
+      "home": { "display": true }
+    },
+    "autofit": true,
+    "attribution": "Multi-Manifest Loading Demo"
+  }
+}

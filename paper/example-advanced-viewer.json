@@ -1,0 +1,175 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "title": "Advanced Split View with Lens",
+    "description": "Multi-layer viewer with split viewport and lens connections for detailed comparison",
+    "author": "Research Team",
+    "created": "2025-12-18T10:00:00Z",
+    "tags": ["split-view", "lens", "comparison", "multispectral"]
+  },
+  
+  "viewer": {
+    "container": ".openlime",
+    "autofit": true,
+    "idleTime": 90,
+    "camera": {
+      "bounded": false,
+      "minZoom": 0.1,
+      "maxZoom": 50.0
+    }
+  },
+  
+  "layers": {
+    "manuscript_base": {
+      "type": "image",
+      "layout": "deepzoom",
+      "url": "assets/manuscript/manuscript.dzi",
+      "visible": true,
+      "zindex": 0,
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "dx": 0.5,
+        "dy": 1.0
+      }
+    },
+    "manuscript_uv": {
+      "type": "image", 
+      "layout": "deepzoom",
+      "url": "assets/manuscript/manuscript_uv.dzi",
+      "visible": true,
+      "zindex": 0,
+      "viewport": {
+        "x": 0.5,
+        "y": 0,
+        "dx": 0.5,
+        "dy": 1.0
+      }
+    },
+    "lens_detail": {
+      "type": "lens",
+      "visible": true,
+      "zindex": 10,
+      "options": {
+        "radius": 150,
+        "border": 5,
+        "borderColor": "#ff6b35",
+        "magnification": 3.0
+      }
+    },
+    "annotations": {
+      "type": "annotation",
+      "visible": true,
+      "zindex": 5,
+      "url": "assets/manuscript/annotations.json"
+    }
+  },
+  
+  "controllers": [
+    {
+      "type": "pan",
+      "options": {
+        "priority": 10
+      }
+    },
+    {
+      "type": "pinch", 
+      "options": {
+        "priority": 10
+      }
+    },
+    {
+      "type": "annotationController",
+      "target": "annotations",
+      "options": {
+        "enableEditing": false,
+        "showLabels": true
+      }
+    }
+  ],
+  
+  "ui": {
+    "type": "custom",
+    "skin": {
+      "url": "skin/skin.svg",
+      "theme": "dark"
+    },
+    "actions": {
+      "light": { "display": false },
+      "zoomin": { "display": true },
+      "zoomout": { "display": true },
+      "home": { "display": true },
+      "fullscreen": { "display": true },
+      "snapshot": { "display": true },
+      "ruler": { 
+        "display": true,
+        "title": "Measurement Tool"
+      }
+    },
+    "pixelSize": 0.025,
+    "attribution": "Historical Manuscript - Digital Research Archive"
+  },
+  
+  "connections": {
+    "lenses": [
+      {
+        "source": "manuscript_base",
+        "target": "lens_detail",
+        "type": "magnify",
+        "radius": 150,
+        "border": 5
+      }
+    ],
+    "synchronization": [
+      {
+        "layers": ["manuscript_base", "manuscript_uv"],
+        "properties": ["transform", "zoom"]
+      }
+    ]
+  },
+  
+  "events": {
+    "gestures": {
+      "fingerSingleTap": {
+        "enabled": true,
+        "priority": 50,
+        "handler": "handleAnnotationTap"
+      },
+      "fingerHold": {
+        "enabled": true,
+        "priority": 75,
+        "handler": "showContextMenu"
+      }
+    },
+    "custom": [
+      {
+        "event": "resize",
+        "target": "viewer", 
+        "handler": "updateSplitViewports"
+      },
+      {
+        "event": "annotationSelected",
+        "target": "annotations",
+        "handler": "highlightAnnotation"
+      }
+    ]
+  },
+  
+  "plugins": [
+    {
+      "name": "measurementTool",
+      "url": "plugins/measurement.js",
+      "config": {
+        "units": "mm",
+        "precision": 2
+      }
+    },
+    {
+      "name": "exportTool",
+      "url": "plugins/export.js",
+      "config": {
+        "formats": ["png", "pdf", "json"]
+      }
+    }
+  ]
+}

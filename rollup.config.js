@@ -112,7 +112,11 @@ const annotation = [
 	'./src/EditorSvgAnnotation.js'
 ];
 
-const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rsc, ...lens, ...annotation];
+const loader = [
+	'./src/ManifestLoader.js'
+];
+
+const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rsc, ...lens, ...annotation, ...loader];
 
 module.exports = [
 	{

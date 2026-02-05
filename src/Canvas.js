@@ -354,7 +354,10 @@ class Canvas {
 	 */
 	addLayer(id, layer) {
 
-		console.assert(!(id in this.layers), "Duplicated layer id");
+		if (id in this.layers) {
+			console.warn(`Layer with id "${id}" already exists. Removing old layer first.`);
+			this.removeLayer(id);
+		}
 
 		layer.id = id;
 		layer.addEvent('ready', () => {
