@@ -229,6 +229,15 @@ class Viewer {
 	}
 
 	/**
+	 * Clears all layers from the viewer.
+	 * @fires Canvas#update
+	 */
+	clearLayers() {
+		this.canvas.clearLayers();
+		this.redraw();
+	}
+
+	/**
 	 * Removes layer from viewer
 	 * @param {Layer|string} layer - Layer instance or ID
 	 * @fires Canvas#update

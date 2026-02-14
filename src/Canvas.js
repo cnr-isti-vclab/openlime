@@ -420,6 +420,16 @@ class Canvas {
 		this.prefetch();
 	}
 
+	/**
+	 * Clears all layers from the canvas.
+	 * This method iterates through all existing layers and removes them using the removeLayer method,
+	 * ensuring that all associated GPU resources are properly released and the internal layer list is cleared.
+	 */
+	clearLayers() {
+		for (let id in this.layers) {
+			this.removeLayer(this.layers[id]);
+		}
+	}
 
 	updateSize() {
 		const discardHidden = false;
