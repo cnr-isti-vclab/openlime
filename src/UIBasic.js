@@ -4,6 +4,8 @@ import { Controller2D } from './Controller2D'
 import { ControllerPanZoom } from './ControllerPanZoom'
 import { Ruler } from "./Ruler"
 import { ScaleBar } from './ScaleBar'
+import { CoordinateSystem } from './CoordinateSystem'
+import { Layer } from './Layer'
 import { addSignals } from './Signals'
 
 /**
@@ -113,6 +115,9 @@ class UIBasic {
 	 * Creates a new UIBasic instance
 	 * @param {Viewer} viewer - OpenLIME viewer instance
 	 * @param {UIBasic~Options} [options] - Configuration options
+	 * @param {boolean} [options.annotationsActive=false] - Enable annotation pencil mode on startup
+	 * @param {Function} [options.annotationCallback] - Callback function called when an annotation is created.
+	 *                                                   Receives the created Annotation as parameter.
 	 * 
 	 * @fires UIBasic#lightdirection
 	 * 
@@ -128,8 +133,19 @@ class UIBasic {
 	 *     // Add measurement support
 	 *     pixelSize: 0.1,
 	 *     // Add attribution
-	 *     attribution: "© Example Source"
+	 *     attribution: "© Example Source",
+	 *     // Enable annotations and set callback
+	 *     annotationsActive: false,
+	 *     annotationCallback: (annotation) => {
+	 *         console.log('Annotation created:', annotation);
+	 *         // Custom annotation processing here
+	 *     }
 	 * });
+	 * 
+	 * // Toggle annotation mode with pencil button or programmatically:
+	 * // ui.toggleAnnotations(); // Toggle annotation mode
+	 * // ui.toggleAnnotations(true);  // Enable annotation mode
+	 * // ui.toggleAnnotations(false); // Disable annotation mode
 	 * ```
 	 */
 	constructor(viewer, options) {
@@ -152,6 +168,7 @@ class UIBasic {
 				ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
+				pencil: { title: 'Pencil', display: true, key: 'p', task: (event) => { this.toggleAnnotations(); } },
 			},
 			postInit: () => { },
 			showScale: true,
@@ -162,7 +179,9 @@ class UIBasic {
 			showLightDirections: false,
 			enableTooltip: true,
 			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
-			menu: []
+			menu: [],
+			annotationsActive: false,
+			annotationCallback: null
 		});
 
 		Object.assign(this, options);
@@ -258,6 +277,11 @@ class UIBasic {
 		this.viewer.pointerManager.onEvent(controller);
 		this.lightcontroller = controller;
 
+		this._annotationsPointerHandler = {
+			priority: 10000,
+			fingerDoubleTap: (e) => this._handleAnnotationDblClick(e)
+		};
+		this.viewer.pointerManager.onEvent(this._annotationsPointerHandler);
 
 		let lightLayers = [];
 		for (let [id, layer] of Object.entries(this.viewer.canvas.layers))
@@ -397,8 +421,6 @@ class UIBasic {
 			*/
 
 			this.setupActions();
-
-
 			/* Get pixel size from options if provided or from layer metadata
 			 */
 			if (this.showScale) {
@@ -508,10 +530,12 @@ class UIBasic {
 				}
 
 				action.element = await Skin.appendIcon(toolbar, action.icon);
+
 				if (this.enableTooltip) {
 					let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
 					title.textContent = action.title;
-					action.element.appendChild(title);
+					if (action.element)
+						action.element.appendChild(title);
 				}
 			}
 
@@ -1244,6 +1268,189 @@ class UIBasic {
 			layer.shader.setUniform(name, value);
 		}
 		layer.emit('update');
+	}
+
+	/**
+	 * Toggles annotation pencil mode on/off
+	 * When active, double-clicking on the viewer creates annotations
+	 * @param {boolean} [force] - Force specific state
+	 * @private
+	 */
+	toggleAnnotations(force) {
+		this.annotationsActive = force === undefined ? !this.annotationsActive : force;
+		if (this.panzoom)
+			this.panzoom.enableDoubleTapZoom = !this.annotationsActive;
+
+		const pencilButton = this.viewer.containerElement.querySelector('.openlime-button.openlime-pencil');
+		if (pencilButton) {
+			pencilButton.classList.toggle('openlime-pencil-active', this.annotationsActive);
+		}
+
+		if (this.annotationsActive) {
+			this._annotationsEnabled = true;
+		} else {
+			this._annotationsEnabled = false;
+		}
+	}
+
+	/**
+	 * Internal handler for annotation double-click events
+	 * @param {MouseEvent} e - The dblclick event
+	 * @private
+	 */
+	_handleAnnotationDblClick(e) {
+		// Only process if annotations are active
+		if (!this.annotationsActive) {
+			return;
+		}
+
+		// Don't process if click was on a UI element
+		const target = e.target;
+		if (target && (
+			target.closest('.openlime-toolbar') ||
+			target.closest('.openlime-layers-menu') ||
+			target.closest('.openlime-annotation-edit') ||
+			target.classList.contains('openlime-tool') ||
+			target.classList.contains('openlime-button') ||
+			target.closest('button') ||
+			target.closest('.openlime-dialog')
+		)) {
+			return;
+		}
+
+		e.preventDefault();
+		e.stopPropagation();
+
+		const annotationLayer = this._getOrCreateAnnotationLayer();
+
+		if (!annotationLayer) {
+			console.warn('No annotation layer available and automatic creation failed');
+			return;
+		}
+
+		// Map click position to model coordinates
+		const pos = this._mapToModelCoordinates(e, annotationLayer);
+
+		// Create annotation with filled disk
+		const annotation = this.createAnnotationWithDisk(annotationLayer, pos);
+
+		// Call user callback if provided
+		if (this.annotationCallback) {
+			this.annotationCallback(annotation);
+		}
+
+		this.viewer.redraw();
+	}
+
+	/**
+	 * Returns the first annotation-capable layer or creates one if missing.
+	 * @returns {Layer|null} Annotation layer instance
+	 * @private
+	 */
+	_getOrCreateAnnotationLayer() {
+		if (this._pencilAnnotationLayer && this.viewer.canvas.layers[this._pencilAnnotationLayer.id]) {
+			return this._pencilAnnotationLayer;
+		}
+
+		const baseLayer = Object.values(this.viewer.canvas.layers).find(layer => layer && !layer.overlay)
+			|| Object.values(this.viewer.canvas.layers)[0];
+		if (!baseLayer) {
+			return null;
+		}
+
+		let id = 'pencil_annotations';
+		if (this.viewer.canvas.layers[id]) {
+			let idx = 1;
+			while (this.viewer.canvas.layers[`${id}_${idx}`]) idx++;
+			id = `${id}_${idx}`;
+		}
+		const annotationLayer = new Layer({
+			type: 'svg_annotations',
+			label: 'Pencil annotations',
+			layout: baseLayer.layout,
+			annotations: []
+		});
+
+		this.viewer.addLayer(id, annotationLayer);
+		this._pencilAnnotationLayer = annotationLayer;
+		return annotationLayer;
+	}
+
+	/**
+	 * Maps pointer event coordinates to model space for a given layer
+	 * @param {MouseEvent|PointerEvent} e - Event object with coordinates
+	 * @param {Layer} layer - Target layer
+	 * @returns {Object} Coordinates {x, y} in model space
+	 * @private
+	 */
+	_mapToModelCoordinates(e, layer) {
+		// Get canvas coordinates from event
+		const canvas = this.viewer.canvasElement;
+		const rect = canvas.getBoundingClientRect();
+
+		// Support both MouseEvent (clientX/clientY) and PointerEvent (offsetX/offsetY)
+		let canvasX, canvasY;
+		if ('offsetX' in e) {
+			canvasX = e.offsetX;
+			canvasY = e.offsetY;
+		} else {
+			canvasX = e.clientX - rect.left;
+			canvasY = e.clientY - rect.top;
+		}
+
+		// Use CoordinateSystem to convert canvas to model coordinates
+		const p = { x: canvasX, y: canvasY };
+		const layerTransform = layer.transform;
+		const layerbb = layer.boundingBox();
+		const layerSize = { w: layerbb.width(), h: layerbb.height() };
+		const useGL = false;
+
+		return CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerTransform, layerSize, useGL);
+	}
+
+	/**
+	 * Creates a new annotation with a filled disk (circle) at the specified position
+	 * The disk is centered at the click location in model coordinates
+	 * @param {Layer} layer - Annotation layer
+	 * @param {Object} pos - Position in model coordinates {x, y}
+	 * @returns {Annotation} Created annotation
+	 * @private
+	 */
+	createAnnotationWithDisk(layer, pos) {
+		// Create new annotation
+		const annotation = layer.newAnnotation();
+		annotation.publish = 1;
+		annotation.label = '';
+		annotation.description = '';
+		annotation.class = '';
+		annotation.data = annotation.data || {};
+
+		// Create filled disk element using Util.createSVGElement
+		const diskRadius = 20; // Default radius in model units
+		const circle = Util.createSVGElement('circle', {
+			cx: pos.x,
+			cy: pos.y,
+			r: diskRadius,
+			class: 'annotation-disk',
+			fill: '#ff0000', // Red filled circle
+			opacity: '0.6'
+		});
+
+		// Add circle to annotation elements
+		annotation.elements.push(circle);
+		annotation.needsUpdate = true;
+
+		// Add annotation to layer if not already there
+		if (layer.annotations && !layer.annotations.includes(annotation)) {
+			layer.annotations.push(annotation);
+		}
+
+		// Select the annotation
+		if (layer.setSelected) {
+			layer.setSelected(annotation);
+		}
+
+		return annotation;
 	}
 
 	/**

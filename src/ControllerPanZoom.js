@@ -34,6 +34,7 @@ class ControllerPanZoom extends Controller {
 		this.camera = camera;
 		this.zoomAmount = 1.2;          //for wheel or double tap event
 		this.controlZoom = false;       //require control+wheel to zoom
+		this.enableDoubleTapZoom = true;
 
 		this.panning = false;           //true if in the middle of a pan
 		this.initialTransform = null;
@@ -179,9 +180,8 @@ class ControllerPanZoom extends Controller {
 	 * @private
 	 * @param {PointerEvent} e - The pointer event representing the double tap
 	 */
-	fingerDoubleTap(e) { }
 	fingerDoubleTap(e) {
-		if (!this.active || !this.activeModifiers.includes(this.modifierState(e)))
+		if (!this.active || !this.enableDoubleTapZoom || !this.activeModifiers.includes(this.modifierState(e)))
 			return;
 		//const pos = this.camera.mapToScene(e.offsetX, e.offsetY, this.camera.getCurrentTransform(performance.now()));
 		const pos = CoordinateSystem.fromCanvasHtmlToScene({ x: e.offsetX, y: e.offsetY }, this.camera, this.useGLcoords);
