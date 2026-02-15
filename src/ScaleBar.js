@@ -93,7 +93,7 @@ class ScaleBar extends Units {
 		}, options);
 		Object.assign(this, options);
 
-		this.svg = Util.createSVGElement('svg', { viewBox: `0 0 ${this.width} 30` });
+		this.svg = Util.createSVGElement('svg', { viewBox: `0 0 ${this.width} 40` });
 		this.svg.classList.add('openlime-scale');
 
 		this.line = Util.createSVGElement('line', { x1: 5, y1: 26.5, x2: this.width - 5, y2: 26.5 });
