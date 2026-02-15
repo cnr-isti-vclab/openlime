@@ -98,7 +98,7 @@ class ScaleBar extends Units {
 
 		this.line = Util.createSVGElement('line', { x1: 5, y1: 26.5, x2: this.width - 5, y2: 26.5 });
 
-		this.text = Util.createSVGElement('text', { x: '50%', y: '16px', 'dominant-basiline': 'middle', 'text-anchor': 'middle' });
+		this.text = Util.createSVGElement('text', { x: '50%', y: '16px', 'dominant-baseline': 'middle', 'text-anchor': 'middle' });
 		this.text.textContent = "";
 
 		this.svg.appendChild(this.line);
