@@ -117,6 +117,7 @@ class UIBasic {
 	 * @param {UIBasic~Options} [options] - Configuration options
 	 * @param {boolean} [options.annotationsActive=false] - Enable annotation pencil mode on startup
 	 * @param {Function} [options.annotationCallback] - Callback function called when an annotation is created.
+	 * @param {number} [options.pencilDiskRadius=20] - Pencil disk radius in screen pixels at zoom level 1.
 	 *                                                   Receives the created Annotation as parameter.
 	 * 
 	 * @fires UIBasic#lightdirection
@@ -181,7 +182,8 @@ class UIBasic {
 			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
 			menu: [],
 			annotationsActive: false,
-			annotationCallback: null
+			annotationCallback: null,
+			pencilDiskRadius: 20
 		});
 
 		Object.assign(this, options);
@@ -1368,12 +1370,55 @@ class UIBasic {
 			type: 'svg_annotations',
 			label: 'Pencil annotations',
 			layout: baseLayer.layout,
+			transform: baseLayer.transform.copy(),
 			annotations: []
 		});
+
+		annotationLayer.annotationUpdate = (annotation, transform) => {
+			this._updatePencilDiskSize(annotation, transform);
+		};
 
 		this.viewer.addLayer(id, annotationLayer);
 		this._pencilAnnotationLayer = annotationLayer;
 		return annotationLayer;
+	}
+
+	/**
+	 * Computes pencil disk radius in model units to keep constant screen size.
+	 * @param {Object} transform - Current camera transform
+	 * @param {number} [baseRadius=this.pencilDiskRadius] - Base radius in pixels at zoom 1
+	 * @returns {number} Radius to use in model space
+	 * @private
+	 */
+	_getPencilDiskRadius(transform, baseRadius = this.pencilDiskRadius) {
+		const zoom = transform?.z || 1;
+		return baseRadius / zoom;
+	}
+
+	/**
+	 * Updates annotation disk radius so the visible size stays constant across zoom.
+	 * @param {Annotation} annotation - Annotation containing disk elements
+	 * @param {Object} transform - Current camera transform
+	 * @private
+	 */
+	_updatePencilDiskSize(annotation, transform) {
+		if (!annotation || !Array.isArray(annotation.elements)) {
+			return;
+		}
+
+		const baseRadius = annotation.data?.pencilDiskRadius ?? this.pencilDiskRadius;
+		const radius = this._getPencilDiskRadius(transform, baseRadius);
+		if (annotation.previous_disk_radius === radius) {
+			return;
+		}
+
+		annotation.elements.forEach((element) => {
+			if (element.classList?.contains('annotation-disk')) {
+				element.setAttribute('r', `${radius}`);
+			}
+		});
+
+		annotation.previous_disk_radius = radius;
 	}
 
 	/**
@@ -1388,20 +1433,16 @@ class UIBasic {
 		const canvas = this.viewer.canvasElement;
 		const rect = canvas.getBoundingClientRect();
 
-		// Support both MouseEvent (clientX/clientY) and PointerEvent (offsetX/offsetY)
-		let canvasX, canvasY;
-		if ('offsetX' in e) {
-			canvasX = e.offsetX;
-			canvasY = e.offsetY;
-		} else {
-			canvasX = e.clientX - rect.left;
-			canvasY = e.clientY - rect.top;
-		}
+		// Always use client coordinates mapped to the canvas rectangle.
+		// offsetX/offsetY are relative to event target and may not be the canvas.
+		const canvasX = e.clientX - rect.left;
+		const canvasY = e.clientY - rect.top;
 
 		// Use CoordinateSystem to convert canvas to model coordinates
 		const p = { x: canvasX, y: canvasY };
 		const layerTransform = layer.transform;
-		const layerbb = layer.boundingBox();
+		// layerSize must be in image/layout pixels (untransformed), not scene bbox size
+		const layerbb = layer.layout.boundingBox();
 		const layerSize = { w: layerbb.width(), h: layerbb.height() };
 		const useGL = false;
 
@@ -1426,7 +1467,9 @@ class UIBasic {
 		annotation.data = annotation.data || {};
 
 		// Create filled disk element using Util.createSVGElement
-		const diskRadius = 20; // Default radius in model units
+		const transform = this.viewer.camera.getCurrentTransform(performance.now());
+		const baseRadius = this.pencilDiskRadius;
+		const diskRadius = this._getPencilDiskRadius(transform, baseRadius);
 		const circle = Util.createSVGElement('circle', {
 			cx: pos.x,
 			cy: pos.y,
@@ -1438,6 +1481,7 @@ class UIBasic {
 
 		// Add circle to annotation elements
 		annotation.elements.push(circle);
+		annotation.data.pencilDiskRadius = baseRadius;
 		annotation.needsUpdate = true;
 
 		// Add annotation to layer if not already there

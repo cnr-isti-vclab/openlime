@@ -869,10 +869,14 @@ class EditorSvgAnnotation {
 			e.targetElement = this._findElementUnderPointer(e);
 		}
 
-		const p = { x: e.offsetX, y: e.offsetY };
+		const rect = this.viewer.canvasElement.getBoundingClientRect();
+		const p = {
+			x: e.clientX - rect.left,
+			y: e.clientY - rect.top
+		};
 		const layerT = this.layer.transform;
 		const useGL = false;
-		const layerbb = this.layer.boundingBox();
+		const layerbb = this.layer.layout.boundingBox();
 		const layerSize = { w: layerbb.width(), h: layerbb.height() };
 		let pos = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
 		p.x += 1;
