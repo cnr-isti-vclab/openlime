@@ -183,7 +183,7 @@ class UIBasic {
 			menu: [],
 			annotationsActive: false,
 			annotationCallback: null,
-			pencilDiskRadius: 20
+			pencilDiskRadius: 12
 		});
 
 		Object.assign(this, options);
