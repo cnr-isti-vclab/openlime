@@ -1465,6 +1465,7 @@ class UIBasic {
 		annotation.description = '';
 		annotation.class = '';
 		annotation.data = annotation.data || {};
+		annotation.state = window.structuredClone(this.viewer.canvas.getState());
 
 		// Create filled disk element using Util.createSVGElement
 		const transform = this.viewer.camera.getCurrentTransform(performance.now());
@@ -1482,6 +1483,7 @@ class UIBasic {
 		// Add circle to annotation elements
 		annotation.elements.push(circle);
 		annotation.data.pencilDiskRadius = baseRadius;
+		annotation.data.pos = pos; 
 		annotation.needsUpdate = true;
 
 		// Add annotation to layer if not already there
@@ -1493,7 +1495,7 @@ class UIBasic {
 		if (layer.setSelected) {
 			layer.setSelected(annotation);
 		}
-
+		console.log(annotation);
 		return annotation;
 	}
 
