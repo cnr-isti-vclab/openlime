@@ -594,11 +594,15 @@ class Layer {
 
 
 	/**
-	 * Gets pixel size in millimeters
-	 * @returns {number} Size of one pixel in mm
+	 * Gets scene pixel size in millimeters.
+	 * Converts layer pixel size (mm/layer-pixel) into mm/scene-pixel
+	 * by accounting for layer scaling.
+	 * @returns {number} Size of one scene pixel in mm
 	 */
 	pixelSizePerMM() {
-		return this.pixelSize * this.transform.z;
+		if (!this.transform || !this.transform.z)
+			return this.pixelSize;
+		return this.pixelSize / this.transform.z;
 	}
 
 
