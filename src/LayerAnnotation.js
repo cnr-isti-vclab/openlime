@@ -34,6 +34,9 @@ import { addSignals } from './Signals.js';
  * @extends Layer
  * @fires LayerAnnotation#selected - Fired when annotation selection changes, with selected annotation as parameter
  * @fires LayerAnnotation#loaded - Fired when annotations are loaded
+ * @fires LayerAnnotation#created - Fired when an annotation is created
+ * @fires LayerAnnotation#updated - Fired when an annotation is updated
+ * @fires LayerAnnotation#deleted - Fired when an annotation is deleted
  * @fires Layer#update - Inherited from Layer, fired when redraw needed
  * @fires Layer#ready - Inherited from Layer, fired when layer is ready
  * 
@@ -203,36 +206,42 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 		}
 
 		this.annotations.push(annotation);
-
-		// Recreate the entire dropdown list to include the new annotation with correct structure
-		if (this.annotationsListEntry && this.annotationsListEntry.element && this.annotationsListEntry.element.parentElement) {
-			const list = this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
-			if (list) {
-				// Store current dropdown state
-				const selectContainer = list.querySelector('.openlime-annotations-select');
-				const wasActive = selectContainer && selectContainer.classList.contains('active');
-
-				// Cleanup previous event listeners if they exist
-				if (selectContainer && selectContainer._cleanup) {
-					selectContainer._cleanup();
-				}
-
-				// Recreate the entire annotations list
-				this.createAnnotationsList();
-
-				// Restore dropdown state if it was open
-				if (wasActive) {
-					const newSelectContainer = list.querySelector('.openlime-annotations-select');
-					if (newSelectContainer) {
-						newSelectContainer.classList.add('active');
-					}
-				}
-			}
-		}
+		this.refreshAnnotationsList();
 
 		this.clearSelected();
 		//this.setSelected(annotation);
 		return annotation;
+	}
+
+	/**
+	 * Recreates annotations dropdown list preserving open state when possible.
+	 * @private
+	 */
+	refreshAnnotationsList() {
+		if (!this.annotationsListEntry || !this.annotationsListEntry.element || !this.annotationsListEntry.element.parentElement) {
+			return;
+		}
+
+		const list = this.annotationsListEntry.element.parentElement.querySelector('.openlime-list');
+		if (!list) {
+			return;
+		}
+
+		const selectContainer = list.querySelector('.openlime-annotations-select');
+		const wasActive = selectContainer && selectContainer.classList.contains('active');
+
+		if (selectContainer && selectContainer._cleanup) {
+			selectContainer._cleanup();
+		}
+
+		this.createAnnotationsList();
+
+		if (wasActive) {
+			const newSelectContainer = list.querySelector('.openlime-annotations-select');
+			if (newSelectContainer) {
+				newSelectContainer.classList.add('active');
+			}
+		}
 	}
 
 	/**
@@ -513,6 +522,104 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 	}
 
 	/**
+	 * Returns the annotations list.
+	 * @param {boolean} [copy=true] - When true returns a shallow copy.
+	 * @returns {Annotation[]} Annotations array (or copy).
+	 */
+	listAnnotations(copy = true) {
+		return copy ? [...this.annotations] : this.annotations;
+	}
+
+	/**
+	 * Creates an annotation and emits events.
+	 * @param {Annotation|Object} [annotation] - Annotation instance or plain options object.
+	 * @returns {Annotation} Created annotation.
+	 */
+	createAnnotation(annotation) {
+		let anno = annotation;
+		if (anno && !(anno instanceof Annotation)) {
+			anno = new Annotation(anno);
+		}
+		anno = this.newAnnotation(anno);
+		this.emit('update');
+		this.emit('created', anno);
+		return anno;
+	}
+
+	/**
+	 * Updates an annotation by ID and emits events.
+	 * @param {string} id - Annotation identifier.
+	 * @param {Object} updates - Partial update object.
+	 * @returns {Annotation|null} Updated annotation or null if not found.
+	 */
+	updateAnnotationById(id, updates = {}) {
+		const anno = this.getAnnotationById(id);
+		if (!anno || !updates || typeof updates !== 'object') {
+			return anno || null;
+		}
+
+		const patch = { ...updates };
+		delete patch.id;
+
+		if (patch.data && typeof patch.data === 'object') {
+			anno.data = Object.assign({}, anno.data || {}, patch.data);
+			delete patch.data;
+		}
+
+		Object.assign(anno, patch);
+
+		if (this.getAnnotationIdx(anno) === null || this.getAnnotationIdx(anno) === undefined) {
+			const maxIdx = Math.max(...this.annotations
+				.filter(a => a !== anno)
+				.map(a => {
+					const idx = this.getAnnotationIdx(a);
+					return (idx !== null && idx !== undefined) ? parseInt(idx) || 0 : 0;
+				}), -1);
+			this.setAnnotationIdx(anno, maxIdx + 1);
+		}
+
+		anno.needsUpdate = true;
+		this.refreshAnnotationsList();
+		this.emit('update');
+		this.emit('updated', anno);
+		return anno;
+	}
+
+	/**
+	 * Deletes an annotation by ID and emits events.
+	 * @param {string} id - Annotation identifier.
+	 * @returns {Annotation|null} Deleted annotation or null if not found.
+	 */
+	deleteAnnotationById(id) {
+		const anno = this.getAnnotationById(id);
+		if (!anno) {
+			return null;
+		}
+
+		this.annotations = this.annotations.filter(a => a !== anno);
+		const wasSelected = this.selected.has(anno.id);
+		this.selected.delete(anno.id);
+
+		if (wasSelected) {
+			this.clearSelected();
+		}
+
+		this.refreshAnnotationsList();
+		this.emit('update');
+		this.emit('deleted', anno);
+		return anno;
+	}
+
+	/**
+	 * Returns a single annotation data object by ID.
+	 * @param {string} id - Annotation identifier.
+	 * @returns {Annotation|null} Annotation or null if not found.
+	 */
+	getAnnotationDataById(id) {
+		return this.getAnnotationById(id);
+	}
+
+	/**
 	 * Clears all annotation selections
 	 * @private
 	 */
@@ -616,5 +723,5 @@ class LayerAnnotation extends Layer { //FIXME CustomData Object template {name: 
 
 }
 
-addSignals(LayerAnnotation, 'selected', 'loaded');
+addSignals(LayerAnnotation, 'selected', 'loaded', 'created', 'updated', 'deleted');
 export { LayerAnnotation }

@@ -169,7 +169,7 @@ class UIBasic {
 				ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
-				pencil: { title: 'Pencil', display: true, key: 'p', task: (event) => { this.toggleAnnotations(); } },
+				pencil: { title: 'Pencil', display: false, key: 'p', task: (event) => { this.toggleAnnotations(); } },
 			},
 			postInit: () => { },
 			showScale: true,
