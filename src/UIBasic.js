@@ -117,8 +117,10 @@ class UIBasic {
 	 * @param {UIBasic~Options} [options] - Configuration options
 	 * @param {boolean} [options.annotationsActive=false] - Enable annotation pencil mode on startup
 	 * @param {Function} [options.annotationCallback] - Callback function called when an annotation is created.
-	 * @param {number} [options.pencilDiskRadius=20] - Pencil disk radius in screen pixels at zoom level 1.
 	 *                                                   Receives the created Annotation as parameter.
+	 * @param {Function} [options.annotationClickCallback] - Callback function called when an annotation circle is clicked.
+	 *                                                       Receives the clicked Annotation as parameter.
+	 * @param {number} [options.pencilDiskRadius=20] - Pencil disk radius in screen pixels at zoom level 1.
 	 * 
 	 * @fires UIBasic#lightdirection
 	 * 
@@ -135,11 +137,15 @@ class UIBasic {
 	 *     pixelSize: 0.1,
 	 *     // Add attribution
 	 *     attribution: "© Example Source",
-	 *     // Enable annotations and set callback
+	 *     // Enable annotations and set callbacks
 	 *     annotationsActive: false,
 	 *     annotationCallback: (annotation) => {
 	 *         console.log('Annotation created:', annotation);
 	 *         // Custom annotation processing here
+	 *     },
+	 *     annotationClickCallback: (annotation) => {
+	 *         console.log('Annotation clicked:', annotation);
+	 *         // Handle annotation circle click
 	 *     }
 	 * });
 	 * 
@@ -183,6 +189,7 @@ class UIBasic {
 			menu: [],
 			annotationsActive: false,
 			annotationCallback: null,
+			annotationClickCallback: null,
 			pencilDiskRadius: 12
 		});
 
@@ -1322,7 +1329,7 @@ class UIBasic {
 
 		e.preventDefault();
 		e.stopPropagation();
-
+		
 		const annotationLayer = this._getOrCreateAnnotationLayer();
 
 		if (!annotationLayer) {
@@ -1377,6 +1384,10 @@ class UIBasic {
 		annotationLayer.annotationUpdate = (annotation, transform) => {
 			this._updatePencilDiskSize(annotation, transform);
 		};
+
+		if (this.annotationClickCallback) {
+			annotationLayer.onClick = this.annotationClickCallback;
+		}
 
 		this.viewer.addLayer(id, annotationLayer);
 		this._pencilAnnotationLayer = annotationLayer;
