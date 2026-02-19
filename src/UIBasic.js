@@ -166,6 +166,22 @@ class UIBasic {
 		});
 
 		Object.assign(this, options);
+
+		// Keep the pencil toolbar button in sync with ManagerSvgAnnotation mode changes.
+		// This also fires the pencilEnabled / pencilDisabled signals so that listeners
+		// in index.html (e.g. annotation color reset) are notified when the manager's
+		// mode is changed programmatically (e.g. via an Edit button).
+		if (this.annotationManager?.addEvent) {
+			this.annotationManager.addEvent('modeChange', (mode) => {
+				const pencilButton = this.viewer.containerElement
+					.querySelector('.openlime-button.openlime-pencil');
+				if (pencilButton)
+					pencilButton.classList.toggle('openlime-pencil-active', mode === 'draw');
+				if (mode === 'draw') this.emit('pencilEnabled');
+				else                 this.emit('pencilDisabled');
+			});
+		}
+
 		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
 			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
 
@@ -1255,19 +1271,9 @@ class UIBasic {
 	toggleAnnotations(force) {
 		if (this.annotationManager) {
 			this.annotationManager.toggle(force);
+			// Button state and pencilEnabled/pencilDisabled signals are handled
+			// by the 'modeChange' listener wired in the constructor.
 		}
-		const isActive = this.annotationManager?.active ?? false;
-		const pencilButton = this.viewer.containerElement.querySelector('.openlime-button.openlime-pencil');
-		if (pencilButton) {
-			pencilButton.classList.toggle('openlime-pencil-active', isActive);
-		}
-
-		if(isActive) {
-			this.emit('pencilEnabled');
-		} else {
-			this.emit('pencilDisabled');
-		}
-
 	}
 
 	// closeLayersMenu() {

@@ -196,6 +196,20 @@ class Marker {
     return annotation.elements;
   }
 
+  /**
+   * **['edit' mode]** Moves the vertex at `vertexIndex` to `pos`.
+   * Called while the user drags a vertex handle in edit mode.
+   * Default implementation is a no-op; override in markers that store vertices.
+   *
+   * @param {number} vertexIndex - Zero-based index of the vertex being dragged
+   * @param {{x:number,y:number}} pos - New position in image coordinates
+   * @param {Object} transform - Current camera transform
+   * @param {Annotation} annotation - The annotation being edited
+   */
+  moveVertex(vertexIndex, pos, transform, annotation) {
+    // no-op by default
+  }
+
   // ── Common ──────────────────────────────────────────────────────────────
 
   /**
@@ -360,17 +374,19 @@ class PolylineMarker extends Marker {
 
   /** Creates a vertex dot and appends it to the handles group. */
   _addDot(pos, transform, handles) {
-    const r  = this._modelRadius(transform);
+    const r = this._modelRadius(transform);
     const sw = this._modelStroke(transform);
     const dot = Util.createSVGElement('circle', {
       cx: String(pos.x), cy: String(pos.y),
-      r:  String(r),
+      r: String(r),
       class: 'annotation-vertex-dot',
       fill: this.stroke,
       stroke: '#ffffff',
       'stroke-width': String(sw * 0.5),
       opacity: '0.9',
-      'pointer-events': 'none',
+      // No pointer-events:none — dots must be drag-targets in edit mode.
+      // The parent svgGroup has pointer-events:none in draw mode anyway.
+      cursor: 'grab',
     });
     handles.appendChild(dot);
     return dot;
@@ -380,13 +396,13 @@ class PolylineMarker extends Marker {
 
   startElement(pos, transform, annotation) {
     // Persist config
-    annotation.data._markerStroke       = this.stroke;
-    annotation.data._markerStrokeWidth  = this.strokeWidth;
-    annotation.data._markerFill         = this.fill;
-    annotation.data._markerOpacity      = this.opacity;
-    annotation.data._markerClosed       = this.closed;
+    annotation.data._markerStroke = this.stroke;
+    annotation.data._markerStrokeWidth = this.strokeWidth;
+    annotation.data._markerFill = this.fill;
+    annotation.data._markerOpacity = this.opacity;
+    annotation.data._markerClosed = this.closed;
     annotation.data._markerVertexRadius = this.vertexRadius ?? 5;
-    annotation.data._markerPoints       = [pos];
+    annotation.data._markerPoints = [pos];
 
     const sw = this._modelStroke(transform);
 
@@ -491,10 +507,10 @@ class PolylineMarker extends Marker {
   // ── Zoom-responsive sizes ───────────────────────────────────────────────
 
   updateElements(elements, transform, annotation) {
-    const baseSW = annotation.data?._markerStrokeWidth  ?? this.strokeWidth;
-    const baseR  = annotation.data?._markerVertexRadius ?? (this.vertexRadius ?? 5);
+    const baseSW = annotation.data?._markerStrokeWidth ?? this.strokeWidth;
+    const baseR = annotation.data?._markerVertexRadius ?? (this.vertexRadius ?? 5);
     const sw = baseSW / (transform?.z ?? 1);
-    const r  = baseR  / (transform?.z ?? 1);
+    const r = baseR / (transform?.z ?? 1);
 
     for (const el of elements) {
       if (el.classList?.contains('annotation-polyline')) {
@@ -510,6 +526,32 @@ class PolylineMarker extends Marker {
           dot.setAttribute('r', r);
           dot.setAttribute('stroke-width', sw * 0.5);
         }
+      }
+    }
+  }
+
+  moveVertex(vertexIndex, pos, transform, annotation) {
+    if (!annotation.data._markerPoints ||
+      vertexIndex >= annotation.data._markerPoints.length) return;
+
+    annotation.data._markerPoints[vertexIndex] = pos;
+
+    // Update polyline / polygon points attribute
+    const shape = annotation.elements.find(
+      el => el.classList?.contains('annotation-polyline'));
+    if (shape) {
+      shape.setAttribute('points',
+        PolylineMarker._toPointsAttr(annotation.data._markerPoints));
+    }
+
+    // Update the dot position
+    const handles = annotation.elements.find(
+      el => el.classList?.contains('annotation-vertex-handles'));
+    if (handles) {
+      const dot = handles.children[vertexIndex];
+      if (dot) {
+        dot.setAttribute('cx', String(pos.x));
+        dot.setAttribute('cy', String(pos.y));
       }
     }
   }
@@ -611,10 +653,16 @@ class ManagerSvgAnnotation {
       markerOptions: {},
       enableState: true,
       customState: null,
-      _active: false,
-      /** @type {DrawingSession|null} Active drawing session, or null when idle. */
-      _session: null,
     }, options);
+
+    /** @type {'idle'|'draw'|'edit'} Current interaction mode. */
+    this._mode = 'idle';
+    /** @type {DrawingSession|null} Active drawing session, or null when idle. */
+    this._session = null;
+    /** @type {{annotation, vertexIndex}|null} Active vertex-drag session in edit mode. */
+    this._vertexSession = null;
+    /** @type {Annotation|null} The annotation whose vertex handles are currently visible. */
+    this._selectedAnnotation = null;
 
     // Resolve or auto-create the annotation layer
     this._resolveLayer();
@@ -673,12 +721,12 @@ class ManagerSvgAnnotation {
     document.addEventListener('keydown', this._keyHandler);
 
     // Shorthand callback registration
-    if (options.onCreate)       this.addEvent('create',       options.onCreate);
-    if (options.onUpdate)       this.addEvent('update',       options.onUpdate);
-    if (options.onDelete)       this.addEvent('delete',       options.onDelete);
-    if (options.onSelect)       this.addEvent('select',       options.onSelect);
+    if (options.onCreate) this.addEvent('create', options.onCreate);
+    if (options.onUpdate) this.addEvent('update', options.onUpdate);
+    if (options.onDelete) this.addEvent('delete', options.onDelete);
+    if (options.onSelect) this.addEvent('select', options.onSelect);
     if (options.onSessionStart) this.addEvent('sessionStart', options.onSessionStart);
-    if (options.onSessionCancel)this.addEvent('sessionCancel',options.onSessionCancel);
+    if (options.onSessionCancel) this.addEvent('sessionCancel', options.onSessionCancel);
   }
 
   // ─── Static Marker Registry ───────────────────────────────────────────────
@@ -708,29 +756,67 @@ class ManagerSvgAnnotation {
   // ─── Pencil mode ──────────────────────────────────────────────────────────
 
   /**
-   * Toggles pencil mode (annotation-on-double-click).
-   * Called by `UIBasic.toggleAnnotations()` when the pencil action fires.
+   * Sets the interaction mode.
    *
-   * @param {boolean} [force] - Force a specific state; toggles if omitted.
-   * @returns {boolean} The new active state.
+   * | Mode   | Behaviour |
+   * |--------|-----------|
+   * | `'idle'` | No annotation interaction; panzoom/light work normally |
+   * | `'draw'` | Creates new annotations; existing annotations are non-clickable (pointer-events:none) |
+   * | `'edit'` | Selects and (future) edits existing annotations; no new creation |
+   *
+   * Cancels any in-progress drawing session when leaving `'draw'`.
+   * Fires the `'modeChange'` signal when the mode actually changes.
+   *
+   * @param {'idle'|'draw'|'edit'} mode
+   * @returns {string} The new mode.
    */
-  toggle(force) {
-    this._active = force === undefined ? !this._active : !!force;
-    if (this._active && this.viewer.panzoom) {
-      // Prevent double-tap zoom while pencil mode is on
-      this.viewer.panzoom.enableDoubleTapZoom = false;
-    } else if (!this._active && this.viewer.panzoom) {
-      this.viewer.panzoom.enableDoubleTapZoom = true;
-    }
+  setMode(mode) {
+    const valid = ['idle', 'draw', 'edit'];
+    if (!valid.includes(mode))
+      throw new Error(`ManagerSvgAnnotation.setMode: invalid mode '${mode}'. Valid: ${valid.join(', ')}`);
+
+    // Cancel in-progress drawing when leaving draw mode
+    if (this._mode === 'draw' && mode !== 'draw' && this._session)
+      this._cancelSession();
+
+    const prev = this._mode;
+    this._mode = mode;
+
+    // Double-tap zoom: disable whenever a mode other than idle is active
+    if (this.viewer.panzoom)
+      this.viewer.panzoom.enableDoubleTapZoom = (mode === 'idle');
+
     this._syncPointerEvents();
-    return this._active;
+    if (mode !== prev) this.emit('modeChange', mode);
+    return mode;
   }
 
   /**
-   * Current pencil mode state.
+   * Convenience toggle for `UIBasic` backward compatibility.
+   * Toggles between `'draw'` and `'idle'`; `force=true` → draw, `force=false` → idle.
+   * @param {boolean} [force]
+   * @returns {boolean} True if now in draw mode.
+   */
+  toggle(force) {
+    const target = force === undefined
+      ? (this._mode === 'draw' ? 'idle' : 'draw')
+      : (force ? 'draw' : 'idle');
+    this.setMode(target);
+    return this._mode === 'draw';
+  }
+
+  /**
+   * Current interaction mode: `'idle'`, `'draw'`, or `'edit'`.
+   * @type {string}
+   */
+  get mode() { return this._mode; }
+
+  /**
+   * `true` when any mode other than `'idle'` is active.
+   * Kept for backward compatibility with `UIBasic`.
    * @type {boolean}
    */
-  get active() { return this._active; }
+  get active() { return this._mode !== 'idle'; }
 
   /**
    * Programmatically finalises the current sequence/drag drawing.
@@ -749,8 +835,10 @@ class ManagerSvgAnnotation {
    */
   destroy() {
     document.removeEventListener('keydown', this._keyHandler);
-    this._syncPointerEvents(false); // restore pointer-events before detaching
+    const svgGroup = this.layer?.svgGroup;
+    if (svgGroup) svgGroup.style.pointerEvents = ''; // restore
     if (this._session) this._cancelSession();
+    if (this._selectedAnnotation) this._detachVertexDragListeners(this._selectedAnnotation);
   }
 
   // ─── CRUD API ─────────────────────────────────────────────────────────────
@@ -943,7 +1031,7 @@ class ManagerSvgAnnotation {
     }
     this.activeMarker = type;
     this.markerOptions = options;
-    this._syncPointerEvents();
+    this._syncPointerEvents(); // re-evaluate pointer-events for new interaction mode
   }
 
   // ─── Internal: pointer-events management ────────────────────────────────────
@@ -962,21 +1050,25 @@ class ManagerSvgAnnotation {
    * transparent area as hit-target instead of the SVG shapes, so pointer events
    * land directly on `overlayElement`/canvas and `PointerManager` sees them all.
    *
-   * @param {boolean} [forceState] - Override instead of reading `this._active`.
    * @private
    */
-  _syncPointerEvents(forceState) {
+  _syncPointerEvents() {
     const svgGroup = this.layer?.svgGroup;
     if (!svgGroup) return;
-    const active = forceState !== undefined ? forceState : this._active;
-    if (active) {
+    if (this._mode === 'draw') {
+      // In draw mode, existing annotations must NOT intercept pointer events so
+      // PointerManager sees every click — even clicks on top of drawn shapes.
       try {
-        const mode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
-        svgGroup.style.pointerEvents = (mode === 'sequence' || mode === 'drag') ? 'none' : '';
+        const iMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
+        // For sequence/drag the whole svgGroup is transparent.
+        // For tap, single-clicks still need to reach PointerManager for double-tap
+        // detection, so we also set none (tap mode only fires on dblclick).
+        svgGroup.style.pointerEvents = 'none';
       } catch {
-        svgGroup.style.pointerEvents = '';
+        svgGroup.style.pointerEvents = 'none';
       }
     } else {
+      // idle or edit: annotations respond to clicks normally (selection)
       svgGroup.style.pointerEvents = '';
     }
   }
@@ -1087,9 +1179,9 @@ class ManagerSvgAnnotation {
 
   // ─── Internal: pointer handlers ──────────────────────────────────────────
 
-  /** Guard: returns true if the event should be ignored (UI overlays, not active). */
+  /** Guard: returns true if the event should be ignored (not in draw mode, or UI overlays). */
   _shouldIgnore(e) {
-    if (!this._active) return true;
+    if (this._mode !== 'draw') return true;
     if (!this.layer?.layout) return true;
     const t = e.target;
     if (t?.closest?.('.openlime-toolbar') ||
@@ -1123,7 +1215,7 @@ class ManagerSvgAnnotation {
       if (this._session) {
         // Add the double-clicked point as an extra vertex, then finalize.
         // This mirrors the intuitive "last click = close" UX of drawing tools.
-        const pos       = this._eventToImageCoords(e);
+        const pos = this._eventToImageCoords(e);
         const transform = this.viewer.camera.getCurrentTransform(performance.now());
         this._session.marker.addVertex(pos, transform, this._session.annotation);
         this._session.annotation.needsUpdate = true;
@@ -1163,7 +1255,7 @@ class ManagerSvgAnnotation {
   /** Hover → rubber-band update for 'sequence' sessions (mouse up + moving). @private */
   _onHover(e) {
     if (!this._session) return;
-    const pos       = this._eventToImageCoords(e);
+    const pos = this._eventToImageCoords(e);
     const transform = this.viewer.camera.getCurrentTransform(performance.now());
     this._session.marker.updatePreview(pos, transform, this._session.annotation);
     this._session.annotation.needsUpdate = true;
@@ -1185,21 +1277,30 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onDragStart(e) {
-    // Only interfere when pencil is on
-    if (!this._active || !this.layer?.layout) return;
+    // Interfere when in draw OR edit mode (but not idle)
+    if (this._mode === 'idle' || !this.layer?.layout) return;
 
     // Allow toolbar/menu clicks to fall through normally
     const t = e.target;
-    if (t?.closest?.('.openlime-toolbar')    ||
-        t?.closest?.('.openlime-layers-menu') ||
-        t?.closest?.('.openlime-dialog')      ||
-        t?.classList?.contains('openlime-button')) return;
+    if (t?.closest?.('.openlime-toolbar') ||
+      t?.closest?.('.openlime-layers-menu') ||
+      t?.closest?.('.openlime-dialog') ||
+      t?.classList?.contains('openlime-button')) return;
 
-    // Block panzoom + light controller from receiving this pan.
-    // This is the KEY call: because onPan() wraps panStart as fingerMovingStart,
-    // calling preventDefault here stops lower-priority handlers (panzoom) from
-    // ever seeing the event.
+    // Block light controller (priority 0) and panzoom (priority -1000) from
+    // receiving this pan.  In draw mode we go on to handle drawing; in edit mode
+    // we start a vertex-drag session if the pointer is on a vertex dot.
     e.preventDefault?.();
+
+    if (this._mode === 'edit') {
+      // In edit mode, vertex drag is handled by direct per-dot listeners
+      // (see _attachVertexDragListeners). We still call e.preventDefault() here
+      // only if the target is NOT a vertex dot (to block light/panzoom on 
+      // non-vertex drags). For vertex dots the dot's own pointerdown listener
+      // calls stopPropagation so this handler won't be reached at all.
+      e.preventDefault?.();
+      return;
+    }
 
     const mode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
 
@@ -1225,12 +1326,12 @@ class ManagerSvgAnnotation {
 
   /**
    * Pan/drag move → live shape/rubber-band preview.
-   * Handles both 'drag' (shape resize) and 'sequence' (rubber-band while pressed).
+   * (Vertex drag is handled entirely via direct listeners on the dot elements.)
    * @private
    */
   _onDragMove(e) {
     if (!this._session) return;
-    const pos       = this._eventToImageCoords(e);
+    const pos = this._eventToImageCoords(e);
     const transform = this.viewer.camera.getCurrentTransform(performance.now());
     this._session.marker.updatePreview(pos, transform, this._session.annotation);
     this._session.annotation.needsUpdate = true;
@@ -1285,12 +1386,19 @@ class ManagerSvgAnnotation {
 
   /**
    * Shows vertex handles for `selectedAnno` and hides them for all others.
+   * In edit mode also re-wires direct pointer-down drag listeners on the visible dots.
    * Called on 'selected' events from the layer.
    * @param {Annotation|null} selectedAnno
    * @private
    */
   _updateHandlesVisibility(selectedAnno) {
     if (!this.layer?.annotations) return;
+
+    // Detach drag listeners from the previously-selected annotation
+    if (this._selectedAnnotation && this._selectedAnnotation !== selectedAnno) {
+      this._detachVertexDragListeners(this._selectedAnnotation);
+    }
+
     let changed = false;
     for (const anno of this.layer.annotations) {
       const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
@@ -1303,6 +1411,12 @@ class ManagerSvgAnnotation {
       anno.needsUpdate = true;
       changed = true;
     }
+
+    this._selectedAnnotation = selectedAnno ?? null;
+
+    // Attach drag listeners to the newly-selected annotation (if any)
+    if (selectedAnno) this._attachVertexDragListeners(selectedAnno);
+
     if (changed) this.viewer.redraw();
   }
 
@@ -1337,6 +1451,124 @@ class ManagerSvgAnnotation {
     this.layer.deleteAnnotationById(annotation.id);
     this.viewer.redraw();
     this.emit('sessionCancel');
+  }
+
+  // ─── Internal: vertex-drag direct listeners ────────────────────────────────
+
+  /**
+   * Attaches a direct `pointerdown` listener to every vertex dot of `annotation`.
+   *
+   * Why direct listeners instead of PointerManager:
+   * `LayerSvgAnnotation` sets `onpointerdown` (with `stopPropagation`) on every
+   * element in `anno.elements`, including the `annotation-vertex-handles` group.
+   * A click on a dot bubbles to that group handler and is swallowed before
+   * PointerManager sees it.  By adding an `addEventListener` on the dot itself
+   * we intercept the event at the target (before it bubbles to the group handler)
+   * and drive the drag via `setPointerCapture` + raw `pointermove`/`pointerup`.
+   *
+   * @param {Annotation} annotation
+   * @private
+   */
+  _attachVertexDragListeners(annotation) {
+    const handles = annotation.elements?.find(
+      el => el.classList?.contains('annotation-vertex-handles'));
+    if (!handles) return;
+
+    [...handles.children].forEach((dot, idx) => {
+      // Idempotent: skip if already attached
+      if (dot._vertexDragHandler) return;
+
+      dot._vertexDragHandler = (e) => {
+        if (e.button !== 0) return;
+        // Prevent the event from bubbling to handles.onpointerdown (stopPropagation)
+        // and from being treated as a pan by PointerManager.
+        e.stopPropagation();
+        e.preventDefault();
+
+        this._vertexSession = { annotation, vertexIndex: idx };
+
+        // setPointerCapture ensures pointermove fires even if the dot element is
+        // detached mid-drag by a redraw/syncSvg cycle.  We also capture on
+        // document so we always get the events regardless of DOM changes.
+        dot.setPointerCapture(e.pointerId);
+
+        const onMove = (ev) => {
+          if (ev.pointerId !== e.pointerId) return;
+          if (!this._vertexSession) { cleanup(); return; }
+          const pos = this._eventToImageCoords(ev);
+          const transform = this.viewer.camera.getCurrentTransform(performance.now());
+          const markerType = annotation.data?._markerType ?? this.activeMarker;
+          try {
+            const marker = this._instantiateMarker(markerType, {});
+            marker.moveVertex(idx, pos, transform, annotation);
+          } catch { /* unknown marker — ignore */ }
+          annotation.needsUpdate = true;
+          this.viewer.redraw();
+        };
+
+        const onUp = (ev) => {
+          if (ev.pointerId !== e.pointerId) return;
+          cleanup();
+          this._vertexSession = null;
+          annotation.syncSvg?.();
+          this.emit('update', annotation);
+        };
+
+        const cleanup = () => {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          document.removeEventListener('pointercancel', onUp);
+        };
+
+        // Listen on document so events arrive even if the dot is replaced
+        // by a syncSvg() call during the redraw triggered inside onMove.
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
+      };
+
+      dot.addEventListener('pointerdown', dot._vertexDragHandler);
+    });
+  }
+
+  /**
+   * Removes the vertex-drag `pointerdown` listeners previously attached by
+   * `_attachVertexDragListeners`.
+   * @param {Annotation} annotation
+   * @private
+   */
+  _detachVertexDragListeners(annotation) {
+    const handles = annotation?.elements?.find(
+      el => el.classList?.contains('annotation-vertex-handles'));
+    if (!handles) return;
+    for (const dot of handles.children) {
+      if (dot._vertexDragHandler) {
+        dot.removeEventListener('pointerdown', dot._vertexDragHandler);
+        delete dot._vertexDragHandler;
+      }
+    }
+  }
+
+  // ─── Internal: vertex-hit detection (kept for reference) ───────────────────
+
+  /**
+   * Returns the annotation and vertex index for a pointer target that is a
+   * vertex dot, or `null` if the target is not a vertex dot.
+   *
+   * @param {EventTarget} target
+   * @returns {{annotation: Annotation, vertexIndex: number}|null}
+   * @private
+   */
+  _findVertexAtTarget(target) {
+    if (!target?.classList?.contains('annotation-vertex-dot')) return null;
+    for (const anno of this.layer.annotations) {
+      const handles = anno.elements?.find(
+        el => el.classList?.contains('annotation-vertex-handles'));
+      if (!handles) continue;
+      const idx = [...handles.children].indexOf(target);
+      if (idx !== -1) return { annotation: anno, vertexIndex: idx };
+    }
+    return null;
   }
 
   // ─── Internal: marker instantiation ──────────────────────────────────────
@@ -1387,7 +1619,7 @@ class ManagerSvgAnnotation {
  * @description Fired when the user selects an annotation in the layer.
  */
 
-addSignals(ManagerSvgAnnotation, 'create', 'update', 'delete', 'select', 'sessionStart', 'sessionCancel');
+addSignals(ManagerSvgAnnotation, 'create', 'update', 'delete', 'select', 'sessionStart', 'sessionCancel', 'modeChange');
 
 // Register built-in markers
 ManagerSvgAnnotation.registerMarker('disk', DiskMarker);

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - RTI Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+    <style>
+        html,
+        body {
+            color: white;
+            background-color: black;
+        }
+
+        /* Override examples.css: viewer takes full viewport, panels are fixed overlays */
+        h1 { display: none; }
+        .openlime { height: 100% !important; }
+
+        #annotation-toolbar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            pointer-events: none;   /* children re-enable as needed */
+        }
+
+        #mode-panel {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: rgba(0,0,0,0.65);
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            pointer-events: auto;
+        }
+
+        #mode-panel button {
+            padding: 6px 14px;
+            border: 2px solid #555;
+            border-radius: 6px;
+            background: #222;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        #mode-panel button:hover {
+            background: #333;
+        }
+
+        #mode-panel button.active {
+            border-color: #4fc3f7;
+            background: #0d2b3e;
+            color: #fff;
+        }
+
+        #marker-panel {
+            display: none;
+            /* shown only in draw mode */
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 6px 10px;
+            background: rgba(0,0,0,0.65);
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            border-left: 3px solid #4fc3f7;
+            pointer-events: auto;
+        }
+
+        #marker-panel button {
+            padding: 6px 14px;
+            border: 2px solid #555;
+            border-radius: 6px;
+            background: #222;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        #marker-panel button:hover {
+            background: #333;
+        }
+
+        #marker-panel button.active {
+            border-color: #e63946;
+            background: #3a1018;
+            color: #fff;
+        }
+
+        #drawing-hint {
+            display: none;
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 9999;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        #drawing-hint b {
+            color: #ffd700;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>OpenLIME - RTI Viewer</h1>
+    <div id="annotation-toolbar">
+        <div id="mode-panel">
+            <strong>Mode:</strong>
+            <button id="btn-mode-draw">&#9998; Draw</button>
+            <button id="btn-mode-edit">&#10549; Select/Edit</button>
+        </div>
+        <div id="marker-panel">
+            <strong>Marker:</strong>
+            <button id="btn-disk" class="active">&#9679; Disk</button>
+            <button id="btn-polyline">&#9135; Polyline</button>
+            <button id="btn-polygon">&#9651; Polygon</button>
+        </div>
+    </div>
+    <div id="drawing-hint">
+        Click to add vertex &nbsp;·&nbsp;
+        <b>double-click</b> last point to finish &nbsp;·&nbsp;
+        <b>Enter</b> to finish &nbsp;·&nbsp;
+        <b>Esc</b> to cancel
+    </div>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+
+        // Create 4 RTI layers and add them to the canvans
+        // A RTI layer has many channels. In this example the 4 layers store 
+        // channels in 4 different ways: image, deepzoom, tarzoom and itarzoom 
+        const layer0 = new OpenLIME.Layer({
+            label: 'coin-image ptm',
+            layout: 'image',
+            type: 'rti',
+            url: '../../assets/rti/ptm/info.json',
+            normals: false
+        });
+        lime.addLayer('coin0', layer0);
+
+        const layer1 = new OpenLIME.Layer({
+            label: 'coin-deepzoom hsh',
+            layout: 'deepzoom',
+            type: 'rti',
+            url: '../../assets/rti/hsh/info.json',
+            normals: false
+        });
+        lime.addLayer('coin1', layer1);
+
+        const layer2 = new OpenLIME.Layer({
+            label: 'coin-tarzoom bln',
+            layout: 'tarzoom',
+            type: 'rti',
+            url: '../../assets/rti/bln/info.json',
+            normals: false
+        });
+        lime.addLayer('coin2', layer2);
+
+        const layer3 = new OpenLIME.Layer({
+            label: 'coin-itarzoom ybln',
+            layout: 'itarzoom',
+            type: 'rti',
+            url: '../../assets/rti/ybln/info.json',
+            normals: false
+        });
+        lime.addLayer('coin3', layer3);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // ── Annotation Manager ───────────────────────────────────────────────
+        // Create the manager AFTER layers are registered so it can share their
+        // layout when auto-creating the SVG annotation layer.
+        const manager = new OpenLIME.ManagerSvgAnnotation(lime, {
+            // Use the built-in disk marker (default)
+            activeMarker: 'disk',
+            markerOptions: {
+                radius: 14,        // screen-px at zoom 1
+                fill: '#e63946',
+                opacity: 0.75,
+            },
+            // Capture viewer state (light direction, render mode, …) in each annotation
+            enableState: true,
+
+            // Called whenever a new annotation is created
+            onCreate: (anno) => {
+                document.getElementById('drawing-hint').style.display = 'none';
+                console.log('[ManagerSvgAnnotation] CREATE', anno);
+            },
+
+            // Show/hide drawing hint during sequence drawing
+            onSessionStart: (anno) => {
+                const mode = anno?.data?._markerType;
+                if (mode && mode !== 'disk') {
+                    document.getElementById('drawing-hint').style.display = 'block';
+                }
+            },
+            onSessionCancel: () => {
+                document.getElementById('drawing-hint').style.display = 'none';
+            },
+
+            // Called when the user selects an annotation by clicking on it
+            onSelect: (anno) => {
+                const SELECTED_STROKE = '#a70000';  // gold highlight
+                const SELECTED_FILL = '#a70000';
+                for (const a of manager.getAnnotations()) {
+                    const selected = (a === anno);
+                    for (const el of a.elements) {
+                        if (el.classList?.contains('annotation-disk')) {
+                            el.setAttribute('fill', SELECTED_FILL);
+                        } else if (el.classList?.contains('annotation-polyline')) {
+                            el.setAttribute('stroke', SELECTED_STROKE);
+                        }
+                    }
+                }
+
+                console.log('[ManagerSvgAnnotation] SELECT - annotation data:', {
+                    id: anno.id,
+                    label: anno.label,
+                    description: anno.description,
+                    class: anno.class,
+                    publish: anno.publish,
+                    data: anno.data,
+                    state: anno.state,
+                    svg: anno.svg,
+                    elements: anno.elements.length + ' SVG element(s)',
+                });
+            },
+        });
+
+        // ── UI ───────────────────────────────────────────────────────────────
+        // Pass the manager so the pencil action activates/deactivates it
+        const ui = new OpenLIME.UIBasic(lime, {
+            showLightDirections: true,
+            annotationManager: manager,
+        });
+
+        // When pencil mode is activated, deselect all annotations
+        ui.addEvent('pencilEnabled', () => {
+            for (const a of manager.getAnnotations()) {
+                for (const el of a.elements) {
+                    if (el.classList?.contains('annotation-disk'))
+                        el.setAttribute('fill', a.data._markerFill ?? '#e63946');
+                    else if (el.classList?.contains('annotation-polyline'))
+                        el.setAttribute('stroke', a.data._markerStroke ?? '#ff0000');
+                }
+            }
+        });
+
+        // ── Mode panel ───────────────────────────────────────────────────
+        // Sync button active states and marker-panel visibility on mode change
+        manager.addEvent('modeChange', (mode) => {
+            document.getElementById('btn-mode-draw').classList.toggle('active', mode === 'draw');
+            document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
+            document.getElementById('marker-panel').style.display = mode === 'draw' ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-mode-draw').addEventListener('click', () =>
+            manager.setMode(manager.mode === 'draw' ? 'idle' : 'draw'));
+        document.getElementById('btn-mode-edit').addEventListener('click', () =>
+            manager.setMode(manager.mode === 'edit' ? 'idle' : 'edit'));
+
+        // ── Marker selector panel ────────────────────────────────────────
+        const markerConfigs = {
+            'disk': { type: 'disk', opts: { radius: 14, fill: '#e63946', opacity: 0.75 } },
+            'polyline': { type: 'polyline', opts: { stroke: '#00aaff', strokeWidth: 2, closed: false } },
+            'polygon': {
+                type: 'polyline', opts: {
+                    stroke: '#22bb55', strokeWidth: 2,
+                    fill: 'rgba(34,187,85,0.2)', closed: true
+                }
+            },
+        };
+
+        function setMarker(key) {
+            const cfg = markerConfigs[key];
+            manager.setActiveMarker(cfg.type, cfg.opts);
+            document.querySelectorAll('#marker-panel button').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + key).classList.add('active');
+        }
+
+        document.getElementById('btn-disk').addEventListener('click', () => setMarker('disk'));
+        document.getElementById('btn-polyline').addEventListener('click', () => setMarker('polyline'));
+        document.getElementById('btn-polygon').addEventListener('click', () => setMarker('polygon'));
+
+
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+        ui.actions.light.active = true;
+
+        // Show the pencil toggle button in the toolbar
+        ui.actions.pencil.display = true;
+
+        OpenLIME.HSH.minElevation = 0.2;
+
+        class LightSpin {
+            constructor(layer, secondsPerTurn = 20, height = 0.7) {
+                this.layer = layer;
+                this.setHeight(height);
+                this.startTime = Date.now();
+                this.secondsPerTurn = secondsPerTurn;
+                this.spinning = true;
+                this.angle = 0.0;
+                this.startAngle = 0.0;
+            }
+            setHeight(height) {
+                this.w = Math.sqrt(1 + height * height);
+            }
+            update() {
+                let seconds = (Date.now() - this.startTime) / 1000;
+
+                this.angle = 2 * Math.PI * (seconds / this.secondsPerTurn) + this.startAngle;
+
+                let x = Math.cos(this.angle) / this.w;
+                let y = Math.sin(this.angle) / this.w;
+                this.layer.setLight([x, y], 100);
+                if (this.spinning)
+                    requestAnimationFrame(() => this.update());
+            }
+            start() {
+                this.startTime = Date.now();
+                this.spinning = true;
+                this.update();
+            }
+            stop() {
+                this.startTime = Date.now();
+                this.startAngle = this.angle;
+                this.spinning = false;
+            }
+        }
+
+
+        let spinner = new LightSpin(layer0, 20);
+        //spinner.start();
+        lime.pointerManager.idleTime = 60;
+        lime.pointerManager.onEvent({
+            priority: 0,
+            wentIdle: () => { spinner.start() },
+            activeAgain: () => { spinner.stop() }
+        });
+
+        //ui.toggleLightController(true);
+
+    </script>
+</body>
+
+</html>
