@@ -4,8 +4,6 @@ import { Controller2D } from './Controller2D'
 import { ControllerPanZoom } from './ControllerPanZoom'
 import { Ruler } from "./Ruler"
 import { ScaleBar } from './ScaleBar'
-import { CoordinateSystem } from './CoordinateSystem'
-import { Layer } from './Layer'
 import { addSignals } from './Signals'
 
 /**
@@ -115,44 +113,21 @@ class UIBasic {
 	 * Creates a new UIBasic instance
 	 * @param {Viewer} viewer - OpenLIME viewer instance
 	 * @param {UIBasic~Options} [options] - Configuration options
-	 * @param {boolean} [options.annotationsActive=false] - Enable annotation pencil mode on startup
-	 * @param {Function} [options.annotationCallback] - Callback function called when an annotation is created.
-	 *                                                   Receives the created Annotation as parameter.
-	 * @param {Function} [options.annotationClickCallback] - Callback function called when an annotation circle is clicked.
-	 *                                                       Receives the clicked Annotation as parameter.
-	 * @param {number} [options.pencilDiskRadius=20] - Pencil disk radius in screen pixels at zoom level 1.
-	 * 
+	 * @param {ManagerSvgAnnotation} [options.annotationManager=null]
+	 *   Optional {@link ManagerSvgAnnotation} instance. When set, the 'pencil' action
+	 *   toggles annotation-creation mode by calling `annotationManager.toggle()`.
+	 *
 	 * @fires UIBasic#lightdirection
-	 * 
+	 *
 	 * @example
 	 * ```javascript
-	 * const ui = new UIBasic(viewer, {
-	 *     // Enable specific actions
-	 *     actions: {
-	 *         light: { display: true },
-	 *         zoomin: { display: true },
-	 *         layers: { display: true }
-	 *     },
-	 *     // Add measurement support
-	 *     pixelSize: 0.1,
-	 *     // Add attribution
-	 *     attribution: "© Example Source",
-	 *     // Enable annotations and set callbacks
-	 *     annotationsActive: false,
-	 *     annotationCallback: (annotation) => {
-	 *         console.log('Annotation created:', annotation);
-	 *         // Custom annotation processing here
-	 *     },
-	 *     annotationClickCallback: (annotation) => {
-	 *         console.log('Annotation clicked:', annotation);
-	 *         // Handle annotation circle click
-	 *     }
+	 * const manager = new ManagerSvgAnnotation(viewer, {
+	 *     onCreate: (anno) => console.log('created', anno),
 	 * });
-	 * 
-	 * // Toggle annotation mode with pencil button or programmatically:
-	 * // ui.toggleAnnotations(); // Toggle annotation mode
-	 * // ui.toggleAnnotations(true);  // Enable annotation mode
-	 * // ui.toggleAnnotations(false); // Disable annotation mode
+	 * const ui = new UIBasic(viewer, {
+	 *     actions: { pencil: { display: true } },
+	 *     annotationManager: manager,
+	 * });
 	 * ```
 	 */
 	constructor(viewer, options) {
@@ -187,10 +162,7 @@ class UIBasic {
 			enableTooltip: true,
 			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
 			menu: [],
-			annotationsActive: false,
-			annotationCallback: null,
-			annotationClickCallback: null,
-			pencilDiskRadius: 12
+			annotationManager: null
 		});
 
 		Object.assign(this, options);
@@ -252,7 +224,7 @@ class UIBasic {
 			};
 			if (modes.length > 1) layerEntry.list = modes;
 
-			if (layer.annotations) {
+			if (layer.annotations && typeof layer.annotationsEntry === 'function') {
 				layerEntry.list = [];
 				layerEntry.list.push(layer.annotationsEntry());
 			}
@@ -285,12 +257,6 @@ class UIBasic {
 		controller.priority = 0;
 		this.viewer.pointerManager.onEvent(controller);
 		this.lightcontroller = controller;
-
-		this._annotationsPointerHandler = {
-			priority: 10000,
-			fingerDoubleTap: (e) => this._handleAnnotationDblClick(e)
-		};
-		this.viewer.pointerManager.onEvent(this._annotationsPointerHandler);
 
 		let lightLayers = [];
 		for (let [id, layer] of Object.entries(this.viewer.canvas.layers))
@@ -1280,239 +1246,30 @@ class UIBasic {
 	}
 
 	/**
-	 * Toggles annotation pencil mode on/off
-	 * When active, double-clicking on the viewer creates annotations
-	 * @param {boolean} [force] - Force specific state
-	 * @private
+	 * Toggles annotation pencil mode on/off.
+	 * Delegates to {@link ManagerSvgAnnotation#toggle} when an `annotationManager` is set.
+	 * Updates the pencil button active state in the toolbar.
+	 *
+	 * @param {boolean} [force] - Force a specific state; toggles if omitted.
 	 */
 	toggleAnnotations(force) {
-		this.annotationsActive = force === undefined ? !this.annotationsActive : force;
-		if (this.panzoom)
-			this.panzoom.enableDoubleTapZoom = !this.annotationsActive;
-
+		if (this.annotationManager) {
+			this.annotationManager.toggle(force);
+		}
+		const isActive = this.annotationManager?.active ?? false;
 		const pencilButton = this.viewer.containerElement.querySelector('.openlime-button.openlime-pencil');
 		if (pencilButton) {
-			pencilButton.classList.toggle('openlime-pencil-active', this.annotationsActive);
+			pencilButton.classList.toggle('openlime-pencil-active', isActive);
 		}
 
-		if (this.annotationsActive) {
-			this._annotationsEnabled = true;
+		if(isActive) {
+			this.emit('pencilActivated');
 		} else {
-			this._annotationsEnabled = false;
+			this.emit('pencilDeactivated');
 		}
+
 	}
 
-	/**
-	 * Internal handler for annotation double-click events
-	 * @param {MouseEvent} e - The dblclick event
-	 * @private
-	 */
-	_handleAnnotationDblClick(e) {
-		// Only process if annotations are active
-		if (!this.annotationsActive) {
-			return;
-		}
-
-		// Don't process if click was on a UI element
-		const target = e.target;
-		if (target && (
-			target.closest('.openlime-toolbar') ||
-			target.closest('.openlime-layers-menu') ||
-			target.closest('.openlime-annotation-edit') ||
-			target.classList.contains('openlime-tool') ||
-			target.classList.contains('openlime-button') ||
-			target.closest('button') ||
-			target.closest('.openlime-dialog')
-		)) {
-			return;
-		}
-
-		e.preventDefault();
-		e.stopPropagation();
-		
-		const annotationLayer = this._getOrCreateAnnotationLayer();
-
-		if (!annotationLayer) {
-			console.warn('No annotation layer available and automatic creation failed');
-			return;
-		}
-
-		// Map click position to model coordinates
-		const pos = this._mapToModelCoordinates(e, annotationLayer);
-
-		// Create annotation with filled disk
-		const annotation = this.createAnnotationWithDisk(annotationLayer, pos);
-
-		// Call user callback if provided
-		if (this.annotationCallback) {
-			this.annotationCallback(annotation);
-		}
-
-		this.viewer.redraw();
-	}
-
-	/**
-	 * Returns the first annotation-capable layer or creates one if missing.
-	 * @returns {Layer|null} Annotation layer instance
-	 * @private
-	 */
-	_getOrCreateAnnotationLayer() {
-		if (this._pencilAnnotationLayer && this.viewer.canvas.layers[this._pencilAnnotationLayer.id]) {
-			return this._pencilAnnotationLayer;
-		}
-
-		const baseLayer = Object.values(this.viewer.canvas.layers).find(layer => layer && !layer.overlay)
-			|| Object.values(this.viewer.canvas.layers)[0];
-		if (!baseLayer) {
-			return null;
-		}
-
-		let id = 'pencil_annotations';
-		if (this.viewer.canvas.layers[id]) {
-			let idx = 1;
-			while (this.viewer.canvas.layers[`${id}_${idx}`]) idx++;
-			id = `${id}_${idx}`;
-		}
-		const annotationLayer = new Layer({
-			type: 'svg_annotations',
-			label: 'Pencil annotations',
-			layout: baseLayer.layout,
-			transform: baseLayer.transform.copy(),
-			annotations: []
-		});
-
-		annotationLayer.annotationUpdate = (annotation, transform) => {
-			this._updatePencilDiskSize(annotation, transform);
-		};
-
-		if (this.annotationClickCallback) {
-			annotationLayer.onClick = this.annotationClickCallback;
-		}
-
-		this.viewer.addLayer(id, annotationLayer);
-		this._pencilAnnotationLayer = annotationLayer;
-		return annotationLayer;
-	}
-
-	/**
-	 * Computes pencil disk radius in model units to keep constant screen size.
-	 * @param {Object} transform - Current camera transform
-	 * @param {number} [baseRadius=this.pencilDiskRadius] - Base radius in pixels at zoom 1
-	 * @returns {number} Radius to use in model space
-	 * @private
-	 */
-	_getPencilDiskRadius(transform, baseRadius = this.pencilDiskRadius) {
-		const zoom = transform?.z || 1;
-		return baseRadius / zoom;
-	}
-
-	/**
-	 * Updates annotation disk radius so the visible size stays constant across zoom.
-	 * @param {Annotation} annotation - Annotation containing disk elements
-	 * @param {Object} transform - Current camera transform
-	 * @private
-	 */
-	_updatePencilDiskSize(annotation, transform) {
-		if (!annotation || !Array.isArray(annotation.elements)) {
-			return;
-		}
-
-		const baseRadius = annotation.data?.pencilDiskRadius ?? this.pencilDiskRadius;
-		const radius = this._getPencilDiskRadius(transform, baseRadius);
-		if (annotation.previous_disk_radius === radius) {
-			return;
-		}
-
-		annotation.elements.forEach((element) => {
-			if (element.classList?.contains('annotation-disk')) {
-				element.setAttribute('r', `${radius}`);
-			}
-		});
-
-		annotation.previous_disk_radius = radius;
-	}
-
-	/**
-	 * Maps pointer event coordinates to model space for a given layer
-	 * @param {MouseEvent|PointerEvent} e - Event object with coordinates
-	 * @param {Layer} layer - Target layer
-	 * @returns {Object} Coordinates {x, y} in model space
-	 * @private
-	 */
-	_mapToModelCoordinates(e, layer) {
-		// Get canvas coordinates from event
-		const canvas = this.viewer.canvasElement;
-		const rect = canvas.getBoundingClientRect();
-
-		// Always use client coordinates mapped to the canvas rectangle.
-		// offsetX/offsetY are relative to event target and may not be the canvas.
-		const canvasX = e.clientX - rect.left;
-		const canvasY = e.clientY - rect.top;
-
-		// Use CoordinateSystem to convert canvas to model coordinates
-		const p = { x: canvasX, y: canvasY };
-		const layerTransform = layer.transform;
-		// layerSize must be in image/layout pixels (untransformed), not scene bbox size
-		const layerbb = layer.layout.boundingBox();
-		const layerSize = { w: layerbb.width(), h: layerbb.height() };
-		const useGL = false;
-
-		return CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerTransform, layerSize, useGL);
-	}
-
-	/**
-	 * Creates a new annotation with a filled disk (circle) at the specified position
-	 * The disk is centered at the click location in model coordinates
-	 * @param {Layer} layer - Annotation layer
-	 * @param {Object} pos - Position in model coordinates {x, y}
-	 * @returns {Annotation} Created annotation
-	 * @private
-	 */
-	createAnnotationWithDisk(layer, pos) {
-		// Create new annotation
-		const annotation = layer.newAnnotation();
-		annotation.publish = 1;
-		annotation.label = '';
-		annotation.description = '';
-		annotation.class = '';
-		annotation.data = annotation.data || {};
-		annotation.state = window.structuredClone(this.viewer.canvas.getState());
-
-		// Create filled disk element using Util.createSVGElement
-		const transform = this.viewer.camera.getCurrentTransform(performance.now());
-		const baseRadius = this.pencilDiskRadius;
-		const diskRadius = this._getPencilDiskRadius(transform, baseRadius);
-		const circle = Util.createSVGElement('circle', {
-			cx: pos.x,
-			cy: pos.y,
-			r: diskRadius,
-			class: 'annotation-disk',
-			fill: '#ff0000', // Red filled circle
-			opacity: '0.6'
-		});
-
-		// Add circle to annotation elements
-		annotation.elements.push(circle);
-		annotation.data.pencilDiskRadius = baseRadius;
-		annotation.data.pos = pos; 
-		annotation.needsUpdate = true;
-
-		// Add annotation to layer if not already there
-		if (layer.annotations && !layer.annotations.includes(annotation)) {
-			layer.annotations.push(annotation);
-		}
-
-		// Select the annotation
-		if (layer.setSelected) {
-			layer.setSelected(annotation);
-		}
-		console.log(annotation);
-		return annotation;
-	}
-
-	/**
-	 * Hides layers menu
-	 */
 	// closeLayersMenu() {
 	// 	this.layerMenu.style.display = 'none';
 	// }
@@ -1654,5 +1411,7 @@ class UIDialog { //FIXME standalone class
 
 addSignals(UIDialog, 'closed');
 addSignals(UIBasic, 'lightdirection');
+addSignals(UIBasic, 'pencilActivated');
+addSignals(UIBasic, 'pencilDeactivated');
 
 export { UIBasic, UIDialog }

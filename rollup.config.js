@@ -107,9 +107,11 @@ const brdf = [
 const annotation = [
 	'./src/AudioPlayer.js',
 	'./src/TextToSpeechPlayer.js',
+	'./src/Annotation.js',
 	'./src/LayerAnnotation.js',
 	'./src/LayerSvgAnnotation.js',
-	'./src/EditorSvgAnnotation.js'
+	'./src/EditorSvgAnnotation.js',
+	'./src/ManagerSvgAnnotation.js'
 ];
 
 const loader = [
