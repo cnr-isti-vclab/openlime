@@ -124,7 +124,30 @@ class Annotation {
   }
 
   /**
-   * Creates an Annotation instance from a JSON-LD format object.
+   * Serializes all SVG DOM elements into `this.svg` as a single SVG string.
+   * Wraps multiple elements in a `<g>` group; single element is serialized directly.
+   * Call this after modifying `elements` to keep `svg` in sync for export/other viewers.
+   * @returns {string|null} The serialized SVG string, or null if no elements.
+   */
+  syncSvg() {
+    if (!this.elements.length) return null;
+    const serializer = new XMLSerializer();
+    let svgStr;
+    if (this.elements.length === 1) {
+      svgStr = serializer.serializeToString(this.elements[0]);
+    } else {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      for (const el of this.elements) g.appendChild(el.cloneNode(true));
+      svgStr = serializer.serializeToString(g);
+    }
+    this.svg = svgStr;
+    // Mark ready so prefetch does not re-parse svg back into elements
+    // (elements are already live DOM nodes; re-parsing would lose them)
+    this.ready = true;
+    return svgStr;
+  }
+
+  /**
    * @param {Object} entry - The JSON-LD object representing an annotation.
    * @returns {Annotation} A new Annotation instance.
    * @throws {Error} If the entry is not a valid JSON-LD annotation or contains unsupported selectors.
@@ -216,13 +239,9 @@ class Annotation {
 
     // Add SVG representation if elements exist
     if (this.elements.length > 0) {
-      // Get the first element or combine them if needed
-      const element = this.elements[0]; // Simplified for now
-      if (element) {
-        const serializer = new XMLSerializer();
-        jsonLd.target.selector.type = 'SvgSelector';
-        jsonLd.target.selector.value = serializer.serializeToString(element);
-      }
+      this.syncSvg();
+      jsonLd.target.selector.type = 'SvgSelector';
+      jsonLd.target.selector.value = this.svg;
     } else if (this.svg) {
       // Use existing SVG if available
       jsonLd.target.selector.type = 'SvgSelector';

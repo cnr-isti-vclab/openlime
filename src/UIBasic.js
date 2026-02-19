@@ -142,7 +142,7 @@ class UIBasic {
 			actions: {
 				home: { title: 'Home', display: true, key: 'Home', task: (event) => { if (camera.boundingBox) camera.fitCameraBox(250); } },
 				fullscreen: { title: 'Fullscreen', display: true, key: 'f', task: (event) => { this.toggleFullscreen(); } },
-				layers: { title: 'Layers', display: true, key: 'Escape', task: (event) => { this.toggleLayers(); } },
+				layers: { title: 'Layers', display: true, task: (event) => { this.toggleLayers(); } },
 				zoomin: { title: 'Zoom in', display: false, key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout: { title: 'Zoom out', display: false, key: '-', task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
 				rotate: { title: 'Rotate', display: false, key: 'r', task: (event) => { camera.rotate(250, -45); } },
@@ -1263,9 +1263,9 @@ class UIBasic {
 		}
 
 		if(isActive) {
-			this.emit('pencilActivated');
+			this.emit('pencilEnabled');
 		} else {
-			this.emit('pencilDeactivated');
+			this.emit('pencilDisabled');
 		}
 
 	}
@@ -1411,7 +1411,7 @@ class UIDialog { //FIXME standalone class
 
 addSignals(UIDialog, 'closed');
 addSignals(UIBasic, 'lightdirection');
-addSignals(UIBasic, 'pencilActivated');
-addSignals(UIBasic, 'pencilDeactivated');
+addSignals(UIBasic, 'pencilEnabled');
+addSignals(UIBasic, 'pencilDisabled');
 
 export { UIBasic, UIDialog }
