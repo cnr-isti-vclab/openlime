@@ -117,6 +117,14 @@
         #drawing-hint b {
             color: #ffd700;
         }
+
+        /* Toolbar locked during an active drawing session */
+        #annotation-toolbar.session-active #mode-panel,
+        #annotation-toolbar.session-active #marker-panel {
+            pointer-events: none;
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
     </style>
 
 </head>
@@ -207,17 +215,20 @@
             // Called whenever a new annotation is created
             onCreate: (anno) => {
                 document.getElementById('drawing-hint').style.display = 'none';
+                document.getElementById('annotation-toolbar').classList.remove('session-active');
                 console.log('[ManagerSvgAnnotation] CREATE', anno);
             },
 
-            // Show/hide drawing hint during sequence drawing
+            // Lock toolbar and show drawing hint during sequence drawing
             onSessionStart: (anno) => {
+                document.getElementById('annotation-toolbar').classList.add('session-active');
                 const mode = anno?.data?._markerType;
                 if (mode && mode !== 'disk') {
                     document.getElementById('drawing-hint').style.display = 'block';
                 }
             },
             onSessionCancel: () => {
+                document.getElementById('annotation-toolbar').classList.remove('session-active');
                 document.getElementById('drawing-hint').style.display = 'none';
             },
 
