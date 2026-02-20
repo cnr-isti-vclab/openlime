@@ -64,7 +64,7 @@
 
         #marker-panel {
             display: none;
-            /* shown only in draw mode */
+            /* shown only in create mode */
             align-items: center;
             flex-wrap: wrap;
             gap: 8px;
@@ -97,7 +97,7 @@
             color: #fff;
         }
 
-        #drawing-hint {
+        #creation-hint {
             display: none;
             position: fixed;
             bottom: 28px;
@@ -114,11 +114,11 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        #drawing-hint b {
+        #creation-hint b {
             color: #ffd700;
         }
 
-        /* Toolbar locked during an active drawing session */
+        /* Toolbar locked during an active creation session */
         #annotation-toolbar.session-active #mode-panel,
         #annotation-toolbar.session-active #marker-panel {
             pointer-events: none;
@@ -134,7 +134,7 @@
     <div id="annotation-toolbar">
         <div id="mode-panel">
             <strong>Mode:</strong>
-            <button id="btn-mode-draw">&#9998; Draw</button>
+            <button id="btn-mode-create">&#9998; Create</button>
             <button id="btn-mode-edit">&#10549; Select/Edit</button>
         </div>
         <div id="marker-panel">
@@ -144,7 +144,7 @@
             <button id="btn-polygon">&#9651; Polygon</button>
         </div>
     </div>
-    <div id="drawing-hint">
+    <div id="creation-hint">
         Click to add vertex &nbsp;·&nbsp;
         <b>double-click</b> last point to finish &nbsp;·&nbsp;
         <b>Enter</b> to finish &nbsp;·&nbsp;
@@ -191,22 +191,22 @@
 
             // Called whenever a new annotation is created
             onCreate: (anno) => {
-                document.getElementById('drawing-hint').style.display = 'none';
+                document.getElementById('creation-hint').style.display = 'none';
                 document.getElementById('annotation-toolbar').classList.remove('session-active');
                 console.log('[ManagerSvgAnnotation] CREATE', anno);
             },
 
-            // Lock toolbar and show drawing hint during sequence drawing
+            // Lock toolbar and show creation hint during sequence creation
             onSessionStart: (anno) => {
                 document.getElementById('annotation-toolbar').classList.add('session-active');
                 const mode = anno?.data?._markerType;
                 if (mode && mode !== 'disk') {
-                    document.getElementById('drawing-hint').style.display = 'block';
+                    document.getElementById('creation-hint').style.display = 'block';
                 }
             },
             onSessionCancel: () => {
                 document.getElementById('annotation-toolbar').classList.remove('session-active');
-                document.getElementById('drawing-hint').style.display = 'none';
+                document.getElementById('creation-hint').style.display = 'none';
             },
 
             // Called when the user selects an annotation by clicking on it
@@ -241,13 +241,13 @@
         // ── Mode panel ───────────────────────────────────────────────────
         // Sync button active states and marker-panel visibility on mode change
         manager.addEvent('modeChange', (mode) => {
-            document.getElementById('btn-mode-draw').classList.toggle('active', mode === 'draw');
+            document.getElementById('btn-mode-create').classList.toggle('active', mode === 'create');
             document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
-            document.getElementById('marker-panel').style.display = mode === 'draw' ? 'flex' : 'none';
+            document.getElementById('marker-panel').style.display = mode === 'create' ? 'flex' : 'none';
         });
 
-        document.getElementById('btn-mode-draw').addEventListener('click', () =>
-            manager.setMode(manager.mode === 'draw' ? 'idle' : 'draw'));
+        document.getElementById('btn-mode-create').addEventListener('click', () =>
+            manager.setMode(manager.mode === 'create' ? 'idle' : 'create'));
         document.getElementById('btn-mode-edit').addEventListener('click', () =>
             manager.setMode(manager.mode === 'edit' ? 'idle' : 'edit'));
 

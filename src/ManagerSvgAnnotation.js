@@ -30,7 +30,7 @@ import { addSignals } from './Signals.js';
  *  │  'sequence' click* + dbl-click → polygon/polyline      │        │
  *  │  'drag'     mousedown+move+up → rect/ellipse           │        │
  *  │                                                        │        │
- *  │  DrawingSession (active during 'sequence'/'drag')      │        │
+ *  │  CreationSession (active during 'sequence'/'drag')      │        │
  *  │  { annotation, marker, vertices, previewEl }           │        │
  *  │                                                        │        │
  *  │  CRUD API                                              │        │
@@ -679,9 +679,9 @@ class ManagerSvgAnnotation {
       defaultAnnotationClass: 0,
     }, options);
 
-    /** @type {'idle'|'draw'|'edit'} Current interaction mode. */
+    /** @type {'idle'|'create'|'edit'} Current interaction mode. */
     this._mode = 'idle';
-    /** @type {DrawingSession|null} Active drawing session, or null when idle. */
+    /** @type {CreationSession|null} Active creation session, or null when idle. */
     this._session = null;
     /** @type {{annotation, vertexIndex}|null} Active vertex-drag session in edit mode. */
     this._vertexSession = null;
@@ -785,22 +785,22 @@ class ManagerSvgAnnotation {
    * | Mode   | Behaviour |
    * |--------|-----------|
    * | `'idle'` | No annotation interaction; panzoom/light work normally |
-   * | `'draw'` | Creates new annotations; existing annotations are non-clickable (pointer-events:none) |
+   * | `'create'` | Creates new annotations; existing annotations are non-clickable (pointer-events:none) |
    * | `'edit'` | Selects and (future) edits existing annotations; no new creation |
    *
-   * Cancels any in-progress drawing session when leaving `'draw'`.
+   * Cancels any in-progress creation session when leaving `'create'`.
    * Fires the `'modeChange'` signal when the mode actually changes.
    *
-   * @param {'idle'|'draw'|'edit'} mode
+   * @param {'idle'|'create'|'edit'} mode
    * @returns {string} The new mode.
    */
   setMode(mode) {
-    const valid = ['idle', 'draw', 'edit'];
+    const valid = ['idle', 'create', 'edit'];
     if (!valid.includes(mode))
       throw new Error(`ManagerSvgAnnotation.setMode: invalid mode '${mode}'. Valid: ${valid.join(', ')}`);
 
-    // Cancel in-progress drawing when leaving draw mode
-    if (this._mode === 'draw' && mode !== 'draw' && this._session)
+    // Cancel in-progress creation session when leaving create mode
+    if (this._mode === 'create' && mode !== 'create' && this._session)
       this._cancelSession();
 
     // Clear selection when leaving edit mode
@@ -821,20 +821,20 @@ class ManagerSvgAnnotation {
 
   /**
    * Convenience toggle for `UIBasic` backward compatibility.
-   * Toggles between `'draw'` and `'idle'`; `force=true` → draw, `force=false` → idle.
+   * Toggles between `'create'` and `'idle'`; `force=true` → create, `force=false` → idle.
    * @param {boolean} [force]
-   * @returns {boolean} True if now in draw mode.
+   * @returns {boolean} True if now in create mode.
    */
   toggle(force) {
     const target = force === undefined
-      ? (this._mode === 'draw' ? 'idle' : 'draw')
-      : (force ? 'draw' : 'idle');
+      ? (this._mode === 'create' ? 'idle' : 'create')
+      : (force ? 'create' : 'idle');
     this.setMode(target);
-    return this._mode === 'draw';
+    return this._mode === 'create';
   }
 
   /**
-   * Current interaction mode: `'idle'`, `'draw'`, or `'edit'`.
+   * Current interaction mode: `'idle'`, `'create'`, or `'edit'`.
    * @type {string}
    */
   get mode() { return this._mode; }
@@ -847,11 +847,11 @@ class ManagerSvgAnnotation {
   get active() { return this._mode !== 'idle'; }
 
   /**
-   * Programmatically finalises the current sequence/drag drawing.
-   * Equivalent to pressing Enter. No-op if no drawing is in progress.
+   * Programmatically finalises the current sequence/drag creation.
+   * Equivalent to pressing Enter. No-op if no creation is in progress.
    * @returns {Annotation|null} The created annotation, or null.
    */
-  finishDrawing() {
+  finishCreating() {
     if (!this._session) return null;
     this._finalizeSession(null);
     return null; // annotation already emitted via 'create' event
@@ -1100,8 +1100,8 @@ class ManagerSvgAnnotation {
       svgGroup.style.pointerEvents = '';
     } else {
       // idle: annotations must not be clickable
-      // draw: existing annotations must NOT intercept pointer events so
-      //       PointerManager sees every click — even clicks on top of drawn shapes.
+      // create: existing annotations must NOT intercept pointer events so
+      //         PointerManager sees every click — even clicks on top of drawn shapes.
       svgGroup.style.pointerEvents = 'none';
     }
   }
@@ -1273,9 +1273,9 @@ class ManagerSvgAnnotation {
 
   // ─── Internal: pointer handlers ──────────────────────────────────────────
 
-  /** Guard: returns true if the event should be ignored (not in draw mode, or UI overlays). */
+  /** Guard: returns true if the event should be ignored (not in create mode, or UI overlays). */
   _shouldIgnore(e) {
-    if (this._mode !== 'draw') return true;
+    if (this._mode !== 'create') return true;
     if (!this.layer?.layout) return true;
     const t = e.target;
     if (t?.closest?.('.openlime-toolbar') ||
@@ -1371,7 +1371,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onDragStart(e) {
-    // Interfere when in draw OR edit mode (but not idle)
+    // Interfere when in create OR edit mode (but not idle)
     if (this._mode === 'idle' || !this.layer?.layout) return;
 
     // Allow toolbar/menu clicks to fall through normally
@@ -1382,7 +1382,7 @@ class ManagerSvgAnnotation {
       t?.classList?.contains('openlime-button')) return;
 
     // Block light controller (priority 0) and panzoom (priority -1000) from
-    // receiving this pan.  In draw mode we go on to handle drawing; in edit mode
+    // receiving this pan.  In create mode we go on to handle creation; in edit mode
     // we start a vertex-drag session if the pointer is on a vertex dot.
     e.preventDefault?.();
 
@@ -1415,7 +1415,7 @@ class ManagerSvgAnnotation {
         this.viewer.redraw();
       }
     }
-    // 'tap' mode: pan is blocked, no drawing action (user uses double-click)
+    // 'tap' mode: pan is blocked, no creation action (user uses double-click)
   }
 
   /**
@@ -1440,10 +1440,10 @@ class ManagerSvgAnnotation {
     }
   }
 
-  // ─── Internal: drawing session lifecycle ──────────────────────────────────
+  // ─── Internal: creation session lifecycle ───────────────────────────────────
 
   /**
-   * Starts a new DrawingSession for the current active marker.
+   * Starts a new CreationSession for the current active marker.
    * Creates a draft annotation visible in the layer immediately.
    * @param {{x:number,y:number}} pos - First point in image coordinates
    * @param {PointerEvent} e
