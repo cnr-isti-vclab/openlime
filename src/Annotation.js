@@ -20,17 +20,13 @@ class Annotation {
    * Creates a new Annotation instance.
    * @param {Object} [options] - Configuration options for the annotation.
    * @param {string} [options.id] - Unique identifier for the annotation. Auto-generated if not provided.
-   * @param {string} [options.code] - A code identifier for the annotation.
    * @param {string} [options.label=''] - Display label for the annotation.
    * @param {string} [options.description] - HTML text containing a comprehensive description.
    * @param {string} [options.class] - Category or classification of the annotation.
    * @param {string} [options.target] - Target element or area this annotation refers to.
    * @param {string} [options.svg] - SVG content for the annotation.
-   * @param {Object} [options.image] - Image data associated with the annotation.
-   * @param {Object} [options.region] - Region coordinates {x, y, w, h} for the annotation.
+   * @param {Object} [options.type] - Semantic type of the annotation.
    * @param {Object} [options.data={}] - Additional custom data for the annotation.
-   * @param {Object} [options.style] - Style configuration for rendering.
-   * @param {BoundingBox} [options.bbox] - Bounding box of the annotation.
    * @param {boolean} [options.visible=true] - Visibility state of the annotation.
    * @param {Object} [options.state] - State variables for the annotation.
    * @param {boolean} [options.ready=false] - Indicates if SVG conversion is complete.
@@ -40,17 +36,13 @@ class Annotation {
   constructor(options = {}) {
     // Set default properties
     this.id = options.id ?? Annotation.generateUUID();
-    this.code = options.code ?? null;
     this.label = options.label ?? '';
     this.description = options.description ?? null;
     this.class = options.class ?? null;
     this.target = options.target ?? null;
     this.svg = options.svg ?? null;
-    this.image = options.image ?? null;
-    this.region = options.region ?? null;
+    this.type = options.type ?? '';
     this.data = options.data ?? {};
-    this.style = options.style ?? null;
-    this.bbox = options.bbox ?? null;
     this.visible = options.visible ?? true;
     this.state = options.state ?? null;
     this.ready = options.ready ?? false;

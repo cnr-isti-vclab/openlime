@@ -1527,6 +1527,17 @@ class ManagerSvgAnnotation {
   _finalizeSession(e) {
     if (!this._session) return;
     const { annotation, marker } = this._session;
+
+    // Reject sequence shapes with too few points
+    if (marker.interactionMode() === 'sequence') {
+      const pts = annotation.data._markerPoints?.length ?? 0;
+      const minPts = annotation.data._markerClosed ? 3 : 2;
+      if (pts < minPts) {
+        this._cancelSession();
+        return;
+      }
+    }
+
     this._session = null;
 
     const transform = this.viewer.camera.getCurrentTransform(performance.now());
