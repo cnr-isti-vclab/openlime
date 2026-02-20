@@ -278,6 +278,8 @@ class LensDashboard {
 	 */
 	update(x, y, r) {
 		const useGL = false;
+		// Guard: viewport may be null before the first camera resize event
+		if (!this.viewer.camera.viewport) return;
 		const center = CoordinateSystem.fromSceneToCanvasHtml({ x: x, y: y }, this.viewer.camera, useGL);
 
 		const now = performance.now();

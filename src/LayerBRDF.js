@@ -83,16 +83,23 @@ class LayerBRDF extends Layer {
 			monochromeMaterial: [0.80, 0.79, 0.75],
 			kAmbient: 0.1
 		}, options);
+		// When sourceLayer is provided, rasters/tiles are inherited — skip re-creation.
+		const isClone = !!options.sourceLayer;
+
 		super(options);
 
-		if (Object.keys(this.rasters).length != 0)
-			throw "Rasters options should be empty!";
+		// When cloning (sourceLayer provided), rasters are inherited from
+		// the source layer — do NOT re-create them or call layout.setUrls again.
+		if (!isClone) {
+			if (Object.keys(this.rasters).length != 0)
+				throw "Rasters options should be empty!";
 
-		if (!this.channels)
-			throw "channels option is required";
+			if (!this.channels)
+				throw "channels option is required";
 
-		if (!this.channels.kd || !this.channels.normals)
-			throw "kd and normals channels are required";
+			if (!this.channels.kd || !this.channels.normals)
+				throw "kd and normals channels are required";
+		}
 
 		if (!this.colorspaces) {
 			console.log("LayerBRDF: missing colorspaces: force both to linear");
@@ -110,13 +117,17 @@ class LayerBRDF extends Layer {
 			gloss: { format: 'float', name: 'uTexGloss' }
 		};
 		for (let c in this.channels) {
-			this.rasters.push(new Raster({ format: brdfSamplersMap[c].format, isLinear: true }));
+			if (!isClone) {
+				this.rasters.push(new Raster({ format: brdfSamplersMap[c].format, isLinear: true }));
+				urls[id] = this.channels[c];
+			}
 			samplers.push({ 'id': id, 'name': brdfSamplersMap[c].name });
-			urls[id] = this.channels[c];
 			id++;
 		}
 
-		this.layout.setUrls(urls);
+		if (!isClone) {
+			this.layout.setUrls(urls);
+		}
 		this.addControl('light', [0, 0]); // This is a projection to the z=0 plane.
 
 		let shader = new ShaderBRDF({

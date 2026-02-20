@@ -24,7 +24,6 @@ import { Util } from './Util.js'
  * @property {Object.<string, Shader>} [shaders] - Map of available shaders
  * @property {Controller[]} [controllers] - Array of active UI controllers
  * @property {Layer} [sourceLayer] - Layer to share tiles with
- * @property {Layer} [layerSource] - Alias for sourceLayer (backward compatibility)
  * @property {number} [pixelSize=0.0] - Physical size of a pixel in mm
  */
 
@@ -100,15 +99,6 @@ class Layer {
 			isLinear: false,
 			isSrgbSimplified: true
 		}, options);
-
-		// Backward compatibility: allow `layerSource` as an alias for `sourceLayer`.
-		// Some examples use `layerSource` to indicate a shared-resource clone layer.
-		if (options && options.layerSource && !options.sourceLayer) {
-			options.sourceLayer = options.layerSource;
-		}
-		if (options && Object.prototype.hasOwnProperty.call(options, 'layerSource')) {
-			delete options.layerSource;
-		}
 
 		if (options.type) {
 			let type = options.type;
@@ -228,15 +218,6 @@ class Layer {
 			onFirstDraw: null,
 			_didFirstDraw: false
 		});
-
-		// Backward compatibility: allow `layerSource` as an alias for `sourceLayer`.
-		// When cloning layers, `sourceLayer` (or `layerSource`) allows sharing the same tile cache.
-		if (options && options.layerSource && !options.sourceLayer) {
-			options.sourceLayer = options.layerSource;
-		}
-		if (options && Object.prototype.hasOwnProperty.call(options, 'layerSource')) {
-			delete options.layerSource;
-		}
 
 		// If a source layer is provided, inherit shared resources by default unless explicitly overridden.
 		// This enables "duplicating" a layer without re-instantiating expensive resources.

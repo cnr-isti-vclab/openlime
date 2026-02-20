@@ -161,21 +161,21 @@ class ManifestLoader {
     
     console.log(`📦 Simple layers complete. Canvas now has:`, Object.keys(viewer.canvas.layers));
 
-    // Add dependent layers (layerSource) after their source layers exist
+    // Add dependent layers (sourceLayer) after their source layers exist
     for (const [id, config] of Object.entries(dependentLayers)) {
         console.log(`🔗 Adding dependent layer '${id}' (${config.type || 'image'})`);
         try {
-            // Use derive() for layerSource
+            // Use derive() for sourceLayer
             const layerConfig = { ...config };
-            if (config.layerSource) {
-                const sourceLayer = viewer.canvas.layers[config.layerSource];
+            if (config.sourceLayer) {
+                const sourceLayer = viewer.canvas.layers[config.sourceLayer];
                 if (sourceLayer) {
-                    delete layerConfig.layerSource;
+                    delete layerConfig.sourceLayer;
                     const layer = sourceLayer.derive(layerConfig);
                     viewer.addLayer(id, layer);
                     console.log(`✅ Added derived layer '${id}': ${layer.constructor.name}`);
                 } else {
-                    console.warn(`⚠️ layerSource not found: ${config.layerSource}`);
+                    console.warn(`⚠️ sourceLayer not found: ${config.sourceLayer}`);
                     console.log(`   Available layers:`, Object.keys(viewer.canvas.layers));
                     // Fallback to creating normally
                     const layer = new OpenLIME.Layer(layerConfig);
@@ -264,10 +264,10 @@ class ManifestLoader {
         complexLayers[id] = config;
         console.log(`🔧 Marked '${id}' as complex (${config.type}) - will create manually`);
       }
-      // Layers with layerSource dependency  
-      else if (config.layerSource) {
+      // Layers with sourceLayer dependency  
+      else if (config.sourceLayer) {
         dependentLayers[id] = config;
-        console.log(`🔗 Marked '${id}' as dependent (layerSource: ${config.layerSource}) - will create after source`);
+        console.log(`🔗 Marked '${id}' as dependent (sourceLayer: ${config.sourceLayer}) - will create after source`);
       }
       else {
         // Simple layers that can be created first

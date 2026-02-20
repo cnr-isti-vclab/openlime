@@ -51,7 +51,7 @@
         lime.addLayer('Color', layer);
 
         // SECOND LAYER
-        const layerIn = new OpenLIME.LayerBRDF({ ...options, visible: false, layerSource: layer });
+        const layerIn = new OpenLIME.LayerBRDF({ ...options, visible: false, sourceLayer: layer });
         layerIn.setMode('normals');
         lime.addLayer('MuralIn', layerIn);
 
