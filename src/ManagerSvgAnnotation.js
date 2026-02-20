@@ -246,8 +246,7 @@ class Marker {
  * parameter to each method.
  *
  * Stored geometry keys on `annotation.data`:
- *  - `_markerType`   → `'disk'`
- *  - `_markerRadius` → base radius in screen pixels
+ *  - `_markerType` → `'disk'`
  *
  * @extends Marker
  *
@@ -267,9 +266,7 @@ class DiskMarker extends Marker {
   }
 
   createElement(pos, transform, annotation, style = {}) {
-    const screenRadius = this.radius;
-    const modelRadius = screenRadius / (transform?.z ?? 1);
-    annotation.data._markerRadius = screenRadius;
+    const modelRadius = this.radius / (transform?.z ?? 1);
 
     const circle = Util.createSVGElement('circle', {
       cx: pos.x,
@@ -283,8 +280,7 @@ class DiskMarker extends Marker {
   }
 
   updateElements(elements, transform, annotation, style = {}) {
-    const baseRadius = annotation.data?._markerRadius ?? this.radius;
-    const modelRadius = baseRadius / (transform?.z ?? 1);
+    const modelRadius = this.radius / (transform?.z ?? 1);
     for (const el of elements) {
       if (el.classList?.contains('annotation-disk')) {
         el.setAttribute('r', modelRadius);
@@ -325,10 +321,9 @@ class DiskMarker extends Marker {
  * parameter to each method.
  *
  * Stored geometry keys on `annotation.data`:
- *  - `_markerType`        → `'polyline'`
- *  - `_markerClosed`      → whether to close the path as a polygon
- *  - `_markerVertexRadius`→ base vertex-dot radius in screen pixels
- *  - `_markerPoints`      → `[{x,y}, …]` image-space vertices
+ *  - `_markerType`   → `'polyline'`
+ *  - `_markerClosed` → whether to close the path as a polygon
+ *  - `_markerPoints`  → `[{x,y}, …]` image-space vertices
  *
  * @extends Marker
  *
@@ -391,7 +386,6 @@ class PolylineMarker extends Marker {
 
   startElement(pos, transform, annotation, style = {}) {
     annotation.data._markerClosed = this.closed;
-    annotation.data._markerVertexRadius = this.vertexRadius ?? 5;
     annotation.data._markerPoints = [pos];
 
     const sw = this._modelStroke(transform, style);
@@ -515,9 +509,8 @@ class PolylineMarker extends Marker {
   // ── Zoom-responsive sizes ───────────────────────────────────────────────
 
   updateElements(elements, transform, annotation, style = {}) {
-    const baseR = annotation.data?._markerVertexRadius ?? (this.vertexRadius ?? 5);
     const sw = this._modelStroke(transform, style);
-    const r = baseR / (transform?.z ?? 1);
+    const r = (this.vertexRadius ?? 5) / (transform?.z ?? 1);
 
     for (const el of elements) {
       if (el.classList?.contains('annotation-polyline')) {
