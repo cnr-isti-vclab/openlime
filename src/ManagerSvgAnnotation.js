@@ -621,7 +621,7 @@ class PolylineMarker extends Marker {
  */
 class ManagerSvgAnnotation {
   /**
-   * @param {import('./Viewer.js').Viewer} viewer - OpenLIME viewer instance
+   * @param {Viewer} viewer - OpenLIME viewer instance
    * @param {Object} [options]
    * @param {LayerSvgAnnotation} [options.layer]
    *   Existing SVG annotation layer to manage.
@@ -760,7 +760,7 @@ class ManagerSvgAnnotation {
    * Registration is global (shared across all manager instances).
    *
    * @param {string} type - Unique lowercase type identifier (e.g. `'star'`)
-   * @param {typeof Marker} MarkerClass - Subclass of {@link Marker}
+   * @param {Function} MarkerClass - Subclass of {@link Marker}
    * @example
    * ManagerSvgAnnotation.registerMarker('star', StarMarker);
    */

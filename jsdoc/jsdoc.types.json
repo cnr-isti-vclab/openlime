@@ -1,0 +1,19 @@
+{
+    "tags": {
+        "allowUnknownTags": ["all"]
+    },
+    "source": {
+        "include": ["./src"],
+        "includePattern": ".+\\.js(doc|x)?$",
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+    "opts": {
+        "template": "node_modules/tsd-jsdoc/dist",
+        "encoding": "utf8",
+        "destination": "./dist/types/",
+        "recurse": true
+    },
+    "plugins": [
+        "plugins/markdown"
+    ]
+}
