@@ -915,6 +915,7 @@ class ManagerSvgAnnotation {
     annotation.label = opts.label ?? '';
     annotation.description = opts.description ?? '';
     annotation.class = opts.class ?? this.defaultAnnotationClass;
+    annotation.type = 'pin';
     annotation.publish = opts.publish ?? 1;
     annotation.data = Object.assign({}, opts.data ?? {});
 
@@ -1457,6 +1458,7 @@ class ManagerSvgAnnotation {
     annotation.label = '';
     annotation.description = '';
     annotation.class = this.defaultAnnotationClass;
+    annotation.type = 'region';
     annotation.publish = 1;
     annotation.data = {};
     annotation.data._markerType = this.activeMarker;
