@@ -399,7 +399,7 @@ class PolylineMarker extends Marker {
     const fill = this.closed ? (style.fill ?? 'none') : 'none';
     const opacity = style.fillOpacity ?? 1;
 
-    annotation.type = this.closed ? 'region' : 'linear';
+    annotation.type = this.closed ? 'polygon' : 'polyline';
 
     // Main polyline — starts with a single point (will grow with addVertex)
     const polyline = Util.createSVGElement('polyline', {
