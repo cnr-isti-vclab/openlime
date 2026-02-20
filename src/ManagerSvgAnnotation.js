@@ -399,6 +399,8 @@ class PolylineMarker extends Marker {
     const fill = this.closed ? (style.fill ?? 'none') : 'none';
     const opacity = style.fillOpacity ?? 1;
 
+    annotation.type = this.closed ? 'region' : 'linear';
+
     // Main polyline — starts with a single point (will grow with addVertex)
     const polyline = Util.createSVGElement('polyline', {
       points: PolylineMarker._toPointsAttr([pos]),
@@ -915,7 +917,7 @@ class ManagerSvgAnnotation {
     annotation.label = opts.label ?? '';
     annotation.description = opts.description ?? '';
     annotation.class = opts.class ?? this.defaultAnnotationClass;
-    annotation.type = 'pin';
+    annotation.type = 'point';
     annotation.publish = opts.publish ?? 1;
     annotation.data = Object.assign({}, opts.data ?? {});
 
@@ -1458,7 +1460,6 @@ class ManagerSvgAnnotation {
     annotation.label = '';
     annotation.description = '';
     annotation.class = this.defaultAnnotationClass;
-    annotation.type = 'region';
     annotation.publish = 1;
     annotation.data = {};
     annotation.data._markerType = this.activeMarker;
