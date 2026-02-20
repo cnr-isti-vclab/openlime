@@ -159,14 +159,6 @@
         // Create 4 RTI layers and add them to the canvans
         // A RTI layer has many channels. In this example the 4 layers store 
         // channels in 4 different ways: image, deepzoom, tarzoom and itarzoom 
-        const layer0 = new OpenLIME.Layer({
-            label: 'coin-image ptm',
-            layout: 'image',
-            type: 'rti',
-            url: '../../assets/rti/ptm/info.json',
-            normals: false
-        });
-        lime.addLayer('coin0', layer0);
 
         const layer1 = new OpenLIME.Layer({
             label: 'coin-deepzoom hsh',
@@ -175,25 +167,7 @@
             url: '../../assets/rti/hsh/info.json',
             normals: false
         });
-        lime.addLayer('coin1', layer1);
-
-        const layer2 = new OpenLIME.Layer({
-            label: 'coin-tarzoom bln',
-            layout: 'tarzoom',
-            type: 'rti',
-            url: '../../assets/rti/bln/info.json',
-            normals: false
-        });
-        lime.addLayer('coin2', layer2);
-
-        const layer3 = new OpenLIME.Layer({
-            label: 'coin-itarzoom ybln',
-            layout: 'itarzoom',
-            type: 'rti',
-            url: '../../assets/rti/ybln/info.json',
-            normals: false
-        });
-        lime.addLayer('coin3', layer3);
+        lime.addLayer('coin', layer1);
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
@@ -204,11 +178,14 @@
         const manager = new OpenLIME.ManagerSvgAnnotation(lime, {
             // Use the built-in disk marker (default)
             activeMarker: 'disk',
-            markerOptions: {
-                radius: 14,        // screen-px at zoom 1
-                fill: '#e63946',
-                opacity: 0.75,
-            },
+            markerOptions: { radius: 14 },
+            // Colour classes — annotation.class (0/1/2) selects the style
+            classes: [
+                { label: 'Disk',     fill: '#e63946', stroke: '#e63946', fillOpacity: 0.75, strokeWidth: 2, fillSelected: '#ffd700', strokeSelected: '#ffd700' },
+                { label: 'Polyline', fill: 'none',    stroke: '#00aaff', fillOpacity: 1,    strokeWidth: 2, fillSelected: 'none',    strokeSelected: '#ffd700' },
+                { label: 'Polygon',  fill: 'rgba(34,187,85,0.2)', stroke: '#22bb55', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
+            ],
+            defaultAnnotationClass: 0,
             // Capture viewer state (light direction, render mode, …) in each annotation
             enableState: true,
 
@@ -234,23 +211,7 @@
 
             // Called when the user selects an annotation by clicking on it
             onSelect: (anno) => {
-                const SELECTED_STROKE = '#ffd700';
-                const SELECTED_FILL   = '#ffd700';
-                for (const a of manager.getAnnotations()) {
-                    const selected = (a === anno);
-                    for (const el of a.elements) {
-                        if (el.classList?.contains('annotation-disk')) {
-                            el.setAttribute('fill', selected
-                                ? SELECTED_FILL
-                                : (a.data._markerFill ?? '#e63946'));
-                        } else if (el.classList?.contains('annotation-polyline')) {
-                            el.setAttribute('stroke', selected
-                                ? SELECTED_STROKE
-                                : (a.data._markerStroke ?? '#ff0000'));
-                        }
-                    }
-                }
-
+                // Colours are applied automatically by the manager via classes.
                 console.log('[ManagerSvgAnnotation] SELECT - annotation data:', {
                     id: anno.id,
                     label: anno.label,
@@ -274,14 +235,7 @@
 
         // When pencil mode is activated, deselect all annotations
         ui.addEvent('pencilEnabled', () => {
-            for (const a of manager.getAnnotations()) {
-                for (const el of a.elements) {
-                    if (el.classList?.contains('annotation-disk'))
-                        el.setAttribute('fill', a.data._markerFill ?? '#e63946');
-                    else if (el.classList?.contains('annotation-polyline'))
-                        el.setAttribute('stroke', a.data._markerStroke ?? '#ff0000');
-                }
-            }
+            manager.deselectAll(); // colours restored automatically from classes
         });
 
         // ── Mode panel ───────────────────────────────────────────────────
@@ -299,19 +253,15 @@
 
         // ── Marker selector panel ────────────────────────────────────────
         const markerConfigs = {
-            'disk': { type: 'disk', opts: { radius: 14, fill: '#e63946', opacity: 0.75 } },
-            'polyline': { type: 'polyline', opts: { stroke: '#00aaff', strokeWidth: 2, closed: false } },
-            'polygon': {
-                type: 'polyline', opts: {
-                    stroke: '#22bb55', strokeWidth: 2,
-                    fill: 'rgba(34,187,85,0.2)', closed: true
-                }
-            },
+            'disk':     { type: 'disk',     opts: { radius: 14 },                     classIdx: 0 },
+            'polyline': { type: 'polyline', opts: { closed: false, vertexRadius: 5 }, classIdx: 1 },
+            'polygon':  { type: 'polyline', opts: { closed: true,  vertexRadius: 5 }, classIdx: 2 },
         };
 
         function setMarker(key) {
             const cfg = markerConfigs[key];
             manager.setActiveMarker(cfg.type, cfg.opts);
+            manager.defaultAnnotationClass = cfg.classIdx;
             document.querySelectorAll('#marker-panel button').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + key).classList.add('active');
         }

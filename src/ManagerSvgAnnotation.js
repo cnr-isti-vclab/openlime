@@ -241,53 +241,48 @@ class Marker {
  * DiskMarker — a filled circle that maintains constant **screen-space** size
  * regardless of zoom level.
  *
- * Stored marker data keys on `annotation.data`:
- *  - `_markerType`  → `'disk'`
+ * Colors are **not** stored in the marker; they are resolved by
+ * `ManagerSvgAnnotation` from its `classes` array and passed as the `style`
+ * parameter to each method.
+ *
+ * Stored geometry keys on `annotation.data`:
+ *  - `_markerType`   → `'disk'`
  *  - `_markerRadius` → base radius in screen pixels
- *  - `_markerFill`   → fill color
- *  - `_markerOpacity` → opacity
  *
  * @extends Marker
  *
  * @example
  * ```javascript
  * ManagerSvgAnnotation.registerMarker('disk', DiskMarker);
- * manager.setActiveMarker('disk', { radius: 16, fill: '#00aaff', opacity: 0.8 });
+ * manager.setActiveMarker('disk', { radius: 16 });
  * ```
  */
 class DiskMarker extends Marker {
   /**
    * @param {Object} [options]
    * @param {number} [options.radius=12] - Screen radius in pixels at zoom level 1
-   * @param {string} [options.fill='#ff0000'] - Fill color
-   * @param {number} [options.opacity=0.7] - Opacity (0–1)
    */
   constructor(options = {}) {
-    super('disk', Object.assign({ radius: 12, fill: '#ff0000', opacity: 0.7 }, options));
+    super('disk', Object.assign({ radius: 12 }, options));
   }
 
-  createElement(pos, transform, annotation) {
+  createElement(pos, transform, annotation, style = {}) {
     const screenRadius = this.radius;
     const modelRadius = screenRadius / (transform?.z ?? 1);
-
-    // Persist marker params in annotation data for later zoom updates
     annotation.data._markerRadius = screenRadius;
-    annotation.data._markerFill = this.fill;
-    annotation.data._markerOpacity = this.opacity;
 
     const circle = Util.createSVGElement('circle', {
       cx: pos.x,
       cy: pos.y,
       r: modelRadius,
       class: 'annotation-disk',
-      fill: this.fill,
-      opacity: String(this.opacity)
+      fill: style.fill ?? '#ff0000',
+      opacity: String(style.fillOpacity ?? 0.7),
     });
-
     return [circle];
   }
 
-  updateElements(elements, transform, annotation) {
+  updateElements(elements, transform, annotation, style = {}) {
     const baseRadius = annotation.data?._markerRadius ?? this.radius;
     const modelRadius = baseRadius / (transform?.z ?? 1);
     for (const el of elements) {
@@ -297,8 +292,19 @@ class DiskMarker extends Marker {
     }
   }
 
+  moveVertex(vertexIndex, pos, transform, annotation) {
+    // A disk has a single implicit vertex at its centre
+    annotation.data._x = pos.x;
+    annotation.data._y = pos.y;
+    const circle = annotation.elements?.find(el => el.classList?.contains('annotation-disk'));
+    if (circle) {
+      circle.setAttribute('cx', String(pos.x));
+      circle.setAttribute('cy', String(pos.y));
+    }
+  }
+
   serialize() {
-    return { type: this.type, radius: this.radius, fill: this.fill, opacity: this.opacity };
+    return { type: this.type, radius: this.radius };
   }
 }
 
@@ -311,43 +317,36 @@ class DiskMarker extends Marker {
  * - First click starts the shape (also places the first vertex).
  * - Subsequent single-clicks add vertices.
  * - A rubber-band segment follows the pointer between clicks.
- * - **Double-click** finalises the polyline (the last vertex is the double-click point).
+ * - **Double-click** finalises the polyline.
  * - **Escape** cancels and removes the draft annotation.
  *
- * Stored marker data keys on `annotation.data`:
- *  - `_markerType`    → `'polyline'`
- *  - `_markerStroke`  → stroke color
- *  - `_markerStrokeWidth` → base stroke width in screen pixels
- *  - `_markerFill`    → fill color (`'none'` for open polyline)
- *  - `_markerClosed`  → whether to close the path as a polygon
- *  - `_markerPoints`  → `[{x,y}, …]` image-space vertices
+ * Colors are **not** stored in the marker; they are resolved by
+ * `ManagerSvgAnnotation` from its `classes` array and passed as the `style`
+ * parameter to each method.
+ *
+ * Stored geometry keys on `annotation.data`:
+ *  - `_markerType`        → `'polyline'`
+ *  - `_markerClosed`      → whether to close the path as a polygon
+ *  - `_markerVertexRadius`→ base vertex-dot radius in screen pixels
+ *  - `_markerPoints`      → `[{x,y}, …]` image-space vertices
  *
  * @extends Marker
  *
  * @example
  * ```javascript
- * manager.setActiveMarker('polyline', {
- *   stroke: '#00aaff', strokeWidth: 2, fill: 'none', closed: false
- * });
+ * manager.setActiveMarker('polyline', { closed: false, vertexRadius: 5 });
  * ```
  */
 class PolylineMarker extends Marker {
   /**
    * @param {Object} [options]
-   * @param {string} [options.stroke='#ff0000']    - Stroke color
-   * @param {number} [options.strokeWidth=2]       - Base stroke width in screen pixels
-   * @param {string} [options.fill='none']         - Fill color ('none' = open polyline)
-   * @param {number} [options.opacity=1]           - Overall opacity (0–1)
-   * @param {boolean}[options.closed=false]        - Close the path as a polygon
+   * @param {boolean}[options.closed=false]      - Close the path as a polygon
+   * @param {number} [options.vertexRadius=5]    - Screen-px radius for vertex handle dots
    */
   constructor(options = {}) {
     super('polyline', Object.assign({
-      stroke: '#ff0000',
-      strokeWidth: 2,
-      fill: 'none',
-      opacity: 1,
       closed: false,
-      vertexRadius: 5,   // screen-px radius for vertex handle dots
+      vertexRadius: 5,
     }, options));
   }
 
@@ -360,12 +359,10 @@ class PolylineMarker extends Marker {
     return vertices.map(p => `${p.x},${p.y}`).join(' ');
   }
 
-  /** Returns model-space stroke width from a screen-px base. */
-  _modelStroke(transform) {
-    return this.strokeWidth / (transform?.z ?? 1);
+  /** Returns model-space stroke width from the style and current zoom. */
+  _modelStroke(transform, style) {
+    return (style?.strokeWidth ?? 2) / (transform?.z ?? 1);
   }
-
-  // ── Internal helpers ────────────────────────────────────────────────────
 
   /** Returns model-space vertex-dot radius from a screen-px base. */
   _modelRadius(transform) {
@@ -373,19 +370,17 @@ class PolylineMarker extends Marker {
   }
 
   /** Creates a vertex dot and appends it to the handles group. */
-  _addDot(pos, transform, handles) {
+  _addDot(pos, transform, handles, style = {}) {
     const r = this._modelRadius(transform);
-    const sw = this._modelStroke(transform);
+    const sw = this._modelStroke(transform, style);
     const dot = Util.createSVGElement('circle', {
       cx: String(pos.x), cy: String(pos.y),
       r: String(r),
       class: 'annotation-vertex-dot',
-      fill: this.stroke,
+      fill: style.stroke ?? '#ff0000',
       stroke: '#ffffff',
       'stroke-width': String(sw * 0.5),
       opacity: '0.9',
-      // No pointer-events:none — dots must be drag-targets in edit mode.
-      // The parent svgGroup has pointer-events:none in draw mode anyway.
       cursor: 'grab',
     });
     handles.appendChild(dot);
@@ -394,28 +389,26 @@ class PolylineMarker extends Marker {
 
   // ── Sequence mode overrides ─────────────────────────────────────────────
 
-  startElement(pos, transform, annotation) {
-    // Persist config
-    annotation.data._markerStroke = this.stroke;
-    annotation.data._markerStrokeWidth = this.strokeWidth;
-    annotation.data._markerFill = this.fill;
-    annotation.data._markerOpacity = this.opacity;
+  startElement(pos, transform, annotation, style = {}) {
     annotation.data._markerClosed = this.closed;
     annotation.data._markerVertexRadius = this.vertexRadius ?? 5;
     annotation.data._markerPoints = [pos];
 
-    const sw = this._modelStroke(transform);
+    const sw = this._modelStroke(transform, style);
+    const stroke = style.stroke ?? '#ff0000';
+    const fill = this.closed ? (style.fill ?? 'none') : 'none';
+    const opacity = style.fillOpacity ?? 1;
 
     // Main polyline — starts with a single point (will grow with addVertex)
     const polyline = Util.createSVGElement('polyline', {
       points: PolylineMarker._toPointsAttr([pos]),
       class: 'annotation-polyline',
-      stroke: this.stroke,
+      stroke,
       'stroke-width': String(sw),
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round',
-      fill: this.fill,
-      opacity: String(this.opacity),
+      fill,
+      opacity: String(opacity),
     });
 
     // Rubber-band segment (preview of next edge, removed on finalize)
@@ -423,16 +416,16 @@ class PolylineMarker extends Marker {
       x1: pos.x, y1: pos.y,
       x2: pos.x, y2: pos.y,
       class: 'annotation-polyline-rubber',
-      stroke: this.stroke,
+      stroke,
       'stroke-width': String(sw),
       'stroke-dasharray': `${sw * 4},${sw * 2}`,
       'stroke-linecap': 'round',
-      opacity: String(this.opacity * 0.6),
+      opacity: String(opacity * 0.6),
     });
 
     // Vertex-handle dots group — one dot per committed vertex
     const handles = Util.createSVGElement('g', { class: 'annotation-vertex-handles' });
-    this._addDot(pos, transform, handles);
+    this._addDot(pos, transform, handles, style);
 
     annotation.elements.push(polyline, rubber, handles);
     return [polyline, rubber, handles];
@@ -453,10 +446,23 @@ class PolylineMarker extends Marker {
       rubber.setAttribute('x2', pos.x);
       rubber.setAttribute('y2', pos.y);
     }
-    // Add vertex dot
+    // Add vertex dot (reuse current stroke from existing polyline element)
     const handles = annotation.elements.find(el => el.classList?.contains('annotation-vertex-handles'));
     if (handles) {
-      this._addDot(pos, transform, handles);
+      const existingStroke = polyline?.getAttribute('stroke') ?? '#ff0000';
+      const existingSW = parseFloat(polyline?.getAttribute('stroke-width') ?? '1');
+      const r = this._modelRadius(transform);
+      const dot = Util.createSVGElement('circle', {
+        cx: String(pos.x), cy: String(pos.y),
+        r: String(r),
+        class: 'annotation-vertex-dot',
+        fill: existingStroke,
+        stroke: '#ffffff',
+        'stroke-width': String(existingSW * 0.5),
+        opacity: '0.9',
+        cursor: 'grab',
+      });
+      handles.appendChild(dot);
     }
   }
 
@@ -468,7 +474,7 @@ class PolylineMarker extends Marker {
     }
   }
 
-  finalizeElement(transform, annotation) {
+  finalizeElement(transform, annotation, style = {}) {
     // Remove rubber-band element
     const rubberIdx = annotation.elements.findIndex(el => el.classList?.contains('annotation-polyline-rubber'));
     if (rubberIdx !== -1) {
@@ -488,12 +494,12 @@ class PolylineMarker extends Marker {
         const polygon = Util.createSVGElement('polygon', {
           points: PolylineMarker._toPointsAttr(annotation.data._markerPoints),
           class: 'annotation-polyline',
-          stroke: annotation.data._markerStroke,
+          stroke: style.stroke ?? polylineEl.getAttribute('stroke'),
           'stroke-width': polylineEl.getAttribute('stroke-width'),
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
-          fill: annotation.data._markerFill,
-          opacity: String(annotation.data._markerOpacity),
+          fill: style.fill ?? 'none',
+          opacity: polylineEl.getAttribute('opacity'),
         });
         polylineEl.parentNode?.replaceChild(polygon, polylineEl);
         const idx = annotation.elements.indexOf(polylineEl);
@@ -506,10 +512,9 @@ class PolylineMarker extends Marker {
 
   // ── Zoom-responsive sizes ───────────────────────────────────────────────
 
-  updateElements(elements, transform, annotation) {
-    const baseSW = annotation.data?._markerStrokeWidth ?? this.strokeWidth;
+  updateElements(elements, transform, annotation, style = {}) {
     const baseR = annotation.data?._markerVertexRadius ?? (this.vertexRadius ?? 5);
-    const sw = baseSW / (transform?.z ?? 1);
+    const sw = this._modelStroke(transform, style);
     const r = baseR / (transform?.z ?? 1);
 
     for (const el of elements) {
@@ -521,7 +526,6 @@ class PolylineMarker extends Marker {
         el.setAttribute('stroke-dasharray', `${sw * 4},${sw * 2}`);
       }
       if (el.classList?.contains('annotation-vertex-handles')) {
-        el.setAttribute('stroke-width', sw * 0.5);
         for (const dot of el.children) {
           dot.setAttribute('r', r);
           dot.setAttribute('stroke-width', sw * 0.5);
@@ -559,10 +563,6 @@ class PolylineMarker extends Marker {
   serialize() {
     return {
       type: this.type,
-      stroke: this.stroke,
-      strokeWidth: this.strokeWidth,
-      fill: this.fill,
-      opacity: this.opacity,
       closed: this.closed,
       vertexRadius: this.vertexRadius ?? 5,
     };
@@ -653,6 +653,30 @@ class ManagerSvgAnnotation {
       markerOptions: {},
       enableState: true,
       customState: null,
+      /**
+       * Visual class definitions. Each entry drives the fill/stroke colours for
+       * all annotations whose `annotation.class` equals the entry's array index.
+       * @type {Array<{label:string, fill:string, stroke:string, fillOpacity:number,
+       *              strokeWidth:number, fillSelected:string, strokeSelected:string}>}
+       */
+      classes: [
+        {
+          label: 'Default',
+          fill: '#ff0000',
+          stroke: '#ff0000',
+          fillOpacity: 0.7,
+          strokeWidth: 2,
+          fillSelected: '#ffd700',
+          strokeSelected: '#ffd700',
+        },
+      ],
+      /**
+       * Default class index assigned to newly created annotations.
+       * Change this (or set `annotation.class` manually) to draw new annotations
+       * with a specific style from `classes`.
+       * @type {number}
+       */
+      defaultAnnotationClass: 0,
     }, options);
 
     /** @type {'idle'|'draw'|'edit'} Current interaction mode. */
@@ -779,6 +803,10 @@ class ManagerSvgAnnotation {
     if (this._mode === 'draw' && mode !== 'draw' && this._session)
       this._cancelSession();
 
+    // Clear selection when leaving edit mode
+    if (this._mode === 'edit' && mode !== 'edit')
+      this.deselectAll();
+
     const prev = this._mode;
     this._mode = mode;
 
@@ -830,6 +858,17 @@ class ManagerSvgAnnotation {
   }
 
   /**
+   * Clears the current selection: detaches vertex-drag listeners, hides all
+   * vertex-handle overlays, removes the CSS `selected` class, and restores
+   * the original fill/stroke colours from the annotation's class definition.
+   * Does **not** fire the `'select'` event.
+   */
+  deselectAll() {
+    this.layer.clearSelected();
+    this._updateHandlesVisibility(null);
+  }
+
+  /**
    * Removes all event listeners registered by this manager.
    * Call when removing the manager from the viewer.
    */
@@ -875,7 +914,7 @@ class ManagerSvgAnnotation {
     const annotation = this.layer.newAnnotation();
     annotation.label = opts.label ?? '';
     annotation.description = opts.description ?? '';
-    annotation.class = opts.class ?? '';
+    annotation.class = opts.class ?? this.defaultAnnotationClass;
     annotation.publish = opts.publish ?? 1;
     annotation.data = Object.assign({}, opts.data ?? {});
 
@@ -889,9 +928,10 @@ class ManagerSvgAnnotation {
       this._captureState(annotation);
     }
 
-    // Let the marker build its SVG elements
+    // Let the marker build its SVG elements (using class-derived style)
     const transform = this.viewer.camera.getCurrentTransform(performance.now());
-    const elements = marker.createElement(pos, transform, annotation);
+    const style = this._getClassStyle(annotation, false);
+    const elements = marker.createElement(pos, transform, annotation, style);
     annotation.elements.push(...elements);
     annotation.needsUpdate = true;
 
@@ -1055,21 +1095,73 @@ class ManagerSvgAnnotation {
   _syncPointerEvents() {
     const svgGroup = this.layer?.svgGroup;
     if (!svgGroup) return;
-    if (this._mode === 'draw') {
-      // In draw mode, existing annotations must NOT intercept pointer events so
-      // PointerManager sees every click — even clicks on top of drawn shapes.
-      try {
-        const iMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
-        // For sequence/drag the whole svgGroup is transparent.
-        // For tap, single-clicks still need to reach PointerManager for double-tap
-        // detection, so we also set none (tap mode only fires on dblclick).
-        svgGroup.style.pointerEvents = 'none';
-      } catch {
-        svgGroup.style.pointerEvents = 'none';
-      }
-    } else {
-      // idle or edit: annotations respond to clicks normally (selection)
+    if (this._mode === 'edit') {
+      // Only in edit mode annotations respond to clicks for selection
       svgGroup.style.pointerEvents = '';
+    } else {
+      // idle: annotations must not be clickable
+      // draw: existing annotations must NOT intercept pointer events so
+      //       PointerManager sees every click — even clicks on top of drawn shapes.
+      svgGroup.style.pointerEvents = 'none';
+    }
+  }
+
+  // ─── Internal: style resolution ─────────────────────────────────────────────
+
+  /**
+   * Resolves the visual style for `anno` from `this.classes`.
+   *
+   * `anno.class` is treated as a numeric index into `this.classes`.
+   * Falls back to index 0 when the value is not a valid index.
+   *
+   * @param {Annotation} anno
+   * @param {boolean} [selected=false]
+   * @returns {{fill:string, stroke:string, fillOpacity:number, strokeWidth:number}}
+   * @private
+   */
+  _getClassStyle(anno, selected = false) {
+    const idx = Number(anno.class) || 0;
+    const cls = this.classes?.[idx] ?? this.classes?.[0] ?? {};
+    if (selected) {
+      return {
+        fill:        cls.fillSelected   ?? cls.fill   ?? '#ffd700',
+        stroke:      cls.strokeSelected ?? cls.stroke ?? '#ffd700',
+        fillOpacity: cls.fillOpacity  ?? 0.7,
+        strokeWidth: cls.strokeWidth  ?? 2,
+      };
+    }
+    return {
+      fill:        cls.fill        ?? '#ff0000',
+      stroke:      cls.stroke      ?? '#ff0000',
+      fillOpacity: cls.fillOpacity ?? 0.7,
+      strokeWidth: cls.strokeWidth ?? 2,
+    };
+  }
+
+  /**
+   * Applies the class-derived fill/stroke style directly to the SVG elements of
+   * `anno`.  Called automatically on every selection/deselection change.
+   *
+   * Override `classes[n].fillSelected` / `classes[n].strokeSelected` to customise
+   * the highlight colour without touching `onSelect` callbacks.
+   *
+   * @param {Annotation} anno
+   * @param {boolean} [selected=false]
+   * @private
+   */
+  _applyStyleToElements(anno, selected = false) {
+    const style = this._getClassStyle(anno, selected);
+    for (const el of anno.elements ?? []) {
+      if (el.classList?.contains('annotation-disk')) {
+        el.setAttribute('fill', style.fill);
+        el.setAttribute('opacity', String(style.fillOpacity));
+        el.style.cursor = selected ? 'grab' : '';
+      } else if (el.classList?.contains('annotation-polyline')) {
+        el.setAttribute('stroke', style.stroke);
+        if (anno.data._markerClosed) {
+          el.setAttribute('fill', style.fill);
+        }
+      }
     }
   }
 
@@ -1139,7 +1231,9 @@ class ManagerSvgAnnotation {
     const markerType = anno.data?._markerType ?? this.activeMarker;
     try {
       const marker = this._instantiateMarker(markerType, this.markerOptions);
-      marker.updateElements(anno.elements, transform, anno);
+      const selected = this.layer.selected?.has(anno.id) ?? false;
+      const style = this._getClassStyle(anno, selected);
+      marker.updateElements(anno.elements, transform, anno, style);
     } catch {
       // Unknown marker type — silently ignore for robustness
     }
@@ -1362,17 +1456,16 @@ class ManagerSvgAnnotation {
     const annotation = this.layer.newAnnotation();
     annotation.label = '';
     annotation.description = '';
-    annotation.class = '';
+    annotation.class = this.defaultAnnotationClass;
     annotation.publish = 1;
     annotation.data = {};
     annotation.data._markerType = this.activeMarker;
-    annotation.data._x = pos.x;
-    annotation.data._y = pos.y;
 
     if (this.enableState) this._captureState(annotation);
 
     const transform = this.viewer.camera.getCurrentTransform(performance.now());
-    marker.startElement(pos, transform, annotation);
+    const style = this._getClassStyle(annotation, false);
+    marker.startElement(pos, transform, annotation, style);
     annotation.needsUpdate = true;
 
     if (!this.layer.annotations.includes(annotation)) {
@@ -1399,17 +1492,19 @@ class ManagerSvgAnnotation {
       this._detachVertexDragListeners(this._selectedAnnotation);
     }
 
-    let changed = false;
     for (const anno of this.layer.annotations) {
+      const isSelected = (anno === selectedAnno);
+
+      // Show/hide vertex handles
       const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
-      if (!handles) continue;
-      if (anno === selectedAnno) {
-        handles.removeAttribute('visibility');
-      } else {
-        handles.setAttribute('visibility', 'hidden');
+      if (handles) {
+        if (isSelected) handles.removeAttribute('visibility');
+        else handles.setAttribute('visibility', 'hidden');
       }
+
+      // Apply selection / deselection style from classes
+      this._applyStyleToElements(anno, isSelected);
       anno.needsUpdate = true;
-      changed = true;
     }
 
     this._selectedAnnotation = selectedAnno ?? null;
@@ -1417,7 +1512,7 @@ class ManagerSvgAnnotation {
     // Attach drag listeners to the newly-selected annotation (if any)
     if (selectedAnno) this._attachVertexDragListeners(selectedAnno);
 
-    if (changed) this.viewer.redraw();
+    if (this.layer.annotations.length > 0) this.viewer.redraw();
   }
 
   /**
@@ -1432,7 +1527,8 @@ class ManagerSvgAnnotation {
     this._session = null;
 
     const transform = this.viewer.camera.getCurrentTransform(performance.now());
-    const finalElements = marker.finalizeElement(transform, annotation);
+    const style = this._getClassStyle(annotation, false);
+    const finalElements = marker.finalizeElement(transform, annotation, style);
     annotation.elements = finalElements;
     annotation.needsUpdate = true;
     annotation.syncSvg();
@@ -1470,6 +1566,48 @@ class ManagerSvgAnnotation {
    * @private
    */
   _attachVertexDragListeners(annotation) {
+    // ── Disk: drag the circle itself ────────────────────────────────────────
+    const diskEl = annotation.elements?.find(el => el.classList?.contains('annotation-disk'));
+    if (diskEl && !diskEl._vertexDragHandler) {
+      diskEl._vertexDragHandler = (e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        e.preventDefault();
+        diskEl.setPointerCapture(e.pointerId);
+        this._vertexSession = { annotation, vertexIndex: 0 };
+
+        const onMove = (ev) => {
+          if (ev.pointerId !== e.pointerId) return;
+          if (!this._vertexSession) { cleanup(); return; }
+          const pos = this._eventToImageCoords(ev);
+          const transform = this.viewer.camera.getCurrentTransform(performance.now());
+          try {
+            const marker = this._instantiateMarker('disk', {});
+            marker.moveVertex(0, pos, transform, annotation);
+          } catch { /* ignore */ }
+          annotation.needsUpdate = true;
+          this.viewer.redraw();
+        };
+        const onUp = (ev) => {
+          if (ev.pointerId !== e.pointerId) return;
+          cleanup();
+          this._vertexSession = null;
+          annotation.syncSvg?.();
+          this.emit('update', annotation);
+        };
+        const cleanup = () => {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          document.removeEventListener('pointercancel', onUp);
+        };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
+      };
+      diskEl.addEventListener('pointerdown', diskEl._vertexDragHandler);
+    }
+
+    // ── Polyline: drag individual vertex dots ───────────────────────────────
     const handles = annotation.elements?.find(
       el => el.classList?.contains('annotation-vertex-handles'));
     if (!handles) return;
@@ -1538,6 +1676,13 @@ class ManagerSvgAnnotation {
    * @private
    */
   _detachVertexDragListeners(annotation) {
+    // Disk
+    const diskEl = annotation?.elements?.find(el => el.classList?.contains('annotation-disk'));
+    if (diskEl?._vertexDragHandler) {
+      diskEl.removeEventListener('pointerdown', diskEl._vertexDragHandler);
+      delete diskEl._vertexDragHandler;
+    }
+    // Polyline vertex dots
     const handles = annotation?.elements?.find(
       el => el.classList?.contains('annotation-vertex-handles'));
     if (!handles) return;
