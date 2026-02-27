@@ -176,8 +176,8 @@ class UIBasic {
 				const pencilButton = this.viewer.containerElement
 					.querySelector('.openlime-button.openlime-pencil');
 				if (pencilButton)
-					pencilButton.classList.toggle('openlime-pencil-active', mode === 'draw');
-				if (mode === 'draw') this.emit('pencilEnabled');
+					pencilButton.classList.toggle('openlime-pencil-active', mode !== 'idle');
+				if (mode !== 'idle') this.emit('pencilEnabled');
 				else                 this.emit('pencilDisabled');
 			});
 		}
