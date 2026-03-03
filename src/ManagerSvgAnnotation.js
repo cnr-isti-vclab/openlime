@@ -983,6 +983,35 @@ class ManagerSvgAnnotation {
   }
 
   /**
+   * Delete all selected annotations
+   */
+  deleteSelected() {
+    this.layer.selected.forEach(id => {
+        this.layer.deleteAnnotation(id);
+    });
+  }
+
+   /**
+   * Delete array of annotations
+   * @param {ids} array of annotaion ids 
+   */
+  deleteAnnotations(ids) {
+    ids.forEach(id => {
+      this.layer.deleteAnnotation(id);
+    })
+  }
+
+  /**
+   * Expose selection interface
+   * @param {string} id 
+   * @param {boolean} on: if true is selected
+   */
+  setSelected(id, on = true) {
+    const anno = this.layer.getAnnotationById(id);
+    this.layer.setSelected(anno, on);
+  }
+
+  /**
    * Deletes the annotation with the given ID from the layer and the DOM.
    *
    * @param {string} id - Annotation ID.
