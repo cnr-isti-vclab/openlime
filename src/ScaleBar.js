@@ -118,7 +118,7 @@ class ScaleBar extends Units {
 		if (zoom == this.lastScaleZoom)
 			return;
 		this.lastScaleZoom = zoom;
-		let s = this.bestLength(this.width / 2, this.width, this.pixelSize, zoom);
+		let s = this.bestLength(this.width / 3, this.width, this.pixelSize, zoom);
 
 		let margin = this.width - s.length;
 		this.line.setAttribute('x1', margin / 2);
@@ -130,7 +130,7 @@ class ScaleBar extends Units {
 	 * Calculates the best scale length and label value for current zoom.
 	 * Tries to find a "nice" round number that fits within the given constraints.
 	 * @private
-	 * @param {number} min - Minimum desired length in pixels
+	 * @param {number} min - Minimum desired length in pixels (should be ≤ max/2.5 to guarantee a result with steps [1,2,5])
 	 * @param {number} max - Maximum desired length in pixels
 	 * @param {number} pixelSize - Size of a pixel in real-world units
 	 * @param {number} zoom - Current zoom level
