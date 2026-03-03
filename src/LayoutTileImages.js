@@ -226,7 +226,7 @@ class LayoutTileImages extends Layout {
 
 	/**
 	 * Gets coordinates for a tile in both image space and texture space.
-	 * @param Obj} tile - The tile to get coordinates for
+	 * @param {Object} tile - The tile to get coordinates for
 	 * @returns {Object} Coordinate data
 	 * @returns {Float32Array} .coords - Image space coordinates [x,y,z, x,y,z, x,y,z, x,y,z]
 	 * @returns {Float32Array} .tcoords - Texture coordinates [u,v, u,v, u,v, u,v]

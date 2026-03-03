@@ -90,6 +90,7 @@ function addSignals(proto, ...signals) {
 	 * @memberof SignalHandler
 	 * @instance
 	 * @private
+	 * @ignore
 	 */
 	proto.prototype.initSignals = function () {
 		// Use nullish coalescing for signal initialization
@@ -104,6 +105,7 @@ function addSignals(proto, ...signals) {
 	 * @param {string} event - The event name to listen for
 	 * @param {Function} callback - Function to be called when event is emitted
 	 * @throws {Error} Implicitly if event doesn't exist
+	 * @ignore
 	 * 
 	 * @example
 	 * ```javascript
@@ -128,6 +130,7 @@ function addSignals(proto, ...signals) {
 	 * @param {string} event - The event name to listen for once
 	 * @param {Function} callback - Function to be called once when event is emitted
 	 * @throws {Error} Implicitly if event doesn't exist or callback is not a function
+	 * @ignore
 	 * 
 	 * @example
 	 * ```javascript
@@ -163,6 +166,7 @@ function addSignals(proto, ...signals) {
 	 * @param {Function} [callback] - Optional specific callback function to remove
 	 * @returns {boolean} True if callback(s) were removed, false if event or callback not found
 	 * @throws {Error} Implicitly if event doesn't exist
+	 * @ignore
 	 * 
 	 * @example
 	 * ```javascript
@@ -208,6 +212,7 @@ function addSignals(proto, ...signals) {
 	 * @instance
 	 * @param {string} event - The event name to emit
 	 * @param {...*} parameters - Parameters to pass to the callback functions
+	 * @ignore
 	 * 
 	 * @example
 	 * ```javascript

@@ -74,10 +74,11 @@ class Spline {
 	}
 
 	/**
- * Calculates interpolated value at given point.
- * @param {number} x - Point to interpolate at
- * @returns {number} Interpolated value
- */
+	 * Calculates interpolated value at given point.
+	 * @param {number} x - Point to interpolate at
+	 * @returns {number} Interpolated value
+	 * @ignore
+	 */
 	at(x) {
 		let i = this.getIndexBefore(x);
 		const t = (x - this.xs[i - 1]) / (this.xs[i] - this.xs[i - 1]);

@@ -1,5 +1,8 @@
 import { fromURL } from 'png-es6';
 
+/**
+ * Utility class for loading native 16-bit PNG images.
+ */
 export class Png16Loader {
   /**
    * Load native 16-bit PNG directly from a URL using png-es6.

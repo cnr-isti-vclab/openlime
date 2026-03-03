@@ -674,13 +674,25 @@ class ManagerSvgAnnotation {
       defaultAnnotationClass: 0,
     }, options);
 
-    /** @type {'idle'|'create'|'edit'} Current interaction mode. */
+    /**
+     * Current interaction mode.
+     * @type {'idle'|'create'|'edit'}
+     */
     this._mode = 'idle';
-    /** @type {CreationSession|null} Active creation session, or null when idle. */
+    /**
+     * Active creation session, or null when idle.
+     * @type {CreationSession|null}
+     */
     this._session = null;
-    /** @type {{annotation, vertexIndex}|null} Active vertex-drag session in edit mode. */
+    /**
+     * Active vertex-drag session in edit mode.
+     * @type {{annotation, vertexIndex}|null}
+     */
     this._vertexSession = null;
-    /** @type {Annotation|null} The annotation whose vertex handles are currently visible. */
+    /**
+     * The annotation whose vertex handles are currently visible.
+     * @type {Annotation|null}
+     */
     this._selectedAnnotation = null;
 
     // Resolve or auto-create the annotation layer

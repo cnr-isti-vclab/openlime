@@ -21,7 +21,7 @@ class CoordinateSystem {
      * @param {*} p point in Viewport: 0,0 at left,bottom
      * @param {Camera} camera Camera which contains viewport information
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns  point in CanvasHtml: 0,0 left,top
+     * @returns {{x: number, y: number}} point in CanvasHtml: 0,0 left,top
      */
     static fromViewportToCanvasHtml(p, camera, useGL) {
         const viewport = this.getViewport(camera, useGL);
@@ -35,7 +35,7 @@ class CoordinateSystem {
      * @param {*} p point in CanvasHtml: 0,0 left,top y Down
      * @param {Camera} camera Camera
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns  point in GLViewport: 0,0 left,bottom
+     * @returns {{x: number, y: number}} point in GLViewport: 0,0 left,bottom
      */
     static fromCanvasHtmlToViewport(p, camera, useGL) {
         let result = p;
@@ -53,7 +53,7 @@ class CoordinateSystem {
      * @param {Camera} camera camera
      * @param {Transform} layerT layer transform
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns point in Layer coordinates (0, 0 at layer center, y Up)
+     * @returns {{x: number, y: number}} point in Layer coordinates (0, 0 at layer center, y Up)
      */
     static fromViewportToLayer(p, camera, layerT, useGL) {
         // M = InvLayerT * InvCameraT  * Tr(-Vw/2, -Vh/2)
@@ -72,7 +72,7 @@ class CoordinateSystem {
      * @param {Camera} camera 
      * @param {Transform} layerT layer transform
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns point in viewport coordinates (0,0 at left,bottom y Up)
+     * @returns {{x: number, y: number}} point in viewport coordinates (0,0 at left,bottom y Up)
      */
     static fromLayerToViewport(p, camera, layerT, useGL) {
         const M = this.getFromLayerToViewportTransform(camera, layerT, useGL);
@@ -84,7 +84,7 @@ class CoordinateSystem {
      * @param {*} p point {x,y} in Layer coordinates (0,0 at Layer center)
      * @param {Camera} camera camera
      * @param {Transform} layerT layer transform
-     * @returns point in Center (0, 0 at glViewport center) coordinates.
+     * @returns {{x: number, y: number}} point in Center (0, 0 at glViewport center) coordinates.
      */
     static fromLayerToCenter(p, camera, layerT, useGL) {
         // M = cameraT * layerT
@@ -100,7 +100,7 @@ class CoordinateSystem {
      * Transform a point from Layer to Image coordinates
      * @param {*} p point {x, y} Layer coordinates (0,0 at Layer center)
      * @param {*} layerSize {w, h} Size in pixel of the Layer
-     * @returns  Point in Image coordinates (0,0 at left,top, y Down)
+     * @returns {{x: number, y: number}} Point in Image coordinates (0,0 at left,top, y Down)
      */
     static fromLayerToImage(p, layerSize) {
         // InvertY * Tr(Lw/2, Lh/2)
@@ -113,7 +113,7 @@ class CoordinateSystem {
      * @param {*} p point {x, y} in CanvasHtml (0,0 left,top, y Down)
      * @param {Camera} camera camera
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns Point in Scene coordinates (0,0 at scene center, y Up)
+     * @returns {{x: number, y: number}} Point in Scene coordinates (0,0 at scene center, y Up)
      */
     static fromCanvasHtmlToScene(p, camera, useGL) {
         // invCameraT * Tr(-Vw/2, -Vh/2) * InvertY  * [Scale(devPixRatio)]
@@ -130,7 +130,7 @@ class CoordinateSystem {
      * @param {*} p point {x, y} Scene coordinates (0,0 at scene center, y Up)
      * @param {Camera} camera camera
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns Point in CanvasHtml (0,0 left,top, y Down)
+     * @returns {{x: number, y: number}} Point in CanvasHtml (0,0 left,top, y Down)
      */
     static fromSceneToCanvasHtml(p, camera, useGL) {
         // invCameraT * Tr(-Vw/2, -Vh/2) * InvertY  * [Scale(devPixRatio)]
@@ -143,7 +143,7 @@ class CoordinateSystem {
      * @param {*} p point {x, y} Scene coordinates (0,0 at scene center, y Up)
      * @param {Camera} camera camera
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns Point in Viewport (0,0 left,bottom, y Up)
+     * @returns {{x: number, y: number}} Point in Viewport (0,0 left,bottom, y Up)
      */
     static fromSceneToViewport(p, camera, useGL) {
         // FromCenterToViewport * CamT
@@ -159,7 +159,7 @@ class CoordinateSystem {
      * @param {*} p point {x, y} Scene coordinates (0,0 at scene center, y Up)
      * @param {Transform} cameraT camera transform
      * @param {*} viewport viewport {x,y,dx,dy,w,h}
-     * @returns Point in Viewport (0,0 left,bottom, y Up)
+     * @returns {{x: number, y: number}} Point in Viewport (0,0 left,bottom, y Up)
      */
     static fromSceneToViewportNoCamera(p, cameraT, viewport) {
         // invCameraT * Tr(-Vw/2, -Vh/2) * InvertY  * [Scale(devPixRatio)]
@@ -174,7 +174,7 @@ class CoordinateSystem {
      * @param {*} p point {x, y} Viewport coordinates (0,0 at left,bottom, y Up)
      * @param {Camera} camera camera
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns Point in Viewport (0,0 at scene center, y Up)
+     * @returns {{x: number, y: number}} Point in Viewport (0,0 at scene center, y Up)
      */
     static fromViewportToScene(p, camera, useGL) {
         // invCamT * FromViewportToCenter 
@@ -190,7 +190,7 @@ class CoordinateSystem {
      * @param {*} p point {x, y} Viewport coordinates (0,0 at left,bottom, y Up)
      * @param {Transform} cameraT camera transform
      * @param {*} viewport viewport {x,y,dx,dy,w,h}
-     * @returns Point in Viewport (0,0 at scene center, y Up)
+     * @returns {{x: number, y: number}} Point in Viewport (0,0 at scene center, y Up)
      */
     static fromViewportToSceneNoCamera(p, cameraT, viewport) {
         // invCamT * FromViewportToCenter 
@@ -208,7 +208,7 @@ class CoordinateSystem {
      * @param {Transform} layerT layer transform 
      * @param {*} layerSize  {w, h} Size in pixel of the Layer
      * @param {bool} useGL if true apply devPixelRatio scale. Keep it false when working with SVG
-     * @returns Point in Image space (0,0 left,top of the image, y Down)
+     * @returns {{x: number, y: number}} Point in Image space (0,0 left,top of the image, y Down)
      */
     static fromCanvasHtmlToImage(p, camera, layerT, layerSize, useGL) {
         // Translate(Lw/2, Lh/2) * InvLayerT * InvCameraT *  Translate(-Vw/2, -Vh/2) * invertY
@@ -228,7 +228,7 @@ class CoordinateSystem {
      * @param {*} viewport {x,y,dx,dy,w,h}
      * @param {Transform} layerT layer transform
      * @param {*} layerSize {w,h} layer pixel size
-     * @returns box in Image coordinates (0,0 left,top, y Dowm)
+     * @returns {BoundingBox} box in Image coordinates (0,0 left,top, y Down)
      */
     static fromViewportBoxToImageBox(box, cameraT, viewport, layerT, layerSize) {
         // InvertYonImage * T(Lw/2, Lh/2) * InvL * InvCam * T(-Vw/2,-Vh/2) 
@@ -251,7 +251,7 @@ class CoordinateSystem {
      * Transform a box from Layer to Scene 
      * @param {BoundingBox} box  box in Layer coordinates (0,0 at layer center)
      * @param {Transform} layerT layer transform
-     * @returns box in Scene coordinates (0,0 at scene center)
+     * @returns {BoundingBox} box in Scene coordinates (0,0 at scene center)
      */
     static fromLayerBoxToSceneBox(box, layerT) {
         return layerT.transformBox(box);
@@ -261,7 +261,7 @@ class CoordinateSystem {
      * Transform a box from Scene to Layer 
      * @param {BoundingBox} box  box in Layer coordinates (0,0 at layer center)
      * @param {Transform} layerT layer transform
-     * @returns box in Scene coordinates (0,0 at scene center)
+     * @returns {BoundingBox} box in Layer coordinates (0,0 at layer center)
      */
     static fromSceneBoxToLayerBox(box, layerT) {
         return layerT.inverse().transformBox(box);
@@ -273,7 +273,7 @@ class CoordinateSystem {
      * @param {Camera} camera 
      * @param {Transform} layerT layer transform
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns Box in Viewport coordinates (0,0 at left, bottom y Up)
+     * @returns {BoundingBox} Box in Viewport coordinates (0,0 at left, bottom y Up)
      */
     static fromLayerBoxToViewportBox(box, camera, layerT, useGL) {
         const M = this.getFromLayerToViewportTransform(camera, layerT, useGL);
@@ -286,7 +286,7 @@ class CoordinateSystem {
      * @param {Camera} camera 
      * @param {Transform} layerT layer transform
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns Box in Viewport coordinates (0,0 at left, bottom y Up)
+     * @returns {BoundingBox} Box in Layer coordinates (0,0 at layer center y Up)
      */
     static fromViewportBoxToLayerBox(box, camera, layerT, useGL) {
         const M = this.getFromLayerToViewportTransform(camera, layerT, useGL).inverse();
@@ -297,7 +297,7 @@ class CoordinateSystem {
      * Get a transform to go from viewport 0,0 at left, bottom y Up, to Center 0,0 at viewport center
      * @param {Camera} camera camera
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns transform from Viewport to Center
+     * @returns {Transform} transform from Viewport to Center
      */
     static getFromViewportToCenterTransform(camera, useGL) {
         const viewport = this.getViewport(camera, useGL);
@@ -308,7 +308,7 @@ class CoordinateSystem {
      * Get a transform to go from viewport 0,0 at left, bottom y Up, to Center 0,0 at viewport center
      * from explicit viewport param. (Not using camera parameter here)
      * @param {*} viewport viewport
-     * @returns transform from Viewport to Center
+     * @returns {Transform} transform from Viewport to Center
      */
     static getFromViewportToCenterTransformNoCamera(viewport) {
         return new Transform({x:-viewport.w/2, y:-viewport.h/2, z:1, a:0, t:0});
@@ -328,7 +328,7 @@ class CoordinateSystem {
      * @param {Camera} camera 
      * @param {Transform} layerT layer transform
      * @param {bool} useGL True to work with WebGL, false for SVG. When true, it uses devPixelRatio scale
-     * @returns transform from Layer to Viewport
+     * @returns {Transform} transform from Layer to Viewport
      */
     static getFromLayerToViewportTransform(camera, layerT, useGL) {
         // M =  Center2Viewport * CameraT  * LayerT
@@ -343,7 +343,7 @@ class CoordinateSystem {
      * @param {Transform} CameraT camera transform
      * @param {viewport} viewport {x,y,dx,dy,w,h} viewport
      * @param {Transform} layerT layer transform
-     * @returns transform from Layer to Viewport
+     * @returns {Transform} transform from Layer to Viewport
      */
     static getFromLayerToViewportTransformNoCamera(cameraT, viewport, layerT) {
         // M =  Center2Viewport * CameraT  * LayerT
@@ -357,7 +357,7 @@ class CoordinateSystem {
      * Scale x applying f scale factor
      * @param {*} p Point to be scaled
      * @param {Number} f Scale factor
-     * @returns Point scaled
+     * @returns {{x: number, y: number}} Point scaled
      */
     static scale(p, f) {
         return { x: p.x * f, y: p.y * f };
@@ -367,7 +367,7 @@ class CoordinateSystem {
      * Invert y with respect to viewport.h
      * @param {*} p Point to be transformed 
      * @param {*} viewport current viewport
-     * @returns Point with y inverted with respect to viewport.h
+     * @returns {{x: number, y: number}} Point with y inverted with respect to viewport.h
      */
     static invertY(p, viewport) {
         return { x: p.x, y: viewport.h - p.y };
@@ -376,7 +376,7 @@ class CoordinateSystem {
     /**
      * Return the camera viewport: scaled by devicePixelRatio if useGL is true.
      * @param {bool} useGL True to work with WebGL, false for SVG. When true viewport scaled by devPixelRatio 
-     * @returns Viewport 
+     * @returns {{x: number, y: number, dx: number, dy: number, w: number, h: number}} Viewport 
      */
     static getViewport(camera, useGL) {
         return useGL ? camera.glViewport() : camera.viewport;

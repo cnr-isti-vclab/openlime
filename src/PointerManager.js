@@ -739,6 +739,7 @@ class CircularBuffer {
 
     /**
      * Removes all elements from the buffer.
+     * @ignore
      */
     clear() {
         this.first = 0;
@@ -748,6 +749,7 @@ class CircularBuffer {
     /**
      * Checks if the buffer is empty.
      * @returns {boolean} True if empty
+     * @ignore
      */
     empty() {
         return this.size === 0;
@@ -756,6 +758,7 @@ class CircularBuffer {
     /**
      * Gets the first (oldest) element.
      * @returns {*} First element or null if empty
+     * @ignore
      */
     first() {
         return this.size > 0 ? this.buffer[this.first] : null;
@@ -764,6 +767,7 @@ class CircularBuffer {
     /**
      * Gets the last (newest) element.
      * @returns {*} Last element or null if empty
+     * @ignore
      */
     last() {
         return this.size > 0 ? this.buffer[(this.first + this.size - 1) % this.capacity] : null;
@@ -772,6 +776,7 @@ class CircularBuffer {
     /**
      * Adds an element to the front, replacing the last if full.
      * @param {*} value - Value to add
+     * @ignore
      */
     enqueue(value) {
         this.first = (this.first > 0) ? this.first - 1 : this.capacity - 1;
@@ -785,6 +790,7 @@ class CircularBuffer {
     /**
      * Adds an element to the end, replacing the first if full.
      * @param {*} value - Value to add
+     * @ignore
      */
     push(value) {
         const index = (this.first + this.size) % this.capacity;
@@ -802,6 +808,7 @@ class CircularBuffer {
      * Removes and returns the last element.
      * @returns {*} Removed element
      * @throws {RangeError} If buffer is empty
+     * @ignore
      */
     pop() {
         if (this.size === 0) {
@@ -819,6 +826,7 @@ class CircularBuffer {
      * Removes and returns the first element.
      * @returns {*} Removed element
      * @throws {RangeError} If buffer is empty
+     * @ignore
      */
     shift() {
         if (this.size === 0) {
@@ -838,6 +846,7 @@ class CircularBuffer {
      * @param {number} [end] - End index (inclusive)
      * @returns {*|Array} Single element or array of elements
      * @throws {TypeError|RangeError} If indices are invalid
+     * @ignore
      */
     get(start, end) {
         // Special case for empty buffer with valid indices
@@ -880,6 +889,7 @@ class CircularBuffer {
     /**
      * Converts the buffer to an array.
      * @returns {Array} Array containing all elements in order
+     * @ignore
      */
     toArray() {
         if (this.size === 0) return [];
