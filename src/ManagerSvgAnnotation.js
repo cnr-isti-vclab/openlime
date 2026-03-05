@@ -636,7 +636,8 @@ class ManagerSvgAnnotation {
    * @param {Function} [options.onCreate]   - Shorthand: `.addEvent('create', fn)`
    * @param {Function} [options.onUpdate]   - Shorthand: `.addEvent('update', fn)`
    * @param {Function} [options.onDelete]   - Shorthand: `.addEvent('delete', fn)`
-   * @param {Function} [options.onSelect]   - Shorthand: `.addEvent('select', fn)`
+   * @param {Function} [options.onSelect]   - Shorthand: `.addEvent('select', fn)` — fires with the last activated annotation
+   * @param {Function} [options.onSelectionChange] - Shorthand: `.addEvent('selectionChange', fn)` — fires with the full `Annotation[]` array
    */
   constructor(viewer, options = {}) {
     Object.assign(this, {
@@ -690,18 +691,35 @@ class ManagerSvgAnnotation {
      */
     this._vertexSession = null;
     /**
-     * The annotation whose vertex handles are currently visible.
+     * The annotation whose vertex handles are currently visible and whose
+     * vertex-drag listeners are attached.  In a multi-selection this is the
+     * **most recently activated** annotation (last in the selection order).
      * @type {Annotation|null}
      */
     this._selectedAnnotation = null;
+
+    /**
+     * Set to `true` while `setSelectedIds` is processing its batch so that
+     * the per-item `layer 'selected'` events do not trigger redundant
+     * `_updateHandlesVisibility` calls.
+     * @type {boolean}
+     * @private
+     */
+    this._batchSelectInProgress = false;
 
     // Resolve or auto-create the annotation layer
     this._resolveLayer();
 
     // Wire selection events from the layer → 'select' signal + vertex-handle visibility
     this.layer.addEvent('selected', (anno) => {
+      // During a setSelectedIds batch we skip per-item updates; the batch
+      // method calls _updateHandlesVisibility once at the end instead.
+      if (this._batchSelectInProgress) return;
       this._updateHandlesVisibility(anno);
       if (anno) this.emit('select', anno);
+      const all = [...this.layer.selected]
+        .map(id => this.layer.getAnnotationById(id)).filter(Boolean);
+      this.emit('selectionChange', all);
     });
 
     // ── Pointer handlers ────────────────────────────────────────────────
@@ -756,6 +774,7 @@ class ManagerSvgAnnotation {
     if (options.onUpdate) this.addEvent('update', options.onUpdate);
     if (options.onDelete) this.addEvent('delete', options.onDelete);
     if (options.onSelect) this.addEvent('select', options.onSelect);
+    if (options.onSelectionChange) this.addEvent('selectionChange', options.onSelectionChange);
     if (options.onSessionStart) this.addEvent('sessionStart', options.onSessionStart);
     if (options.onSessionCancel) this.addEvent('sessionCancel', options.onSessionCancel);
   }
@@ -865,14 +884,16 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Clears the current selection: detaches vertex-drag listeners, hides all
+   * Clears the entire selection: detaches vertex-drag listeners, hides all
    * vertex-handle overlays, removes the CSS `selected` class, and restores
    * the original fill/stroke colours from the annotation's class definition.
-   * Does **not** fire the `'select'` event.
+   * Does **not** fire the `'select'` event but fires `'selectionChange'` with
+   * an empty array.
    */
   deselectAll() {
     this.layer.clearSelected();
     this._updateHandlesVisibility(null);
+    this.emit('selectionChange', []);
   }
 
   /**
@@ -1014,13 +1035,60 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Expose selection interface
-   * @param {string} id 
-   * @param {boolean} on: if true is selected
+   * Adds or removes a **single** annotation from the current selection.
+   *
+   * This operation is **additive**: it does not clear the rest of the
+   * selection.  Call it multiple times to build up a multi-selection
+   * one item at a time, or use {@link setSelectedIds} to replace the
+   * entire selection atomically.
+   *
+   * @param {string}  id          - Annotation ID.
+   * @param {boolean} [on=true]   - `true` to select, `false` to deselect.
    */
   setSelected(id, on = true) {
     const anno = this.layer.getAnnotationById(id);
+    if (!anno) return;
     this.layer.setSelected(anno, on);
+  }
+
+  /**
+   * Atomically replaces the current selection with the provided annotation IDs.
+   *
+   * More efficient than calling `setSelected` repeatedly: the SVG style update
+   * and vertex-handle rewiring happen **once** at the end, not once per item.
+   *
+   * - Fires one `'select'` event with the **last** annotation in `ids`
+   *   (or nothing if `ids` is empty), preserving backward compatibility.
+   * - Fires one `'selectionChange'` event with the full array of selected
+   *   {@link Annotation} objects (in the same order as `ids`).
+   * - Vertex-drag handles are attached to the last annotation in `ids`.
+   *
+   * @param {string[]} ids - Annotation IDs to select. Duplicates are ignored.
+   *                         Pass an empty array to deselect everything.
+   */
+  setSelectedIds(ids) {
+    const unique = [...new Set(ids)];
+
+    // Suppress per-item _updateHandlesVisibility calls during the batch.
+    this._batchSelectInProgress = true;
+    this.layer.clearSelected();
+    for (const id of unique) {
+      const anno = this.layer.getAnnotationById(id);
+      if (anno) this.layer.setSelected(anno, true);
+    }
+    this._batchSelectInProgress = false;
+
+    // Single visual + vertex-handle update for the whole new selection.
+    const lastAnno = unique.length > 0
+      ? this.layer.getAnnotationById(unique[unique.length - 1])
+      : null;
+    this._updateHandlesVisibility(lastAnno);
+
+    // Emit events once.
+    if (lastAnno) this.emit('select', lastAnno);
+    const selected = [...this.layer.selected]
+      .map(id => this.layer.getAnnotationById(id)).filter(Boolean);
+    this.emit('selectionChange', selected);
   }
 
   /**
@@ -1252,6 +1320,33 @@ class ManagerSvgAnnotation {
   _wireAnnotationUpdate() {
     this.layer.annotationUpdate = (anno, transform) => {
       this._onAnnotationUpdate(anno, transform);
+    };
+    this._wireClickHandler();
+  }
+
+  /**
+   * Installs `layer.onClick` to handle Ctrl/Meta+click multi-selection.
+   *
+   * When the user clicks an annotation while holding Ctrl (Windows/Linux) or
+   * ⌘ (Mac), the annotation is **toggled** in/out of the current selection
+   * without clearing other selected annotations.
+   *
+   * A plain click (no modifier) returns `false` so the default pathway in
+   * `LayerSvgAnnotation` runs: clear current selection → select the clicked one.
+   *
+   * Only active in `'edit'` mode; in any other mode the SVG group has
+   * `pointer-events: none` so no click ever reaches an annotation element.
+   *
+   * @private
+   */
+  _wireClickHandler() {
+    this.layer.onClick = (anno, e) => {
+      if (e?.ctrlKey || e?.metaKey) {
+        const nowSelected = !this.layer.selected.has(anno.id);
+        this.layer.setSelected(anno, nowSelected);
+        return true; // prevent default clear-all + select-one
+      }
+      return false; // let LayerSvgAnnotation's default single-select run
     };
   }
 
@@ -1515,40 +1610,78 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Shows vertex handles for `selectedAnno` and hides them for all others.
-   * In edit mode also re-wires direct pointer-down drag listeners on the visible dots.
-   * Called on 'selected' events from the layer.
-   * @param {Annotation|null} selectedAnno
+   * Synchronises vertex-handle visibility, fill/stroke styles, and vertex-drag
+   * listeners with the current `layer.selected` Set.
+   *
+   * ### Multi-selection behaviour
+   * - Vertex handles (the dots on a polyline) are **shown for every selected
+   *   annotation**, giving clear visual feedback regardless of how many items
+   *   are selected.
+   * - Vertex-**drag** listeners are attached to exactly **one** annotation at a
+   *   time — `_selectedAnnotation` — which is the "active" vertex-drag target.
+   *   Priority rules for choosing the active annotation:
+   *   1. If `changedAnno` was just *added* to the selection → it becomes active.
+   *   2. Else if the previous active is still in the selection → keep it.
+   *   3. Else pick the first remaining selected annotation.
+   *   4. When the selection is empty, `_selectedAnnotation` becomes `null`.
+   *
+   * Called on `'selected'` events from the layer and directly by
+   * `setSelectedIds` / `deselectAll`.
+   *
+   * @param {Annotation|null} changedAnno - The annotation whose selection state
+   *   just changed (or `null` when deselecting everything).
    * @private
    */
-  _updateHandlesVisibility(selectedAnno) {
+  _updateHandlesVisibility(changedAnno) {
     if (!this.layer?.annotations) return;
 
-    // Detach drag listeners from the previously-selected annotation
-    if (this._selectedAnnotation && this._selectedAnnotation !== selectedAnno) {
+    // `layer.selected` is the authoritative source of truth.
+    const selectedIds = this.layer.selected; // Set<string>
+
+    // ── Determine the new vertex-drag active annotation ──────────────────
+    const changedIsNowSelected = changedAnno != null && selectedIds.has(changedAnno.id);
+    let nextActive;
+    if (changedIsNowSelected) {
+      // The annotation that just entered the selection becomes the active one.
+      nextActive = changedAnno;
+    } else if (this._selectedAnnotation && selectedIds.has(this._selectedAnnotation.id)) {
+      // The previous active is still selected — keep it.
+      nextActive = this._selectedAnnotation;
+    } else if (selectedIds.size > 0) {
+      // The previous active was removed — fall back to the first remaining id.
+      const firstId = selectedIds.values().next().value;
+      nextActive = this.layer.annotations.find(a => a.id === firstId) ?? null;
+    } else {
+      nextActive = null;
+    }
+
+    // ── Manage drag-listener attachment ──────────────────────────────────
+    // Detach from the old active annotation when it changes.
+    if (this._selectedAnnotation && this._selectedAnnotation !== nextActive) {
       this._detachVertexDragListeners(this._selectedAnnotation);
     }
 
+    // ── Update every annotation's visual state ────────────────────────────
     for (const anno of this.layer.annotations) {
-      const isSelected = (anno === selectedAnno);
+      const isSelected = selectedIds.has(anno.id);
 
-      // Show/hide vertex handles
+      // Show vertex handles for ALL selected annotations.
       const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
       if (handles) {
         if (isSelected) handles.removeAttribute('visibility');
-        else handles.setAttribute('visibility', 'hidden');
+        else            handles.setAttribute('visibility', 'hidden');
       }
 
-      // Apply selection / deselection style from classes
       this._applyStyleToElements(anno, isSelected);
       anno.needsUpdate = true;
     }
 
-    this._selectedAnnotation = selectedAnno ?? null;
+    // Attach drag listeners to the new active annotation (only if it changed).
+    if (nextActive && nextActive !== this._selectedAnnotation) {
+      this._attachVertexDragListeners(nextActive);
+    }
 
-    // Attach drag listeners to the newly-selected annotation (if any)
-    if (selectedAnno) this._attachVertexDragListeners(selectedAnno);
-
+    this._selectedAnnotation = nextActive;
     if (this.layer.annotations.length > 0) this.viewer.redraw();
   }
 
@@ -1812,7 +1945,7 @@ class ManagerSvgAnnotation {
  * @description Fired when the user selects an annotation in the layer.
  */
 
-addSignals(ManagerSvgAnnotation, 'create', 'update', 'delete', 'select', 'sessionStart', 'sessionCancel', 'modeChange');
+addSignals(ManagerSvgAnnotation, 'create', 'update', 'delete', 'select', 'selectionChange', 'sessionStart', 'sessionCancel', 'modeChange');
 
 // Register built-in markers
 ManagerSvgAnnotation.registerMarker('disk', DiskMarker);

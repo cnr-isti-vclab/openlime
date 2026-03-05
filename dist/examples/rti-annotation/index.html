@@ -118,6 +118,42 @@
             color: #ffd700;
         }
 
+        /* Selection status panel — shown in edit mode */
+        #selection-panel {
+            display: none;
+            padding: 6px 10px;
+            background: rgba(0,0,0,0.65);
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            border-left: 3px solid #ffd700;
+            pointer-events: none;
+            font-size: 12px;
+            color: #ccc;
+            max-width: 280px;
+        }
+
+        #selection-panel strong { color: #ffd700; }
+
+        /* Ctrl+click hint — shown at the bottom in edit mode */
+        #ctrl-hint {
+            display: none;
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 9998;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        #ctrl-hint b { color: #ffd700; }
+
         /* Toolbar locked during an active creation session */
         #annotation-toolbar.session-active #mode-panel,
         #annotation-toolbar.session-active #marker-panel {
@@ -143,12 +179,18 @@
             <button id="btn-polyline">&#9135; Polyline</button>
             <button id="btn-polygon">&#9651; Polygon</button>
         </div>
+        <div id="selection-panel">
+            <strong>Selected:</strong> <span id="selection-info">none</span>
+        </div>
     </div>
     <div id="creation-hint">
         Click to add vertex &nbsp;·&nbsp;
         <b>double-click</b> last point to finish &nbsp;·&nbsp;
         <b>Enter</b> to finish &nbsp;·&nbsp;
         <b>Esc</b> to cancel
+    </div>
+    <div id="ctrl-hint">
+        Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b> on Mac) to add/remove from selection
     </div>
     <div class="openlime"></div>
     <script src="../../js/openlime.js"></script>
@@ -209,20 +251,25 @@
                 document.getElementById('creation-hint').style.display = 'none';
             },
 
-            // Called when the user selects an annotation by clicking on it
+            // Called when the user selects an annotation by clicking on it.
+            // Fired with the last activated annotation only; use onSelectionChange
+            // to react to the complete selection set.
             onSelect: (anno) => {
-                // Colours are applied automatically by the manager via classes.
-                console.log('[ManagerSvgAnnotation] SELECT - annotation data:', {
-                    id: anno.id,
-                    label: anno.label,
-                    description: anno.description,
-                    class: anno.class,
-                    publish: anno.publish,
-                    data: anno.data,
-                    state: anno.state,
-                    svg: anno.svg,
-                    elements: anno.elements.length + ' SVG element(s)',
-                });
+                console.log('[ManagerSvgAnnotation] SELECT', anno.id, anno.label);
+            },
+
+            // Called whenever the multi-selection set changes:
+            //   plain click, Ctrl+click, setSelectedIds(), deselectAll(), …
+            // `annotations` is the full Annotation[] currently selected.
+            onSelectionChange: (annotations) => {
+                const info = document.getElementById('selection-info');
+                info.textContent = annotations.length === 0
+                    ? 'none'
+                    : annotations.map(a => a.label || a.id.slice(0, 8)).join(', ');
+                console.log(
+                    '[ManagerSvgAnnotation] SELECTION_CHANGE',
+                    annotations.map(a => ({ id: a.id, label: a.label }))
+                );
             },
         });
 
@@ -239,11 +286,17 @@
         });
 
         // ── Mode panel ───────────────────────────────────────────────────
-        // Sync button active states and marker-panel visibility on mode change
+        // Sync button active states and panel visibility on mode change
         manager.addEvent('modeChange', (mode) => {
             document.getElementById('btn-mode-create').classList.toggle('active', mode === 'create');
             document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
-            document.getElementById('marker-panel').style.display = mode === 'create' ? 'flex' : 'none';
+            document.getElementById('marker-panel').style.display    = mode === 'create' ? 'flex'  : 'none';
+            document.getElementById('selection-panel').style.display  = mode === 'edit'   ? 'block' : 'none';
+            document.getElementById('ctrl-hint').style.display        = mode === 'edit'   ? 'block' : 'none';
+            // Reset displayed selection when leaving edit mode
+            if (mode !== 'edit') {
+                document.getElementById('selection-info').textContent = 'none';
+            }
         });
 
         document.getElementById('btn-mode-create').addEventListener('click', () =>

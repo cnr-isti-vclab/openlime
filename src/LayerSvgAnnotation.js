@@ -301,7 +301,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 					if (e.button == 0) {
 						e.preventDefault();
 						e.stopPropagation();
-						if (this.onClick && this.onClick(anno))
+						if (this.onClick && this.onClick(anno, e))
 							return;
 						if (this.selected.has(anno.id))
 							return;
