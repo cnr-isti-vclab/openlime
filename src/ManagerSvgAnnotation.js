@@ -233,6 +233,15 @@ class Marker {
   serialize() {
     return { type: this.type };
   }
+
+  /**
+   * Called by `_finalizeSession` to decide whether the current drawing can be
+   * committed.  Return `false` to silently cancel instead.
+   * Default implementation always allows finalising (safe for 'tap'/'drag').
+   * @param {Annotation} annotation
+   * @returns {boolean}
+   */
+  canFinalize(annotation) { return true; }
 }
 
 // ─── Built-in: DiskMarker ─────────────────────────────────────────────────────
@@ -561,6 +570,12 @@ class PolylineMarker extends Marker {
       closed: this.closed,
       vertexRadius: this.vertexRadius ?? 5,
     };
+  }
+
+  canFinalize(annotation) {
+    const pts = annotation.data._markerPoints?.length ?? 0;
+    const minPts = annotation.data._markerClosed ? 3 : 2;
+    return pts >= minPts;
   }
 }
 
@@ -1306,6 +1321,10 @@ class ManagerSvgAnnotation {
         if (anno.data._markerClosed) {
           el.setAttribute('fill', style.fill);
         }
+      } else if (el.classList?.contains('annotation-rect')) {
+        el.setAttribute('stroke', style.stroke);
+        el.setAttribute('fill', style.fill);
+        el.setAttribute('fill-opacity', String(style.fillOpacity));
       }
     }
   }
@@ -1750,14 +1769,10 @@ class ManagerSvgAnnotation {
     if (!this._session) return;
     const { annotation, marker } = this._session;
 
-    // Reject sequence shapes with too few points
-    if (marker.interactionMode() === 'sequence') {
-      const pts = annotation.data._markerPoints?.length ?? 0;
-      const minPts = annotation.data._markerClosed ? 3 : 2;
-      if (pts < minPts) {
-        this._cancelSession();
-        return;
-      }
+    // Let the marker decide whether there is enough geometry to commit.
+    if (!marker.canFinalize(annotation)) {
+      this._cancelSession();
+      return;
     }
 
     this._session = null;
@@ -2008,8 +2023,202 @@ class ManagerSvgAnnotation {
 
 addSignals(ManagerSvgAnnotation, 'create', 'update', 'delete', 'select', 'selectionChange', 'sessionStart', 'sessionCancel', 'modeChange');
 
+// ─── Built-in: RectMarker ─────────────────────────────────────────────────────
+
+/**
+ * RectMarker — an axis-aligned rectangle drawn by fixing the first corner
+ * (double-click), moving the mouse to preview the shape, then double-clicking
+ * again to finalise.
+ *
+ * **Interaction (sequence mode)**
+ * - First double-click: enters create mode and places the first corner (shown as a dot).
+ * - Move mouse: rectangle stretches live, second corner dot follows the cursor.
+ * - Second double-click (or Enter): finalises the rectangle.
+ * - Escape: cancels.
+ *
+ * Stored geometry keys on `annotation.data`:
+ *  - `_markerType`    → `'rect'`
+ *  - `_markerCorners` → `[{x,y}, {x,y}]` — two opposite corners in image space
+ *
+ * @extends Marker
+ */
+class RectMarker extends Marker {
+  /**
+   * @param {Object} [options]
+   * @param {number} [options.vertexRadius=5] - Screen-px radius for corner handle dots
+   */
+  constructor(options = {}) {
+    super('rect', options);
+    this.vertexRadius = options.vertexRadius ?? 5;
+  }
+
+  interactionMode() { return 'sequence'; }
+
+  // ── Internal helpers ───────────────────────────────────────────────────
+
+  _modelStroke(transform, style) {
+    return (style?.strokeWidth ?? 2) / (transform?.z ?? 1);
+  }
+
+  _modelRadius(transform) {
+    return (this.vertexRadius ?? 5) / (transform?.z ?? 1);
+  }
+
+  _makeDot(x, y, r) {
+    return Util.createSVGElement('circle', {
+      cx: x, cy: y, r,
+      fill: '#fff',
+      stroke: '#333',
+      'stroke-width': r * 0.4,
+      class: 'annotation-vertex-dot',
+      style: 'cursor: crosshair',
+    });
+  }
+
+  /** Updates the SVG <rect> x/y/width/height from the two stored corners. */
+  _updateRectGeometry(annotation) {
+    const c = annotation.data._markerCorners;
+    if (!c) return;
+    const x = Math.min(c[0].x, c[1].x);
+    const y = Math.min(c[0].y, c[1].y);
+    const w = Math.abs(c[1].x - c[0].x);
+    const h = Math.abs(c[1].y - c[0].y);
+    const rect = annotation.elements?.find(el => el.classList?.contains('annotation-rect'));
+    if (rect) {
+      rect.setAttribute('x', x);
+      rect.setAttribute('y', y);
+      rect.setAttribute('width', w);
+      rect.setAttribute('height', h);
+    }
+  }
+
+  /** Rebuilds the four corner dots in the handles group (used after finalise, for edit). */
+  _rebuildHandles(annotation, transform) {
+    const handles = annotation.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
+    if (!handles) return;
+    handles.innerHTML = '';
+    const c = annotation.data._markerCorners;
+    if (!c) return;
+    const x0 = Math.min(c[0].x, c[1].x), y0 = Math.min(c[0].y, c[1].y);
+    const x1 = Math.max(c[0].x, c[1].x), y1 = Math.max(c[0].y, c[1].y);
+    const pts = [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }];
+    const r = this._modelRadius(transform);
+    for (const p of pts) {
+      handles.appendChild(this._makeDot(p.x, p.y, r));
+    }
+  }
+
+  // ── Sequence mode overrides ────────────────────────────────────────────
+
+  startElement(pos, transform, annotation, style = {}) {
+    annotation.data._markerType = 'rect';
+    annotation.data._markerCorners = [{ ...pos }, { ...pos }];
+    const sw = this._modelStroke(transform, style);
+    const r  = this._modelRadius(transform);
+
+    const rect = Util.createSVGElement('rect', {
+      x: pos.x, y: pos.y, width: 0, height: 0,
+      fill: style.fill ?? '#ff0000',
+      'fill-opacity': style.fillOpacity ?? 0.2,
+      stroke: style.stroke ?? '#ff0000',
+      'stroke-width': sw,
+      class: 'annotation-rect',
+    });
+
+    // Two dots: first corner (anchor) + second corner (follows mouse)
+    const handles = Util.createSVGElement('g', {
+      class: 'annotation-vertex-handles',
+      visibility: 'visible',
+    });
+    handles.appendChild(this._makeDot(pos.x, pos.y, r)); // dot[0] — fixed
+    handles.appendChild(this._makeDot(pos.x, pos.y, r)); // dot[1] — rubber
+
+    annotation.elements = [rect, handles];
+    return annotation.elements;
+  }
+
+  /** Updates the second corner live (rubber-band). */
+  _moveSecondCorner(pos, annotation) {
+    if (!annotation.data._markerCorners) return;
+    annotation.data._markerCorners[1] = { ...pos };
+    this._updateRectGeometry(annotation);
+    const handles = annotation.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
+    const dot1 = handles?.children[1];
+    if (dot1) {
+      dot1.setAttribute('cx', pos.x);
+      dot1.setAttribute('cy', pos.y);
+    }
+  }
+
+  addVertex(pos, transform, annotation) {
+    // For a rect only two corners are needed; single-click locks the second corner
+    // but drawing continues until double-click finalises.
+    this._moveSecondCorner(pos, annotation);
+  }
+
+  updatePreview(pos, transform, annotation) {
+    this._moveSecondCorner(pos, annotation);
+  }
+
+  finalizeElement(transform, annotation, style = {}) {
+    this._updateRectGeometry(annotation);
+    // Replace the two preview dots with proper 4-corner handles for editing
+    this._rebuildHandles(annotation, transform);
+    const handles = annotation.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
+    if (handles) handles.setAttribute('visibility', 'hidden');
+    return annotation.elements;
+  }
+
+  canFinalize(annotation) {
+    const c = annotation.data._markerCorners;
+    if (!c) return false;
+    // Require a non-degenerate rectangle
+    return c[0].x !== c[1].x || c[0].y !== c[1].y;
+  }
+
+  moveVertex(vertexIndex, pos, transform, annotation) {
+    const c = annotation.data._markerCorners;
+    if (!c) return;
+    // Normalised corners (TL / BR) so each handle maps to the right axis.
+    let x0 = Math.min(c[0].x, c[1].x), y0 = Math.min(c[0].y, c[1].y);
+    let x1 = Math.max(c[0].x, c[1].x), y1 = Math.max(c[0].y, c[1].y);
+    if      (vertexIndex === 0) { x0 = pos.x; y0 = pos.y; }
+    else if (vertexIndex === 1) { x1 = pos.x; y0 = pos.y; }
+    else if (vertexIndex === 2) { x1 = pos.x; y1 = pos.y; }
+    else if (vertexIndex === 3) { x0 = pos.x; y1 = pos.y; }
+    annotation.data._markerCorners = [{ x: x0, y: y0 }, { x: x1, y: y1 }];
+    this._updateRectGeometry(annotation);
+    this._rebuildHandles(annotation, transform);
+  }
+
+  // ── Zoom-responsive sizes ─────────────────────────────────────────────────
+
+  updateElements(elements, transform, annotation, style = {}) {
+    const sw = this._modelStroke(transform, style);
+    const r  = this._modelRadius(transform);
+    for (const el of elements) {
+      if (el.classList?.contains('annotation-rect')) {
+        el.setAttribute('stroke-width', sw);
+        el.setAttribute('stroke', style.stroke ?? '#ff0000');
+        el.setAttribute('fill', style.fill ?? '#ff0000');
+        el.setAttribute('fill-opacity', style.fillOpacity ?? 0.2);
+      } else if (el.classList?.contains('annotation-vertex-handles')) {
+        for (const dot of el.children) {
+          dot.setAttribute('r', r);
+          dot.setAttribute('stroke-width', r * 0.4);
+        }
+      }
+    }
+  }
+
+  serialize() {
+    return { type: this.type, vertexRadius: this.vertexRadius ?? 5 };
+  }
+}
+
 // Register built-in markers
 ManagerSvgAnnotation.registerMarker('disk', DiskMarker);
 ManagerSvgAnnotation.registerMarker('polyline', PolylineMarker);
+ManagerSvgAnnotation.registerMarker('rect', RectMarker);
 
-export { ManagerSvgAnnotation, Marker, DiskMarker, PolylineMarker };
+export { ManagerSvgAnnotation, Marker, DiskMarker, PolylineMarker, RectMarker };

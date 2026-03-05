@@ -139,17 +139,13 @@
             <button id="btn-disk" class="active">&#9679; Disk</button>
             <button id="btn-polyline">&#9135; Polyline</button>
             <button id="btn-polygon">&#9651; Polygon</button>
+            <button id="btn-rect">&#9645; Rect</button>
         </div>
         <div id="selection-panel">
             <strong>Selected:</strong> <span id="selection-info">none</span>
         </div>
     </div>
-    <div id="creation-hint">
-        Click to add vertex &nbsp;·&nbsp;
-        <b>double-click</b> last point to finish &nbsp;·&nbsp;
-        <b>Enter</b> to finish &nbsp;·&nbsp;
-        <b>Esc</b> to cancel
-    </div>
+    <div id="creation-hint"></div>
     <div id="ctrl-hint">
         <b>Double-click</b> on canvas to create &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b>) to multi-select
     </div>
@@ -187,6 +183,7 @@
                 { label: 'Disk',     fill: '#e63946', stroke: '#e63946', fillOpacity: 0.75, strokeWidth: 2, fillSelected: '#ffd700', strokeSelected: '#ffd700' },
                 { label: 'Polyline', fill: 'none',    stroke: '#00aaff', fillOpacity: 1,    strokeWidth: 2, fillSelected: 'none',    strokeSelected: '#ffd700' },
                 { label: 'Polygon',  fill: 'rgba(34,187,85,0.2)', stroke: '#22bb55', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
+                { label: 'Rect',     fill: 'rgba(100,160,255,0.2)', stroke: '#64a0ff', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
             ],
             defaultAnnotationClass: 0,
             // With singleEditMode, vertex handles are shown only when exactly
@@ -206,9 +203,15 @@
             onSessionStart: (anno) => {
                 document.getElementById('annotation-toolbar').classList.add('session-active');
                 const type = anno?.data?._markerType;
-                if (type && type !== 'disk') {
+                document.getElementById('ctrl-hint').style.display = 'none';
+                if (type === 'polyline') {
+                    document.getElementById('creation-hint').innerText =
+                        'Click to add vertex · double-click last point to finish · Enter to finish · Esc to cancel';
                     document.getElementById('creation-hint').style.display = 'block';
-                    document.getElementById('ctrl-hint').style.display = 'none';
+                } else if (type === 'rect') {
+                    document.getElementById('creation-hint').innerText =
+                        'Move mouse to size the rectangle · double-click (or Enter) to finish · Esc to cancel';
+                    document.getElementById('creation-hint').style.display = 'block';
                 }
             },
             onSessionCancel: () => {
@@ -255,6 +258,7 @@
             'disk':     { type: 'disk',     opts: { radius: 14 },                     classIdx: 0 },
             'polyline': { type: 'polyline', opts: { closed: false, vertexRadius: 5 }, classIdx: 1 },
             'polygon':  { type: 'polyline', opts: { closed: true,  vertexRadius: 5 }, classIdx: 2 },
+            'rect':     { type: 'rect',     opts: { vertexRadius: 6 },                classIdx: 3 },
         };
 
         function setMarker(key) {
@@ -268,6 +272,7 @@
         document.getElementById('btn-disk').addEventListener('click', () => setMarker('disk'));
         document.getElementById('btn-polyline').addEventListener('click', () => setMarker('polyline'));
         document.getElementById('btn-polygon').addEventListener('click', () => setMarker('polygon'));
+        document.getElementById('btn-rect').addEventListener('click', () => setMarker('rect'));
 
         // ── Mode panel ─────────────────────────────────────────────
         // Modes are set automatically (double-click → create, click → edit);
