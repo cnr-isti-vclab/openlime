@@ -228,6 +228,9 @@
                 { label: 'Polygon',  fill: 'rgba(34,187,85,0.2)', stroke: '#22bb55', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
             ],
             defaultAnnotationClass: 0,
+            // With singleEditMode, vertex handles are shown only when exactly
+            // one annotation is selected; activeAnnotation returns null otherwise.
+            singleEditMode: true,
             // Capture viewer state (light direction, render mode, …) in each annotation
             enableState: true,
 

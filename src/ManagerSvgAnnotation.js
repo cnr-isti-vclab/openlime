@@ -638,6 +638,11 @@ class ManagerSvgAnnotation {
    * @param {Function} [options.onDelete]   - Shorthand: `.addEvent('delete', fn)`
    * @param {Function} [options.onSelect]   - Shorthand: `.addEvent('select', fn)` — fires with the last activated annotation
    * @param {Function} [options.onSelectionChange] - Shorthand: `.addEvent('selectionChange', fn)` — fires with the full `Annotation[]` array
+ * @param {boolean} [options.singleEditMode=false]
+ *   When `true`, vertex handles (and `activeAnnotation`) are only active when
+ *   **exactly one** annotation is selected.  With two or more selected the
+ *   manager enters a "batch-select" state: no handles are shown and
+ *   `activeAnnotation` returns `null`.  Defaults to `false` (legacy behaviour).
    */
   constructor(viewer, options = {}) {
     Object.assign(this, {
@@ -673,6 +678,12 @@ class ManagerSvgAnnotation {
        * @type {number}
        */
       defaultAnnotationClass: 0,
+      /**
+       * When true, vertex handles and `activeAnnotation` are suppressed
+       * whenever more than one annotation is selected.
+       * @type {boolean}
+       */
+      singleEditMode: false,
     }, options);
 
     /**
@@ -871,6 +882,28 @@ class ManagerSvgAnnotation {
    * @type {boolean}
    */
   get active() { return this._mode !== 'idle'; }
+
+  /**
+   * The **active** annotation: the most recently activated one inside the
+   * current selection.  This is also the annotation that receives vertex-drag
+   * handles in edit mode.
+   *
+   * `null` when nothing is selected.
+   *
+   * In a single-selection scenario this is always the selected annotation.
+   * In a multi-selection it is the last annotation added to the selection
+   * (either by click, Ctrl+click, or the last id in a `setSelectedIds` call).
+   *
+   * Read-only; updated automatically by the manager.
+   *
+   * When {@link ManagerSvgAnnotation#singleEditMode} is `true` and more than
+   * one annotation is selected, returns `null`.
+   * @type {Annotation|null}
+   */
+  get activeAnnotation() {
+    if (this.singleEditMode && this.layer?.selected?.size !== 1) return null;
+    return this._selectedAnnotation;
+  }
 
   /**
    * Programmatically finalises the current sequence/drag creation.
@@ -1637,6 +1670,23 @@ class ManagerSvgAnnotation {
 
     // `layer.selected` is the authoritative source of truth.
     const selectedIds = this.layer.selected; // Set<string>
+
+    // ── singleEditMode: suppress handles when >1 annotation is selected ──
+    if (this.singleEditMode && selectedIds.size > 1) {
+      if (this._selectedAnnotation) {
+        this._detachVertexDragListeners(this._selectedAnnotation);
+        this._selectedAnnotation = null;
+      }
+      for (const anno of this.layer.annotations) {
+        const isSelected = selectedIds.has(anno.id);
+        const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
+        if (handles) handles.setAttribute('visibility', 'hidden');
+        this._applyStyleToElements(anno, isSelected);
+        anno.needsUpdate = true;
+      }
+      if (this.layer.annotations.length > 0) this.viewer.redraw();
+      return;
+    }
 
     // ── Determine the new vertex-drag active annotation ──────────────────
     const changedIsNowSelected = changedAnno != null && selectedIds.has(changedAnno.id);
