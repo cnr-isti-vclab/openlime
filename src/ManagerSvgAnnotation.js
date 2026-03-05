@@ -718,6 +718,15 @@ class ManagerSvgAnnotation {
      */
     this._batchSelectInProgress = false;
 
+    /**
+     * Set by `_wireClickHandler` when a click lands on an annotation element.
+     * Read and reset in `_onSingleTap` to distinguish "click on annotation" from
+     * "click on empty area" for automatic mode switching.
+     * @type {boolean}
+     * @private
+     */
+    this._lastClickWasOnAnnotation = false;
+
     // Resolve or auto-create the annotation layer
     this._resolveLayer();
 
@@ -1009,6 +1018,9 @@ class ManagerSvgAnnotation {
     this.viewer.redraw();
     annotation.syncSvg();
     this.emit('create', annotation);
+    // After instant creation (tap/disk) return to edit mode so the user can
+    // immediately select / inspect the new annotation.
+    this.setMode('edit');
     return annotation;
   }
 
@@ -1233,15 +1245,10 @@ class ManagerSvgAnnotation {
   _syncPointerEvents() {
     const svgGroup = this.layer?.svgGroup;
     if (!svgGroup) return;
-    if (this._mode === 'edit') {
-      // Only in edit mode annotations respond to clicks for selection
-      svgGroup.style.pointerEvents = '';
-    } else {
-      // idle: annotations must not be clickable
-      // create: existing annotations must NOT intercept pointer events so
-      //         PointerManager sees every click — even clicks on top of drawn shapes.
-      svgGroup.style.pointerEvents = 'none';
-    }
+    // In create mode, existing annotation shapes must NOT intercept pointer events
+    // so that PointerManager always sees every click/drag for drawing.
+    // In idle and edit modes, annotations are clickable for selection.
+    svgGroup.style.pointerEvents = (this._mode === 'create') ? 'none' : '';
   }
 
   // ─── Internal: style resolution ─────────────────────────────────────────────
@@ -1374,6 +1381,9 @@ class ManagerSvgAnnotation {
    */
   _wireClickHandler() {
     this.layer.onClick = (anno, e) => {
+      // Record that the click landed on an annotation so _onSingleTap can
+      // distinguish this from a click on the empty canvas background.
+      this._lastClickWasOnAnnotation = true;
       if (e?.ctrlKey || e?.metaKey) {
         const nowSelected = !this.layer.selected.has(anno.id);
         this.layer.setSelected(anno, nowSelected);
@@ -1438,77 +1448,95 @@ class ManagerSvgAnnotation {
 
   // ─── Internal: pointer handlers ──────────────────────────────────────────
 
-  /** Guard: returns true if the event should be ignored (not in create mode, or UI overlays). */
-  _shouldIgnore(e) {
-    if (this._mode !== 'create') return true;
+  /**
+   * Returns true when the event target is a UI element that should always
+   * fall through (toolbar, menu, dialog, button).  Also true when the layer
+   * has no layout yet (not fully initialised).
+   * @private
+   */
+  _isUiTarget(e) {
     if (!this.layer?.layout) return true;
     const t = e.target;
-    if (t?.closest?.('.openlime-toolbar') ||
-      t?.closest?.('.openlime-layers-menu') ||
-      t?.closest?.('.openlime-dialog') ||
-      t?.classList?.contains('openlime-button')) return true;
-    return false;
+    return !!(t?.closest?.('.openlime-toolbar') ||
+              t?.closest?.('.openlime-layers-menu') ||
+              t?.closest?.('.openlime-dialog') ||
+              t?.classList?.contains('openlime-button'));
   }
 
   /**
-   * Double-tap:
-   *  - 'tap'      → instant create (existing behaviour, unchanged)
-   *  - 'sequence' → if session active: add final vertex + finalise
-   *                 (classic GIS UX: double-click = "place last point and close")
-   *                 if no session: ignored
-   *  - 'drag'     → ignored
+   * Double-tap — unified entry point to creation, regardless of current mode:
+   *
+   * - Any mode, no session, 'tap' marker      → enter create, instant create, back to edit
+   * - Any mode, no session, 'sequence' marker → enter create, start drawing session
+   * - Any mode, no session, 'drag' marker     → enter create, arm drag (next drag starts rect)
+   * - Create mode, session active, 'sequence' → add last vertex + finalise
    * @private
    */
   _onDoubleTap(e) {
-    if (this._shouldIgnore(e)) return;
+    if (this._isUiTarget(e)) return;
     e.preventDefault?.();
     e.stopPropagation?.();
 
-    const mode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
+    const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
 
-    if (mode === 'tap') {
+    // Session active (sequence mode mid-drawing) → add last point + finalise
+    if (this._session && markerMode === 'sequence') {
       const pos = this._eventToImageCoords(e);
-      this.createAnnotation(pos);
-
-    } else if (mode === 'sequence') {
-      if (this._session) {
-        // Add the double-clicked point as an extra vertex, then finalize.
-        // This mirrors the intuitive "last click = close" UX of drawing tools.
-        const pos = this._eventToImageCoords(e);
-        const transform = this.viewer.camera.getCurrentTransform(performance.now());
-        this._session.marker.addVertex(pos, transform, this._session.annotation);
-        this._session.annotation.needsUpdate = true;
-        this._finalizeSession(e);
-      }
+      const transform = this.viewer.camera.getCurrentTransform(performance.now());
+      this._session.marker.addVertex(pos, transform, this._session.annotation);
+      this._session.annotation.needsUpdate = true;
+      this._finalizeSession(e);
+      return;
     }
+
+    // No active session → enter create mode and start / create
+    this.setMode('create');
+    const pos = this._eventToImageCoords(e);
+
+    if (markerMode === 'tap') {
+      // Disk: instant create (createAnnotation will switch back to edit)
+      this.createAnnotation(pos);
+    } else if (markerMode === 'sequence') {
+      // Polyline/Polygon: double-click places the first vertex
+      this._startSession(pos, e);
+    }
+    // 'drag': create mode is now armed; the next drag gesture will start the session
   }
 
   /**
-   * Single-tap:
-   *  - 'sequence' + no session → start a new drawing session (first vertex)
-   *  - 'sequence' + session    → add a vertex
-   *  - other modes             → ignored
+   * Single-tap — dual purpose depending on context:
+   *
+   * - Session active (sequence mode) → add a vertex to the current drawing
+   * - No session, click on annotation → ensure edit mode is active (selection
+   *   was already handled by LayerSvgAnnotation's onpointerdown)
+   * - No session, click on empty area → enter edit mode + deselect all
    * @private
    */
   _onSingleTap(e) {
-    if (this._shouldIgnore(e)) return;
+    if (this._isUiTarget(e)) return;
 
-    const mode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
-    if (mode !== 'sequence') return;
-
-    e.preventDefault?.();
-    e.stopPropagation?.();
-
-    const pos = this._eventToImageCoords(e);
-
-    if (!this._session) {
-      this._startSession(pos, e);
-    } else {
+    // Mid-drawing: add a vertex (only for sequence/polyline markers)
+    if (this._session) {
+      const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
+      if (markerMode !== 'sequence') return;
+      e.preventDefault?.();
+      e.stopPropagation?.();
+      const pos = this._eventToImageCoords(e);
       const transform = this.viewer.camera.getCurrentTransform(performance.now());
       this._session.marker.addVertex(pos, transform, this._session.annotation);
       this._session.annotation.needsUpdate = true;
       this.viewer.redraw();
+      return;
     }
+
+    // No session: switch to edit mode
+    // _lastClickWasOnAnnotation was set by _wireClickHandler if pointerdown
+    // landed on an annotation element (fires before fingerSingleTap).
+    const wasOnAnnotation = this._lastClickWasOnAnnotation;
+    this._lastClickWasOnAnnotation = false;
+
+    if (this._mode !== 'edit') this.setMode('edit');
+    if (!wasOnAnnotation) this.deselectAll();
   }
 
   /** Hover → rubber-band update for 'sequence' sessions (mouse up + moving). @private */
@@ -1524,53 +1552,31 @@ class ManagerSvgAnnotation {
   /**
    * Pan/drag start.
    *
-   * When pencil is active this handler runs BEFORE panzoom (priority 10000 vs -1000).
-   * Calling `e.preventDefault()` here stops the PointerManager from registering
-   * per-pointer fingerMoving/fingerMovingEnd handlers for panzoom, AND breaks the
-   * broadcast() loop so panzoom's fingerMovingStart never fires — full pan lockout.
+   * Only intercepts in 'create' mode and only for 'drag' or 'sequence' markers;
+   * in all other cases the event is left untouched so panzoom/light work normally.
    *
-   * Modes:
-   *  - 'drag'     → start a drag session (rect/ellipse)
-   *  - 'sequence' → treat pan-start position as a vertex (fallback for "drag-click")
-   *  - 'tap'      → pan is just blocked, no drawing action
+   * - 'drag' marker in create mode     → start drag session (rect/ellipse)
+   * - 'sequence' marker in create mode → treat press position as a vertex (drag-click fallback)
+   * - everything else                  → pass through (panzoom / light controller)
    * @private
    */
   _onDragStart(e) {
-    // Interfere when in create OR edit mode (but not idle)
-    if (this._mode === 'idle' || !this.layer?.layout) return;
+    if (this._isUiTarget(e)) return;
+    // Only intercept while actively creating an annotation
+    if (this._mode !== 'create') return;
 
-    // Allow toolbar/menu clicks to fall through normally
-    const t = e.target;
-    if (t?.closest?.('.openlime-toolbar') ||
-      t?.closest?.('.openlime-layers-menu') ||
-      t?.closest?.('.openlime-dialog') ||
-      t?.classList?.contains('openlime-button')) return;
+    const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
+    if (markerMode !== 'drag' && markerMode !== 'sequence') return;
 
-    // Block light controller (priority 0) and panzoom (priority -1000) from
-    // receiving this pan.  In create mode we go on to handle creation; in edit mode
-    // we start a vertex-drag session if the pointer is on a vertex dot.
+    // Block panzoom/light from receiving this pan
     e.preventDefault?.();
 
-    if (this._mode === 'edit') {
-      // In edit mode, vertex drag is handled by direct per-dot listeners
-      // (see _attachVertexDragListeners). We still call e.preventDefault() here
-      // only if the target is NOT a vertex dot (to block light/panzoom on 
-      // non-vertex drags). For vertex dots the dot's own pointerdown listener
-      // calls stopPropagation so this handler won't be reached at all.
-      e.preventDefault?.();
-      return;
-    }
+    const pos = this._eventToImageCoords(e);
 
-    const mode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
-
-    if (mode === 'drag') {
-      const pos = this._eventToImageCoords(e);
+    if (markerMode === 'drag') {
       this._startSession(pos, e);
-
-    } else if (mode === 'sequence') {
-      // "Drag-click": user pressed and moved slightly (> 1 mm threshold).
-      // Treat the press position as a vertex, same as a clean single-tap.
-      const pos = this._eventToImageCoords(e);
+    } else {
+      // sequence: drag-click fallback — treat as a vertex
       if (!this._session) {
         this._startSession(pos, e);
       } else {
@@ -1580,7 +1586,6 @@ class ManagerSvgAnnotation {
         this.viewer.redraw();
       }
     }
-    // 'tap' mode: pan is blocked, no creation action (user uses double-click)
   }
 
   /**
@@ -1765,6 +1770,9 @@ class ManagerSvgAnnotation {
     annotation.syncSvg();
     this.viewer.redraw();
     this.emit('create', annotation);
+    // After finalising a sequence/drag shape, return to edit mode so the user
+    // can immediately pan, select or inspect the newly created annotation.
+    this.setMode('edit');
   }
 
   /**
@@ -1778,6 +1786,9 @@ class ManagerSvgAnnotation {
     this.layer.deleteAnnotationById(annotation.id);
     this.viewer.redraw();
     this.emit('sessionCancel');
+    // Return to edit mode so the next interaction (click to select, pan, …)
+    // works immediately without requiring the user to re-click a mode button.
+    this.setMode('edit');
   }
 
   // ─── Internal: vertex-drag direct listeners ────────────────────────────────

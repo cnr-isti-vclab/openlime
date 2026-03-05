@@ -30,41 +30,8 @@
             pointer-events: none;   /* children re-enable as needed */
         }
 
-        #mode-panel {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 10px;
-            background: rgba(0,0,0,0.65);
-            border-radius: 8px;
-            backdrop-filter: blur(4px);
-            pointer-events: auto;
-        }
-
-        #mode-panel button {
-            padding: 6px 14px;
-            border: 2px solid #555;
-            border-radius: 6px;
-            background: #222;
-            color: #ccc;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.15s, border-color 0.15s;
-        }
-
-        #mode-panel button:hover {
-            background: #333;
-        }
-
-        #mode-panel button.active {
-            border-color: #4fc3f7;
-            background: #0d2b3e;
-            color: #fff;
-        }
-
         #marker-panel {
-            display: none;
-            /* shown only in create mode */
+            display: flex;
             align-items: center;
             flex-wrap: wrap;
             gap: 8px;
@@ -134,9 +101,9 @@
 
         #selection-panel strong { color: #ffd700; }
 
-        /* Ctrl+click hint — shown at the bottom in edit mode */
+        /* Interaction hint — always visible except during active sessions */
         #ctrl-hint {
-            display: none;
+            display: block;
             position: fixed;
             bottom: 28px;
             left: 50%;
@@ -155,7 +122,6 @@
         #ctrl-hint b { color: #ffd700; }
 
         /* Toolbar locked during an active creation session */
-        #annotation-toolbar.session-active #mode-panel,
         #annotation-toolbar.session-active #marker-panel {
             pointer-events: none;
             opacity: 0.4;
@@ -168,11 +134,6 @@
 <body>
     <h1>OpenLIME - RTI Viewer</h1>
     <div id="annotation-toolbar">
-        <div id="mode-panel">
-            <strong>Mode:</strong>
-            <button id="btn-mode-create">&#9998; Create</button>
-            <button id="btn-mode-edit">&#10549; Select/Edit</button>
-        </div>
         <div id="marker-panel">
             <strong>Marker:</strong>
             <button id="btn-disk" class="active">&#9679; Disk</button>
@@ -190,7 +151,7 @@
         <b>Esc</b> to cancel
     </div>
     <div id="ctrl-hint">
-        Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b> on Mac) to add/remove from selection
+        <b>Double-click</b> on canvas to create &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b>) to multi-select
     </div>
     <div class="openlime"></div>
     <script src="../../js/openlime.js"></script>
@@ -241,12 +202,13 @@
                 console.log('[ManagerSvgAnnotation] CREATE', anno);
             },
 
-            // Lock toolbar and show creation hint during sequence creation
+            // Show creation hint during sequence/drag session
             onSessionStart: (anno) => {
                 document.getElementById('annotation-toolbar').classList.add('session-active');
-                const mode = anno?.data?._markerType;
-                if (mode && mode !== 'disk') {
+                const type = anno?.data?._markerType;
+                if (type && type !== 'disk') {
                     document.getElementById('creation-hint').style.display = 'block';
+                    document.getElementById('ctrl-hint').style.display = 'none';
                 }
             },
             onSessionCancel: () => {
@@ -288,25 +250,6 @@
             manager.deselectAll(); // colours restored automatically from classes
         });
 
-        // ── Mode panel ───────────────────────────────────────────────────
-        // Sync button active states and panel visibility on mode change
-        manager.addEvent('modeChange', (mode) => {
-            document.getElementById('btn-mode-create').classList.toggle('active', mode === 'create');
-            document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
-            document.getElementById('marker-panel').style.display    = mode === 'create' ? 'flex'  : 'none';
-            document.getElementById('selection-panel').style.display  = mode === 'edit'   ? 'block' : 'none';
-            document.getElementById('ctrl-hint').style.display        = mode === 'edit'   ? 'block' : 'none';
-            // Reset displayed selection when leaving edit mode
-            if (mode !== 'edit') {
-                document.getElementById('selection-info').textContent = 'none';
-            }
-        });
-
-        document.getElementById('btn-mode-create').addEventListener('click', () =>
-            manager.setMode(manager.mode === 'create' ? 'idle' : 'create'));
-        document.getElementById('btn-mode-edit').addEventListener('click', () =>
-            manager.setMode(manager.mode === 'edit' ? 'idle' : 'edit'));
-
         // ── Marker selector panel ────────────────────────────────────────
         const markerConfigs = {
             'disk':     { type: 'disk',     opts: { radius: 14 },                     classIdx: 0 },
@@ -326,7 +269,19 @@
         document.getElementById('btn-polyline').addEventListener('click', () => setMarker('polyline'));
         document.getElementById('btn-polygon').addEventListener('click', () => setMarker('polygon'));
 
-
+        // ── Mode panel ─────────────────────────────────────────────
+        // Modes are set automatically (double-click → create, click → edit);
+        // just keep the selection panel in sync.
+        manager.addEvent('modeChange', (mode) => {
+            document.getElementById('selection-panel').style.display = mode === 'edit' ? 'block' : 'none';
+            // Restore ctrl-hint when returning to edit mode (was hidden during creation session)
+            if (mode === 'edit') {
+                document.getElementById('ctrl-hint').style.display = 'block';
+            }
+            if (mode !== 'edit') {
+                document.getElementById('selection-info').textContent = 'none';
+            }
+        });
 
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display = true;
