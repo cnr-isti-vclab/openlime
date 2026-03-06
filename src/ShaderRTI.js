@@ -158,6 +158,7 @@ class ShaderRTI extends Shader {
 	 * @param {number[]} relight.basis - Optional PCA basis
 	 */
 	init(relight) {
+		this.json = relight;
 		Object.assign(this, relight);
 		if (this.colorspace == 'mycc')
 			this.nplanes = this.yccplanes[0] + this.yccplanes[1] + this.yccplanes[2];
@@ -197,7 +198,7 @@ class ShaderRTI extends Shader {
 			this.loadBasis(this.basis);
 
 
-		this.uniforms = {
+		this.registerUniforms({
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 			specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
 			bias: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.bias },
@@ -205,7 +206,7 @@ class ShaderRTI extends Shader {
 			base: { type: 'vec3', needsUpdate: true, size: this.nplanes },
 			base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
 			base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
-		}
+		});
 
 		this.lightWeights([0, 0, 1], 'base');
 	}

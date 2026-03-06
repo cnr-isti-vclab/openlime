@@ -183,6 +183,11 @@
 	vector-effect: non-scaling-stroke;
 }
 
+/* ANNOTATION PENCIL */
+.openlime-toolbar .openlime-pencil.openlime-pencil-active path[style] {
+	fill: #ff0 !important;
+}
+
 g.openlime-compact {
 	visibility: hidden !important;
 }

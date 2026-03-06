@@ -153,6 +153,9 @@ class Canvas {
 		console.log('Support for linear filtering on float textures:', this.hasLinearFloat);
 	}
 
+	canvasWidthHeight() {
+	 	return { width: this.canvasElement.width, height: this.canvasElement.height};
+	}
 	/**
 	 * Sets up the offscreen framebuffer for rendering
 	 * @private
@@ -169,15 +172,14 @@ class Canvas {
 		gl.bindTexture(gl.TEXTURE_2D, this.offscreenTexture);
 
 		// Define size based on canvas size
-		const width = this.canvasElement.width;
-		const height = this.canvasElement.height;
+		const {width, height} = this.canvasWidthHeight();
 
 		// Initialize texture with null (we'll resize it properly in resizeOffscreenFramebuffer)
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
 		// Set texture parameters
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -216,8 +218,7 @@ class Canvas {
 		if (!this.useOffscreenFramebuffer || !this.offscreenFramebuffer) return;
 
 		const gl = this.gl;
-		const width = this.canvasElement.width;
-		const height = this.canvasElement.height;
+		const {width, height} = this.canvasWidthHeight();
 
 		// Resize texture
 		gl.bindTexture(gl.TEXTURE_2D, this.offscreenTexture);
@@ -228,6 +229,9 @@ class Canvas {
 			gl.bindRenderbuffer(gl.RENDERBUFFER, this.offscreenRenderbuffer);
 			gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, width, height);
 		}
+
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
 		gl.bindTexture(gl.TEXTURE_2D, null);
 		if (this.stencil) {
@@ -266,7 +270,7 @@ class Canvas {
 	* @param {string} [easing='linear'] - Easing function for animations
 	*/
 	setState(state, dt, easing = 'linear') {
-		if(!state || typeof state !== 'object') return;
+		if (!state || typeof state !== 'object') return;
 		if ('camera' in state) {
 			const m = state.camera;
 			this.camera.setPosition(dt, m.x, m.y, m.z, m.a, easing);
@@ -350,7 +354,10 @@ class Canvas {
 	 */
 	addLayer(id, layer) {
 
-		console.assert(!(id in this.layers), "Duplicated layer id");
+		if (id in this.layers) {
+			console.warn(`Layer with id "${id}" already exists. Removing old layer first.`);
+			this.removeLayer(id);
+		}
 
 		layer.id = id;
 		layer.addEvent('ready', () => {
@@ -371,20 +378,57 @@ class Canvas {
 	}
 
 	/**
-	 * Removes a layer from the canvas.
-	 * @param {Layer} layer - Layer instance to remove
-	 * @example
-	 * const layer = new Layer(options);
-	 * canvas.addLayer('map', layer);
-	 * // ... later ...
-	 * canvas.removeLayer(layer);
-	 */
+ * Removes a layer from the canvas.
+ * This method clears GPU resources associated with the layer,
+ * removes it from the internal layer list, and triggers a prefetch update.
+ *
+ * @param {Layer|string|null} layer - The layer instance to remove, or its ID.
+ */
 	removeLayer(layer) {
-		layer.clear(); //order is important.
+		// Sanity check: null or undefined
+		if (!layer) {
+			console.warn("Canvas.removeLayer called with null or undefined layer.");
+			return;
+		}
 
-		delete this.layers[layer.id];
-		delete Cache.layers[layer];
+		// If a string ID is passed, resolve the actual layer instance
+		if (typeof layer === "string") {
+			const resolved = this.layers[layer];
+			if (!resolved) {
+				console.warn(`Canvas.removeLayer: no layer found with id "${layer}".`);
+				return;
+			}
+			layer = resolved;
+		}
+
+		// Extra check: missing ID property
+		if (!layer.id) {
+			console.warn("Canvas.removeLayer: layer has no 'id' property.", layer);
+		}
+
+		// Clear GPU buffers, textures, cache entries.
+		// Layer.clear() calls Cache.getInstance().flushLayer(this), so
+		// Canvas does not need to touch the cache directly.
+		layer.clear(); // Order is important.
+
+		// Remove the layer from the internal layer dictionary
+		if (this.layers && layer.id && this.layers[layer.id]) {
+			delete this.layers[layer.id];
+		}
+
+		// Update internal tile prefetch state after removal
 		this.prefetch();
+	}
+
+	/**
+	 * Clears all layers from the canvas.
+	 * This method iterates through all existing layers and removes them using the removeLayer method,
+	 * ensuring that all associated GPU resources are properly released and the internal layer list is cleared.
+	 */
+	clearLayers() {
+		for (let id in this.layers) {
+			this.removeLayer(this.layers[id]);
+		}
 	}
 
 	updateSize() {

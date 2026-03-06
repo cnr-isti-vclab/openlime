@@ -6,11 +6,11 @@ import { addSignals } from './Signals.js'
 
 /**
  * @typedef {Object} ViewerOptions
- * Configuration options for Viewer initialization
  * @property {string} [background] - CSS background style
- * @property {boolean} [autofit=true] - Auto-fit camera to scene
- * @property {Object} [canvas={}] - Canvas configuration options
- * @property {Camera} [camera] - Custom camera instance
+ * @property {boolean} [autofit=true] - Auto-fit camera
+ * @property {Object} [canvas] - Canvas options
+ * @property {Camera} [camera] - Custom camera
+ * @property {number} [idleTime=60] - Idle timeout seconds
  */
 
 /**
@@ -229,6 +229,15 @@ class Viewer {
 	}
 
 	/**
+	 * Clears all layers from the viewer.
+	 * @fires Canvas#update
+	 */
+	clearLayers() {
+		this.canvas.clearLayers();
+		this.redraw();
+	}
+
+	/**
 	 * Removes layer from viewer
 	 * @param {Layer|string} layer - Layer instance or ID
 	 * @fires Canvas#update
@@ -242,7 +251,6 @@ class Viewer {
 		}
 	}
 
-
 	/**
 	 * Handles viewer resizing
 	 * @param {number} width - New width in CSS pixels
@@ -253,8 +261,8 @@ class Viewer {
 	resize(width, height) {
 		if (width == 0 || height == 0) return;
 		// Test with retina display!
-		this.canvasElement.width = width * window.devicePixelRatio;
-		this.canvasElement.height = height * window.devicePixelRatio;
+		this.canvasElement.width = width; 
+		this.canvasElement.height = height;
 
 		let view = { x: 0, y: 0, dx: width, dy: height, w: width, h: height };
 		this.camera.setViewport(view);

@@ -11,6 +11,63 @@ window.structuredClone = typeof (structuredClone) == "function" ? structuredClon
 class Util {
 
     /**
+     * Returns the basename (last path segment, without directories or query/hash parts)
+     * Works with both file paths and URLs.
+     * @param {string} pathOrUrl - full path or URL
+     * @returns {string} - basename (e.g. "RealRTI01_ksvd.txt")
+     */
+    static basename(pathOrUrl) {
+        if (!pathOrUrl) return "";
+
+        // Remove query string and hash fragments if present
+        const clean = pathOrUrl.split(/[?#]/)[0];
+
+        // Handle both / and \ separators
+        return clean.split(/[/\\]/).filter(Boolean).pop() || "";
+    }
+
+    /**
+     * Returns the directory part of a path or URL (everything before the basename)
+     * Works with both file paths and URLs.
+     * @param {string} pathOrUrl - full path or URL
+     * @returns {string} - directory part (e.g. "tmp/RealRTI01_ksvd" or "https://example.com/data/RealRTI01_ksvd")
+     */
+    static dirname(pathOrUrl) {
+        if (!pathOrUrl) return "";
+
+        // Remove query/hash fragments
+        const clean = pathOrUrl.split(/[?#]/)[0];
+
+        const parts = clean.split(/[/\\]/).filter(Boolean);
+        parts.pop(); // remove basename
+        return parts.join("/");
+    }
+
+    /**
+     * Returns the file extension (without leading dot)
+     * Works with both file paths and URLs.
+     * @param {string} pathOrUrl - full path or URL
+     * @returns {string} - extension (e.g. "txt"), or empty string if none
+     */
+    static extension(pathOrUrl) {
+        const base = Util.basename(pathOrUrl);
+        const idx = base.lastIndexOf(".");
+        return idx > 0 ? base.substring(idx + 1) : "";
+    }
+
+    /**
+     * Returns the basename without its file extension
+     * Works with both file paths and URLs.
+     * @param {string} pathOrUrl - full path or URL
+     * @returns {string} - basename without extension (e.g. "RealRTI01_ksvd")
+     */
+    static basenameNoExt(pathOrUrl) {
+        const base = Util.basename(pathOrUrl);
+        const idx = base.lastIndexOf(".");
+        return idx > 0 ? base.substring(0, idx) : base;
+    }
+
+    /**
      * Pads a number with leading zeros
      * @param {number} num - Number to pad
      * @param {number} size - Desired string length
@@ -39,7 +96,7 @@ class Util {
         });
         console.log(result);
     }
-    
+
 
     /**
      * Creates an SVG element with optional attributes

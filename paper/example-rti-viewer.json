@@ -1,0 +1,115 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "title": "RTI Viewer with Light Control",
+    "description": "Reflectance Transformation Imaging viewer with interactive lighting",
+    "author": "Cultural Heritage Team",
+    "created": "2025-12-18T10:00:00Z",
+    "tags": ["rti", "lighting", "cultural-heritage"]
+  },
+  
+  "viewer": {
+    "container": ".openlime",
+    "autofit": true,
+    "idleTime": 120,
+    "camera": {
+      "bounded": true
+    }
+  },
+  
+  "layers": {
+    "artifact": {
+      "type": "rti",
+      "layout": "rti",
+      "url": "assets/artifact/artifact.rti",
+      "visible": true,
+      "zindex": 0,
+      "shader": "rtiShader",
+      "options": {
+        "lightVector": [0, 0, 1],
+        "specularExponent": 16.0,
+        "diffuseGain": 1.0,
+        "specularGain": 0.5
+      }
+    }
+  },
+  
+  "shaders": {
+    "rtiShader": {
+      "type": "rti",
+      "mode": "enhanced",
+      "uniforms": {
+        "uLightVector": [0, 0, 1],
+        "uSpecularExp": 16.0,
+        "uDiffuseGain": 1.0,
+        "uSpecularGain": 0.5,
+        "uAmbientTerm": 0.1
+      }
+    }
+  },
+  
+  "controllers": [
+    {
+      "type": "pan",
+      "options": {}
+    },
+    {
+      "type": "pinch",
+      "options": {}
+    },
+    {
+      "type": "light",
+      "target": "artifact",
+      "options": {
+        "lightType": "sphere",
+        "enableDragging": true,
+        "enablePhiTheta": true
+      }
+    }
+  ],
+  
+  "ui": {
+    "type": "basic",
+    "skin": {
+      "url": "skin/skin.svg"
+    },
+    "actions": {
+      "light": { 
+        "display": true,
+        "title": "Light Control" 
+      },
+      "zoomin": { "display": true },
+      "zoomout": { "display": true },
+      "home": { "display": true },
+      "fullscreen": { "display": true },
+      "snapshot": { "display": true }
+    },
+    "attribution": "Ancient artifact - Museum Collection"
+  },
+  
+  "connections": {
+    "synchronization": [
+      {
+        "layers": ["artifact"],
+        "properties": ["lightVector", "specularExponent"]
+      }
+    ]
+  },
+  
+  "events": {
+    "gestures": {
+      "fingerDoubleTap": {
+        "enabled": true,
+        "priority": 100,
+        "handler": "resetLightPosition"
+      }
+    },
+    "custom": [
+      {
+        "event": "lightChanged",
+        "target": "artifact",
+        "handler": "updateLightingParameters"
+      }
+    ]
+  }
+}

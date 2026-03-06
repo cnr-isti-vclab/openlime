@@ -58,7 +58,6 @@ class LayerMultispectral extends Layer {
    * Creates a new LayerMultispectral instance
    * @param {LayerMultispectralOptions} options - Configuration options
    * @throws {Error} If rasters options is not empty (rasters are created automatically)
-   * @throws {Error} If url to info.json is not provided
    * @throws {Error} If presets option is not provided
    */
   constructor(options) {
@@ -67,8 +66,6 @@ class LayerMultispectral extends Layer {
     if (Object.keys(this.rasters).length != 0)
       throw new Error("Rasters options should be empty!");
 
-    if (!this.url)
-      throw new Error("Url option is required");
 
     if (!this.presets) {
       throw new Error("Presets option is required");
@@ -92,7 +89,9 @@ class LayerMultispectral extends Layer {
 
     // Load configuration
     this.info = null;
-    this.loadInfo(this.url);
+    if (!this.sourceLayer) {
+        this.loadInfo(this.url);
+    }
   }
 
   /**

@@ -134,10 +134,15 @@ class LayoutTiles extends Layout {
 			}
 			this.initBoxes();
 			this.status = 'ready';
+			this.error = null;
 			this.emit('ready');
 		} catch (e) {
-			console.log(e);
-			this.status = e;
+			console.error(e);
+			// Use Layout.setError to mark failure and emit Layout#error
+			if (typeof this.setError === 'function')
+				this.setError(e);
+			else
+				this.status = e;
 		}
 	}
 
@@ -495,36 +500,81 @@ class LayoutTiles extends Layout {
 	 * @throws {Error} If unable to fetch or parse DZI file
 	 */
 	async initDeepzoom(onepixel) {
-		let url = this.urls.filter(u => u)[0];
-		var response = await fetch(url);
-		if (!response.ok) {
-			this.status = "Failed loading " + url + ": " + response.statusText;
+		// Fetch all DZI URLs, preserving indexes (null -> response null)
+		const responses = await Promise.all(
+			this.urls.map(url => url ? fetch(url) : null)
+		);
+
+		// Check responses only for non-null URLs
+		responses.forEach((response, i) => {
+			if (!response) return; // skip null entries
+			if (!response.ok) {
+				const url = this.urls[i];
+				this.status = "Failed loading " + url + ": " + response.statusText;
+				throw new Error(this.status);
+			}
+		});
+
+		// Parse all XMLs, preserving indexes (null -> parser null)
+		const texts = await Promise.all(
+			responses.map(r => r ? r.text() : null)
+		);
+
+		const parsers = texts.map(t => {
+			if (!t) return null;
+			return (new window.DOMParser()).parseFromString(t, "text/xml");
+		});
+
+		// Use the first non-null parser as reference for global properties
+		const firstParser = parsers.find(p => p !== null);
+		if (!firstParser) {
+			this.status = "No valid DeepZoom (.dzi) URLs provided";
 			throw new Error(this.status);
 		}
-		let text = await response.text();
-		let xml = (new window.DOMParser()).parseFromString(text, "text/xml");
 
-		let doc = xml.documentElement;
-		this.suffix = doc.getAttribute('Format');
-		this.tilesize = parseInt(doc.getAttribute('TileSize'));
-		this.overlap = parseInt(doc.getAttribute('Overlap'));
+		const firstDoc = firstParser.documentElement;
+		this.tilesize = parseInt(firstDoc.getAttribute('TileSize'));
+		this.overlap = parseInt(firstDoc.getAttribute('Overlap'));
 
-		let size = doc.querySelector('Size');
+		const size = firstParser.querySelector('Size');
 		this.width = parseInt(size.getAttribute('Width'));
 		this.height = parseInt(size.getAttribute('Height'));
 
-		let max = Math.max(this.width, this.height) / this.tilesize;
+		// Compute number of levels (same for all rasters)
+		const max = Math.max(this.width, this.height) / this.tilesize;
 		this.nlevels = Math.ceil(Math.log(max) / Math.LN2) + 1;
 
-		this.urls = this.urls.map(url => url ? url.slice(0, url.lastIndexOf(".")) + '_files/' : null);
-		this.skiplevels = 0;
-		if (onepixel)
-			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
+		// Build suffixes aligned with this.urls
+		this.suffixes = parsers.map(xml => {
+			if (!xml) return "undefined"; // for null URLs
+			const doc = xml.documentElement;
+			return doc.getAttribute('Format'); // e.g. 'jpg', 'png'
+		});
 
+		// Replace each URL with its corresponding "_files/" directory, preserving null
+		this.urls = this.urls.map(url => {
+			if (!url) return null;
+			return url.slice(0, url.lastIndexOf(".")) + '_files/';
+		});
+
+		// Compute skipped levels if only one pixel per tile is needed
+		this.skiplevels = 0;
+		if (onepixel) {
+			this.skiplevels = Math.ceil(Math.log(this.tilesize) / Math.LN2);
+		}
+
+		// Tile URL generator; assume that rasters con URL null non vengono usati
 		this.getTileURL = (rasterid, tile) => {
-			let url = this.urls[rasterid];
-			let level = tile.level + this.skiplevels;
-			return url + level + '/' + tile.x + '_' + tile.y + '.' + this.suffix;
+			const baseUrl = this.urls[rasterid];
+			const suffix = this.suffixes[rasterid];
+
+			if (!baseUrl || !suffix) {
+				// In teoria non dovrebbe mai essere chiamato per questi raster
+				return null;
+			}
+
+			const level = tile.level + this.skiplevels;
+			return baseUrl + level + '/' + tile.x + '_' + tile.y + '.' + suffix;
 		};
 	}
 

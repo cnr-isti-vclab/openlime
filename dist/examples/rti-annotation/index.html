@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - RTI Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+    <style>
+        html,
+        body {
+            color: white;
+            background-color: black;
+        }
+
+        /* Override examples.css: viewer takes full viewport, panels are fixed overlays */
+        h1 { display: none; }
+        .openlime { height: 100% !important; }
+
+        #annotation-toolbar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            pointer-events: none;   /* children re-enable as needed */
+        }
+
+        #marker-panel {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 6px 10px;
+            background: rgba(0,0,0,0.65);
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            border-left: 3px solid #4fc3f7;
+            pointer-events: auto;
+        }
+
+        #marker-panel button {
+            padding: 6px 14px;
+            border: 2px solid #555;
+            border-radius: 6px;
+            background: #222;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        #marker-panel button:hover {
+            background: #333;
+        }
+
+        #marker-panel button.active {
+            border-color: #e63946;
+            background: #3a1018;
+            color: #fff;
+        }
+
+        #creation-hint {
+            display: none;
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 9999;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        #creation-hint b {
+            color: #ffd700;
+        }
+
+        /* Selection status panel — shown in edit mode */
+        #selection-panel {
+            display: none;
+            padding: 6px 10px;
+            background: rgba(0,0,0,0.65);
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            border-left: 3px solid #ffd700;
+            pointer-events: none;
+            font-size: 15px;
+            color: #ccc;
+            max-width: 280px;
+        }
+
+        #selection-panel strong { color: #ffd700; }
+
+        /* Interaction hint — always visible except during active sessions */
+        #ctrl-hint {
+            display: block;
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 9998;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        #ctrl-hint b { color: #ffd700; }
+
+        /* Toolbar locked during an active creation session */
+        #annotation-toolbar.session-active #marker-panel {
+            pointer-events: none;
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>OpenLIME - RTI Viewer</h1>
+    <div id="annotation-toolbar">
+        <div id="marker-panel">
+            <strong>Marker:</strong>
+            <button id="btn-disk" class="active">&#9679; Disk</button>
+            <button id="btn-polyline">&#9135; Polyline</button>
+            <button id="btn-polygon">&#9651; Polygon</button>
+            <button id="btn-rect">&#9645; Rect</button>
+        </div>
+        <div id="selection-panel">
+            <strong>Selected:</strong> <span id="selection-info">none</span>
+        </div>
+    </div>
+    <div id="creation-hint"></div>
+    <div id="ctrl-hint">
+        <b>Double-click</b> on canvas to create &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b>) to multi-select
+    </div>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+
+        // Create 4 RTI layers and add them to the canvans
+        // A RTI layer has many channels. In this example the 4 layers store 
+        // channels in 4 different ways: image, deepzoom, tarzoom and itarzoom 
+
+        const layer1 = new OpenLIME.Layer({
+            label: 'coin-deepzoom hsh',
+            layout: 'deepzoom',
+            type: 'rti',
+            url: '../../assets/rti/hsh/info.json',
+            normals: false
+        });
+        lime.addLayer('coin', layer1);
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // ── Annotation Manager ───────────────────────────────────────────────
+        // Create the manager AFTER layers are registered so it can share their
+        // layout when auto-creating the SVG annotation layer.
+        const manager = new OpenLIME.ManagerSvgAnnotation(lime, {
+            // Use the built-in disk marker (default)
+            activeMarker: 'disk',
+            markerOptions: { radius: 14 },
+            // Colour classes — annotation.class (0/1/2) selects the style
+            classes: [
+                { label: 'Disk',     fill: '#e63946', stroke: '#e63946', fillOpacity: 0.75, strokeWidth: 2, fillSelected: '#ffd700', strokeSelected: '#ffd700' },
+                { label: 'Polyline', fill: 'none',    stroke: '#00aaff', fillOpacity: 1,    strokeWidth: 2, fillSelected: 'none',    strokeSelected: '#ffd700' },
+                { label: 'Polygon',  fill: 'rgba(34,187,85,0.2)', stroke: '#22bb55', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
+                { label: 'Rect',     fill: 'rgba(100,160,255,0.2)', stroke: '#64a0ff', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
+            ],
+            defaultAnnotationClass: 0,
+            // With singleEditMode, vertex handles are shown only when exactly
+            // one annotation is selected; activeAnnotation returns null otherwise.
+            singleEditMode: true,
+            // Capture viewer state (light direction, render mode, …) in each annotation
+            enableState: true,
+
+            // Called whenever a new annotation is created
+            onCreate: (anno) => {
+                document.getElementById('creation-hint').style.display = 'none';
+                document.getElementById('annotation-toolbar').classList.remove('session-active');
+                console.log('[ManagerSvgAnnotation] CREATE', anno);
+            },
+
+            // Show creation hint during sequence/drag session
+            onSessionStart: (anno) => {
+                document.getElementById('annotation-toolbar').classList.add('session-active');
+                const type = anno?.data?._markerType;
+                document.getElementById('ctrl-hint').style.display = 'none';
+                if (type === 'polyline') {
+                    document.getElementById('creation-hint').innerText =
+                        'Click to add vertex · double-click last point to finish · Enter to finish · Esc to cancel';
+                    document.getElementById('creation-hint').style.display = 'block';
+                } else if (type === 'rect') {
+                    document.getElementById('creation-hint').innerText =
+                        'Move mouse to size the rectangle · double-click (or Enter) to finish · Esc to cancel';
+                    document.getElementById('creation-hint').style.display = 'block';
+                }
+            },
+            onSessionCancel: () => {
+                document.getElementById('annotation-toolbar').classList.remove('session-active');
+                document.getElementById('creation-hint').style.display = 'none';
+            },
+
+            // Called when the user selects an annotation by clicking on it.
+            // Fired with the last activated annotation only; use onSelectionChange
+            // to react to the complete selection set.
+            onSelect: (anno) => {
+                console.log('[ManagerSvgAnnotation] SELECT', anno.id, anno.label);
+            },
+
+            // Called whenever the multi-selection set changes:
+            //   plain click, Ctrl+click, setSelectedIds(), deselectAll(), …
+            // `annotations` is the full Annotation[] currently selected.
+            onSelectionChange: (annotations) => {
+                const info = document.getElementById('selection-info');
+                info.textContent = annotations.length === 0
+                    ? 'none'
+                    : annotations.map(a => a.label || a.id.slice(0, 8)).join(', ');
+                console.log(
+                    '[ManagerSvgAnnotation] SELECTION_CHANGE',
+                    annotations.map(a => ({ id: a.id, label: a.label }))
+                );
+            },
+        });
+
+        // ── UI ───────────────────────────────────────────────────────────────
+        // Pass the manager so the pencil action activates/deactivates it
+        const ui = new OpenLIME.UIBasic(lime, {
+            showLightDirections: true,
+            annotationManager: manager,
+        });
+
+        // When pencil mode is activated, deselect all annotations
+        ui.addEvent('pencilEnabled', () => {
+            manager.deselectAll(); // colours restored automatically from classes
+        });
+
+        // ── Marker selector panel ────────────────────────────────────────
+        const markerConfigs = {
+            'disk':     { type: 'disk',     opts: { radius: 14 },                     classIdx: 0 },
+            'polyline': { type: 'polyline', opts: { closed: false, vertexRadius: 5 }, classIdx: 1 },
+            'polygon':  { type: 'polyline', opts: { closed: true,  vertexRadius: 5 }, classIdx: 2 },
+            'rect':     { type: 'rect',     opts: { vertexRadius: 6 },                classIdx: 3 },
+        };
+
+        function setMarker(key) {
+            const cfg = markerConfigs[key];
+            manager.setActiveMarker(cfg.type, cfg.opts);
+            manager.defaultAnnotationClass = cfg.classIdx;
+            document.querySelectorAll('#marker-panel button').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + key).classList.add('active');
+        }
+
+        document.getElementById('btn-disk').addEventListener('click', () => setMarker('disk'));
+        document.getElementById('btn-polyline').addEventListener('click', () => setMarker('polyline'));
+        document.getElementById('btn-polygon').addEventListener('click', () => setMarker('polygon'));
+        document.getElementById('btn-rect').addEventListener('click', () => setMarker('rect'));
+
+        // ── Mode panel ─────────────────────────────────────────────
+        // Modes are set automatically (double-click → create, click → edit);
+        // just keep the selection panel in sync.
+        manager.addEvent('modeChange', (mode) => {
+            document.getElementById('selection-panel').style.display = mode === 'edit' ? 'block' : 'none';
+            // Restore ctrl-hint when returning to edit mode (was hidden during creation session)
+            if (mode === 'edit') {
+                document.getElementById('ctrl-hint').style.display = 'block';
+            }
+            if (mode !== 'edit') {
+                document.getElementById('selection-info').textContent = 'none';
+            }
+        });
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+        ui.actions.light.active = true;
+
+        // Show the pencil toggle button in the toolbar
+        ui.actions.pencil.display = true;
+
+        OpenLIME.HSH.minElevation = 0.2;
+
+        //ui.toggleLightController(true);
+
+    </script>
+</body>
+
+</html>

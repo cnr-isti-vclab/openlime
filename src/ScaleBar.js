@@ -38,7 +38,7 @@ class Units {
 	format(d, unit) {
 		if (d == 0)
 			return '';
-		if(unit === "px") {
+		if (unit === "px") {
 			return Math.floor(d) + unit;
 		}
 		if (unit)
@@ -93,12 +93,12 @@ class ScaleBar extends Units {
 		}, options);
 		Object.assign(this, options);
 
-		this.svg = Util.createSVGElement('svg', { viewBox: `0 0 ${this.width} 30` });
+		this.svg = Util.createSVGElement('svg', { viewBox: `0 0 ${this.width} 50` });
 		this.svg.classList.add('openlime-scale');
 
 		this.line = Util.createSVGElement('line', { x1: 5, y1: 26.5, x2: this.width - 5, y2: 26.5 });
 
-		this.text = Util.createSVGElement('text', { x: '50%', y: '16px', 'dominant-basiline': 'middle', 'text-anchor': 'middle' });
+		this.text = Util.createSVGElement('text', { x: '50%', y: '12px', 'dominant-baseline': 'middle', 'text-anchor': 'middle' });
 		this.text.textContent = "";
 
 		this.svg.appendChild(this.line);
@@ -118,7 +118,7 @@ class ScaleBar extends Units {
 		if (zoom == this.lastScaleZoom)
 			return;
 		this.lastScaleZoom = zoom;
-		let s = this.bestLength(this.width / 2, this.width, this.pixelSize, zoom);
+		let s = this.bestLength(this.width / 3, this.width, this.pixelSize, zoom);
 
 		let margin = this.width - s.length;
 		this.line.setAttribute('x1', margin / 2);
@@ -130,7 +130,7 @@ class ScaleBar extends Units {
 	 * Calculates the best scale length and label value for current zoom.
 	 * Tries to find a "nice" round number that fits within the given constraints.
 	 * @private
-	 * @param {number} min - Minimum desired length in pixels
+	 * @param {number} min - Minimum desired length in pixels (should be ≤ max/2.5 to guarantee a result with steps [1,2,5])
 	 * @param {number} max - Maximum desired length in pixels
 	 * @param {number} pixelSize - Size of a pixel in real-world units
 	 * @param {number} zoom - Current zoom level
@@ -139,21 +139,31 @@ class ScaleBar extends Units {
 	 * @returns {number} .label - Value to display (in real-world units)
 	 */
 	bestLength(min, max, pixelSize, zoom) {
-		pixelSize /= zoom;
-		//closest power of 10:
-		let label10 = Math.pow(10, Math.floor(Math.log(max * pixelSize) / Math.log(10)));
-		let length10 = label10 / pixelSize;
-		if (length10 > min) return { length: length10, label: label10 };
+		if (!(zoom > 0) || !(pixelSize > 0) || !(max > 0) || !(min <= max)) {
+			return { length: 0, label: 0 };
+		}
 
-		let label20 = label10 * 2;
-		let length20 = length10 * 2;
-		if (length20 > min) return { length: length20, label: label20 };
+		const realPerPixel = pixelSize / zoom;
+		const minLabel = min * realPerPixel;
+		const maxLabel = max * realPerPixel;
 
-		let label50 = label10 * 5;
-		let length50 = length10 * 5;
+		const expMin = Math.floor(Math.log10(minLabel));
+		const expMax = Math.ceil(Math.log10(maxLabel));
+		const steps = [1, 2, 5];
 
-		if (length50 > min) return { length: length50, label: label50 };
-		return { length: 0, label: 0 }
+		let best = { length: 0, label: 0 };
+
+		for (let exp = expMin; exp <= expMax; exp++) {
+			const base = Math.pow(10, exp);
+			for (const s of steps) {
+				const label = s * base;
+				const length = label / realPerPixel;
+				if (length >= min && length <= max) {
+					if (length > best.length) best = { length, label };
+				}
+			}
+		}
+		return best;
 	}
 }
 /**

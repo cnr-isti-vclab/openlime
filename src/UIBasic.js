@@ -9,28 +9,33 @@ import { Minimap } from './Minimap'
 
 /**
  * @typedef {Object} UIAction
- * Action configuration for toolbar buttons
  * @property {string} title - Display title for the action
  * @property {boolean} display - Whether to show in toolbar
- * @property {string} [key] - Keyboard shortcut key
+ * @property {string} key - Keyboard shortcut key
  * @property {Function} task - Callback function for action
- * @property {string} [icon] - Custom SVG icon path or content
- * @property {string} [html] - HTML content for help dialog
+ * @property {string} icon - Custom SVG icon path or content
+ * @property {string} html - HTML content for help dialog
  */
 
 /**
- * @typedef {Object} MenuEntry
- * Menu configuration item
- * @property {string} [title] - Large title text
- * @property {string} [section] - Section header text
- * @property {string} [html] - Raw HTML content
- * @property {string} [button] - Button text
- * @property {string} [group] - Button group identifier
- * @property {string} [layer] - Associated layer ID
- * @property {string} [mode] - Layer visualization mode
- * @property {Function} [onclick] - Click handler
- * @property {Function} [oninput] - Input handler for sliders
- * @property {MenuEntry[]} [list] - Nested menu entries
+ * @typedef {Object<string, UIAction>} UIActions
+ * Collection of named actions used in the toolbar and UI.
+ */
+
+/**
+ * @typedef {Object} UIBasicOptions
+ * @property {UIActions} [actions] - Configurable UI actions collection
+ * @property {Object} [menu] - Menu configuration object
+ * @property {number} [pixelSize] - Pixel size for scale bar
+ * @property {string} [attribution] - Attribution HTML string
+ * @property {boolean} [autoFit] - Automatically fit camera on start
+ * // Aggiungere qui altre proprietà note di configurazione
+ */
+
+/**
+ * @class UIBasic
+ * @param {Viewer} viewer - Parent viewer instance
+ * @param {UIBasicOptions} [options] - UI configuration options
  */
 
 /**
@@ -110,33 +115,42 @@ class UIBasic {
 	 * Creates a new UIBasic instance
 	 * @param {Viewer} viewer - OpenLIME viewer instance
 	 * @param {UIBasic~Options} [options] - Configuration options
-	 * 
+	 * @param {ManagerSvgAnnotation} [options.annotationManager=null]
+	 *   Optional {@link ManagerSvgAnnotation} instance. When set, the 'pencil' action
+	 *   toggles annotation-creation mode by calling `annotationManager.toggle()`.
+	 *
 	 * @fires UIBasic#lightdirection
-	 * 
+	 *
 	 * @example
 	 * ```javascript
+	 * const manager = new ManagerSvgAnnotation(viewer, {
+	 *     onCreate: (anno) => console.log('created', anno),
+	 * });
 	 * const ui = new UIBasic(viewer, {
 	 *     // Enable specific actions
 	 *     actions: {
 	 *         light: { display: true },
 	 *         zoomin: { display: true },
-	 *         layers: { display: true }
+	 *         layers: { display: true },
+	 *         pencil: { display: true }
 	 *     },
 	 *     // Add measurement support
 	 *     pixelSize: 0.1,
 	 *     // Add attribution
 	 *     attribution: "© Example Source",
-	 *    // Minimap configuration
-	 *    minimapOptions: {
-	 *        position: 'top-right',
-	 *        width: 150,
-	 *        height: 100,
-	 *        layer: {
-	 *            layout: 'deepzoom',
-	 *            type: 'rti',
-	 *            url: 'assets/rti/hsh/info.json'
-	 *        }
-	 *	  }
+	 *     // Annotation manager (shows pencil toggle button)
+	 *     annotationManager: manager,
+	 *     // Minimap configuration
+	 *     minimapOptions: {
+	 *         position: 'top-right',
+	 *         width: 150,
+	 *         height: 100,
+	 *         layer: {
+	 *             layout: 'deepzoom',
+	 *             type: 'rti',
+	 *             url: 'assets/rti/hsh/info.json'
+	 *         }
+	 *     }
 	 * });
 	 * ```
 	 */
@@ -152,7 +166,7 @@ class UIBasic {
 			actions: {
 				home: { title: 'Home', display: true, key: 'Home', task: (event) => { if (camera.boundingBox) camera.fitCameraBox(250); } },
 				fullscreen: { title: 'Fullscreen', display: true, key: 'f', task: (event) => { this.toggleFullscreen(); } },
-				layers: { title: 'Layers', display: true, key: 'Escape', task: (event) => { this.toggleLayers(); } },
+				layers: { title: 'Layers', display: true, task: (event) => { this.toggleLayers(); } },
 				zoomin: { title: 'Zoom in', display: false, key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout: { title: 'Zoom out', display: false, key: '-', task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
 				rotate: { title: 'Rotate', display: false, key: 'r', task: (event) => { camera.rotate(250, -45); } },
@@ -160,6 +174,7 @@ class UIBasic {
 				ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
+				pencil: { title: 'Pencil', display: false, key: 'p', task: (event) => { this.toggleAnnotations(); } },
 			},
 			postInit: () => { },
 			showScale: true,
@@ -172,10 +187,27 @@ class UIBasic {
 			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
 			menu: [],
 			minimap: null,
-			minimapOptions: null
+			minimapOptions: null,
+			annotationManager: null
 		});
 
 		Object.assign(this, options);
+
+		// Keep the pencil toolbar button in sync with ManagerSvgAnnotation mode changes.
+		// This also fires the pencilEnabled / pencilDisabled signals so that listeners
+		// in index.html (e.g. annotation color reset) are notified when the manager's
+		// mode is changed programmatically (e.g. via an Edit button).
+		if (this.annotationManager?.addEvent) {
+			this.annotationManager.addEvent('modeChange', (mode) => {
+				const pencilButton = this.viewer.containerElement
+					.querySelector('.openlime-button.openlime-pencil');
+				if (pencilButton)
+					pencilButton.classList.toggle('openlime-pencil-active', mode !== 'idle');
+				if (mode !== 'idle') this.emit('pencilEnabled');
+				else                 this.emit('pencilDisabled');
+			});
+		}
+
 		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
 			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
 
@@ -210,11 +242,14 @@ class UIBasic {
 					layer: id,
 					// FIXED: use the ID to retrieve the correct layer
 					onclick: () => {
-						this.viewer.canvas.layers[id].setMode(m);
-						this.viewer.redraw(); // Force redraw to update the lens
+						const l = this.viewer.canvas.layers[id];
+						if (l) {
+							l.setMode(m);
+							this.viewer.redraw(); // Force redraw to update the lens
+						}
 					},
 					// FIXED: use the ID to retrieve the correct layer
-					status: () => this.viewer.canvas.layers[id].getMode() == m ? 'active' : '',
+					status: () => { const l = this.viewer.canvas.layers[id]; return l && l.getMode() == m ? 'active' : ''; },
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
@@ -224,14 +259,14 @@ class UIBasic {
 			let layerEntry = {
 				button: layer.label || id,
 				// FIXED: use the ID to retrieve the correct layer
-				onclick: () => { this.setLayer(this.viewer.canvas.layers[id]); },
+				onclick: () => { const l = this.viewer.canvas.layers[id]; if (l) this.setLayer(l); },
 				// FIXED: use the ID to retrieve the correct layer  
-				status: () => this.viewer.canvas.layers[id].visible ? 'active' : '',
+				status: () => { const l = this.viewer.canvas.layers[id]; return l && l.visible ? 'active' : ''; },
 				layer: id
 			};
 			if (modes.length > 1) layerEntry.list = modes;
 
-			if (layer.annotations) {
+			if (layer.annotations && typeof layer.annotationsEntry === 'function') {
 				layerEntry.list = [];
 				layerEntry.list.push(layer.annotationsEntry());
 			}
@@ -264,7 +299,6 @@ class UIBasic {
 		controller.priority = 0;
 		this.viewer.pointerManager.onEvent(controller);
 		this.lightcontroller = controller;
-
 
 		let lightLayers = [];
 		for (let [id, layer] of Object.entries(this.viewer.canvas.layers))
@@ -404,8 +438,6 @@ class UIBasic {
 			*/
 
 			this.setupActions();
-
-
 			/* Get pixel size from options if provided or from layer metadata
 			 */
 			if (this.showScale) {
@@ -519,10 +551,12 @@ class UIBasic {
 				}
 
 				action.element = await Skin.appendIcon(toolbar, action.icon);
+
 				if (this.enableTooltip) {
 					let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
 					title.textContent = action.title;
-					action.element.appendChild(title);
+					if (action.element)
+						action.element.appendChild(title);
 				}
 			}
 
@@ -599,7 +633,7 @@ class UIBasic {
 	 */
 	setActiveControllers(on) {
 		for (let c of this.viewer.controllers) {
-			if(c == this.panzoom)  //panzoom is always active	
+			if (c == this.panzoom)  //panzoom is always active
 				continue;
 			c.active = on;
 		}
@@ -890,12 +924,23 @@ class UIBasic {
 	}
 
 	/**
-		 * Updates all menu entries
-		 * @private
-		 */
+	 * Updates the visual state of all menu entries.
+	 * It is safe to call this before initialization completes:
+	 * in that case it will simply do nothing.
+	 */
 	updateMenu() {
-		for (let entry of this.menu)
+		// If the menu DOM is not created yet, just skip
+		if (!this.layerMenu) {
+			return;
+		}
+
+		for (const entry of this.menu) {
+			// If the entry DOM element is not attached yet, skip it
+			if (!entry.element) {
+				continue;
+			}
 			this.updateEntry(entry);
+		}
 	}
 
 	createMinimap() {
@@ -923,6 +968,8 @@ class UIBasic {
 	setLayer(layer_on) {
 		if (typeof layer_on == 'string')
 			layer_on = this.viewer.canvas.layers[layer_on];
+
+		if (!layer_on) return;
 
 		if (layer_on.overlay) { //just toggle
 			layer_on.setVisible(!layer_on.visible);
@@ -1262,8 +1309,20 @@ class UIBasic {
 	}
 
 	/**
-	 * Hides layers menu
+	 * Toggles annotation pencil mode on/off.
+	 * Delegates to {@link ManagerSvgAnnotation#toggle} when an `annotationManager` is set.
+	 * Updates the pencil button active state in the toolbar.
+	 *
+	 * @param {boolean} [force] - Force a specific state; toggles if omitted.
 	 */
+	toggleAnnotations(force) {
+		if (this.annotationManager) {
+			this.annotationManager.toggle(force);
+			// Button state and pencilEnabled/pencilDisabled signals are handled
+			// by the 'modeChange' listener wired in the constructor.
+		}
+	}
+
 	// closeLayersMenu() {
 	// 	this.layerMenu.style.display = 'none';
 	// }
@@ -1405,5 +1464,7 @@ class UIDialog { //FIXME standalone class
 
 addSignals(UIDialog, 'closed');
 addSignals(UIBasic, 'lightdirection');
+addSignals(UIBasic, 'pencilEnabled');
+addSignals(UIBasic, 'pencilDisabled');
 
 export { UIBasic, UIDialog }

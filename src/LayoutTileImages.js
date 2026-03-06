@@ -68,33 +68,62 @@ class LayoutTileImages extends Layout {
 	 * @fires Layout#updateSize - When bounding box is computed
 	 */
 	async loadDescriptors(url) {
-		// Load tile descriptors from annotation file
-		let response = await fetch(url);
-		if (!response.ok) {
-			this.status = "Failed loading " + url + ": " + response.statusText;
-			return;
-		}
-		this.tileDescriptors = await response.json();
-		if (this.tileDescriptors.status == 'error') {
-			alert("Failed to load annotations: " + this.tileDescriptors.msg);
-			return;
-		}
-		//this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
-		this.tileDescriptors = this.tileDescriptors.map(a => new Annotation(a));
-		for (let a of this.tileDescriptors) {
-			if (a.publish != 1)
-				a.visible = false;
-		}
-		this.computeBoundingBox();
-		this.emit('updateSize');
+		try {
+			// Load tile descriptors from an annotation file
+			let response = await fetch(url);
+			if (!response.ok) {
+				const err = new Error("Failed loading " + url + ": " + response.statusText);
+				if (typeof this.setError === 'function')
+					this.setError(err);
+				else {
+					this.status = 'error';
+					this.error = err;
+				}
+				return;
+			}
 
-		if (this.path == null) {
-			this.setPathFromUrl(url);
-		}
+			this.tileDescriptors = await response.json();
+			if (this.tileDescriptors.status == 'error') {
+				const msg = "Failed to load annotations: " + this.tileDescriptors.msg;
+				alert(msg);
+				const err = new Error(msg);
+				if (typeof this.setError === 'function')
+					this.setError(err);
+				else {
+					this.status = 'error';
+					this.error = err;
+				}
+				return;
+			}
 
-		this.status = 'ready';
-		this.emit('ready');
+			// this.annotations = this.annotations.map(a => '@context' in a ? Annotation.fromJsonLd(a): a);
+			this.tileDescriptors = this.tileDescriptors.map(a => new Annotation(a));
+			for (let a of this.tileDescriptors) {
+				if (a.publish != 1)
+					a.visible = false;
+			}
+
+			this.computeBoundingBox();
+			this.emit('updateSize');
+
+			if (this.path == null) {
+				this.setPathFromUrl(url);
+			}
+
+			this.status = 'ready';
+			this.error = null;
+			this.emit('ready');
+		} catch (err) {
+			console.error('Error loading tile descriptors:', err);
+			if (typeof this.setError === 'function')
+				this.setError(err);
+			else {
+				this.status = 'error';
+				this.error = err;
+			}
+		}
 	}
+
 
 	/**
 	 * Computes the bounding box containing all tile regions.
@@ -197,7 +226,7 @@ class LayoutTileImages extends Layout {
 
 	/**
 	 * Gets coordinates for a tile in both image space and texture space.
-	 * @param Obj} tile - The tile to get coordinates for
+	 * @param {Object} tile - The tile to get coordinates for
 	 * @returns {Object} Coordinate data
 	 * @returns {Float32Array} .coords - Image space coordinates [x,y,z, x,y,z, x,y,z, x,y,z]
 	 * @returns {Float32Array} .tcoords - Texture coordinates [u,v, u,v, u,v, u,v]

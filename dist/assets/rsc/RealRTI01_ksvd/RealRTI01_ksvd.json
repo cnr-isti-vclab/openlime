@@ -1,0 +1,47 @@
+{
+     "base_path": "/data/sparse_relight/output/real_rti/RealRTI01_ksvd/RealRTI01_ksvd",
+     "input_params": {
+          "deep_zoom_enabled": false,
+          "desired_coreset_fraction": 0.20000000298023224,
+          "desired_coreset_size": 8388608,
+          "dictionary_atom_count": 1024,
+          "dictionary_atom_image_h": 64,
+          "dictionary_atom_image_w": 64,
+          "dictionary_encoding_16_bit": true,
+          "dictionary_init_method_id": "CLUSTERS_PCA2",
+          "encoding_pursuit_method_id": "FOLS",
+          "is_parallel_atom_update_enabled": true,
+          "learning_method_id": "ksvd",
+          "learning_pursuit_method_id": "FOLS",
+          "multiresolution_enabled": false,
+          "multiresolution_level_count": 1,
+          "remove_average": true,
+          "sparsity": 6,
+          "sparsity_base": 3,
+          "sparsity_multiplier": 2,
+          "tolerance": 0.0,
+          "training_epoch_count": 20
+     },
+     "output_params": {
+          "average_min": 0.013741355389356613,
+          "average_range": 0.5239028930664063,
+          "coefficients_min": -4.319763660430908,
+          "coefficients_range": 7.852607727050781,
+          "dictionary_atom_count_x": 32,
+          "dictionary_atom_count_y": 32,
+          "dictionary_column_size": 180,
+          "dictionary_min": -0.5627634525299072,
+          "dictionary_range": 1.0821244716644287
+     },
+     "stats": {
+          "PSNR_db": 45.003082140031275,
+          "PSNR_db_zfp": 38.98248222675165,
+          "emax": 0.1059613688411707,
+          "nrmse": 0.0056214181687199065,
+          "rmse": 0.005603680623049892,
+          "sparse_encoding_time_ms": 10451.0,
+          "training_time_ms": 43868.0,
+          "ymax": 0.5981227159500122,
+          "ymin": -0.39872193336486816
+     }
+}

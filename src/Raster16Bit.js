@@ -50,36 +50,36 @@ class Raster16Bit extends Raster {
    * @param {DataLoaderCallback} [options.dataLoader=null] - Custom data loader callback
    * @param {Object} [options.dataLoaderOptions={}] - Options to pass to the data loader
    * @param {boolean} [options.debug=false] - Enable debug output
+   * @param {boolean} [options.buildMipmaps=true] - Whether to build mipmaps for large textures
    */
   constructor(options) {
     // Initialize with parent constructor but override defaults
     super(Object.assign({
-        format: 'rgb16ui',
-        debug: false,
-        useHalfFloat: false,
-        flipY: false,
-        premultiplyAlpha: false,
+      format: 'rgb16ui',
+      debug: false,
+      useHalfFloat: false,
+      flipY: false,
+      premultiplyAlpha: false,
+      buildMipmaps:true,
     }, options));
 
     // Additional options specific to 16-bit handling
     Object.assign(this, {
-        dataLoader: null,
-        dataLoaderOptions: {},
-        statInfo: {}
+      dataLoader: null,
+      dataLoaderOptions: {},
+      statInfo: {},
+      _formatChecked: false // Flag to track if format has been checked
     });
 
     // Override with provided options
     if (options) {
-        Object.assign(this, options);
+      Object.assign(this, options);
     }
 
-    // Check if the format is supported
-    if (!this._isFormatSupported(this.format)) {
-        throw new Error(`The format "${this.format}" is not supported by the browser.`);
-    }
+    // Note: Format support check is deferred to loadImage where we have WebGL context
 
     if (this.debug) {
-        console.log(`Raster16Bit created with format: ${this.format}`);
+      console.log(`Raster16Bit created with format: ${this.format}`);
     }
   }
 
@@ -121,6 +121,14 @@ class Raster16Bit extends Raster {
     // Ensure we have a WebGL2 context
     if (!(gl instanceof WebGL2RenderingContext)) {
       throw new Error("WebGL2 context is required for 16-bit textures");
+    }
+
+    // Check format support once we have WebGL context
+    if (!this._formatChecked) {
+      if (!Raster16Bit._isFormatSupported(gl, this.format)) {
+        throw new Error(`The format "${this.format}" is not supported by the browser.`);
+      }
+      this._formatChecked = true;
     }
 
     if (this.debug) {
@@ -208,7 +216,7 @@ class Raster16Bit extends Raster {
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
 
-    // Set texture parameters
+    // Basic unpack params
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.flipY);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
@@ -233,24 +241,50 @@ class Raster16Bit extends Raster {
         formatParams.type,            // type
         data                          // pixels
       );
+      if (this.debug) {
+        console.log('glError after texImage2D:', gl.getError());
+      }
     } catch (error) {
       console.error("Error creating texture:", error);
       throw error;
     }
 
-    // Set filtering and wrapping parameters
-    if (width > 1024 || height > 1024) {
-      gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    // Detect if this is an integer texture (e.g. RGBA16UI, RGB16UI, R16UI ...)
+    // Integer textures in WebGL2 must use NEAREST filtering and cannot use mipmaps.
+    const intIF = formatParams.internalFormat;
+    const isIntegerTexture =
+      intIF === gl.RGBA16UI ||
+      intIF === gl.RGB16UI ||
+      intIF === gl.RG16UI ||
+      intIF === gl.R16UI;
+
+    if (isIntegerTexture) {
+      // Integer texture: no mipmap, only NEAREST
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     } else {
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      // Regular (float/normalized) texture: keep previous behavior
+      let filterLinear = this.filterLinear !== undefined ? this.filterLinear : true;
+			let selectedFilter = filterLinear ? gl.LINEAR : gl.NEAREST;
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, selectedFilter);
+      
+      if (this.buildMipmaps && (width > 1024 || height > 1024)) {
+				console.log("Generating mipmaps for large texture:", this.width, "x", this.height);
+
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      } else {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, selectedFilter);
+      }
+
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, selectedFilter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
 
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-    // Store color space information on the texture
+    // Store color space / texture ref
     this._texture = tex;
 
     return tex;
@@ -355,52 +389,85 @@ class Raster16Bit extends Raster {
  * Checks if the specified format is supported by the browser.
  * Also verifies that required WebGL extensions are available.
  * @private
+ * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context
  * @param {string} format - The format to check
  * @returns {boolean} True if the format is supported, false otherwise
  */
-_isFormatSupported(format) {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2');
+  static _isFormatSupported(gl, format) {
+    // Map format strings to WebGL2 internal formats, external formats, and data types
+    const formats = {
+      // 16-bit float formats (require EXT_color_buffer_float to be renderable,
+      // but are usually ok as textures). Use HALF_FLOAT for allocation.
+      'r16f': { internalFormat: gl.R16F, format: gl.RED, type: gl.HALF_FLOAT, exts: ['EXT_color_buffer_float'] },
+      'rg16f': { internalFormat: gl.RG16F, format: gl.RG, type: gl.HALF_FLOAT, exts: ['EXT_color_buffer_float'] },
+      'rgb16f': { internalFormat: gl.RGB16F, format: gl.RGB, type: gl.HALF_FLOAT, exts: ['EXT_color_buffer_float'] },
+      'rgba16f': { internalFormat: gl.RGBA16F, format: gl.RGBA, type: gl.HALF_FLOAT, exts: ['EXT_color_buffer_float'] },
 
-    if (!gl) {
-        console.error('WebGL2 is not supported by this browser.');
-        return false;
-    }
-
-    const formatMap = {
-        'r16f': { internalFormat: gl.R16F, requiredExtensions: ['EXT_color_buffer_float'] },
-        'rg16f': { internalFormat: gl.RG16F, requiredExtensions: ['EXT_color_buffer_float'] },
-        'rgb16f': { internalFormat: gl.RGB16F, requiredExtensions: ['EXT_color_buffer_float'] },
-        'rgba16f': { internalFormat: gl.RGBA16F, requiredExtensions: ['EXT_color_buffer_float'] },
-        'r16ui': { internalFormat: gl.R16UI, requiredExtensions: [] },
-        'rg16ui': { internalFormat: gl.RG16UI, requiredExtensions: [] },
-        'rgb16ui': { internalFormat: gl.RGB16UI, requiredExtensions: [] },
-        'rgba16ui': { internalFormat: gl.RGBA16UI, requiredExtensions: [] },
-        'r16i': { internalFormat: gl.R16I, requiredExtensions: [] },
-        'rg16i': { internalFormat: gl.RG16I, requiredExtensions: [] },
-        'rgb16i': { internalFormat: gl.RGB16I, requiredExtensions: [] },
-        'rgba16i': { internalFormat: gl.RGBA16I, requiredExtensions: [] },
-        'depth16': { internalFormat: gl.DEPTH_COMPONENT16, requiredExtensions: [] }
+      // Unsigned integer 16-bit formats (core WebGL2)
+      'r16ui': { internalFormat: gl.R16UI, format: gl.RED_INTEGER, type: gl.UNSIGNED_SHORT, exts: [] },
+      'rg16ui': { internalFormat: gl.RG16UI, format: gl.RG_INTEGER, type: gl.UNSIGNED_SHORT, exts: [] },
+      'rgb16ui': { internalFormat: gl.RGB16UI, format: gl.RGB_INTEGER, type: gl.UNSIGNED_SHORT, exts: [] },
+      'rgba16ui': { internalFormat: gl.RGBA16UI, format: gl.RGBA_INTEGER, type: gl.UNSIGNED_SHORT, exts: [] },
     };
 
-    const formatInfo = formatMap[format];
-    if (!formatInfo) {
-        console.error(`Unknown format: ${format}`);
-        return false;
+    const info = formats[format];
+    if (!info) {
+      console.warn('Raster16Bit: unknown format', format);
+      return false;
     }
 
-    // Check for required extensions
-    for (const extension of formatInfo.requiredExtensions) {
-        if (!gl.getExtension(extension)) {
-            console.error(`Required WebGL extension "${extension}" is not supported for format "${format}".`);
-            return false;
+    // 1) Check required extensions (only relevant for 16f)
+    if (info.exts && info.exts.length) {
+      for (const e of info.exts) {
+        if (!gl.getExtension(e)) {
+          console.warn(`Raster16Bit: required extension ${e} not available for format ${format}`);
+          return false;
         }
+      }
     }
 
-    // Check if the internal format is supported
-    const isSupported = gl.getInternalformatParameter(gl.RENDERBUFFER, formatInfo.internalFormat, gl.SAMPLES);
-    return isSupported && isSupported.length > 0;
-}
+    // 2) Try to allocate a small texture with that format
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // Integer textures must use NEAREST filtering
+    if (
+      info.format === gl.RGBA_INTEGER ||
+      info.format === gl.RGB_INTEGER ||
+      info.format === gl.RG_INTEGER ||
+      info.format === gl.RED_INTEGER
+    ) {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    }
+
+    // Try allocation: 4x4 with the given internal/format/type
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      info.internalFormat,
+      4,
+      4,
+      0,
+      info.format,
+      info.type,
+      null
+    );
+
+    const err = gl.getError();
+
+    // Cleanup
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.deleteTexture(tex);
+
+    return err === gl.NO_ERROR;
+  }
+
 }
 
 export { Raster16Bit };

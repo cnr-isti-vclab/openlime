@@ -6,17 +6,17 @@
   "private": false,
   "main": "dist/js/openlime.cjs.js",
   "module": "dist/js/openlime.esm.js",
-  "types": "dist/types/openlime.d.ts",
+  "types": "dist/types/index.d.ts",
   "unpkg": "dist/js/openlime.umd.js",
   "jsdelivr": "dist/js/openlime.umd.js",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/types/openlime.d.ts",
+        "types": "./dist/types/index.d.ts",
         "default": "./dist/js/openlime.esm.js"
       },
       "require": {
-        "types": "./dist/types/openlime.d.ts",
+        "types": "./dist/types/index.d.ts",
         "default": "./dist/js/openlime.cjs.js"
       },
       "default": "./dist/js/openlime.umd.js"
@@ -61,15 +61,17 @@
     "start": "webpack-dev-server",
     "build": "webpack -c webpack.config.js --mode development",
     "rollup": "rollup -c rollup.config.js --extend",
-    "build-types": "tsc --allowJs --declaration --emitDeclarationOnly --outDir dist/types dist/js/openlime.esm.js && mv dist/types/openlime.esm.d.ts dist/types/openlime.d.ts",
+    "build-types": "mkdir -p dist/types && jsdoc -c jsdoc/jsdoc.types.json && printf \"export * from './types';\\ndeclare module 'openlime' { export * from './types'; }\\n\" > dist/types/index.d.ts",
     "nodemon": "nodemon --watch ./src --exec npm run rollup",
     "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md && mkdir -p docs/img && cp -r jsdoc/static/img/* docs/img/",
     "update-readme": "node utils/update-readme.js",
     "prepublishOnly": "npm run update-readme && npm run rollup && npm run build-types && npm run doc"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-multi-entry": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "copy-webpack-plugin": "^10.2.4",
     "html-webpack-plugin": "^5.5.0",
     "jsdoc": "^4.0.4",
@@ -78,6 +80,7 @@
     "rollup-plugin-terser": "^7.0.2",
     "sanitize-html": "^2.15.0",
     "taffydb": "^2.7.3",
+    "tsd-jsdoc": "^2.5.0",
     "webpack": "^5.70.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.4"
@@ -90,5 +93,8 @@
     "LICENSE",
     "package.json",
     "README.md"
-  ]
+  ],
+  "dependencies": {
+    "png-es6": "^2.2.9"
+  }
 }

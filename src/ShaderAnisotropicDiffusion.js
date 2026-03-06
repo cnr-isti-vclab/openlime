@@ -24,12 +24,6 @@ class ShaderAnisotropicDiffusion extends Shader {
       iterations: 3,        // Fewer iterations to avoid over-smoothing
       lambda: 0.1,          // Gentler diffusion
       normalStrength: 1.2,  // Increased strength for better visibility
-      uniforms: {
-        kappa: { type: 'float', value: 0.03, needsUpdate: true },
-        iterations: { type: 'int', value: 3, needsUpdate: true },
-        lambda: { type: 'float', value: 0.1, needsUpdate: true },
-        normalStrength: { type: 'float', value: 1.2, needsUpdate: true }
-      },
       samplers: [
         { id: 0, name: 'source', label: 'Normal Map', samplers: [{ id: 0, type: 'color' }] }
       ],
@@ -39,6 +33,13 @@ class ShaderAnisotropicDiffusion extends Shader {
     }, options);
 
     super(diffusionOptions);
+
+    this.registerUniforms({
+      kappa: { type: 'float', value: 0.03, needsUpdate: true },
+      iterations: { type: 'int', value: 3, needsUpdate: true },
+      lambda: { type: 'float', value: 0.1, needsUpdate: true },
+      normalStrength: { type: 'float', value: 1.2, needsUpdate: true }
+    });
 
     // Set parameters from options
     if (options.kappa !== undefined) {

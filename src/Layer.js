@@ -3,10 +3,14 @@ import { Layout } from './Layout.js'
 import { Cache } from './Cache.js'
 import { BoundingBox } from './BoundingBox.js'
 import { addSignals } from './Signals.js'
+import { Raster } from './Raster.js'
+import { Raster16Bit } from './Raster16Bit.js'
+
 import { Util } from './Util.js'
 
 /**
  * @typedef {Object} LayerOptions
+ * @property {string} [url] - URL pointing to the layer's source asset
  * @property {string|Layout} [layout='image'] - Layout/format of input raster images
  * @property {string} [type] - Identifier for specific derived layer class
  * @property {string} [id] - Unique layer identifier
@@ -85,7 +89,9 @@ class Layer {
 	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader}.
 	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
 	* @param {Layer} options.sourceLayer The layer from which to take the tiles (in order to avoid tile duplication).
+	* @param {Layer} [options.layerSource] Alias for sourceLayer (backward compatibility).
 	* @param {boolean} [options.debug=false] - Enable debug output
+	* @throws {Error} If url or layerSource are not provided
 	*/
 	constructor(options) {
 		//create from derived class if type specified
@@ -93,7 +99,6 @@ class Layer {
 			isLinear: false,
 			isSrgbSimplified: true
 		}, options);
-
 
 		if (options.type) {
 			let type = options.type;
@@ -182,6 +187,7 @@ class Layer {
 	init(options) {
 		Object.assign(this, {
 			transform: new Transform(),
+			staticTextures: [], // implement static textures
 			viewport: null,
 			debug: false,
 			visible: true,
@@ -209,10 +215,38 @@ class Layer {
 			//only raster used by the shader will be loade.
 			queue: [],     //queue of tiles to be loaded.
 			requested: new Map,  //tiles requested.
+			onFirstDraw: null,
+			_didFirstDraw: false
 		});
 
+		// If a source layer is provided, inherit shared resources by default unless explicitly overridden.
+		// This enables "duplicating" a layer without re-instantiating expensive resources.
+		if (options && options.sourceLayer) {
+			const s = options.sourceLayer;
+			if (options.layout === undefined) options.layout = s.layout;
+			if (options.rasters === undefined) options.rasters = s.rasters;
+			if (options.staticTextures === undefined) options.staticTextures = s.staticTextures;
+			if (options.width === undefined) options.width = s.width;
+			if (options.height === undefined) options.height = s.height;
+			if (options.pixelSize === undefined) options.pixelSize = s.pixelSize;
+			if (options.server === undefined) options.server = s.server;
+			if (options.prefetchBorder === undefined) options.prefetchBorder = s.prefetchBorder;
+			if (options.mipmapBias === undefined) options.mipmapBias = s.mipmapBias;
+		}
+
 		Object.assign(this, options);
-		if (this.sourceLayer) this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
+
+		if (this.sourceLayer) {
+			this.tiles = this.sourceLayer.tiles; //FIXME avoid tiles duplication
+			this.layout = this.sourceLayer.layout;
+			this.url = this.sourceLayer.url;
+			this.json = this.sourceLayer.json;
+			this.width = this.sourceLayer.width;
+			this.height = this.sourceLayer.height;
+			if (this.sourceLayer.rasters && this.sourceLayer.rasters.length > 0) {
+				this.rasters = this.sourceLayer.rasters.slice();
+			}
+		}
 
 		this.transform = new Transform(this.transform);
 
@@ -384,18 +418,42 @@ class Layer {
 		* @event Layer#update
 		*/
 		this.layout = layout;
+		this.status = 'loading';
+		this.error = null;
 
-		let callback = () => {
+		const onReady = () => {
 			this.status = 'ready';
-			this.setupTiles(); //setup expect status to be ready!
+			this.error = null;
+			this.setupTiles(); // setup expects status to be ready
 
 			this.emit('ready');
 			this.emit('update');
 		};
-		if (layout.status == 'ready') //layout already initialized.
-			callback();
-		else
-			layout.addEvent('ready', callback);
+
+		const onError = (err) => {
+			this.status = 'error';
+			this.error = err;
+
+			/**
+			 * The event is fired when a layer fails to initialize or load its layout.
+			 * @event Layer#error
+			 * @type {Error}
+			 */
+			this.emit('error', err);
+		};
+
+		if (layout.status === 'ready') {
+			// layout already initialized
+			onReady();
+		} else if (layout.status === 'error') {
+			// layout already failed
+			onError(layout.error || layout.status);
+		} else {
+			// wait for async initialization
+			layout.addEvent('ready', onReady);
+			if (typeof layout.addEvent === 'function')
+				layout.addEvent('error', onError);
+		}
 
 		// Set signal to acknowledge change of bbox when it is known. Let this signal go up to canvas
 		this.layout.addEvent('updateSize', () => {
@@ -404,6 +462,8 @@ class Layer {
 			this.emit('updateSize');
 		});
 	}
+
+
 
 	/**
 	 * Sets the layer's transform
@@ -515,11 +575,15 @@ class Layer {
 
 
 	/**
-	 * Gets pixel size in millimeters
-	 * @returns {number} Size of one pixel in mm
+	 * Gets scene pixel size in millimeters.
+	 * Converts layer pixel size (mm/layer-pixel) into mm/scene-pixel
+	 * by accounting for layer scaling.
+	 * @returns {number} Size of one scene pixel in mm
 	 */
 	pixelSizePerMM() {
-		return this.pixelSize * this.transform.z;
+		if (!this.transform || !this.transform.z)
+			return this.pixelSize;
+		return this.pixelSize / this.transform.z;
 	}
 
 
@@ -687,11 +751,123 @@ class Layer {
 	 */
 	clear() {
 		this.ibuffer = this.vbuffer = null;
-		Cache.flushLayer(this);
+
+		// Clean up static textures
+		this.clearStaticTextures();
+
+		Cache.getInstance().flushLayer(this);
+
 		this.tiles = new Map(); //TODO We need to drop these tile textures before clearing Map
 		this.setupTiles();
 		this.queue = [];
 		this.previouslyNeeded = false;
+	}
+
+
+	// STATIC TEXTURE	
+
+	/**
+	 * Adds a static texture to be loaded and bound globally for the layer
+	 * @param {Object} options - Static texture configuration
+	 * @param {string} options.url - URL of the texture to load
+	 * @param {string} options.uniform - Shader uniform name (e.g., "u_dict")
+	 * @param {string} [options.sizeUniform] - Optional size uniform name (e.g., "u_dictSize")
+	 * @param {string} [options.format='rgba16ui'] - Texture format
+	 * @param {boolean} [options.isLinear=true] - Whether texture is in linear color space
+	 * @param {Function} [options.dataLoader] - Custom data loader function
+	 * @param {boolean} [options.use16Bit=true] - Use Raster16Bit vs regular Raster
+	 * @returns {Promise<void>}
+	 */
+	async addStaticTexture(options) {
+		// Add to the static textures array
+		const staticTexConfig = {
+			url: options.url,
+			uniform: options.uniform,
+			sizeUniform: options.sizeUniform,
+			format: options.format || 'rgba16ui',
+			isLinear: options.isLinear !== undefined ? options.isLinear : true,
+			dataLoader: options.dataLoader,
+			use16Bit: options.use16Bit !== undefined ? options.use16Bit : true,
+			buildMipmaps: options.buildMipmaps !== undefined ? options.buildMipmaps : true,
+			// Runtime properties
+			texture: null,
+			width: 0,
+			height: 0,
+			loaded: false
+		};
+
+		this.staticTextures.push(staticTexConfig);
+
+		// Load immediately if GL context is available
+		if (this.gl) {
+			await this.loadStaticTexture(this.staticTextures.length - 1);
+		}
+	}
+
+	/**
+	 * Loads a specific static texture by index
+	 * @private
+	 * @param {number} index - Index in staticTextures array
+	 * @returns {Promise<void>}
+	 */
+	async loadStaticTexture(index) {
+		const config = this.staticTextures[index];
+		if (!config || config.loaded) return;
+
+		try {
+			// Choose appropriate raster class - much simpler!
+			const RasterClass = config.use16Bit ? Raster16Bit : Raster;
+
+			const rasterOptions = {
+				format: config.format,
+				isLinear: config.isLinear,
+				buildMipmaps: config.buildMipmaps,
+				filterLinear: config.filterLinear,
+				debug: this.debug || false
+			};
+
+			if (config.dataLoader) {
+				rasterOptions.dataLoader = config.dataLoader;
+			}
+
+			const raster = new RasterClass(rasterOptions);
+			const [texture] = await raster.loadImage({ url: config.url }, this.gl);
+
+			// Update the configuration with loaded texture info
+			config.texture = texture;
+			config.width = raster.width;
+			config.height = raster.height;
+			config.loaded = true;
+
+			this.emit('update');
+		} catch (error) {
+			console.error(`Failed to load static texture ${config.url}:`, error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Removes all static textures
+	 */
+	clearStaticTextures() {
+		// Clean up WebGL textures
+		if (this.gl) {
+			for (const config of this.staticTextures) {
+				if (config.texture) {
+					this.gl.deleteTexture(config.texture);
+				}
+			}
+		}
+		this.staticTextures = [];
+	}
+
+	/**
+	 * Gets a static texture configuration by uniform name
+	 * @param {string} uniformName - Uniform name to search for
+	 * @returns {Object|undefined} Static texture configuration
+	 */
+	getStaticTexture(uniformName) {
+		return this.staticTextures.find(tex => tex.uniform === uniformName);
 	}
 
 	/*
@@ -705,6 +881,8 @@ class Layer {
 		if (this.status != 'ready')// || this.tiles.size == 0)
 			return true;
 
+		if (!this.gl) return true;
+
 		if (!this.shader)
 			throw "Shader not specified!";
 
@@ -715,7 +893,6 @@ class Layer {
 			viewport = this.viewport;
 			this.gl.viewport(viewport.x, viewport.y, viewport.dx, viewport.dy);
 		}
-
 
 		this.prepareWebGL();
 
@@ -739,6 +916,37 @@ class Layer {
 			}
 		}
 
+		// Bind layer-level static textures (e.g. dict) if present
+		if (this.staticTextures && this.staticTextures.length) {
+			// start after normal samplers and filter samplers
+			// normal samplers: this.shader.samplers.length
+			// filter samplers: already advanced iSampler above
+			// so we can just continue from the current unit counter
+			let startUnit = this.shader.samplers.length;
+			const gl = this.gl;
+			for (let i = 0; i < this.staticTextures.length; i++) {
+				const st = this.staticTextures[i];
+				const unit = startUnit + i;
+
+				gl.activeTexture(gl.TEXTURE0 + unit);
+				gl.bindTexture(gl.TEXTURE_2D, st.texture);
+
+				// bind sampler uniform
+				const loc = this.shader.program
+					? gl.getUniformLocation(this.shader.program, st.uniform)
+					: null;
+				if (loc) {
+					gl.uniform1i(loc, unit);
+				}
+
+				// optional size uniform
+				if (st.sizeUniform) {
+					const l2 = gl.getUniformLocation(this.shader.program, st.sizeUniform);
+					if (l2) gl.uniform2f(l2, st.width, st.height);
+				}
+			}
+		}
+
 		let i = 0;
 		for (let tile of Object.values(available)) {
 			//			if(tile.complete)
@@ -754,13 +962,35 @@ class Layer {
 	/** @ignore */
 	drawTile(tile, index) {
 		//let tiledata = this.tiles.get(tile.index);
+
 		if (tile.missing != 0)
 			throw "Attempt to draw tile still missing textures"
 
+		const gl = this.gl;
+
 		//coords and texture buffers updated once for all tiles from main draw() call
 
+		// Update standard uniform
+		const tileSize = this.layout.type === 'image' ?
+			[this.layout.width, this.layout.height] :  // Single image
+			this.layout.getTileSize();                 // Tiled system
+
+		const tileOffset = this.layout.type === 'image' ?
+			[0, 0] :                                   // Single image
+			[tile.x * tileSize[0], tile.y * tileSize[1]]; // Tiled system
+
+		// Per tile ai bordi, calcola la dimensione effettiva
+		const effectiveTileSize = [
+			Math.min(tileSize[0], this.layout.width - tileOffset[0]),
+			Math.min(tileSize[1], this.layout.height - tileOffset[1])
+		];
+
+		this.shader.setUniform('u_tileOffset', tileOffset);
+		this.shader.setUniform('u_tileSize', effectiveTileSize);
+		this.shader.setUniform('u_imageSize', [this.layout.width, this.layout.height]);
+		this.shader.updateUniforms(gl);
+
 		//bind textures
-		let gl = this.gl;
 		for (var i = 0; i < this.shader.samplers.length; i++) {
 			let id = this.shader.samplers[i].id;
 			gl.uniform1i(this.shader.samplers[i].location, i);
@@ -906,9 +1136,26 @@ class Layer {
 	}
 
 	/** @ignore */
-	prepareWebGL() {
+	async prepareWebGL() {
+		const gl = this.gl;
 
-		let gl = this.gl;
+		// Run lazy init once, when GL is available
+		if (!this._didFirstDraw) {
+			// Load static textures first
+			for (let i = 0; i < this.staticTextures.length; i++) {
+				if (!this.staticTextures[i].loaded) {
+					await this.loadStaticTexture(i);
+				}
+			}
+
+			// Legacy onFirstDraw callback support (can be removed later)
+			if (typeof this.onFirstDraw === "function") {
+				// pass gl so the callback can create textures
+				this.onFirstDraw(gl);
+			}
+
+			this._didFirstDraw = true;
+		}
 
 		if (!this.ibuffer) { //this part might go into another function.
 			this.ibuffer = gl.createBuffer();
@@ -932,7 +1179,6 @@ class Layer {
 		gl.useProgram(this.shader.program);
 		this.shader.updateUniforms(gl);
 	}
-
 	/** @ignore */
 	sameNeeded(a, b) {
 		if (a.level != b.level)
@@ -1399,6 +1645,6 @@ class Layer {
 }
 
 Layer.prototype.types = {}
-addSignals(Layer, 'ready', 'update', 'loaded', 'updateSize');
+addSignals(Layer, 'ready', 'update', 'loaded', 'updateSize', 'error');
 
 export { Layer }

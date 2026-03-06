@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "title": "Manifest 2 - Overlay Layer",
+    "description": "Second manifest for multi-manifest loading test",
+    "author": "OpenLIME",
+    "created": "2026-02-05T10:00:00Z"
+  },
+  "layers": {
+    "overlay": {
+      "type": "image",
+      "layout": "deepzoom",
+      "url": "../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi",
+      "visible": true,
+      "zindex": 1,
+      "label": "Normal Map Overlay"
+    }
+  }
+}

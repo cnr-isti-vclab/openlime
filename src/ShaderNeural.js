@@ -134,7 +134,7 @@ class ShaderNeural extends Shader {
 			{ id: 3, name: 'u_texture_3', type: 'vec3' }
 		];
 
-		this.uniforms = {
+		this.registerUniforms({
 			lights: { type: 'vec2', needsUpdate: true, size: 2, value: [0.0, 0.0] },
 			min: { type: 'vec3', needsUpdate: true, size: 3, value: [0, 0, 0] },
 			max: { type: 'vec3', needsUpdate: true, size: 3, value: [1, 1, 1] },
@@ -144,7 +144,7 @@ class ShaderNeural extends Shader {
 			layer2_biases: { type: 'vec4', needsUpdate: true, size: this.n / 4 },
 			layer3_weights: { type: 'vec4', needsUpdate: true, size: this.n * 3 / 4 },
 			layer3_biases: { type: 'vec3', needsUpdate: true, size: 1 },
-		};
+		});
 	}
 
 	/**

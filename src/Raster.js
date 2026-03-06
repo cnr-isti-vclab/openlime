@@ -7,10 +7,12 @@ import { addSignals } from './Signals.js'
 */
 
 /**
-* @typedef {('vec3'|'vec4'|'float')} Raster#Format
+* @typedef {('uvec3'|'uvec4'|'vec3'|'vec4'|'float')} Raster#Format
 * Defines the color format for image data storage in textures and renderbuffers.
-* @property {'vec3'} vec3 - RGB format (3 components without alpha)
-* @property {'vec4'} vec4 - RGBA format (4 components with alpha)
+* @property {'uvec3'} uvec3 - RGB format (3 components uint8 without alpha)
+* @property {'uvec4'} uvec4 - RGBA format (4 components uint8 with alpha)
+* @property {'vec3'} vec3 - RGB format (3 components float without alpha)
+* @property {'vec4'} vec4 - RGBA format (4 components float with alpha)
 * @property {'float'} float - Single-channel format for coefficient data
 */
 
@@ -34,7 +36,7 @@ class Raster {
 	 *   - 'float' for coefficient data
 	 */
 	constructor(options) {
-
+		this.filterLinear = true;
 		Object.assign(this, {
 			format: 'vec3'
 		});
@@ -125,60 +127,71 @@ class Raster {
 	}
 
 	/**
-	 * Creates a WebGL texture from an image.
-	 * Handles different color formats and automatically creates mipmaps for large textures.
+	 * Creates a WebGL texture from an image. Handles different color formats and automatically creates mipmaps for large textures.
 	 * @private
 	 * @param {WebGLRenderingContext} gl - The WebGL rendering context
 	 * @param {HTMLImageElement|ImageBitmap} img - The source image
 	 * @returns {WebGLTexture} The created texture
-	 * 
-	 * @property {number} width - Width of the loaded image (set after loading)
-	 * @property {number} height - Height of the loaded image (set after loading)
 	 */
 	loadTexture(gl, img) {
 		this.width = img.width;
 		this.height = img.height;
+
 		var tex = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, tex);
+
 		let glFormat = gl.RGBA;
 		let internalFormat = gl.RGBA;
 
 		switch (this.format) {
 			case 'vec3':
+				internalFormat = gl.RGB;
 				glFormat = gl.RGB;
 				break;
 			case 'vec4':
+				internalFormat = gl.RGBA;
 				glFormat = gl.RGBA;
 				break;
+			case 'uvec3':
+				internalFormat = gl.RGB8UI;
+				glFormat = gl.RGB_INTEGER;
+				break;
+			case 'uvec4':
+				internalFormat = gl.RGBA8UI;
+				glFormat = gl.RGBA_INTEGER;
+				break;
 			case 'float':
-				// Use RED instead of LUMINANCE for WebGL2
+				internalFormat = gl.R8;
 				glFormat = gl instanceof WebGL2RenderingContext ? gl.RED : gl.LUMINANCE;
 				break;
 			default:
 				break;
 		}
 
-		// For WebGL2, use proper internal format for linear textures
-		if (this.format === 'float') {
-			// For float textures in WebGL2, use R8 as internal format
-			internalFormat = gl.R8;
-		} else {
-			internalFormat = glFormat === gl.RGB ? gl.RGB : gl.RGBA;
-		}
 		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
 
+		// Logica selectedFilter chiara e leggibile come in Raster16Bit.js
+		let filterLinear = this.filterLinear !== undefined ? this.filterLinear : true;
 
-		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		//build mipmap for large images.
-		if (this.width > 1024 || this.height > 1024) {
+		// Integer textures devono usare NEAREST (come in Raster16Bit)
+		const isIntegerTexture = this.format === 'uvec3' || this.format === 'uvec4';
+		const selectedFilter = isIntegerTexture ? gl.NEAREST :
+			(filterLinear ? gl.LINEAR : gl.NEAREST);
+
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, selectedFilter);
+
+		if (this.buildMipmaps && this.width >= 1024 && this.height >= 1024) {
 			gl.generateMipmap(gl.TEXTURE_2D);
-			gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+				isIntegerTexture ? gl.LINEAR_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR);
 		} else {
-			gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, selectedFilter);
 		}
+
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		this._texture = tex;
+
+		this.texture = tex;
 		return tex;
 	}
 }

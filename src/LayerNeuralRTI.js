@@ -104,7 +104,9 @@ class LayerNeuralRTI extends Layer {
 		this.neuralShader.setLight([0, 0]);
 
 
-		(async () => { await this.loadNeural(this.url); })();
+		if (!this.sourceLayer) {
+			(async () => { await this.loadNeural(this.url); })();
+		}
 	}
 
 	/**

@@ -46,11 +46,10 @@ class ShaderFilter {
         }, options);
         Object.assign(this, options);
         this.name = this.constructor.name;
-        this.uniforms = {};
         this.samplers = [];
         this.needsUpdate = true;
         this.shader = null;
-
+        this.uniforms = {};
         this.modes = {};
     }
 

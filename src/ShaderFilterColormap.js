@@ -74,7 +74,7 @@ class ShaderFilterColormap extends ShaderFilter {
 
         this.samplers = [{ name: `${this.samplerName('colormap')}` }];
 
-        this.uniforms[this.uniformName('channel_weigths')] = { type: 'vec3', needsUpdate: true, size: 3, value: this.channelWeights };
+        this.uniforms[this.uniformName('channel_weights')] = { type: 'vec3', needsUpdate: true, size: 3, value: this.channelWeights };
         this.uniforms[this.uniformName('low_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.colorscale.lowColor.value() };
         this.uniforms[this.uniformName('high_color')] = { type: 'vec4', needsUpdate: true, size: 4, value: this.colorscale.highColor.value() };
         this.uniforms[this.uniformName('scale')] = { type: 'float', needsUpdate: true, size: 1, value: scale };
@@ -125,7 +125,7 @@ class ShaderFilterColormap extends ShaderFilter {
         return `
             vec4 ${this.functionName()}(vec4 col){
                 if(col.a == 0.0) return col;
-                float v = dot(col.rgb, ${this.uniformName('channel_weigths')});
+                float v = dot(col.rgb, ${this.uniformName('channel_weights')});
                 float cv = v*${this.uniformName('scale')} + ${this.uniformName('bias')};
 
                 if(cv >= 1.0) return ${this.uniformName('high_color')};

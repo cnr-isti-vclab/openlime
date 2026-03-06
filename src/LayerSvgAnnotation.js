@@ -154,9 +154,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	 * Clears all annotation selections
 	 */
 	clearSelected() {
-		if (!this.svgElement) this.createOverlaySVGElement();
-		//		return;
-		this.svgGroup.querySelectorAll('[data-annotation]').forEach((e) => e.classList.remove('selected'));
+		if (this.svgGroup)
+			this.svgGroup.querySelectorAll('[data-annotation]').forEach((e) => e.classList.remove('selected'));
 		super.clearSelected();
 	}
 
@@ -166,10 +165,25 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	 * @param {boolean} [on=true] - Whether to select (true) or deselect (false)
 	 */
 	setSelected(anno, on = true) {
-		for (let a of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))
-			a.classList.toggle('selected', on);
+		if (this.svgElement) {
+			for (let a of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))
+				a.classList.toggle('selected', on);
+		}
 
 		super.setSelected(anno, on);
+	}
+
+	/**
+	 * Deletes an annotation by ID and keeps SVG DOM in sync.
+	 * @param {string} id - Annotation identifier.
+	 * @returns {Annotation|null} Deleted annotation or null if not found.
+	 * @override
+	 */
+	deleteAnnotationById(id) {
+		if (this.svgGroup)
+			this.svgGroup.querySelectorAll(`[data-annotation="${id}"]`).forEach((e) => e.remove());
+
+		return super.deleteAnnotationById(id);
 	}
 
 	/**
@@ -287,7 +301,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 					if (e.button == 0) {
 						e.preventDefault();
 						e.stopPropagation();
-						if (this.onClick && this.onClick(anno))
+						if (this.onClick && this.onClick(anno, e))
 							return;
 						if (this.selected.has(anno.id))
 							return;

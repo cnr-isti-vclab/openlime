@@ -72,7 +72,7 @@ class ShaderBRDF extends Shader {
 		const monochromeMaterial = options.monochromeMaterial ? options.monochromeMaterial : [0.80, 0.79, 0.75];
 		const kAmbient = options.kAmbient ? options.kAmbient : 0.02;
 
-		this.uniforms = {
+		this.registerUniforms({
 			uLightInfo: { type: 'vec4', needsUpdate: true, size: 4, value: [0.1, 0.1, 0.9, 0] },
 			uAlphaLimits: { type: 'vec2', needsUpdate: true, size: 2, value: alphaLimits },
 			uBrightnessGamma: { type: 'vec2', needsUpdate: true, size: 2, value: [brightness, gamma] },
@@ -81,7 +81,7 @@ class ShaderBRDF extends Shader {
 			uMonochromeMaterial: { type: 'vec3', needsUpdate: true, size: 3, value: monochromeMaterial },
 			uKAmbient: { type: 'float', needsUpdate: true, size: 1, value: kAmbient },
 
-		}
+		});
 
 		this.innerCode = '';
 		this.setMode(this.mode);

@@ -85,11 +85,11 @@ class ShaderDstretch extends Shader {
         this.min = min;
         this.max = max;
 
-        this.uniforms = {
+        this.registerUniforms({
             rotation: { type: 'mat4', needsUpdate: true, size: 16, value: this.matToArray(this.rotationMatrix) },
             min: { type: 'vec3', needsUpdate: true, size: 3, value: this.min },
             max: { type: 'vec3', needsUpdate: true, size: 3, value: this.max }
-        }
+        });
     }
 
     /**

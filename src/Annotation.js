@@ -20,17 +20,13 @@ class Annotation {
    * Creates a new Annotation instance.
    * @param {Object} [options] - Configuration options for the annotation.
    * @param {string} [options.id] - Unique identifier for the annotation. Auto-generated if not provided.
-   * @param {string} [options.code] - A code identifier for the annotation.
    * @param {string} [options.label=''] - Display label for the annotation.
    * @param {string} [options.description] - HTML text containing a comprehensive description.
    * @param {string} [options.class] - Category or classification of the annotation.
    * @param {string} [options.target] - Target element or area this annotation refers to.
    * @param {string} [options.svg] - SVG content for the annotation.
-   * @param {Object} [options.image] - Image data associated with the annotation.
-   * @param {Object} [options.region] - Region coordinates {x, y, w, h} for the annotation.
+   * @param {Object} [options.type] - Semantic type of the annotation.
    * @param {Object} [options.data={}] - Additional custom data for the annotation.
-   * @param {Object} [options.style] - Style configuration for rendering.
-   * @param {BoundingBox} [options.bbox] - Bounding box of the annotation.
    * @param {boolean} [options.visible=true] - Visibility state of the annotation.
    * @param {Object} [options.state] - State variables for the annotation.
    * @param {boolean} [options.ready=false] - Indicates if SVG conversion is complete.
@@ -40,17 +36,13 @@ class Annotation {
   constructor(options = {}) {
     // Set default properties
     this.id = options.id ?? Annotation.generateUUID();
-    this.code = options.code ?? null;
     this.label = options.label ?? '';
     this.description = options.description ?? null;
     this.class = options.class ?? null;
     this.target = options.target ?? null;
     this.svg = options.svg ?? null;
-    this.image = options.image ?? null;
-    this.region = options.region ?? null;
+    this.type = options.type ?? '';
     this.data = options.data ?? {};
-    this.style = options.style ?? null;
-    this.bbox = options.bbox ?? null;
     this.visible = options.visible ?? true;
     this.state = options.state ?? null;
     this.ready = options.ready ?? false;
@@ -124,7 +116,30 @@ class Annotation {
   }
 
   /**
-   * Creates an Annotation instance from a JSON-LD format object.
+   * Serializes all SVG DOM elements into `this.svg` as a single SVG string.
+   * Wraps multiple elements in a `<g>` group; single element is serialized directly.
+   * Call this after modifying `elements` to keep `svg` in sync for export/other viewers.
+   * @returns {string|null} The serialized SVG string, or null if no elements.
+   */
+  syncSvg() {
+    if (!this.elements.length) return null;
+    const serializer = new XMLSerializer();
+    let svgStr;
+    if (this.elements.length === 1) {
+      svgStr = serializer.serializeToString(this.elements[0]);
+    } else {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      for (const el of this.elements) g.appendChild(el.cloneNode(true));
+      svgStr = serializer.serializeToString(g);
+    }
+    this.svg = svgStr;
+    // Mark ready so prefetch does not re-parse svg back into elements
+    // (elements are already live DOM nodes; re-parsing would lose them)
+    this.ready = true;
+    return svgStr;
+  }
+
+  /**
    * @param {Object} entry - The JSON-LD object representing an annotation.
    * @returns {Annotation} A new Annotation instance.
    * @throws {Error} If the entry is not a valid JSON-LD annotation or contains unsupported selectors.
@@ -216,13 +231,9 @@ class Annotation {
 
     // Add SVG representation if elements exist
     if (this.elements.length > 0) {
-      // Get the first element or combine them if needed
-      const element = this.elements[0]; // Simplified for now
-      if (element) {
-        const serializer = new XMLSerializer();
-        jsonLd.target.selector.type = 'SvgSelector';
-        jsonLd.target.selector.value = serializer.serializeToString(element);
-      }
+      this.syncSvg();
+      jsonLd.target.selector.type = 'SvgSelector';
+      jsonLd.target.selector.value = this.svg;
     } else if (this.svg) {
       // Use existing SVG if available
       jsonLd.target.selector.type = 'SvgSelector';

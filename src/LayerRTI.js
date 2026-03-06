@@ -80,16 +80,26 @@ class LayerRTI extends Layer {
 		if (Object.keys(this.rasters).length != 0)
 			throw "Rasters options should be empty!";
 
-		if (!this.url)
-			throw "Url option is required";
-
-		this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
-		this.setShader('rti');
-
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 
-		this.loadJson(this.url);
+		if (this.sourceLayer) {
+			// For derived RTI layers, copy the shader and set mode
+			this.normals = this.sourceLayer.normals;
+			this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
+			if (this.json) {
+				this.shaders['rti'].init(this.json);
+			}
+			Object.assign(this.shaders['rti'], this.sourceLayer.shader);
+			this.setShader('rti');
+			if (this.mode) this.shader.setMode(this.mode);
+			this.status = 'ready';
+			this.emit('ready');
+		} else {
+			this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
+			this.setShader('rti');
+			this.loadJson(this.url);
+		}
 	}
 
 	/**
@@ -142,6 +152,7 @@ class LayerRTI extends Layer {
 				return;
 			}
 			let json = await response.json();
+			this.json = json;
 
 			// Update layout image format and pixelSize if provided in info.json
 			this.layout.suffix = json.format;

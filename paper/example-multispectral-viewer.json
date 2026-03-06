@@ -1,0 +1,157 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "title": "Multispectral Imaging Viewer",
+    "description": "Advanced multispectral viewer with band selection and spectral analysis",
+    "author": "Imaging Science Lab",
+    "created": "2025-12-18T10:00:00Z",
+    "tags": ["multispectral", "imaging", "analysis", "rgb-presets"]
+  },
+  
+  "viewer": {
+    "container": ".openlime",
+    "autofit": true,
+    "idleTime": 120,
+    "camera": {
+      "bounded": true,
+      "minZoom": 0.1,
+      "maxZoom": 20.0
+    }
+  },
+  
+  "layers": {
+    "multispectral": {
+      "type": "image",
+      "layout": "multispectral",
+      "url": "assets/multispectral/data.json",
+      "visible": true,
+      "zindex": 0,
+      "options": {
+        "channels": 32,
+        "wavelengthRange": [400, 1000],
+        "defaultPreset": "naturalColor",
+        "enableSingleBand": true
+      }
+    },
+    "comparison": {
+      "type": "image",
+      "layout": "multispectral", 
+      "url": "assets/multispectral/data.json",
+      "visible": false,
+      "zindex": 1,
+      "viewport": {
+        "x": 0.5,
+        "y": 0,
+        "dx": 0.5,
+        "dy": 1.0
+      },
+      "options": {
+        "defaultPreset": "falseColor"
+      }
+    }
+  },
+  
+  "shaders": {
+    "multispectralRenderer": {
+      "type": "custom",
+      "uniforms": {
+        "uRedBand": 28,
+        "uGreenBand": 18,
+        "uBlueBand": 8,
+        "uGamma": 1.0,
+        "uContrast": 1.0,
+        "uBrightness": 0.0
+      }
+    }
+  },
+  
+  "controllers": [
+    {
+      "type": "pan",
+      "options": {}
+    },
+    {
+      "type": "pinch",
+      "options": {}
+    }
+  ],
+  
+  "ui": {
+    "type": "multispectral",
+    "skin": {
+      "url": "skin/skin.svg"
+    },
+    "floatingPanel": true,
+    "actions": {
+      "light": { "display": false },
+      "zoomin": { "display": true },
+      "zoomout": { "display": true },
+      "home": { "display": true },
+      "fullscreen": { "display": true },
+      "snapshot": { "display": true }
+    },
+    "attribution": "Multispectral dataset - Research Collection"
+  },
+  
+  "connections": {
+    "synchronization": [
+      {
+        "layers": ["multispectral", "comparison"],
+        "properties": ["transform", "zoom", "pan"]
+      }
+    ]
+  },
+  
+  "events": {
+    "gestures": {
+      "fingerSingleTap": {
+        "enabled": true,
+        "priority": 1000,
+        "handler": "updateSpectralPlot"
+      }
+    },
+    "custom": [
+      {
+        "event": "ready",
+        "target": "multispectral",
+        "handler": "initializeSpectralChart"
+      },
+      {
+        "event": "bandChanged",
+        "target": "multispectral", 
+        "handler": "updateVisualization"
+      },
+      {
+        "event": "presetChanged",
+        "target": "multispectral",
+        "handler": "applyPresetToComparison"
+      }
+    ]
+  },
+  
+  "plugins": [
+    {
+      "name": "spectralChart",
+      "url": "plugins/spectral-chart.js",
+      "config": {
+        "chartContainer": "#spectral-chart",
+        "wavelengthRange": [400, 1000],
+        "showRGBLines": true,
+        "exportFormats": ["csv", "json"]
+      }
+    },
+    {
+      "name": "presetManager",
+      "url": "plugins/preset-manager.js",
+      "config": {
+        "presets": {
+          "naturalColor": { "red": 28, "green": 18, "blue": 8 },
+          "falseColor": { "red": 25, "green": 15, "blue": 5 },
+          "vegetation": { "red": 30, "green": 20, "blue": 10 },
+          "gold": { "red": 22, "green": 12, "blue": 2 }
+        },
+        "allowCustom": true
+      }
+    }
+  ]
+}

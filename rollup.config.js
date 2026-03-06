@@ -1,3 +1,5 @@
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 const { terser } = require("rollup-plugin-terser");
 const multi = require("@rollup/plugin-multi-entry");
 const json = require("@rollup/plugin-json");
@@ -5,15 +7,15 @@ const pkg = require("./package.json");
 
 function header() {
 	const banner = [
-    '// ##########################################',
-    '// OpenLIME - Open Layered IMage Explorer',
-    '// Author: CNR ISTI - Visual Computing Lab',
+		'// ##########################################',
+		'// OpenLIME - Open Layered IMage Explorer',
+		'// Author: CNR ISTI - Visual Computing Lab',
 		'// Author: CRS4 Visual and Data-intensive Computing Group',
-    `// ${pkg.name} v${pkg.version} - ${pkg.license} License`,
-    `// Documentation: ${pkg.homepage}`,
+		`// ${pkg.name} v${pkg.version} - ${pkg.license} License`,
+		`// Documentation: ${pkg.homepage}`,
 		`// Repository: ${pkg.repository.url}`,
-    '// ##########################################'
-  ].join('\n');
+		'// ##########################################'
+	].join('\n');
 	return {
 		renderChunk(code) {
 			return banner + "\n" + code;
@@ -61,6 +63,10 @@ const core = [
 	'./src/ShaderHDR.js'
 ];
 
+const extra = [
+	'./src/Png16Loader.js'
+];
+
 const ui = [
 	'./src/Skin.js',
 	'./src/UIBasic.js',
@@ -87,6 +93,12 @@ const rti = [
 	'./src/ShaderNeural.js'
 ];
 
+const rsc = [
+	'./src/LayerRSC.js',
+	'./src/ShaderRSc.js'
+];
+
+
 const brdf = [
 	'./src/LayerBRDF.js',
 	'./src/ShaderBRDF.js'
@@ -95,12 +107,18 @@ const brdf = [
 const annotation = [
 	'./src/AudioPlayer.js',
 	'./src/TextToSpeechPlayer.js',
+	'./src/Annotation.js',
 	'./src/LayerAnnotation.js',
 	'./src/LayerSvgAnnotation.js',
-	'./src/EditorSvgAnnotation.js'
+	'./src/EditorSvgAnnotation.js',
+	'./src/ManagerSvgAnnotation.js'
 ];
 
-const allModules = [...core, ...ui, ...rti, ...brdf, ...lens, ...annotation];
+const loader = [
+	'./src/ManifestLoader.js'
+];
+
+const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rsc, ...lens, ...annotation, ...loader];
 
 module.exports = [
 	{
@@ -133,6 +151,15 @@ module.exports = [
 				plugins: [header()]
 			}
 		],
-		plugins: [multi(), json()]
+		plugins: [
+			multi(),
+			json(),
+			resolve({
+				browser: true,
+				preferBuiltins: false,
+			}),
+			// serve perché 'utif' è CommonJS
+			commonjs(),
+		]
 	}
 ];

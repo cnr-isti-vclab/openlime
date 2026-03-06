@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - RTI Viewer</title>
+    <link rel="stylesheet" href="../../css/skin.css" />
+    <link rel="stylesheet" href="../examples.css" />
+    <style>
+        html,
+        body {
+            color: rgb(143, 30, 30);
+            background-color: black;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>OpenLIME - RSC Viewer</h1>
+    <div class="openlime"></div>
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // Create an OpenLIME canvas into openlime
+        const lime = new OpenLIME.Viewer('.openlime');
+        
+        // Create a Layer RSC from Deep Zoom Image
+        // const layer0 = new OpenLIME.Layer({
+        //     label: 'item3_dzi',
+        //     layout: 'deepzoom',
+        //     url: '../../assets/rsc/item3_dzi/info.json',
+        //     type: 'rsc',
+        //     normals: false
+        // });
+
+        // Create a Layer RSC with standard image format
+        const layer0 = new OpenLIME.Layer({
+            label: 'item1',
+            layout: 'image',
+            url: '../../assets/rsc/item1/info.json',
+            type: 'rsc',
+            normals: false
+        });
+        lime.addLayer('base', layer0);
+
+        // Create a Light Sphere Controller
+        const lsc = new OpenLIME.LightSphereController('.openlime',
+            { enableLightMarkers: true, enableLightSnap: true });
+        const draggableLsc = new OpenLIME.Draggable(
+            lsc.containerElement,
+            '.openlime',
+            { top: 20, right: 20, handleColor: '#5a82aab3' });
+
+        layer0.addEvent('config_ready', () => {
+            lsc.addLayer(layer0);
+            console.log('Light directions loaded:', layer0.lightDirs().length);
+        });
+
+        // Fetch a skin (visual elements for the web page)
+        OpenLIME.Skin.setUrl('../../skin/skin.svg');
+
+        // Create an User Interface 
+        const ui = new OpenLIME.UIBasic(lime, { showLightDirections: true });
+
+        // Add zoomin and zoomout to the toolbar
+        ui.actions.zoomin.display = true;
+        ui.actions.zoomout.display = true;
+
+        // Disable default light controller
+        ui.actions.light.display = false;
+        ui.actions.light.active = false;
+
+    </script>
+</body>
+
+</html>

@@ -1,6 +1,7 @@
 {
 "width": 1024, "height": 1024,
 "format": "jpg",
+"layout": "itarzoom",
 "type":"bilinear",
 "resolution": 8,
 "pixelSizeInMM": 0.0173729,
