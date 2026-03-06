@@ -2111,7 +2111,7 @@ class RectMarker extends Marker {
   // ── Sequence mode overrides ────────────────────────────────────────────
 
   startElement(pos, transform, annotation, style = {}) {
-    annotation.data._markerType = 'rect';
+    annotation.type = 'rect';
     annotation.data._markerCorners = [{ ...pos }, { ...pos }];
     const sw = this._modelStroke(transform, style);
     const r  = this._modelRadius(transform);
