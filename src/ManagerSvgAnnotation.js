@@ -1493,8 +1493,8 @@ class ManagerSvgAnnotation {
    */
   _onDoubleTap(e) {
     if (this._isUiTarget(e)) return;
-    e.preventDefault?.();
-    e.stopPropagation?.();
+    e.preventDefault();
+    e.stopPropagation();
 
     const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
 
