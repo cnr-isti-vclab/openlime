@@ -170,29 +170,48 @@ class Raster {
 
 		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
 
-		// Logica selectedFilter chiara e leggibile come in Raster16Bit.js
-		let filterLinear = this.filterLinear !== undefined ? this.filterLinear : true;
-
-		// Integer textures devono usare NEAREST (come in Raster16Bit)
 		const isIntegerTexture = this.format === 'uvec3' || this.format === 'uvec4';
-		const selectedFilter = isIntegerTexture ? gl.NEAREST :
-			(filterLinear ? gl.LINEAR : gl.NEAREST);
-
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, selectedFilter);
-
-		if (this.buildMipmaps && this.width >= 1024 && this.height >= 1024) {
-			gl.generateMipmap(gl.TEXTURE_2D);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
-				isIntegerTexture ? gl.LINEAR_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR);
-		} else {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, selectedFilter);
-		}
-
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		this._applyTextureParams(gl, isIntegerTexture, this.width, this.height);
 
 		this.texture = tex;
 		return tex;
+	}
+
+	/**
+	 * Applies texture filter, mipmap and wrap parameters to the currently bound TEXTURE_2D.
+	 * Shared by {@link loadTexture} and {@link Raster16Bit#_createTextureFromData} so the
+	 * filtering/mipmap logic lives in exactly one place.
+	 *
+	 * Rules:
+	 * - Integer-sampled formats (`uvec3/4`, `*16ui`, `*16i`) must use NEAREST and cannot
+	 *   use mipmaps (WebGL spec).
+	 * - All other formats respect `this.filterLinear` (default `true`) and generate
+	 *   mipmaps when `this.buildMipmaps` is set and both dimensions are ≥ 1024.
+	 *
+	 * @protected
+	 * @param {WebGLRenderingContext|WebGL2RenderingContext} gl
+	 * @param {boolean} isIntegerTexture
+	 * @param {number} width
+	 * @param {number} height
+	 */
+	_applyTextureParams(gl, isIntegerTexture, width, height) {
+		if (isIntegerTexture) {
+			// Integer textures must use NEAREST; mipmaps are not supported.
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		} else {
+			const filterLinear = this.filterLinear ?? true;
+			const filter = filterLinear ? gl.LINEAR : gl.NEAREST;
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+			if (this.buildMipmaps && width >= 1024 && height >= 1024) {
+				gl.generateMipmap(gl.TEXTURE_2D);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+			} else {
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+			}
+		}
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 	}
 }
 

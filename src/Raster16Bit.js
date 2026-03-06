@@ -249,40 +249,21 @@ class Raster16Bit extends Raster {
       throw error;
     }
 
-    // Detect if this is an integer texture (e.g. RGBA16UI, RGB16UI, R16UI ...)
-    // Integer textures in WebGL2 must use NEAREST filtering and cannot use mipmaps.
+    // Delegate filter/mipmap/wrap setup to the shared base-class method.
+    // Integer formats (16ui / 16i) force NEAREST and skip mipmaps;
+    // float/normalised formats respect this.filterLinear and this.buildMipmaps.
     const intIF = formatParams.internalFormat;
     const isIntegerTexture =
       intIF === gl.RGBA16UI ||
       intIF === gl.RGB16UI ||
       intIF === gl.RG16UI ||
-      intIF === gl.R16UI;
+      intIF === gl.R16UI ||
+      intIF === gl.RGBA16I ||
+      intIF === gl.RGB16I ||
+      intIF === gl.RG16I ||
+      intIF === gl.R16I;
 
-    if (isIntegerTexture) {
-      // Integer texture: no mipmap, only NEAREST
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    } else {
-      // Regular (float/normalized) texture: keep previous behavior
-      let filterLinear = this.filterLinear !== undefined ? this.filterLinear : true;
-			let selectedFilter = filterLinear ? gl.LINEAR : gl.NEAREST;
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, selectedFilter);
-      
-      if (this.buildMipmaps && (width > 1024 || height > 1024)) {
-				console.log("Generating mipmaps for large texture:", this.width, "x", this.height);
-
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-      } else {
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, selectedFilter);
-      }
-
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, selectedFilter);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    }
+    this._applyTextureParams(gl, isIntegerTexture, width, height);
 
     // Store color space / texture ref
     this._texture = tex;
