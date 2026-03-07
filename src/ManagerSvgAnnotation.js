@@ -753,6 +753,16 @@ class ManagerSvgAnnotation {
      */
     this._lastClickWasOnAnnotation = false;
 
+    /**
+     * Whether the pencil has been explicitly enabled by the user.
+     * When `false` the manager is completely transparent: all pointer events
+     * pass through unchanged and OpenLIME behaves as if the manager did not exist.
+     * Set to `true` only via `toggle()`.
+     * @type {boolean}
+     * @private
+     */
+    this._pencilEnabled = false;
+
     // Resolve or auto-create the annotation layer
     this._resolveLayer();
 
@@ -805,6 +815,7 @@ class ManagerSvgAnnotation {
 
     // Keyboard: Escape cancels, Enter finalises an in-progress drawing
     this._keyHandler = (e) => {
+      if (!this._pencilEnabled) return;
       if (e.key === 'Escape' && this._session) {
         this._cancelSession();
         e.preventDefault();
@@ -892,17 +903,23 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Convenience toggle for `UIBasic` backward compatibility.
-   * Toggles between `'create'` and `'idle'`; `force=true` → create, `force=false` → idle.
+   * Enables or disables the pencil (annotation system).
+   *
+   * - `toggle()`        — flips the enabled state.
+   * - `toggle(true)`    — enables; enters `'create'` mode.
+   * - `toggle(false)`   — disables; returns to `'idle'` and deselects everything.
+   *
+   * When disabled the manager is completely transparent: every pointer event
+   * passes through to OpenLIME's normal panzoom / light controllers.
+   *
    * @param {boolean} [force]
-   * @returns {boolean} True if now in create mode.
+   * @returns {boolean} `true` if the pencil is now enabled.
    */
   toggle(force) {
-    const target = force === undefined
-      ? (this._mode === 'create' ? 'idle' : 'create')
-      : (force ? 'create' : 'idle');
-    this.setMode(target);
-    return this._mode === 'create';
+    const enable = force === undefined ? !this._pencilEnabled : !!force;
+    this._pencilEnabled = enable;
+    this.setMode(enable ? 'create' : 'idle');
+    return this._pencilEnabled;
   }
 
   /**
@@ -912,11 +929,11 @@ class ManagerSvgAnnotation {
   get mode() { return this._mode; }
 
   /**
-   * `true` when any mode other than `'idle'` is active.
+   * `true` when the pencil has been explicitly enabled by the user.
    * Kept for backward compatibility with `UIBasic`.
    * @type {boolean}
    */
-  get active() { return this._mode !== 'idle'; }
+  get active() { return this._pencilEnabled; }
 
   /**
    * The **active** annotation: the most recently activated one inside the
@@ -1119,6 +1136,11 @@ class ManagerSvgAnnotation {
   setSelected(id, on = true) {
     const anno = this.layer.getAnnotationById(id);
     if (!anno) return;
+    // Programmatic selection auto-enables the pencil in edit mode.
+    if (!this._pencilEnabled) {
+      this._pencilEnabled = true;
+      this.setMode('edit');
+    }
     this.layer.setSelected(anno, on);
   }
 
@@ -1139,6 +1161,12 @@ class ManagerSvgAnnotation {
    */
   setSelectedIds(ids) {
     const unique = [...new Set(ids)];
+
+    // Programmatic selection auto-enables the pencil in edit mode.
+    if (!this._pencilEnabled) {
+      this._pencilEnabled = true;
+      this.setMode('edit');
+    }
 
     // Suppress per-item _updateHandlesVisibility calls during the batch.
     this._batchSelectInProgress = true;
@@ -1271,10 +1299,13 @@ class ManagerSvgAnnotation {
   _syncPointerEvents() {
     const svgGroup = this.layer?.svgGroup;
     if (!svgGroup) return;
-    // In create mode, existing annotation shapes must NOT intercept pointer events
-    // so that PointerManager always sees every click/drag for drawing.
-    // In idle and edit modes, annotations are clickable for selection.
-    svgGroup.style.pointerEvents = (this._mode === 'create') ? 'none' : '';
+    // pointer-events: none in three cases:
+    //  1. pencil disabled → annotations must be fully transparent to the user;
+    //     all clicks/drags must reach the canvas (panzoom, light, …)
+    //  2. create mode → PointerManager must see every click/drag for drawing
+    // In edit mode with pencil enabled, annotations are clickable for selection.
+    svgGroup.style.pointerEvents =
+      (!this._pencilEnabled || this._mode === 'create') ? 'none' : '';
   }
 
   // ─── Internal: style resolution ─────────────────────────────────────────────
@@ -1411,6 +1442,9 @@ class ManagerSvgAnnotation {
    */
   _wireClickHandler() {
     this.layer.onClick = (anno, e) => {
+      // Mouse selections are only allowed when the pencil is enabled by the user.
+      // Return true to swallow the event (prevent LayerSvgAnnotation's default select).
+      if (!this._pencilEnabled) return true;
       // Record that the click landed on an annotation so _onSingleTap can
       // distinguish this from a click on the empty canvas background.
       this._lastClickWasOnAnnotation = true;
@@ -1503,6 +1537,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onDoubleTap(e) {
+    if (!this._pencilEnabled) return;
     if (this._isUiTarget(e)) return;
     e.preventDefault();
     e.stopPropagation();
@@ -1543,6 +1578,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onSingleTap(e) {
+    if (!this._pencilEnabled) return;
     if (this._isUiTarget(e)) return;
 
     // Mid-drawing: add a vertex (only for sequence/polyline markers)
@@ -1571,6 +1607,7 @@ class ManagerSvgAnnotation {
 
   /** Hover → rubber-band update for 'sequence' sessions (mouse up + moving). @private */
   _onHover(e) {
+    if (!this._pencilEnabled) return;
     if (!this._session) return;
     const pos = this._eventToImageCoords(e);
     const transform = this.viewer.camera.getCurrentTransform(performance.now());
@@ -1591,6 +1628,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onDragStart(e) {
+    if (!this._pencilEnabled) return;
     if (this._isUiTarget(e)) return;
     // Only intercept while actively creating an annotation
     if (this._mode !== 'create') return;
