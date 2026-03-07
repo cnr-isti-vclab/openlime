@@ -373,6 +373,7 @@ class PolylineMarker extends Marker {
     super('polyline', Object.assign({
       closed: false,
       vertexRadius: 5,
+      hitTolerance: 8,   // screen-px extra hit area on each side of the stroke
     }, options));
   }
 
@@ -428,6 +429,23 @@ class PolylineMarker extends Marker {
       opacity: String(opacity),
     });
 
+    // Invisible hit-target with wider stroke for easier selection.
+    // Uses pointer-events:stroke so only the stroked path triggers clicks,
+    // for closed shapes we use pointer-events:all to also hit the fill area.
+    const hitSw = (this.hitTolerance ?? 8) / (transform?.z ?? 1);
+    const hitFill = this.closed ? 'transparent' : 'none';
+    const hitEvents = this.closed ? 'all' : 'stroke';
+    const hit = Util.createSVGElement('polyline', {
+      points: PolylineMarker._toPointsAttr([pos]),
+      class: 'annotation-polyline-hit',
+      stroke: 'transparent',
+      'stroke-width': String(hitSw),
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      fill: hitFill,
+      'pointer-events': hitEvents,
+    });
+
     // Rubber-band segment (preview of next edge, removed on finalize)
     const rubber = Util.createSVGElement('line', {
       x1: pos.x, y1: pos.y,
@@ -445,17 +463,20 @@ class PolylineMarker extends Marker {
     const handles = Util.createSVGElement('g', { class: 'annotation-vertex-handles', visibility: 'visible' });
     this._addDot(pos, transform, handles);
 
-    annotation.elements.push(polyline, rubber, handles);
-    return [polyline, rubber, handles];
+    annotation.elements.push(polyline, hit, rubber, handles);
+    return [polyline, hit, rubber, handles];
   }
 
   addVertex(pos, transform, annotation) {
     annotation.data._markerPoints.push(pos);
 
+    const pts = PolylineMarker._toPointsAttr(annotation.data._markerPoints);
     const polyline = annotation.elements.find(el => el.classList?.contains('annotation-polyline'));
-    if (polyline) {
-      polyline.setAttribute('points', PolylineMarker._toPointsAttr(annotation.data._markerPoints));
-    }
+    if (polyline) polyline.setAttribute('points', pts);
+
+    const hit = annotation.elements.find(el => el.classList?.contains('annotation-polyline-hit'));
+    if (hit) hit.setAttribute('points', pts);
+
     // Advance rubber-band start
     const rubber = annotation.elements.find(el => el.classList?.contains('annotation-polyline-rubber'));
     if (rubber) {
@@ -493,12 +514,15 @@ class PolylineMarker extends Marker {
     const handles = annotation.elements.find(el => el.classList?.contains('annotation-vertex-handles'));
     if (handles) handles.setAttribute('visibility', 'hidden');
 
-    // If closed, swap polyline → polygon
+    // If closed, swap polyline → polygon (both visible and hit-target elements)
     if (annotation.data._markerClosed) {
-      const polylineEl = annotation.elements.find(el => el.classList?.contains('annotation-polyline'));
+      const pts = PolylineMarker._toPointsAttr(annotation.data._markerPoints);
+
+      const polylineEl = annotation.elements.find(el =>
+        el.classList?.contains('annotation-polyline') && !el.classList?.contains('annotation-polyline-hit'));
       if (polylineEl) {
         const polygon = Util.createSVGElement('polygon', {
-          points: PolylineMarker._toPointsAttr(annotation.data._markerPoints),
+          points: pts,
           class: 'annotation-polyline',
           stroke: style.stroke ?? polylineEl.getAttribute('stroke'),
           'stroke-width': polylineEl.getAttribute('stroke-width'),
@@ -511,6 +535,23 @@ class PolylineMarker extends Marker {
         const idx = annotation.elements.indexOf(polylineEl);
         if (idx !== -1) annotation.elements[idx] = polygon;
       }
+
+      const hitEl = annotation.elements.find(el => el.classList?.contains('annotation-polyline-hit'));
+      if (hitEl) {
+        const hitPolygon = Util.createSVGElement('polygon', {
+          points: pts,
+          class: 'annotation-polyline-hit',
+          stroke: 'transparent',
+          'stroke-width': hitEl.getAttribute('stroke-width'),
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          fill: 'transparent',
+          'pointer-events': 'all',
+        });
+        hitEl.parentNode?.replaceChild(hitPolygon, hitEl);
+        const hidx = annotation.elements.indexOf(hitEl);
+        if (hidx !== -1) annotation.elements[hidx] = hitPolygon;
+      }
     }
 
     return annotation.elements;
@@ -520,11 +561,16 @@ class PolylineMarker extends Marker {
 
   updateElements(elements, transform, annotation, style = {}) {
     const sw = this._modelStroke(transform, style);
-    const r = (this.vertexRadius ?? 5) / (transform?.z ?? 1);
+    const r  = this._modelRadius(transform);
+    // Hit-target tolerance in model space: fixed 8 screen-px converted to model.
+    const hitSw = (this.hitTolerance ?? 8) / (transform?.z ?? 1);
 
     for (const el of elements) {
       if (el.classList?.contains('annotation-polyline')) {
         el.setAttribute('stroke-width', sw);
+      }
+      if (el.classList?.contains('annotation-polyline-hit')) {
+        el.setAttribute('stroke-width', hitSw);
       }
       if (el.classList?.contains('annotation-polyline-rubber')) {
         el.setAttribute('stroke-width', sw);
@@ -533,7 +579,7 @@ class PolylineMarker extends Marker {
       if (el.classList?.contains('annotation-vertex-handles')) {
         for (const dot of el.children) {
           dot.setAttribute('r', r);
-          dot.setAttribute('stroke-width', sw * 0.5);
+          dot.setAttribute('stroke-width', r * 0.4);
         }
       }
     }
@@ -544,14 +590,17 @@ class PolylineMarker extends Marker {
       vertexIndex >= annotation.data._markerPoints.length) return;
 
     annotation.data._markerPoints[vertexIndex] = pos;
+    const pts = PolylineMarker._toPointsAttr(annotation.data._markerPoints);
 
     // Update polyline / polygon points attribute
     const shape = annotation.elements.find(
       el => el.classList?.contains('annotation-polyline'));
-    if (shape) {
-      shape.setAttribute('points',
-        PolylineMarker._toPointsAttr(annotation.data._markerPoints));
-    }
+    if (shape) shape.setAttribute('points', pts);
+
+    // Update hit-target points
+    const hitEl = annotation.elements.find(
+      el => el.classList?.contains('annotation-polyline-hit'));
+    if (hitEl) hitEl.setAttribute('points', pts);
 
     // Update the dot position
     const handles = annotation.elements.find(
@@ -570,6 +619,7 @@ class PolylineMarker extends Marker {
       type: this.type,
       closed: this.closed,
       vertexRadius: this.vertexRadius ?? 5,
+      hitTolerance: this.hitTolerance ?? 8,
     };
   }
 
