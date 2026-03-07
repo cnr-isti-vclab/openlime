@@ -446,10 +446,12 @@ class PolylineMarker extends Marker {
       'pointer-events': hitEvents,
     });
 
-    // Rubber-band segment (preview of next edge, removed on finalize)
-    const rubber = Util.createSVGElement('line', {
-      x1: pos.x, y1: pos.y,
-      x2: pos.x, y2: pos.y,
+    // Rubber-band polyline (preview of next edge, removed on finalize).
+    // Using <polyline> instead of <line> so that for closed polygons we can
+    // extend it to [lastCommitted, cursor, firstCommitted] and show the
+    // closing edge live — without ever touching the main annotation-polyline.
+    const rubber = Util.createSVGElement('polyline', {
+      points: PolylineMarker._toPointsAttr([pos, pos]),
       class: 'annotation-polyline-rubber',
       stroke,
       'stroke-width': String(sw),
@@ -480,10 +482,10 @@ class PolylineMarker extends Marker {
     // Advance rubber-band start
     const rubber = annotation.elements.find(el => el.classList?.contains('annotation-polyline-rubber'));
     if (rubber) {
-      rubber.setAttribute('x1', pos.x);
-      rubber.setAttribute('y1', pos.y);
-      rubber.setAttribute('x2', pos.x);
-      rubber.setAttribute('y2', pos.y);
+      const pts = annotation.data._markerPoints;
+      const last = pts[pts.length - 1];
+      // rubber: [newVertex, newVertex] (collapsed; updatePreview will expand it)
+      rubber.setAttribute('points', PolylineMarker._toPointsAttr([last, last]));
     }
     // Add vertex dot
     const handles = annotation.elements.find(el => el.classList?.contains('annotation-vertex-handles'));
@@ -494,11 +496,17 @@ class PolylineMarker extends Marker {
   }
 
   updatePreview(pos, transform, annotation) {
+    // The main annotation-polyline is NEVER modified here — only the rubber-band.
+    // For open polylines: rubber = [lastCommitted, cursor]  (single segment).
+    // For closed polygons with ≥2 committed vertices: rubber = [lastCommitted, cursor, firstCommitted]
+    // so the closing edge is shown live without touching the authoritative polyline element.
     const rubber = annotation.elements.find(el => el.classList?.contains('annotation-polyline-rubber'));
-    if (rubber) {
-      rubber.setAttribute('x2', pos.x);
-      rubber.setAttribute('y2', pos.y);
-    }
+    if (!rubber) return;
+    const pts = annotation.data._markerPoints;
+    if (!pts?.length) return;
+    const last  = pts[pts.length - 1];
+    const close = annotation.data._markerClosed && pts.length >= 2 ? [pos, pts[0]] : [pos];
+    rubber.setAttribute('points', PolylineMarker._toPointsAttr([last, ...close]));
   }
 
   finalizeElement(transform, annotation, style = {}) {
@@ -574,6 +582,7 @@ class PolylineMarker extends Marker {
       }
       if (el.classList?.contains('annotation-polyline-rubber')) {
         el.setAttribute('stroke-width', sw);
+        // rubber is now a <polyline>; update dash pattern for all its segments
         el.setAttribute('stroke-dasharray', `${sw * 4},${sw * 2}`);
       }
       if (el.classList?.contains('annotation-vertex-handles')) {
