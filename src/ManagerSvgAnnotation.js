@@ -905,9 +905,11 @@ class ManagerSvgAnnotation {
   /**
    * Enables or disables the pencil (annotation system).
    *
-   * - `toggle()`        — flips the enabled state.
-   * - `toggle(true)`    — enables; enters `'create'` mode.
-   * - `toggle(false)`   — disables; returns to `'idle'` and deselects everything.
+   * - `toggle()`       — flips the enabled state.
+   * - `toggle(true)`   — enables; enters `'edit'` mode (ready to select/inspect).
+   *                      Drawing (`'create'` mode) starts automatically on
+   *                      double-click via `_onDoubleTap`.
+   * - `toggle(false)`  — disables; returns to `'idle'` and deselects everything.
    *
    * When disabled the manager is completely transparent: every pointer event
    * passes through to OpenLIME's normal panzoom / light controllers.
@@ -918,7 +920,7 @@ class ManagerSvgAnnotation {
   toggle(force) {
     const enable = force === undefined ? !this._pencilEnabled : !!force;
     this._pencilEnabled = enable;
-    this.setMode(enable ? 'create' : 'idle');
+    this.setMode(enable ? 'edit' : 'idle');
     return this._pencilEnabled;
   }
 
@@ -1528,12 +1530,16 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Double-tap — unified entry point to creation, regardless of current mode:
+   * Double-tap — unified entry point to creation:
    *
    * - Any mode, no session, 'tap' marker      → enter create, instant create, back to edit
    * - Any mode, no session, 'sequence' marker → enter create, start drawing session
    * - Any mode, no session, 'drag' marker     → enter create, arm drag (next drag starts rect)
    * - Create mode, session active, 'sequence' → add last vertex + finalise
+   *
+   * Note: `toggle()` enters `'edit'` mode (not `'create'`).  Drawing always
+   * starts here on double-click, keeping pointer-events enabled on the SVG
+   * until the very moment the user begins a new annotation.
    * @private
    */
   _onDoubleTap(e) {
