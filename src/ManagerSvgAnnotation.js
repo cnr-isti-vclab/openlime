@@ -430,11 +430,10 @@ class PolylineMarker extends Marker {
     });
 
     // Invisible hit-target with wider stroke for easier selection.
-    // Uses pointer-events:stroke so only the stroked path triggers clicks,
-    // for closed shapes we use pointer-events:all to also hit the fill area.
+    // Do NOT set `pointer-events` explicitly here: the element must inherit
+    // the group-level pointer-events policy (e.g. `none` when pencil disabled).
     const hitSw = (this.hitTolerance ?? 8) / (transform?.z ?? 1);
     const hitFill = this.closed ? 'transparent' : 'none';
-    const hitEvents = this.closed ? 'all' : 'stroke';
     const hit = Util.createSVGElement('polyline', {
       points: PolylineMarker._toPointsAttr([pos]),
       class: 'annotation-polyline-hit',
@@ -443,7 +442,6 @@ class PolylineMarker extends Marker {
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round',
       fill: hitFill,
-      'pointer-events': hitEvents,
     });
 
     // Rubber-band polyline (preview of next edge, removed on finalize).
@@ -554,7 +552,6 @@ class PolylineMarker extends Marker {
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
           fill: 'transparent',
-          'pointer-events': 'all',
         });
         hitEl.parentNode?.replaceChild(hitPolygon, hitEl);
         const hidx = annotation.elements.indexOf(hitEl);
@@ -579,6 +576,9 @@ class PolylineMarker extends Marker {
       }
       if (el.classList?.contains('annotation-polyline-hit')) {
         el.setAttribute('stroke-width', hitSw);
+        // Ensure legacy hit-targets created with explicit pointer-events
+        // no longer override group-level pointer-event policy.
+        el.removeAttribute('pointer-events');
       }
       if (el.classList?.contains('annotation-polyline-rubber')) {
         el.setAttribute('stroke-width', sw);
@@ -1660,10 +1660,10 @@ class ManagerSvgAnnotation {
       return;
     }
 
-    // No session: switch to edit mode
-    // _lastClickWasOnAnnotation was set by _wireClickHandler if pointerdown
-    // landed on an annotation element (fires before fingerSingleTap).
-    const wasOnAnnotation = this._lastClickWasOnAnnotation;
+    // No session: switch to edit mode.
+    // Determine annotation-hit directly from the current event target to avoid
+    // stale state when annotation clicks are handled by LayerSvgAnnotation.
+    const wasOnAnnotation = !!(e.target?.closest?.('.openlime-annotation'));
     this._lastClickWasOnAnnotation = false;
 
     if (this._mode !== 'edit') this.setMode('edit');
