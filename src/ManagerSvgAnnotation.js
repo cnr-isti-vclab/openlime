@@ -242,6 +242,28 @@ class Marker {
    * @returns {boolean}
    */
   canFinalize(annotation) { return true; }
+
+  /**
+   * Creates a vertex-handle dot SVG circle.
+   * Shared by all built-in markers for visual consistency:
+   * white fill with a dark outline, constant model-space radius.
+   *
+   * @param {number} x      - cx in image coordinates
+   * @param {number} y      - cy in image coordinates
+   * @param {number} r      - model-space radius
+   * @param {string} [cursor='grab'] - CSS cursor shown on the dot
+   * @returns {SVGCircleElement}
+   */
+  makeDot(x, y, r, cursor = 'grab') {
+    return Util.createSVGElement('circle', {
+      cx: x, cy: y, r,
+      fill: '#fff',
+      stroke: '#333',
+      'stroke-width': r * 0.4,
+      class: 'annotation-vertex-dot',
+      style: `cursor: ${cursor}`,
+    });
+  }
 }
 
 // ─── Built-in: DiskMarker ─────────────────────────────────────────────────────
@@ -374,19 +396,9 @@ class PolylineMarker extends Marker {
   }
 
   /** Creates a vertex dot and appends it to the handles group. */
-  _addDot(pos, transform, handles, style = {}) {
+  _addDot(pos, transform, handles) {
     const r = this._modelRadius(transform);
-    const sw = this._modelStroke(transform, style);
-    const dot = Util.createSVGElement('circle', {
-      cx: String(pos.x), cy: String(pos.y),
-      r: String(r),
-      class: 'annotation-vertex-dot',
-      fill: style.stroke ?? '#ff0000',
-      stroke: '#ffffff',
-      'stroke-width': String(sw * 0.5),
-      opacity: '0.9',
-      cursor: 'grab',
-    });
+    const dot = this.makeDot(pos.x, pos.y, r);
     handles.appendChild(dot);
     return dot;
   }
@@ -429,8 +441,9 @@ class PolylineMarker extends Marker {
     });
 
     // Vertex-handle dots group — one dot per committed vertex
-    const handles = Util.createSVGElement('g', { class: 'annotation-vertex-handles' });
-    this._addDot(pos, transform, handles, style);
+    // Explicitly visible during the creation session; finalizeElement will hide it.
+    const handles = Util.createSVGElement('g', { class: 'annotation-vertex-handles', visibility: 'visible' });
+    this._addDot(pos, transform, handles);
 
     annotation.elements.push(polyline, rubber, handles);
     return [polyline, rubber, handles];
@@ -451,23 +464,11 @@ class PolylineMarker extends Marker {
       rubber.setAttribute('x2', pos.x);
       rubber.setAttribute('y2', pos.y);
     }
-    // Add vertex dot (reuse current stroke from existing polyline element)
+    // Add vertex dot
     const handles = annotation.elements.find(el => el.classList?.contains('annotation-vertex-handles'));
     if (handles) {
-      const existingStroke = polyline?.getAttribute('stroke') ?? '#ff0000';
-      const existingSW = parseFloat(polyline?.getAttribute('stroke-width') ?? '1');
       const r = this._modelRadius(transform);
-      const dot = Util.createSVGElement('circle', {
-        cx: String(pos.x), cy: String(pos.y),
-        r: String(r),
-        class: 'annotation-vertex-dot',
-        fill: existingStroke,
-        stroke: '#ffffff',
-        'stroke-width': String(existingSW * 0.5),
-        opacity: '0.9',
-        cursor: 'grab',
-      });
-      handles.appendChild(dot);
+      handles.appendChild(this.makeDot(pos.x, pos.y, r));
     }
   }
 
@@ -654,10 +655,10 @@ class ManagerSvgAnnotation {
    * @param {Function} [options.onSelect]   - Shorthand: `.addEvent('select', fn)` — fires with the last activated annotation
    * @param {Function} [options.onSelectionChange] - Shorthand: `.addEvent('selectionChange', fn)` — fires with the full `Annotation[]` array
  * @param {boolean} [options.singleEditMode=false]
- *   When `true`, vertex handles (and `activeAnnotation`) are only active when
- *   **exactly one** annotation is selected.  With two or more selected the
- *   manager enters a "batch-select" state: no handles are shown and
- *   `activeAnnotation` returns `null`.  Defaults to `false` (legacy behaviour).
+ *   When `true`, vertex-drag listeners (and `activeAnnotation`) are suppressed
+ *   when **more than one** annotation is selected — no single annotation can be
+ *   vertex-dragged in a multi-selection.  Handle *visibility* is orthogonal and
+ *   still controlled by `showVertexHandles`.  Defaults to `false`.
    */
   constructor(viewer, options = {}) {
     Object.assign(this, {
@@ -694,11 +695,21 @@ class ManagerSvgAnnotation {
        */
       defaultAnnotationClass: 0,
       /**
-       * When true, vertex handles and `activeAnnotation` are suppressed
-       * whenever more than one annotation is selected.
+       * When true, vertex-drag listeners and `activeAnnotation` are suppressed
+       * whenever more than one annotation is selected.  Handle *visibility* is
+       * unaffected: dots still follow `showVertexHandles` regardless.
        * @type {boolean}
        */
       singleEditMode: false,
+      /**
+       * When true (default), vertex-handle dots are shown on selected annotations
+       * in edit mode, allowing the user to drag individual vertices.
+       * Set to false to keep dots hidden after finalisation — they will still
+       * appear during an active creation session but disappear as soon as the
+       * annotation is committed (last double-click / Enter).
+       * @type {boolean}
+       */
+      showVertexHandles: true,
     }, options);
 
     /**
@@ -1695,7 +1706,8 @@ class ManagerSvgAnnotation {
     // `layer.selected` is the authoritative source of truth.
     const selectedIds = this.layer.selected; // Set<string>
 
-    // ── singleEditMode: suppress handles when >1 annotation is selected ──
+    // ── singleEditMode: suppress drag listeners when >1 annotation is selected ──
+    // Handle *visibility* is still governed by `showVertexHandles` (orthogonal flag).
     if (this.singleEditMode && selectedIds.size > 1) {
       if (this._selectedAnnotation) {
         this._detachVertexDragListeners(this._selectedAnnotation);
@@ -1703,8 +1715,12 @@ class ManagerSvgAnnotation {
       }
       for (const anno of this.layer.annotations) {
         const isSelected = selectedIds.has(anno.id);
+        const isInSession = this._session?.annotation === anno;
         const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
-        if (handles) handles.setAttribute('visibility', 'hidden');
+        if (handles) {
+          if ((isSelected && this.showVertexHandles) || isInSession) handles.removeAttribute('visibility');
+          else                                                        handles.setAttribute('visibility', 'hidden');
+        }
         this._applyStyleToElements(anno, isSelected);
         anno.needsUpdate = true;
       }
@@ -1738,12 +1754,14 @@ class ManagerSvgAnnotation {
     // ── Update every annotation's visual state ────────────────────────────
     for (const anno of this.layer.annotations) {
       const isSelected = selectedIds.has(anno.id);
+      const isInSession = this._session?.annotation === anno;
 
-      // Show vertex handles for ALL selected annotations.
+      // Show vertex handles for ALL selected annotations (when the feature is enabled).
+      // Always show handles on the annotation currently being drawn (session active).
       const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
       if (handles) {
-        if (isSelected) handles.removeAttribute('visibility');
-        else            handles.setAttribute('visibility', 'hidden');
+        if ((isSelected && this.showVertexHandles) || isInSession) handles.removeAttribute('visibility');
+        else                                                        handles.setAttribute('visibility', 'hidden');
       }
 
       this._applyStyleToElements(anno, isSelected);
@@ -2064,17 +2082,6 @@ class RectMarker extends Marker {
     return (this.vertexRadius ?? 5) / (transform?.z ?? 1);
   }
 
-  _makeDot(x, y, r) {
-    return Util.createSVGElement('circle', {
-      cx: x, cy: y, r,
-      fill: '#fff',
-      stroke: '#333',
-      'stroke-width': r * 0.4,
-      class: 'annotation-vertex-dot',
-      style: 'cursor: crosshair',
-    });
-  }
-
   /** Updates the SVG <rect> x/y/width/height from the two stored corners. */
   _updateRectGeometry(annotation) {
     const c = annotation.data._markerCorners;
@@ -2104,7 +2111,7 @@ class RectMarker extends Marker {
     const pts = [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }];
     const r = this._modelRadius(transform);
     for (const p of pts) {
-      handles.appendChild(this._makeDot(p.x, p.y, r));
+      handles.appendChild(this.makeDot(p.x, p.y, r, 'nwse-resize'));
     }
   }
 
@@ -2130,8 +2137,8 @@ class RectMarker extends Marker {
       class: 'annotation-vertex-handles',
       visibility: 'visible',
     });
-    handles.appendChild(this._makeDot(pos.x, pos.y, r)); // dot[0] — fixed
-    handles.appendChild(this._makeDot(pos.x, pos.y, r)); // dot[1] — rubber
+    handles.appendChild(this.makeDot(pos.x, pos.y, r, 'crosshair')); // dot[0] — fixed
+    handles.appendChild(this.makeDot(pos.x, pos.y, r, 'crosshair')); // dot[1] — rubber
 
     annotation.elements = [rect, handles];
     return annotation.elements;
