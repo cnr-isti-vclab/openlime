@@ -468,10 +468,8 @@ class UIBasic {
 				this.viewer.containerElement.appendChild(p);
 			}
 
-			for (let l of Object.values(this.viewer.canvas.layers)) {
-				this.setLayer(l);
-				break;
-			}
+			// Layers default to visible=true; just sync the menu UI with that state.
+			this.updateMenu();
 
 			if (this.actions.light && this.actions.light.active)
 				this.toggleLightController();
@@ -767,6 +765,7 @@ class UIBasic {
 							<span class="openlime-layer-name">${entry.button}</span>
 							<span class="openlime-layer-status"></span>
 					</a>`;
+					
 			} else if (mode) {
 				// This is a mode button
 				html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry openlime-mode-entry ${classes}">
@@ -951,7 +950,7 @@ class UIBasic {
 				this.minimapOptions.viewport = firstLayer.boundingBox;
 			}
 		}
-		
+
 		this.minimap = new Minimap(this.viewer, this.minimapOptions);
 	}
 
@@ -971,21 +970,15 @@ class UIBasic {
 
 		if (!layer_on) return;
 
-		if (layer_on.overlay) { //just toggle
-			layer_on.setVisible(!layer_on.visible);
+		// Toggle this layer's visibility (works for both overlay and non-overlay layers)
+		layer_on.setVisible(!layer_on.visible);
 
-		} else {
-			for (let layer of Object.values(this.viewer.canvas.layers)) {
-				if (layer.overlay)
-					continue;
-
-				layer.setVisible(layer == layer_on);
-				for (let c of layer.controllers) {
-					if (c.control == 'light')
-						c.active = this.lightActive && layer == layer_on;
-				}
-			}
+		// Keep light controllers in sync: active only when the layer is visible
+		for (let c of layer_on.controllers) {
+			if (c.control == 'light')
+				c.active = this.lightActive && layer_on.visible;
 		}
+
 		this.updateMenu();
 		this.viewer.redraw();
 	}
