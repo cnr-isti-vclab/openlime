@@ -118,10 +118,10 @@ class UIBasic {
 	 * @param {ManagerSvgAnnotation} [options.annotationManager=null]
 	 *   Optional {@link ManagerSvgAnnotation} instance. When set, the 'pencil' action
 	 *   toggles annotation-creation mode by calling `annotationManager.toggle()`.
-	 * @param {'radio'|'toggle'} [options.layerVisibilityMode='radio']
+	 * @param {'exclusive'|'nonExclusive'|'radio'|'toggle'} [options.layerVisibilityMode='exclusive']
 	 *   Layer visibility policy for non-overlay layers:
-	 *   - `'radio'` (legacy): selecting one base layer hides the others.
-	 *   - `'toggle'`: each layer button toggles its own visibility independently.
+	 *   - `'exclusive'` (preferred, legacy alias: `'radio'`): selecting one base layer hides the others.
+	 *   - `'nonExclusive'` (preferred, legacy alias: `'toggle'`): each layer button toggles its own visibility independently.
 	 *
 	 * @fires UIBasic#lightdirection
 	 *
@@ -193,11 +193,13 @@ class UIBasic {
 			minimap: null,
 			minimapOptions: null,
 			annotationManager: null,
-			layerVisibilityMode: 'radio'
+			layerVisibilityMode: 'exclusive'
 		});
 
 		Object.assign(this, options);
-		this.layerVisibilityMode = (this.layerVisibilityMode === 'toggle') ? 'toggle' : 'radio';
+		if (this.layerVisibilityMode === 'toggle') this.layerVisibilityMode = 'nonExclusive';
+		if (this.layerVisibilityMode === 'radio') this.layerVisibilityMode = 'exclusive';
+		this.layerVisibilityMode = (this.layerVisibilityMode === 'nonExclusive') ? 'nonExclusive' : 'exclusive';
 
 		// Keep the pencil toolbar button in sync with ManagerSvgAnnotation mode changes.
 		// This also fires the pencilEnabled / pencilDisabled signals so that listeners
@@ -475,9 +477,9 @@ class UIBasic {
 			}
 
 			// Layer visibility policy init:
-			// - radio (legacy): keep exactly one non-overlay layer visible (the first).
-			// - toggle: keep current layer visibility as configured.
-			if (this.layerVisibilityMode === 'radio') {
+			// - exclusive: keep exactly one non-overlay layer visible (the first).
+			// - nonExclusive: keep current layer visibility as configured.
+			if (this.layerVisibilityMode === 'exclusive') {
 				const baseLayers = Object.values(this.viewer.canvas.layers)
 					.filter(layer => !layer.overlay);
 				if (baseLayers.length > 0) {
@@ -988,11 +990,11 @@ class UIBasic {
 
 		if (!layer_on) return;
 
-		if (this.layerVisibilityMode === 'toggle' || layer_on.overlay) {
+		if (this.layerVisibilityMode === 'nonExclusive' || layer_on.overlay) {
 			// Toggle this layer's visibility independently.
 			layer_on.setVisible(!layer_on.visible);
 		} else {
-			// Legacy radio behaviour for base layers: selecting one hides the others.
+			// Exclusive behaviour for base layers: selecting one hides the others.
 			for (let layer of Object.values(this.viewer.canvas.layers)) {
 				if (layer.overlay) continue;
 				layer.setVisible(layer === layer_on);
