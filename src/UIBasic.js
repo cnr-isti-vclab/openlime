@@ -649,10 +649,9 @@ class UIBasic {
 		this.setActiveControllers(!active);
 		for (let layer of Object.values(this.viewer.canvas.layers))
 			for (let c of layer.controllers)
-				if (c.control == 'light') {
-					c.active = true;
+				if (c.control == 'light')
 					c.activeModifiers = active ? [0, 2, 4] : [2, 4];  //nothing, shift and alt
-				}
+		this._syncLightControllers();
 	}
 
 	/**
@@ -973,14 +972,38 @@ class UIBasic {
 		// Toggle this layer's visibility (works for both overlay and non-overlay layers)
 		layer_on.setVisible(!layer_on.visible);
 
-		// Keep light controllers in sync: active only when the layer is visible
-		for (let c of layer_on.controllers) {
-			if (c.control == 'light')
-				c.active = this.lightActive && layer_on.visible;
-		}
+		// Keep light controllers in sync with global multi-layer visibility.
+		this._syncLightControllers();
 
 		this.updateMenu();
 		this.viewer.redraw();
+	}
+
+	/**
+	 * Recomputes light-controller activation from the current layer visibility.
+	 * In multi-layer mode, light controls remain active while at least one
+	 * visible layer supports light interaction.
+	 * @private
+	 */
+	_syncLightControllers() {
+		let hasVisibleLightLayer = false;
+		for (let layer of Object.values(this.viewer.canvas.layers)) {
+			if (!layer.visible) continue;
+			for (let c of layer.controllers) {
+				if (c.control == 'light') {
+					hasVisibleLightLayer = true;
+					break;
+				}
+			}
+			if (hasVisibleLightLayer) break;
+		}
+
+		for (let layer of Object.values(this.viewer.canvas.layers)) {
+			for (let c of layer.controllers) {
+				if (c.control == 'light')
+					c.active = this.lightActive && hasVisibleLightLayer;
+			}
+		}
 	}
 
 	/**
