@@ -118,6 +118,10 @@ class UIBasic {
 	 * @param {ManagerSvgAnnotation} [options.annotationManager=null]
 	 *   Optional {@link ManagerSvgAnnotation} instance. When set, the 'pencil' action
 	 *   toggles annotation-creation mode by calling `annotationManager.toggle()`.
+	 * @param {'radio'|'toggle'} [options.layerVisibilityMode='radio']
+	 *   Layer visibility policy for non-overlay layers:
+	 *   - `'radio'` (legacy): selecting one base layer hides the others.
+	 *   - `'toggle'`: each layer button toggles its own visibility independently.
 	 *
 	 * @fires UIBasic#lightdirection
 	 *
@@ -188,10 +192,12 @@ class UIBasic {
 			menu: [],
 			minimap: null,
 			minimapOptions: null,
-			annotationManager: null
+			annotationManager: null,
+			layerVisibilityMode: 'radio'
 		});
 
 		Object.assign(this, options);
+		this.layerVisibilityMode = (this.layerVisibilityMode === 'toggle') ? 'toggle' : 'radio';
 
 		// Keep the pencil toolbar button in sync with ManagerSvgAnnotation mode changes.
 		// This also fires the pencilEnabled / pencilDisabled signals so that listeners
@@ -468,7 +474,20 @@ class UIBasic {
 				this.viewer.containerElement.appendChild(p);
 			}
 
-			// Layers default to visible=true; just sync the menu UI with that state.
+			// Layer visibility policy init:
+			// - radio (legacy): keep exactly one non-overlay layer visible (the first).
+			// - toggle: keep current layer visibility as configured.
+			if (this.layerVisibilityMode === 'radio') {
+				const baseLayers = Object.values(this.viewer.canvas.layers)
+					.filter(layer => !layer.overlay);
+				if (baseLayers.length > 0) {
+					const first = baseLayers[0];
+					for (const layer of baseLayers)
+						layer.setVisible(layer === first);
+				}
+			}
+
+			this._syncLightControllers();
 			this.updateMenu();
 
 			if (this.actions.light && this.actions.light.active)
@@ -969,8 +988,16 @@ class UIBasic {
 
 		if (!layer_on) return;
 
-		// Toggle this layer's visibility (works for both overlay and non-overlay layers)
-		layer_on.setVisible(!layer_on.visible);
+		if (this.layerVisibilityMode === 'toggle' || layer_on.overlay) {
+			// Toggle this layer's visibility independently.
+			layer_on.setVisible(!layer_on.visible);
+		} else {
+			// Legacy radio behaviour for base layers: selecting one hides the others.
+			for (let layer of Object.values(this.viewer.canvas.layers)) {
+				if (layer.overlay) continue;
+				layer.setVisible(layer === layer_on);
+			}
+		}
 
 		// Keep light controllers in sync with global multi-layer visibility.
 		this._syncLightControllers();
