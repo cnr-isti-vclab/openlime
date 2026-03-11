@@ -397,6 +397,34 @@ g.openlime-expand {
 	color: #4CAF50;
 }
 
+/* Lens toggle button inside layer entries */
+.openlime-lens-btn {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 4px;
+	color: rgba(255, 255, 255, 0.5);
+	font-size: 14px;
+	line-height: 1;
+	padding: 2px 5px;
+	cursor: pointer;
+	margin-left: 6px;
+	flex-shrink: 0;
+	transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.openlime-lens-btn:hover {
+	background-color: rgba(255, 255, 255, 0.15);
+	color: rgba(255, 255, 255, 0.9);
+	border-color: rgba(255, 255, 255, 0.4);
+}
+
+.openlime-lens-btn.active {
+	background-color: rgba(70, 130, 180, 0.7);
+	border-color: rgba(100, 160, 220, 0.8);
+	color: #ffffff;
+}
+
+
 /* Mode entries */
 .openlime-mode-entry {
 	padding-left: 25px;

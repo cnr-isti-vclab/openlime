@@ -125,15 +125,11 @@ class LayerLens extends LayerCombiner {
 	}
 
 	/**
-	 * Sets the base layer (shown inside lens)
-	 * @param {Layer} layer - Base layer instance
+	 * Sets the base layer (shown inside lens). Pass null to clear the base layer.
+	 * @param {Layer|null} l - Base layer instance, or null to clear
 	 * @fires Layer#update
 	 */
 	setBaseLayer(l) {
-		if (!l) {
-			console.warn("Attempting to set null base layer");
-			return;
-		}
 		this.layers[0] = l;
 		this.emit('update');
 	}
@@ -240,6 +236,9 @@ class LayerLens extends LayerCombiner {
 	 * @private
 	 */
 	draw(transform, viewport) {
+		if (this.layers[0] === null)
+			return true;
+
 		let done = this.interpolateControls();
 
 		// Cache frequently accessed values

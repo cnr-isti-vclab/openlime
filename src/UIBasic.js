@@ -6,6 +6,7 @@ import { Ruler } from "./Ruler"
 import { ScaleBar } from './ScaleBar'
 import { addSignals } from './Signals'
 import { Minimap } from './Minimap'
+import { LayerSvgAnnotation } from './LayerSvgAnnotation'
 
 /**
  * @typedef {Object} UIAction
@@ -193,7 +194,8 @@ class UIBasic {
 			minimap: null,
 			minimapOptions: null,
 			annotationManager: null,
-			layerVisibilityMode: 'exclusive'
+			layerVisibilityMode: 'exclusive',
+			lensLayer: null
 		});
 
 		Object.assign(this, options);
@@ -212,7 +214,7 @@ class UIBasic {
 				if (pencilButton)
 					pencilButton.classList.toggle('openlime-pencil-active', mode !== 'idle');
 				if (mode !== 'idle') this.emit('pencilEnabled');
-				else                 this.emit('pencilDisabled');
+				else this.emit('pencilDisabled');
 			});
 		}
 
@@ -242,6 +244,9 @@ class UIBasic {
 		// In the constructor section, replace this block:
 
 		for (let [id, layer] of Object.entries(this.viewer.canvas.layers)) {
+			// Skip the LensLayer instance: it is controlled via lens buttons, not shown as a regular entry
+			if (this.lensLayer && layer === this.lensLayer) continue;
+
 			let modes = []
 			for (let m of layer.getModes()) {
 				let mode = {
@@ -270,7 +275,11 @@ class UIBasic {
 				onclick: () => { const l = this.viewer.canvas.layers[id]; if (l) this.setLayer(l); },
 				// FIXED: use the ID to retrieve the correct layer  
 				status: () => { const l = this.viewer.canvas.layers[id]; return l && l.visible ? 'active' : ''; },
-				layer: id
+				layer: id,
+				// Lens button: present when a lensLayer is configured
+				lensButton: !!this.lensLayer && !(layer instanceof LayerSvgAnnotation),
+				lensOnclick: () => { const l = this.viewer.canvas.layers[id]; if (l) this.setLensForLayer(l); },
+				lensStatus: () => { const l = this.viewer.canvas.layers[id]; return (l && this.lensLayer && this.lensLayer.layers[0] === l && this.lensLayer.visible) ? 'active' : ''; },
 			};
 			if (modes.length > 1) layerEntry.list = modes;
 
@@ -780,12 +789,17 @@ class UIBasic {
 			// Add icons for layers and modes
 			if (layer && !mode) {
 				// This is a layer button
+				let lensBtn = '';
+				if (entry.lensButton) {
+					lensBtn = `<button class="openlime-lens-btn" title="Show in lens" data-lens-layer="${entry.layer}">&#x1F50D;</button>`;
+				}
 				html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry openlime-layer-entry ${classes}">
 							<span class="openlime-layer-icon"></span>
 							<span class="openlime-layer-name">${entry.button}</span>
 							<span class="openlime-layer-status"></span>
+							${lensBtn}
 					</a>`;
-					
+
 			} else if (mode) {
 				// This is a mode button
 				html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry openlime-mode-entry ${classes}">
@@ -824,6 +838,8 @@ class UIBasic {
 		entry.element = this.layerMenu.querySelector('#' + entry.id);
 		if (entry.onclick)
 			entry.element.addEventListener('click', (e) => {
+				// Ignore clicks that originated from the lens button
+				if (e.target.closest('.openlime-lens-btn')) return;
 				entry.onclick();
 				// Update the slider value if it exists
 				const sliderValue = entry.element.querySelector('.openlime-slider-value');
@@ -834,6 +850,16 @@ class UIBasic {
 					}
 				}
 			});
+
+		// Wire the lens button if present
+		entry.lensBtnElement = entry.element.querySelector('.openlime-lens-btn');
+		if (entry.lensBtnElement && entry.lensOnclick) {
+			entry.lensBtnElement.addEventListener('click', (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				entry.lensOnclick();
+			});
+		}
 
 		// For sliders, we need special handling
 		if (entry.element.classList.contains('openlime-slider')) {
@@ -881,6 +907,12 @@ class UIBasic {
 			const statusIcon = entry.element.querySelector('.openlime-layer-status');
 			if (statusIcon) {
 				statusIcon.textContent = status == 'active' ? '✓' : '';
+			}
+			// Update lens button active state
+			if (entry.lensBtnElement && entry.lensStatus) {
+				const lensActive = entry.lensStatus() === 'active';
+				entry.lensBtnElement.classList.toggle('active', lensActive);
+				entry.lensBtnElement.title = lensActive ? 'Remove from lens' : 'Show in lens';
 			}
 		}
 
@@ -1366,6 +1398,29 @@ class UIBasic {
 			// Button state and pencilEnabled/pencilDisabled signals are handled
 			// by the 'modeChange' listener wired in the constructor.
 		}
+	}
+
+	/**
+	 * Sets or clears the base layer inside the LensLayer.
+	 * If the requested layer is already in the lens, it is removed (toggle off).
+	 * Otherwise the layer is set as the lens base and all other layers are
+	 * updated to no longer be inside the lens.
+	 * @param {Layer} layer - Layer to set as lens base (or to remove from lens)
+	 */
+	setLensForLayer(layer) {
+		if (!this.lensLayer) return;
+
+		if (this.lensLayer.layers[0] === layer && this.lensLayer.visible) {
+			// Toggle off: hide the lens layer
+			this.lensLayer.setVisible(false);
+		} else {
+			// Set this layer as the inner content of the lens and show it
+			this.lensLayer.setBaseLayer(layer);
+			this.lensLayer.setVisible(true);
+		}
+
+		this.updateMenu();
+		this.viewer.redraw();
 	}
 
 	// closeLayersMenu() {

@@ -16,8 +16,13 @@
         }
 
         /* Override examples.css: viewer takes full viewport, panels are fixed overlays */
-        h1 { display: none; }
-        .openlime { height: 100% !important; }
+        h1 {
+            display: none;
+        }
+
+        .openlime {
+            height: 100% !important;
+        }
 
         #annotation-toolbar {
             position: fixed;
@@ -27,7 +32,8 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            pointer-events: none;   /* children re-enable as needed */
+            pointer-events: none;
+            /* children re-enable as needed */
         }
 
         #marker-panel {
@@ -36,7 +42,7 @@
             flex-wrap: wrap;
             gap: 8px;
             padding: 6px 10px;
-            background: rgba(0,0,0,0.65);
+            background: rgba(0, 0, 0, 0.65);
             border-radius: 8px;
             backdrop-filter: blur(4px);
             border-left: 3px solid #4fc3f7;
@@ -89,7 +95,7 @@
         #selection-panel {
             display: none;
             padding: 6px 10px;
-            background: rgba(0,0,0,0.65);
+            background: rgba(0, 0, 0, 0.65);
             border-radius: 8px;
             backdrop-filter: blur(4px);
             border-left: 3px solid #ffd700;
@@ -99,7 +105,9 @@
             max-width: 280px;
         }
 
-        #selection-panel strong { color: #ffd700; }
+        #selection-panel strong {
+            color: #ffd700;
+        }
 
         /* Interaction hint — always visible except during active sessions */
         #ctrl-hint {
@@ -119,7 +127,9 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        #ctrl-hint b { color: #ffd700; }
+        #ctrl-hint b {
+            color: #ffd700;
+        }
 
         /* Toolbar locked during an active creation session */
         #annotation-toolbar.session-active #marker-panel {
@@ -147,7 +157,8 @@
     </div>
     <div id="creation-hint"></div>
     <div id="ctrl-hint">
-        <b>Double-click</b> on canvas to create &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b>) to multi-select
+        <b>Double-click</b> on canvas to create &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or
+        <b>&#8984;+click</b>) to multi-select
     </div>
     <div class="openlime"></div>
     <script src="../../js/openlime.js"></script>
@@ -155,26 +166,99 @@
         // Create an OpenLIME canvas into openlime
         const lime = new OpenLIME.Viewer('.openlime');
 
-        const layer0 = new OpenLIME.Layer({
-            label: 'item1',
+        const path = '../../assets/lighthouse/image/';
+
+        let maxZIndex = 10; // Track the maximum z-index used by regular layers
+        let zindexCounter = maxZIndex; // Start z-index from 1 for regular layers
+
+        const layerKd = new OpenLIME.Layer({
+            label: 'kdmap',
             layout: 'image',
-            url: '../../assets/rsc/item1/info.json',
-            type: 'rsc',
-            normals: false, 
-            zindex: 2
-        });
-        lime.addLayer('rsc', layer0);
-
-        const layer1 = new OpenLIME.Layer({
-            label: 'coin-deepzoom hsh',
-            layout: 'deepzoom',
-            type: 'rti',
-            url: '../../assets/rti/hsh/info.json',
+            url: path + 'lighthouse-kdmap.jpg',
+            type: 'image',
             normals: false,
-            zindex: 1
+            zindex: zindexCounter--,
+            visible: true,
         });
-        lime.addLayer('coin', layer1);
+        lime.addLayer('kdmap', layerKd);
 
+        const layerKs = new OpenLIME.Layer({
+            label: 'ksmap',
+            layout: 'image',
+            url: path + 'lighthouse-ksmap.jpg',
+            type: 'image',
+            normals: false,
+            zindex: zindexCounter--,
+            visible: false,
+        });
+        lime.addLayer('ksmap', layerKs);
+
+        const layerNo = new OpenLIME.Layer({
+            label: 'normalmap',
+            layout: 'image',
+            url: path + 'lighthouse-nomap.jpg',
+            type: 'image',
+            normals: false,
+            zindex: zindexCounter--,
+            visible: false,
+        });
+        lime.addLayer('normalmap', layerNo);
+
+        const layerGl = new OpenLIME.Layer({
+            label: 'glmap',
+            layout: 'image',
+            url: path + 'lighthouse-glmap.jpg',
+            type: 'image',
+            normals: false,
+            zindex: zindexCounter--,
+            visible: false,
+        });
+        lime.addLayer('glmap', layerGl);
+
+        // Create a BRDF layer and add it to the canvans
+        // A BRDF layer has 4 channels. In this example the channel are stored as deepzoom files
+        const layerBrdf = new OpenLIME.Layer({
+            type: 'brdf',
+            channels: {
+                'kd': '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
+                'ks': '../../assets/lighthouse/deepzoom/lighthouse-ksmap.dzi',
+                'normals': '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
+                'gloss': '../../assets/lighthouse/deepzoom/lighthouse-glmap.dzi'
+            },
+            colorspaces: {
+                'kd': 'linear',
+                'ks': 'linear'
+            },
+            layout: 'deepzoom',
+            alphaLimits: [0.05, 0.6],
+            brightness: 3.14,
+            gamma: 1.0,
+            zindex: zindexCounter--,
+            visible: false,
+        });
+        lime.addLayer('BRDF', layerBrdf);
+
+        const lensLayer = new OpenLIME.Layer({
+            type: "lens",
+            layers: [],
+            camera: lime.camera,
+            radius: 400,
+            borderEnable: true,
+            borderColor: [0.5, 0.5, 0.5, 1],
+            borderWidth: 5,
+            visible: false,
+            zindex: maxZIndex + 1, // Ensure lens is always on top
+        });
+        lime.addLayer('lens', lensLayer);
+
+        // Create a lens controller for focus and context exploration.
+        const controllerLens = new OpenLIME.ControllerFocusContext({
+            lensLayer: lensLayer,
+            camera: lime.camera,
+            canvas: lime.canvas,
+        });
+        lime.pointerManager.onEvent(controllerLens);
+        lensLayer.controllers.push(controllerLens);
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
@@ -188,10 +272,10 @@
             markerOptions: { radius: 14 },
             // Colour classes — annotation.class (0/1/2) selects the style
             classes: [
-                { label: 'Disk',     fill: '#e63946', stroke: '#e63946', fillOpacity: 0.75, strokeWidth: 2, fillSelected: '#ffd700', strokeSelected: '#ffd700' },
-                { label: 'Polyline', fill: 'none',    stroke: '#00aaff', fillOpacity: 1,    strokeWidth: 2, fillSelected: 'none',    strokeSelected: '#ffd700' },
-                { label: 'Polygon',  fill: 'rgba(34,187,85,0.2)', stroke: '#22bb55', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
-                { label: 'Rect',     fill: 'rgba(100,160,255,0.2)', stroke: '#64a0ff', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
+                { label: 'Disk', fill: '#e63946', stroke: '#e63946', fillOpacity: 0.75, strokeWidth: 2, fillSelected: '#ffd700', strokeSelected: '#ffd700' },
+                { label: 'Polyline', fill: 'none', stroke: '#00aaff', fillOpacity: 1, strokeWidth: 2, fillSelected: 'none', strokeSelected: '#ffd700' },
+                { label: 'Polygon', fill: 'rgba(34,187,85,0.2)', stroke: '#22bb55', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
+                { label: 'Rect', fill: 'rgba(100,160,255,0.2)', stroke: '#64a0ff', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
             ],
             defaultAnnotationClass: 0,
             // With singleEditMode, vertex handles are shown only when exactly
@@ -254,7 +338,8 @@
         const ui = new OpenLIME.UIBasic(lime, {
             showLightDirections: true,
             annotationManager: manager,
-            layerVisibilityMode: 'nonExclusive'
+            layerVisibilityMode: 'exclusive',
+            lensLayer: lensLayer,
         });
 
         // When pencil mode is activated, deselect all annotations
@@ -264,10 +349,10 @@
 
         // ── Marker selector panel ────────────────────────────────────────
         const markerConfigs = {
-            'disk':     { type: 'disk',     opts: { radius: 14 },                     classIdx: 0 },
+            'disk': { type: 'disk', opts: { radius: 14 }, classIdx: 0 },
             'polyline': { type: 'polyline', opts: { closed: false, vertexRadius: 5 }, classIdx: 1 },
-            'polygon':  { type: 'polyline', opts: { closed: true,  vertexRadius: 5 }, classIdx: 2 },
-            'rect':     { type: 'rect',     opts: { vertexRadius: 6 },                classIdx: 3 },
+            'polygon': { type: 'polyline', opts: { closed: true, vertexRadius: 5 }, classIdx: 2 },
+            'rect': { type: 'rect', opts: { vertexRadius: 6 }, classIdx: 3 },
         };
 
         function setMarker(key) {
