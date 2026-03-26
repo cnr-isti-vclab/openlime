@@ -195,7 +195,11 @@ class UIBasic {
 			minimapOptions: null,
 			annotationManager: null,
 			layerVisibilityMode: 'exclusive',
-			lensLayer: null
+			lensLayer: null,
+			_pencilControllersLocked: false,
+			_savedControllerStates: null,
+			_savedPanzoomActive: true,
+			_restoreLightActiveAfterPencil: false
 		});
 
 		Object.assign(this, options);
@@ -213,6 +217,7 @@ class UIBasic {
 					.querySelector('.openlime-button.openlime-pencil');
 				if (pencilButton)
 					pencilButton.classList.toggle('openlime-pencil-active', mode !== 'idle');
+				this._setControllersForPencil(mode !== 'idle');
 				if (mode !== 'idle') this.emit('pencilEnabled');
 				else this.emit('pencilDisabled');
 			});
@@ -665,6 +670,53 @@ class UIBasic {
 				continue;
 			c.active = on;
 		}
+	}
+
+	/**
+	 * Temporarily disables all interaction controllers while annotation pencil
+	 * mode is active, then restores their previous active states.
+	 * @param {boolean} pencilOn
+	 * @private
+	 */
+	_setControllersForPencil(pencilOn) {
+		if (pencilOn) {
+			if (this._pencilControllersLocked) return;
+
+			this._savedControllerStates = new Map(
+				(this.viewer.controllers || []).map(c => [c, !!c.active])
+			);
+			this._savedPanzoomActive = !!this.panzoom?.active;
+			this._restoreLightActiveAfterPencil = !!this.lightActive;
+
+			if (this._restoreLightActiveAfterPencil) {
+				this.toggleLightController(false);
+			}
+
+			for (const c of this.viewer.controllers || []) {
+				c.active = false;
+			}
+			if (this.panzoom) this.panzoom.active = false;
+			this._pencilControllersLocked = true;
+			return;
+		}
+
+		if (!this._pencilControllersLocked) return;
+
+		if (this._restoreLightActiveAfterPencil) {
+			this.toggleLightController(true);
+			if (this.panzoom) this.panzoom.active = this._savedPanzoomActive;
+		} else if (this._savedControllerStates) {
+			for (const c of this.viewer.controllers || []) {
+				if (this._savedControllerStates.has(c)) {
+					c.active = this._savedControllerStates.get(c);
+				}
+			}
+			if (this.panzoom) this.panzoom.active = this._savedPanzoomActive;
+		}
+
+		this._savedControllerStates = null;
+		this._restoreLightActiveAfterPencil = false;
+		this._pencilControllersLocked = false;
 	}
 
 	/**
