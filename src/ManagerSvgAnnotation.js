@@ -3,7 +3,7 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation.js';
 import { CoordinateSystem } from './CoordinateSystem.js';
 import { Util } from './Util.js';
 import { addSignals } from './Signals.js';
-import { simplify, smooth } from './Simplify.js';
+import { ramerDouglasPeucker, smooth } from './Simplify.js';
 
 /**
  * @file ManagerSvgAnnotation.js
@@ -2402,46 +2402,6 @@ class FreehandMarker extends Marker {
     return dx * dx + dy * dy;
   }
 
-  _distancePointToSegmentSq(p, a, b) {
-    const abx = b.x - a.x;
-    const aby = b.y - a.y;
-    const ab2 = abx * abx + aby * aby;
-    if (ab2 === 0) return this._distanceSq(p, a);
-    let t = ((p.x - a.x) * abx + (p.y - a.y) * aby) / ab2;
-    t = Math.max(0, Math.min(1, t));
-    const proj = { x: a.x + t * abx, y: a.y + t * aby };
-    return this._distanceSq(p, proj);
-  }
-
-  // Ramer-Douglas-Peucker simplification to reduce noise while preserving shape.
-  _rdp(points, tol) {
-    if (!points || points.length <= 2) return points ?? [];
-    const tolSq = tol * tol;
-
-    const recurse = (pts, first, last, keep) => {
-      let maxDist = 0;
-      let idx = -1;
-      for (let i = first + 1; i < last; i++) {
-        const d = this._distancePointToSegmentSq(pts[i], pts[first], pts[last]);
-        if (d > maxDist) {
-          maxDist = d;
-          idx = i;
-        }
-      }
-      if (idx !== -1 && maxDist > tolSq) {
-        keep[idx] = true;
-        recurse(pts, first, idx, keep);
-        recurse(pts, idx, last, keep);
-      }
-    };
-
-    const keep = new Array(points.length).fill(false);
-    keep[0] = true;
-    keep[points.length - 1] = true;
-    recurse(points, 0, points.length - 1, keep);
-    return points.filter((_, i) => keep[i]);
-  }
-
   _appendSample(pos, transform, annotation) {
     const pts = annotation.data._markerPoints;
     if (!pts || pts.length === 0) return;
@@ -2465,7 +2425,7 @@ class FreehandMarker extends Marker {
     if (normalized.length < 2) return normalized;
 
     const tol = this._modelDistancePx(this.simplifyTolerance ?? 1.0, transform);
-    const reduced = simplify(normalized, tol);
+    const reduced = ramerDouglasPeucker(normalized, tol);
 
     if (!this.enableSmoothingFilter) {
       return reduced.length >= 2 ? reduced : normalized;

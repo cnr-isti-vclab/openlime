@@ -73,6 +73,17 @@ function simplify(points, tolerance) {
 }
 
 /**
+ * Ramer-Douglas-Peucker polyline simplification.
+ * Alias of `simplify(...)` exported with an explicit algorithm name.
+ * @param {Array<Point>} points A polyline.
+ * @param {number} tolerance Maximum allowed deviation from the original polyline.
+ * @returns {Array<Point>} The simplified polyline.
+ */
+function ramerDouglasPeucker(points, tolerance) {
+	return simplify(points, tolerance);
+}
+
+/**
  *  Uses Bezier Curve to smooth a polyline
  * @param {Array<Point>} points A polyline.
  * @param {number} cornerThres The angular threshold (in degrees). Two segments are smoothed if their angle is less then the threshold.
@@ -195,4 +206,4 @@ function smoothToPath(smoothed) {
 	return d.join(' ');
 }
 
-export { simplify, smooth, smoothToPath }
+export { simplify, ramerDouglasPeucker, smooth, smoothToPath }
