@@ -1588,6 +1588,203 @@ class ManagerSvgAnnotation {
     );
   }
 
+  /**
+   * Converts an image-space point (x right, y down) to canvas HTML coordinates.
+   * @param {{x:number,y:number}} p
+   * @returns {{x:number,y:number}|null}
+   * @private
+   */
+  _imageToCanvasHtml(p) {
+    if (!this.layer?.layout || !this.layer?.transform || !this.viewer?.camera) return null;
+    const bb = this.layer.layout.boundingBox();
+    const size = { w: bb.width(), h: bb.height() };
+    if (!(size.w > 0 && size.h > 0)) return null;
+
+    const layerPoint = {
+      x: Number(p.x) - size.w / 2,
+      y: size.h / 2 - Number(p.y),
+    };
+    if (!Number.isFinite(layerPoint.x) || !Number.isFinite(layerPoint.y)) return null;
+
+    const scenePoint = this.layer.transform.apply(layerPoint.x, layerPoint.y);
+    return CoordinateSystem.fromSceneToCanvasHtml(scenePoint, this.viewer.camera, false);
+  }
+
+  /**
+   * Reads the current rendered framebuffer and builds a compact contour map.
+   * The map is cached briefly to keep drag interactions responsive.
+   * @returns {{map:Uint8Array,width:number,height:number,canvasW:number,canvasH:number,downsample:number}|null}
+   * @private
+   */
+  _getRenderedContourMap() {
+    const canvasApi = this.viewer?.canvas;
+    const gl = canvasApi?.gl;
+    const canvasEl = this.viewer?.canvasElement;
+    if (!gl || !canvasEl) return null;
+
+    const fbW = canvasEl.width | 0;
+    const fbH = canvasEl.height | 0;
+    if (fbW <= 2 || fbH <= 2) return null;
+
+    const now = performance.now();
+    const cache = this._contourMapCache;
+    if (cache && cache.fbW === fbW && cache.fbH === fbH && (now - cache.ts) < 120) {
+      return cache.value;
+    }
+
+    const rgba = new Uint8Array(fbW * fbH * 4);
+    const prevFb = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+    try {
+      const readFb = canvasApi.useOffscreenFramebuffer ? canvasApi.offscreenFramebuffer : null;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, readFb);
+      gl.readPixels(0, 0, fbW, fbH, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
+    } catch {
+      try { gl.bindFramebuffer(gl.FRAMEBUFFER, prevFb); } catch { /* ignore */ }
+      return null;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, prevFb);
+
+    const downsample = Math.max(1, Math.round(Math.min(fbW, fbH) / 512));
+    const mapW = Math.max(3, Math.floor(fbW / downsample));
+    const mapH = Math.max(3, Math.floor(fbH / downsample));
+
+    const luma = new Float32Array(mapW * mapH);
+    for (let y = 0; y < mapH; y++) {
+      const srcYTop = Math.min(fbH - 1, y * downsample);
+      const srcY = fbH - 1 - srcYTop;
+      for (let x = 0; x < mapW; x++) {
+        const srcX = Math.min(fbW - 1, x * downsample);
+        const idx = (srcY * fbW + srcX) * 4;
+        const r = rgba[idx + 0];
+        const g = rgba[idx + 1];
+        const b = rgba[idx + 2];
+        luma[y * mapW + x] = 0.299 * r + 0.587 * g + 0.114 * b;
+      }
+    }
+
+    const map = new Uint8Array(mapW * mapH);
+    for (let y = 1; y < mapH - 1; y++) {
+      for (let x = 1; x < mapW - 1; x++) {
+        const i = y * mapW + x;
+        const gx = luma[i + 1] - luma[i - 1];
+        const gy = luma[i + mapW] - luma[i - mapW];
+        const mag = Math.min(255, Math.hypot(gx, gy));
+        map[i] = mag;
+      }
+    }
+
+    const value = {
+      map,
+      width: mapW,
+      height: mapH,
+      canvasW: fbW,
+      canvasH: fbH,
+      downsample,
+    };
+    this._contourMapCache = { ts: now, fbW, fbH, value };
+    return value;
+  }
+
+  /**
+   * Snaps an image-space point to the nearest strong contour from the rendered frame.
+   * @param {{x:number,y:number}} imagePoint
+   * @param {{radiusPx?:number,strength?:number,minGradient?:number}} [options]
+   * @returns {{x:number,y:number}}
+   */
+  snapImagePointToRenderedContour(imagePoint, options = {}) {
+    const base = {
+      x: Number(imagePoint?.x),
+      y: Number(imagePoint?.y),
+    };
+    if (!Number.isFinite(base.x) || !Number.isFinite(base.y)) return imagePoint;
+
+    const contour = this._getRenderedContourMap();
+    if (!contour) return base;
+
+    const canvasPoint = this._imageToCanvasHtml(base);
+    if (!canvasPoint) return base;
+
+    const rect = this.viewer.canvasElement.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return base;
+
+    const scaleX = contour.canvasW / rect.width;
+    const scaleY = contour.canvasH / rect.height;
+    const fbX = canvasPoint.x * scaleX;
+    const fbY = canvasPoint.y * scaleY;
+
+    const cx = Math.round(fbX / contour.downsample);
+    const cy = Math.round(fbY / contour.downsample);
+    if (!Number.isFinite(cx) || !Number.isFinite(cy)) return base;
+
+    const radPx = Math.max(2, Number(options.radiusPx ?? 14));
+    const radMap = Math.max(1, Math.round((radPx * ((scaleX + scaleY) * 0.5)) / contour.downsample));
+    const minGradient = Math.max(0, Number(options.minGradient ?? 22));
+    const strength = Math.max(0, Math.min(1, Number(options.strength ?? 0.7)));
+
+    let bestIdx = -1;
+    let bestScore = minGradient;
+    for (let dy = -radMap; dy <= radMap; dy++) {
+      const yy = cy + dy;
+      if (yy < 1 || yy >= contour.height - 1) continue;
+      for (let dx = -radMap; dx <= radMap; dx++) {
+        const xx = cx + dx;
+        if (xx < 1 || xx >= contour.width - 1) continue;
+        const d2 = dx * dx + dy * dy;
+        if (d2 > radMap * radMap) continue;
+        const idx = yy * contour.width + xx;
+        const grad = contour.map[idx];
+        const proximity = 1 - (Math.sqrt(d2) / (radMap + 1));
+        const score = grad + (24 * proximity);
+        if (score > bestScore) {
+          bestScore = score;
+          bestIdx = idx;
+        }
+      }
+    }
+
+    if (bestIdx < 0) return base;
+
+    const bestX = (bestIdx % contour.width);
+    const bestY = Math.floor(bestIdx / contour.width);
+    const snappedCanvas = {
+      x: ((bestX * contour.downsample) / scaleX),
+      y: ((bestY * contour.downsample) / scaleY),
+    };
+
+    const blendedCanvas = {
+      x: canvasPoint.x + (snappedCanvas.x - canvasPoint.x) * strength,
+      y: canvasPoint.y + (snappedCanvas.y - canvasPoint.y) * strength,
+    };
+
+    const bb = this.layer.layout.boundingBox();
+    const size = { w: bb.width(), h: bb.height() };
+    return CoordinateSystem.fromCanvasHtmlToImage(
+      blendedCanvas,
+      this.viewer.camera,
+      this.layer.transform,
+      size,
+      false,
+    );
+  }
+
+  /**
+   * Returns a snapshot of the rendered-frame contour map.
+   * Useful for diagnostic overlays and parameter tuning in external UIs.
+   * @returns {{map:Uint8Array,width:number,height:number,canvasW:number,canvasH:number,downsample:number}|null}
+   */
+  getRenderedContourMap() {
+    const contour = this._getRenderedContourMap();
+    if (!contour) return null;
+    return {
+      map: contour.map.slice(0),
+      width: contour.width,
+      height: contour.height,
+      canvasW: contour.canvasW,
+      canvasH: contour.canvasH,
+      downsample: contour.downsample,
+    };
+  }
+
   // ─── Internal: pointer handlers ──────────────────────────────────────────
 
   /**
@@ -2141,7 +2338,9 @@ class ManagerSvgAnnotation {
         `Registered: [${ManagerSvgAnnotation.getMarkerTypes().join(', ')}]`
       );
     }
-    return new cls(options);
+    const marker = new cls(options);
+    marker._manager = this;
+    return marker;
   }
 }
 
@@ -2382,6 +2581,10 @@ class FreehandMarker extends Marker {
    * @param {boolean}[options.closed=false] - Close stroke and output polygon
    * @param {boolean}[options.continuousDrawing=true] - Keep create mode after each stroke
    * @param {number} [options.hitTolerance=10] - Extra hit area in screen px
+   * @param {boolean}[options.enableContourSnap=false] - Snap sampled points to rendered contours
+   * @param {number} [options.contourSnapRadius=14] - Search radius in screen px for contour snap
+   * @param {number} [options.contourSnapStrength=0.7] - Blend factor [0..1] towards detected contour
+   * @param {number} [options.contourMinGradient=22] - Minimum local gradient magnitude to accept snap
    */
   constructor(options = {}) {
     super('freehand', Object.assign({
@@ -2392,6 +2595,10 @@ class FreehandMarker extends Marker {
       closed: false,
       continuousDrawing: true,
       hitTolerance: 10,
+        enableContourSnap: false,
+        contourSnapRadius: 14,
+        contourSnapStrength: 0.7,
+        contourMinGradient: 22,
     }, options));
   }
 
@@ -2415,14 +2622,26 @@ class FreehandMarker extends Marker {
     return dx * dx + dy * dy;
   }
 
+  _snapPoint(pos) {
+    if (!this.enableContourSnap) return pos;
+    const mgr = this._manager;
+    if (!mgr?.snapImagePointToRenderedContour) return pos;
+    return mgr.snapImagePointToRenderedContour(pos, {
+      radiusPx: this.contourSnapRadius,
+      strength: this.contourSnapStrength,
+      minGradient: this.contourMinGradient,
+    });
+  }
+
   _appendSample(pos, transform, annotation) {
+    const snappedPos = this._snapPoint(pos);
     const pts = annotation.data._markerPoints;
     if (!pts || pts.length === 0) return;
     const last = pts[pts.length - 1];
     const minD = this._modelDistancePx(this.sampleDistance ?? 1.5, transform);
     const minDSq = minD * minD;
-    if (this._distanceSq(last, pos) >= minDSq) {
-      pts.push({ x: pos.x, y: pos.y });
+    if (this._distanceSq(last, snappedPos) >= minDSq) {
+      pts.push({ x: snappedPos.x, y: snappedPos.y });
     }
   }
 
@@ -2464,9 +2683,10 @@ class FreehandMarker extends Marker {
   }
 
   startElement(pos, transform, annotation, style = {}) {
+    const startPos = this._snapPoint(pos);
     annotation.type = this.closed ? 'polygon' : 'polyline';
     annotation.data._markerClosed = !!this.closed;
-    annotation.data._markerPoints = [{ x: pos.x, y: pos.y }];
+    annotation.data._markerPoints = [{ x: startPos.x, y: startPos.y }];
 
     const sw = this._modelStroke(transform, style);
     const pts = FreehandMarker._toPointsAttr(annotation.data._markerPoints);
@@ -2588,6 +2808,10 @@ class FreehandMarker extends Marker {
       closed: !!this.closed,
       continuousDrawing: !!this.continuousDrawing,
       hitTolerance: this.hitTolerance ?? 10,
+      enableContourSnap: !!this.enableContourSnap,
+      contourSnapRadius: this.contourSnapRadius ?? 14,
+      contourSnapStrength: this.contourSnapStrength ?? 0.7,
+      contourMinGradient: this.contourMinGradient ?? 22,
     };
   }
 }

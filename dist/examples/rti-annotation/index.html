@@ -190,6 +190,11 @@
                         <button type="button" id="fh-preset-strong" class="btn btn-outline-warning btn-sm">Strong</button>
                     </div>
 
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="button" id="fh-relief-weak" class="btn btn-outline-info btn-sm">Relief Weak</button>
+                        <button type="button" id="fh-relief-strong" class="btn btn-outline-success btn-sm">Relief Strong</button>
+                    </div>
+
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" role="switch" id="fh-enable-filter">
                         <label class="form-check-label" for="fh-enable-filter">Enable Smoothing Filter</label>
@@ -223,6 +228,40 @@
                         <span id="fh-hit-tolerance-value">10</span>
                     </label>
                     <input id="fh-hit-tolerance" type="range" class="form-range" min="4" max="24" step="1" value="10">
+
+                    <div class="form-check form-switch mt-3 mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="fh-enable-contour-snap">
+                        <label class="form-check-label" for="fh-enable-contour-snap">Enable Contour Snap (from rendered frame)</label>
+                    </div>
+
+                    <label for="fh-snap-radius" class="form-label d-flex justify-content-between mt-2">
+                        <span>Contour snap radius (px)</span>
+                        <span id="fh-snap-radius-value">14</span>
+                    </label>
+                    <input id="fh-snap-radius" type="range" class="form-range" min="4" max="40" step="1" value="14">
+
+                    <label for="fh-snap-strength" class="form-label d-flex justify-content-between mt-3">
+                        <span>Contour snap strength</span>
+                        <span id="fh-snap-strength-value">0.70</span>
+                    </label>
+                    <input id="fh-snap-strength" type="range" class="form-range" min="0" max="1" step="0.05" value="0.70">
+
+                    <label for="fh-contour-min-gradient" class="form-label d-flex justify-content-between mt-3">
+                        <span>Contour min gradient</span>
+                        <span id="fh-contour-min-gradient-value">22</span>
+                    </label>
+                    <input id="fh-contour-min-gradient" type="range" class="form-range" min="5" max="80" step="1" value="22">
+
+                    <div class="form-check form-switch mt-3 mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="fh-show-contour-overlay">
+                        <label class="form-check-label" for="fh-show-contour-overlay">Show contour overlay (diagnostic)</label>
+                    </div>
+
+                    <label for="fh-overlay-opacity" class="form-label d-flex justify-content-between mt-2">
+                        <span>Overlay opacity</span>
+                        <span id="fh-overlay-opacity-value">0.65</span>
+                    </label>
+                    <input id="fh-overlay-opacity" type="range" class="form-range" min="0.10" max="1.00" step="0.05" value="0.65">
 
                     <label for="fh-stroke-width" class="form-label d-flex justify-content-between mt-3">
                         <span>Stroke width (px)</span>
@@ -378,6 +417,7 @@
         ui.addEvent('pencilDisabled', () => {
             syncMarkerToolbarEnabled();
             hideCtrlHint();
+            clearContourOverlay();
         });
 
         // ── Marker selector panel ────────────────────────────────────────
@@ -390,8 +430,32 @@
             smoothAngle: 90,
             closed: false,
             hitTolerance: 10,
+            enableContourSnap: false,
+            contourSnapRadius: 14,
+            contourSnapStrength: 0.70,
+            contourMinGradient: 22,
+            showContourOverlay: false,
+            contourOverlayOpacity: 0.65,
             strokeWidth: 2.0,
         };
+
+        const openlimeRoot = document.querySelector('.openlime');
+        if (openlimeRoot && window.getComputedStyle(openlimeRoot).position === 'static') {
+            openlimeRoot.style.position = 'relative';
+        }
+
+        const contourOverlay = document.createElement('canvas');
+        contourOverlay.id = 'contour-overlay';
+        contourOverlay.style.position = 'absolute';
+        contourOverlay.style.inset = '0';
+        contourOverlay.style.width = '100%';
+        contourOverlay.style.height = '100%';
+        contourOverlay.style.pointerEvents = 'none';
+        contourOverlay.style.zIndex = '5';
+        contourOverlay.style.mixBlendMode = 'screen';
+        contourOverlay.style.imageRendering = 'pixelated';
+        contourOverlay.style.display = 'none';
+        openlimeRoot?.appendChild(contourOverlay);
 
         // Active class index used for newly created freehand annotations.
         // Existing annotations keep their original class, so stroke-width changes
@@ -408,6 +472,10 @@
             document.getElementById('fh-simplify-value').textContent = Number(freehandSettings.simplifyTolerance).toFixed(1);
             document.getElementById('fh-smooth-angle-value').textContent = String(Math.round(freehandSettings.smoothAngle));
             document.getElementById('fh-hit-tolerance-value').textContent = String(Math.round(freehandSettings.hitTolerance));
+            document.getElementById('fh-snap-radius-value').textContent = String(Math.round(freehandSettings.contourSnapRadius));
+            document.getElementById('fh-snap-strength-value').textContent = Number(freehandSettings.contourSnapStrength).toFixed(2);
+            document.getElementById('fh-contour-min-gradient-value').textContent = String(Math.round(freehandSettings.contourMinGradient));
+            document.getElementById('fh-overlay-opacity-value').textContent = Number(freehandSettings.contourOverlayOpacity).toFixed(2);
             document.getElementById('fh-stroke-width-value').textContent = Number(freehandSettings.strokeWidth).toFixed(1);
         }
 
@@ -418,8 +486,94 @@
             document.getElementById('fh-simplify').value = String(freehandSettings.simplifyTolerance);
             document.getElementById('fh-smooth-angle').value = String(freehandSettings.smoothAngle);
             document.getElementById('fh-hit-tolerance').value = String(freehandSettings.hitTolerance);
+            document.getElementById('fh-enable-contour-snap').checked = !!freehandSettings.enableContourSnap;
+            document.getElementById('fh-snap-radius').value = String(freehandSettings.contourSnapRadius);
+            document.getElementById('fh-snap-strength').value = String(freehandSettings.contourSnapStrength);
+            document.getElementById('fh-contour-min-gradient').value = String(freehandSettings.contourMinGradient);
+            document.getElementById('fh-show-contour-overlay').checked = !!freehandSettings.showContourOverlay;
+            document.getElementById('fh-overlay-opacity').value = String(freehandSettings.contourOverlayOpacity);
             document.getElementById('fh-stroke-width').value = String(freehandSettings.strokeWidth);
             updateFreehandLabels();
+        }
+
+        function clearContourOverlay() {
+            const ctx = contourOverlay.getContext('2d');
+            if (!ctx) return;
+            ctx.clearRect(0, 0, contourOverlay.width || 1, contourOverlay.height || 1);
+            contourOverlay.style.display = 'none';
+        }
+
+        function updateContourOverlay() {
+            const shouldShow = !!freehandSettings.showContourOverlay &&
+                !!manager.active &&
+                selectedMarkerKey === 'freehand';
+            if (!shouldShow) {
+                clearContourOverlay();
+                return;
+            }
+
+            const contour = manager.getRenderedContourMap?.();
+            if (!contour) {
+                clearContourOverlay();
+                return;
+            }
+
+            if (contourOverlay.width !== contour.width || contourOverlay.height !== contour.height) {
+                contourOverlay.width = contour.width;
+                contourOverlay.height = contour.height;
+            }
+
+            const ctx = contourOverlay.getContext('2d');
+            if (!ctx) return;
+            const image = ctx.createImageData(contour.width, contour.height);
+            const data = image.data;
+            const minG = Math.max(0, Number(freehandSettings.contourMinGradient));
+            const baseOpacity = Math.max(0, Math.min(1, Number(freehandSettings.contourOverlayOpacity)));
+
+            for (let i = 0, j = 0; i < contour.map.length; i++, j += 4) {
+                const g = contour.map[i];
+                if (g < minG) {
+                    data[j + 0] = 0;
+                    data[j + 1] = 0;
+                    data[j + 2] = 0;
+                    data[j + 3] = 0;
+                    continue;
+                }
+                const t = (g - minG) / Math.max(1, 255 - minG);
+                data[j + 0] = 40;
+                data[j + 1] = 230;
+                data[j + 2] = 255;
+                data[j + 3] = Math.round(255 * baseOpacity * (0.25 + 0.75 * t));
+            }
+
+            ctx.putImageData(image, 0, 0);
+            contourOverlay.style.display = 'block';
+        }
+
+        function contourOverlayLoop() {
+            updateContourOverlay();
+            window.requestAnimationFrame(contourOverlayLoop);
+        }
+
+        function applyReliefPreset(kind) {
+            freehandSettings.enableContourSnap = true;
+            if (kind === 'weak') {
+                freehandSettings.contourSnapRadius = 20;
+                freehandSettings.contourSnapStrength = 0.55;
+                freehandSettings.contourMinGradient = 14;
+                freehandSettings.enableSmoothingFilter = true;
+                freehandSettings.enableTremorFilter = true;
+                freehandSettings.smoothAngle = 100;
+            } else {
+                freehandSettings.contourSnapRadius = 12;
+                freehandSettings.contourSnapStrength = 0.82;
+                freehandSettings.contourMinGradient = 30;
+                freehandSettings.enableSmoothingFilter = true;
+                freehandSettings.enableTremorFilter = true;
+                freehandSettings.smoothAngle = 135;
+            }
+            syncFreehandControlsFromState();
+            applyFreehandSettingsIfActive();
         }
 
         function applyFreehandStrokeWidthForFuture() {
@@ -465,6 +619,7 @@
                 freehandSettings.simplifyTolerance = 1.0;
                 freehandSettings.smoothAngle = 95;
                 freehandSettings.hitTolerance = 10;
+                freehandSettings.enableContourSnap = false;
             } else if (name === 'strong') {
                 freehandSettings.enableSmoothingFilter = true;
                 freehandSettings.enableTremorFilter = true;
@@ -472,6 +627,10 @@
                 freehandSettings.simplifyTolerance = 2.4;
                 freehandSettings.smoothAngle = 145;
                 freehandSettings.hitTolerance = 10;
+                freehandSettings.enableContourSnap = true;
+                freehandSettings.contourSnapRadius = 16;
+                freehandSettings.contourSnapStrength = 0.75;
+                freehandSettings.contourMinGradient = 20;
             }
             syncFreehandControlsFromState();
             applyFreehandStrokeWidthForFuture();
@@ -598,6 +757,8 @@
         });
         document.getElementById('fh-preset-natural').addEventListener('click', () => applyFreehandPreset('natural'));
         document.getElementById('fh-preset-strong').addEventListener('click', () => applyFreehandPreset('strong'));
+        document.getElementById('fh-relief-weak').addEventListener('click', () => applyReliefPreset('weak'));
+        document.getElementById('fh-relief-strong').addEventListener('click', () => applyReliefPreset('strong'));
         document.getElementById('fh-closed').addEventListener('change', (e) => {
             freehandSettings.closed = !!e.target.checked;
             applyFreehandSettingsIfActive();
@@ -622,6 +783,33 @@
             updateFreehandLabels();
             applyFreehandSettingsIfActive();
         });
+        document.getElementById('fh-enable-contour-snap').addEventListener('change', (e) => {
+            freehandSettings.enableContourSnap = !!e.target.checked;
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-snap-radius').addEventListener('input', (e) => {
+            freehandSettings.contourSnapRadius = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-snap-strength').addEventListener('input', (e) => {
+            freehandSettings.contourSnapStrength = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-contour-min-gradient').addEventListener('input', (e) => {
+            freehandSettings.contourMinGradient = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-show-contour-overlay').addEventListener('change', (e) => {
+            freehandSettings.showContourOverlay = !!e.target.checked;
+            if (!freehandSettings.showContourOverlay) clearContourOverlay();
+        });
+        document.getElementById('fh-overlay-opacity').addEventListener('input', (e) => {
+            freehandSettings.contourOverlayOpacity = Number(e.target.value);
+            updateFreehandLabels();
+        });
         document.getElementById('fh-stroke-width').addEventListener('input', (e) => {
             freehandSettings.strokeWidth = Number(e.target.value);
             updateFreehandLabels();
@@ -630,6 +818,7 @@
         });
 
         syncFreehandControlsFromState();
+        window.requestAnimationFrame(contourOverlayLoop);
         applyFreehandStrokeWidthForFuture();
         if (manager.active) setCtrlHint(EDIT_HINT_TEXT);
         else hideCtrlHint();
