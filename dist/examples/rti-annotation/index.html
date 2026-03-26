@@ -222,6 +222,12 @@
                         <span id="fh-hit-tolerance-value">10</span>
                     </label>
                     <input id="fh-hit-tolerance" type="range" class="form-range" min="4" max="24" step="1" value="10">
+
+                    <label for="fh-stroke-width" class="form-label d-flex justify-content-between mt-3">
+                        <span>Stroke width (px)</span>
+                        <span id="fh-stroke-width-value">2.0</span>
+                    </label>
+                    <input id="fh-stroke-width" type="range" class="form-range" min="1" max="12" step="0.1" value="2.0">
                 </div>
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -360,7 +366,13 @@
             smoothAngle: 90,
             closed: false,
             hitTolerance: 10,
+            strokeWidth: 2.0,
         };
+
+        // Active class index used for newly created freehand annotations.
+        // Existing annotations keep their original class, so stroke-width changes
+        // here affect only future strokes.
+        let freehandClassIdx = 4;
 
         const freehandModalEl = document.getElementById('freehandSettingsModal');
         const freehandModal = (window.bootstrap && freehandModalEl)
@@ -372,6 +384,7 @@
             document.getElementById('fh-simplify-value').textContent = Number(freehandSettings.simplifyTolerance).toFixed(1);
             document.getElementById('fh-smooth-angle-value').textContent = String(Math.round(freehandSettings.smoothAngle));
             document.getElementById('fh-hit-tolerance-value').textContent = String(Math.round(freehandSettings.hitTolerance));
+            document.getElementById('fh-stroke-width-value').textContent = Number(freehandSettings.strokeWidth).toFixed(1);
         }
 
         function syncFreehandControlsFromState() {
@@ -381,7 +394,38 @@
             document.getElementById('fh-simplify').value = String(freehandSettings.simplifyTolerance);
             document.getElementById('fh-smooth-angle').value = String(freehandSettings.smoothAngle);
             document.getElementById('fh-hit-tolerance').value = String(freehandSettings.hitTolerance);
+            document.getElementById('fh-stroke-width').value = String(freehandSettings.strokeWidth);
             updateFreehandLabels();
+        }
+
+        function applyFreehandStrokeWidthForFuture() {
+            const fw = Number(freehandSettings.strokeWidth);
+            if (!Number.isFinite(fw) || fw <= 0) return;
+
+            const key = fw.toFixed(1);
+            const existingIdx = manager.classes.findIndex((cls, idx) =>
+                idx >= 4 &&
+                cls?.label?.startsWith('Freehand') &&
+                Number(cls.strokeWidth).toFixed(1) === key
+            );
+
+            if (existingIdx !== -1) {
+                freehandClassIdx = existingIdx;
+            } else {
+                const base = manager.classes?.[4];
+                if (!base) return;
+                freehandClassIdx = manager.classes.length;
+                manager.classes.push({
+                    ...base,
+                    label: `Freehand ${key}px`,
+                    strokeWidth: fw,
+                });
+            }
+
+            markerConfigs.freehand.classIdx = freehandClassIdx;
+            if (selectedMarkerKey === 'freehand') {
+                manager.defaultAnnotationClass = freehandClassIdx;
+            }
         }
 
         function applyFreehandSettingsIfActive() {
@@ -406,6 +450,7 @@
                 freehandSettings.hitTolerance = 10;
             }
             syncFreehandControlsFromState();
+            applyFreehandStrokeWidthForFuture();
             applyFreehandSettingsIfActive();
         }
 
@@ -414,7 +459,7 @@
             'polyline': { type: 'polyline', opts: { closed: false, vertexRadius: 5 }, classIdx: 1 },
             'polygon':  { type: 'polyline', opts: { closed: true,  vertexRadius: 5 }, classIdx: 2 },
             'rect':     { type: 'rect',     opts: { vertexRadius: 6 },                classIdx: 3 },
-            'freehand': { type: 'freehand', opts: { ...freehandSettings },            classIdx: 4 },
+            'freehand': { type: 'freehand', opts: { ...freehandSettings },            classIdx: freehandClassIdx },
         };
 
         let selectedMarkerKey = 'disk';
@@ -546,8 +591,15 @@
             updateFreehandLabels();
             applyFreehandSettingsIfActive();
         });
+        document.getElementById('fh-stroke-width').addEventListener('input', (e) => {
+            freehandSettings.strokeWidth = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandStrokeWidthForFuture();
+            applyFreehandSettingsIfActive();
+        });
 
         syncFreehandControlsFromState();
+        applyFreehandStrokeWidthForFuture();
 
         // ── Mode panel ─────────────────────────────────────────────
         // Modes are set automatically (double-click → create, click → edit);
