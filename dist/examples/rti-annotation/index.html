@@ -157,6 +157,8 @@
                     <button id="btn-rect" class="btn btn-outline-light marker-btn">&#9645; Rect</button>
                     <button id="btn-freehand" class="btn btn-outline-light marker-btn">&#9998; Freehand</button>
                     <button id="btn-freehand-settings" class="btn btn-outline-info settings-btn">Settings</button>
+                    <button id="btn-anno-save" class="btn btn-outline-info settings-btn">Save</button>
+                    <button id="btn-anno-load" class="btn btn-outline-info settings-btn">Load</button>
                 </div>
             </div>
         </div>
@@ -229,6 +231,7 @@
     </div>
 
     <div class="openlime"></div>
+    <input id="anno-load-input" type="file" accept="application/json,.json" style="display:none" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="../../js/openlime.js"></script>
     <script>
@@ -462,6 +465,54 @@
         document.getElementById('btn-freehand-settings').addEventListener('click', () => {
             syncFreehandControlsFromState();
             freehandModal?.show();
+        });
+
+        document.getElementById('btn-anno-save').addEventListener('click', () => {
+            try {
+                const payload = manager.exportAnnotations();
+                const json = JSON.stringify(payload, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const now = new Date();
+                const stamp = now.toISOString().replace(/[:.]/g, '-');
+                a.download = `openlime-annotations-${stamp}.json`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error('[Annotations] Save failed', err);
+                alert('Failed to save annotations JSON. See console for details.');
+            }
+        });
+
+        const annoLoadInput = document.getElementById('anno-load-input');
+        document.getElementById('btn-anno-load').addEventListener('click', () => {
+            annoLoadInput.value = '';
+            annoLoadInput.click();
+        });
+
+        annoLoadInput.addEventListener('change', async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+                if (!Array.isArray(parsed)) {
+                    throw new Error('Expected a JSON array of annotations');
+                }
+
+                // Replace current annotations with loaded ones.
+                const existingIds = manager.getAnnotations().map(a => a.id);
+                if (existingIds.length) manager.deleteAnnotations(existingIds);
+                manager.importAnnotations(parsed);
+                manager.deselectAll();
+            } catch (err) {
+                console.error('[Annotations] Load failed', err);
+                alert('Failed to load annotations JSON. Check file format and console logs.');
+            }
         });
 
         document.getElementById('fh-enable-filter').addEventListener('change', (e) => {
