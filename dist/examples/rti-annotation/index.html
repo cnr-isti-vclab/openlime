@@ -188,6 +188,8 @@
                     <div class="d-flex gap-2 mb-3">
                         <button type="button" id="fh-preset-natural" class="btn btn-outline-light btn-sm">Natural</button>
                         <button type="button" id="fh-preset-strong" class="btn btn-outline-warning btn-sm">Strong</button>
+                        <button type="button" id="fh-preset-smooth-snap" class="btn btn-outline-primary btn-sm">Smooth Snap</button>
+                        <button type="button" id="fh-preset-smooth-snap-strong" class="btn btn-outline-danger btn-sm">Smooth Snap Strong</button>
                     </div>
 
                     <div class="d-flex gap-2 mb-3">
@@ -619,7 +621,6 @@
                 freehandSettings.simplifyTolerance = 1.0;
                 freehandSettings.smoothAngle = 95;
                 freehandSettings.hitTolerance = 10;
-                freehandSettings.enableContourSnap = false;
             } else if (name === 'strong') {
                 freehandSettings.enableSmoothingFilter = true;
                 freehandSettings.enableTremorFilter = true;
@@ -631,6 +632,30 @@
                 freehandSettings.contourSnapRadius = 16;
                 freehandSettings.contourSnapStrength = 0.75;
                 freehandSettings.contourMinGradient = 20;
+            } else if (name === 'smoothSnap') {
+                // Dedicated anti-zigzag setup for contour snapping.
+                freehandSettings.enableSmoothingFilter = true;
+                freehandSettings.enableTremorFilter = true;
+                freehandSettings.enableContourSnap = true;
+                freehandSettings.sampleDistance = 1.6;
+                freehandSettings.simplifyTolerance = 2.0;
+                freehandSettings.smoothAngle = 135;
+                freehandSettings.hitTolerance = 10;
+                freehandSettings.contourSnapRadius = 10;
+                freehandSettings.contourSnapStrength = 0.58;
+                freehandSettings.contourMinGradient = 30;
+            } else if (name === 'smoothSnapStrong') {
+                // Stronger snap while still avoiding visible sawtooth artifacts.
+                freehandSettings.enableSmoothingFilter = true;
+                freehandSettings.enableTremorFilter = true;
+                freehandSettings.enableContourSnap = true;
+                freehandSettings.sampleDistance = 1.3;
+                freehandSettings.simplifyTolerance = 2.4;
+                freehandSettings.smoothAngle = 145;
+                freehandSettings.hitTolerance = 10;
+                freehandSettings.contourSnapRadius = 12;
+                freehandSettings.contourSnapStrength = 0.70;
+                freehandSettings.contourMinGradient = 32;
             }
             syncFreehandControlsFromState();
             applyFreehandStrokeWidthForFuture();
@@ -757,6 +782,8 @@
         });
         document.getElementById('fh-preset-natural').addEventListener('click', () => applyFreehandPreset('natural'));
         document.getElementById('fh-preset-strong').addEventListener('click', () => applyFreehandPreset('strong'));
+        document.getElementById('fh-preset-smooth-snap').addEventListener('click', () => applyFreehandPreset('smoothSnap'));
+        document.getElementById('fh-preset-smooth-snap-strong').addEventListener('click', () => applyFreehandPreset('smoothSnapStrong'));
         document.getElementById('fh-relief-weak').addEventListener('click', () => applyReliefPreset('weak'));
         document.getElementById('fh-relief-strong').addEventListener('click', () => applyReliefPreset('strong'));
         document.getElementById('fh-closed').addEventListener('change', (e) => {

@@ -539,8 +539,12 @@ class UIBasic {
 
 		if (e.defaultPrevented) return;
 
-		for (const a of Object.values(this.actions)) {
+		for (const [name, a] of Object.entries(this.actions)) {
 			if ('key' in a && a.key == e.key) {
+				if (this._isPencilToolLockActive() && name !== 'pencil') {
+					e.preventDefault();
+					return;
+				}
 				e.preventDefault();
 				a.task(e);
 				return;
@@ -645,6 +649,11 @@ class UIBasic {
 			// let pointerManager = new PointerManager(element);
 			// pointerManager.onEvent({ fingerSingleTap: action.task, priority: -2000 });
 			element.addEventListener('click', (e) => {
+				if (this._isPencilToolLockActive() && name !== 'pencil') {
+					e.preventDefault();
+					e.stopPropagation();
+					return;
+				}
 				action.task(e);
 				e.preventDefault();
 			});
@@ -697,6 +706,7 @@ class UIBasic {
 			}
 			if (this.panzoom) this.panzoom.active = false;
 			this._pencilControllersLocked = true;
+			this._syncToolbarLockForPencil();
 			return;
 		}
 
@@ -717,6 +727,35 @@ class UIBasic {
 		this._savedControllerStates = null;
 		this._restoreLightActiveAfterPencil = false;
 		this._pencilControllersLocked = false;
+		this._syncToolbarLockForPencil();
+	}
+
+	/**
+	 * Returns true when annotation pencil mode is actively locking other tools.
+	 * @returns {boolean}
+	 * @private
+	 */
+	_isPencilToolLockActive() {
+		if (!this.annotationManager) return false;
+		const mode = this.annotationManager.mode;
+		return this.annotationManager.active && mode !== 'idle';
+	}
+
+	/**
+	 * Applies a disabled visual state to all toolbar actions except pencil while
+	 * annotation mode is active.
+	 * @private
+	 */
+	_syncToolbarLockForPencil() {
+		const locked = this._isPencilToolLockActive();
+		for (const [name, action] of Object.entries(this.actions || {})) {
+			if (name === 'pencil') continue;
+			const el = action?.element;
+			if (!el) continue;
+			el.style.pointerEvents = locked ? 'none' : '';
+			el.style.opacity = locked ? '0.35' : '';
+			el.style.filter = locked ? 'grayscale(1)' : '';
+		}
 	}
 
 	/**
@@ -890,6 +929,11 @@ class UIBasic {
 		entry.element = this.layerMenu.querySelector('#' + entry.id);
 		if (entry.onclick)
 			entry.element.addEventListener('click', (e) => {
+				if (this._isPencilToolLockActive()) {
+					e.preventDefault();
+					e.stopPropagation();
+					return;
+				}
 				// Ignore clicks that originated from the lens button
 				if (e.target.closest('.openlime-lens-btn')) return;
 				entry.onclick();
@@ -907,6 +951,11 @@ class UIBasic {
 		entry.lensBtnElement = entry.element.querySelector('.openlime-lens-btn');
 		if (entry.lensBtnElement && entry.lensOnclick) {
 			entry.lensBtnElement.addEventListener('click', (e) => {
+				if (this._isPencilToolLockActive()) {
+					e.preventDefault();
+					e.stopPropagation();
+					return;
+				}
 				e.preventDefault();
 				e.stopPropagation();
 				entry.lensOnclick();
@@ -924,6 +973,7 @@ class UIBasic {
 
 					// Update value on input
 					entry.element.addEventListener('input', (e) => {
+						if (this._isPencilToolLockActive()) return;
 						sliderValue.textContent = e.target.value;
 						if (entry.oninput) entry.oninput(e);
 					});
@@ -931,6 +981,7 @@ class UIBasic {
 			}
 		} else if (entry.oninput) {
 			entry.element.addEventListener('input', (e) => {
+				if (this._isPencilToolLockActive()) return;
 				entry.oninput(e);
 			});
 		}
