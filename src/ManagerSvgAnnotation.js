@@ -2362,19 +2362,16 @@ class FreehandMarker extends Marker {
    * @param {number} [options.sampleDistance=1.5] - Minimum sampling spacing in screen px
    * @param {number} [options.simplifyTolerance=1.0] - Simplification tolerance in screen px
    * @param {boolean}[options.enableSmoothingFilter=false] - Enable smoothing filter
-   * @param {boolean}[options.enableTremorFilter] - Deprecated alias for enableSmoothingFilter
    * @param {number} [options.smoothAngle=90] - Corner threshold in degrees for smoothing
    * @param {boolean}[options.closed=false] - Close stroke and output polygon
    * @param {boolean}[options.continuousDrawing=true] - Keep create mode after each stroke
    * @param {number} [options.hitTolerance=10] - Extra hit area in screen px
    */
   constructor(options = {}) {
-    const enableSmoothingFilter =
-      (options.enableSmoothingFilter ?? options.enableTremorFilter ?? false);
     super('freehand', Object.assign({
       sampleDistance: 1.5,
       simplifyTolerance: 1.0,
-      enableSmoothingFilter,
+      enableSmoothingFilter: false,
       smoothAngle: 90,
       closed: false,
       continuousDrawing: true,
@@ -2571,8 +2568,6 @@ class FreehandMarker extends Marker {
       sampleDistance: this.sampleDistance ?? 1.5,
       simplifyTolerance: this.simplifyTolerance ?? 1.0,
       enableSmoothingFilter: !!this.enableSmoothingFilter,
-      // Keep deprecated key for backward compatibility with existing payloads.
-      enableTremorFilter: !!this.enableSmoothingFilter,
       smoothAngle: this.smoothAngle ?? 90,
       closed: !!this.closed,
       continuousDrawing: !!this.continuousDrawing,
