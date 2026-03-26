@@ -3,6 +3,7 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation.js';
 import { CoordinateSystem } from './CoordinateSystem.js';
 import { Util } from './Util.js';
 import { addSignals } from './Signals.js';
+import { simplify, smooth } from './Simplify.js';
 
 /**
  * @file ManagerSvgAnnotation.js
@@ -242,6 +243,15 @@ class Marker {
    * @returns {boolean}
    */
   canFinalize(annotation) { return true; }
+
+  /**
+   * Called by `_finalizeSession` to decide whether the manager should stay in
+   * `create` mode after committing the current shape.
+   * Default keeps the existing behaviour (switch back to `edit`).
+   * @param {Annotation} annotation
+   * @returns {boolean}
+   */
+  shouldStayInCreateModeAfterFinalize(annotation) { return false; }
 
   /**
    * Creates a vertex-handle dot SVG circle.
@@ -1428,6 +1438,8 @@ class ManagerSvgAnnotation {
         el.setAttribute('stroke', style.stroke);
         el.setAttribute('fill', style.fill);
         el.setAttribute('fill-opacity', String(style.fillOpacity));
+      } else if (el.classList?.contains('annotation-freehand')) {
+        el.setAttribute('stroke', style.stroke);
       }
     }
   }
@@ -1906,9 +1918,10 @@ class ManagerSvgAnnotation {
     annotation.syncSvg();
     this.viewer.redraw();
     this.emit('create', annotation);
-    // After finalising a sequence/drag shape, return to edit mode so the user
-    // can immediately pan, select or inspect the newly created annotation.
-    this.setMode('edit');
+    // Most markers return to edit mode; markers can opt into continuous
+    // drawing by overriding shouldStayInCreateModeAfterFinalize().
+    if (marker.shouldStayInCreateModeAfterFinalize(annotation)) this.setMode('create');
+    else                                                       this.setMode('edit');
   }
 
   /**
@@ -2326,9 +2339,292 @@ class RectMarker extends Marker {
   }
 }
 
+// ─── Built-in: FreehandMarker ────────────────────────────────────────────────
+
+/**
+ * FreehandMarker — draws fluid freehand strokes while dragging.
+ *
+ * **Interaction (drag mode)**
+ * - Press and drag: points are sampled continuously from pointer movement.
+ * - Release: stroke is simplified and committed as a polyline.
+ * - Escape: cancels.
+ *
+ * Stored geometry keys on `annotation.data`:
+ *  - `_markerType`   → `'freehand'`
+ *  - `_markerClosed` → `false` for open strokes, `true` for closed polygons
+ *  - `_markerPoints` → `[{x,y}, ...]` sampled image-space points
+ *
+ * @extends Marker
+ */
+class FreehandMarker extends Marker {
+  /**
+   * @param {Object} [options]
+   * @param {number} [options.sampleDistance=1.5] - Minimum sampling spacing in screen px
+   * @param {number} [options.simplifyTolerance=1.0] - Simplification tolerance in screen px
+   * @param {boolean}[options.enableSmoothingFilter=false] - Enable smoothing filter
+   * @param {boolean}[options.enableTremorFilter] - Deprecated alias for enableSmoothingFilter
+   * @param {number} [options.smoothAngle=90] - Corner threshold in degrees for smoothing
+   * @param {boolean}[options.closed=false] - Close stroke and output polygon
+   * @param {boolean}[options.continuousDrawing=true] - Keep create mode after each stroke
+   * @param {number} [options.hitTolerance=10] - Extra hit area in screen px
+   */
+  constructor(options = {}) {
+    const enableSmoothingFilter =
+      (options.enableSmoothingFilter ?? options.enableTremorFilter ?? false);
+    super('freehand', Object.assign({
+      sampleDistance: 1.5,
+      simplifyTolerance: 1.0,
+      enableSmoothingFilter,
+      smoothAngle: 90,
+      closed: false,
+      continuousDrawing: true,
+      hitTolerance: 10,
+    }, options));
+  }
+
+  interactionMode() { return 'drag'; }
+
+  static _toPointsAttr(points) {
+    return points.map(p => `${p.x},${p.y}`).join(' ');
+  }
+
+  _modelStroke(transform, style) {
+    return (style?.strokeWidth ?? 2) / (transform?.z ?? 1);
+  }
+
+  _modelDistancePx(px, transform) {
+    return px / (transform?.z ?? 1);
+  }
+
+  _distanceSq(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return dx * dx + dy * dy;
+  }
+
+  _distancePointToSegmentSq(p, a, b) {
+    const abx = b.x - a.x;
+    const aby = b.y - a.y;
+    const ab2 = abx * abx + aby * aby;
+    if (ab2 === 0) return this._distanceSq(p, a);
+    let t = ((p.x - a.x) * abx + (p.y - a.y) * aby) / ab2;
+    t = Math.max(0, Math.min(1, t));
+    const proj = { x: a.x + t * abx, y: a.y + t * aby };
+    return this._distanceSq(p, proj);
+  }
+
+  // Ramer-Douglas-Peucker simplification to reduce noise while preserving shape.
+  _rdp(points, tol) {
+    if (!points || points.length <= 2) return points ?? [];
+    const tolSq = tol * tol;
+
+    const recurse = (pts, first, last, keep) => {
+      let maxDist = 0;
+      let idx = -1;
+      for (let i = first + 1; i < last; i++) {
+        const d = this._distancePointToSegmentSq(pts[i], pts[first], pts[last]);
+        if (d > maxDist) {
+          maxDist = d;
+          idx = i;
+        }
+      }
+      if (idx !== -1 && maxDist > tolSq) {
+        keep[idx] = true;
+        recurse(pts, first, idx, keep);
+        recurse(pts, idx, last, keep);
+      }
+    };
+
+    const keep = new Array(points.length).fill(false);
+    keep[0] = true;
+    keep[points.length - 1] = true;
+    recurse(points, 0, points.length - 1, keep);
+    return points.filter((_, i) => keep[i]);
+  }
+
+  _appendSample(pos, transform, annotation) {
+    const pts = annotation.data._markerPoints;
+    if (!pts || pts.length === 0) return;
+    const last = pts[pts.length - 1];
+    const minD = this._modelDistancePx(this.sampleDistance ?? 1.5, transform);
+    const minDSq = minD * minD;
+    if (this._distanceSq(last, pos) >= minDSq) {
+      pts.push({ x: pos.x, y: pos.y });
+    }
+  }
+
+  _normalizePointArray(points) {
+    if (!Array.isArray(points)) return [];
+    return points
+      .map(p => ({ x: Number(p.x), y: Number(p.y) }))
+      .filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
+  }
+
+  _buildFilteredPoints(points, transform) {
+    const normalized = this._normalizePointArray(points);
+    if (normalized.length < 2) return normalized;
+
+    const tol = this._modelDistancePx(this.simplifyTolerance ?? 1.0, transform);
+    const reduced = simplify(normalized, tol);
+
+    if (!this.enableSmoothingFilter) {
+      return reduced.length >= 2 ? reduced : normalized;
+    }
+
+    // Reuse EditorSvgAnnotation pipeline: simplify -> smooth.
+    const angle = Number(this.smoothAngle ?? 90);
+    const smoothed = smooth(reduced, Number.isFinite(angle) ? angle : 90, true);
+    const anchors = smoothed
+      .map(p => ({ x: Number(p[0]), y: Number(p[1]) }))
+      .filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
+
+    if (anchors.length < 2) return reduced.length >= 2 ? reduced : normalized;
+
+    // Remove adjacent duplicates to avoid degenerate segments.
+    const dedup = [anchors[0]];
+    for (let i = 1; i < anchors.length; i++) {
+      const prev = dedup[dedup.length - 1];
+      const cur = anchors[i];
+      if (prev.x !== cur.x || prev.y !== cur.y) dedup.push(cur);
+    }
+    return dedup.length >= 2 ? dedup : (reduced.length >= 2 ? reduced : normalized);
+  }
+
+  startElement(pos, transform, annotation, style = {}) {
+    annotation.type = this.closed ? 'polygon' : 'polyline';
+    annotation.data._markerClosed = !!this.closed;
+    annotation.data._markerPoints = [{ x: pos.x, y: pos.y }];
+
+    const sw = this._modelStroke(transform, style);
+    const pts = FreehandMarker._toPointsAttr(annotation.data._markerPoints);
+    const hitSw = this._modelDistancePx(this.hitTolerance ?? 10, transform);
+
+    const stroke = Util.createSVGElement('polyline', {
+      points: pts,
+      class: 'annotation-freehand',
+      stroke: style.stroke ?? '#ff0000',
+      'stroke-width': String(sw),
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      fill: 'none',
+    });
+
+    const hit = Util.createSVGElement('polyline', {
+      points: pts,
+      class: 'annotation-freehand-hit',
+      stroke: 'transparent',
+      'stroke-width': String(hitSw),
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      fill: 'none',
+    });
+
+    annotation.elements = [stroke, hit];
+    return annotation.elements;
+  }
+
+  updatePreview(pos, transform, annotation) {
+    this._appendSample(pos, transform, annotation);
+    const pts = annotation.data._markerPoints;
+    if (!pts || pts.length === 0) return;
+    const attr = FreehandMarker._toPointsAttr(pts);
+    const stroke = annotation.elements.find(el => el.classList?.contains('annotation-freehand'));
+    const hit = annotation.elements.find(el => el.classList?.contains('annotation-freehand-hit'));
+    if (stroke) stroke.setAttribute('points', attr);
+    if (hit) hit.setAttribute('points', attr);
+  }
+
+  finalizeElement(transform, annotation, style = {}) {
+    const pts = annotation.data._markerPoints ?? [];
+    annotation.data._markerPoints = this._buildFilteredPoints(pts, transform);
+
+    const attr = FreehandMarker._toPointsAttr(annotation.data._markerPoints);
+    const stroke = annotation.elements.find(el => el.classList?.contains('annotation-freehand'));
+    const hit = annotation.elements.find(el => el.classList?.contains('annotation-freehand-hit'));
+    if (stroke) {
+      stroke.setAttribute('points', attr);
+      stroke.setAttribute('stroke', style.stroke ?? stroke.getAttribute('stroke') ?? '#ff0000');
+    }
+    if (hit) hit.setAttribute('points', attr);
+
+    // Convert to polygons when closed mode is enabled.
+    if (annotation.data._markerClosed) {
+      if (stroke && stroke.tagName?.toLowerCase() !== 'polygon') {
+        const polygon = Util.createSVGElement('polygon', {
+          points: attr,
+          class: 'annotation-freehand',
+          stroke: style.stroke ?? stroke.getAttribute('stroke') ?? '#ff0000',
+          'stroke-width': stroke.getAttribute('stroke-width') ?? '2',
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          fill: style.fill ?? 'none',
+        });
+        stroke.parentNode?.replaceChild(polygon, stroke);
+        const idx = annotation.elements.indexOf(stroke);
+        if (idx !== -1) annotation.elements[idx] = polygon;
+      }
+      if (hit && hit.tagName?.toLowerCase() !== 'polygon') {
+        const hitPolygon = Util.createSVGElement('polygon', {
+          points: attr,
+          class: 'annotation-freehand-hit',
+          stroke: 'transparent',
+          'stroke-width': hit.getAttribute('stroke-width') ?? '10',
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          fill: 'transparent',
+        });
+        hit.parentNode?.replaceChild(hitPolygon, hit);
+        const hidx = annotation.elements.indexOf(hit);
+        if (hidx !== -1) annotation.elements[hidx] = hitPolygon;
+      }
+    }
+
+    return annotation.elements;
+  }
+
+  updateElements(elements, transform, annotation, style = {}) {
+    const sw = this._modelStroke(transform, style);
+    const hitSw = this._modelDistancePx(this.hitTolerance ?? 10, transform);
+    for (const el of elements) {
+      if (el.classList?.contains('annotation-freehand')) {
+        el.setAttribute('stroke-width', String(sw));
+        el.setAttribute('stroke', style.stroke ?? '#ff0000');
+      }
+      if (el.classList?.contains('annotation-freehand-hit')) {
+        el.setAttribute('stroke-width', String(hitSw));
+        el.removeAttribute('pointer-events');
+      }
+    }
+  }
+
+  canFinalize(annotation) {
+    return (annotation.data?._markerPoints?.length ?? 0) >= 2;
+  }
+
+  shouldStayInCreateModeAfterFinalize(annotation) {
+    return !!this.continuousDrawing;
+  }
+
+  serialize() {
+    return {
+      type: this.type,
+      sampleDistance: this.sampleDistance ?? 1.5,
+      simplifyTolerance: this.simplifyTolerance ?? 1.0,
+      enableSmoothingFilter: !!this.enableSmoothingFilter,
+      // Keep deprecated key for backward compatibility with existing payloads.
+      enableTremorFilter: !!this.enableSmoothingFilter,
+      smoothAngle: this.smoothAngle ?? 90,
+      closed: !!this.closed,
+      continuousDrawing: !!this.continuousDrawing,
+      hitTolerance: this.hitTolerance ?? 10,
+    };
+  }
+}
+
 // Register built-in markers
 ManagerSvgAnnotation.registerMarker('disk', DiskMarker);
 ManagerSvgAnnotation.registerMarker('polyline', PolylineMarker);
 ManagerSvgAnnotation.registerMarker('rect', RectMarker);
+ManagerSvgAnnotation.registerMarker('freehand', FreehandMarker);
 
-export { ManagerSvgAnnotation, Marker, DiskMarker, PolylineMarker, RectMarker };
+export { ManagerSvgAnnotation, Marker, DiskMarker, PolylineMarker, RectMarker, FreehandMarker };

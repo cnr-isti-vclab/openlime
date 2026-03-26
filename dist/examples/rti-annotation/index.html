@@ -8,6 +8,7 @@
     <title>OpenLIME - RTI Viewer</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <link rel="stylesheet" href="../examples.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
     <style>
         html,
         body {
@@ -31,37 +32,44 @@
         }
 
         #marker-panel {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 6px 10px;
-            background: rgba(0,0,0,0.65);
-            border-radius: 8px;
-            backdrop-filter: blur(4px);
-            border-left: 3px solid #4fc3f7;
             pointer-events: auto;
         }
 
-        #marker-panel button {
-            padding: 6px 14px;
-            border: 2px solid #555;
-            border-radius: 6px;
-            background: #222;
-            color: #ccc;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.15s, border-color 0.15s;
+        #marker-panel .card {
+            background: rgba(12, 14, 20, 0.8);
+            backdrop-filter: blur(6px);
+            border-color: rgba(79, 195, 247, 0.55);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
         }
 
-        #marker-panel button:hover {
-            background: #333;
+        #marker-panel .marker-btn {
+            --bs-btn-padding-y: 0.32rem;
+            --bs-btn-padding-x: 0.7rem;
+            --bs-btn-font-size: 0.82rem;
+            min-width: 88px;
         }
 
-        #marker-panel button.active {
-            border-color: #e63946;
-            background: #3a1018;
-            color: #fff;
+        #marker-panel .marker-btn.active {
+            --bs-btn-bg: #b4232f;
+            --bs-btn-border-color: #d3414e;
+            --bs-btn-color: #fff;
+            --bs-btn-hover-bg: #bf2d3a;
+            --bs-btn-hover-border-color: #dc5963;
+            --bs-btn-active-bg: #b4232f;
+            --bs-btn-active-border-color: #d3414e;
+        }
+
+        #marker-panel .settings-btn {
+            --bs-btn-padding-y: 0.32rem;
+            --bs-btn-padding-x: 0.85rem;
+            --bs-btn-font-size: 0.8rem;
+            --bs-btn-color: #8fe8ff;
+            --bs-btn-border-color: #35b8da;
+            --bs-btn-hover-bg: rgba(53, 184, 218, 0.18);
+            --bs-btn-hover-border-color: #72d6ef;
+            --bs-btn-hover-color: #d7f7ff;
+            --bs-btn-active-bg: rgba(53, 184, 218, 0.24);
+            --bs-btn-active-border-color: #72d6ef;
         }
 
         #creation-hint {
@@ -88,18 +96,16 @@
         /* Selection status panel — shown in edit mode */
         #selection-panel {
             display: none;
-            padding: 6px 10px;
-            background: rgba(0,0,0,0.65);
-            border-radius: 8px;
-            backdrop-filter: blur(4px);
-            border-left: 3px solid #ffd700;
             pointer-events: none;
-            font-size: 15px;
-            color: #ccc;
             max-width: 280px;
         }
 
-        #selection-panel strong { color: #ffd700; }
+        #selection-panel .card {
+            background: rgba(22, 18, 8, 0.78);
+            backdrop-filter: blur(6px);
+            border-color: rgba(255, 215, 0, 0.5);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+        }
 
         /* Interaction hint — always visible except during active sessions */
         #ctrl-hint {
@@ -124,7 +130,14 @@
         /* Toolbar locked during an active creation session */
         #annotation-toolbar.session-active #marker-panel {
             pointer-events: none;
-            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Marker toolbar disabled when pencil is OFF */
+        #annotation-toolbar.pencil-off #marker-panel {
+            pointer-events: none;
+            opacity: 0.35;
+            filter: grayscale(1);
             cursor: not-allowed;
         }
     </style>
@@ -135,21 +148,88 @@
     <h1>OpenLIME - RTI Viewer</h1>
     <div id="annotation-toolbar">
         <div id="marker-panel">
-            <strong>Marker:</strong>
-            <button id="btn-disk" class="active">&#9679; Disk</button>
-            <button id="btn-polyline">&#9135; Polyline</button>
-            <button id="btn-polygon">&#9651; Polygon</button>
-            <button id="btn-rect">&#9645; Rect</button>
+            <div class="card border-info">
+                <div class="card-body py-2 px-3 d-flex align-items-center flex-wrap gap-2">
+                    <span class="badge text-bg-info">Marker</span>
+                    <button id="btn-disk" class="btn btn-outline-light marker-btn active">&#9679; Disk</button>
+                    <button id="btn-polyline" class="btn btn-outline-light marker-btn">&#9135; Polyline</button>
+                    <button id="btn-polygon" class="btn btn-outline-light marker-btn">&#9651; Polygon</button>
+                    <button id="btn-rect" class="btn btn-outline-light marker-btn">&#9645; Rect</button>
+                    <button id="btn-freehand" class="btn btn-outline-light marker-btn">&#9998; Freehand</button>
+                    <button id="btn-freehand-settings" class="btn btn-outline-info settings-btn">Settings</button>
+                </div>
+            </div>
         </div>
         <div id="selection-panel">
-            <strong>Selected:</strong> <span id="selection-info">none</span>
+            <div class="card border-warning">
+                <div class="card-body py-2 px-3 small text-light">
+                    <span class="fw-semibold text-warning">Selected:</span>
+                    <span id="selection-info">none</span>
+                </div>
+            </div>
         </div>
     </div>
     <div id="creation-hint"></div>
     <div id="ctrl-hint">
         <b>Double-click</b> on canvas to create &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b>) to multi-select
     </div>
+
+    <div class="modal fade" id="freehandSettingsModal" tabindex="-1" aria-labelledby="freehandSettingsLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-light border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="freehandSettingsLabel">Freehand Settings</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="button" id="fh-preset-natural" class="btn btn-outline-light btn-sm">Natural</button>
+                        <button type="button" id="fh-preset-strong" class="btn btn-outline-warning btn-sm">Strong</button>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="fh-enable-filter">
+                        <label class="form-check-label" for="fh-enable-filter">Enable Smoothing Filter</label>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="fh-closed">
+                        <label class="form-check-label" for="fh-closed">Close stroke (create polygon)</label>
+                    </div>
+
+                    <label for="fh-sample-distance" class="form-label d-flex justify-content-between">
+                        <span>Sample distance (px)</span>
+                        <span id="fh-sample-distance-value">1.5</span>
+                    </label>
+                    <input id="fh-sample-distance" type="range" class="form-range" min="0.5" max="6" step="0.1" value="1.5">
+
+                    <label for="fh-simplify" class="form-label d-flex justify-content-between mt-3">
+                        <span>Simplify tolerance (px)</span>
+                        <span id="fh-simplify-value">1.0</span>
+                    </label>
+                    <input id="fh-simplify" type="range" class="form-range" min="0.2" max="5" step="0.1" value="1.0">
+
+                    <label for="fh-smooth-angle" class="form-label d-flex justify-content-between mt-3">
+                        <span>Smooth angle (deg)</span>
+                        <span id="fh-smooth-angle-value">90</span>
+                    </label>
+                    <input id="fh-smooth-angle" type="range" class="form-range" min="20" max="175" step="1" value="90">
+
+                    <label for="fh-hit-tolerance" class="form-label d-flex justify-content-between mt-3">
+                        <span>Hit tolerance (px)</span>
+                        <span id="fh-hit-tolerance-value">10</span>
+                    </label>
+                    <input id="fh-hit-tolerance" type="range" class="form-range" min="4" max="24" step="1" value="10">
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="openlime"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="../../js/openlime.js"></script>
     <script>
         // Create an OpenLIME canvas into openlime
@@ -184,6 +264,7 @@
                 { label: 'Polyline', fill: 'none',    stroke: '#00aaff', fillOpacity: 1,    strokeWidth: 2, fillSelected: 'none',    strokeSelected: '#ffd700' },
                 { label: 'Polygon',  fill: 'rgba(34,187,85,0.2)', stroke: '#22bb55', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
                 { label: 'Rect',     fill: 'rgba(100,160,255,0.2)', stroke: '#64a0ff', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
+                { label: 'Freehand', fill: 'none',    stroke: '#ff8a00', fillOpacity: 1,    strokeWidth: 2, fillSelected: 'none',    strokeSelected: '#ffd700' },
             ],
             defaultAnnotationClass: 0,
             // With singleEditMode, vertex handles are shown only when exactly
@@ -211,6 +292,10 @@
                 } else if (type === 'rect') {
                     document.getElementById('creation-hint').innerText =
                         'Move mouse to size the rectangle · double-click (or Enter) to finish · Esc to cancel';
+                    document.getElementById('creation-hint').style.display = 'block';
+                } else if (type === 'freehand') {
+                    document.getElementById('creation-hint').innerText =
+                        'Press and drag to draw · release to finish · Esc to cancel';
                     document.getElementById('creation-hint').style.display = 'block';
                 }
             },
@@ -248,31 +333,170 @@
             annotationManager: manager,
         });
 
+        function syncMarkerToolbarEnabled() {
+            const toolbar = document.getElementById('annotation-toolbar');
+            toolbar.classList.toggle('pencil-off', !manager.active);
+        }
+
         // When pencil mode is activated, deselect all annotations
         ui.addEvent('pencilEnabled', () => {
             manager.deselectAll(); // colours restored automatically from classes
+            syncMarkerToolbarEnabled();
+        });
+        ui.addEvent('pencilDisabled', () => {
+            syncMarkerToolbarEnabled();
         });
 
         // ── Marker selector panel ────────────────────────────────────────
+        const freehandSettings = {
+            enableSmoothingFilter: false,
+            // Backward-compatible alias used by older builds.
+            enableTremorFilter: false,
+            sampleDistance: 1.5,
+            simplifyTolerance: 1.0,
+            smoothAngle: 90,
+            closed: false,
+            hitTolerance: 10,
+        };
+
+        const freehandModalEl = document.getElementById('freehandSettingsModal');
+        const freehandModal = (window.bootstrap && freehandModalEl)
+            ? new bootstrap.Modal(freehandModalEl)
+            : null;
+
+        function updateFreehandLabels() {
+            document.getElementById('fh-sample-distance-value').textContent = Number(freehandSettings.sampleDistance).toFixed(1);
+            document.getElementById('fh-simplify-value').textContent = Number(freehandSettings.simplifyTolerance).toFixed(1);
+            document.getElementById('fh-smooth-angle-value').textContent = String(Math.round(freehandSettings.smoothAngle));
+            document.getElementById('fh-hit-tolerance-value').textContent = String(Math.round(freehandSettings.hitTolerance));
+        }
+
+        function syncFreehandControlsFromState() {
+            document.getElementById('fh-enable-filter').checked = !!freehandSettings.enableSmoothingFilter;
+            document.getElementById('fh-closed').checked = !!freehandSettings.closed;
+            document.getElementById('fh-sample-distance').value = String(freehandSettings.sampleDistance);
+            document.getElementById('fh-simplify').value = String(freehandSettings.simplifyTolerance);
+            document.getElementById('fh-smooth-angle').value = String(freehandSettings.smoothAngle);
+            document.getElementById('fh-hit-tolerance').value = String(freehandSettings.hitTolerance);
+            updateFreehandLabels();
+        }
+
+        function applyFreehandSettingsIfActive() {
+            if (manager.activeMarker !== 'freehand') return;
+            manager.setActiveMarker('freehand', { ...freehandSettings });
+        }
+
+        function applyFreehandPreset(name) {
+            if (name === 'natural') {
+                freehandSettings.enableSmoothingFilter = true;
+                freehandSettings.enableTremorFilter = true;
+                freehandSettings.sampleDistance = 1.4;
+                freehandSettings.simplifyTolerance = 1.0;
+                freehandSettings.smoothAngle = 95;
+                freehandSettings.hitTolerance = 10;
+            } else if (name === 'strong') {
+                freehandSettings.enableSmoothingFilter = true;
+                freehandSettings.enableTremorFilter = true;
+                freehandSettings.sampleDistance = 0.8;
+                freehandSettings.simplifyTolerance = 2.4;
+                freehandSettings.smoothAngle = 145;
+                freehandSettings.hitTolerance = 10;
+            }
+            syncFreehandControlsFromState();
+            applyFreehandSettingsIfActive();
+        }
+
         const markerConfigs = {
             'disk':     { type: 'disk',     opts: { radius: 14 },                     classIdx: 0 },
             'polyline': { type: 'polyline', opts: { closed: false, vertexRadius: 5 }, classIdx: 1 },
             'polygon':  { type: 'polyline', opts: { closed: true,  vertexRadius: 5 }, classIdx: 2 },
             'rect':     { type: 'rect',     opts: { vertexRadius: 6 },                classIdx: 3 },
+            'freehand': { type: 'freehand', opts: { ...freehandSettings },            classIdx: 4 },
         };
+
+        let selectedMarkerKey = 'disk';
+
+        function clearMarkerSelectionUI() {
+            document.querySelectorAll('#marker-panel .marker-btn')
+                .forEach(b => b.classList.remove('active'));
+        }
 
         function setMarker(key) {
             const cfg = markerConfigs[key];
+            if (key === 'freehand') {
+                cfg.opts = { ...freehandSettings };
+            }
             manager.setActiveMarker(cfg.type, cfg.opts);
             manager.defaultAnnotationClass = cfg.classIdx;
-            document.querySelectorAll('#marker-panel button').forEach(b => b.classList.remove('active'));
+            clearMarkerSelectionUI();
             document.getElementById('btn-' + key).classList.add('active');
+            selectedMarkerKey = key;
+
+            // Freehand is a drag marker: arm drawing immediately so mouse drag
+            // starts stroke creation instead of driving light/pan controls.
+            if (key === 'freehand' && manager.active) {
+                manager.setMode('create');
+            }
         }
 
-        document.getElementById('btn-disk').addEventListener('click', () => setMarker('disk'));
-        document.getElementById('btn-polyline').addEventListener('click', () => setMarker('polyline'));
-        document.getElementById('btn-polygon').addEventListener('click', () => setMarker('polygon'));
-        document.getElementById('btn-rect').addEventListener('click', () => setMarker('rect'));
+        function toggleMarker(key) {
+            // Clicking the already active marker deselects all marker buttons.
+            if (selectedMarkerKey === key) {
+                clearMarkerSelectionUI();
+                selectedMarkerKey = null;
+                // Reset to a neutral marker so no hidden freehand state remains active.
+                manager.setActiveMarker('disk', { radius: 14 });
+                manager.defaultAnnotationClass = markerConfigs.disk.classIdx;
+                // If pencil is active, fallback to edit mode on deselection.
+                if (manager.active) manager.setMode('edit');
+                return;
+            }
+            setMarker(key);
+        }
+
+        document.getElementById('btn-disk').addEventListener('click', () => toggleMarker('disk'));
+        document.getElementById('btn-polyline').addEventListener('click', () => toggleMarker('polyline'));
+        document.getElementById('btn-polygon').addEventListener('click', () => toggleMarker('polygon'));
+        document.getElementById('btn-rect').addEventListener('click', () => toggleMarker('rect'));
+        document.getElementById('btn-freehand').addEventListener('click', () => toggleMarker('freehand'));
+        document.getElementById('btn-freehand-settings').addEventListener('click', () => {
+            syncFreehandControlsFromState();
+            freehandModal?.show();
+        });
+
+        document.getElementById('fh-enable-filter').addEventListener('change', (e) => {
+            freehandSettings.enableSmoothingFilter = !!e.target.checked;
+            freehandSettings.enableTremorFilter = freehandSettings.enableSmoothingFilter;
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-preset-natural').addEventListener('click', () => applyFreehandPreset('natural'));
+        document.getElementById('fh-preset-strong').addEventListener('click', () => applyFreehandPreset('strong'));
+        document.getElementById('fh-closed').addEventListener('change', (e) => {
+            freehandSettings.closed = !!e.target.checked;
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-sample-distance').addEventListener('input', (e) => {
+            freehandSettings.sampleDistance = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-simplify').addEventListener('input', (e) => {
+            freehandSettings.simplifyTolerance = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-smooth-angle').addEventListener('input', (e) => {
+            freehandSettings.smoothAngle = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-hit-tolerance').addEventListener('input', (e) => {
+            freehandSettings.hitTolerance = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandSettingsIfActive();
+        });
+
+        syncFreehandControlsFromState();
 
         // ── Mode panel ─────────────────────────────────────────────
         // Modes are set automatically (double-click → create, click → edit);
@@ -295,6 +519,9 @@
 
         // Show the pencil toggle button in the toolbar
         ui.actions.pencil.display = true;
+
+        // Initial state: marker panel disabled until pencil is enabled.
+        syncMarkerToolbarEnabled();
 
         OpenLIME.HSH.minElevation = 0.2;
 
