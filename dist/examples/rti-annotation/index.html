@@ -151,11 +151,12 @@
             <div class="card border-info">
                 <div class="card-body py-2 px-3 d-flex align-items-center flex-wrap gap-2">
                     <span class="badge text-bg-info">Marker</span>
-                    <button id="btn-disk" class="btn btn-outline-light marker-btn active">&#9679; Disk</button>
+                    <button id="btn-disk" class="btn btn-outline-light marker-btn">&#9679; Disk</button>
                     <button id="btn-polyline" class="btn btn-outline-light marker-btn">&#9135; Polyline</button>
                     <button id="btn-polygon" class="btn btn-outline-light marker-btn">&#9651; Polygon</button>
                     <button id="btn-rect" class="btn btn-outline-light marker-btn">&#9645; Rect</button>
                     <button id="btn-freehand" class="btn btn-outline-light marker-btn">&#9998; Freehand</button>
+                    <button id="btn-edit" class="btn btn-outline-warning settings-btn">Edit</button>
                     <button id="btn-freehand-settings" class="btn btn-outline-info settings-btn">Settings</button>
                     <button id="btn-anno-save" class="btn btn-outline-info settings-btn">Save</button>
                     <button id="btn-anno-load" class="btn btn-outline-info settings-btn">Load</button>
@@ -173,7 +174,7 @@
     </div>
     <div id="creation-hint"></div>
     <div id="ctrl-hint">
-        <b>Double-click</b> on canvas to create &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b>) to multi-select
+        Select a marker button to draw &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b>) to multi-select
     </div>
 
     <div class="modal fade" id="freehandSettingsModal" tabindex="-1" aria-labelledby="freehandSettingsLabel" aria-hidden="true">
@@ -342,6 +343,26 @@
             annotationManager: manager,
         });
 
+        const EDIT_HINT_TEXT =
+            'Click to select \u00b7 <b>Ctrl+click</b> (or <b>&#8984;+click</b>) for multi-select';
+        const MARKER_HINTS = {
+            disk: '<b>Disk</b>: double-click on canvas to create',
+            polyline: '<b>Polyline</b>: single-click to start/add points \u00b7 double-click to finish',
+            polygon: '<b>Polygon</b>: single-click to start/add points \u00b7 double-click to finish',
+            rect: '<b>Rect</b>: single-click to start \u00b7 move mouse to size \u00b7 double-click to finish',
+            freehand: '<b>Freehand</b>: press and drag to draw \u00b7 release to finish',
+        };
+
+        function setCtrlHint(html) {
+            const el = document.getElementById('ctrl-hint');
+            el.innerHTML = html;
+            el.style.display = 'block';
+        }
+
+        function hideCtrlHint() {
+            document.getElementById('ctrl-hint').style.display = 'none';
+        }
+
         function syncMarkerToolbarEnabled() {
             const toolbar = document.getElementById('annotation-toolbar');
             toolbar.classList.toggle('pencil-off', !manager.active);
@@ -351,9 +372,12 @@
         ui.addEvent('pencilEnabled', () => {
             manager.deselectAll(); // colours restored automatically from classes
             syncMarkerToolbarEnabled();
+            const hint = selectedMarkerKey ? (MARKER_HINTS[selectedMarkerKey] || EDIT_HINT_TEXT) : EDIT_HINT_TEXT;
+            setCtrlHint(hint);
         });
         ui.addEvent('pencilDisabled', () => {
             syncMarkerToolbarEnabled();
+            hideCtrlHint();
         });
 
         // ── Marker selector panel ────────────────────────────────────────
@@ -462,11 +486,21 @@
             'freehand': { type: 'freehand', opts: { ...freehandSettings },            classIdx: freehandClassIdx },
         };
 
-        let selectedMarkerKey = 'disk';
+        let selectedMarkerKey = null;
 
         function clearMarkerSelectionUI() {
             document.querySelectorAll('#marker-panel .marker-btn')
                 .forEach(b => b.classList.remove('active'));
+        }
+
+        function activateEditModeUI() {
+            clearMarkerSelectionUI();
+            selectedMarkerKey = null;
+            // Reset to a neutral marker so no hidden marker-specific state remains active.
+            manager.setActiveMarker('disk', { radius: 14 });
+            manager.defaultAnnotationClass = markerConfigs.disk.classIdx;
+            if (manager.active) manager.setMode('edit');
+            setCtrlHint(EDIT_HINT_TEXT);
         }
 
         function setMarker(key) {
@@ -479,10 +513,12 @@
             clearMarkerSelectionUI();
             document.getElementById('btn-' + key).classList.add('active');
             selectedMarkerKey = key;
+            setCtrlHint(MARKER_HINTS[key] || EDIT_HINT_TEXT);
 
-            // Freehand is a drag marker: arm drawing immediately so mouse drag
-            // starts stroke creation instead of driving light/pan controls.
-            if (key === 'freehand' && manager.active) {
+            // Arm creation immediately for non-disk markers.
+            // - sequence markers (polyline/polygon/rect): first vertex on single-click
+            // - drag marker (freehand): stroke starts on drag
+            if (key !== 'disk' && manager.active) {
                 manager.setMode('create');
             }
         }
@@ -490,13 +526,7 @@
         function toggleMarker(key) {
             // Clicking the already active marker deselects all marker buttons.
             if (selectedMarkerKey === key) {
-                clearMarkerSelectionUI();
-                selectedMarkerKey = null;
-                // Reset to a neutral marker so no hidden freehand state remains active.
-                manager.setActiveMarker('disk', { radius: 14 });
-                manager.defaultAnnotationClass = markerConfigs.disk.classIdx;
-                // If pencil is active, fallback to edit mode on deselection.
-                if (manager.active) manager.setMode('edit');
+                activateEditModeUI();
                 return;
             }
             setMarker(key);
@@ -507,6 +537,7 @@
         document.getElementById('btn-polygon').addEventListener('click', () => toggleMarker('polygon'));
         document.getElementById('btn-rect').addEventListener('click', () => toggleMarker('rect'));
         document.getElementById('btn-freehand').addEventListener('click', () => toggleMarker('freehand'));
+        document.getElementById('btn-edit').addEventListener('click', () => activateEditModeUI());
         document.getElementById('btn-freehand-settings').addEventListener('click', () => {
             syncFreehandControlsFromState();
             freehandModal?.show();
@@ -600,6 +631,8 @@
 
         syncFreehandControlsFromState();
         applyFreehandStrokeWidthForFuture();
+        if (manager.active) setCtrlHint(EDIT_HINT_TEXT);
+        else hideCtrlHint();
 
         // ── Mode panel ─────────────────────────────────────────────
         // Modes are set automatically (double-click → create, click → edit);
@@ -608,7 +641,7 @@
             document.getElementById('selection-panel').style.display = mode === 'edit' ? 'block' : 'none';
             // Restore ctrl-hint when returning to edit mode (was hidden during creation session)
             if (mode === 'edit') {
-                document.getElementById('ctrl-hint').style.display = 'block';
+                setCtrlHint(EDIT_HINT_TEXT);
             }
             if (mode !== 'edit') {
                 document.getElementById('selection-info').textContent = 'none';

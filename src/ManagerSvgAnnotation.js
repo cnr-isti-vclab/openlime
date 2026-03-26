@@ -458,7 +458,7 @@ class PolylineMarker extends Marker {
     // Using <polyline> instead of <line> so that for closed polygons we can
     // extend it to [lastCommitted, cursor, firstCommitted] and show the
     // closing edge live — without ever touching the main annotation-polyline.
-    const rubber = Util.createSVGElement('polyline', {
+    const rubberAttrs = {
       points: PolylineMarker._toPointsAttr([pos, pos]),
       class: 'annotation-polyline-rubber',
       stroke,
@@ -466,7 +466,12 @@ class PolylineMarker extends Marker {
       'stroke-dasharray': `${sw * 4},${sw * 2}`,
       'stroke-linecap': 'round',
       opacity: String(opacity * 0.6),
-    });
+      fill: this.closed ? fill : 'none',
+    };
+    if (this.closed) {
+      rubberAttrs['fill-opacity'] = String(Math.max(0.08, (style.fillOpacity ?? 0.25) * 0.6));
+    }
+    const rubber = Util.createSVGElement('polyline', rubberAttrs);
 
     // Vertex-handle dots group — one dot per committed vertex
     // Explicitly visible during the creation session; finalizeElement will hide it.
@@ -1648,6 +1653,7 @@ class ManagerSvgAnnotation {
   /**
    * Single-tap — dual purpose depending on context:
    *
+    * - Create mode + no session + 'sequence' marker → start drawing session (first vertex)
    * - Session active (sequence mode) → add a vertex to the current drawing
    * - No session, click on annotation → ensure edit mode is active (selection
    *   was already handled by LayerSvgAnnotation's onpointerdown)
@@ -1658,9 +1664,19 @@ class ManagerSvgAnnotation {
     if (!this._pencilEnabled) return;
     if (this._isUiTarget(e)) return;
 
+    const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
+
+    // In create mode, sequence markers start on first single-click.
+    if (!this._session && this._mode === 'create' && markerMode === 'sequence') {
+      e.preventDefault?.();
+      e.stopPropagation?.();
+      const pos = this._eventToImageCoords(e);
+      this._startSession(pos, e);
+      return;
+    }
+
     // Mid-drawing: add a vertex (only for sequence/polyline markers)
     if (this._session) {
-      const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
       if (markerMode !== 'sequence') return;
       e.preventDefault?.();
       e.stopPropagation?.();
