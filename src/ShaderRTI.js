@@ -285,11 +285,17 @@ uniform ${basetype} base2[np1];
 
 const int ny0 = ${this.yccplanes[0]};
 const int ny1 = ${this.yccplanes[1]};
-`
+`;
+
+str += `
+vec4 texsample(sampler2D sampler, vec2 coord) {
+	return srgb2linear(texture(sampler, coord));
+}
+`;
 
 		switch (this.colorspace) {
 			case 'lrgb': str += LRGB.render(this.njpegs); break;
-			case 'rgb': str += RGB.render(this.njpegs); break;
+			case 'rgb':  str += RGB .render(this.njpegs); break;
 			case 'mrgb': str += MRGB.render(this.njpegs); break;
 			case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0]); break;
 		}
@@ -309,9 +315,9 @@ vec4 data() {
 `;
 			if (this.normals)
 				str += `
-	vec3 normal = texture(normals, v_texcoord).xyz * 2.0 - 1.0;
+	vec3 normal = texsample(normals, v_texcoord).xyz * 2.0 - 1.0;
 	normal = normalize(normal);		
-	//vec3 normal = (texture(normals, v_texcoord).zyx *2.0) - 1.0;
+	//vec3 normal = (texsample(normals, v_texcoord).zyx *2.0) - 1.0;
 	//normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
 `;
 			else
@@ -332,7 +338,7 @@ vec4 data() {
 				case 'diffuse':
 					if (this.colorspace == 'lrgb' || this.colorspace == 'rgb')
 						str += `
-vec4 diffuse = texture(plane0, v_texcoord);
+vec4 diffuse = texsample(plane0, v_texcoord);
 float s = dot(light, normal);
 color = vec4(s * diffuse.xyz, 1);
 `;
@@ -373,7 +379,7 @@ vec4 render(vec3 base[np1]) {
 		for (let j = 1, k = 0; j < njpegs; j++, k += 3) {
 			str += `
 	{
-		vec4 c = texture(plane${j}, v_texcoord);
+		vec4 c = texsample(plane${j}, v_texcoord);
 		l += base[${k}].x*(c.x - bias[${j}].x)*scale[${j}].x;
 		l += base[${k + 1}].x*(c.y - bias[${j}].y)*scale[${j}].y;
 		l += base[${k + 2}].x*(c.z - bias[${j}].z)*scale[${j}].z;
@@ -381,8 +387,8 @@ vec4 render(vec3 base[np1]) {
 `;
 		}
 		str += `
-	vec3 basecolor = (texture(plane0, v_texcoord).xyz - bias[0])*scale[0];
-
+	vec3 basecolor = (texsample(plane0, v_texcoord).xyz - bias[0])*scale[0];
+	
 	return l*vec4(basecolor, 1);
 }
 `;
@@ -400,7 +406,7 @@ vec4 render(vec3 base[np1]) {
 		for (let j = 0; j < njpegs; j++) {
 			str += `
 	{
-		vec4 c = texture(plane${j}, v_texcoord);
+		vec4 c = texsample(plane${j}, v_texcoord);
 		rgb.x += base[${j}].x*(c.x - bias[${j}].x)*scale[${j}].x;
 		rgb.y += base[${j}].y*(c.y - bias[${j}].y)*scale[${j}].y;
 		rgb.z += base[${j}].z*(c.z - bias[${j}].z)*scale[${j}].z;
@@ -425,7 +431,7 @@ vec4 render(vec3 base[np1]) {
 `;
 		for (let j = 0; j < njpegs; j++) {
 			str +=
-				`	c = texture(plane${j}, v_texcoord);
+				`	c = texsample(plane${j}, v_texcoord);
 	r = (c.xyz - bias[${j}])* scale[${j}];
 
 	rgb += base[${j}*3+1]*r.x;
@@ -461,7 +467,7 @@ vec4 render(vec3 base[np1]) {
 		for (let j = 0; j < njpegs; j++) {
 			str += `
 
-	c = texture(plane${j}, v_texcoord);
+	c = texsample(plane${j}, v_texcoord);
 
 	r = (c.xyz - bias[${j}])* scale[${j}];
 `;

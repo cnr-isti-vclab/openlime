@@ -163,8 +163,10 @@ class Raster {
 			// For float textures in WebGL2, use R8 as internal format
 			internalFormat = gl.R8;
 		} else {
+			//cant' use srgb internal format because mipmap is not supported
 			internalFormat = glFormat === gl.RGB ? gl.RGB : gl.RGBA;
 		}
+
 		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
 
 

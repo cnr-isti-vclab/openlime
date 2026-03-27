@@ -701,7 +701,6 @@ class Layer {
 	draw(transform, viewport) {
 		//exception for layout image where we still do not know the image size
 		//how linear or srgb should be specified here.
-		//		gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
 		if (this.status != 'ready')// || this.tiles.size == 0)
 			return true;
 
