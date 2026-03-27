@@ -1627,12 +1627,10 @@ class ManagerSvgAnnotation {
    */
   _getRenderedContourMap() {
     const canvasApi = this.viewer?.canvas;
-    const gl = canvasApi?.gl;
-    const canvasEl = this.viewer?.canvasElement;
-    if (!gl || !canvasEl) return null;
+    const frame = canvasApi?.readPixelsRGBA?.();
+    if (!frame) return null;
 
-    const fbW = canvasEl.width | 0;
-    const fbH = canvasEl.height | 0;
+    const { data: rgba, width: fbW, height: fbH } = frame;
     if (fbW <= 2 || fbH <= 2) return null;
 
     const now = performance.now();
@@ -1640,18 +1638,6 @@ class ManagerSvgAnnotation {
     if (cache && cache.fbW === fbW && cache.fbH === fbH && (now - cache.ts) < 120) {
       return cache.value;
     }
-
-    const rgba = new Uint8Array(fbW * fbH * 4);
-    const prevFb = gl.getParameter(gl.FRAMEBUFFER_BINDING);
-    try {
-      const readFb = canvasApi.useOffscreenFramebuffer ? canvasApi.offscreenFramebuffer : null;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, readFb);
-      gl.readPixels(0, 0, fbW, fbH, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
-    } catch {
-      try { gl.bindFramebuffer(gl.FRAMEBUFFER, prevFb); } catch { /* ignore */ }
-      return null;
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, prevFb);
 
     const downsample = Math.max(1, Math.round(Math.min(fbW, fbH) / 512));
     const mapW = Math.max(3, Math.floor(fbW / downsample));
@@ -1857,7 +1843,8 @@ class ManagerSvgAnnotation {
   /**
    * Pen hold — alternative finalise gesture for tablet stylus users.
    *
-   * - Pen + active 'sequence' session → finalise without requiring double-tap
+    * - Pen + active 'sequence' session → commit the current stylus position as
+    *   the last vertex, then finalise without requiring double-tap
    * - Any other pointer type / mode    → ignored
    *
    * @private
@@ -1867,11 +1854,20 @@ class ManagerSvgAnnotation {
     if (this._isUiTarget(e)) return;
     if (e.pointerType !== 'pen') return;
 
-    const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
-    if (!this._session || markerMode !== 'sequence') return;
+    if (!this._session || this._session.marker.interactionMode() !== 'sequence') return;
 
     e.preventDefault?.();
     e.stopPropagation?.();
+
+    const pos = this._eventToImageCoords(e);
+    const transform = this.viewer.camera.getCurrentTransform(performance.now());
+    const points = this._session.annotation?.data?._markerPoints;
+    const last = Array.isArray(points) ? points[points.length - 1] : null;
+    if (!last || last.x !== pos.x || last.y !== pos.y) {
+      this._session.marker.addVertex(pos, transform, this._session.annotation);
+      this._session.annotation.needsUpdate = true;
+    }
+
     this._finalizeSession(e);
   }
 

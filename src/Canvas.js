@@ -262,6 +262,49 @@ class Canvas {
 	}
 
 	/**
+	 * Reads RGBA pixels from the canvas framebuffer into a Uint8Array.
+	 *
+	 * By default it reads the full rendered frame and automatically targets the
+	 * offscreen framebuffer when that rendering path is enabled.
+	 *
+	 * @param {Object} [options]
+	 * @param {number} [options.x=0] - Readback origin X in framebuffer pixels.
+	 * @param {number} [options.y=0] - Readback origin Y in framebuffer pixels.
+	 * @param {number} [options.width=canvas width] - Readback width in pixels.
+	 * @param {number} [options.height=canvas height] - Readback height in pixels.
+	 * @param {WebGLFramebuffer|null} [options.framebuffer] - Explicit framebuffer to read from.
+	 * @returns {{data: Uint8Array, width: number, height: number}|null}
+	 */
+	readPixelsRGBA(options = {}) {
+		const gl = this.gl;
+		const canvasEl = this.canvasElement;
+		if (!gl || !canvasEl) return null;
+
+		const x = Number(options.x ?? 0) | 0;
+		const y = Number(options.y ?? 0) | 0;
+		const width = Number(options.width ?? canvasEl.width) | 0;
+		const height = Number(options.height ?? canvasEl.height) | 0;
+		if (width <= 0 || height <= 0) return null;
+
+		const framebuffer = Object.prototype.hasOwnProperty.call(options, 'framebuffer')
+			? (options.framebuffer ?? null)
+			: (this.useOffscreenFramebuffer ? this.offscreenFramebuffer : null);
+
+		const data = new Uint8Array(width * height * 4);
+		const prevFramebuffer = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+		try {
+			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+			gl.readPixels(x, y, width, height, gl.RGBA, gl.UNSIGNED_BYTE, data);
+		} catch {
+			try { gl.bindFramebuffer(gl.FRAMEBUFFER, prevFramebuffer); } catch { /* ignore */ }
+			return null;
+		}
+		gl.bindFramebuffer(gl.FRAMEBUFFER, prevFramebuffer);
+
+		return { data, width, height };
+	}
+
+	/**
 	* Updates the state of the canvas and its components.
 	* @param {Object} state - State object containing updates
 	* @param {Object} [state.camera] - Camera state updates
