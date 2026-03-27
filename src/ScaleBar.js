@@ -20,7 +20,7 @@ class Units {
 			this.allUnits = { "µm": 0.001, "mm": 1, "cm": 10, "m": 1000, "km": 1e6, "in": 254, "ft": 254 * 12 }
 		this.precision = 2;
 		if (options)
-			Object.assign(options, this);
+			Object.assign(this, options);
 	}
 
 	/**
@@ -87,18 +87,56 @@ class ScaleBar extends Units {
 		options = Object.assign(this, {
 			pixelSize: pixelSize,
 			viewer: viewer,
-			width: 200,
-			fontSize: 24,
+			width: 240,
+			height: 56,
+			padding: 14,
+			fontSize: 28,
+			fontFamily: 'system-ui, sans-serif',
+			strokeWidth: 2,
+			color: 'white',
+			position: 'bottom-left',
+			offsetX: 0,
+			offsetY: 0,
 			precision: 0
 		}, options);
 		Object.assign(this, options);
 
-		this.svg = Util.createSVGElement('svg', { viewBox: `0 0 ${this.width} 50` });
+		this.svg = Util.createSVGElement('svg', {
+			viewBox: `0 0 ${this.width} ${this.height}`,
+			preserveAspectRatio: 'xMinYMin meet'
+		});
 		this.svg.classList.add('openlime-scale');
+		this.svg.style.width = `${this.width}px`;
+		this.svg.style.height = `${this.height}px`;
+		this.svg.style.padding = `${this.padding}px`;
+		this.svg.style.overflow = 'visible';
+		this.svg.style.fill = this.color;
+		this.setPosition(this.position, this.offsetX, this.offsetY);
 
-		this.line = Util.createSVGElement('line', { x1: 5, y1: 26.5, x2: this.width - 5, y2: 26.5 });
+		const lineY = this.height - 13;
+		const textY = 6;
 
-		this.text = Util.createSVGElement('text', { x: '50%', y: '12px', 'dominant-baseline': 'middle', 'text-anchor': 'middle' });
+		this.line = Util.createSVGElement('line', {
+			x1: 5,
+			y1: lineY,
+			x2: this.width - 5,
+			y2: lineY,
+			stroke: this.color,
+			'stroke-width': this.strokeWidth,
+			'stroke-linecap': 'round',
+			'vector-effect': 'non-scaling-stroke'
+		});
+
+		this.text = Util.createSVGElement('text', {
+			x: this.width / 2,
+			y: textY,
+			fill: this.color,
+			'font-size': this.fontSize,
+			'font-family': this.fontFamily,
+			'font-weight': 600,
+			'text-anchor': 'middle',
+			'dominant-baseline': 'hanging'
+		});
 		this.text.textContent = "";
 
 		this.svg.appendChild(this.line);
@@ -107,18 +145,57 @@ class ScaleBar extends Units {
 		this.viewer.addEvent('draw', () => { this.updateScale(); });
 	}
 
+	setPosition(position = 'bottom-left', offsetX = 0, offsetY = 0) {
+		const normalized = String(position || 'bottom-left').toLowerCase();
+		const horizontal = normalized.includes('right') ? 'right' : 'left';
+		const vertical = normalized.includes('top') ? 'top' : 'bottom';
+
+		this.position = `${vertical}-${horizontal}`;
+		this.offsetX = offsetX;
+		this.offsetY = offsetY;
+
+		this.svg.classList.remove(
+			'openlime-scale-left',
+			'openlime-scale-right',
+			'openlime-scale-top',
+			'openlime-scale-bottom'
+		);
+		this.svg.classList.add(`openlime-scale-${horizontal}`);
+		this.svg.classList.add(`openlime-scale-${vertical}`);
+		this.svg.style.setProperty('--openlime-scalebar-offset-x', this.cssLength(offsetX));
+		this.svg.style.setProperty('--openlime-scalebar-offset-y', this.cssLength(offsetY));
+	}
+
+	cssLength(value) {
+		return typeof value === 'number' ? `${value}px` : String(value);
+	}
+
 	/**
 	 * Updates the scale bar based on current zoom level.
 	 * Called automatically on viewer draw events.
 	 * @private
 	 */
 	updateScale() {
-		//let zoom = this.viewer.camera.getCurrentTransform(performance.now()).z;
-		let zoom = this.viewer.camera.target.z;
+		const now = performance && performance.now ? performance.now() : Date.now();
+		const current = this.viewer.camera.getCurrentTransform ? this.viewer.camera.getCurrentTransform(now) : null;
+		const zoom = (current && Number.isFinite(current.z) && current.z > 0)
+			? current.z
+			: this.viewer.camera.target.z;
 		if (zoom == this.lastScaleZoom)
 			return;
 		this.lastScaleZoom = zoom;
+
+		if (!(Number.isFinite(this.pixelSize) && this.pixelSize > 0 && Number.isFinite(zoom) && zoom > 0)) {
+			this.svg.style.display = 'none';
+			return;
+		}
+
 		let s = this.bestLength(this.width / 3, this.width, this.pixelSize, zoom);
+		if (!(Number.isFinite(s.length) && s.length > 0 && Number.isFinite(s.label) && s.label > 0)) {
+			this.svg.style.display = 'none';
+			return;
+		}
+		this.svg.style.display = '';
 
 		let margin = this.width - s.length;
 		this.line.setAttribute('x1', margin / 2);

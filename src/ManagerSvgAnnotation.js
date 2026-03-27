@@ -31,7 +31,7 @@ import { ramerDouglasPeucker, smooth, relaxDenseZigZagPoints } from './Simplify.
  *  │  'sequence' click* + dbl-click → polygon/polyline      │        │
  *  │  'drag'     mousedown+move+up → rect/ellipse           │        │
  *  │                                                        │        │
- *  │  CreationSession (active during 'sequence'/'drag')      │        │
+ *  │  CreationSession (active during 'sequence'/'drag')     │        │
  *  │  { annotation, marker, vertices, previewEl }           │        │
  *  │                                                        │        │
  *  │  CRUD API                                              │        │

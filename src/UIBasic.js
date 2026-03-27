@@ -141,6 +141,11 @@ class UIBasic {
 	 *     },
 	 *     // Add measurement support
 	 *     pixelSize: 0.1,
+	 *     scaleBarOptions: {
+	 *         position: 'bottom-right',
+	 *         offsetX: 16,
+	 *         offsetY: 16
+	 *     },
 	 *     // Add attribution
 	 *     attribution: "© Example Source",
 	 *     // Annotation manager (shows pencil toggle button)
@@ -184,6 +189,7 @@ class UIBasic {
 			postInit: () => { },
 			showScale: true,
 			pixelSize: null,
+			scaleBarOptions: null,
 			unit: null,
 			attribution: null,     //image attribution
 			lightcontroller: null,
@@ -464,14 +470,14 @@ class UIBasic {
 			 */
 			if (this.showScale) {
 				if (this.pixelSize) {
-					this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+					this.scalebar = new ScaleBar(this.pixelSize, this.viewer, this.scaleBarOptions);
 				}
 				else {
 					let createScaleBar = () => {
 						for (const [id, layer] of Object.entries(this.viewer.canvas.layers)) {
 							this.pixelSize = layer.pixelSizePerMM();
 							if (this.pixelSize) {
-								this.scalebar = new ScaleBar(this.pixelSize, this.viewer);
+								this.scalebar = new ScaleBar(this.pixelSize, this.viewer, this.scaleBarOptions);
 								break;
 							}
 						}

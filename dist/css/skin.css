@@ -29,22 +29,24 @@
 
 .openlime-scale {
 	position: absolute;
-	bottom: 25px;
-	left: 0px;
-	width: 200px;
-	height: 40px;
-	padding: 15px;
-	fill: white;
 	z-index: 1000;
+	pointer-events: none;
 }
 
-.openlime-scale>text {
-	font-size: 24px;
+.openlime-scale-left {
+	left: var(--openlime-scalebar-offset-x, 0px);
 }
 
-.openlime-scale>line {
-	stroke: white;
-	stroke-width: 2px;
+.openlime-scale-right {
+	right: var(--openlime-scalebar-offset-x, 0px);
+}
+
+.openlime-scale-top {
+	top: var(--openlime-scalebar-offset-y, 0px);
+}
+
+.openlime-scale-bottom {
+	bottom: var(--openlime-scalebar-offset-y, 0px);
 }
 
 /* DIALOG */
