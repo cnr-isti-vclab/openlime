@@ -10,13 +10,13 @@
  */
 
 /**
- * Simplifies a polyline via the Douglas-Peucker algorithm.
+ * Simplifies a polyline via the Ramer-Douglas-Peucker algorithm.
  * @param {Array<Point>} points A polyline.
  * @param {*} tolerance The tolerance is the maximum distance between the original polyline and the simplified polyline.
  * It has the same metric as the point coordinates.  
  * @returns {Array<Point>} The simplified polyline.
  */
-function simplify(points, tolerance) {
+function ramerDouglasPeucker(points, tolerance) {
 	let tolerance2 = Math.pow(tolerance, 2);
 
     var simplify1 = function(start, end) { // recursize simplifies points from start to end
@@ -70,17 +70,6 @@ function simplify(points, tolerance) {
     simplify1(0, end);
     newLine.push(points[end]);
     return newLine;
-}
-
-/**
- * Ramer-Douglas-Peucker polyline simplification.
- * Alias of `simplify(...)` exported with an explicit algorithm name.
- * @param {Array<Point>} points A polyline.
- * @param {number} tolerance Maximum allowed deviation from the original polyline.
- * @returns {Array<Point>} The simplified polyline.
- */
-function ramerDouglasPeucker(points, tolerance) {
-	return simplify(points, tolerance);
 }
 
 /**
@@ -293,4 +282,4 @@ function relaxDenseZigZagPoints(points, options = {}) {
 	return out;
 }
 
-export { simplify, ramerDouglasPeucker, smooth, smoothToPath, relaxDenseZigZagPoints }
+export { ramerDouglasPeucker, smooth, smoothToPath, relaxDenseZigZagPoints }

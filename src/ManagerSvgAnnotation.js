@@ -27,7 +27,7 @@ import { ramerDouglasPeucker, smooth, relaxDenseZigZagPoints } from './Simplify.
  *  │  └──────────────────┘   └──────────────────────────────┼───┘    │
  *  │                                                        │        │
  *  │  Interaction modes                                     │        │
- *  │  'tap'      double-click → instant create              │        │
+ *  │  'tap'      create-click → instant create                │      │
  *  │  'sequence' click* + dbl-click → polygon/polyline      │        │
  *  │  'drag'     mousedown+move+up → rect/ellipse           │        │
  *  │                                                        │        │
@@ -54,7 +54,7 @@ import { ramerDouglasPeucker, smooth, relaxDenseZigZagPoints } from './Simplify.
  * ## Extending with new marker types
  *
  * ```javascript
- * // Tap marker (instant creation on double-click) – default behaviour
+ * // Tap marker (instant creation with single-click in create mode)
  * class StarMarker extends Marker {
  *   constructor(opts = {}) { super('star', opts); }
  *   interactionMode() { return 'tap'; }
@@ -95,7 +95,7 @@ import { ramerDouglasPeucker, smooth, relaxDenseZigZagPoints } from './Simplify.
  *
  * | `interactionMode()` | UX | Mandatory overrides |
  * |---|---|---|
- * | `'tap'` *(default)* | double-click → instant create | `createElement` |
+ * | `'tap'` *(default)* | create-click → instant create | `createElement` |
  * | `'sequence'` | click per vertex, double-click to finalise | `startElement`, `addVertex`, `updatePreview`, `finalizeElement` |
  * | `'drag'` | mousedown + drag + mouseup | `startElement`, `updatePreview`, `finalizeElement` |
  *
@@ -133,7 +133,7 @@ class Marker {
 
   /**
    * **['tap' mode]** Creates the SVG DOM element(s) for this marker at `pos`.
-   * Called once on double-click; must return an array of SVG elements.
+  * Called once for instant creation; must return an array of SVG elements.
    *
    * @param {Object} pos - Position in image coordinates {x, y}
    * @param {Object} transform - Current camera transform (.z = zoom)
@@ -842,6 +842,10 @@ class ManagerSvgAnnotation {
 
     // Wire selection events from the layer → 'select' signal + vertex-handle visibility
     this.layer.addEvent('selected', (anno) => {
+      if (this._mode === 'create') {
+        if (this.layer.selected?.size) this.deselectAll();
+        return;
+      }
       // During a setSelectedIds batch we skip per-item updates; the batch
       // method calls _updateHandlesVisibility once at the end instead.
       if (this._batchSelectInProgress) return;
@@ -856,13 +860,14 @@ class ManagerSvgAnnotation {
     // All three are registered permanently; each guards on _active and
     // the current interaction mode, so they are effectively no-ops when idle.
 
-    // Double-tap: finalise 'sequence' OR instant-create 'tap'
+    // Double-tap finalises sequence markers; pen hold offers a tablet-friendly alternative.
     this._pointerHandler = {
       priority: 10000,
       fingerDoubleTap: (e) => this._onDoubleTap(e),
+      fingerHold: (e) => this._onHold(e),
     };
 
-    // Single-tap: add vertex for 'sequence' mode
+    // Single-tap: create 'tap' markers in create mode, or add vertices for 'sequence'.
     this._singleTapHandler = {
       priority: 10000,
       fingerSingleTap: (e) => this._onSingleTap(e),
@@ -980,9 +985,9 @@ class ManagerSvgAnnotation {
    * Enables or disables the pencil (annotation system).
    *
    * - `toggle()`       — flips the enabled state.
-   * - `toggle(true)`   — enables; enters `'edit'` mode (ready to select/inspect).
-   *                      Drawing (`'create'` mode) starts automatically on
-   *                      double-click via `_onDoubleTap`.
+  * - `toggle(true)`   — enables; enters `'edit'` mode (ready to select/inspect).
+  *                      Drawing starts once the user explicitly arms `'create'`
+  *                      mode (for example by selecting a marker).
    * - `toggle(false)`  — disables; returns to `'idle'` and deselects everything.
    *
    * When disabled the manager is completely transparent: every pointer event
@@ -1095,6 +1100,7 @@ class ManagerSvgAnnotation {
    * @fires ManagerSvgAnnotation#create
    */
   createAnnotation(pos, opts = {}) {
+    const keepCreateMode = this._mode === 'create';
     const markerType = opts.markerType ?? this.activeMarker;
     const markerOptions = Object.assign({}, this.markerOptions, opts.markerOptions ?? {});
     const marker = this._instantiateMarker(markerType, markerOptions);
@@ -1137,9 +1143,8 @@ class ManagerSvgAnnotation {
     this.viewer.redraw();
     annotation.syncSvg();
     this.emit('create', annotation);
-    // After instant creation (tap/disk) return to edit mode so the user can
-    // immediately select / inspect the new annotation.
-    this.setMode('edit');
+    if (keepCreateMode) this.setMode('create');
+    else                this.setMode('edit');
     return annotation;
   }
 
@@ -1210,6 +1215,7 @@ class ManagerSvgAnnotation {
    * @param {boolean} [on=true]   - `true` to select, `false` to deselect.
    */
   setSelected(id, on = true) {
+    if (this._mode === 'create') return;
     const anno = this.layer.getAnnotationById(id);
     if (!anno) return;
     // Programmatic selection auto-enables the pencil in edit mode.
@@ -1236,6 +1242,7 @@ class ManagerSvgAnnotation {
    *                         Pass an empty array to deselect everything.
    */
   setSelectedIds(ids) {
+    if (this._mode === 'create') return;
     const unique = [...new Set(ids)];
 
     // Programmatic selection auto-enables the pencil in edit mode.
@@ -1351,6 +1358,8 @@ class ManagerSvgAnnotation {
     }
     this.activeMarker = type;
     this.markerOptions = options;
+    this._pencilEnabled = true;
+    this.setMode('create');
     this._syncPointerEvents(); // re-evaluate pointer-events for new interaction mode
   }
 
@@ -1522,7 +1531,7 @@ class ManagerSvgAnnotation {
     this.layer.onClick = (anno, e) => {
       // Mouse selections are only allowed when the pencil is enabled by the user.
       // Return true to swallow the event (prevent LayerSvgAnnotation's default select).
-      if (!this._pencilEnabled) return true;
+      if (!this._pencilEnabled || this._mode !== 'edit') return true;
       // Record that the click landed on an annotation so _onSingleTap can
       // distinguish this from a click on the empty canvas background.
       this._lastClickWasOnAnnotation = true;
@@ -1805,14 +1814,13 @@ class ManagerSvgAnnotation {
   /**
    * Double-tap — unified entry point to creation:
    *
-   * - Any mode, no session, 'tap' marker      → enter create, instant create, back to edit
    * - Any mode, no session, 'sequence' marker → enter create, start drawing session
    * - Any mode, no session, 'drag' marker     → enter create, arm drag (next drag starts rect)
    * - Create mode, session active, 'sequence' → add last vertex + finalise
    *
-   * Note: `toggle()` enters `'edit'` mode (not `'create'`).  Drawing always
-   * starts here on double-click, keeping pointer-events enabled on the SVG
-   * until the very moment the user begins a new annotation.
+  * Note: `toggle()` enters `'edit'` mode (not `'create'`).  Sequence/drag
+  * drawing can start here on double-click; tap markers are created with a
+  * single click once create mode is active.
    * @private
    */
   _onDoubleTap(e) {
@@ -1833,14 +1841,13 @@ class ManagerSvgAnnotation {
       return;
     }
 
-    // No active session → enter create mode and start / create
+    // No active session → enter create mode and start sequence/drag creation.
+    if (markerMode === 'tap') return;
+
     this.setMode('create');
     const pos = this._eventToImageCoords(e);
 
-    if (markerMode === 'tap') {
-      // Disk: instant create (createAnnotation will switch back to edit)
-      this.createAnnotation(pos);
-    } else if (markerMode === 'sequence') {
+    if (markerMode === 'sequence') {
       // Polyline/Polygon: double-click places the first vertex
       this._startSession(pos, e);
     }
@@ -1848,8 +1855,30 @@ class ManagerSvgAnnotation {
   }
 
   /**
+   * Pen hold — alternative finalise gesture for tablet stylus users.
+   *
+   * - Pen + active 'sequence' session → finalise without requiring double-tap
+   * - Any other pointer type / mode    → ignored
+   *
+   * @private
+   */
+  _onHold(e) {
+    if (!this._pencilEnabled) return;
+    if (this._isUiTarget(e)) return;
+    if (e.pointerType !== 'pen') return;
+
+    const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
+    if (!this._session || markerMode !== 'sequence') return;
+
+    e.preventDefault?.();
+    e.stopPropagation?.();
+    this._finalizeSession(e);
+  }
+
+  /**
    * Single-tap — dual purpose depending on context:
    *
+    * - Create mode + no session + 'tap' marker      → instant create
     * - Create mode + no session + 'sequence' marker → start drawing session (first vertex)
    * - Session active (sequence mode) → add a vertex to the current drawing
    * - No session, click on annotation → ensure edit mode is active (selection
@@ -1863,12 +1892,24 @@ class ManagerSvgAnnotation {
 
     const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
 
+    if (!this._session && this._mode === 'create' && markerMode === 'tap') {
+      e.preventDefault?.();
+      e.stopPropagation?.();
+      const pos = this._eventToImageCoords(e);
+      this.createAnnotation(pos);
+      return;
+    }
+
     // In create mode, sequence markers start on first single-click.
     if (!this._session && this._mode === 'create' && markerMode === 'sequence') {
       e.preventDefault?.();
       e.stopPropagation?.();
       const pos = this._eventToImageCoords(e);
       this._startSession(pos, e);
+      return;
+    }
+
+    if (!this._session && this._mode === 'create') {
       return;
     }
 
@@ -1885,7 +1926,7 @@ class ManagerSvgAnnotation {
       return;
     }
 
-    // No session: switch to edit mode.
+    // No session in edit mode: clicking empty area clears the current selection.
     // Determine annotation-hit directly from the current event target to avoid
     // stale state when annotation clicks are handled by LayerSvgAnnotation.
     const wasOnAnnotation = !!(e.target?.closest?.('.openlime-annotation'));
@@ -1960,7 +2001,7 @@ class ManagerSvgAnnotation {
     this.viewer.redraw();
   }
 
-  /** Pan/drag end → finalise 'drag' mode only. 'sequence' finalises on double-tap. @private */
+  /** Pan/drag end → finalise 'drag' mode only. 'sequence' finalises on double-tap or pen hold. @private */
   _onDragEnd(e) {
     if (!this._session) return;
     if (this._session.marker.interactionMode() === 'drag') {
@@ -2131,10 +2172,8 @@ class ManagerSvgAnnotation {
     annotation.syncSvg();
     this.viewer.redraw();
     this.emit('create', annotation);
-    // Most markers return to edit mode; markers can opt into continuous
-    // drawing by overriding shouldStayInCreateModeAfterFinalize().
-    if (marker.shouldStayInCreateModeAfterFinalize(annotation)) this.setMode('create');
-    else                                                       this.setMode('edit');
+    if (this._mode === 'create' || marker.shouldStayInCreateModeAfterFinalize(annotation)) this.setMode('create');
+    else                                                                                   this.setMode('edit');
   }
 
   /**
@@ -2148,9 +2187,8 @@ class ManagerSvgAnnotation {
     this.layer.deleteAnnotationById(annotation.id);
     this.viewer.redraw();
     this.emit('sessionCancel');
-    // Return to edit mode so the next interaction (click to select, pan, …)
-    // works immediately without requiring the user to re-click a mode button.
-    this.setMode('edit');
+    if (this._mode === 'create') this.setMode('create');
+    else                         this.setMode('edit');
   }
 
   // ─── Internal: vertex-drag direct listeners ────────────────────────────────
@@ -2667,7 +2705,7 @@ class FreehandMarker extends Marker {
       return reduced.length >= 2 ? reduced : normalized;
     }
 
-    // Reuse EditorSvgAnnotation pipeline: simplify -> smooth.
+    // Reuse EditorSvgAnnotation pipeline: RDP reduction -> smooth.
     const angle = Number(this.smoothAngle ?? 90);
     const smoothed = smooth(reduced, Number.isFinite(angle) ? angle : 90, true);
     const anchors = smoothed

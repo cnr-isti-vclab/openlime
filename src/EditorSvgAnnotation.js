@@ -1,6 +1,6 @@
 import { Skin } from './Skin.js';
 import { Util } from './Util.js';
-import { simplify, smooth, smoothToPath } from './Simplify.js'
+import { ramerDouglasPeucker, smooth, smoothToPath } from './Simplify.js'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js'
 import { CoordinateSystem } from './CoordinateSystem.js'
 
@@ -1079,7 +1079,7 @@ class Line {
 
 	static svgPath(points) {
 		let tolerance = 1.5 * points[0].pixelSize;
-		let tmp = simplify(points, tolerance);
+		let tmp = ramerDouglasPeucker(points, tolerance);
 		let smoothed = smooth(tmp, 90, true);
 		return smoothToPath(smoothed);
 	}
