@@ -142,6 +142,10 @@
         }
 
         /* More compact Freehand settings dialog */
+        #freehandSettingsModal {
+            z-index: 20000;
+        }
+
         #freehandSettingsModal .modal-dialog {
             max-width: 620px;
         }
@@ -241,8 +245,6 @@
                     </div>
 
                     <div class="d-flex gap-2 mb-3">
-                        <button type="button" id="fh-relief-weak" class="btn btn-outline-info btn-sm">Relief Weak</button>
-                        <button type="button" id="fh-relief-strong" class="btn btn-outline-success btn-sm">Relief Strong</button>
                     </div>
 
                     <div class="form-check form-switch mb-3">
@@ -633,27 +635,6 @@
             updateFreehandLabels();
         }
 
-        function applyReliefPreset(kind) {
-            freehandSettings.enableContourSnap = true;
-            if (kind === 'weak') {
-                freehandSettings.contourSnapRadius = 20;
-                freehandSettings.contourSnapStrength = 0.55;
-                freehandSettings.contourMinGradient = 14;
-                freehandSettings.enableSmoothingFilter = true;
-                freehandSettings.enableTremorFilter = true;
-                freehandSettings.smoothAngle = 100;
-            } else {
-                freehandSettings.contourSnapRadius = 12;
-                freehandSettings.contourSnapStrength = 0.82;
-                freehandSettings.contourMinGradient = 30;
-                freehandSettings.enableSmoothingFilter = true;
-                freehandSettings.enableTremorFilter = true;
-                freehandSettings.smoothAngle = 135;
-            }
-            syncFreehandControlsFromState();
-            applyFreehandSettingsIfActive();
-        }
-
         function applyFreehandStrokeWidthForFuture() {
             const fw = Number(freehandSettings.strokeWidth);
             if (!Number.isFinite(fw) || fw <= 0) return;
@@ -872,8 +853,6 @@
         document.getElementById('fh-preset-strong').addEventListener('click', () => applyFreehandPreset('strong'));
         document.getElementById('fh-preset-smooth-snap').addEventListener('click', () => applyFreehandPreset('smoothSnap'));
         document.getElementById('fh-preset-smooth-snap-strong').addEventListener('click', () => applyFreehandPreset('smoothSnapStrong'));
-        document.getElementById('fh-relief-weak').addEventListener('click', () => applyReliefPreset('weak'));
-        document.getElementById('fh-relief-strong').addEventListener('click', () => applyReliefPreset('strong'));
         document.getElementById('fh-closed').addEventListener('change', (e) => {
             freehandSettings.closed = !!e.target.checked;
             applyFreehandSettingsIfActive();
