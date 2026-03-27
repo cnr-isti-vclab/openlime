@@ -323,6 +323,25 @@
                     </label>
                     <input id="fh-contour-amount" type="range" class="form-range" min="0.10" max="1.00" step="0.05" value="0.55">
 
+                    <hr class="border-secondary opacity-50 my-2">
+
+                    <div class="form-check form-switch mt-3 mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="fh-enable-final-relax">
+                        <label class="form-check-label" for="fh-enable-final-relax">Enable final relax</label>
+                    </div>
+
+                    <label for="fh-final-relax-strength" class="form-label d-flex justify-content-between mt-2">
+                        <span>Final relax strength</span>
+                        <span id="fh-final-relax-strength-value">0.12</span>
+                    </label>
+                    <input id="fh-final-relax-strength" type="range" class="form-range" min="0.00" max="0.50" step="0.01" value="0.12">
+
+                    <label for="fh-final-relax-dense-factor" class="form-label d-flex justify-content-between mt-3">
+                        <span>Final relax dense factor</span>
+                        <span id="fh-final-relax-dense-factor-value">1.45</span>
+                    </label>
+                    <input id="fh-final-relax-dense-factor" type="range" class="form-range" min="0.50" max="3.00" step="0.05" value="1.45">
+
                 </div>
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -494,6 +513,9 @@
             contourSnapStrength: 0.70,
             contourMinGradient: 22,
             contourAmount: 0.55,
+            enableFinalRelax: true,
+            finalRelaxStrength: 0.12,
+            finalRelaxDenseFactor: 1.45,
             strokeWidth: 5.0,
         };
 
@@ -516,6 +538,8 @@
             document.getElementById('fh-snap-strength-value').textContent = Number(freehandSettings.contourSnapStrength).toFixed(2);
             document.getElementById('fh-contour-min-gradient-value').textContent = String(Math.round(freehandSettings.contourMinGradient));
             document.getElementById('fh-contour-amount-value').textContent = Number(freehandSettings.contourAmount).toFixed(2);
+            document.getElementById('fh-final-relax-strength-value').textContent = Number(freehandSettings.finalRelaxStrength).toFixed(2);
+            document.getElementById('fh-final-relax-dense-factor-value').textContent = Number(freehandSettings.finalRelaxDenseFactor).toFixed(2);
             document.getElementById('fh-stroke-width-value').textContent = Number(freehandSettings.strokeWidth).toFixed(1);
         }
 
@@ -602,6 +626,9 @@
             document.getElementById('fh-snap-strength').value = String(freehandSettings.contourSnapStrength);
             document.getElementById('fh-contour-min-gradient').value = String(freehandSettings.contourMinGradient);
             document.getElementById('fh-contour-amount').value = String(freehandSettings.contourAmount);
+            document.getElementById('fh-enable-final-relax').checked = !!freehandSettings.enableFinalRelax;
+            document.getElementById('fh-final-relax-strength').value = String(freehandSettings.finalRelaxStrength);
+            document.getElementById('fh-final-relax-dense-factor').value = String(freehandSettings.finalRelaxDenseFactor);
             document.getElementById('fh-stroke-width').value = String(freehandSettings.strokeWidth);
             updateFreehandLabels();
         }
@@ -696,6 +723,8 @@
                 freehandSettings.contourSnapRadius = 10;
                 freehandSettings.contourSnapStrength = 0.58;
                 freehandSettings.contourMinGradient = 30;
+                freehandSettings.finalRelaxStrength = 0.12;
+                freehandSettings.finalRelaxDenseFactor = 1.45;
             } else if (name === 'smoothSnapStrong') {
                 // Strong snap with extra smoothing to keep curves clean and reduce zig-zag.
                 freehandSettings.enableSmoothingFilter = true;
@@ -709,6 +738,8 @@
                 freehandSettings.contourSnapStrength = 0.70;
                 freehandSettings.contourMinGradient = 17;
                 freehandSettings.contourAmount = 0.55;
+                freehandSettings.finalRelaxStrength = 0.12;
+                freehandSettings.finalRelaxDenseFactor = 1.45;
             }
             syncFreehandControlsFromState();
             applyFreehandStrokeWidthForFuture();
@@ -892,6 +923,20 @@
         });
         document.getElementById('fh-contour-amount').addEventListener('input', (e) => {
             freehandSettings.contourAmount = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-enable-final-relax').addEventListener('change', (e) => {
+            freehandSettings.enableFinalRelax = !!e.target.checked;
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-final-relax-strength').addEventListener('input', (e) => {
+            freehandSettings.finalRelaxStrength = Number(e.target.value);
+            updateFreehandLabels();
+            applyFreehandSettingsIfActive();
+        });
+        document.getElementById('fh-final-relax-dense-factor').addEventListener('input', (e) => {
+            freehandSettings.finalRelaxDenseFactor = Number(e.target.value);
             updateFreehandLabels();
             applyFreehandSettingsIfActive();
         });
