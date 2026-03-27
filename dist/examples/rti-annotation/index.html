@@ -43,10 +43,10 @@
         }
 
         #marker-panel .marker-btn {
-            --bs-btn-padding-y: 0.32rem;
-            --bs-btn-padding-x: 0.7rem;
-            --bs-btn-font-size: 0.82rem;
-            min-width: 88px;
+            --bs-btn-padding-y: 0.24rem;
+            --bs-btn-padding-x: 0.58rem;
+            --bs-btn-font-size: 0.76rem;
+            min-width: 80px;
         }
 
         #marker-panel .marker-btn.active {
@@ -60,9 +60,9 @@
         }
 
         #marker-panel .settings-btn {
-            --bs-btn-padding-y: 0.32rem;
-            --bs-btn-padding-x: 0.85rem;
-            --bs-btn-font-size: 0.8rem;
+            --bs-btn-padding-y: 0.24rem;
+            --bs-btn-padding-x: 0.7rem;
+            --bs-btn-font-size: 0.76rem;
             --bs-btn-color: #8fe8ff;
             --bs-btn-border-color: #35b8da;
             --bs-btn-hover-bg: rgba(53, 184, 218, 0.18);
@@ -140,6 +140,49 @@
             filter: grayscale(1);
             cursor: not-allowed;
         }
+
+        /* More compact Freehand settings dialog */
+        #freehandSettingsModal .modal-dialog {
+            max-width: 620px;
+        }
+
+        #freehandSettingsModal .modal-header,
+        #freehandSettingsModal .modal-footer {
+            padding: 0.45rem 0.7rem;
+        }
+
+        #freehandSettingsModal .modal-title {
+            font-size: 0.95rem;
+        }
+
+        #freehandSettingsModal .modal-body {
+            font-size: 0.78rem;
+            padding: 0.55rem 0.7rem;
+            line-height: 1.2;
+        }
+
+        #freehandSettingsModal .btn {
+            font-size: 0.68rem;
+            padding: 0.17rem 0.42rem;
+        }
+
+        #freehandSettingsModal .form-check {
+            margin-bottom: 0.45rem !important;
+        }
+
+        #freehandSettingsModal .form-check-label {
+            font-size: 0.75rem;
+        }
+
+        #freehandSettingsModal .form-label {
+            margin-bottom: 0.12rem;
+            font-size: 0.72rem;
+        }
+
+        #freehandSettingsModal .form-range {
+            margin-bottom: 0.18rem;
+            height: 1rem;
+        }
     </style>
 
 </head>
@@ -149,17 +192,22 @@
     <div id="annotation-toolbar">
         <div id="marker-panel">
             <div class="card border-info">
-                <div class="card-body py-2 px-3 d-flex align-items-center flex-wrap gap-2">
-                    <span class="badge text-bg-info">Marker</span>
-                    <button id="btn-disk" class="btn btn-outline-light marker-btn">&#9679; Disk</button>
-                    <button id="btn-polyline" class="btn btn-outline-light marker-btn">&#9135; Polyline</button>
-                    <button id="btn-polygon" class="btn btn-outline-light marker-btn">&#9651; Polygon</button>
-                    <button id="btn-rect" class="btn btn-outline-light marker-btn">&#9645; Rect</button>
-                    <button id="btn-freehand" class="btn btn-outline-light marker-btn">&#9998; Freehand</button>
-                    <button id="btn-edit" class="btn btn-outline-warning settings-btn">Edit</button>
-                    <button id="btn-freehand-settings" class="btn btn-outline-info settings-btn">Settings</button>
-                    <button id="btn-anno-save" class="btn btn-outline-info settings-btn">Save</button>
-                    <button id="btn-anno-load" class="btn btn-outline-info settings-btn">Load</button>
+                <div class="card-body py-1 px-2 d-flex flex-column gap-1">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="badge text-bg-info">Marker</span>
+                        <button id="btn-disk" class="btn btn-outline-light marker-btn">&#9679; Disk</button>
+                        <button id="btn-polyline" class="btn btn-outline-light marker-btn">&#9135; Polyline</button>
+                        <button id="btn-polygon" class="btn btn-outline-light marker-btn">&#9651; Polygon</button>
+                        <button id="btn-rect" class="btn btn-outline-light marker-btn">&#9645; Rect</button>
+                        <button id="btn-freehand" class="btn btn-outline-light marker-btn">&#9998; Freehand</button>
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <button id="btn-edit" class="btn btn-outline-warning settings-btn">Edit</button>
+                        <button id="btn-relax-selected" class="btn btn-outline-warning settings-btn">Relax</button>
+                        <button id="btn-freehand-settings" class="btn btn-outline-info settings-btn">Settings</button>
+                        <button id="btn-anno-save" class="btn btn-outline-info settings-btn">Save</button>
+                        <button id="btn-anno-load" class="btn btn-outline-info settings-btn">Load</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -207,6 +255,19 @@
                         <label class="form-check-label" for="fh-closed">Close stroke (create polygon)</label>
                     </div>
 
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="fh-auto-close-near-start">
+                        <label class="form-check-label" for="fh-auto-close-near-start">Auto-close when release is near first point</label>
+                    </div>
+
+                    <label for="fh-stroke-width" class="form-label d-flex justify-content-between mt-2">
+                        <span>Stroke width (px)</span>
+                        <span id="fh-stroke-width-value">2.0</span>
+                    </label>
+                    <input id="fh-stroke-width" type="range" class="form-range" min="1" max="12" step="0.1" value="2.0">
+
+                    <hr class="border-secondary opacity-50 my-2">
+
                     <label for="fh-sample-distance" class="form-label d-flex justify-content-between">
                         <span>Sample distance (px)</span>
                         <span id="fh-sample-distance-value">1.5</span>
@@ -231,6 +292,8 @@
                     </label>
                     <input id="fh-hit-tolerance" type="range" class="form-range" min="4" max="24" step="1" value="10">
 
+                    <hr class="border-secondary opacity-50 my-2">
+
                     <div class="form-check form-switch mt-3 mb-3">
                         <input class="form-check-input" type="checkbox" role="switch" id="fh-enable-contour-snap">
                         <label class="form-check-label" for="fh-enable-contour-snap">Enable Contour Snap (from rendered frame)</label>
@@ -254,22 +317,12 @@
                     </label>
                     <input id="fh-contour-min-gradient" type="range" class="form-range" min="5" max="80" step="1" value="22">
 
-                    <div class="form-check form-switch mt-3 mb-2">
-                        <input class="form-check-input" type="checkbox" role="switch" id="fh-show-contour-overlay">
-                        <label class="form-check-label" for="fh-show-contour-overlay">Show contour overlay (diagnostic)</label>
-                    </div>
-
-                    <label for="fh-overlay-opacity" class="form-label d-flex justify-content-between mt-2">
-                        <span>Overlay opacity</span>
-                        <span id="fh-overlay-opacity-value">0.65</span>
+                    <label for="fh-contour-amount" class="form-label d-flex justify-content-between mt-3">
+                        <span>Contour amount</span>
+                        <span id="fh-contour-amount-value">0.55</span>
                     </label>
-                    <input id="fh-overlay-opacity" type="range" class="form-range" min="0.10" max="1.00" step="0.05" value="0.65">
+                    <input id="fh-contour-amount" type="range" class="form-range" min="0.10" max="1.00" step="0.05" value="0.55">
 
-                    <label for="fh-stroke-width" class="form-label d-flex justify-content-between mt-3">
-                        <span>Stroke width (px)</span>
-                        <span id="fh-stroke-width-value">2.0</span>
-                    </label>
-                    <input id="fh-stroke-width" type="range" class="form-range" min="1" max="12" step="0.1" value="2.0">
                 </div>
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -413,13 +466,16 @@
         ui.addEvent('pencilEnabled', () => {
             manager.deselectAll(); // colours restored automatically from classes
             syncMarkerToolbarEnabled();
-            const hint = selectedMarkerKey ? (MARKER_HINTS[selectedMarkerKey] || EDIT_HINT_TEXT) : EDIT_HINT_TEXT;
-            setCtrlHint(hint);
+            if (selectedMarkerKey && markerConfigs[selectedMarkerKey]) {
+                // Re-apply the selected marker so manager mode/options match UI state.
+                setMarker(selectedMarkerKey);
+            } else {
+                setCtrlHint(EDIT_HINT_TEXT);
+            }
         });
         ui.addEvent('pencilDisabled', () => {
             syncMarkerToolbarEnabled();
             hideCtrlHint();
-            clearContourOverlay();
         });
 
         // ── Marker selector panel ────────────────────────────────────────
@@ -431,33 +487,15 @@
             simplifyTolerance: 1.0,
             smoothAngle: 90,
             closed: false,
+            autoCloseNearStart: true,
             hitTolerance: 10,
             enableContourSnap: false,
             contourSnapRadius: 14,
             contourSnapStrength: 0.70,
             contourMinGradient: 22,
-            showContourOverlay: false,
-            contourOverlayOpacity: 0.65,
+            contourAmount: 0.55,
             strokeWidth: 2.0,
         };
-
-        const openlimeRoot = document.querySelector('.openlime');
-        if (openlimeRoot && window.getComputedStyle(openlimeRoot).position === 'static') {
-            openlimeRoot.style.position = 'relative';
-        }
-
-        const contourOverlay = document.createElement('canvas');
-        contourOverlay.id = 'contour-overlay';
-        contourOverlay.style.position = 'absolute';
-        contourOverlay.style.inset = '0';
-        contourOverlay.style.width = '100%';
-        contourOverlay.style.height = '100%';
-        contourOverlay.style.pointerEvents = 'none';
-        contourOverlay.style.zIndex = '5';
-        contourOverlay.style.mixBlendMode = 'screen';
-        contourOverlay.style.imageRendering = 'pixelated';
-        contourOverlay.style.display = 'none';
-        openlimeRoot?.appendChild(contourOverlay);
 
         // Active class index used for newly created freehand annotations.
         // Existing annotations keep their original class, so stroke-width changes
@@ -477,13 +515,84 @@
             document.getElementById('fh-snap-radius-value').textContent = String(Math.round(freehandSettings.contourSnapRadius));
             document.getElementById('fh-snap-strength-value').textContent = Number(freehandSettings.contourSnapStrength).toFixed(2);
             document.getElementById('fh-contour-min-gradient-value').textContent = String(Math.round(freehandSettings.contourMinGradient));
-            document.getElementById('fh-overlay-opacity-value').textContent = Number(freehandSettings.contourOverlayOpacity).toFixed(2);
+            document.getElementById('fh-contour-amount-value').textContent = Number(freehandSettings.contourAmount).toFixed(2);
             document.getElementById('fh-stroke-width-value').textContent = Number(freehandSettings.strokeWidth).toFixed(1);
+        }
+
+        function getEffectiveContourMinGradient() {
+            const base = Math.max(0, Number(freehandSettings.contourMinGradient) || 0);
+            const amount = Math.max(0.10, Math.min(1.00, Number(freehandSettings.contourAmount) || 1));
+            // Lower amount means fewer contours by increasing the effective threshold.
+            return Math.min(255, Math.round(base + (1 - amount) * 70));
+        }
+
+        function pointsToAttr(points) {
+            return points.map(p => `${p.x},${p.y}`).join(' ');
+        }
+
+        function refreshAnnotationPoints(anno) {
+            const pts = anno?.data?._markerPoints;
+            if (!Array.isArray(pts) || pts.length < 2) return;
+            const attr = pointsToAttr(pts);
+
+            const shape = anno.elements?.find(el =>
+                el.classList?.contains('annotation-polyline') || el.classList?.contains('annotation-freehand'));
+            if (shape) shape.setAttribute('points', attr);
+
+            const hit = anno.elements?.find(el =>
+                el.classList?.contains('annotation-polyline-hit') || el.classList?.contains('annotation-freehand-hit'));
+            if (hit) hit.setAttribute('points', attr);
+
+            const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
+            if (handles) {
+                for (let i = 0; i < Math.min(handles.children.length, pts.length); i++) {
+                    handles.children[i].setAttribute('cx', String(pts[i].x));
+                    handles.children[i].setAttribute('cy', String(pts[i].y));
+                }
+            }
+        }
+
+        function relaxSelectedAnnotations() {
+            const selectedIds = [...(manager.layer?.selected ?? [])];
+            if (!selectedIds.length) return;
+            if (typeof OpenLIME.relaxDenseZigZagPoints !== 'function') {
+                console.warn('[Relax] relaxDenseZigZagPoints not available yet. Wait for src rebuild (nodemon/rollup).');
+                return;
+            }
+
+            let changed = 0;
+            for (const id of selectedIds) {
+                const anno = manager.getAnnotationById(id);
+                if (!anno?.data) continue;
+
+                const markerType = anno.data._markerType;
+                const isSupported = markerType === 'polyline' || markerType === 'freehand';
+                const pts = anno.data._markerPoints;
+                if (!isSupported || !Array.isArray(pts) || pts.length < 3) continue;
+
+                const closed = !!anno.data._markerClosed;
+                const relaxed = OpenLIME.relaxDenseZigZagPoints(pts, {
+                    closed,
+                    strength: 0.34,
+                    denseFactor: 1.8,
+                    sharpCosThreshold: 0.35,
+                });
+                anno.data._markerPoints = relaxed;
+                refreshAnnotationPoints(anno);
+                anno.needsUpdate = true;
+                manager.emit('update', anno);
+                changed += 1;
+            }
+
+            if (changed > 0) {
+                manager.viewer.redraw();
+            }
         }
 
         function syncFreehandControlsFromState() {
             document.getElementById('fh-enable-filter').checked = !!freehandSettings.enableSmoothingFilter;
             document.getElementById('fh-closed').checked = !!freehandSettings.closed;
+            document.getElementById('fh-auto-close-near-start').checked = !!freehandSettings.autoCloseNearStart;
             document.getElementById('fh-sample-distance').value = String(freehandSettings.sampleDistance);
             document.getElementById('fh-simplify').value = String(freehandSettings.simplifyTolerance);
             document.getElementById('fh-smooth-angle').value = String(freehandSettings.smoothAngle);
@@ -492,69 +601,9 @@
             document.getElementById('fh-snap-radius').value = String(freehandSettings.contourSnapRadius);
             document.getElementById('fh-snap-strength').value = String(freehandSettings.contourSnapStrength);
             document.getElementById('fh-contour-min-gradient').value = String(freehandSettings.contourMinGradient);
-            document.getElementById('fh-show-contour-overlay').checked = !!freehandSettings.showContourOverlay;
-            document.getElementById('fh-overlay-opacity').value = String(freehandSettings.contourOverlayOpacity);
+            document.getElementById('fh-contour-amount').value = String(freehandSettings.contourAmount);
             document.getElementById('fh-stroke-width').value = String(freehandSettings.strokeWidth);
             updateFreehandLabels();
-        }
-
-        function clearContourOverlay() {
-            const ctx = contourOverlay.getContext('2d');
-            if (!ctx) return;
-            ctx.clearRect(0, 0, contourOverlay.width || 1, contourOverlay.height || 1);
-            contourOverlay.style.display = 'none';
-        }
-
-        function updateContourOverlay() {
-            const shouldShow = !!freehandSettings.showContourOverlay &&
-                !!manager.active &&
-                selectedMarkerKey === 'freehand';
-            if (!shouldShow) {
-                clearContourOverlay();
-                return;
-            }
-
-            const contour = manager.getRenderedContourMap?.();
-            if (!contour) {
-                clearContourOverlay();
-                return;
-            }
-
-            if (contourOverlay.width !== contour.width || contourOverlay.height !== contour.height) {
-                contourOverlay.width = contour.width;
-                contourOverlay.height = contour.height;
-            }
-
-            const ctx = contourOverlay.getContext('2d');
-            if (!ctx) return;
-            const image = ctx.createImageData(contour.width, contour.height);
-            const data = image.data;
-            const minG = Math.max(0, Number(freehandSettings.contourMinGradient));
-            const baseOpacity = Math.max(0, Math.min(1, Number(freehandSettings.contourOverlayOpacity)));
-
-            for (let i = 0, j = 0; i < contour.map.length; i++, j += 4) {
-                const g = contour.map[i];
-                if (g < minG) {
-                    data[j + 0] = 0;
-                    data[j + 1] = 0;
-                    data[j + 2] = 0;
-                    data[j + 3] = 0;
-                    continue;
-                }
-                const t = (g - minG) / Math.max(1, 255 - minG);
-                data[j + 0] = 40;
-                data[j + 1] = 230;
-                data[j + 2] = 255;
-                data[j + 3] = Math.round(255 * baseOpacity * (0.25 + 0.75 * t));
-            }
-
-            ctx.putImageData(image, 0, 0);
-            contourOverlay.style.display = 'block';
-        }
-
-        function contourOverlayLoop() {
-            updateContourOverlay();
-            window.requestAnimationFrame(contourOverlayLoop);
         }
 
         function applyReliefPreset(kind) {
@@ -610,7 +659,10 @@
 
         function applyFreehandSettingsIfActive() {
             if (manager.activeMarker !== 'freehand') return;
-            manager.setActiveMarker('freehand', { ...freehandSettings });
+            manager.setActiveMarker('freehand', {
+                ...freehandSettings,
+                contourMinGradient: getEffectiveContourMinGradient(),
+            });
         }
 
         function applyFreehandPreset(name) {
@@ -645,17 +697,18 @@
                 freehandSettings.contourSnapStrength = 0.58;
                 freehandSettings.contourMinGradient = 30;
             } else if (name === 'smoothSnapStrong') {
-                // Stronger snap while still avoiding visible sawtooth artifacts.
+                // Strong snap with extra smoothing to keep curves clean and reduce zig-zag.
                 freehandSettings.enableSmoothingFilter = true;
                 freehandSettings.enableTremorFilter = true;
                 freehandSettings.enableContourSnap = true;
                 freehandSettings.sampleDistance = 1.3;
-                freehandSettings.simplifyTolerance = 2.4;
-                freehandSettings.smoothAngle = 145;
+                freehandSettings.simplifyTolerance = 2.8;
+                freehandSettings.smoothAngle = 165;
                 freehandSettings.hitTolerance = 10;
                 freehandSettings.contourSnapRadius = 12;
                 freehandSettings.contourSnapStrength = 0.70;
-                freehandSettings.contourMinGradient = 32;
+                freehandSettings.contourMinGradient = 17;
+                freehandSettings.contourAmount = 0.55;
             }
             syncFreehandControlsFromState();
             applyFreehandStrokeWidthForFuture();
@@ -690,7 +743,10 @@
         function setMarker(key) {
             const cfg = markerConfigs[key];
             if (key === 'freehand') {
-                cfg.opts = { ...freehandSettings };
+                cfg.opts = {
+                    ...freehandSettings,
+                    contourMinGradient: getEffectiveContourMinGradient(),
+                };
             }
             manager.setActiveMarker(cfg.type, cfg.opts);
             manager.defaultAnnotationClass = cfg.classIdx;
@@ -722,6 +778,7 @@
         document.getElementById('btn-rect').addEventListener('click', () => toggleMarker('rect'));
         document.getElementById('btn-freehand').addEventListener('click', () => toggleMarker('freehand'));
         document.getElementById('btn-edit').addEventListener('click', () => activateEditModeUI());
+        document.getElementById('btn-relax-selected').addEventListener('click', () => relaxSelectedAnnotations());
         document.getElementById('btn-freehand-settings').addEventListener('click', () => {
             syncFreehandControlsFromState();
             freehandModal?.show();
@@ -790,6 +847,10 @@
             freehandSettings.closed = !!e.target.checked;
             applyFreehandSettingsIfActive();
         });
+        document.getElementById('fh-auto-close-near-start').addEventListener('change', (e) => {
+            freehandSettings.autoCloseNearStart = !!e.target.checked;
+            applyFreehandSettingsIfActive();
+        });
         document.getElementById('fh-sample-distance').addEventListener('input', (e) => {
             freehandSettings.sampleDistance = Number(e.target.value);
             updateFreehandLabels();
@@ -829,13 +890,10 @@
             updateFreehandLabels();
             applyFreehandSettingsIfActive();
         });
-        document.getElementById('fh-show-contour-overlay').addEventListener('change', (e) => {
-            freehandSettings.showContourOverlay = !!e.target.checked;
-            if (!freehandSettings.showContourOverlay) clearContourOverlay();
-        });
-        document.getElementById('fh-overlay-opacity').addEventListener('input', (e) => {
-            freehandSettings.contourOverlayOpacity = Number(e.target.value);
+        document.getElementById('fh-contour-amount').addEventListener('input', (e) => {
+            freehandSettings.contourAmount = Number(e.target.value);
             updateFreehandLabels();
+            applyFreehandSettingsIfActive();
         });
         document.getElementById('fh-stroke-width').addEventListener('input', (e) => {
             freehandSettings.strokeWidth = Number(e.target.value);
@@ -845,7 +903,6 @@
         });
 
         syncFreehandControlsFromState();
-        window.requestAnimationFrame(contourOverlayLoop);
         applyFreehandStrokeWidthForFuture();
         if (manager.active) setCtrlHint(EDIT_HINT_TEXT);
         else hideCtrlHint();

@@ -206,4 +206,91 @@ function smoothToPath(smoothed) {
 	return d.join(' ');
 }
 
-export { simplify, ramerDouglasPeucker, smooth, smoothToPath }
+function _median(values) {
+	if (!Array.isArray(values) || values.length === 0) return 0;
+	const sorted = [...values].sort((a, b) => a - b);
+	const mid = Math.floor(sorted.length / 2);
+	return (sorted.length % 2) ? sorted[mid] : 0.5 * (sorted[mid - 1] + sorted[mid]);
+}
+
+/**
+ * Selectively relaxes dense local zig-zags while preserving broad curve shape.
+ *
+ * The filter acts only on vertices that satisfy both conditions:
+ * 1) incident segments are locally short (dense sampling), and
+ * 2) turn is sharp enough (cosine threshold).
+ *
+ * It returns a new point array and does not mutate the input.
+ *
+ * @param {Array<Point>} points Polyline points.
+ * @param {Object} [options]
+ * @param {boolean} [options.closed=false] Treat the polyline as closed.
+ * @param {number} [options.strength=0.34] Relaxation amount in [0, 1].
+ * @param {number} [options.denseFactor=1.8] Density threshold multiplier over median segment length.
+ * @param {number} [options.sharpCosThreshold=0.35] Max allowed cosine for a corner to be relaxed.
+ * @returns {Array<Point>} Relaxed points.
+ */
+function relaxDenseZigZagPoints(points, options = {}) {
+	if (!Array.isArray(points) || points.length < 3) return points;
+
+	const {
+		closed = false,
+		strength = 0.34,
+		denseFactor = 1.8,
+		sharpCosThreshold = 0.35,
+	} = options;
+
+	const n = points.length;
+	const segmentLens = [];
+	for (let i = 1; i < n; i++) {
+		const dx = points[i].x - points[i - 1].x;
+		const dy = points[i].y - points[i - 1].y;
+		segmentLens.push(Math.hypot(dx, dy));
+	}
+	if (closed && n > 2) {
+		const dx = points[0].x - points[n - 1].x;
+		const dy = points[0].y - points[n - 1].y;
+		segmentLens.push(Math.hypot(dx, dy));
+	}
+
+	const med = Math.max(1e-6, _median(segmentLens));
+	const denseMax = med * Math.max(0.01, Number(denseFactor) || 1.8);
+	const relax = Math.max(0, Math.min(1, Number(strength) || 0.34));
+	const sharpCut = Number(sharpCosThreshold);
+
+	const src = points.map(p => ({ x: Number(p.x), y: Number(p.y) }));
+	const out = src.map(p => ({ x: p.x, y: p.y }));
+	const start = closed ? 0 : 1;
+	const end = closed ? n : n - 1;
+
+	for (let i = start; i < end; i++) {
+		const iPrev = (i - 1 + n) % n;
+		const iNext = (i + 1) % n;
+		const prev = src[iPrev];
+		const cur = src[i];
+		const next = src[iNext];
+
+		const v1x = cur.x - prev.x;
+		const v1y = cur.y - prev.y;
+		const v2x = next.x - cur.x;
+		const v2y = next.y - cur.y;
+		const l1 = Math.hypot(v1x, v1y);
+		const l2 = Math.hypot(v2x, v2y);
+		if (l1 < 1e-6 || l2 < 1e-6) continue;
+
+		const localDense = l1 <= denseMax && l2 <= denseMax;
+		if (!localDense) continue;
+
+		const cos = (v1x * v2x + v1y * v2y) / (l1 * l2);
+		if (cos > sharpCut) continue;
+
+		const tx = 0.5 * (prev.x + next.x);
+		const ty = 0.5 * (prev.y + next.y);
+		out[i].x = cur.x + relax * (tx - cur.x);
+		out[i].y = cur.y + relax * (ty - cur.y);
+	}
+
+	return out;
+}
+
+export { simplify, ramerDouglasPeucker, smooth, smoothToPath, relaxDenseZigZagPoints }

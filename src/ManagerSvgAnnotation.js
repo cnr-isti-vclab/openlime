@@ -3,7 +3,7 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation.js';
 import { CoordinateSystem } from './CoordinateSystem.js';
 import { Util } from './Util.js';
 import { addSignals } from './Signals.js';
-import { ramerDouglasPeucker, smooth } from './Simplify.js';
+import { ramerDouglasPeucker, smooth, relaxDenseZigZagPoints } from './Simplify.js';
 
 /**
  * @file ManagerSvgAnnotation.js
@@ -2585,6 +2585,8 @@ class FreehandMarker extends Marker {
    * @param {number} [options.contourSnapRadius=14] - Search radius in screen px for contour snap
    * @param {number} [options.contourSnapStrength=0.7] - Blend factor [0..1] towards detected contour
    * @param {number} [options.contourMinGradient=22] - Minimum local gradient magnitude to accept snap
+   * @param {boolean}[options.autoCloseNearStart=false] - Auto-close as polygon when stroke ends near the first point
+   * @param {number} [options.autoCloseDistancePx=10] - Max screen distance from first point to trigger auto-close
    */
   constructor(options = {}) {
     super('freehand', Object.assign({
@@ -2599,6 +2601,8 @@ class FreehandMarker extends Marker {
         contourSnapRadius: 14,
         contourSnapStrength: 0.7,
         contourMinGradient: 22,
+        autoCloseNearStart: false,
+        autoCloseDistancePx: 10,
     }, options));
   }
 
@@ -2729,7 +2733,21 @@ class FreehandMarker extends Marker {
 
   finalizeElement(transform, annotation, style = {}) {
     const pts = annotation.data._markerPoints ?? [];
-    annotation.data._markerPoints = this._buildFilteredPoints(pts, transform);
+    let filtered = this._buildFilteredPoints(pts, transform);
+
+    if (!annotation.data._markerClosed && this.autoCloseNearStart && filtered.length >= 3) {
+      const first = filtered[0];
+      const last = filtered[filtered.length - 1];
+      const closeDist = this._modelDistancePx(this.autoCloseDistancePx ?? 10, transform);
+      if (this._distanceSq(first, last) <= closeDist * closeDist) {
+        annotation.data._markerClosed = true;
+        annotation.type = 'polygon';
+        // Remove the terminal near-duplicate endpoint so polygon closure is cleaner.
+        if (filtered.length > 3) filtered = filtered.slice(0, -1);
+      }
+    }
+
+    annotation.data._markerPoints = filtered;
 
     const attr = FreehandMarker._toPointsAttr(annotation.data._markerPoints);
     const stroke = annotation.elements.find(el => el.classList?.contains('annotation-freehand'));
@@ -2812,6 +2830,8 @@ class FreehandMarker extends Marker {
       contourSnapRadius: this.contourSnapRadius ?? 14,
       contourSnapStrength: this.contourSnapStrength ?? 0.7,
       contourMinGradient: this.contourMinGradient ?? 22,
+      autoCloseNearStart: !!this.autoCloseNearStart,
+      autoCloseDistancePx: this.autoCloseDistancePx ?? 10,
     };
   }
 }
@@ -2822,4 +2842,4 @@ ManagerSvgAnnotation.registerMarker('polyline', PolylineMarker);
 ManagerSvgAnnotation.registerMarker('rect', RectMarker);
 ManagerSvgAnnotation.registerMarker('freehand', FreehandMarker);
 
-export { ManagerSvgAnnotation, Marker, DiskMarker, PolylineMarker, RectMarker, FreehandMarker };
+export { ManagerSvgAnnotation, Marker, DiskMarker, PolylineMarker, RectMarker, FreehandMarker, relaxDenseZigZagPoints };
