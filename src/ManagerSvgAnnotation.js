@@ -1715,6 +1715,22 @@ class ManagerSvgAnnotation {
     const radMap = Math.max(1, Math.round((radPx * ((scaleX + scaleY) * 0.5)) / contour.downsample));
     const minGradient = Math.max(0, Number(options.minGradient ?? 22));
     const strength = Math.max(0, Math.min(1, Number(options.strength ?? 0.7)));
+    const directionWeight = Math.max(0, Number(options.directionWeight ?? 18));
+
+    let previousCanvasPoint = null;
+    if (options.previousPoint) {
+      previousCanvasPoint = this._imageToCanvasHtml(options.previousPoint);
+    }
+
+    let preferredDirection = null;
+    if (options.preferredDirection) {
+      const dirX = Number(options.preferredDirection.x);
+      const dirY = Number(options.preferredDirection.y);
+      const dirLen = Math.hypot(dirX, dirY);
+      if (dirLen > 1e-6) {
+        preferredDirection = { x: dirX / dirLen, y: dirY / dirLen };
+      }
+    }
 
     let bestIdx = -1;
     let bestScore = minGradient;
@@ -1729,7 +1745,18 @@ class ManagerSvgAnnotation {
         const idx = yy * contour.width + xx;
         const grad = contour.map[idx];
         const proximity = 1 - (Math.sqrt(d2) / (radMap + 1));
-        const score = grad + (24 * proximity);
+        let score = grad + (24 * proximity);
+        if (previousCanvasPoint && preferredDirection) {
+          const candX = (xx * contour.downsample) / scaleX;
+          const candY = (yy * contour.downsample) / scaleY;
+          const stepX = candX - previousCanvasPoint.x;
+          const stepY = candY - previousCanvasPoint.y;
+          const stepLen = Math.hypot(stepX, stepY);
+          if (stepLen > 1e-6) {
+            const align = (stepX * preferredDirection.x + stepY * preferredDirection.y) / stepLen;
+            score += directionWeight * align;
+          }
+        }
         if (score > bestScore) {
           bestScore = score;
           bestIdx = idx;
@@ -2618,7 +2645,13 @@ class FreehandMarker extends Marker {
    * @param {boolean}[options.enableContourSnap=false] - Snap sampled points to rendered contours
    * @param {number} [options.contourSnapRadius=14] - Search radius in screen px for contour snap
    * @param {number} [options.contourSnapStrength=0.7] - Blend factor [0..1] towards detected contour
-   * @param {number} [options.contourMinGradient=22] - Minimum local gradient magnitude to accept snap
+  * @param {number} [options.contourMinGradient=22] - Minimum local gradient magnitude to accept snap
+  * @param {number} [options.contourDirectionWeight=18] - Continuity weight that favours forward contour motion.
+  * @param {number} [options.onlineSmoothingStrength=0.18] - Light smoothing applied while sampling in [0, 1], only when the legacy smoothing filter is off.
+  * @param {boolean}[options.enableFinalRelax=true] - Apply a weak anti-zigzag relax pass before commit, only when the legacy smoothing filter is off.
+  * @param {number} [options.finalRelaxStrength=0.12] - Relaxation amount for the final anti-zigzag pass.
+  * @param {number} [options.finalRelaxDenseFactor=1.45] - Density multiplier for the final anti-zigzag pass.
+  * @param {number} [options.finalRelaxSharpCosThreshold=0.1] - Corner threshold for the final anti-zigzag pass.
    * @param {boolean}[options.autoCloseNearStart=false] - Auto-close as polygon when stroke ends near the first point
    * @param {number} [options.autoCloseDistancePx=10] - Max screen distance from first point to trigger auto-close
    */
@@ -2635,6 +2668,12 @@ class FreehandMarker extends Marker {
         contourSnapRadius: 14,
         contourSnapStrength: 0.7,
         contourMinGradient: 22,
+        contourDirectionWeight: 18,
+        onlineSmoothingStrength: 0.18,
+        enableFinalRelax: true,
+        finalRelaxStrength: 0.12,
+        finalRelaxDenseFactor: 1.45,
+        finalRelaxSharpCosThreshold: 0.1,
         autoCloseNearStart: false,
         autoCloseDistancePx: 10,
     }, options));
@@ -2660,19 +2699,63 @@ class FreehandMarker extends Marker {
     return dx * dx + dy * dy;
   }
 
-  _snapPoint(pos) {
+  _shouldApplyOnlineSmoothing() {
+    return !this.enableSmoothingFilter;
+  }
+
+  _shouldApplyFinalRelax() {
+    return !this.enableSmoothingFilter && !!this.enableFinalRelax;
+  }
+
+  _preferredDirection(points) {
+    if (!Array.isArray(points) || points.length < 2) return null;
+    const last = points[points.length - 1];
+    const prev = points[points.length - 2];
+    let dx = last.x - prev.x;
+    let dy = last.y - prev.y;
+    if (points.length >= 3) {
+      const prev2 = points[points.length - 3];
+      dx += 0.5 * (prev.x - prev2.x);
+      dy += 0.5 * (prev.y - prev2.y);
+    }
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-6) return null;
+    return { x: dx / len, y: dy / len };
+  }
+
+  _smoothRecentSamples(points, transform) {
+    if (!Array.isArray(points) || points.length < 3) return;
+    if (!this._shouldApplyOnlineSmoothing()) return;
+    const strength = Math.max(0, Math.min(1, Number(this.onlineSmoothingStrength) || 0.18));
+    if (strength <= 0) return;
+    const current = points[points.length - 1];
+    const middle = points[points.length - 2];
+    const prev = points[points.length - 3];
+    const denseLimit = this._modelDistancePx((this.sampleDistance ?? 1.5) * 2.4, transform);
+    const l1 = Math.hypot(middle.x - prev.x, middle.y - prev.y);
+    const l2 = Math.hypot(current.x - middle.x, current.y - middle.y);
+    if (l1 > denseLimit || l2 > denseLimit) return;
+    middle.x += strength * (0.5 * (prev.x + current.x) - middle.x);
+    middle.y += strength * (0.5 * (prev.y + current.y) - middle.y);
+  }
+
+  _snapPoint(pos, annotation = null) {
     if (!this.enableContourSnap) return pos;
     const mgr = this._manager;
     if (!mgr?.snapImagePointToRenderedContour) return pos;
+    const points = annotation?.data?._markerPoints;
     return mgr.snapImagePointToRenderedContour(pos, {
       radiusPx: this.contourSnapRadius,
       strength: this.contourSnapStrength,
       minGradient: this.contourMinGradient,
+      directionWeight: this.contourDirectionWeight,
+      previousPoint: Array.isArray(points) && points.length > 0 ? points[points.length - 1] : null,
+      preferredDirection: this._preferredDirection(points),
     });
   }
 
   _appendSample(pos, transform, annotation) {
-    const snappedPos = this._snapPoint(pos);
+    const snappedPos = this._snapPoint(pos, annotation);
     const pts = annotation.data._markerPoints;
     if (!pts || pts.length === 0) return;
     const last = pts[pts.length - 1];
@@ -2680,6 +2763,7 @@ class FreehandMarker extends Marker {
     const minDSq = minD * minD;
     if (this._distanceSq(last, snappedPos) >= minDSq) {
       pts.push({ x: snappedPos.x, y: snappedPos.y });
+      this._smoothRecentSamples(pts, transform);
     }
   }
 
@@ -2721,7 +2805,7 @@ class FreehandMarker extends Marker {
   }
 
   startElement(pos, transform, annotation, style = {}) {
-    const startPos = this._snapPoint(pos);
+    const startPos = this._snapPoint(pos, annotation);
     annotation.type = this.closed ? 'polygon' : 'polyline';
     annotation.data._markerClosed = !!this.closed;
     annotation.data._markerPoints = [{ x: startPos.x, y: startPos.y }];
@@ -2779,6 +2863,15 @@ class FreehandMarker extends Marker {
         // Remove the terminal near-duplicate endpoint so polygon closure is cleaner.
         if (filtered.length > 3) filtered = filtered.slice(0, -1);
       }
+    }
+
+    if (this._shouldApplyFinalRelax() && filtered.length >= 3) {
+      filtered = relaxDenseZigZagPoints(filtered, {
+        closed: !!annotation.data._markerClosed,
+        strength: Math.max(0, Math.min(1, Number(this.finalRelaxStrength) || 0.12)),
+        denseFactor: Math.max(0.01, Number(this.finalRelaxDenseFactor) || 1.45),
+        sharpCosThreshold: Number(this.finalRelaxSharpCosThreshold ?? 0.1),
+      });
     }
 
     annotation.data._markerPoints = filtered;
@@ -2864,6 +2957,12 @@ class FreehandMarker extends Marker {
       contourSnapRadius: this.contourSnapRadius ?? 14,
       contourSnapStrength: this.contourSnapStrength ?? 0.7,
       contourMinGradient: this.contourMinGradient ?? 22,
+      contourDirectionWeight: this.contourDirectionWeight ?? 18,
+      onlineSmoothingStrength: this.onlineSmoothingStrength ?? 0.18,
+      enableFinalRelax: !!this.enableFinalRelax,
+      finalRelaxStrength: this.finalRelaxStrength ?? 0.12,
+      finalRelaxDenseFactor: this.finalRelaxDenseFactor ?? 1.45,
+      finalRelaxSharpCosThreshold: this.finalRelaxSharpCosThreshold ?? 0.1,
       autoCloseNearStart: !!this.autoCloseNearStart,
       autoCloseDistancePx: this.autoCloseDistancePx ?? 10,
     };
