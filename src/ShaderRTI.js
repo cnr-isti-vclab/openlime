@@ -79,6 +79,7 @@ class ShaderRTI extends Shader {
 			lights: null,      //light directions (needed for rbf interpolation)
 			sigma: null,       //rbf interpolation parameter
 			ndimensions: null, //PCA dimension space (for rbf and bln)
+			inputLinear: false,    //whether to linearize input textures
 
 			scale: null,      //factor and bias are used to dequantize coefficient planes.
 			bias: null,
@@ -197,6 +198,7 @@ class ShaderRTI extends Shader {
 			this.loadBasis(this.basis);
 
 
+
 		this.uniforms = {
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 			specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
@@ -256,7 +258,7 @@ class ShaderRTI extends Shader {
 	}
 
 	fragShaderSrc(gl) {
-
+		let linearize = this.inputLinear == true;
 		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
 		let str = `
 
@@ -289,7 +291,16 @@ const int ny1 = ${this.yccplanes[1]};
 
 str += `
 vec4 texsample(sampler2D sampler, vec2 coord) {
+`;
+if(linearize)
+	str += `
 	return srgb2linear(texture(sampler, coord));
+`;
+else
+	str += `
+	return texture(sampler, coord);
+`;
+	str += `	
 }
 `;
 
@@ -361,8 +372,11 @@ color = vec4(vec3(dot(light, normal)), 1);
 					break;
 			}
 		}
-
-		str += `
+		if(linearize)
+			str += `
+		color = linear2srgb(color);
+`;
+		str += `		
 		return color;
 }`;
 		return str;
