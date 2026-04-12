@@ -79,7 +79,7 @@ class ShaderRTI extends Shader {
 			lights: null,      //light directions (needed for rbf interpolation)
 			sigma: null,       //rbf interpolation parameter
 			ndimensions: null, //PCA dimension space (for rbf and bln)
-			inputLinear: false,    //whether to linearize input textures
+			linearInput: false,    //whether to linearize input textures
 
 			scale: null,      //factor and bias are used to dequantize coefficient planes.
 			bias: null,
@@ -258,7 +258,7 @@ class ShaderRTI extends Shader {
 	}
 
 	fragShaderSrc(gl) {
-		let linearize = this.inputLinear == true;
+		let linearize = this.linearInput;
 		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
 		let str = `
 
