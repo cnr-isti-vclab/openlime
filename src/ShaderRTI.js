@@ -71,6 +71,7 @@ class ShaderRTI extends Shader {
 			mode: 'normal',
 			type: ['ptm', 'hsh', 'sh', 'rbf', 'bln'],
 			colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
+			colorprofile: 'sRGB',
 
 			nplanes: null,     //number of coefficient planes
 			yccplanes: null,     //number of luminance planes for mycc color space
@@ -198,7 +199,6 @@ class ShaderRTI extends Shader {
 			this.loadBasis(this.basis);
 
 
-
 		this.uniforms = {
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 			specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
@@ -210,6 +210,8 @@ class ShaderRTI extends Shader {
 		}
 
 		this.lightWeights([0, 0, 1], 'base');
+		this.isSrgbSimplified = false;
+		this.isLinear = this.colorprofile == 'sRGB';
 	}
 
 	/**
@@ -258,7 +260,6 @@ class ShaderRTI extends Shader {
 	}
 
 	fragShaderSrc(gl) {
-		let linearize = this.linearInput;
 		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
 		let str = `
 
@@ -291,16 +292,7 @@ const int ny1 = ${this.yccplanes[1]};
 
 str += `
 vec4 texsample(sampler2D sampler, vec2 coord) {
-`;
-if(linearize)
-	str += `
-	return srgb2linear(texture(sampler, coord));
-`;
-else
-	str += `
-	return texture(sampler, coord);
-`;
-	str += `	
+${this.isLinear? 'return srgb2linear(texture(sampler, coord));' : 'return texture(sampler, coord);'}
 }
 `;
 
@@ -372,12 +364,8 @@ color = vec4(vec3(dot(light, normal)), 1);
 					break;
 			}
 		}
-		if(linearize)
-			str += `
-		color = linear2srgb(color);
-`;
-		str += `		
-		return color;
+		str += `
+		return color;	
 }`;
 		return str;
 	}
@@ -517,7 +505,7 @@ class PTM {
 	static lightWeights(v) {
 		let b = [1.0, v[0], v[1], v[0] * v[0], v[0] * v[1], v[1] * v[1]];
 		let base = new Float32Array(18);
-		for (let i = 0; i < 18; i++)
+		for (let i = 0; i < 6; i++)
 			base[3 * i] = base[3 * i + 1] = base[3 * i + 2] = b[i];
 		return base;
 	}

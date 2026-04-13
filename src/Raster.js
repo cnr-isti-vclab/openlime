@@ -36,7 +36,8 @@ class Raster {
 	constructor(options) {
 
 		Object.assign(this, {
-			format: 'vec3'
+			format: 'vec3',
+			raw: false      //disallow webgl color profile conversion.
 		});
 
 		this._texture = null;
@@ -166,9 +167,10 @@ class Raster {
 			//cant' use srgb internal format because mipmap is not supported
 			internalFormat = glFormat === gl.RGB ? gl.RGB : gl.RGBA;
 		}
-
+		if(this.raw)
+			gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
 		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
-
+		
 
 		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		//build mipmap for large images.
