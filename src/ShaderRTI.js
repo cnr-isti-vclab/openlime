@@ -80,7 +80,6 @@ class ShaderRTI extends Shader {
 			lights: null,      //light directions (needed for rbf interpolation)
 			sigma: null,       //rbf interpolation parameter
 			ndimensions: null, //PCA dimension space (for rbf and bln)
-			linearInput: false,    //whether to linearize input textures
 
 			scale: null,      //factor and bias are used to dequantize coefficient planes.
 			bias: null,
@@ -211,7 +210,10 @@ class ShaderRTI extends Shader {
 
 		this.lightWeights([0, 0, 1], 'base');
 		this.isSrgbSimplified = false;
-		this.isLinear = this.colorprofile == 'sRGB';
+
+		this.isLinear = true; //processing color space and initial colorspace are the same so no conversion
+		//when loading, only at the end depending on the colorspace
+		
 	}
 
 	/**
@@ -292,7 +294,8 @@ const int ny1 = ${this.yccplanes[1]};
 
 str += `
 vec4 texsample(sampler2D sampler, vec2 coord) {
-${this.isLinear? 'return srgb2linear(texture(sampler, coord));' : 'return texture(sampler, coord);'}
+	return texture(sampler, coord);
+//${this.isLinear? 'return srgb2linear(texture(sampler, coord));' : 'return texture(sampler, coord);'}
 }
 `;
 
@@ -365,7 +368,7 @@ color = vec4(vec3(dot(light, normal)), 1);
 			}
 		}
 		str += `
-		return color;	
+		${this.colorprofile == 'sRGB'? 'return srgb2linear(color);' : 'return color;' }
 }`;
 		return str;
 	}

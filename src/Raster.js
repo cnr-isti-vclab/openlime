@@ -38,6 +38,8 @@ class Raster {
 		Object.assign(this, {
 			format: 'vec3',
 			raw: false      //disallow webgl color profile conversion.
+			//either raw + know colorspace if srgb call conversio n when sampling texdtures (can use linear datasets)
+			//or use srgb internal format to deal with conversion to linear (if colorspace srgb)
 		});
 
 		this._texture = null;
@@ -164,10 +166,12 @@ class Raster {
 			// For float textures in WebGL2, use R8 as internal format
 			internalFormat = gl.R8;
 		} else {
-			//cant' use srgb internal format because mipmap is not supported
-			internalFormat = glFormat === gl.RGB ? gl.RGB : gl.RGBA;
+			if(this.isLinear)
+				internalFormat = glFormat === gl.RGB ? gl.RGB : gl.RGBA;
+			else
+				internalFormat = glFormat === gl.RGB ? gl.SRGB8 : gl.SRGB8_ALPHA8;
 		}
-		if(this.raw)
+		if(this.isLinear)
 			gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
 		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, glFormat, gl.UNSIGNED_BYTE, img);
 		
