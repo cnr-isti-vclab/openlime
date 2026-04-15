@@ -297,7 +297,7 @@
                     <hr class="border-secondary opacity-50 my-2">
 
                     <div class="form-check form-switch mt-3 mb-3">
-                        <input class="form-check-input" type="checkbox" role="switch" id="fh-enable-contour-snap">
+                        <input class="form-check-input" type="checkbox" role="switch" id="fh-enable-contour-snap" checked>
                         <label class="form-check-label" for="fh-enable-contour-snap">Enable Contour Snap (from rendered frame)</label>
                     </div>
 
@@ -369,6 +369,7 @@
             layout: 'deepzoom',
             type: 'rti',
             url: '../../assets/rti/hsh/info.json',
+            transform: { x: 0, y: 0, z: 1, a: 0 },
             normals: false
         });
         lime.addLayer('coin', layer1);
@@ -510,7 +511,7 @@
             closed: false,
             autoCloseNearStart: true,
             hitTolerance: 10,
-            enableContourSnap: false,
+            enableContourSnap: true,
             contourSnapRadius: 14,
             contourSnapStrength: 0.70,
             contourMinGradient: 22,
