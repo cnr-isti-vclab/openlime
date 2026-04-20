@@ -67,7 +67,7 @@ class ShaderRTI extends Shader {
 		super({});
 
 		Object.assign(this, {
-			modes: ['light', 'normals', 'diffuse', 'gray_diffuse', 'specular'],
+			modes: ['light', 'normals', 'diffuse', 'gray_diffuse', 'specular', 'sketch'],
 			mode: 'normal',
 			type: ['ptm', 'hsh', 'sh', 'rbf', 'bln'],
 			colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
@@ -150,6 +150,14 @@ class ShaderRTI extends Shader {
 		this.setUniform('specular_exp', value);
 	}
 
+	setSketchWidth(value) {
+		this.setUniform('sketch_width', value/100.0);
+	}
+	setSketchRadius(value) {
+		this.setUniform('sketch_radius', value/100.0);
+	}
+
+
 	/**
 	 * Initializes shader with RTI configuration
 	 * @param {Object} relight - RTI configuration data
@@ -201,6 +209,8 @@ class ShaderRTI extends Shader {
 		this.uniforms = {
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 			specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
+			sketch_width: { type: 'float', needsUpdate: false, size: 1, value: 0.5 },
+			sketch_radius: { type: 'float', needsUpdate: false, size: 1, value: 0.5 },
 			bias: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.bias },
 			scale: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.scale },
 			base: { type: 'vec3', needsUpdate: true, size: this.nplanes },
@@ -276,6 +286,8 @@ const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
 
 uniform vec3 light;
 uniform float specular_exp;
+uniform float sketch_width;
+uniform float sketch_radius;
 uniform vec3 bias[np1];
 uniform vec3 scale[np1];
 
@@ -299,12 +311,15 @@ vec4 texsample(sampler2D sampler, vec2 coord) {
 }
 `;
 
-		switch (this.colorspace) {
-			case 'lrgb': str += LRGB.render(this.njpegs); break;
-			case 'rgb':  str += RGB .render(this.njpegs); break;
-			case 'mrgb': str += MRGB.render(this.njpegs); break;
-			case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0]); break;
-		}
+		if(this.mode == 'sketch')
+			str += SKETCH.render(this.njpegs);
+		else
+			switch (this.colorspace) {
+				case 'lrgb': str += LRGB.render(this.njpegs); break;
+				case 'rgb':  str += RGB .render(this.njpegs); break;
+				case 'mrgb': str += MRGB.render(this.njpegs); break;
+				case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0]); break;
+			}
 
 		str += `
 
@@ -312,8 +327,13 @@ vec4 data() {
 
 `;
 		if (this.mode == 'light') {
-			str += `
+						str += `
 	vec4 color = render(base);
+`;
+
+		} else if (this.mode == 'sketch') {
+			str += `
+	vec4 color = render();
 `;
 		} else {
 			str += `
@@ -715,6 +735,59 @@ class BLN {
 			}
 		}
 		return lweights;
+	}
+}
+
+class SKETCH {
+	static render(njpegs) {
+		return `
+		vec4 render() {
+
+    // 1. Setup Kernel Size
+    // s is the pixel radius for the search
+    int s = int(1.0 + 5.0 * sketch_radius); 
+    float invn = 1.0 / float((2*s + 1) * (2*s + 1));
+    
+    // 2. Get Average Normal (Smoothing)
+    vec3 sum = vec3(0.0);
+    for(int i = 1; i <= 11; i++) {
+        for (int y = -1; y <= 1; y++) {
+            for (int x = -1; x <= 1; x++) {
+                vec2 offset = vec2(float(x * i) / tileSize.x, float(y * i) / tileSize.y);
+                vec3 n = texture(normals, v_texcoord + offset).rgb * 2.0 - 1.0;
+                sum += n;
+            }
+        }
+        if(i == s) break;
+    }
+    vec3 avgNormal = normalize(sum);
+
+    // 3. Calculate Curvature (Wedge Detection)
+    float sigma2 = 0.0;
+    for (int i = 1; i <= 11; i++) {
+        for (int y = -1; y <= 1; y++) {
+            for (int x = -1; x <= 1; x++) {
+                vec2 offset = vec2(float(x * i) / tileSize.x, float(y * i) / tileSize.y);
+                vec3 neighborN = texture(normals, v_texcoord + offset).rgb * 2.0 - 1.0;
+                
+                // Determine if neighbor points toward or away from center
+                // Using a simplified direction vector based on the loop grid
+                vec3 dir = vec3(-float(x * i), float(y * i), 0.0);
+                float neighborSign = dot(avgNormal - neighborN, dir);
+                
+                sigma2 += neighborSign * dot(avgNormal - neighborN, avgNormal - neighborN);
+            }
+        }
+        if(i == s) break;
+    }
+    sigma2 *= invn;
+
+    // 4. Final Thresholding
+    // smoothstep isolates "valleys" (negative sigma)
+    float wedge = smoothstep(0.0, -0.01, sigma2);
+	float value = 1.0 - pow(wedge, sketch_width);
+    return vec4(vec3(pow(value, 3.0)), 1.0);
+}`;
 	}
 }
 

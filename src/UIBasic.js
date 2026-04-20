@@ -218,6 +218,11 @@ class UIBasic {
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
+				if (m == 'sketch' && layer.shader.setSketchWidth) {
+					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSketchWidth(e.target.value); } }];
+					mode.list.push({ slider: '', oninput: (e) => { layer.shader.setSketchRadius(e.target.value); } });
+				}
+
 				modes.push(mode);
 			}
 
