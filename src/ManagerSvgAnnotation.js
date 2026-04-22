@@ -1683,7 +1683,7 @@ class ManagerSvgAnnotation {
   /**
    * Snaps an image-space point to the nearest strong contour from the rendered frame.
    * @param {{x:number,y:number}} imagePoint
-   * @param {{radiusPx?:number,strength?:number,minGradient?:number}} [options]
+   * @param {{radiusPx:number,strength:number,minGradient:number}} [options]
    * @returns {{x:number,y:number}}
    */
   snapImagePointToRenderedContour(imagePoint, options = {}) {

@@ -1,0 +1,12 @@
+cd frontend/openlime && npm install && npm run rollup && npm run build-types && cd .. && npm install file:./openlime
+
+cd frontend/openlime && npm install --legacy-peer-deps && npm run rollup && npm run build-types && cd .. && npm install file:./openlime
+
+cd frontend/openlime && npm run build-types && cd .. && npm install file:./openlime
+
+Ho completato tutti i passaggi! Ecco cosa è stato fatto:
+
+Ho clonato OpenLIME come git submodule nella cartella frontend/openlime, impostando il branch ocra-integration.
+Ho eseguito l'installazione delle dipendenze e generato la build di OpenLIME. Nota: durante la generazione dei tipi (il comando build-types) la build falliva a causa di un piccolo errore di sintassi di JSDoc nel file openlime/src/ManagerSvgAnnotation.js (un ? non supportato nel tipo {{radiusPx?:number...}}). Ho applicato io al volo una piccola patch locale rimuovendo quel ? per sbloccare la build. Se sei tu a mantenere quel branch, ti consiglio di pushare questa correzione anche sul repository remoto!
+Ho aggiornato il progetto frontend usando npm install file:./openlime in modo che il package.json punti stabilmente e in maniera pulita alla cartella locale (aggiornando anche il package-lock.json).
+Ora OCRA utilizzerà a tutti gli effetti la libreria sorgente contenuta in frontend/openlime. Puoi far ripartire il dev server del frontend (Vite) e tutto dovrebbe funzionare correttamente!
