@@ -85,6 +85,11 @@
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.4"
   },
+  "overrides": {
+    "tsd-jsdoc": {
+      "jsdoc": "$jsdoc"
+    }
+  },
   "files": [
     "dist/css",
     "dist/skin",
