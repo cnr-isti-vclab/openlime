@@ -26,6 +26,7 @@ class Canvas {
 	 * @param {boolean} [options.srgb=true] - Whether to enable sRGB color space or display-P3 for the output framebuffer
 	 * @param {boolean} [options.stencil=false] - Whether to enable stencil buffer support
 	 * @param {boolean} [options.useOffscreenFramebuffer=true] - Whether to use offscreen framebuffer for rendering
+	 * @param {'passthrough'|'linear-to-srgb'} [options.offscreenColorTransform='passthrough'] - Color transform applied when presenting the offscreen framebuffer
 	 * @fires Canvas#update
 	 * @fires Canvas#updateSize
 	 * @fires Canvas#ready
@@ -48,6 +49,7 @@ class Canvas {
 			isSrgbSimplified: true,
 			stencil: false, // Disable stencil buffer by default
 			useOffscreenFramebuffer: true, // Use offscreen framebuffer by default
+			offscreenColorTransform: 'passthrough', // Keep offscreen presentation consistent with direct rendering by default
 
 			// Framebuffer objects
 			offscreenFramebuffer: null,
@@ -554,12 +556,21 @@ class Canvas {
 	drawOffscreenToCanvas() {
 		const gl = this.gl;
 		const view = this.camera.glViewport();
+		const shouldEncodeSrgb = this.offscreenColorTransform === 'linear-to-srgb';
+		const programVariant = `${this.offscreenColorTransform}:${this.isSrgbSimplified}`;
 
 		// Set viewport for the final display
 		gl.viewport(view.x, view.y, view.dx, view.dy);
 
 		// If we don't already have a fullscreen quad program, create one
-		if (!this._fullscreenQuadProgram) {
+		if (!this._fullscreenQuadProgram || this._fullscreenQuadProgramVariant !== programVariant) {
+			if (this._fullscreenQuadProgram) {
+				gl.deleteProgram(this._fullscreenQuadProgram);
+				gl.deleteBuffer(this._quadPositionBuffer);
+				gl.deleteBuffer(this._quadTexCoordBuffer);
+				gl.deleteVertexArray(this._quadVAO);
+			}
+
 			// Vertex shader
 			const vsSource = `#version 300 es
 				in vec4 aPosition;
@@ -579,12 +590,12 @@ class Canvas {
 			uniform sampler2D uTexture;
 			out vec4 fragColor;`;
 
-			if (this.isSrgbSimplified) {
+			if (shouldEncodeSrgb && this.isSrgbSimplified) {
 				fsSource += `
 			vec4 linear2srgb(vec4 linear) {
 				return vec4(pow(linear.rgb, vec3(1.0/2.2)), linear.a);
 			}`;
-			} else {
+			} else if (shouldEncodeSrgb) {
 				fsSource += `
 			vec4 linear2srgb(vec4 linear) {
 				bvec3 cutoff = lessThan(linear.rgb, vec3(0.0031308));
@@ -597,7 +608,7 @@ class Canvas {
 			fsSource += `
 		void main() {
 			fragColor = texture(uTexture, vTexCoord);
-			fragColor = linear2srgb(fragColor);
+			${shouldEncodeSrgb ? 'fragColor = linear2srgb(fragColor);' : ''}
 			fragColor = clamp(fragColor, 0.0, 1.0);
 		}`;
 
@@ -605,6 +616,7 @@ class Canvas {
 			const vertexShader = this._createShader(gl, gl.VERTEX_SHADER, vsSource);
 			const fragmentShader = this._createShader(gl, gl.FRAGMENT_SHADER, fsSource);
 			this._fullscreenQuadProgram = this._createProgram(gl, vertexShader, fragmentShader);
+			this._fullscreenQuadProgramVariant = programVariant;
 
 			// Get attribute and uniform locations
 			this._positionLocation = gl.getAttribLocation(this._fullscreenQuadProgram, 'aPosition');
