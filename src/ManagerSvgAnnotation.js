@@ -517,7 +517,7 @@ class PolylineMarker extends Marker {
     if (!rubber) return;
     const pts = annotation.data._markerPoints;
     if (!pts?.length) return;
-    const last  = pts[pts.length - 1];
+    const last = pts[pts.length - 1];
     const close = annotation.data._markerClosed && pts.length >= 2 ? [pos, pts[0]] : [pos];
     rubber.setAttribute('points', PolylineMarker._toPointsAttr([last, ...close]));
   }
@@ -581,7 +581,7 @@ class PolylineMarker extends Marker {
 
   updateElements(elements, transform, annotation, style = {}) {
     const sw = this._modelStroke(transform, style);
-    const r  = this._modelRadius(transform);
+    const r = this._modelRadius(transform);
     // Hit-target tolerance in model space: fixed 8 screen-px converted to model.
     const hitSw = (this.hitTolerance ?? 8) / (transform?.z ?? 1);
 
@@ -785,6 +785,25 @@ class ManagerSvgAnnotation {
        */
       showVertexHandles: true,
     }, options);
+
+    // Resolve the class index used for grouped annotations.
+    // Priority: options.groupAnnotationClass > class labelled 'Group'/'group' > auto-created entry.
+    if (this.groupAnnotationClass == null) {
+      let idx = this.classes.findIndex(e => e.label === 'group' || e.label === 'Group');
+      if (idx === -1) {
+        idx = this.classes.length;
+        this.classes.push({
+          label: 'Group',
+          fill: '#fa5aff',
+          stroke: '#fa5aff',
+          fillOpacity: 0.7,
+          strokeWidth: 2,
+          fillSelected: '#ffd700',
+          strokeSelected: '#ffd700',
+        });
+      }
+      this.groupAnnotationClass = idx;
+    }
 
     /**
      * Current interaction mode.
@@ -1144,7 +1163,7 @@ class ManagerSvgAnnotation {
     annotation.syncSvg();
     this.emit('create', annotation);
     if (keepCreateMode) this.setMode('create');
-    else                this.setMode('edit');
+    else this.setMode('edit');
     return annotation;
   }
 
@@ -1189,14 +1208,14 @@ class ManagerSvgAnnotation {
    */
   deleteSelected() {
     this.layer.selected.forEach(id => {
-        this.layer.deleteAnnotation(id);
+      this.layer.deleteAnnotation(id);
     });
   }
 
-   /**
-   * Delete array of annotations
-   * @param {ids} array of annotaion ids 
-   */
+  /**
+  * Delete array of annotations
+  * @param {ids} array of annotaion ids 
+  */
   deleteAnnotations(ids) {
     ids.forEach(id => {
       this.layer.deleteAnnotation(id);
@@ -1411,15 +1430,15 @@ class ManagerSvgAnnotation {
     const cls = this.classes?.[idx] ?? this.classes?.[0] ?? {};
     if (selected) {
       return {
-        fill:        cls.fillSelected   ?? cls.fill   ?? '#ffd700',
-        stroke:      cls.strokeSelected ?? cls.stroke ?? '#ffd700',
-        fillOpacity: cls.fillOpacity  ?? 0.7,
-        strokeWidth: cls.strokeWidth  ?? 2,
+        fill: cls.fillSelected ?? cls.fill ?? '#ffd700',
+        stroke: cls.strokeSelected ?? cls.stroke ?? '#ffd700',
+        fillOpacity: cls.fillOpacity ?? 0.7,
+        strokeWidth: cls.strokeWidth ?? 2,
       };
     }
     return {
-      fill:        cls.fill        ?? '#ff0000',
-      stroke:      cls.stroke      ?? '#ff0000',
+      fill: cls.fill ?? '#ff0000',
+      stroke: cls.stroke ?? '#ff0000',
       fillOpacity: cls.fillOpacity ?? 0.7,
       strokeWidth: cls.strokeWidth ?? 2,
     };
@@ -1438,7 +1457,7 @@ class ManagerSvgAnnotation {
    */
   _applyStyleToElements(anno, selected = false) {
     const style = this._getClassStyle(anno, selected);
-    for (const el of anno.elements ?? []) {
+    const applyToEl = (el) => {
       if (el.classList?.contains('annotation-disk')) {
         el.setAttribute('fill', style.fill);
         el.setAttribute('opacity', String(style.fillOpacity));
@@ -1454,7 +1473,14 @@ class ManagerSvgAnnotation {
         el.setAttribute('fill-opacity', String(style.fillOpacity));
       } else if (el.classList?.contains('annotation-freehand')) {
         el.setAttribute('stroke', style.stroke);
+      } else if (el.tagName?.toLowerCase() === 'g' && el.getAttribute('id')) {
+        // Grouped annotation: recurse into <g id="originalId"> wrappers
+        // to reach the actual annotation elements inside.
+        for (const child of el.children ?? []) applyToEl(child);
       }
+    };
+    for (const el of anno.elements ?? []) {
+      applyToEl(el);
     }
   }
 
@@ -1819,9 +1845,9 @@ class ManagerSvgAnnotation {
     if (!this.layer?.layout) return true;
     const t = e.target;
     return !!(t?.closest?.('.openlime-toolbar') ||
-              t?.closest?.('.openlime-layers-menu') ||
-              t?.closest?.('.openlime-dialog') ||
-              t?.classList?.contains('openlime-button'));
+      t?.closest?.('.openlime-layers-menu') ||
+      t?.closest?.('.openlime-dialog') ||
+      t?.classList?.contains('openlime-button'));
   }
 
   /**
@@ -2111,7 +2137,7 @@ class ManagerSvgAnnotation {
         const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
         if (handles) {
           if ((isSelected && this.showVertexHandles) || isInSession) handles.removeAttribute('visibility');
-          else                                                        handles.setAttribute('visibility', 'hidden');
+          else handles.setAttribute('visibility', 'hidden');
         }
         this._applyStyleToElements(anno, isSelected);
         anno.needsUpdate = true;
@@ -2153,7 +2179,7 @@ class ManagerSvgAnnotation {
       const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
       if (handles) {
         if ((isSelected && this.showVertexHandles) || isInSession) handles.removeAttribute('visibility');
-        else                                                        handles.setAttribute('visibility', 'hidden');
+        else handles.setAttribute('visibility', 'hidden');
       }
 
       this._applyStyleToElements(anno, isSelected);
@@ -2196,7 +2222,7 @@ class ManagerSvgAnnotation {
     this.viewer.redraw();
     this.emit('create', annotation);
     if (this._mode === 'create' || marker.shouldStayInCreateModeAfterFinalize(annotation)) this.setMode('create');
-    else                                                                                   this.setMode('edit');
+    else this.setMode('edit');
   }
 
   /**
@@ -2211,7 +2237,7 @@ class ManagerSvgAnnotation {
     this.viewer.redraw();
     this.emit('sessionCancel');
     if (this._mode === 'create') this.setMode('create');
-    else                         this.setMode('edit');
+    else this.setMode('edit');
   }
 
   // ─── Internal: vertex-drag direct listeners ────────────────────────────────
@@ -2403,6 +2429,231 @@ class ManagerSvgAnnotation {
     marker._manager = this;
     return marker;
   }
+
+  // ─── Grouping / Ungrouping ───────────────────────────────────────────────────
+
+  /**
+   * Merges multiple annotations into a single grouped annotation.
+   *
+   * The new annotation's SVG contains one `<g id="originalId">` per source
+   * annotation, preserving the original IDs so {@link ungroupAnnotation} can
+   * restore them later.  All original annotations are deleted after grouping.
+   *
+   * Nested grouping is **not** supported: if any of the supplied IDs refers
+   * to an annotation that is itself already a group, the call throws.
+   *
+   * @param {string[]} ids - IDs of the annotations to group (minimum 2).
+   * @returns {Annotation} The newly created grouped annotation.
+   * @throws {Error} If fewer than 2 IDs, any ID is not found, or any annotation
+   *   is already a group.
+   * @fires ManagerSvgAnnotation#group
+   * @fires ManagerSvgAnnotation#delete
+   */
+  groupAnnotations(ids) {
+    if (!Array.isArray(ids) || ids.length < 2) {
+      throw new Error('groupAnnotations: at least 2 annotation IDs are required.');
+    }
+
+    // Resolve and validate all source annotations up front.
+    const sources = ids.map(id => {
+      const anno = this.getAnnotationById(id);
+      if (!anno) throw new Error(`groupAnnotations: annotation '${id}' not found.`);
+      if (anno.data?._grouped) {
+        throw new Error(
+          `groupAnnotations: annotation '${id}' is already a group. ` +
+          'Nested grouping is not supported — ungroup it first.'
+        );
+      }
+      return anno;
+    });
+
+    // ── Build the grouped SVG ────────────────────────────────────────────
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const wrapperSvg = document.createElementNS(svgNS, 'svg');
+    const serializer = new XMLSerializer();
+
+    // Metadata snapshot for each original (used by ungroupAnnotation).
+    const groupedMeta = [];
+
+    for (const anno of sources) {
+      // Reset to unselected style before serialising so the grouped SVG
+      // does not bake in the "selected" highlight colours.
+      this._applyStyleToElements(anno, false);
+      anno.syncSvg();
+
+      const g = document.createElementNS(svgNS, 'g');
+      g.setAttribute('id', anno.id);
+
+      // Clone each SVG element into the group.
+      for (const el of anno.elements ?? []) {
+        g.appendChild(el.cloneNode(true));
+      }
+      wrapperSvg.appendChild(g);
+
+      // Snapshot metadata so ungroup can fully restore each annotation.
+      groupedMeta.push({
+        id: anno.id,
+        label: anno.label,
+        description: anno.description,
+        class: anno.class,
+        publish: anno.publish,
+        data: JSON.parse(JSON.stringify(anno.data ?? {})),
+        svg: anno.svg,
+      });
+    }
+
+    const groupedSvgString = serializer.serializeToString(wrapperSvg);
+
+    // ── Create the group annotation ──────────────────────────────────────
+    const groupAnno = this.layer.newAnnotation();
+    groupAnno.label = sources.map(a => a.label).filter(Boolean).join(', ') || 'Group';
+    groupAnno.description = '';
+    groupAnno.class = this.groupAnnotationClass;//sources[0].class;
+    groupAnno.publish = sources[0].publish;
+    groupAnno.svg = groupedSvgString;
+    groupAnno.data._grouped = true;
+    groupAnno.data._groupedIds = ids.slice();
+    groupAnno.data._groupedMeta = groupedMeta;
+    groupAnno.needsUpdate = true;
+
+    // Parse the grouped SVG into elements directly so we can apply the
+    // group class style before the first render.  Relying on prefetch would
+    // show the source annotations' original colours for one frame.
+    const groupParser = new DOMParser();
+    const groupDoc = groupParser.parseFromString(groupedSvgString, 'image/svg+xml');
+    const groupRoot = groupDoc.documentElement;
+    groupAnno.elements = groupRoot.children.length > 0
+      ? [...groupRoot.children]
+      : [groupRoot];
+    groupAnno.ready = true;
+
+    // Apply group class colours so the first render is correct.
+    this._applyStyleToElements(groupAnno, false);
+    groupAnno.syncSvg();
+
+    if (!this.layer.annotations.includes(groupAnno)) {
+      this.layer.annotations.push(groupAnno);
+    }
+
+    // ── Delete originals ─────────────────────────────────────────────────
+    // Deselect first to avoid stale selection references.
+    this.deselectAll();
+    for (const id of ids) {
+      this.deleteAnnotation(id);
+    }
+
+    this.emit('group', { annotation: groupAnno, sourceIds: ids.slice() });
+    this.viewer.redraw();
+    return groupAnno;
+  }
+
+  /**
+   * Splits a grouped annotation back into its original individual annotations.
+   *
+   * Each `<g id="originalId">` inside the group's SVG is extracted and used to
+   * recreate an annotation with the original ID, label, class, and custom data
+   * that were stored at grouping time.
+   *
+   * @param {string} id - ID of the grouped annotation to ungroup.
+   * @returns {Annotation[]} The restored individual annotations.
+   * @throws {Error} If the annotation is not found or is not a group.
+   * @fires ManagerSvgAnnotation#ungroup
+   * @fires ManagerSvgAnnotation#delete
+   */
+  ungroupAnnotation(id) {
+    const groupAnno = this.getAnnotationById(id);
+    if (!groupAnno) {
+      throw new Error(`ungroupAnnotation: annotation '${id}' not found.`);
+    }
+    if (!groupAnno.data?._grouped) {
+      throw new Error(`ungroupAnnotation: annotation '${id}' is not a grouped annotation.`);
+    }
+
+    const metaMap = new Map(
+      (groupAnno.data._groupedMeta ?? []).map(m => [m.id, m])
+    );
+
+    // ── Parse the group SVG to extract per-annotation <g> elements ─────
+    // Ensure SVG string is current.
+    groupAnno.syncSvg();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(groupAnno.svg, 'image/svg+xml');
+    const root = doc.documentElement;
+
+    const restored = [];
+
+    // Iterate over top-level <g> children whose id matches a stored original.
+    for (const gEl of [...root.children]) {
+      if (gEl.tagName !== 'g' && gEl.tagName !== 'G') continue;
+      const origId = gEl.getAttribute('id');
+      if (!origId) continue;
+
+      const meta = metaMap.get(origId) ?? {};
+
+      // Rebuild the annotation's SVG from the <g>'s children.
+      const serializer = new XMLSerializer();
+      let innerSvg;
+      if (gEl.children.length === 1) {
+        innerSvg = serializer.serializeToString(gEl.children[0]);
+      } else {
+        // Wrap multiple children back into a <g> (mirrors Annotation.syncSvg).
+        const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        for (const child of [...gEl.children]) wrapper.appendChild(child.cloneNode(true));
+        innerSvg = serializer.serializeToString(wrapper);
+      }
+
+      // Use the original SVG if we have it in the meta snapshot, otherwise
+      // fall back to what we just extracted from the group.
+      const svgString = meta.svg ?? innerSvg;
+
+      const anno = new Annotation({
+        id: origId,
+        label: meta.label ?? '',
+        description: meta.description ?? '',
+        class: meta.class ?? groupAnno.class,
+        publish: meta.publish ?? groupAnno.publish,
+        data: meta.data ? JSON.parse(JSON.stringify(meta.data)) : {},
+        svg: svgString,
+        visible: true,
+        needsUpdate: true,
+      });
+
+      // Parse the SVG directly into elements instead of leaving it to
+      // prefetch.  prefetch uses `documentElement.children` which returns
+      // an empty list for bare single-element SVGs (e.g. `<circle/>`).
+      const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
+      const svgRoot = svgDoc.documentElement;
+      anno.elements = svgRoot.children.length > 0
+        ? [...svgRoot.children]
+        : [svgRoot];
+      anno.ready = true;
+
+      this.layer.annotations.push(anno);
+      restored.push(anno);
+    }
+
+    // ── Delete the group annotation ──────────────────────────────────────
+    this.deselectAll();
+    this.deleteAnnotation(id);
+
+    this.viewer.redraw();
+    this.emit('ungroup', { groupId: id, annotations: restored });
+    return restored;
+  }
+
+  /**
+   * Groups all currently selected annotations.
+   *
+   * Convenience wrapper around {@link groupAnnotations} that reads the current
+   * selection from the layer.  Requires at least 2 annotations to be selected.
+   *
+   * @returns {Annotation} The newly created grouped annotation.
+   * @throws {Error} If fewer than 2 annotations are selected.
+   */
+  groupSelected() {
+    const ids = [...(this.layer.selected ?? [])];
+    return this.groupAnnotations(ids);
+  }
 }
 
 // ─── Signal definitions ───────────────────────────────────────────────────────
@@ -2431,7 +2682,19 @@ class ManagerSvgAnnotation {
  * @description Fired when the user selects an annotation in the layer.
  */
 
-addSignals(ManagerSvgAnnotation, 'create', 'update', 'delete', 'select', 'selectionChange', 'sessionStart', 'sessionCancel', 'modeChange');
+/**
+ * @event ManagerSvgAnnotation#group
+ * @type {{annotation: Annotation, sourceIds: string[]}}
+ * @description Fired when multiple annotations are merged into a single group.
+ */
+
+/**
+ * @event ManagerSvgAnnotation#ungroup
+ * @type {{groupId: string, annotations: Annotation[]}}
+ * @description Fired when a grouped annotation is split back into individuals.
+ */
+
+addSignals(ManagerSvgAnnotation, 'create', 'update', 'delete', 'select', 'selectionChange', 'sessionStart', 'sessionCancel', 'modeChange', 'group', 'ungroup');
 
 // ─── Built-in: RectMarker ─────────────────────────────────────────────────────
 
@@ -2513,7 +2776,7 @@ class RectMarker extends Marker {
     annotation.type = 'rect';
     annotation.data._markerCorners = [{ ...pos }, { ...pos }];
     const sw = this._modelStroke(transform, style);
-    const r  = this._modelRadius(transform);
+    const r = this._modelRadius(transform);
 
     const rect = Util.createSVGElement('rect', {
       x: pos.x, y: pos.y, width: 0, height: 0,
@@ -2581,7 +2844,7 @@ class RectMarker extends Marker {
     // Normalised corners (TL / BR) so each handle maps to the right axis.
     let x0 = Math.min(c[0].x, c[1].x), y0 = Math.min(c[0].y, c[1].y);
     let x1 = Math.max(c[0].x, c[1].x), y1 = Math.max(c[0].y, c[1].y);
-    if      (vertexIndex === 0) { x0 = pos.x; y0 = pos.y; }
+    if (vertexIndex === 0) { x0 = pos.x; y0 = pos.y; }
     else if (vertexIndex === 1) { x1 = pos.x; y0 = pos.y; }
     else if (vertexIndex === 2) { x1 = pos.x; y1 = pos.y; }
     else if (vertexIndex === 3) { x0 = pos.x; y1 = pos.y; }
@@ -2594,7 +2857,7 @@ class RectMarker extends Marker {
 
   updateElements(elements, transform, annotation, style = {}) {
     const sw = this._modelStroke(transform, style);
-    const r  = this._modelRadius(transform);
+    const r = this._modelRadius(transform);
     for (const el of elements) {
       if (el.classList?.contains('annotation-rect')) {
         el.setAttribute('stroke-width', sw);
@@ -2664,18 +2927,18 @@ class FreehandMarker extends Marker {
       closed: false,
       continuousDrawing: true,
       hitTolerance: 10,
-        enableContourSnap: false,
-        contourSnapRadius: 14,
-        contourSnapStrength: 0.7,
-        contourMinGradient: 22,
-        contourDirectionWeight: 18,
-        onlineSmoothingStrength: 0.18,
-        enableFinalRelax: true,
-        finalRelaxStrength: 0.12,
-        finalRelaxDenseFactor: 1.45,
-        finalRelaxSharpCosThreshold: 0.1,
-        autoCloseNearStart: false,
-        autoCloseDistancePx: 10,
+      enableContourSnap: false,
+      contourSnapRadius: 14,
+      contourSnapStrength: 0.7,
+      contourMinGradient: 22,
+      contourDirectionWeight: 18,
+      onlineSmoothingStrength: 0.18,
+      enableFinalRelax: true,
+      finalRelaxStrength: 0.12,
+      finalRelaxDenseFactor: 1.45,
+      finalRelaxSharpCosThreshold: 0.1,
+      autoCloseNearStart: false,
+      autoCloseDistancePx: 10,
     }, options));
   }
 

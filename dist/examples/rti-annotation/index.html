@@ -8,7 +8,8 @@
     <title>OpenLIME - RTI Viewer</title>
     <link rel="stylesheet" href="../../css/skin.css" />
     <link rel="stylesheet" href="../examples.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
     <style>
         html,
         body {
@@ -17,8 +18,13 @@
         }
 
         /* Override examples.css: viewer takes full viewport, panels are fixed overlays */
-        h1 { display: none; }
-        .openlime { height: 100% !important; }
+        h1 {
+            display: none;
+        }
+
+        .openlime {
+            height: 100% !important;
+        }
 
         #annotation-toolbar {
             position: fixed;
@@ -28,7 +34,8 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            pointer-events: none;   /* children re-enable as needed */
+            pointer-events: none;
+            /* children re-enable as needed */
         }
 
         #marker-panel {
@@ -125,7 +132,9 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        #ctrl-hint b { color: #ffd700; }
+        #ctrl-hint b {
+            color: #ffd700;
+        }
 
         /* Toolbar locked during an active creation session */
         #annotation-toolbar.session-active #marker-panel {
@@ -211,6 +220,8 @@
                         <button id="btn-freehand-settings" class="btn btn-outline-info settings-btn">Settings</button>
                         <button id="btn-anno-save" class="btn btn-outline-info settings-btn">Save</button>
                         <button id="btn-anno-load" class="btn btn-outline-info settings-btn">Load</button>
+                        <button id="btn-anno-group" class="btn btn-outline-info settings-btn">Group</button>
+                        <button id="btn-anno-ungroup" class="btn btn-outline-info settings-btn">Ungroup</button>
                     </div>
                 </div>
             </div>
@@ -226,22 +237,29 @@
     </div>
     <div id="creation-hint"></div>
     <div id="ctrl-hint">
-        Select a marker button to draw &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or <b>&#8984;+click</b>) to multi-select
+        Select a marker button to draw &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or
+        <b>&#8984;+click</b>) to multi-select
     </div>
 
-    <div class="modal fade" id="freehandSettingsModal" tabindex="-1" aria-labelledby="freehandSettingsLabel" aria-hidden="true">
+    <div class="modal fade" id="freehandSettingsModal" tabindex="-1" aria-labelledby="freehandSettingsLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-dark text-light border-secondary">
                 <div class="modal-header border-secondary">
                     <h5 class="modal-title" id="freehandSettingsLabel">Freehand Settings</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="d-flex gap-2 mb-3">
-                        <button type="button" id="fh-preset-natural" class="btn btn-outline-light btn-sm">Natural</button>
-                        <button type="button" id="fh-preset-strong" class="btn btn-outline-warning btn-sm">Strong</button>
-                        <button type="button" id="fh-preset-smooth-snap" class="btn btn-outline-primary btn-sm">Smooth Snap</button>
-                        <button type="button" id="fh-preset-smooth-snap-strong" class="btn btn-outline-danger btn-sm">Smooth Snap Strong</button>
+                        <button type="button" id="fh-preset-natural"
+                            class="btn btn-outline-light btn-sm">Natural</button>
+                        <button type="button" id="fh-preset-strong"
+                            class="btn btn-outline-warning btn-sm">Strong</button>
+                        <button type="button" id="fh-preset-smooth-snap" class="btn btn-outline-primary btn-sm">Smooth
+                            Snap</button>
+                        <button type="button" id="fh-preset-smooth-snap-strong"
+                            class="btn btn-outline-danger btn-sm">Smooth Snap Strong</button>
                     </div>
 
                     <div class="d-flex gap-2 mb-3">
@@ -259,7 +277,8 @@
 
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" role="switch" id="fh-auto-close-near-start">
-                        <label class="form-check-label" for="fh-auto-close-near-start">Auto-close when release is near first point</label>
+                        <label class="form-check-label" for="fh-auto-close-near-start">Auto-close when release is near
+                            first point</label>
                     </div>
 
                     <label for="fh-stroke-width" class="form-label d-flex justify-content-between mt-2">
@@ -274,7 +293,8 @@
                         <span>Sample distance (px)</span>
                         <span id="fh-sample-distance-value">1.5</span>
                     </label>
-                    <input id="fh-sample-distance" type="range" class="form-range" min="0.5" max="6" step="0.1" value="1.5">
+                    <input id="fh-sample-distance" type="range" class="form-range" min="0.5" max="6" step="0.1"
+                        value="1.5">
 
                     <label for="fh-simplify" class="form-label d-flex justify-content-between mt-3">
                         <span>Simplify tolerance (px)</span>
@@ -297,8 +317,10 @@
                     <hr class="border-secondary opacity-50 my-2">
 
                     <div class="form-check form-switch mt-3 mb-3">
-                        <input class="form-check-input" type="checkbox" role="switch" id="fh-enable-contour-snap" checked>
-                        <label class="form-check-label" for="fh-enable-contour-snap">Enable Contour Snap (from rendered frame)</label>
+                        <input class="form-check-input" type="checkbox" role="switch" id="fh-enable-contour-snap"
+                            checked>
+                        <label class="form-check-label" for="fh-enable-contour-snap">Enable Contour Snap (from rendered
+                            frame)</label>
                     </div>
 
                     <label for="fh-snap-radius" class="form-label d-flex justify-content-between mt-2">
@@ -311,19 +333,22 @@
                         <span>Contour snap strength</span>
                         <span id="fh-snap-strength-value">0.70</span>
                     </label>
-                    <input id="fh-snap-strength" type="range" class="form-range" min="0" max="1" step="0.05" value="0.70">
+                    <input id="fh-snap-strength" type="range" class="form-range" min="0" max="1" step="0.05"
+                        value="0.70">
 
                     <label for="fh-contour-min-gradient" class="form-label d-flex justify-content-between mt-3">
                         <span>Contour min gradient</span>
                         <span id="fh-contour-min-gradient-value">22</span>
                     </label>
-                    <input id="fh-contour-min-gradient" type="range" class="form-range" min="5" max="80" step="1" value="22">
+                    <input id="fh-contour-min-gradient" type="range" class="form-range" min="5" max="80" step="1"
+                        value="22">
 
                     <label for="fh-contour-amount" class="form-label d-flex justify-content-between mt-3">
                         <span>Contour amount</span>
                         <span id="fh-contour-amount-value">0.55</span>
                     </label>
-                    <input id="fh-contour-amount" type="range" class="form-range" min="0.10" max="1.00" step="0.05" value="0.55">
+                    <input id="fh-contour-amount" type="range" class="form-range" min="0.10" max="1.00" step="0.05"
+                        value="0.55">
 
                     <hr class="border-secondary opacity-50 my-2">
 
@@ -336,13 +361,15 @@
                         <span>Final relax strength</span>
                         <span id="fh-final-relax-strength-value">0.12</span>
                     </label>
-                    <input id="fh-final-relax-strength" type="range" class="form-range" min="0.00" max="0.50" step="0.01" value="0.12">
+                    <input id="fh-final-relax-strength" type="range" class="form-range" min="0.00" max="0.50"
+                        step="0.01" value="0.12">
 
                     <label for="fh-final-relax-dense-factor" class="form-label d-flex justify-content-between mt-3">
                         <span>Final relax dense factor</span>
                         <span id="fh-final-relax-dense-factor-value">1.45</span>
                     </label>
-                    <input id="fh-final-relax-dense-factor" type="range" class="form-range" min="0.50" max="3.00" step="0.05" value="1.45">
+                    <input id="fh-final-relax-dense-factor" type="range" class="form-range" min="0.50" max="3.00"
+                        step="0.05" value="1.45">
 
                 </div>
                 <div class="modal-footer border-secondary">
@@ -354,7 +381,9 @@
 
     <div class="openlime"></div>
     <input id="anno-load-input" type="file" accept="application/json,.json" style="display:none" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
     <script src="../../js/openlime.js"></script>
     <script>
         // Create an OpenLIME canvas into openlime
@@ -386,11 +415,11 @@
             markerOptions: { radius: 14 },
             // Colour classes — annotation.class (0/1/2) selects the style
             classes: [
-                { label: 'Disk',     fill: '#e63946', stroke: '#e63946', fillOpacity: 0.75, strokeWidth: 2, fillSelected: '#ffd700', strokeSelected: '#ffd700' },
-                { label: 'Polyline', fill: 'none',    stroke: '#00aaff', fillOpacity: 1,    strokeWidth: 2, fillSelected: 'none',    strokeSelected: '#ffd700' },
-                { label: 'Polygon',  fill: 'rgba(34,187,85,0.2)', stroke: '#22bb55', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
-                { label: 'Rect',     fill: 'rgba(100,160,255,0.2)', stroke: '#64a0ff', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
-                { label: 'Freehand', fill: 'none',    stroke: '#ff8a00', fillOpacity: 1,    strokeWidth: 5, fillSelected: 'none',    strokeSelected: '#ffd700' },
+                { label: 'Disk', fill: '#e63946', stroke: '#e63946', fillOpacity: 0.75, strokeWidth: 2, fillSelected: '#ffd700', strokeSelected: '#ffd700' },
+                { label: 'Polyline', fill: 'none', stroke: '#00aaff', fillOpacity: 1, strokeWidth: 2, fillSelected: 'none', strokeSelected: '#ffd700' },
+                { label: 'Polygon', fill: 'rgba(34,187,85,0.2)', stroke: '#22bb55', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
+                { label: 'Rect', fill: 'rgba(100,160,255,0.2)', stroke: '#64a0ff', fillOpacity: 1, strokeWidth: 2, fillSelected: 'rgba(255,215,0,0.15)', strokeSelected: '#ffd700' },
+                { label: 'Freehand', fill: 'none', stroke: '#ff8a00', fillOpacity: 1, strokeWidth: 5, fillSelected: 'none', strokeSelected: '#ffd700' },
             ],
             defaultAnnotationClass: 0,
             // With singleEditMode, vertex handles are shown only when exactly
@@ -729,11 +758,11 @@
         }
 
         const markerConfigs = {
-            'disk':     { type: 'disk',     opts: { radius: 14 },                     classIdx: 0 },
+            'disk': { type: 'disk', opts: { radius: 14 }, classIdx: 0 },
             'polyline': { type: 'polyline', opts: { closed: false, vertexRadius: 5 }, classIdx: 1 },
-            'polygon':  { type: 'polyline', opts: { closed: true,  vertexRadius: 5 }, classIdx: 2 },
-            'rect':     { type: 'rect',     opts: { vertexRadius: 6 },                classIdx: 3 },
-            'freehand': { type: 'freehand', opts: { ...freehandSettings },            classIdx: freehandClassIdx },
+            'polygon': { type: 'polyline', opts: { closed: true, vertexRadius: 5 }, classIdx: 2 },
+            'rect': { type: 'rect', opts: { vertexRadius: 6 }, classIdx: 3 },
+            'freehand': { type: 'freehand', opts: { ...freehandSettings }, classIdx: freehandClassIdx },
         };
 
         let selectedMarkerKey = null;
@@ -785,12 +814,44 @@
             setMarker(key);
         }
 
+        function groupSelected() {
+            const selectedIds = [...(manager.layer?.selected ?? [])];
+            if (!selectedIds.length || selectedIds.length < 2) return;
+            console.log('Group selected');
+            manager.groupSelected();
+            // Send to log annotation ids
+
+            console.log('Annotation ids after grouping');
+            for (let a of manager.layer.annotations) {
+                console.log(a.id);
+            }
+        }
+
+        function ungroupSelected() {
+            const selectedIds = [...(manager.layer?.selected ?? [])];
+            console.log('Ungroup selected ids:', selectedIds);
+            if (selectedIds.length == 0) return;
+
+            for (let id of selectedIds) {
+                console.log('Ungroup selected', id);
+                manager.ungroupAnnotation(id);
+                // Send to log annotation ids
+            }
+
+            console.log('Annotation ids after ungrouping');
+            for (let a of manager.layer.annotations) {
+                console.log(a.id);
+            }
+        }
+
         document.getElementById('btn-disk').addEventListener('click', () => toggleMarker('disk'));
         document.getElementById('btn-polyline').addEventListener('click', () => toggleMarker('polyline'));
         document.getElementById('btn-polygon').addEventListener('click', () => toggleMarker('polygon'));
         document.getElementById('btn-rect').addEventListener('click', () => toggleMarker('rect'));
         document.getElementById('btn-freehand').addEventListener('click', () => toggleMarker('freehand'));
         document.getElementById('btn-edit').addEventListener('click', () => activateEditModeUI());
+        document.getElementById('btn-anno-group').addEventListener('click', () => groupSelected());
+        document.getElementById('btn-anno-ungroup').addEventListener('click', () => ungroupSelected());
         document.getElementById('btn-relax-selected').addEventListener('click', () => relaxSelectedAnnotations());
         document.getElementById('btn-freehand-settings').addEventListener('click', () => {
             syncFreehandControlsFromState();
