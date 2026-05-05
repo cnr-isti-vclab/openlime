@@ -2458,12 +2458,7 @@ class ManagerSvgAnnotation {
     const sources = ids.map(id => {
       const anno = this.getAnnotationById(id);
       if (!anno) throw new Error(`groupAnnotations: annotation '${id}' not found.`);
-      if (anno.data?._grouped) {
-        throw new Error(
-          `groupAnnotations: annotation '${id}' is already a group. ` +
-          'Nested grouping is not supported — ungroup it first.'
-        );
-      }
+
       return anno;
     });
 
