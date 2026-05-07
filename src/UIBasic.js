@@ -231,7 +231,6 @@ class UIBasic {
 		entry.element.classList.toggle('active', active); */
 
 		this.menu.push({ section: "Layers" });
-		// In the constructor section, replace this block:
 
 		for (let [id, layer] of Object.entries(this.viewer.canvas.layers)) {
 			let modes = []
@@ -240,15 +239,13 @@ class UIBasic {
 					button: m,
 					mode: m,
 					layer: id,
-					// FIXED: use the ID to retrieve the correct layer
 					onclick: () => {
 						const l = this.viewer.canvas.layers[id];
 						if (l) {
 							l.setMode(m);
-							this.viewer.redraw(); // Force redraw to update the lens
+							this.viewer.redraw();
 						}
 					},
-					// FIXED: use the ID to retrieve the correct layer
 					status: () => { const l = this.viewer.canvas.layers[id]; return l && l.getMode() == m ? 'active' : ''; },
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
@@ -258,16 +255,45 @@ class UIBasic {
 
 			let layerEntry = {
 				button: layer.label || id,
-				// FIXED: use the ID to retrieve the correct layer
 				onclick: () => { const l = this.viewer.canvas.layers[id]; if (l) this.setLayer(l); },
-				// FIXED: use the ID to retrieve the correct layer  
 				status: () => { const l = this.viewer.canvas.layers[id]; return l && l.visible ? 'active' : ''; },
 				layer: id
 			};
-			if (modes.length > 1) layerEntry.list = modes;
+
+			// Add lens layer sublayers if this is a LayerLens
+			if (layer.constructor.name === 'LayerLens' && layer.layers && layer.layers.length > 0) {
+				this.menu.push({ html: '', classes: 'openlime-layer-separator' });
+				layerEntry.classes = 'openlime-lens-parent-entry';
+				let lensLayers = [];
+				for (let i = 0; i < layer.layers.length; i++) {
+					const lensSubLayer = layer.layers[i];
+					const lensLayerLabel = lensSubLayer.label || `Layer ${i}`;
+					lensLayers.push({
+						button: lensLayerLabel,
+						layer: id,
+						classes: 'openlime-lens-choice-entry',
+						roundcheck: true,
+						// Mark which layer is active in the lens
+						status: () => {
+							const lensLayer = this.viewer.canvas.layers[id];
+							return lensLayer && lensLayer.activeLayerIndex === i ? 'active' : '';
+						},
+						onclick: () => {
+							const lensLayer = this.viewer.canvas.layers[id];
+							if (lensLayer && lensLayer.setActiveLayer) {
+								lensLayer.setActiveLayer(i);
+								this.viewer.redraw();
+							}
+						}
+					});
+				}
+				layerEntry.list = lensLayers;
+			} else if (modes.length > 1) {
+				layerEntry.list = modes;
+			}
 
 			if (layer.annotations && typeof layer.annotationsEntry === 'function') {
-				layerEntry.list = [];
+				if (!layerEntry.list) layerEntry.list = [];
 				layerEntry.list.push(layer.annotationsEntry());
 			}
 			this.menu.push(layerEntry);
@@ -758,9 +784,15 @@ class UIBasic {
 			let group = 'group' in entry ? `data-group="${entry.group}"` : '';
 			let layer = 'layer' in entry ? `data-layer="${entry.layer}"` : '';
 			let mode = 'mode' in entry ? `data-mode="${entry.mode}"` : '';
+			let roundcheck = 'roundcheck' in entry ? entry.roundcheck : false;
 
 			// Add icons for layers and modes
-			if (layer && !mode) {
+			if (roundcheck) {
+				html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry ${classes}">
+							<span class="openlime-lens-choice-check"></span>
+							<span class="openlime-lens-choice-name">${entry.button}</span>
+				</a>`;
+			} else if (layer && !mode) {
 				// This is a layer button
 				html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry openlime-layer-entry ${classes}">
 							<span class="openlime-layer-icon"></span>

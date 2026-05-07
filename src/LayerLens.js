@@ -5,6 +5,8 @@ import { ShaderLens } from './ShaderLens.js'
 
 /**
  * @typedef {Object} LayerLensOptions
+ * @property {Layer[]} [layers] - Array of layers available in the lens (optional)
+ * @property {number} [activeLayerIndex=0] - Index of the layer to display in the lens
  * @property {boolean} [overlay=true] - Whether the lens renders as an overlay
  * @property {number} [radius=100] - Initial lens radius in pixels
  * @property {number[]} [borderColor=[0.078, 0.078, 0.078, 1]] - RGBA border color
@@ -16,20 +18,22 @@ import { ShaderLens } from './ShaderLens.js'
  */
 
 /**
- * LayerLens implements a magnifying lens effect that can display content from one or two layers.
- * It provides an interactive lens that can be moved and resized, showing different layer content
- * inside and outside the lens area.
+ * LayerLens implements a magnifying lens effect that displays a single selected layer.
+ * It provides an interactive lens that can be moved and resized, showing magnified content
+ * of the active layer inside the lens area only - no other layers are rendered by the lens.
  * 
  * Features:
  * - Interactive lens positioning and sizing
- * - Support for base and overlay layers
+ * - Support for multiple layers with dynamic switching
+ * - Single active layer display (mutually exclusive)
  * - Animated transitions
  * - Customizable border appearance
  * - Dashboard UI integration
  * - Optimized viewport rendering
  * 
  * Technical Details:
- * - Uses framebuffer composition for layer blending
+ * - Renders only the active layer to avoid output in background
+ * - Uses framebuffer composition for single layer rendering
  * - Implements viewport optimization for performance
  * - Handles coordinate transformations between systems
  * - Supports animated parameter changes
@@ -39,17 +43,18 @@ import { ShaderLens } from './ShaderLens.js'
  * 
  * @example
  * ```javascript
- * // Create lens with base layer
+ * // Create lens with multiple layers (shows first by default)
  * const lens = new OpenLIME.LayerLens({
  *   camera: viewer.camera,
+ *   layers: [layer1, layer2, layer3],
+ *   activeLayerIndex: 0,
  *   radius: 150,
  *   borderEnable: true,
  *   borderColor: [0, 0, 0, 1]
  * });
  * 
- * // Set layers
- * lens.setBaseLayer(baseLayer);
- * lens.setOverlayLayer(overlayLayer);
+ * // Switch to different layer
+ * lens.setActiveLayer(1);
  * 
  * // Animate lens position
  * lens.setCenter(500, 500, 1000, 'ease-out');
@@ -72,6 +77,7 @@ class LayerLens extends LayerCombiner {
 			borderWidth: 12,
 			borderEnable: false,
 			dashboard: null,
+			activeLayerIndex: 0,
 			isLinear: true,
 		}, options);
 		super(options);
@@ -81,9 +87,11 @@ class LayerLens extends LayerCombiner {
 			throw "Missing Camera"
 		}
 
-		// Shader lens currently handles up to 2 layers
+		// Track which layer is active in the lens (mutually exclusive)
+		this.activeLayerIndex = Math.max(0, Math.min(options.activeLayerIndex, this.layers.length - 1));
+
+		// Create shader lens - only single layer rendering now
 		let shader = new ShaderLens();
-		if (this.layers.length == 2) shader.setOverlayLayerEnabled(true); //FIXME Is it a mode? Control?
 		this.shaders['lens'] = shader;
 		this.setShader('lens');
 
@@ -102,31 +110,47 @@ class LayerLens extends LayerCombiner {
 
 	/**
 	 * Sets layer visibility and updates dashboard if present
+	 * Extends parent setVisible() to also manage dashboard UI
 	 * @param {boolean} visible - Whether layer should be visible
 	 * @override
 	 */
 	setVisible(visible) {
+		// Update dashboard UI (LayerLens-specific behavior)
 		if (this.dashboard) {
-			if (visible) {
-				this.dashboard.container.style.display = 'block';
-			} else {
-				this.dashboard.container.style.display = 'none';
-			}
+			this.dashboard.container.style.display = visible ? 'block' : 'none';
 		}
+		// Delegate to parent for core visibility logic
 		super.setVisible(visible);
 	}
 
 	/**
-	 * Removes the overlay layer, returning to single layer mode
+	 * Sets the active layer to be displayed inside the lens.
+	 * Only the active layer is rendered by the lens; others are ignored.
+	 * @param {number} index - Index of the layer to display
+	 * @throws {Error} If index is out of bounds
+	 * @fires Layer#update
 	 */
-	removeOverlayLayer() {
-		this.layers.length = 1;
-		this.shader.setOverlayLayerEnabled(false);
+	setActiveLayer(index) {
+		if (index < 0 || index >= this.layers.length) {
+			console.warn(`Layer index ${index} out of bounds (0-${this.layers.length - 1})`);
+			return;
+		}
+		this.activeLayerIndex = index;
+		this.emit('update');
 	}
 
 	/**
-	 * Sets the base layer (shown inside lens)
-	 * @param {Layer} layer - Base layer instance
+	 * Gets the currently active layer index
+	 * @returns {number} Index of the active layer
+	 */
+	getActiveLayer() {
+		return this.activeLayerIndex;
+	}
+
+	/**
+	 * Sets the base layer (legacy method - sets layers[0])
+	 * For backward compatibility. Prefer setActiveLayer() for new code.
+	 * @param {Layer} layer - Layer instance
 	 * @fires Layer#update
 	 */
 	setBaseLayer(l) {
@@ -135,37 +159,8 @@ class LayerLens extends LayerCombiner {
 			return;
 		}
 		this.layers[0] = l;
+		this.activeLayerIndex = 0;
 		this.emit('update');
-	}
-
-	/**
-	 * Sets the overlay layer (shown outside lens)
-	 * @param {Layer} layer - Overlay layer instance
-	 */
-	setOverlayLayer(l) {
-		if (!l) {
-			console.warn("Attempting to set null overlay layer");
-			return;
-		}
-		this.layers[1] = l;
-		this.layers[1].setVisible(true);
-		this.shader.setOverlayLayerEnabled(true);
-
-		this.regenerateFrameBuffers();
-	}
-
-	/**
-	 * Sets the overlay layer (shown inside lens)
-	 * @param {Layer} layer - Overlay layer instance
-	 */
-	regenerateFrameBuffers() {
-		// Regenerate frame buffers
-		const w = this.layout.width;
-		const h = this.layout.height;
-		this.deleteFramebuffers();
-		this.layout.width = w;
-		this.layout.height = h;
-		this.createFramebuffers();
 	}
 
 	/**
@@ -232,7 +227,7 @@ class LayerLens extends LayerCombiner {
 	}
 
 	/**
-	 * Renders the lens effect
+	 * Renders the lens effect with only the active layer
 	 * @param {Transform} transform - Current view transform
 	 * @param {Object} viewport - Current viewport
 	 * @returns {boolean} Whether all animations are complete
@@ -254,9 +249,9 @@ class LayerLens extends LayerCombiner {
 			this.oldRadius = currentRadius;
 		}
 
-		for (let layer of this.layers)
-			if (layer.status != 'ready')
-				return false;
+		// Check that active layer is ready
+		if (this.activeLayerIndex >= this.layers.length || this.layers[this.activeLayerIndex].status != 'ready')
+			return false;
 
 		if (!this.shader)
 			throw "Shader not specified!";
@@ -266,19 +261,14 @@ class LayerLens extends LayerCombiner {
 		// Draw on a restricted viewport around the lens, to lower down the number of required tiles
 		let lensViewport = this.getLensViewport(transform, viewport);
 
-		// If an overlay is present, merge its viewport with the lens one
-		let overlayViewport = this.getOverlayLayerViewport(transform, viewport);
-		if (overlayViewport != null) {
-			lensViewport = this.joinViewports(lensViewport, overlayViewport);
-		}
-
 		gl.viewport(lensViewport.x, lensViewport.y, lensViewport.dx, lensViewport.dy);
 
-		// Keep the framwbuffer to the window size in order to avoid changing at each scale event
+		// Keep the framebuffer to the window size in order to avoid changing at each scale event
 		if (!this.framebuffers.length || this.layout.width != viewport.w || this.layout.height != viewport.h) {
 			this.deleteFramebuffers();
 			this.layout.width = viewport.w;
 			this.layout.height = viewport.h;
+			// Create only one framebuffer for the active layer
 			this.createFramebuffers();
 		}
 
@@ -288,12 +278,10 @@ class LayerLens extends LayerCombiner {
 		// Save the active framebuffer from Canvas before drawing
 		const activeFramebuffer = this.canvas.getActiveFramebuffer();
 
-		// Draw the layers only within the viewport enclosing the lens
-		for (let i = 0; i < this.layers.length; i++) {
-			gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[i]);
-			gl.clear(gl.COLOR_BUFFER_BIT);
-			this.layers[i].draw(transform, lensViewport);
-		}
+		// Draw ONLY the active layer within the viewport enclosing the lens
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[0]);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+		this.layers[this.activeLayerIndex].draw(transform, lensViewport);
 
 		// Restore the active framebuffer from Canvas
 		this.canvas.setActiveFramebuffer(activeFramebuffer);
@@ -304,12 +292,10 @@ class LayerLens extends LayerCombiner {
 
 		this.prepareWebGL();
 
-		// Bind all textures and combine them with the shaderLens
-		for (let i = 0; i < this.layers.length; i++) {
-			gl.uniform1i(this.shader.samplers[i].location, i);
-			gl.activeTexture(gl.TEXTURE0 + i);
-			gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
-		}
+		// Bind only the active layer texture
+		gl.uniform1i(this.shader.samplers[0].location, 0);
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
 
 		// Get texture coords of the lensViewport with respect to the framebuffer sz
 		const lx = lensViewport.x / lensViewport.w;
