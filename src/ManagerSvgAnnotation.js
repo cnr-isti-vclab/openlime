@@ -1581,13 +1581,159 @@ class ManagerSvgAnnotation {
    */
   _onAnnotationUpdate(anno, transform) {
     const markerType = anno.data?._markerType ?? this.activeMarker;
+    let style = {};
     try {
       const marker = this._instantiateMarker(markerType, this.markerOptions);
       const selected = this.layer.selected?.has(anno.id) ?? false;
-      const style = this._getClassStyle(anno, selected);
+      style = this._getClassStyle(anno, selected);
       marker.updateElements(anno.elements, transform, anno, style);
     } catch {
       // Unknown marker type — silently ignore for robustness
+      const selected = this.layer.selected?.has(anno.id) ?? false;
+      style = this._getClassStyle(anno, selected);
+    }
+
+    this._updateLabelElement(anno, transform, style);
+  }
+
+  /**
+   * Synchronises a text element for the annotation label.
+   * Maintains screen-space font size and places it on top of the annotation's bounding box.
+   * @param {Annotation} anno 
+   * @param {Object} transform 
+   * @param {Object} style 
+   * @private
+   */
+  _updateLabelElement(anno, transform, style) {
+    const hasLabel = anno.label && anno.label.trim() !== '';
+    let labelEl = anno.elements.find(el => el.classList?.contains('annotation-label'));
+    let bgEl = anno.elements.find(el => el.classList?.contains('annotation-label-bg'));
+
+    if (hasLabel) {
+      if (!bgEl) {
+        bgEl = Util.createSVGElement('rect', {
+          class: 'annotation-label-bg',
+          fill: 'rgba(0, 0, 0, 0.8)',
+          'pointer-events': 'none',
+        });
+        if (labelEl) {
+          const idx = anno.elements.indexOf(labelEl);
+          anno.elements.splice(idx, 0, bgEl);
+        } else {
+          anno.elements.push(bgEl);
+        }
+        anno.needsUpdate = true;
+      }
+
+      if (!labelEl) {
+        labelEl = Util.createSVGElement('text', {
+          class: 'annotation-label',
+          'text-anchor': 'middle',
+          fill: '#ffffff', // Use white text for better contrast against dark background
+          'pointer-events': 'none',
+          style: 'user-select: none; font-family: sans-serif;',
+        });
+        anno.elements.push(labelEl);
+        anno.needsUpdate = true;
+      }
+
+      if (labelEl.textContent !== anno.label) {
+        labelEl.textContent = anno.label;
+      }
+
+      // Use white text and stroke color for background border (if desired), but let's keep it clean
+      labelEl.setAttribute('fill', style.stroke ?? '#ffffffff');
+      // bgEl.setAttribute('stroke', style.stroke ?? 'none');
+
+      // Maintain screen-space sizes
+      const zoom = transform?.z ?? 1;
+      const fontSize = 14 / zoom;
+      const padding = 6 / zoom;
+      const cornerRadius = 4 / zoom;
+
+      labelEl.setAttribute('font-size', String(fontSize));
+      bgEl.setAttribute('rx', String(cornerRadius));
+      bgEl.setAttribute('ry', String(cornerRadius));
+
+      // Attempt to calculate position
+      try {
+        const nonLabelElements = anno.elements.filter(el => el !== labelEl && el !== bgEl);
+        let x = 0, y = 0;
+
+        if (nonLabelElements.length > 0) {
+          let minX = Infinity, minY = Infinity, maxX = -Infinity;
+          for (const el of nonLabelElements) {
+            // Must be in DOM and visible for getBBox to work without throwing
+            if (typeof el.getBBox === 'function') {
+              try {
+                const bbox = el.getBBox();
+                // Filter out empty bounding boxes
+                if (bbox.width > 0 || bbox.height > 0) {
+                  minX = Math.min(minX, bbox.x);
+                  minY = Math.min(minY, bbox.y);
+                  maxX = Math.max(maxX, bbox.x + bbox.width);
+                }
+              } catch (e) {
+                // Ignore if not in DOM yet
+              }
+            }
+          }
+          if (minX !== Infinity) {
+            x = (minX + maxX) / 2;
+            y = minY - (8 / zoom); // Add a bit more gap from the box
+          } else if (anno.data._x !== undefined) {
+            x = anno.data._x;
+            y = anno.data._y - (8 / zoom);
+          }
+        } else if (anno.data._x !== undefined) {
+          x = anno.data._x;
+          y = anno.data._y - (8 / zoom);
+        }
+
+        labelEl.setAttribute('x', String(x));
+        labelEl.setAttribute('y', String(y));
+
+        // Now calculate background rect size based on text width
+        let textWidth = anno.label.length * (fontSize * 0.6); // Fallback estimate
+        let textHeight = fontSize;
+        let textY = y - fontSize * 0.8; // Baseline offset approximation
+
+        if (typeof labelEl.getBBox === 'function') {
+          try {
+            const textBbox = labelEl.getBBox();
+            if (textBbox.width > 0) {
+              textWidth = textBbox.width;
+              textHeight = textBbox.height;
+              textY = textBbox.y;
+            }
+          } catch (e) { }
+        }
+
+        bgEl.setAttribute('x', String(x - textWidth / 2 - padding));
+        bgEl.setAttribute('y', String(textY - padding));
+        bgEl.setAttribute('width', String(textWidth + padding * 2));
+        bgEl.setAttribute('height', String(textHeight + padding * 2));
+
+      } catch (e) {
+        // Safe fallback
+      }
+    } else {
+      if (bgEl) {
+        const idx = anno.elements.indexOf(bgEl);
+        if (idx !== -1) {
+          anno.elements.splice(idx, 1);
+          bgEl.remove();
+          anno.needsUpdate = true;
+        }
+      }
+      if (labelEl) {
+        const idx = anno.elements.indexOf(labelEl);
+        if (idx !== -1) {
+          anno.elements.splice(idx, 1);
+          labelEl.remove();
+          anno.needsUpdate = true;
+        }
+      }
     }
   }
 
