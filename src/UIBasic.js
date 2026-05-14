@@ -179,9 +179,14 @@ class UIBasic {
 		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
 			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
 
+		let lightLayers = [];
+		for (let [id, layer] of Object.entries(this.viewer.canvas.layers))
+			if (layer.controls.light) lightLayers.push(layer);
+
 		this.panzoom = new ControllerPanZoom(this.viewer.camera, {
 			priority: -1000,
 			activeModifiers: [0, 1],
+			panMouseButtons: lightLayers.length ? [2] : null,
 			controlZoom: this.controlZoomMessage != null
 		});
 		if (this.controlZoomMessage)
@@ -254,6 +259,7 @@ class UIBasic {
 			// TODO: IS THIS OK? It was false before
 			active: false,
 			activeModifiers: [2, 4],
+			panMouseButtons: [0],
 			control: 'light',
 			onPanStart: this.showLightDirections ? () => {
 				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false));
@@ -269,11 +275,6 @@ class UIBasic {
 		controller.priority = 0;
 		this.viewer.pointerManager.onEvent(controller);
 		this.lightcontroller = controller;
-
-
-		let lightLayers = [];
-		for (let [id, layer] of Object.entries(this.viewer.canvas.layers))
-			if (layer.controls.light) lightLayers.push(layer);
 
 		if (lightLayers.length) {
 			this.createLightDirections();
