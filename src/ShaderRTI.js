@@ -74,20 +74,23 @@ class ShaderRTI extends Shader {
 			colorprofile: 'sRGB',
 
 			nplanes: null,     //number of coefficient planes
-			yccplanes: null,     //number of luminance planes for mycc color space
+			yccplanes: null,   //number of luminance planes for mycc color space
 			njpegs: null,      //number of textures needed (ceil(nplanes/3))
 			material: null,    //material parameters
 			lights: null,      //light directions (needed for rbf interpolation)
 			sigma: null,       //rbf interpolation parameter
 			ndimensions: null, //PCA dimension space (for rbf and bln)
 
-			scale: null,      //factor and bias are used to dequantize coefficient planes.
+			scale: null,       //factor and bias are used to dequantize coefficient planes.
 			bias: null,
 
 			basis: null,       //PCA basis for rbf and bln
-			lweights: null    //light direction dependent coefficients to be used with coefficient planes
+			lweights: null     //light direction dependent coefficients to be used with coefficient planes
 		});
 		Object.assign(this, options);
+
+		if(!this.normals)      //remove sketch mode, it requires normals
+			this.modes = this.modes.filter(m => m != 'sketch');
 
 		if (this.relight)
 			this.init(this.relight);

@@ -274,6 +274,17 @@ function rtiTest(dataset) {
 	layer0.layout.cachelevels = 0;
 	lime.canvas.addLayer('coin', layer0);
 
+	let layer1 = new Layer({
+		type: 'image',
+		url: './assets/lighthouse/image/lighthouse-kdmap.jpg',
+		layout: 'image',
+		zindex: 0,
+		transform: { x: 0, y: 0, z: 1, a: 0 },
+		visible: false
+	});
+	lime.canvas.addLayer('test', layer1);
+
+
 	// let layer0 = new Layer({ 
 	// 	layout: 'image', 
 	// 	type:'rti',
@@ -301,7 +312,7 @@ function rtiTest(dataset) {
 	ui.scale = 0.002;
 	//the light is turned on by default in the ui, turn it off if you don't want it
 	//ui.actions.light.active = false;
-	
+
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };
 	ui.actions.rotate.display = true;
