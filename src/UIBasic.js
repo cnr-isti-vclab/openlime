@@ -282,6 +282,9 @@ class UIBasic {
 				//layer.setLight([0.5, 0.5], 0);
 				layer.controllers.push(controller);
 			}
+			//since we have some light controllers, we can activate the light action by default
+			//we can always torn it off after the constructor
+			this.actions.light.active = true;
 		}
 
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
@@ -447,7 +450,7 @@ class UIBasic {
 			}
 
 			if (this.actions.light && this.actions.light.active)
-				this.toggleLightController();
+				this.toggleLightController(true);
 			if (this.actions.layers && this.actions.layers.active)
 				this.toggleLayers();
 
@@ -535,7 +538,8 @@ class UIBasic {
 
 		if (0) {  //single svg toolbar
 			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-			toolbar.appendChild(svg); ui.toggleLightController();
+			toolbar.appendChild(svg); 
+			ui.toggleLightController();
 			let x = padding;
 			let h = 0;
 			for (let [name, action] of Object.entries(this.actions)) {

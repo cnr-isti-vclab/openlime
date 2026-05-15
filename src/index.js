@@ -299,7 +299,9 @@ function rtiTest(dataset) {
 	ui.menu[0].section = "Prova";
 	ui.menu.push({ html: "<p>Prova</p>" });
 	ui.scale = 0.002;
-	// ui.actions.light.display = true;
+	//the light is turned on by default in the ui, turn it off if you don't want it
+	//ui.actions.light.active = false;
+	
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };
 	ui.actions.rotate.display = true;
