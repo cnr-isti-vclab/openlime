@@ -28,7 +28,7 @@
         });
         lime.addLayer('Base', layer);
 
-        const lsc = new OpenLIME.LightSphereController('.openlime');
+        const lsc = new OpenLIME.LightSphereController('.openlime', { showCoordinates: true});
         const draggableLsc = new OpenLIME.Draggable(lsc.containerElement, '.openlime',
                     { top: 20, right: 20, handleColor: '#5a82aab3' });
 
