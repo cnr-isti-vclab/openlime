@@ -187,8 +187,9 @@
 /* ANNOTATION PENCIL */
 .openlime-toolbar .openlime-pencil.openlime-pencil-active path[style] {
 	fill: #ff0 !important;
-/* Light Sphere Controller */
+}
 
+/* Light Sphere Controller */
 .openlime-lightsphere {
 	padding: 0;
 	position: absolute;
