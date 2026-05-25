@@ -114,15 +114,18 @@ class ShaderBRDF extends Shader {
 			case 'color':
 				this.innerCode =
 					`vec3 linearColor = (kd + ks * spec) * NdotL;
-				linearColor += kd * uKAmbient; // HACK! adding just a bit of ambient`
+				linearColor += kd * uKAmbient; // HACK! adding just a bit of ambient
+				applyGamma = true;`
 				break;
 			case 'diffuse':
 				this.innerCode =
-					`vec3 linearColor = kd;`
+					`vec3 linearColor = kd;
+				applyGamma = true;`
 				break;
 			case 'specular':
 				this.innerCode =
-					`vec3 linearColor = clamp((ks * spec) * NdotL, 0.0, 1.0);`
+					`vec3 linearColor = clamp((ks * spec) * NdotL, 0.0, 1.0);
+				applyGamma = true;`
 				break;
 			case 'normals':
 				this.innerCode =
@@ -130,7 +133,9 @@ class ShaderBRDF extends Shader {
 				applyGamma = false;`
 				break;
 			case 'monochrome':
-				this.innerCode = 'vec3 linearColor = kd * NdotL + kd * uKAmbient;'
+				this.innerCode =
+					`vec3 linearColor = kd * NdotL + kd * uKAmbient;
+				applyGamma = true;`
 				break;
 			default:
 				console.log("ShaderBRDF: Unknown mode: " + mode);

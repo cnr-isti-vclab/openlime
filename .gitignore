@@ -10,6 +10,7 @@ dist/examples/npm-demo/css
 dist/examples/npm-demo/assets
 dist/examples/npm-demo/skin
 paper/
+dist/assets/local
 scratch
 jsconfig.json
 .env
@@ -30,19 +31,6 @@ src/LayoutTiles_bk.js
 src/ShaderRSC.js.keep
 src/openlime_src.txt
 
-# Extra assets (large data not shipped with the repo)
-dist/assets/local/
-dist/assets/calib/
-dist/assets/hdr/raise/
-dist/assets/lamina/
-dist/assets/multispectral/st_demetrios/
-dist/assets/multispectral/st_demetrios_jpg/
-dist/assets/neuralRTI/
-dist/assets/penguins/
-dist/assets/rsc/Ghiberti_ksvd/
-dist/assets/rsc/Ghiberti_ksvd_dzi/
-dist/assets/rti/ptm/festa-di-san-domenico/
-dist/assets/rti/ptm/mask/
 
 # Extra examples (local only, not shipped)
 dist/examples/annotation-editor/db/package-lock.json

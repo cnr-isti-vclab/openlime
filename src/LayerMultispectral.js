@@ -77,7 +77,7 @@ class LayerMultispectral extends Layer {
     this.defaultMode = this.defaultMode || 'single_band';
 
     // Create shader
-    this.shaders['multispectral'] = new ShaderMultispectral();
+    this.shaders['multispectral'] = new ShaderMultispectral({ isLinear: this.linearRaster });
     this.setShader('multispectral');
 
     // Set current CTW arrays

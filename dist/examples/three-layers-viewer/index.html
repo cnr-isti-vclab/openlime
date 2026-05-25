@@ -25,7 +25,8 @@
             layout: 'image',
             type: 'image',
             zindex: 10,
-            url: '../../assets/lighthouse/image/lighthouse-kdmap.jpg'
+            url: '../../assets/lighthouse/image/lighthouse-kdmap.jpg',
+            isLinear: true
         });
         lime.addLayer('Base', layer);
 
@@ -34,7 +35,8 @@
             type: 'image',
             zindex: 100,
             transform: { x: 40, y: -20, z: 1, a: 30 }, // position and rotation of the layer
-            url: '../../assets/lighthouse/image/lighthouse-anno.png'
+            url: '../../assets/lighthouse/image/lighthouse-anno.png',
+            isLinear: true
         });
         layera.setVisible(true);
         lime.addLayer('Annotations', layera);
@@ -43,7 +45,8 @@
             layout: 'image',
             type: 'image',
             zindex: 110,
-            url: '../../assets/lighthouse/image/lighthouse-anno2.png'
+            url: '../../assets/lighthouse/image/lighthouse-anno2.png',
+            isLinear: true
         });
         layerb.setVisible(true);
         lime.addLayer('Annotationsb', layerb);

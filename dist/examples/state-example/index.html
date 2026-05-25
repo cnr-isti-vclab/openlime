@@ -28,7 +28,8 @@
             url: '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
             layout: 'deepzoom',
             transform: { x: 0, y: 0, z: 1, a: 0 },
-            visible: true
+            visible: true,
+            isLinear: true
         });
         lime.addLayer('kdmap', layer0);
 
@@ -39,7 +40,8 @@
             url: '../../assets/lighthouse/deepzoom/lighthouse-nomap.dzi',
             layout: 'deepzoom',
             transform: { x: 0, y: 0, z: 1, a: 0 },
-            visible: false
+            visible: false,
+            isLinear: true
         });
         lime.addLayer('nomap', layer1);
 
@@ -50,7 +52,8 @@
             url: '../../assets/lighthouse/image/lighthouse-anno.png',
             layout: 'image',
             transform: { x: 0, y: 0, z: 1, a: 0 },
-            visible: false
+            visible: false,
+            isLinear: true
         });
         lime.addLayer('anno', layer2);
 
