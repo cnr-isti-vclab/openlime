@@ -141,7 +141,7 @@ class Camera {
 		//if (Math.abs(x) > 64000 || Math.abs(y) > 64000) return;
 		this.easing = easing || this.easing;
 
-		if (this.bounded) {
+		if (this.bounded && this.viewport) {
 			const sw = this.viewport.dx;
 			const sh = this.viewport.dy;
 
