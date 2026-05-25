@@ -131,7 +131,6 @@ class LightSphereController {
         if (!viewer) return this;
 
         this.viewer = viewer;
-        this.viewer.externalLightControllerBound = true;
 
         const ui = this.viewer.ui;
         if (ui && ui.actions && ui.actions.light) {

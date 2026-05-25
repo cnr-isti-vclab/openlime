@@ -71,14 +71,14 @@
         // Create an User Interface 
         const ui = new OpenLIME.UIBasic(lime, { showLightDirections: true });
 
-        // const lsc = new OpenLIME.LightSphereController('.openlime');
-        // const draggableLsc = new OpenLIME.Draggable(
-        //     lsc.containerElement,
-        //     '.openlime',
-        //     { top: 20, right: 20, handleColor: '#5a82aab3' });
+        const lsc = new OpenLIME.LightSphereController('.openlime');
+        const draggableLsc = new OpenLIME.Draggable(
+            lsc.containerElement,
+            '.openlime',
+            { top: 20, right: 20, handleColor: '#5a82aab3' });
 
-        // // Structural API: attach once, all light-capable layers are handled.
-        // lsc.bindToViewer(lime);
+        // Structural API: attach once, all light-capable layers are handled.
+        lsc.bindToViewer(lime);
 
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display = true;

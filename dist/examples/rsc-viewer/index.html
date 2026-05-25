@@ -53,10 +53,8 @@
             '.openlime',
             { top: 20, right: 20, handleColor: '#5a82aab3' });
 
-        layer0.addEvent('config_ready', () => {
-            lsc.addLayer(layer0);
-            console.log('Light directions loaded:', layer0.lightDirs().length);
-        });
+        // Structural API: attach once, all light-capable layers are handled.
+        lsc.bindToViewer(lime);
 
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
@@ -67,10 +65,6 @@
         // Add zoomin and zoomout to the toolbar
         ui.actions.zoomin.display = true;
         ui.actions.zoomout.display = true;
-
-        // Disable default light controller
-        ui.actions.light.display = false;
-        ui.actions.light.active = false;
 
     </script>
 </body>

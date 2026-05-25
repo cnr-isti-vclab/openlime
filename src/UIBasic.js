@@ -194,7 +194,7 @@ class UIBasic {
 		Object.assign(this, options);
 		this.viewer.ui = this;
 
-		if (this.viewer.externalLightControllerBound && this.actions.light) {
+		if (this.viewer.activeLightController && this.viewer.activeLightController !== this && this.actions.light) {
 			this.actions.light.display = false;
 			this.actions.light.active = false;
 		}

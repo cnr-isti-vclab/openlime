@@ -199,7 +199,6 @@ class Viewer {
 		// Initialize controllers array
 		this.controllers = [];
 		this.activeLightController = null;
-		this.externalLightControllerBound = false;
 	}
 
 	/**
