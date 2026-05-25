@@ -19,24 +19,23 @@ import { Shader } from './Shader.js'
  */
 
 /**
- * ShaderLens implements a circular magnification lens effect with optional overlay.
+ * ShaderLens implements a circular magnification lens effect with single layer rendering.
  * 
  * Features:
  * - Circular lens with smooth borders
  * - Configurable lens size and position
  * - Optional border with customizable color
- * - Optional overlay layer with grayscale outside lens
  * - Smooth transition between lens and background
+ * - Single layer rendering (no overlay composition)
  * - Real-time lens movement
  * 
  * Technical Implementation:
  * - Pixel-based distance calculations
  * - Smooth border transitions
- * - Alpha blending for overlays
+ * - Alpha blending for transparency
  * - WebGL 2.0+
  * - Viewport coordinate mapping
  * 
- *
  * Example usage:
  * ```javascript
  * // Create lens shader
@@ -49,22 +48,8 @@ import { Shader } from './Shader.js'
  *     [0.8, 0.8, 0.8, 1],   // gray border
  *     true                  // show border
  * );
- * 
- * // Enable overlay
- * lens.setOverlayLayerEnabled(true);
  * ```
  * 
- * Advanced usage with custom configuration:
- * ```javascript
- * const lens = new ShaderLens({
- *     uniforms: {
- *         u_lens: { value: [0, 0, 150, 15] },
- *         u_border_color: { value: [1, 0, 0, 1] }  // red border
- *     },
- *     overlayLayerEnabled: true
- * });
- * ```
- *
  * GLSL Implementation Details
  * 
  * Key Components:
@@ -72,11 +57,6 @@ import { Shader } from './Shader.js'
  *    - Distance-based circle calculation
  *    - Smooth border transitions
  *    - Color mixing and blending
- * 
- * 2. Overlay Processing:
- *    - Grayscale conversion
- *    - Alpha blending
- *    - Border preservation
  * 
  * Functions:
  * - lensColor(): Handles color transitions between lens regions
@@ -88,29 +68,28 @@ import { Shader } from './Shader.js'
  * - {vec4} u_border_color - Border color and alpha
  * - {bool} u_border_enable - Border visibility flag
  * - {sampler2D} source0 - Main texture
- * - {sampler2D} source1 - Optional overlay texture
  *
  * @extends Shader
  */
 class ShaderLens extends Shader {
     /**
      * Creates a new lens shader
-     * @param {ShaderLens~Options} [options] - Configuration options
+     * @param {Object} [options] - Configuration options
      * 
      * @example
      * ```javascript
      * // Create basic lens shader
      * const lens = new ShaderLens({
-     *     label: 'MyLens',
-     *     overlayLayerEnabled: false
+     *     label: 'MyLens'
      * });
      * ```
      */
     constructor(options) {
         super(options);
 
+        // Only one sampler needed for single layer rendering
         this.samplers = [
-            { id: 0, name: 'source0' }, { id: 1, name: 'source1' }
+            { id: 0, name: 'source0' }
         ];
 
         this.registerUniforms({
@@ -120,17 +99,6 @@ class ShaderLens extends Shader {
             u_border_enable: { type: 'bool', needsUpdate: true, size: 1, value: false }
         });
         this.label = "ShaderLens";
-        this.needsUpdate = true;
-        this.overlayLayerEnabled = false;
-    }
-
-    /**
-     * Enables or disables the overlay layer
-     * When enabled, adds a second texture layer with grayscale outside lens
-     * @param {boolean} enabled - Whether to enable overlay
-     */
-    setOverlayLayerEnabled(x) {
-        this.overlayLayerEnabled = x;
         this.needsUpdate = true;
     }
 
@@ -154,33 +122,14 @@ class ShaderLens extends Shader {
      * Shader Features:
      * - Circular lens implementation
      * - Smooth border transitions
-     * - Optional overlay support
-     * - Grayscale conversion outside lens
+     * - Single layer rendering
      * 
      * @param {WebGLRenderingContext} gl - WebGL context
      * @returns {string} Fragment shader source code
      * @private
      */
     fragShaderSrc(gl) {
-
-        let overlaySamplerCode = "";
-
-        if (this.overlayLayerEnabled) { //FIXME two cases with transparence or not.
-
-            overlaySamplerCode =
-                `vec4 c1 = texture(source1, v_texcoord);
-            if (r > u_lens.z) {
-                float k = (c1.r + c1.g + c1.b) / 3.0;
-                c1 = vec4(k, k, k, c1.a);
-            } else if (u_border_enable && r > innerBorderRadius) {
-                // Preserve border keeping c1 alpha at zero
-                c1.a = 0.0; 
-            }
-            color = color * (1.0 - c1.a) + c1 * c1.a;
-            `
-        }
         return `
-
         uniform vec4 u_lens; // [cx, cy, radius, border]
         uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
         uniform vec4 u_border_color;
@@ -209,7 +158,6 @@ class ShaderLens extends Shader {
 
         vec4 data() {
             vec4 color;
-            float innerBorderRadius = (u_lens.z - u_lens.w);
             float dx = v_texcoord.x * u_width_height.x - u_lens.x;
             float dy = v_texcoord.y * u_width_height.y - u_lens.y;
             float r = sqrt(dx*dx + dy*dy);
@@ -218,11 +166,9 @@ class ShaderLens extends Shader {
             vec4 c_out = u_border_color; c_out.a=0.0;
             
             color = lensColor(c_in, u_border_color, c_out, r, u_lens.z, u_lens.w);
-
-            ${overlaySamplerCode}
             return color;
         }
-        `
+        `;
     }
 
     /**

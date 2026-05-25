@@ -29,8 +29,9 @@
 
 .openlime-scale {
 	position: absolute;
-	bottom: 25px;
-	left: 0px;
+	bottom: calc(5vh + 10px);
+	right: 0px;
+	left: auto;
 	width: 200px;
 	height: 40px;
 	padding: 15px;
@@ -404,6 +405,13 @@ g.openlime-expand {
 	color: #f0f0f0;
 }
 
+.openlime-layer-separator {
+	height: 0;
+	border-top: 1px solid rgba(220, 220, 220, 0.2);
+	margin: 10px 2px 8px 2px;
+	padding: 0;
+}
+
 /* Entry styling */
 .openlime-entry {
 	display: flex;
@@ -432,6 +440,22 @@ g.openlime-expand {
 .openlime-layer-entry.active {
 	background-color: rgba(70, 130, 180, 0.6);
 	color: #ffffff;
+}
+
+/* Lens parent layer entry: visually separated from standard layers */
+.openlime-layer-entry.openlime-lens-parent-entry {
+	background-color: rgba(106, 92, 53, 0.45);
+	margin-top: 14px;
+	margin-bottom: 8px;
+	border: 1px solid rgba(196, 168, 92, 0.35);
+}
+
+.openlime-layer-entry.openlime-lens-parent-entry:hover {
+	background-color: rgba(124, 108, 62, 0.58);
+}
+
+.openlime-layer-entry.openlime-lens-parent-entry.active {
+	background-color: rgba(137, 118, 66, 0.68);
 }
 
 .openlime-layer-icon {
@@ -479,6 +503,42 @@ g.openlime-expand {
 	background-color: currentColor;
 	border-radius: 50%;
 	opacity: 0.7;
+}
+
+/* Lens sublayer selection entries */
+.openlime-lens-choice-entry {
+	padding: 6px 8px;
+	margin: 4px 0 4px 20px;
+	font-size: 11px;
+	font-weight: 400;
+	background-color: rgba(50, 50, 50, 0.25);
+	min-height: 24px;
+}
+
+.openlime-lens-choice-entry:hover {
+	background-color: rgba(80, 80, 80, 0.4);
+}
+
+.openlime-lens-choice-check {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	border: 1.5px solid rgba(230, 230, 230, 0.75);
+	margin-right: 8px;
+	box-sizing: border-box;
+	background: transparent;
+	flex-shrink: 0;
+}
+
+.openlime-lens-choice-entry.active .openlime-lens-choice-check {
+	background: #58c46b;
+	border-color: #58c46b;
+	box-shadow: 0 0 0 2px rgba(88, 196, 107, 0.2);
+}
+
+.openlime-lens-choice-name {
+	line-height: 1.1;
+	opacity: 0.9;
 }
 
 /* Lists (for mode groups) */
