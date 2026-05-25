@@ -5,6 +5,7 @@ import { ControllerPanZoom } from './ControllerPanZoom'
 import { Ruler } from "./Ruler"
 import { ScaleBar } from './ScaleBar'
 import { addSignals } from './Signals'
+import { Minimap } from './Minimap'
 
 /**
  * @typedef {Object} UIAction
@@ -45,6 +46,7 @@ import { addSignals } from './Signals'
  * - Keyboard shortcuts
  * - Scale bar
  * - Measurement tools
+ * - Minimap overlay
  * 
  * Built-in Actions:
  * - home: Reset camera view
@@ -123,7 +125,18 @@ class UIBasic {
 	 *     // Add measurement support
 	 *     pixelSize: 0.1,
 	 *     // Add attribution
-	 *     attribution: "© Example Source"
+	 *     attribution: "© Example Source",
+	 *    // Minimap configuration
+	 *    minimapOptions: {
+	 *        position: 'top-right',
+	 *        width: 150,
+	 *        height: 100,
+	 *        layer: {
+	 *            layout: 'deepzoom',
+	 *            type: 'rti',
+	 *            url: 'assets/rti/hsh/info.json'
+	 *        }
+	 *	  }
 	 * });
 	 * ```
 	 */
@@ -157,7 +170,9 @@ class UIBasic {
 			showLightDirections: false,
 			enableTooltip: true,
 			controlZoomMessage: null, //"Use Ctrl + Wheel to zoom instead of scrolling" ,
-			menu: []
+			menu: [],
+			minimap: null,
+			minimapOptions: null
 		});
 
 		Object.assign(this, options);
@@ -203,6 +218,11 @@ class UIBasic {
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
+				if (m == 'sketch' && layer.shader.setSketchWidth) {
+					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSketchWidth(e.target.value); } }];
+					mode.list.push({ slider: '', oninput: (e) => { layer.shader.setSketchRadius(e.target.value); } });
+				}
+
 				modes.push(mode);
 			}
 
@@ -262,6 +282,9 @@ class UIBasic {
 				//layer.setLight([0.5, 0.5], 0);
 				layer.controllers.push(controller);
 			}
+			//since we have some light controllers, we can activate the light action by default
+			//we can always torn it off after the constructor
+			this.actions.light.active = true;
 		}
 
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
@@ -427,9 +450,13 @@ class UIBasic {
 			}
 
 			if (this.actions.light && this.actions.light.active)
-				this.toggleLightController();
+				this.toggleLightController(true);
 			if (this.actions.layers && this.actions.layers.active)
 				this.toggleLayers();
+
+			if (this.minimapOptions) {
+				this.createMinimap();
+			}
 
 			this.postInit();
 
@@ -511,7 +538,8 @@ class UIBasic {
 
 		if (0) {  //single svg toolbar
 			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-			toolbar.appendChild(svg); ui.toggleLightController();
+			toolbar.appendChild(svg); 
+			ui.toggleLightController();
 			let x = padding;
 			let h = 0;
 			for (let [name, action] of Object.entries(this.actions)) {
@@ -580,7 +608,7 @@ class UIBasic {
 	 */
 	setActiveControllers(on) {
 		for (let c of this.viewer.controllers) {
-			if(c != this.panzoom)  //panzoom is always active	
+			if(c == this.panzoom)  //panzoom is always active	
 				continue;
 			c.active = on;
 		}
@@ -877,6 +905,24 @@ class UIBasic {
 	updateMenu() {
 		for (let entry of this.menu)
 			this.updateEntry(entry);
+	}
+
+	createMinimap() {
+		// Auto-configure viewport from first layer if not specified
+		if (!this.minimapOptions.viewport) {
+			const firstLayer = Object.values(this.viewer.canvas.layers)[0];
+			if (firstLayer && firstLayer.boundingBox) {
+				this.minimapOptions.viewport = firstLayer.boundingBox;
+			}
+		}
+		
+		this.minimap = new Minimap(this.viewer, this.minimapOptions);
+	}
+
+	toggleMinimap(on) {
+		if (!this.minimap) return;
+		if (on === undefined) on = this.minimap.element.style.display === 'none';
+		this.minimap[on ? 'show' : 'hide']();
 	}
 
 	/**

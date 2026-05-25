@@ -274,6 +274,17 @@ function rtiTest(dataset) {
 	layer0.layout.cachelevels = 0;
 	lime.canvas.addLayer('coin', layer0);
 
+	let layer1 = new Layer({
+		type: 'image',
+		url: './assets/lighthouse/image/lighthouse-kdmap.jpg',
+		layout: 'image',
+		zindex: 0,
+		transform: { x: 0, y: 0, z: 1, a: 0 },
+		visible: false
+	});
+	lime.canvas.addLayer('test', layer1);
+
+
 	// let layer0 = new Layer({ 
 	// 	layout: 'image', 
 	// 	type:'rti',
@@ -299,10 +310,26 @@ function rtiTest(dataset) {
 	ui.menu[0].section = "Prova";
 	ui.menu.push({ html: "<p>Prova</p>" });
 	ui.scale = 0.002;
-	// ui.actions.light.display = true;
+	//the light is turned on by default in the ui, turn it off if you don't want it
+	//ui.actions.light.active = false;
+
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };
 	ui.actions.rotate.display = true;
+	ui.minimapOptions = { 
+		layer: { 
+			label: 'Minimap',
+			layout: 'deepzoom',
+			type: 'rti',
+			url: 'assets/rti/hsh/info.json',
+			normals: false
+		}, 
+		width: 150, 
+		height: 150, 
+		padding: 10, 
+		position: 'top-right',
+		viewportStyle: { stroke: 'red' }
+	};
 	
 //	setTimeout(() => { layer0.shader.setLight([0.4, 0.4, Math.sqrt(0.68)], ); lime.canvas.emit('update'); }, 2000);
 }

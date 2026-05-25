@@ -1,6 +1,7 @@
 import { Layer } from './Layer.js'
 import { Raster } from './Raster.js'
 import { ShaderRTI } from './ShaderRTI.js'
+import { ShaderFilterSketch } from './ShaderFilterSketch.js'
 import { Transform } from './Transform.js'
 
 /**
@@ -115,6 +116,50 @@ class LayerRTI extends Layer {
 	}
 
 	/**
+	 * Returns true if the sketch effect can be computed inline (single-pass).
+	 * Requires either a non-tiled ('image') layout or enough tile overlap for the
+	 * sketch kernel (which samples up to 11 pixels outward).
+	 * @returns {boolean}
+	 * @private
+	 */
+	_canInlineSketch() {
+		return this.layout.type === 'image' || (this.layout.overlap !== undefined && this.layout.overlap >= 11);
+	}
+
+	/**
+	 * Sets the rendering mode.
+	 * Intercepts 'sketch' to choose between the inline SKETCH path (fast, single-pass)
+	 * and the 'normals' + ShaderFilterSketch filter path (correct for tiled layouts
+	 * with insufficient overlap).
+	 * @param {string} mode
+	 * @override
+	 */
+	setMode(mode) {
+		// Always remove a previously-attached sketch filter first.
+		this.shader.removeFilter('ShaderFilterSketch');
+
+		if (mode !== 'sketch') {
+			this.shader.setMode(mode);
+		} else if (this._canInlineSketch()) {
+			// Inline path: SKETCH GLSL is baked into the shader (works because every
+			// neighbourhood pixel lies within the same tile or its overlap region).
+			this.shader.setMode('sketch');
+		} else {
+			// Filter path: render normals via the standard mode, then derive sketch
+			// lines in a post-process filter.  The filter reads from the 'normals'
+			// sampler that ShaderRTI already declares, so no extra texture binding
+			// is required.
+			this.shader.setMode('normals');
+			const filter = new ShaderFilterSketch({
+				width:  this.shader.uniforms.sketch_width?.value  ?? 0.5,
+				radius: this.shader.uniforms.sketch_radius?.value ?? 0.5,
+			});
+			this.shader.addFilter(filter);
+		}
+		this.emit('update');
+	}
+
+	/**
 	 * Sets the light direction with optional animation
 	 * @param {number[]} light - Light direction vector [x, y]
 	 * @param {number} [dt] - Animation duration in milliseconds
@@ -152,13 +197,13 @@ class LayerRTI extends Layer {
 			for (let p = 0; p < this.shader.njpegs; p++) {
 				let imageUrl = this.layout.imageUrl(url, 'plane_' + p);
 				urls.push(imageUrl);
-				let raster = new Raster({ format: 'vec3', isLinear: true });
+				let raster = new Raster({ format: 'vec3', isLinear: this.shader.isLinear });
 				this.rasters.push(raster);
 			}
 			if (this.normals) { // ITARZOOM must include normals and currently has a limitation: loads the entire tile
 				let imageUrl = this.layout.imageUrl(url, 'normals');
 				urls.push(imageUrl);
-				let raster = new Raster({ format: 'vec3', isLinear: true });
+				let raster = new Raster({ format: 'vec3', isLinear: this.shader.isLinear });
 				this.rasters.push(raster);
 			}
 			this.layout.setUrls(urls);

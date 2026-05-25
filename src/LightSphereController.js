@@ -27,6 +27,9 @@ class LightSphereController {
      * @param {string} [options.colorSpot='#ffffff'] - Color of the central spot in the gradient
      * @param {string} [options.colorBkg='#0000ff'] - Color of the outer edge of the gradient
      * @param {string} [options.colorMark='#ff0000'] - Color of the position marker
+     * @param {boolean} [options.showCoordinates=false] - Show xyz coordinate inputs below the sphere (x and y are editable, z is read-only)
+     * @param {number} [options.coordsFontSize=11] - Font size in pixels for the coordinate inputs
+     * @param {string} [options.coordsColor='#ffffff'] - Text color for the coordinate labels and inputs
      */    
     constructor(parent, options) {        
         options = Object.assign({
@@ -36,8 +39,11 @@ class LightSphereController {
             right: 0,
             thetaMin: 0,
             colorSpot: '#ffffff',
-            colorBkg: '#0000ff',
-            colorMark: '#ff0000'
+            colorBkg: '#b3a940',
+            colorMark: '#ff0000',
+            showCoordinates: false,
+            coordsFontSize: 13,
+            coordsColor: '#000'
         }, options);
         Object.assign(this, options);
         this.parent = parent;
@@ -47,9 +53,10 @@ class LightSphereController {
 
         this.lightDir = [0, 0];
 
+        const coordsHeight = this.showCoordinates ? Math.round(this.coordsFontSize * 7.5) : 0;
         this.containerElement = document.createElement('div');
-        this.containerElement.style = `padding: 0; position: absolute; width: ${this.width}px; height: ${this.height}px; top:${this.top}px; right:${this.right}px; z-index: 200; touch-action: none; visibility: visible;`;
-        this.containerElement.classList.add('openlime-lsc');
+        this.containerElement.style = `width:${this.width}px; height:${this.height + coordsHeight}px; top:${this.top}px; right:${this.right}px;`;
+        this.containerElement.classList.add('openlime-lightsphere');
 
         const sd = (this.width * 0.5) * (1 - 0.8);
         this.dlCanvas = document.createElement('canvas');
@@ -59,6 +66,35 @@ class LightSphereController {
         this.dlCanvasCtx = this.dlCanvas.getContext("2d");
         this.dlGradient = '';
         this.containerElement.appendChild(this.dlCanvas);
+
+        if (this.showCoordinates) {
+            const fs = this.coordsFontSize;
+
+            this.coordsDiv = document.createElement('div');
+            this.coordsDiv.className = 'openlime-lightsphere-coords';
+            this.coordsDiv.style.fontSize = `${fs}px`;
+            this.coordsDiv.style.color = this.coordsColor;
+            this.coordsDiv.innerHTML = `
+                <span><label>x:</label><input type="number" step="0.01" min="-1" max="1"></span>
+                <span><label>y:</label><input type="number" step="0.01" min="-1" max="1"></span>
+                <span><label>z:</label><input type="number" step="0.01" min="-1" max="1" readonly tabindex="-1"></span>`;
+            this.containerElement.appendChild(this.coordsDiv);
+
+            [this.xInput, this.yInput, this.zInput] = this.coordsDiv.querySelectorAll('input');
+
+            const applyCoords = () => {
+                const ldx = parseFloat(this.xInput.value) || 0;
+                const ldy = parseFloat(this.yInput.value) || 0;
+                this.setLightDirection(ldx, ldy);
+            };
+
+            for (const inp of [this.xInput, this.yInput]) {
+                inp.addEventListener('change', applyCoords);
+                inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { applyCoords(); e.preventDefault(); } });
+                inp.addEventListener('pointerdown', (e) => e.stopPropagation());
+            }
+        }
+
         this.parent.appendChild(this.containerElement);
 
         this.r = this.width * 0.5;
@@ -103,6 +139,47 @@ class LightSphereController {
             this.pointerDown = false;
         });
 
+    }
+
+    /**
+     * Updates the coordinate input fields to reflect the current light direction.
+     * Has no effect when showCoordinates is false.
+     * @private
+     */
+    updateCoordinateDisplay() {
+        if (!this.showCoordinates) return;
+        const [ldx, ldy] = this.lightDir;
+        const ldz = Math.sqrt(Math.max(0, 1 - ldx * ldx - ldy * ldy));
+        this.xInput.value = ldx.toFixed(3);
+        this.yInput.value = ldy.toFixed(3);
+        this.zInput.value = ldz.toFixed(3);
+    }
+
+    /**
+     * Sets the light direction programmatically from normalized x and y values.
+     * z is derived as sqrt(1 - x² - y²). Values are clamped to the valid range
+     * enforced by thetaMin.
+     * @param {number} ldx - X component of the light direction (range: -1 to 1)
+     * @param {number} ldy - Y component of the light direction (range: -1 to 1)
+     */
+    setLightDirection(ldx, ldy) {
+        const maxMag = Math.pow(Math.cos(this.thetaMinRad), 2);
+        const mag = Math.sqrt(ldx * ldx + ldy * ldy);
+        if (mag > maxMag) {
+            const scale = maxMag / mag;
+            ldx *= scale;
+            ldy *= scale;
+        }
+        this.lightDir[0] = ldx;
+        this.lightDir[1] = ldy;
+        for (const l of this.layers) {
+            if (l.controls.light) l.setControl('light', this.lightDir, 5);
+        }
+        const markerX = this.r * (1 + ldx);
+        const markerY = this.r * (1 - ldy);
+        this.computeGradient();
+        this.drawLightSelector(markerX, markerY);
+        this.updateCoordinateDisplay();
     }
 
     /**
@@ -171,6 +248,7 @@ class LightSphereController {
         }
         this.computeGradient();
         this.drawLightSelector(x, y);
+        this.updateCoordinateDisplay();
     }
 
     /**

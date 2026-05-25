@@ -67,26 +67,30 @@ class ShaderRTI extends Shader {
 		super({});
 
 		Object.assign(this, {
-			modes: ['light', 'normals', 'diffuse', 'gray_diffuse', 'specular'],
+			modes: ['light', 'normals', 'diffuse', 'gray_diffuse', 'specular', 'sketch'],
 			mode: 'normal',
 			type: ['ptm', 'hsh', 'sh', 'rbf', 'bln'],
 			colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
+			colorprofile: 'sRGB',
 
 			nplanes: null,     //number of coefficient planes
-			yccplanes: null,     //number of luminance planes for mycc color space
+			yccplanes: null,   //number of luminance planes for mycc color space
 			njpegs: null,      //number of textures needed (ceil(nplanes/3))
 			material: null,    //material parameters
 			lights: null,      //light directions (needed for rbf interpolation)
 			sigma: null,       //rbf interpolation parameter
 			ndimensions: null, //PCA dimension space (for rbf and bln)
 
-			scale: null,      //factor and bias are used to dequantize coefficient planes.
+			scale: null,       //factor and bias are used to dequantize coefficient planes.
 			bias: null,
 
 			basis: null,       //PCA basis for rbf and bln
-			lweights: null    //light direction dependent coefficients to be used with coefficient planes
+			lweights: null     //light direction dependent coefficients to be used with coefficient planes
 		});
 		Object.assign(this, options);
+
+		if(!this.normals)      //remove sketch mode, it requires normals
+			this.modes = this.modes.filter(m => m != 'sketch');
 
 		if (this.relight)
 			this.init(this.relight);
@@ -149,6 +153,14 @@ class ShaderRTI extends Shader {
 		this.setUniform('specular_exp', value);
 	}
 
+	setSketchWidth(value) {
+		this.setUniform('sketch_width', value/100.0);
+	}
+	setSketchRadius(value) {
+		this.setUniform('sketch_radius', value/100.0);
+	}
+
+
 	/**
 	 * Initializes shader with RTI configuration
 	 * @param {Object} relight - RTI configuration data
@@ -200,6 +212,8 @@ class ShaderRTI extends Shader {
 		this.uniforms = {
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 			specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
+			sketch_width: { type: 'float', needsUpdate: false, size: 1, value: 0.5 },
+			sketch_radius: { type: 'float', needsUpdate: false, size: 1, value: 0.5 },
 			bias: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.bias },
 			scale: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.scale },
 			base: { type: 'vec3', needsUpdate: true, size: this.nplanes },
@@ -208,6 +222,11 @@ class ShaderRTI extends Shader {
 		}
 
 		this.lightWeights([0, 0, 1], 'base');
+		this.isSrgbSimplified = false;
+
+		this.isLinear = true; //processing color space and initial colorspace are the same so no conversion
+		//when loading, only at the end depending on the colorspace
+		
 	}
 
 	/**
@@ -256,7 +275,6 @@ class ShaderRTI extends Shader {
 	}
 
 	fragShaderSrc(gl) {
-
 		let basetype = 'vec3'; //(this.colorspace == 'mrgb' || this.colorspace == 'mycc')?'vec3':'float';
 		let str = `
 
@@ -271,6 +289,8 @@ const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
 
 uniform vec3 light;
 uniform float specular_exp;
+uniform float sketch_width;
+uniform float sketch_radius;
 uniform vec3 bias[np1];
 uniform vec3 scale[np1];
 
@@ -285,14 +305,24 @@ uniform ${basetype} base2[np1];
 
 const int ny0 = ${this.yccplanes[0]};
 const int ny1 = ${this.yccplanes[1]};
-`
+`;
 
-		switch (this.colorspace) {
-			case 'lrgb': str += LRGB.render(this.njpegs); break;
-			case 'rgb': str += RGB.render(this.njpegs); break;
-			case 'mrgb': str += MRGB.render(this.njpegs); break;
-			case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0]); break;
-		}
+str += `
+vec4 texsample(sampler2D sampler, vec2 coord) {
+	return texture(sampler, coord);
+//${this.isLinear? 'return srgb2linear(texture(sampler, coord));' : 'return texture(sampler, coord);'}
+}
+`;
+
+		if(this.mode == 'sketch')
+			str += SKETCH.render(this.njpegs);
+		else
+			switch (this.colorspace) {
+				case 'lrgb': str += LRGB.render(this.njpegs); break;
+				case 'rgb':  str += RGB .render(this.njpegs); break;
+				case 'mrgb': str += MRGB.render(this.njpegs); break;
+				case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0]); break;
+			}
 
 		str += `
 
@@ -300,8 +330,13 @@ vec4 data() {
 
 `;
 		if (this.mode == 'light') {
-			str += `
+						str += `
 	vec4 color = render(base);
+`;
+
+		} else if (this.mode == 'sketch') {
+			str += `
+	vec4 color = render();
 `;
 		} else {
 			str += `
@@ -309,9 +344,9 @@ vec4 data() {
 `;
 			if (this.normals)
 				str += `
-	vec3 normal = texture(normals, v_texcoord).xyz * 2.0 - 1.0;
+	vec3 normal = texsample(normals, v_texcoord).xyz * 2.0 - 1.0;
 	normal = normalize(normal);		
-	//vec3 normal = (texture(normals, v_texcoord).zyx *2.0) - 1.0;
+	//vec3 normal = (texsample(normals, v_texcoord).zyx *2.0) - 1.0;
 	//normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
 `;
 			else
@@ -332,7 +367,7 @@ vec4 data() {
 				case 'diffuse':
 					if (this.colorspace == 'lrgb' || this.colorspace == 'rgb')
 						str += `
-vec4 diffuse = texture(plane0, v_texcoord);
+vec4 diffuse = texsample(plane0, v_texcoord);
 float s = dot(light, normal);
 color = vec4(s * diffuse.xyz, 1);
 `;
@@ -355,9 +390,8 @@ color = vec4(vec3(dot(light, normal)), 1);
 					break;
 			}
 		}
-
 		str += `
-		return color;
+		${this.colorprofile == 'sRGB'? 'return srgb2linear(color);' : 'return color;' }
 }`;
 		return str;
 	}
@@ -373,7 +407,7 @@ vec4 render(vec3 base[np1]) {
 		for (let j = 1, k = 0; j < njpegs; j++, k += 3) {
 			str += `
 	{
-		vec4 c = texture(plane${j}, v_texcoord);
+		vec4 c = texsample(plane${j}, v_texcoord);
 		l += base[${k}].x*(c.x - bias[${j}].x)*scale[${j}].x;
 		l += base[${k + 1}].x*(c.y - bias[${j}].y)*scale[${j}].y;
 		l += base[${k + 2}].x*(c.z - bias[${j}].z)*scale[${j}].z;
@@ -381,8 +415,8 @@ vec4 render(vec3 base[np1]) {
 `;
 		}
 		str += `
-	vec3 basecolor = (texture(plane0, v_texcoord).xyz - bias[0])*scale[0];
-
+	vec3 basecolor = (texsample(plane0, v_texcoord).xyz - bias[0])*scale[0];
+	
 	return l*vec4(basecolor, 1);
 }
 `;
@@ -400,7 +434,7 @@ vec4 render(vec3 base[np1]) {
 		for (let j = 0; j < njpegs; j++) {
 			str += `
 	{
-		vec4 c = texture(plane${j}, v_texcoord);
+		vec4 c = texsample(plane${j}, v_texcoord);
 		rgb.x += base[${j}].x*(c.x - bias[${j}].x)*scale[${j}].x;
 		rgb.y += base[${j}].y*(c.y - bias[${j}].y)*scale[${j}].y;
 		rgb.z += base[${j}].z*(c.z - bias[${j}].z)*scale[${j}].z;
@@ -425,7 +459,7 @@ vec4 render(vec3 base[np1]) {
 `;
 		for (let j = 0; j < njpegs; j++) {
 			str +=
-				`	c = texture(plane${j}, v_texcoord);
+				`	c = texsample(plane${j}, v_texcoord);
 	r = (c.xyz - bias[${j}])* scale[${j}];
 
 	rgb += base[${j}*3+1]*r.x;
@@ -461,7 +495,7 @@ vec4 render(vec3 base[np1]) {
 		for (let j = 0; j < njpegs; j++) {
 			str += `
 
-	c = texture(plane${j}, v_texcoord);
+	c = texsample(plane${j}, v_texcoord);
 
 	r = (c.xyz - bias[${j}])* scale[${j}];
 `;
@@ -497,7 +531,7 @@ class PTM {
 	static lightWeights(v) {
 		let b = [1.0, v[0], v[1], v[0] * v[0], v[0] * v[1], v[1] * v[1]];
 		let base = new Float32Array(18);
-		for (let i = 0; i < 18; i++)
+		for (let i = 0; i < 6; i++)
 			base[3 * i] = base[3 * i + 1] = base[3 * i + 2] = b[i];
 		return base;
 	}
@@ -704,6 +738,59 @@ class BLN {
 			}
 		}
 		return lweights;
+	}
+}
+
+class SKETCH {
+	static render(njpegs) {
+		return `
+		vec4 render() {
+
+    // 1. Setup Kernel Size
+    // s is the pixel radius for the search
+    int s = int(1.0 + 5.0 * sketch_radius); 
+    float invn = 1.0 / float((2*s + 1) * (2*s + 1));
+    
+    // 2. Get Average Normal (Smoothing)
+    vec3 sum = vec3(0.0);
+    for(int i = 1; i <= 11; i++) {
+        for (int y = -1; y <= 1; y++) {
+            for (int x = -1; x <= 1; x++) {
+                vec2 offset = vec2(float(x * i) / tileSize.x, float(y * i) / tileSize.y);
+                vec3 n = texture(normals, v_texcoord + offset).rgb * 2.0 - 1.0;
+                sum += n;
+            }
+        }
+        if(i == s) break;
+    }
+    vec3 avgNormal = normalize(sum);
+
+    // 3. Calculate Curvature (Wedge Detection)
+    float sigma2 = 0.0;
+    for (int i = 1; i <= 11; i++) {
+        for (int y = -1; y <= 1; y++) {
+            for (int x = -1; x <= 1; x++) {
+                vec2 offset = vec2(float(x * i) / tileSize.x, float(y * i) / tileSize.y);
+                vec3 neighborN = texture(normals, v_texcoord + offset).rgb * 2.0 - 1.0;
+                
+                // Determine if neighbor points toward or away from center
+                // Using a simplified direction vector based on the loop grid
+                vec3 dir = vec3(-float(x * i), float(y * i), 0.0);
+                float neighborSign = dot(avgNormal - neighborN, dir);
+                
+                sigma2 += neighborSign * dot(avgNormal - neighborN, avgNormal - neighborN);
+            }
+        }
+        if(i == s) break;
+    }
+    sigma2 *= invn;
+
+    // 4. Final Thresholding
+    // smoothstep isolates "valleys" (negative sigma)
+    float wedge = smoothstep(0.0, -0.01, sigma2);
+	float value = 1.0 - pow(wedge, sketch_width);
+    return vec4(vec3(pow(value, 3.0)), 1.0);
+}`;
 	}
 }
 
