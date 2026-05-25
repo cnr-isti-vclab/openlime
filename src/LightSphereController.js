@@ -49,6 +49,8 @@ class LightSphereController {
             this.parent = document.querySelector(this.parent);
 
         this.maxRadius = 1.0;
+        this.active = true;
+        this.viewer = this.parent && this.parent._openlimeViewer ? this.parent._openlimeViewer : null;
 
         this.lightDir = [0, 0];
         this.lightDirs = [];
@@ -113,6 +115,43 @@ class LightSphereController {
             }
         });
 
+        if (this.viewer)
+            this.bindToViewer(this.viewer);
+
+    }
+
+    /**
+     * Binds this controller to a viewer and auto-attaches all light-capable layers.
+     * Once bound, this controller participates in viewer-level single active
+     * light-controller arbitration.
+     * @param {Viewer} viewer - OpenLIME viewer instance
+     * @returns {LightSphereController} this
+     */
+    bindToViewer(viewer) {
+        if (!viewer) return this;
+
+        this.viewer = viewer;
+        this.viewer.externalLightControllerBound = true;
+
+        const ui = this.viewer.ui;
+        if (ui && ui.actions && ui.actions.light) {
+            ui.actions.light.display = false;
+            ui.actions.light.active = false;
+            if (typeof ui.toggleLightController === 'function')
+                ui.toggleLightController(false);
+            if (ui.actions.light.element)
+                ui.actions.light.element.style.display = 'none';
+        }
+
+        for (const layer of Object.values(viewer.canvas.layers)) {
+            if (layer && layer.controls && layer.controls.light)
+                this.addLayer(layer);
+        }
+
+        if (typeof viewer.setActiveLightController === 'function')
+            viewer.setActiveLightController(this);
+
+        return this;
     }
 
     // Listener sul document per drag fuori dal canvas
@@ -147,7 +186,17 @@ class LightSphereController {
      * @param {Layer} layer - Layer to be controlled
      */
     addLayer(l) {
-        this.layers.push(l);
+        if (!l) return;
+
+        if (!this.layers.includes(l))
+            this.layers.push(l);
+
+        if (!this.viewer && l.viewer)
+            this.viewer = l.viewer;
+
+        if (this.viewer && typeof this.viewer.setActiveLightController === 'function')
+            this.viewer.setActiveLightController(this);
+
         // Check if layer provides a lightDirs() function
         if (typeof l.lightDirs === "function") {
             const dirs = l.lightDirs();
@@ -156,6 +205,50 @@ class LightSphereController {
                 this.setLightDirs(dirs);
             }
         }
+
+        if (this.active) {
+            for (const c of l.controllers) {
+                if (c.control === 'light') c.active = false;
+            }
+        }
+    }
+
+    /**
+     * Viewer-level hook to enforce a single active light controller.
+     * @param {boolean} on - Whether this controller should be active
+     */
+    setActive(on) {
+        this.active = !!on;
+        this.containerElement.style.pointerEvents = this.active ? 'auto' : 'none';
+        if (!this.active)
+            this.pointerDown = false;
+
+        if (this.active && this.viewer && this.viewer.canvas && this.viewer.canvas.layers) {
+            for (const layer of Object.values(this.viewer.canvas.layers)) {
+                if (!layer.controls || !layer.controls.light)
+                    continue;
+                if (!this.layers.includes(layer))
+                    this.layers.push(layer);
+            }
+        }
+
+        for (const l of this.layers) {
+            if (!l || !l.controllers) continue;
+            for (const c of l.controllers) {
+                if (c.control === 'light')
+                    c.active = !this.active;
+            }
+        }
+    }
+
+    /**
+     * Viewer-level hook called when a new layer is added.
+     * @param {Layer} layer - Newly added layer
+     */
+    onLayerAdded(layer) {
+        if (!layer || !layer.controls || !layer.controls.light)
+            return;
+        this.addLayer(layer);
     }
 
     /**
@@ -289,6 +382,8 @@ class LightSphereController {
      * @param {number} y - Y coordinate in canvas space
      */
     interactLightDir(x, y) {
+        if (!this.active) return;
+
         let xc = x - this.r;
         let yc = this.r - y;
         const phy = Math.atan2(yc, xc);

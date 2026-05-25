@@ -192,6 +192,12 @@ class UIBasic {
 		});
 
 		Object.assign(this, options);
+		this.viewer.ui = this;
+
+		if (this.viewer.externalLightControllerBound && this.actions.light) {
+			this.actions.light.display = false;
+			this.actions.light.active = false;
+		}
 
 		// Keep the pencil toolbar button in sync with ManagerSvgAnnotation mode changes.
 		// This also fires the pencilEnabled / pencilDisabled signals so that listeners
@@ -333,9 +339,7 @@ class UIBasic {
 		if (lightLayers.length) {
 			this.createLightDirections();
 			for (let layer of lightLayers) {
-				controller.setPosition(0.5, 0.5);
-				//layer.setLight([0.5, 0.5], 0);
-				layer.controllers.push(controller);
+				this.onLayerAdded(layer);
 			}
 		}
 
@@ -499,8 +503,11 @@ class UIBasic {
 				break;
 			}
 
-			if (this.actions.light && this.actions.light.active)
-				this.toggleLightController();
+			if (this.actions.light && this.actions.light.active) {
+				const activeLightController = this.viewer.activeLightController;
+				if (!activeLightController || activeLightController === this)
+					this.toggleLightController();
+			}
 			if (this.actions.layers && this.actions.layers.active)
 				this.toggleLayers();
 
@@ -681,6 +688,48 @@ class UIBasic {
 					c.active = true;
 					c.activeModifiers = active ? [0, 2, 4] : [2, 4];  //nothing, shift and alt
 				}
+
+		if (active)
+			this.viewer.setActiveLightController(this);
+		else
+			this.viewer.clearActiveLightController(this);
+	}
+
+	/**
+	 * Viewer-level hook to enforce a single active light controller.
+	 * Called by Viewer.setActiveLightController when this controller
+	 * is activated/deactivated by another light controller.
+	 * @param {boolean} on - Whether this controller should be active
+	 */
+	setActive(on) {
+		if (on) {
+			this.toggleLightController(true);
+			return;
+		}
+
+		let div = this.viewer.containerElement;
+		div.classList.toggle('openlime-light-active', false);
+		this.lightActive = false;
+		this.setActiveControllers(true);
+		for (let layer of Object.values(this.viewer.canvas.layers))
+			for (let c of layer.controllers)
+				if (c.control == 'light')
+					c.active = false;
+	}
+
+	/**
+	 * Viewer-level hook called when a new layer is added.
+	 * Attaches the shared default light controller to light-capable layers.
+	 * @param {Layer} layer - Newly added layer
+	 */
+	onLayerAdded(layer) {
+		if (!layer || !layer.controls || !layer.controls.light || !this.lightcontroller)
+			return;
+
+		if (!layer.controllers.includes(this.lightcontroller)) {
+			this.lightcontroller.setPosition(0.5, 0.5);
+			layer.controllers.push(this.lightcontroller);
+		}
 	}
 
 	/**
@@ -1007,14 +1056,17 @@ class UIBasic {
 			layer_on.setVisible(!layer_on.visible);
 
 		} else {
+			const defaultLightControllerOwns = !this.viewer.activeLightController || this.viewer.activeLightController === this;
 			for (let layer of Object.values(this.viewer.canvas.layers)) {
 				if (layer.overlay)
 					continue;
 
 				layer.setVisible(layer == layer_on);
 				for (let c of layer.controllers) {
-					if (c.control == 'light')
-						c.active = this.lightActive && layer == layer_on;
+					if (c.control == 'light' && defaultLightControllerOwns) {
+						c.active = true;
+						c.activeModifiers = this.lightActive ? [0, 2, 4] : [2, 4];
+					}
 				}
 			}
 		}

@@ -143,6 +143,7 @@ class Viewer {
 
 		// Set up DOM elements
 		this.containerElement = div;
+		this.containerElement._openlimeViewer = this;
 		this.canvasElement = div.querySelector('canvas');
 		if (!this.canvasElement) {
 			this.canvasElement = document.createElement('canvas');
@@ -197,6 +198,39 @@ class Viewer {
 
 		// Initialize controllers array
 		this.controllers = [];
+		this.activeLightController = null;
+		this.externalLightControllerBound = false;
+	}
+
+	/**
+	 * Activates a light controller and deactivates any previously active one.
+	 * @param {Object|null} controller - Controller handle implementing setActive(boolean)
+	 */
+	setActiveLightController(controller) {
+		if (this.activeLightController === controller)
+			return;
+
+		if (this.activeLightController && typeof this.activeLightController.setActive === 'function')
+			this.activeLightController.setActive(false);
+
+		this.activeLightController = controller || null;
+
+		if (this.activeLightController && typeof this.activeLightController.setActive === 'function')
+			this.activeLightController.setActive(true);
+	}
+
+	/**
+	 * Clears the active light controller.
+	 * @param {Object} [controller] - Optional guard: clear only if this controller is active
+	 */
+	clearActiveLightController(controller) {
+		if (controller && this.activeLightController !== controller)
+			return;
+
+		if (this.activeLightController && typeof this.activeLightController.setActive === 'function')
+			this.activeLightController.setActive(false);
+
+		this.activeLightController = null;
 	}
 
 	/**
@@ -225,6 +259,9 @@ class Viewer {
 	 */
 	addLayer(id, layer) {
 		this.canvas.addLayer(id, layer);
+		layer.viewer = this;
+		if (this.activeLightController && typeof this.activeLightController.onLayerAdded === 'function')
+			this.activeLightController.onLayerAdded(layer);
 		this.redraw();
 	}
 
