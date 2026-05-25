@@ -186,6 +186,63 @@
 /* ANNOTATION PENCIL */
 .openlime-toolbar .openlime-pencil.openlime-pencil-active path[style] {
 	fill: #ff0 !important;
+/* Light Sphere Controller */
+
+.openlime-lightsphere {
+	padding: 0;
+	position: absolute;
+	z-index: 200;
+	touch-action: none;
+	visibility: visible;
+}
+
+.openlime-lightsphere-coords {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 2px;
+	color: #333;
+	padding: 2px 4px;
+	touch-action: auto;
+}
+
+.openlime-lightsphere-coords span {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px;
+}
+
+.openlime-lightsphere-coords label {
+	color: #333;
+	font-size: inherit;
+	flex-shrink: 0;
+}
+
+.openlime-lightsphere-coords input {
+	flex: 1;
+	min-width: 0;
+}
+
+.openlime-lightsphere-coords input {
+	border: 1px solid #555;
+	border-radius: 2px;
+	padding: 1px 2px;
+	box-sizing: border-box;
+	font-size: inherit;
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+.openlime-lightsphere-coords input::-webkit-outer-spin-button,
+.openlime-lightsphere-coords input::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.openlime-lightsphere-coords input[readonly] {
+	color: #aaa;
+	border-color: #333;
 }
 
 g.openlime-compact {
