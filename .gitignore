@@ -9,7 +9,40 @@ dist/examples/npm-demo/index.html
 dist/examples/npm-demo/css
 dist/examples/npm-demo/assets
 dist/examples/npm-demo/skin
+paper/
+dist/assets/local
 scratch
 jsconfig.json
-.env 
+.env
+CLAUDE.md
 __pycache__
+
+# Editor backup files
+*~
+
+# Paper / working documents
+ANNOTATIONS.md
+WEB_ANNOTATION_MODEL.md
+multiselection.*
+openlime-scheme.json
+
+# Source backups
+src/LayoutTiles_bk.js
+src/ShaderRSC.js.keep
+src/openlime_src.txt
+
+
+# Extra examples (local only, not shipped)
+dist/examples/annotation-editor/db/package-lock.json
+dist/examples/calib-viewer/
+dist/examples/concatenated_sources.txt
+dist/examples/electron-editor/dist/
+dist/examples/examples.txt
+dist/examples/lens-lamina/
+dist/examples/lens-viewer2/
+dist/examples/manifest-loader/index.html
+dist/examples/manifest-loader/lens-viewer.json
+dist/examples/neuralrti-viewer/
+dist/examples/neuralrti-viewer.zip
+dist/examples/st_demetrios-lens/
+dist/examples/st_demetrios-viewer/

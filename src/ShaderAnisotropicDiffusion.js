@@ -95,7 +95,7 @@ float normalToGray(vec3 normal) {
 vec4 data() {
   // Sample the center pixel color (normal map)
   vec4 centerColor = texture(source, v_texcoord);
-  ${this.isLinear ? "" : "centerColor = srgb2linear(centerColor);"}
+  ${this.decodeColorSnippet('centerColor')}
   // Convert normal to working grayscale image
   // Adjust normal vector to be in [-1,1] range
   vec3 normal = centerColor.rgb * 2.0 - 1.0;
@@ -117,13 +117,13 @@ vec4 data() {
     
     // Sample the 4-connected neighborhood
     vec4 vN = texture(source, v_texcoord + texelSize * vec2(0.0, -1.0));
-     ${this.isLinear ? "" : "vN = srgb2linear(vN);"}
+      ${this.decodeColorSnippet('vN')}
     vec4 vS = texture(source, v_texcoord + texelSize * vec2(0.0, 1.0));
-     ${this.isLinear ? "" : "vS = srgb2linear(vS);"}
+      ${this.decodeColorSnippet('vS')}
     vec4 vE = texture(source, v_texcoord + texelSize * vec2(1.0, 0.0));
-     ${this.isLinear ? "" : "vE = srgb2linear(vE);"}
+      ${this.decodeColorSnippet('vE')}
     vec4 vW = texture(source, v_texcoord + texelSize * vec2(-1.0, 0.0));
-     ${this.isLinear ? "" : "vW = srgb2linear(vW);"}
+      ${this.decodeColorSnippet('vW')}
 
     vec3 normalN = vN.rgb * 2.0 - 1.0;
     vec3 normalS = vS.rgb * 2.0 - 1.0;
@@ -181,7 +181,9 @@ vec4 data() {
   adjustedIntensity = clamp(adjustedIntensity, 0.0, 1.0);
   
   // Return grayscale result with good visibility
-  return vec4(vec3(adjustedIntensity), centerColor.a);
+  vec4 outColor = vec4(vec3(adjustedIntensity), centerColor.a);
+  ${this.encodeColorSnippet('outColor')}
+  return outColor;
 }`;
   }
 

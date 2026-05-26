@@ -79,7 +79,6 @@ class ShaderFilter {
     /**
      * Prepares filter resources for rendering
      * @param {WebGLRenderingContext} gl - WebGL context
-     * @private
      */
     prepare(gl) {
         if (this.needsUpdate)
@@ -91,7 +90,6 @@ class ShaderFilter {
     /**
      * Generates mode-specific GLSL code
      * @returns {string} GLSL declarations for enabled modes
-     * @private
      */
     fragModeSrc() {
         let src = '';
@@ -121,7 +119,6 @@ class ShaderFilter {
     /**
      * Generates sampler declarations
      * @returns {string} GLSL sampler declarations
-     * @private
      */
     fragSamplerSrc() {
         let src = '';
@@ -135,7 +132,6 @@ class ShaderFilter {
     /**
      * Generates uniform variable declarations
      * @returns {string} GLSL uniform declarations
-     * @private
      */
     fragUniformSrc() {
         let src = '';
@@ -159,7 +155,6 @@ class ShaderFilter {
     // Utility methods documentation
     /**
      * @returns {string} Generated function name for the filter
-     * @private
      */
     functionName() {
         return this.name + "_data";
@@ -168,7 +163,6 @@ class ShaderFilter {
     /**
      * @param {string} name - Base sampler name
      * @returns {string} Unique sampler identifier
-     * @private
      */
     samplerName(name) {
         return `${this.name}_${name}`;
@@ -177,7 +171,6 @@ class ShaderFilter {
     /**
      * @param {string} name - Base uniform name
      * @returns {string} Unique uniform identifier
-     * @private
      */
     uniformName(name) {
         return `u_${this.name}_${name}`;
@@ -186,7 +179,6 @@ class ShaderFilter {
     /**
      * @param {string} name - Base mode name
      * @returns {string} Unique mode identifier
-     * @private
      */
     modeName(name) {
         return `m_${this.name}_${name}`;

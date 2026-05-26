@@ -38,13 +38,19 @@ class Shader {
 	 * @param {string} [options.label=null] - Display label for the shader
 	 * @param {Array<string>} [options.modes=[]] - Available shader modes
 	 * @param {boolean} [options.debug=false] - Enable debug output
-	 * @param {boolean} [options.isLinear=false] - Whether the shader works in linear color space
+	 * @param {'srgb'|'linear'} [options.colorEncoding='srgb'] - Input/output color encoding for the main color pipeline
+	 * @param {boolean} [options.isLinear] - Legacy alias for colorEncoding (`true` => 'linear', `false` => 'srgb')
 	 * @param {boolean} [options.isSrgbSimplified=true] - Use simplified gamma 2.2 conversion instead of IEC standard
 	 * @fires Shader#update
 	 */
 	constructor(options) {
+		options = options || {};
+		if (options.colorEncoding === undefined && options.isLinear !== undefined) {
+			options.colorEncoding = options.isLinear ? 'linear' : 'srgb';
+		}
+
 		options = Object.assign({
-			isLinear: false,
+			colorEncoding: 'srgb',
 			isSrgbSimplified: true
 		}, options);
 		Object.assign(this, {
@@ -61,9 +67,49 @@ class Shader {
 		});
 		addSignals(Shader, 'update');
 		Object.assign(this, options);
+		this.colorEncoding = this.normalizeColorEncoding(this.colorEncoding);
+		// Keep legacy property for compatibility with custom shaders still reading isLinear.
+		this.isLinear = this.colorEncoding === 'linear';
 		this.filters = [];
 		this.needsUpdate = true;
 		 this.addStandardUniforms();
+	}
+
+	/**
+	 * Normalizes a color encoding string to one of the supported values.
+	 * @param {string} encoding - User-provided encoding value
+	 * @returns {'srgb'|'linear'} Normalized encoding
+	 */
+	normalizeColorEncoding(encoding) {
+		if (typeof encoding !== 'string') return 'srgb';
+		const normalized = encoding.toLowerCase();
+		return normalized === 'linear' ? 'linear' : 'srgb';
+	}
+
+	/**
+	 * Returns whether source samples should be decoded from sRGB to linear.
+	 * @returns {boolean}
+	 */
+	shouldDecodeSrgb() {
+		return this.colorEncoding === 'srgb';
+	}
+
+	/**
+	 * Returns a GLSL snippet that decodes a color variable from sRGB if needed.
+	 * @param {string} variableName - GLSL variable name
+	 * @returns {string} GLSL snippet or empty string
+	 */
+	decodeColorSnippet(variableName) {
+		return this.shouldDecodeSrgb() ? `${variableName} = srgb2linear(${variableName});` : '';
+	}
+
+	/**
+	 * Returns a GLSL snippet that encodes a color variable to sRGB if needed.
+	 * @param {string} variableName - GLSL variable name
+	 * @returns {string} GLSL snippet or empty string
+	 */
+	encodeColorSnippet(variableName) {
+		return this.shouldDecodeSrgb() ? `${variableName} = linear2srgb(${variableName});` : '';
 	}
 
 	/**
@@ -83,8 +129,7 @@ class Shader {
 	}
 
 	/**
-	 * Adds standard uniforms available to all shaders
-	 * @private
+	 * Adds standard uniforms available to all shaders.
 	 */
 	addStandardUniforms() {
 		// Marca gli uniform standard come protetti
@@ -147,7 +192,6 @@ class Shader {
 	/**
 	 * Restores WebGL state after context loss.
 	 * @param {WebGL2RenderingContext} gl - WebGL2 context
-	 * @private
 	 */
 	restoreWebGL(gl) {
 		this.createProgram(gl);
@@ -202,7 +246,6 @@ class Shader {
 	 * and incorporates filters.
 	 * @param {WebGL2RenderingContext} gl - WebGL2 context
 	 * @returns {string} Complete fragment shader source code
-	 * @private
 	 */
 	completeFragShaderSrc(gl) {
 		let src = '#version 300 es\n';
@@ -338,7 +381,6 @@ float linear2srgb(float c) {
 	/**
 	 * Creates the WebGL shader program.
 	 * @param {WebGL2RenderingContext} gl - WebGL2 context
-	 * @private
 	 * @throws {Error} If shader compilation or linking fails
 	 */
 	createProgram(gl) {
@@ -447,7 +489,6 @@ float linear2srgb(float c) {
 	/**
 	 * Updates all uniform values in the GPU.
 	 * @param {WebGL2RenderingContext} gl - WebGL2 context
-	 * @private
 	 */
 	updateUniforms(gl) {
 		for (const [name, uniform] of Object.entries(this.allUniforms())) {
@@ -512,7 +553,8 @@ in vec2 v_texcoord;
 
 vec4 data() {
 	vec4 color = texture(source, v_texcoord);
-	${this.isLinear ? "" : "color = srgb2linear(color);"}
+	${this.decodeColorSnippet('color')}
+	${this.encodeColorSnippet('color')}
 	return color;
 }
 `;

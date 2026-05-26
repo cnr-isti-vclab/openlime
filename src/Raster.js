@@ -97,7 +97,6 @@ class Raster {
 	/**
 	 * Converts a Blob to an Image or ImageBitmap.
 	 * Handles browser-specific differences in image orientation.
-	 * @private
 	 * @async
 	 * @param {Blob} blob - Image data as Blob
 	 * @param {WebGLRenderingContext} gl - The WebGL rendering context
@@ -128,7 +127,6 @@ class Raster {
 
 	/**
 	 * Creates a WebGL texture from an image. Handles different color formats and automatically creates mipmaps for large textures.
-	 * @private
 	 * @param {WebGLRenderingContext} gl - The WebGL rendering context
 	 * @param {HTMLImageElement|ImageBitmap} img - The source image
 	 * @returns {WebGLTexture} The created texture
@@ -188,7 +186,6 @@ class Raster {
 	 * - All other formats respect `this.filterLinear` (default `true`) and generate
 	 *   mipmaps when `this.buildMipmaps` is set and both dimensions are ≥ 1024.
 	 *
-	 * @protected
 	 * @param {WebGLRenderingContext|WebGL2RenderingContext} gl
 	 * @param {boolean} isIntegerTexture
 	 * @param {number} width

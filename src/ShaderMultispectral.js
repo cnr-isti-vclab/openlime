@@ -296,7 +296,7 @@ float getBand(int bandIndex) {
     }
 
     src += `
-   ${this.isLinear ? "" : "result = srgb2linear(result);"}      
+  ${this.decodeColorSnippet('result')}
   return result; // Default return for out-of-range bands
 }
 
@@ -360,19 +360,23 @@ vec4 data() {
   //    rgb /= maxVal;
   //}
 
-  return vec4(rgb, 1.0);
+  vec4 outColor = vec4(rgb, 1.0);
+  ${this.encodeColorSnippet('outColor')}
+  return outColor;
 `;
     } else if (this.mode === 'single_band') {
       src += `
   // Single band mode - Show one band in a specific channel
   float value = getBand(selectedBand);
-  
+
   // Output to specified channel
   vec3 rgb = vec3(value, value, value);
   if (bandOutputChannel == 1) rgb = vec3(value, 0.0, 0.0);
   else if (bandOutputChannel == 2) rgb = vec3(0.0, value, 0.0);
   else if (bandOutputChannel == 3) rgb = vec3(0.0, 0.0, value);
-  return vec4(rgb, 1.0);
+  vec4 outColor = vec4(rgb, 1.0);
+  ${this.encodeColorSnippet('outColor')}
+  return outColor;
 `;
     } else {
       // Default fallback

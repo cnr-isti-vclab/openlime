@@ -212,6 +212,12 @@ class UIBasic {
 		if (this.layerVisibilityMode === 'toggle') this.layerVisibilityMode = 'nonExclusive';
 		if (this.layerVisibilityMode === 'radio') this.layerVisibilityMode = 'exclusive';
 		this.layerVisibilityMode = (this.layerVisibilityMode === 'nonExclusive') ? 'nonExclusive' : 'exclusive';
+		this.viewer.ui = this;
+
+		if (this.viewer.activeLightController && this.viewer.activeLightController !== this && this.actions.light) {
+			this.actions.light.display = false;
+			this.actions.light.active = false;
+		}
 
 		// Keep the pencil toolbar button in sync with ManagerSvgAnnotation mode changes.
 		// This also fires the pencilEnabled / pencilDisabled signals so that listeners
@@ -252,7 +258,6 @@ class UIBasic {
 		entry.element.classList.toggle('active', active); */
 
 		this.menu.push({ section: "Layers" });
-		// In the constructor section, replace this block:
 
 		for (let [id, layer] of Object.entries(this.viewer.canvas.layers)) {
 			// Skip the LensLayer instance: it is controlled via lens buttons, not shown as a regular entry
@@ -264,15 +269,13 @@ class UIBasic {
 					button: m,
 					mode: m,
 					layer: id,
-					// FIXED: use the ID to retrieve the correct layer
 					onclick: () => {
 						const l = this.viewer.canvas.layers[id];
 						if (l) {
 							l.setMode(m);
-							this.viewer.redraw(); // Force redraw to update the lens
+							this.viewer.redraw();
 						}
 					},
-					// FIXED: use the ID to retrieve the correct layer
 					status: () => { const l = this.viewer.canvas.layers[id]; return l && l.getMode() == m ? 'active' : ''; },
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
@@ -282,9 +285,7 @@ class UIBasic {
 
 			let layerEntry = {
 				button: layer.label || id,
-				// FIXED: use the ID to retrieve the correct layer
 				onclick: () => { const l = this.viewer.canvas.layers[id]; if (l) this.setLayer(l); },
-				// FIXED: use the ID to retrieve the correct layer  
 				status: () => { const l = this.viewer.canvas.layers[id]; return l && l.visible ? 'active' : ''; },
 				layer: id,
 				// Lens button: present when a lensLayer is configured
@@ -292,10 +293,41 @@ class UIBasic {
 				lensOnclick: () => { const l = this.viewer.canvas.layers[id]; if (l) this.setLensForLayer(l); },
 				lensStatus: () => { const l = this.viewer.canvas.layers[id]; return (l && this.lensLayer && this.lensLayer.layers[0] === l && this.lensLayer.visible) ? 'active' : ''; },
 			};
-			if (modes.length > 1) layerEntry.list = modes;
+
+			// Add lens layer sublayers if this is a LayerLens
+			if (layer.constructor.name === 'LayerLens' && layer.layers && layer.layers.length > 0) {
+				this.menu.push({ html: '', classes: 'openlime-layer-separator' });
+				layerEntry.classes = 'openlime-lens-parent-entry';
+				let lensLayers = [];
+				for (let i = 0; i < layer.layers.length; i++) {
+					const lensSubLayer = layer.layers[i];
+					const lensLayerLabel = lensSubLayer.label || `Layer ${i}`;
+					lensLayers.push({
+						button: lensLayerLabel,
+						layer: id,
+						classes: 'openlime-lens-choice-entry',
+						roundcheck: true,
+						// Mark which layer is active in the lens
+						status: () => {
+							const lensLayer = this.viewer.canvas.layers[id];
+							return lensLayer && lensLayer.activeLayerIndex === i ? 'active' : '';
+						},
+						onclick: () => {
+							const lensLayer = this.viewer.canvas.layers[id];
+							if (lensLayer && lensLayer.setActiveLayer) {
+								lensLayer.setActiveLayer(i);
+								this.viewer.redraw();
+							}
+						}
+					});
+				}
+				layerEntry.list = lensLayers;
+			} else if (modes.length > 1) {
+				layerEntry.list = modes;
+			}
 
 			if (layer.annotations && typeof layer.annotationsEntry === 'function') {
-				layerEntry.list = [];
+				if (!layerEntry.list) layerEntry.list = [];
 				layerEntry.list.push(layer.annotationsEntry());
 			}
 			this.menu.push(layerEntry);
@@ -335,9 +367,7 @@ class UIBasic {
 		if (lightLayers.length) {
 			this.createLightDirections();
 			for (let layer of lightLayers) {
-				controller.setPosition(0.5, 0.5);
-				//layer.setLight([0.5, 0.5], 0);
-				layer.controllers.push(controller);
+				this.onLayerAdded(layer);
 			}
 		}
 
@@ -508,12 +538,14 @@ class UIBasic {
 						layer.setVisible(layer === first);
 				}
 			}
-
 			this._syncLightControllers();
 			this.updateMenu();
 
-			if (this.actions.light && this.actions.light.active)
-				this.toggleLightController();
+			if (this.actions.light && this.actions.light.active) {
+				const activeLightController = this.viewer.activeLightController;
+				if (!activeLightController || activeLightController === this)
+					this.toggleLightController();
+			}
 			if (this.actions.layers && this.actions.layers.active)
 				this.toggleLayers();
 
@@ -779,6 +811,48 @@ class UIBasic {
 				if (c.control == 'light')
 					c.activeModifiers = active ? [0, 2, 4] : [2, 4];  //nothing, shift and alt
 		this._syncLightControllers();
+
+		if (active)
+			this.viewer.setActiveLightController(this);
+		else
+			this.viewer.clearActiveLightController(this);
+	}
+
+	/**
+	 * Viewer-level hook to enforce a single active light controller.
+	 * Called by Viewer.setActiveLightController when this controller
+	 * is activated/deactivated by another light controller.
+	 * @param {boolean} on - Whether this controller should be active
+	 */
+	setActive(on) {
+		if (on) {
+			this.toggleLightController(true);
+			return;
+		}
+
+		let div = this.viewer.containerElement;
+		div.classList.toggle('openlime-light-active', false);
+		this.lightActive = false;
+		this.setActiveControllers(true);
+		for (let layer of Object.values(this.viewer.canvas.layers))
+			for (let c of layer.controllers)
+				if (c.control == 'light')
+					c.active = false;
+	}
+
+	/**
+	 * Viewer-level hook called when a new layer is added.
+	 * Attaches the shared default light controller to light-capable layers.
+	 * @param {Layer} layer - Newly added layer
+	 */
+	onLayerAdded(layer) {
+		if (!layer || !layer.controls || !layer.controls.light || !this.lightcontroller)
+			return;
+
+		if (!layer.controllers.includes(this.lightcontroller)) {
+			this.lightcontroller.setPosition(0.5, 0.5);
+			layer.controllers.push(this.lightcontroller);
+		}
 	}
 
 	/**
@@ -882,9 +956,15 @@ class UIBasic {
 			let group = 'group' in entry ? `data-group="${entry.group}"` : '';
 			let layer = 'layer' in entry ? `data-layer="${entry.layer}"` : '';
 			let mode = 'mode' in entry ? `data-mode="${entry.mode}"` : '';
+			let roundcheck = 'roundcheck' in entry ? entry.roundcheck : false;
 
 			// Add icons for layers and modes
-			if (layer && !mode) {
+			if (roundcheck) {
+				html += `<a href="#" ${id} ${group} ${layer} ${mode} ${tooltip} class="openlime-entry ${classes}">
+							<span class="openlime-lens-choice-check"></span>
+							<span class="openlime-lens-choice-name">${entry.button}</span>
+				</a>`;
+			} else if (layer && !mode) {
 				// This is a layer button
 				let lensBtn = '';
 				if (entry.lensButton) {
@@ -1136,9 +1216,16 @@ class UIBasic {
 			layer_on.setVisible(!layer_on.visible);
 		} else {
 			// Exclusive behaviour for base layers: selecting one hides the others.
+			const defaultLightControllerOwns = !this.viewer.activeLightController || this.viewer.activeLightController === this;
 			for (let layer of Object.values(this.viewer.canvas.layers)) {
 				if (layer.overlay) continue;
 				layer.setVisible(layer === layer_on);
+				for (let c of layer.controllers) {
+					if (c.control == 'light' && defaultLightControllerOwns) {
+						c.active = true;
+						c.activeModifiers = this.lightActive ? [0, 2, 4] : [2, 4];
+					}
+				}
 			}
 		}
 

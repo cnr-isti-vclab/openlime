@@ -10,7 +10,8 @@
     <link rel="stylesheet" href="../examples.css" />
     <style>
         .openlime {
-            overflow: hidden; /* clip elements outside .openlime */
+            overflow: hidden;
+            /* clip elements outside .openlime */
         }
     </style>
 </head>
@@ -27,7 +28,7 @@
         lime.camera.bounded = false;
 
         // BASE LAYER
-        let baseLayerTransform = new OpenLIME.Transform({x:0, y:0, z:1});
+        let baseLayerTransform = new OpenLIME.Transform({ x: 0, y: 0, z: 1 });
         const options = {
             channels: {
                 'kd': '../../assets/lighthouse/deepzoom/lighthouse-kdmap.dzi',
@@ -36,13 +37,12 @@
                 'gloss': '../../assets/lighthouse/deepzoom/lighthouse-glmap.dzi'
             },
             colorspaces: {
-                'kd': 'linear',
+                'kd': 'srgb',
                 'ks': 'linear'
             },
             layout: 'deepzoom',
             alphaLimits: [0.05, 0.6], //Only used for gloss
             brightness: 3.14,
-            gamma: 1.0, //FIXME to change
             transform: baseLayerTransform
         };
 
@@ -64,7 +64,7 @@
         //const lensDashboard = new OpenLIME.LensDashboardNavigator(lime, {});
 
         //const lensDashboard = new OpenLIME.LensDashboard(lime, {});
-    
+
         // Create a lens layer and add it to the canvans.
         // The field displayed inside the lens is layer1 (normal map)
         const lensLayer = new OpenLIME.Layer({
@@ -79,7 +79,7 @@
             visible: true,
         });
         lime.addLayer('lens', lensLayer);
-        
+
         // Create a lens controller for focus and context exploration.
         const controllerLens = new OpenLIME.ControllerFocusContext({
             lensLayer: lensLayer,
@@ -99,9 +99,9 @@
 
         // Add action (lens enable/disable pressing 'i')
         const lenstoggle = {
-	            title: 'Show/hide Lenss', key: 'i', display: false, task: (event) => {
-		        lensToggle(event);
-	        }
+            title: 'Show/hide Lenss', key: 'i', display: false, task: (event) => {
+                lensToggle(event);
+            }
         };
 
         ui.actions = { lenstoggle, layers, light };
@@ -110,7 +110,7 @@
 
         //////////////////
         function lensToggle(e) {
-	        lensLayer.setVisible(!lensLayer.visible);
+            lensLayer.setVisible(!lensLayer.visible);
         }
 
     </script>

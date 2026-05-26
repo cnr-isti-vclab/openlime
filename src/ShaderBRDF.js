@@ -27,7 +27,7 @@ import { Shader } from './Shader.js'
  * // Create a BRDF shader with custom settings
  * const shader = new ShaderBRDF({
  *   mode: 'color',
- *   colorspaces: { kd: 'sRGB', ks: 'linear' },
+ *   colorspaces: { kd: 'srgb', ks: 'linear' },
  *   brightness: 1.2,
  *   gamma: 2.2,
  *   alphaLimits: [0.05, 0.4],
@@ -47,8 +47,8 @@ class ShaderBRDF extends Shader {
 	 *   - 'normals': Visualizes surface normals
 	 *   - 'monochrome': Renders using a single material color with diffuse lighting
 	 * @param {Object} [options.colorspaces] - Color space configurations.
-	 * @param {string} [options.colorspaces.kd='sRGB'] - Color space for diffuse texture ('linear' or 'sRGB').
-	 * @param {string} [options.colorspaces.ks='linear'] - Color space for specular texture ('linear' or 'sRGB').
+	 * @param {string} [options.colorspaces.kd='srgb'] - Color space for diffuse texture ('linear' or 'srgb').
+	 * @param {string} [options.colorspaces.ks='linear'] - Color space for specular texture ('linear' or 'srgb').
 	 * @param {number} [options.brightness=1.0] - Overall brightness multiplier.
 	 * @param {number} [options.gamma=2.2] - Gamma correction value.
 	 * @param {number[]} [options.alphaLimits=[0.01, 0.5]] - Range for surface roughness [min, max].
@@ -57,6 +57,13 @@ class ShaderBRDF extends Shader {
 	 * 
 	 */
 	constructor(options) {
+		options = options || {};
+		const normalizedColorSpaces = {
+			kd: ((options.colorspaces && options.colorspaces.kd) ? options.colorspaces.kd : 'srgb').toLowerCase(),
+			ks: ((options.colorspaces && options.colorspaces.ks) ? options.colorspaces.ks : 'linear').toLowerCase()
+		};
+		options.colorspaces = normalizedColorSpaces;
+
 		super(options);
 		this.modes = ['color', 'diffuse', 'specular', 'normals', 'monochrome'];
 		this.mode = 'color';
@@ -114,15 +121,18 @@ class ShaderBRDF extends Shader {
 			case 'color':
 				this.innerCode =
 					`vec3 linearColor = (kd + ks * spec) * NdotL;
-				linearColor += kd * uKAmbient; // HACK! adding just a bit of ambient`
+				linearColor += kd * uKAmbient; // HACK! adding just a bit of ambient
+				applyGamma = true;`
 				break;
 			case 'diffuse':
 				this.innerCode =
-					`vec3 linearColor = kd;`
+					`vec3 linearColor = kd;
+				applyGamma = true;`
 				break;
 			case 'specular':
 				this.innerCode =
-					`vec3 linearColor = clamp((ks * spec) * NdotL, 0.0, 1.0);`
+					`vec3 linearColor = clamp((ks * spec) * NdotL, 0.0, 1.0);
+				applyGamma = true;`
 				break;
 			case 'normals':
 				this.innerCode =
@@ -130,7 +140,9 @@ class ShaderBRDF extends Shader {
 				applyGamma = false;`
 				break;
 			case 'monochrome':
-				this.innerCode = 'vec3 linearColor = kd * NdotL + kd * uKAmbient;'
+				this.innerCode =
+					`vec3 linearColor = kd * NdotL + kd * uKAmbient;
+				applyGamma = true;`
 				break;
 			default:
 				console.log("ShaderBRDF: Unknown mode: " + mode);
