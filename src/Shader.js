@@ -129,8 +129,7 @@ class Shader {
 	}
 
 	/**
-	 * Adds standard uniforms available to all shaders
-	 * @private
+	 * Adds standard uniforms available to all shaders.
 	 */
 	addStandardUniforms() {
 		// Marca gli uniform standard come protetti
@@ -193,7 +192,6 @@ class Shader {
 	/**
 	 * Restores WebGL state after context loss.
 	 * @param {WebGL2RenderingContext} gl - WebGL2 context
-	 * @private
 	 */
 	restoreWebGL(gl) {
 		this.createProgram(gl);
@@ -248,7 +246,6 @@ class Shader {
 	 * and incorporates filters.
 	 * @param {WebGL2RenderingContext} gl - WebGL2 context
 	 * @returns {string} Complete fragment shader source code
-	 * @private
 	 */
 	completeFragShaderSrc(gl) {
 		let src = '#version 300 es\n';
@@ -384,7 +381,6 @@ float linear2srgb(float c) {
 	/**
 	 * Creates the WebGL shader program.
 	 * @param {WebGL2RenderingContext} gl - WebGL2 context
-	 * @private
 	 * @throws {Error} If shader compilation or linking fails
 	 */
 	createProgram(gl) {
@@ -493,7 +489,6 @@ float linear2srgb(float c) {
 	/**
 	 * Updates all uniform values in the GPU.
 	 * @param {WebGL2RenderingContext} gl - WebGL2 context
-	 * @private
 	 */
 	updateUniforms(gl) {
 		for (const [name, uniform] of Object.entries(this.allUniforms())) {

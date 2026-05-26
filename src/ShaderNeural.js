@@ -151,7 +151,6 @@ class ShaderNeural extends Shader {
 	 * Creates WebGL program and retrieves attribute locations
 	 * @param {WebGLRenderingContext} gl - WebGL context
 	 * @override
-	 * @private
 	 */
 	createProgram(gl) {
 		super.createProgram(gl);
@@ -194,7 +193,6 @@ class ShaderNeural extends Shader {
 	 * Generates vertex shader source code
 	 * @param {WebGLRenderingContext} gl - WebGL context
 	 * @returns {string} Vertex shader source
-	 * @private
 	 */
 	vertShaderSrc(gl) {
 		return `#version 300 es
@@ -211,7 +209,6 @@ void main() {
 	 * Generates fragment shader source code implementing neural network
 	 * @param {WebGLRenderingContext} gl - WebGL context
 	 * @returns {string} Fragment shader source
-	 * @private
 	 */
 	fragShaderSrc(gl) {
 		return `

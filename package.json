@@ -61,7 +61,7 @@
     "start": "webpack-dev-server",
     "build": "webpack -c webpack.config.js --mode development",
     "rollup": "rollup -c rollup.config.js --extend",
-    "build-types": "mkdir -p dist/types && jsdoc -c jsdoc/jsdoc.types.json && printf \"export * from './types';\\ndeclare module 'openlime' { export * from './types'; }\\n\" > dist/types/index.d.ts",
+    "build-types": "rm -rf dist/types && tsc -p tsconfig.types.json && find dist/types -maxdepth 1 -name '*.d.ts' ! -name 'index.d.ts' -printf \"export * from './%f';\\n\" | sed \"s/\\.d\\.ts';$/';/\" > dist/types/index.d.ts",
     "nodemon": "nodemon --watch ./src --exec npm run rollup",
     "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md && mkdir -p docs/img && cp -r jsdoc/static/img/* docs/img/",
     "update-readme": "node utils/update-readme.js",
@@ -80,7 +80,7 @@
     "rollup-plugin-terser": "^7.0.2",
     "sanitize-html": "^2.15.0",
     "taffydb": "^2.7.3",
-    "tsd-jsdoc": "^2.5.0",
+    "typescript": "^5.6.3",
     "webpack": "^5.70.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.4"
