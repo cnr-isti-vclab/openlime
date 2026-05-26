@@ -506,8 +506,8 @@ function brdfTest() {
 			'gloss': 'assets/svbrdf/vis/glossMap.jpg'
 		},
 		colorspaces: {
-			'kd': 'linear',
-			'ks': 'linear'
+			'kd': 'srgb',
+			'ks': 'srgb'
 		},
 		layout: 'image',
 	});

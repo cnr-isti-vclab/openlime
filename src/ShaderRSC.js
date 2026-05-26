@@ -381,7 +381,8 @@ vec4 data() {
 		} 
 		
 		str += 	`
-	color = srgb2linear(color);
+	${this.decodeColorSnippet('color')}
+	${this.encodeColorSnippet('color')}
 	return vec4(color,1);
 }
 `;

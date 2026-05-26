@@ -78,7 +78,7 @@ class LayerLens extends LayerCombiner {
 			borderEnable: false,
 			dashboard: null,
 			activeLayerIndex: 0,
-			isLinear: true,
+			colorEncoding: 'linear',
 		}, options);
 		super(options);
 

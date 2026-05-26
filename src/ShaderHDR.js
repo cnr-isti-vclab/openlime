@@ -17,15 +17,21 @@ class ShaderHDR extends Shader {
      * Creates a new enhanced ShaderHDR instance.
      * 
      * @param {Object} options - Shader configuration options
-     * @param {boolean} [options.isLinear=true] - Whether the shader operates in linear space
+     * @param {'srgb'|'linear'} [options.colorEncoding='linear'] - Input/output color encoding
+     * @param {boolean} [options.isLinear] - Legacy alias for colorEncoding (`true` => 'linear', `false` => 'srgb')
      * @param {string[]} [options.modes=['reinhard', 'aces', 'exposure']] - Available tone mapping modes
      * @param {string} [options.mode='reinhard'] - Default tone mapping mode
      * @param {Object[]} [options.samplers] - Texture samplers for the shader
      */
     constructor(options) {
+		options = options || {};
+		if (options.colorEncoding === undefined && options.isLinear !== undefined) {
+			options.colorEncoding = options.isLinear ? 'linear' : 'srgb';
+		}
+
         // Set default options
         options = Object.assign({
-            isLinear: true,  // Important: we work in linear space!
+            colorEncoding: 'linear',
             format: 'rgba16f',
         }, options);
 
@@ -138,14 +144,14 @@ uniform float highlightCompression;
 vec4 data() {
     // Sample the HDR texture (already in linear space)
     vec4 color = texture(source, v_texcoord);
+    ${this.decodeColorSnippet('color')}
     
     // Apply selected tone mapping operation to compress HDR values
     ${toneMapOperation}
     
-    // Return the tone-mapped color in linear space
-    // The final gamma correction will be applied by Canvas.js
-
-    return vec4(color.rgb, color.a);
+    vec4 outColor = vec4(color.rgb, color.a);
+    ${this.encodeColorSnippet('outColor')}
+    return outColor;
 }
 `;
     }

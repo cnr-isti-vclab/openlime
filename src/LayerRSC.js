@@ -261,7 +261,7 @@ class LayerRSC extends Layer {
 					uniform: 'dict',
 					sizeUniform: 'dictionary_size',
 					format: 'rgb16f',
-					isLinear: true,
+					colorEncoding: 'linear',
 					dataLoader: LayerRSC.pngLoaderToFloat,
 					use16Bit: true,
 					buildMipmaps: false
@@ -275,7 +275,7 @@ class LayerRSC extends Layer {
 					uniform: 'dict',
 					sizeUniform: 'dictionary_size',
 					format: 'rgba',
-					isLinear: true,
+					colorEncoding: 'linear',
 					buildMipmaps: false,
 					use16Bit: false
 				});

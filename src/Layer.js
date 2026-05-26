@@ -21,6 +21,8 @@ import { Util } from './Util.js'
  * @property {boolean} [overlay=false] - Whether layer renders in overlay mode
  * @property {number} [prefetchBorder=1] - Tile prefetch threshold in tile units
  * @property {number} [mipmapBias=0.4] - Texture resolution selection bias (0=highest, 1=lowest)
+ * @property {('srgb'|'linear')} [colorEncoding='srgb'] - Main layer color encoding for shader conversion policy
+ * @property {boolean} [isLinear] - Legacy alias for colorEncoding (`true` => 'linear', `false` => 'srgb')
  * @property {Object.<string, Shader>} [shaders] - Map of available shaders
  * @property {Controller[]} [controllers] - Array of active UI controllers
  * @property {Layer} [sourceLayer] - Layer to share tiles with
@@ -86,6 +88,8 @@ class Layer {
 	* @param {bool} options.overlay=false  Whether the layer must be rendered in overlay mode.
 	* @param {number} options.prefetchBorder=1 The threshold (in tile units) around the current camera position for which to prefetch tiles.
 	* @param {number} options.mipmapBias=0.2 Determine which texture is used when scale is not a power of 2. 0: use always the highest resulution, 1 the lowest, 0.5 switch halfway.
+	* @param {('srgb'|'linear')} [options.colorEncoding='srgb'] Main layer color encoding for shader conversion policy.
+	* @param {boolean} [options.isLinear] Legacy alias for colorEncoding (`true` => 'linear', `false` => 'srgb').
 	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader}.
 	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
 	* @param {Layer} options.sourceLayer The layer from which to take the tiles (in order to avoid tile duplication).
@@ -95,8 +99,13 @@ class Layer {
 	*/
 	constructor(options) {
 		//create from derived class if type specified
+		options = options || {};
+		if (options.colorEncoding === undefined && options.isLinear !== undefined) {
+			options.colorEncoding = options.isLinear ? 'linear' : 'srgb';
+		}
+
 		options = Object.assign({
-			isLinear: false,
+			colorEncoding: 'srgb',
 			isSrgbSimplified: true
 		}, options);
 
@@ -169,6 +178,7 @@ class Layer {
 			shaders: options.shaders || Object.assign({}, this.shaders),
 			mipmapBias: options.mipmapBias || this.mipmapBias,
 			pixelSize: options.pixelSize || this.pixelSize,
+			colorEncoding: options.colorEncoding !== undefined ? options.colorEncoding : this.colorEncoding,
 			debug: options.debug !== undefined ? options.debug : this.debug
 		};
 
@@ -291,7 +301,8 @@ class Layer {
 		if (id in this.shaders) {
 			throw new Error(`Shader with id '${id}' already exists`);
 		}
-		shader.isLinear = this.isLinear;
+		shader.colorEncoding = this.colorEncoding;
+		shader.isLinear = this.colorEncoding === 'linear';
 		shader.isSrgbSimplified = this.isSrgbSimplified;
 		this.shaders[id] = shader;
 
@@ -485,7 +496,8 @@ class Layer {
 		if (!id in this.shaders)
 			throw "Unknown shader: " + id;
 		this.shader = this.shaders[id];
-		this.shader.isLinear = this.isLinear;
+		this.shader.colorEncoding = this.colorEncoding;
+		this.shader.isLinear = this.colorEncoding === 'linear';
 		this.shader.isSrgbSimplified = this.isSrgbSimplified;
 		this.setupTiles();
 		this.shader.addEvent('update', () => { this.emit('update'); });
@@ -773,19 +785,24 @@ class Layer {
 	 * @param {string} options.uniform - Shader uniform name (e.g., "u_dict")
 	 * @param {string} [options.sizeUniform] - Optional size uniform name (e.g., "u_dictSize")
 	 * @param {string} [options.format='rgba16ui'] - Texture format
-	 * @param {boolean} [options.isLinear=true] - Whether texture is in linear color space
+	 * @param {'srgb'|'linear'} [options.colorEncoding='linear'] - Texture color encoding
+	 * @param {boolean} [options.isLinear] - Legacy alias for colorEncoding (`true` => 'linear', `false` => 'srgb')
 	 * @param {Function} [options.dataLoader] - Custom data loader function
 	 * @param {boolean} [options.use16Bit=true] - Use Raster16Bit vs regular Raster
 	 * @returns {Promise<void>}
 	 */
 	async addStaticTexture(options) {
+		const colorEncoding = options.colorEncoding !== undefined
+			? options.colorEncoding
+			: (options.isLinear !== undefined ? (options.isLinear ? 'linear' : 'srgb') : 'linear');
+
 		// Add to the static textures array
 		const staticTexConfig = {
 			url: options.url,
 			uniform: options.uniform,
 			sizeUniform: options.sizeUniform,
 			format: options.format || 'rgba16ui',
-			isLinear: options.isLinear !== undefined ? options.isLinear : true,
+			colorEncoding: colorEncoding,
 			dataLoader: options.dataLoader,
 			use16Bit: options.use16Bit !== undefined ? options.use16Bit : true,
 			buildMipmaps: options.buildMipmaps !== undefined ? options.buildMipmaps : true,
@@ -820,7 +837,7 @@ class Layer {
 
 			const rasterOptions = {
 				format: config.format,
-				isLinear: config.isLinear,
+				colorEncoding: config.colorEncoding,
 				buildMipmaps: config.buildMipmaps,
 				filterLinear: config.filterLinear,
 				debug: this.debug || false

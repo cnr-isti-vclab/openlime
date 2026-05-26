@@ -10,7 +10,7 @@ import { ShaderBRDF } from './ShaderBRDF.js'
  * @property {string} channels.normals - URL to normal map (required)
  * @property {string} channels.gloss - URL to glossiness/roughness map (optional)
  * @property {Object} [colorspaces] - Color space definitions for material properties
- * @property {('linear'|'srgb')} [colorspaces.kd='linear'] - Color space for diffuse map
+ * @property {('linear'|'srgb')} [colorspaces.kd='srgb'] - Color space for diffuse map
  * @property {('linear'|'srgb')} [colorspaces.ks='linear'] - Color space for specular map
  * @property {number} [brightness=1.0] - Overall brightness adjustment
  * @property {number} [gamma=2.2] - Gamma correction value
@@ -102,10 +102,14 @@ class LayerBRDF extends Layer {
 		}
 
 		if (!this.colorspaces) {
-			console.log("LayerBRDF: missing colorspaces: force both to linear");
-			this.colorspaces['kd'] = 'linear';
+			console.log("LayerBRDF: missing colorspaces: default kd=sRGB, ks=linear");
+			this.colorspaces = {};
+			this.colorspaces['kd'] = 'srgb';
 			this.colorspaces['ks'] = 'linear';
 		}
+
+		if (!this.colorspaces['kd']) this.colorspaces['kd'] = 'srgb';
+		if (!this.colorspaces['ks']) this.colorspaces['ks'] = 'linear';
 
 		let id = 0;
 		let urls = [];
@@ -118,7 +122,7 @@ class LayerBRDF extends Layer {
 		};
 		for (let c in this.channels) {
 			if (!isClone) {
-				this.rasters.push(new Raster({ format: brdfSamplersMap[c].format, isLinear: true }));
+				this.rasters.push(new Raster({ format: brdfSamplersMap[c].format, colorEncoding: 'linear' }));
 				urls[id] = this.channels[c];
 			}
 			samplers.push({ 'id': id, 'name': brdfSamplersMap[c].name });

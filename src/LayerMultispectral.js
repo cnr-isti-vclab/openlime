@@ -10,7 +10,8 @@ import { Transform } from './Transform.js'
  * @property {string} layout - Layout type: 'image', 'deepzoom', 'google', 'iiif', 'zoomify', 'tarzoom', 'itarzoom'
  * @property {string} [defaultMode='single_band'] - Initial visualization mode ('rgb' or 'single_band')
  * @property {string} [server] - IIP server URL (for IIP layout)
- * @property {boolean} [linearRaster=true] - Whether to use linear color space for rasters (recommended for scientific accuracy)
+ * @property {('srgb'|'linear')} [colorEncoding='linear'] - Multispectral raster color encoding
+ * @property {boolean} [linearRaster] - Legacy alias for colorEncoding (`true` => 'linear', `false` => 'srgb')
  * @property {string|Object} presets - Path to presets JSON file or presets object containing CTW configurations
  * @extends LayerOptions
  */
@@ -61,6 +62,14 @@ class LayerMultispectral extends Layer {
    * @throws {Error} If presets option is not provided
    */
   constructor(options) {
+    options = options || {};
+    if (options.colorEncoding === undefined && options.linearRaster !== undefined) {
+      options.colorEncoding = options.linearRaster ? 'linear' : 'srgb';
+    }
+    if (options.colorEncoding === undefined) {
+      options.colorEncoding = 'linear';
+    }
+
     super(options);
 
     if (Object.keys(this.rasters).length != 0)
@@ -73,11 +82,10 @@ class LayerMultispectral extends Layer {
     this.loadPresets();
 
     // Set default options
-    this.linearRaster = true;
     this.defaultMode = this.defaultMode || 'single_band';
 
     // Create shader
-    this.shaders['multispectral'] = new ShaderMultispectral({ isLinear: this.linearRaster });
+    this.shaders['multispectral'] = new ShaderMultispectral({ colorEncoding: this.colorEncoding });
     this.setShader('multispectral');
 
     // Set current CTW arrays
@@ -171,7 +179,7 @@ class LayerMultispectral extends Layer {
       // Handle special case for itarzoom (all planes in one file)
       if (this.layout.type === 'itarzoom') {
         // Create a single raster for all planes
-        let raster = new Raster({ format: 'vec3', isLinear: this.linearRaster });
+        let raster = new Raster({ format: 'vec3', colorEncoding: this.colorEncoding });
         this.rasters.push(raster);
 
         // Add a single URL for all planes
@@ -180,7 +188,7 @@ class LayerMultispectral extends Layer {
         // Standard case: one file per image
         for (let p = 0; p < this.shader.nimg; p++) {
           // Create raster with linear color space
-          let raster = new Raster({ format: 'vec3', isLinear: this.linearRaster });
+          let raster = new Raster({ format: 'vec3', colorEncoding: this.colorEncoding });
           this.rasters.push(raster);
 
           // Format index with leading zeros (e.g., 00, 01, 02)

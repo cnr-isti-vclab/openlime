@@ -50,6 +50,7 @@ class LayerHDR extends Layer {
       format: 'rgba16f',
       autoWhitePoint: true,
       debug: false,
+      colorEncoding: 'linear',
       mode: 'reinhard',
     }, options);
     super(options);
@@ -64,7 +65,7 @@ class LayerHDR extends Layer {
 
     const rasterOptions = {
       format: this.format,
-      isLinear: true,  // HDR data is always in linear space
+      colorEncoding: 'linear',
       debug: this.debug
     };
     // Add custom data loader if provided

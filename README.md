@@ -202,6 +202,36 @@ const iiifLayer = new OpenLIME.LayerImage({
 });
 ```
 
+### Color Encoding
+
+OpenLIME now uses `colorEncoding` to control color-space conversions in shaders.
+
+- Default: `colorEncoding: 'srgb'`
+- Use `'linear'` only for physically linear inputs (for example HDR/scientific data)
+- For common web images (`jpg`, `png`, `webp`), you usually do not need to set anything explicitly
+
+```javascript
+// Default behavior (recommended for standard images)
+const imageLayer = new OpenLIME.Layer({
+  type: 'image',
+  url: 'photo.jpg'
+});
+
+// Explicit linear input (non-default case)
+const linearLayer = new OpenLIME.Layer({
+  type: 'image',
+  url: 'reflectance-data.exr',
+  colorEncoding: 'linear'
+});
+```
+
+Legacy aliases are still accepted for backward compatibility:
+
+- `isLinear` (Layer/Shader)
+- `linearRaster` (LayerMultispectral)
+
+New code should prefer `colorEncoding`.
+
 ## Development Setup
 
 ### Installing npm
