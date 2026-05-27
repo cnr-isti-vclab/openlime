@@ -48,40 +48,59 @@
         }
 
         #marker-panel .card {
-            background: rgba(12, 14, 20, 0.8);
-            backdrop-filter: blur(6px);
-            border-color: rgba(79, 195, 247, 0.55);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(2px);
+            border-color: rgba(255, 255, 255, 0.42);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            color: #ffffff;
         }
 
         #marker-panel .marker-btn {
-            --bs-btn-padding-y: 0.24rem;
-            --bs-btn-padding-x: 0.58rem;
+            --bs-btn-padding-y: 0.12rem;
+            --bs-btn-padding-x: 0.3rem;
             --bs-btn-font-size: 0.76rem;
-            min-width: 80px;
+            --bs-btn-color: #ffffff;
+            --bs-btn-border-width: 1px;
+            --bs-btn-border-color: rgba(255, 255, 255, 0.75);
+            --bs-btn-hover-bg: rgba(255, 255, 255, 0.12);
+            --bs-btn-hover-border-color: #ffffff;
+            --bs-btn-hover-color: #ffffff;
+            min-width: 40px;
+            min-height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #marker-panel .marker-btn.active {
-            --bs-btn-bg: #b4232f;
-            --bs-btn-border-color: #d3414e;
-            --bs-btn-color: #fff;
-            --bs-btn-hover-bg: #bf2d3a;
-            --bs-btn-hover-border-color: #dc5963;
-            --bs-btn-active-bg: #b4232f;
-            --bs-btn-active-border-color: #d3414e;
+            --bs-btn-bg: rgba(122, 21, 47, 0.35);
+            --bs-btn-border-color: rgba(255, 255, 255, 0.75);
+            --bs-btn-color: #ffe8ef;
+            --bs-btn-hover-bg: rgba(122, 21, 47, 0.48);
+            --bs-btn-hover-border-color: #ffffff;
+            --bs-btn-active-bg: rgba(122, 21, 47, 0.62);
+            --bs-btn-active-border-color: #ffffff;
         }
 
         #marker-panel .settings-btn {
-            --bs-btn-padding-y: 0.24rem;
-            --bs-btn-padding-x: 0.7rem;
+            --bs-btn-padding-y: 0.12rem;
+            --bs-btn-padding-x: 0.34rem;
             --bs-btn-font-size: 0.76rem;
-            --bs-btn-color: #8fe8ff;
-            --bs-btn-border-color: #35b8da;
-            --bs-btn-hover-bg: rgba(53, 184, 218, 0.18);
-            --bs-btn-hover-border-color: #72d6ef;
-            --bs-btn-hover-color: #d7f7ff;
-            --bs-btn-active-bg: rgba(53, 184, 218, 0.24);
-            --bs-btn-active-border-color: #72d6ef;
+            --bs-btn-color: #ffffff;
+            --bs-btn-border-width: 1px;
+            --bs-btn-border-color: rgba(255, 255, 255, 0.75);
+            --bs-btn-hover-bg: rgba(255, 255, 255, 0.12);
+            --bs-btn-hover-border-color: #ffffff;
+            --bs-btn-hover-color: #ffffff;
+            --bs-btn-active-bg: rgba(255, 255, 255, 0.18);
+            --bs-btn-active-border-color: #ffffff;
+        }
+
+        #marker-panel .marker-icon,
+        #marker-panel .action-icon {
+            width: 24px;
+            height: 24px;
+            display: block;
         }
 
         #creation-hint {
@@ -113,10 +132,11 @@
         }
 
         #selection-panel .card {
-            background: rgba(22, 18, 8, 0.78);
-            backdrop-filter: blur(6px);
-            border-color: rgba(255, 215, 0, 0.5);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(2px);
+            border-color: rgba(255, 255, 255, 0.42);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            color: #ffffff;
         }
 
         /* Interaction hint — always visible except during active sessions */
@@ -209,33 +229,49 @@
     <h1>OpenLIME - RTI Viewer</h1>
     <div id="annotation-toolbar">
         <div id="marker-panel">
-            <div class="card border-info">
+            <div class="card">
                 <div class="card-body py-1 px-2 d-flex flex-column gap-1">
-                    <div class="d-flex align-items-center flex-wrap gap-2">
-                        <span class="badge text-bg-info">Marker</span>
-                        <button id="btn-disk" class="btn btn-outline-light marker-btn">&#9679; Disk</button>
-                        <button id="btn-polyline" class="btn btn-outline-light marker-btn">&#9135; Polyline</button>
-                        <button id="btn-polygon" class="btn btn-outline-light marker-btn">&#9651; Polygon</button>
-                        <button id="btn-rect" class="btn btn-outline-light marker-btn">&#9645; Rect</button>
-                        <button id="btn-freehand" class="btn btn-outline-light marker-btn">&#9998; Freehand</button>
+                    <div class="d-flex align-items-center flex-wrap gap-1">
+                        <span class="badge text-light">Marker</span>
+                        <button id="btn-disk" class="btn btn-outline-secondary marker-btn" title="Disk" aria-label="Disk">
+                            <img class="marker-icon" src="./icons/disk.svg" alt="Disk" />
+                        </button>
+                        <button id="btn-polyline" class="btn btn-outline-secondary marker-btn" title="Polyline" aria-label="Polyline">
+                            <img class="marker-icon" src="./icons/polyline.svg" alt="Polyline" />
+                        </button>
+                        <button id="btn-polygon" class="btn btn-outline-secondary marker-btn" title="Polygon" aria-label="Polygon">
+                            <img class="marker-icon" src="./icons/polygon.svg" alt="Polygon" />
+                        </button>
+                        <button id="btn-rect" class="btn btn-outline-secondary marker-btn" title="Rect" aria-label="Rect">
+                            <img class="marker-icon" src="./icons/rect.svg" alt="Rect" />
+                        </button>
+                        <button id="btn-freehand" class="btn btn-outline-secondary marker-btn" title="Freehand" aria-label="Freehand">
+                            <img class="marker-icon" src="./icons/freehand.svg" alt="Freehand" />
+                        </button>
                     </div>
-                    <div class="d-flex align-items-center flex-wrap gap-2">
-                        <button id="btn-edit" class="btn btn-outline-warning settings-btn">Edit</button>
-                        <button id="btn-relax-selected" class="btn btn-outline-warning settings-btn">Relax</button>
-                        <button id="btn-freehand-settings" class="btn btn-outline-info settings-btn">Settings</button>
-                        <button id="btn-anno-save" class="btn btn-outline-info settings-btn">Save</button>
-                        <button id="btn-anno-load" class="btn btn-outline-info settings-btn">Load</button>
-                        <button id="btn-anno-group" class="btn btn-outline-info settings-btn">Group</button>
-                        <button id="btn-anno-ungroup" class="btn btn-outline-info settings-btn">Ungroup</button>
+                    <div class="d-flex align-items-center flex-wrap gap-1">
+                        <button id="btn-edit" class="btn btn-outline-light settings-btn" title="Edit" aria-label="Edit">
+                            <img class="action-icon" src="./icons/edit.svg" alt="Edit" />
+                        </button>
+                        <button id="btn-relax-selected" class="btn btn-outline-light settings-btn" title="Relax" aria-label="Relax">
+                            <img class="action-icon" src="./icons/relax.svg" alt="Relax" />
+                        </button>
+                        <button id="btn-freehand-settings" class="btn btn-outline-light settings-btn" title="Settings" aria-label="Settings">
+                            <img class="action-icon" src="./icons/settings.svg" alt="Settings" />
+                        </button>
+                        <button id="btn-anno-save" class="btn btn-outline-light settings-btn" title="Save" aria-label="Save">
+                            <img class="action-icon" src="./icons/save.svg" alt="Save" />
+                        </button>
+                        <button id="btn-anno-load" class="btn btn-outline-light settings-btn" title="Load" aria-label="Load">
+                            <img class="action-icon" src="./icons/load.svg" alt="Load" />
+                        </button>
+                        <button id="btn-anno-group" class="btn btn-outline-light settings-btn" title="Group" aria-label="Group">
+                            <img class="action-icon" src="./icons/group.svg" alt="Group" />
+                        </button>
+                        <button id="btn-anno-ungroup" class="btn btn-outline-light settings-btn" title="Ungroup" aria-label="Ungroup">
+                            <img class="action-icon" src="./icons/ungroup.svg" alt="Ungroup" />
+                        </button>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div id="selection-panel">
-            <div class="card border-warning">
-                <div class="card-body py-2 px-3 small text-light">
-                    <span class="fw-semibold text-warning">Selected:</span>
-                    <span id="selection-info">none</span>
                 </div>
             </div>
         </div>
@@ -475,9 +511,11 @@
             // `annotations` is the full Annotation[] currently selected.
             onSelectionChange: (annotations) => {
                 const info = document.getElementById('selection-info');
-                info.textContent = annotations.length === 0
-                    ? 'none'
-                    : annotations.map(a => a.label || a.id.slice(0, 8)).join(', ');
+                if (info) {
+                    info.textContent = annotations.length === 0
+                        ? 'none'
+                        : annotations.map(a => a.label || a.id.slice(0, 8)).join(', ');
+                }
                 console.log(
                     '[ManagerSvgAnnotation] SELECTION_CHANGE',
                     annotations.map(a => ({ id: a.id, label: a.label }))
@@ -954,13 +992,17 @@
         // Modes are set automatically (double-click → create, click → edit);
         // just keep the selection panel in sync.
         manager.addEvent('modeChange', (mode) => {
-            document.getElementById('selection-panel').style.display = mode === 'edit' ? 'block' : 'none';
+            const selectionPanel = document.getElementById('selection-panel');
+            if (selectionPanel) {
+                selectionPanel.style.display = mode === 'edit' ? 'block' : 'none';
+            }
             // Restore ctrl-hint when returning to edit mode (was hidden during creation session)
             if (mode === 'edit') {
                 setCtrlHint(EDIT_HINT_TEXT);
             }
             if (mode !== 'edit') {
-                document.getElementById('selection-info').textContent = 'none';
+                const selectionInfo = document.getElementById('selection-info');
+                if (selectionInfo) selectionInfo.textContent = 'none';
             }
         });
 
