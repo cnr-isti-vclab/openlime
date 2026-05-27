@@ -1195,20 +1195,29 @@ class ManagerSvgAnnotation {
     return annotation;
   }
 
-  /*
-  * Accepts any subset of `{label, description, class, publish, data}`.
-  * `data` is **merged** (not replaced) into `annotation.data`.
-  *
-  * @param {string} id - Annotation ID.
-  * @param {Object} patch - Properties to update.
-  * @param {string}  [patch.label]
-  * @param {string}  [patch.description]
-  * @param {string}  [patch.class]
-  * @param {number}  [patch.publish]
-  * @param {Object}  [patch.data]    - Merged into annotation.data.
-  * @returns {Annotation|null} Updated annotation, or `null` if not found.
-  * @fires ManagerSvgAnnotation#update
-  */
+  /**
+   * Updates any subset of annotation properties and immediately repaints.
+   *
+   * `data` is **merged** (not replaced) into `annotation.data`.
+   *
+   * Per-annotation colour overrides (`fill`, `stroke`, `fillOpacity`,
+   * `strokeWidth`) take precedence over the class palette.  Pass `null` to
+   * remove an override and fall back to the class colour.
+   *
+   * @param {string} id - Annotation ID.
+   * @param {Object} patch
+   * @param {string}  [patch.label]
+   * @param {string}  [patch.description]
+   * @param {number}  [patch.class]       - Index into `this.classes`.
+   * @param {number}  [patch.publish]
+   * @param {string|null}  [patch.fill]        - Per-annotation fill override.
+   * @param {string|null}  [patch.stroke]      - Per-annotation stroke override.
+   * @param {number|null}  [patch.fillOpacity] - Per-annotation fill-opacity override.
+   * @param {number|null}  [patch.strokeWidth] - Per-annotation stroke-width override.
+   * @param {Object}  [patch.data]        - Merged into annotation.data.
+   * @returns {Annotation|null}
+   * @fires ManagerSvgAnnotation#update
+   */
   updateAnnotation(id, patch) {
     const anno = this.getAnnotationById(id);
     if (!anno) {
@@ -1216,8 +1225,9 @@ class ManagerSvgAnnotation {
       return null;
     }
 
-    const allowedKeys = ['label', 'description', 'class', 'publish'];
-    for (const key of allowedKeys) {
+    const scalarKeys = ['label', 'description', 'class', 'publish',
+                        'fill', 'stroke', 'fillOpacity', 'strokeWidth'];
+    for (const key of scalarKeys) {
       if (Object.hasOwn(patch, key)) anno[key] = patch[key];
     }
 
@@ -1225,7 +1235,8 @@ class ManagerSvgAnnotation {
       Object.assign(anno.data, patch.data);
     }
 
-    if (Object.hasOwn(patch, 'class')) {
+    const styleChanged = scalarKeys.slice(2).some(k => Object.hasOwn(patch, k));
+    if (styleChanged) {
       const isSelected = this.layer.selected?.has(anno.id) ?? false;
       this._applyStyleToElements(anno, isSelected);
     }
@@ -1489,10 +1500,11 @@ class ManagerSvgAnnotation {
   _getClassStyle(anno, selected = false) {
     const idx = Number(anno.class) || 0;
     const cls = this.classes?.[idx] ?? this.classes?.[0] ?? {};
-    const fill        = cls.fill        ?? this.defaultFill        ?? 'rgba(34,187,85,0.20)';
-    const stroke      = cls.stroke      ?? this.defaultStroke      ?? '#22bb55';
-    const fillOpacity = cls.fillOpacity ?? this.defaultFillOpacity ?? 1;
-    const strokeWidth = cls.strokeWidth ?? this.defaultStrokeWidth ?? 2;
+    // Per-annotation overrides (set via updateAnnotation) take precedence over the class.
+    const fill        = anno.fill        ?? cls.fill        ?? this.defaultFill        ?? 'rgba(34,187,85,0.20)';
+    const stroke      = anno.stroke      ?? cls.stroke      ?? this.defaultStroke      ?? '#22bb55';
+    const fillOpacity = anno.fillOpacity ?? cls.fillOpacity ?? this.defaultFillOpacity ?? 1;
+    const strokeWidth = anno.strokeWidth ?? cls.strokeWidth ?? this.defaultStrokeWidth ?? 2;
     if (selected) {
       return {
         fill:        cls.fillSelected   ?? this.selectionFill   ?? fill,
