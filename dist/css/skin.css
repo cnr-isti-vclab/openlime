@@ -258,6 +258,52 @@
 	border-color: #333;
 }
 
+/* Bearing Controller */
+
+.openlime-bearing {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+}
+
+.openlime-bearing-crosshair line {
+	stroke: rgba(255, 255, 255, 0.3);
+	stroke-width: 0.5;
+	vector-effect: non-scaling-stroke;
+}
+
+.openlime-bearing-ring {
+	fill: none;
+	stroke: rgba(255, 255, 255, 0.7);
+	stroke-width: 1;
+	vector-effect: non-scaling-stroke;
+}
+
+.openlime-bearing-indicator {
+	stroke: #ffffff;
+	stroke-width: 2;
+	vector-effect: non-scaling-stroke;
+}
+
+.openlime-bearing-handle {
+	fill: rgba(255, 255, 255, 0.2);
+	stroke: #ffffff;
+	stroke-width: 1.5;
+	vector-effect: non-scaling-stroke;
+}
+
+.openlime-bearing-label {
+	fill: #ffffff;
+	font-family: "Open Sans", sans-serif;
+	text-anchor: middle;
+	dominant-baseline: central;
+	user-select: none;
+}
+
+
 g.openlime-compact {
 	visibility: hidden !important;
 }

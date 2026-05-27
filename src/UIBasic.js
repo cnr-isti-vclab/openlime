@@ -1,6 +1,7 @@
 import { Skin } from './Skin'
 import { Util } from './Util'
 import { Controller2D } from './Controller2D'
+import { ControllerBearing } from './ControllerBearing'
 import { ControllerPanZoom } from './ControllerPanZoom'
 import { Ruler } from "./Ruler"
 import { ScaleBar } from './ScaleBar'
@@ -180,6 +181,7 @@ class UIBasic {
 				zoomin: { title: 'Zoom in', display: false, key: '+', task: (event) => { camera.deltaZoom(250, 1.25, 0, 0); } },
 				zoomout: { title: 'Zoom out', display: false, key: '-', task: (event) => { camera.deltaZoom(250, 1 / 1.25, 0, 0); } },
 				rotate: { title: 'Rotate', display: false, key: 'r', task: (event) => { camera.rotate(250, -45); } },
+				bearing: { title: 'Bearing', display: false, key: 'b', task: (event) => { this.toggleBearingController(); } },
 				light: { title: 'Light', display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
 				ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
@@ -469,8 +471,78 @@ class UIBasic {
 	}
 
 	/**
-	 * Initializes UI components
-	 * Sets up toolbar, menu, and controllers
+	 * Creates the SVG bearing dial overlay.
+	 * Two nested SVGs: one for crosshair lines (preserveAspectRatio:none so they span
+	 * the full viewer) and one for the circular dial (preserveAspectRatio:meet so the
+	 * ring stays circular). Drag anywhere inside the ring to rotate the camera.
+	 * @private
+	 */
+	createBearingOverlay() {
+		const container = document.createElement('div');
+		container.innerHTML = `
+			<svg class="openlime-bearing" width="100%" height="100%" style="display:none">
+				<svg class="openlime-bearing-crosshair" viewBox="-100 -100 200 200" preserveAspectRatio="none" width="100%" height="100%">
+					<line x1="-100" y1="0" x2="100" y2="0"/>
+					<line x1="0" y1="-100" x2="0" y2="100"/>
+				</svg>
+				<svg viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
+					<circle class="openlime-bearing-ring" cx="0" cy="0" r="70"/>
+					<g id="openlime-bearing-rotor" class="openlime-bearing-rotor">
+						<line class="openlime-bearing-indicator" x1="0" y1="0" x2="0" y2="-70"/>
+						<circle class="openlime-bearing-handle" cx="0" cy="-70" r="7"/>
+					</g>
+					<text id="openlime-bearing-label" class="openlime-bearing-label" x="0" y="0" font-size="14">0°</text>
+				</svg>
+			</svg>`.trim();
+
+		const svg = container.firstChild;
+		this.viewer.containerElement.appendChild(svg);
+
+		this.bearingOverlay = svg;
+		this.bearingRotor = svg.querySelector('#openlime-bearing-rotor');
+		this.bearingLabel = svg.querySelector('#openlime-bearing-label');
+
+		this.bearingController = new ControllerBearing(this.camera, this.viewer.containerElement, {
+			active: false,
+			onRotate: () => this.updateBearingOverlay()
+		});
+		this.viewer.pointerManager.onEvent(this.bearingController);
+	}
+
+	/**
+	 * Syncs the bearing dial with the current camera rotation angle.
+	 * @private
+	 */
+	updateBearingOverlay() {
+		if (!this.bearingOverlay || this.bearingOverlay.style.display === 'none') return;
+		const a = -this.camera.getCurrentTransform(performance.now()).a;
+		this.bearingRotor.setAttribute('transform', `rotate(${a})`);
+		const deg = Math.round(((a % 360) + 360) % 360);
+		this.bearingLabel.textContent = `${deg}°`;
+	}
+
+	/**
+	 * Toggles the bearing dial overlay.
+	 * @param {boolean} [on] - Force specific state
+	 * @private
+	 */
+	toggleBearingController(on) {
+		if (!this.bearingOverlay) this.createBearingOverlay();
+		const active = this.viewer.containerElement.classList.toggle('openlime-bearing-active', on);
+		this.bearingOverlay.style.display = active ? 'block' : 'none';
+		this.bearingController.active = active;
+		if (active) {
+			this.updateBearingOverlay();
+			this._bearingUpdateHandler = () => this.updateBearingOverlay();
+			this.viewer.canvas.addEvent('update', this._bearingUpdateHandler);
+		} else {
+			if (this._bearingUpdateHandler) {
+				this.viewer.canvas.removeEvent('update', this._bearingUpdateHandler);
+				this._bearingUpdateHandler = null;
+			}
+		}
+	}
+	 /** Initializes UI components
 	 * @private
 	 * @async
 	 */

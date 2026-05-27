@@ -303,6 +303,7 @@ function rtiTest(dataset) {
 	//const { home, fullscreen, rotate } = ui.actions;
 	//ui.actions = { home, fullscreen, rotate };
 	ui.actions.rotate.display = true;
+	ui.actions.bearing.display = true;
 	ui.minimapOptions = { 
 		layer: { 
 			label: 'Minimap',
