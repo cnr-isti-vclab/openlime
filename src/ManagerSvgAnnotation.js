@@ -5,6 +5,11 @@ import { Util } from './Util.js';
 import { addSignals } from './Signals.js';
 import { ramerDouglasPeucker, smooth, relaxDenseZigZagPoints } from './Simplify.js';
 
+// CSS drop-shadow() is post-rasterisation (CSS pixels), so the shadow keeps a
+// constant visual size at every zoom level.
+const _SHADOW        = 'filter: drop-shadow(1.5px 1.5px 2.0px rgba(0,0,0,0.80))';
+const _SHADOW_RUBBER = 'filter: drop-shadow(1px 1px 1.8px rgba(0,0,0,0.40))';
+
 /**
  * @file ManagerSvgAnnotation.js
  *
@@ -300,31 +305,37 @@ class Marker {
 class DiskMarker extends Marker {
   /**
    * @param {Object} [options]
-   * @param {number} [options.radius=12] - Screen radius in pixels at zoom level 1
+   * @param {number} [options.radius=7] - Screen radius in pixels at zoom level 1
    */
   constructor(options = {}) {
-    super('disk', Object.assign({ radius: 12 }, options));
+    super('disk', Object.assign({ radius: 7 }, options));
   }
 
   createElement(pos, transform, annotation, style = {}) {
     const modelRadius = this.radius / (transform?.z ?? 1);
 
+    const sw = (style.strokeWidth ?? 2) / (transform?.z ?? 1);
     const circle = Util.createSVGElement('circle', {
       cx: pos.x,
       cy: pos.y,
       r: modelRadius,
       class: 'annotation-disk',
       fill: style.fill ?? '#ff0000',
+      stroke: style.stroke ?? 'none',
+      'stroke-width': String(sw),
       opacity: String(style.fillOpacity ?? 0.7),
+      style: _SHADOW,
     });
     return [circle];
   }
 
   updateElements(elements, transform, annotation, style = {}) {
     const modelRadius = this.radius / (transform?.z ?? 1);
+    const sw = (style.strokeWidth ?? 2) / (transform?.z ?? 1);
     for (const el of elements) {
       if (el.classList?.contains('annotation-disk')) {
         el.setAttribute('r', modelRadius);
+        el.setAttribute('stroke-width', String(sw));
       }
     }
   }
@@ -437,6 +448,7 @@ class PolylineMarker extends Marker {
       'stroke-linejoin': 'round',
       fill,
       opacity: String(opacity),
+      style: _SHADOW,
     });
 
     // Invisible hit-target with wider stroke for easier selection.
@@ -467,6 +479,7 @@ class PolylineMarker extends Marker {
       'stroke-linecap': 'round',
       opacity: String(opacity * 0.6),
       fill: this.closed ? fill : 'none',
+      style: _SHADOW_RUBBER,
     };
     if (this.closed) {
       rubberAttrs['fill-opacity'] = String(Math.max(0.08, (style.fillOpacity ?? 0.25) * 0.6));
@@ -551,6 +564,7 @@ class PolylineMarker extends Marker {
           'stroke-linejoin': 'round',
           fill: style.fill ?? 'none',
           opacity: polylineEl.getAttribute('opacity'),
+          style: _SHADOW,
         });
         polylineEl.parentNode?.replaceChild(polygon, polylineEl);
         const idx = annotation.elements.indexOf(polylineEl);
@@ -723,16 +737,28 @@ class ManagerSvgAnnotation {
    *   Capture viewer canvas state (e.g. light direction, mode) into each annotation.
    * @param {Function} [options.customState]
    *   Called with `(annotation)` after state capture; use to attach extra custom state.
+   * @param {string} [options.defaultFill='rgba(34,187,85,0.20)']
+   *   Default fill colour. Overridden per-class with `fill`.
+   * @param {string} [options.defaultStroke='#22bb55']
+   *   Default stroke colour. Overridden per-class with `stroke`.
+   * @param {number} [options.defaultFillOpacity=1]
+   *   Default fill opacity. Overridden per-class with `fillOpacity`.
+   * @param {number} [options.defaultStrokeWidth=2]
+   *   Default stroke width. Overridden per-class with `strokeWidth`.
+   * @param {string} [options.selectionFill='rgba(255,225,100,0.20)']
+   *   Fill colour for selected annotations. Per-class `fillSelected` overrides this.
+   * @param {string} [options.selectionStroke='#aaaa00']
+   *   Stroke colour for selected annotations. Per-class `strokeSelected` overrides this.
    * @param {Function} [options.onCreate]   - Shorthand: `.addEvent('create', fn)`
    * @param {Function} [options.onUpdate]   - Shorthand: `.addEvent('update', fn)`
    * @param {Function} [options.onDelete]   - Shorthand: `.addEvent('delete', fn)`
    * @param {Function} [options.onSelect]   - Shorthand: `.addEvent('select', fn)` — fires with the last activated annotation
    * @param {Function} [options.onSelectionChange] - Shorthand: `.addEvent('selectionChange', fn)` — fires with the full `Annotation[]` array
- * @param {boolean} [options.singleEditMode=false]
- *   When `true`, vertex-drag listeners (and `activeAnnotation`) are suppressed
- *   when **more than one** annotation is selected — no single annotation can be
- *   vertex-dragged in a multi-selection.  Handle *visibility* is orthogonal and
- *   still controlled by `showVertexHandles`.  Defaults to `false`.
+   * @param {boolean} [options.singleEditMode=false]
+   *   When `true`, vertex-drag listeners (and `activeAnnotation`) are suppressed
+   *   when **more than one** annotation is selected — no single annotation can be
+   *   vertex-dragged in a multi-selection.  Handle *visibility* is orthogonal and
+   *   still controlled by `showVertexHandles`.  Defaults to `false`.
    */
   constructor(viewer, options = {}) {
     Object.assign(this, {
@@ -744,22 +770,27 @@ class ManagerSvgAnnotation {
       markerOptions: {},
       enableState: true,
       customState: null,
+      /** Default fill colour for annotations (overridden per-class with `fill`). @type {string} */
+      defaultFill: 'rgba(34,187,85,0.20)',
+      /** Default stroke colour for annotations (overridden per-class with `stroke`). @type {string} */
+      defaultStroke: '#22bb55',
+      /** Default fill opacity (overridden per-class with `fillOpacity`). @type {number} */
+      defaultFillOpacity: 1,
+      /** Default stroke width in model units (overridden per-class with `strokeWidth`). @type {number} */
+      defaultStrokeWidth: 2,
+      /** Fill colour for selected annotations (overridden per-class with `fillSelected`). @type {string} */
+      selectionFill: 'rgba(255,225,100,0.20)',
+      /** Stroke colour for selected annotations (overridden per-class with `strokeSelected`). @type {string} */
+      selectionStroke: '#aaaa00',
       /**
-       * Visual class definitions. Each entry drives the fill/stroke colours for
-       * all annotations whose `annotation.class` equals the entry's array index.
-       * @type {Array<{label:string, fill:string, stroke:string, fillOpacity:number,
-       *              strokeWidth:number, fillSelected:string, strokeSelected:string}>}
+       * Visual class definitions. Each entry is a named style override; any
+       * property omitted falls back to the manager-level `default*` values.
+       * @type {Array<{label:string, fill?:string, stroke?:string,
+       *              fillOpacity?:number, strokeWidth?:number,
+       *              fillSelected?:string, strokeSelected?:string}>}
        */
       classes: [
-        {
-          label: 'Default',
-          fill: '#ff0000',
-          stroke: '#ff0000',
-          fillOpacity: 0.7,
-          strokeWidth: 2,
-          fillSelected: '#ffd700',
-          strokeSelected: '#ffd700',
-        },
+        { label: 'Default' },
       ],
       /**
        * Default class index assigned to newly created annotations.
@@ -797,9 +828,6 @@ class ManagerSvgAnnotation {
           fill: '#fa5aff',
           stroke: '#fa5aff',
           fillOpacity: 0.7,
-          strokeWidth: 2,
-          fillSelected: '#ffd700',
-          strokeSelected: '#ffd700',
         });
       }
       this.groupAnnotationClass = idx;
@@ -1197,6 +1225,11 @@ class ManagerSvgAnnotation {
       Object.assign(anno.data, patch.data);
     }
 
+    if (Object.hasOwn(patch, 'class')) {
+      const isSelected = this.layer.selected?.has(anno.id) ?? false;
+      this._applyStyleToElements(anno, isSelected);
+    }
+
     anno.needsUpdate = true;
     this.viewer.redraw();
     this.emit('update', anno);
@@ -1359,6 +1392,34 @@ class ManagerSvgAnnotation {
     this.viewer.redraw();
   }
 
+  // ─── Class management ────────────────────────────────────────────────────
+
+  /**
+   * Replaces the classes array and immediately repaints all existing annotations.
+   * Safe to call at any time, including after an async fetch.
+   *
+   * @param {Array<{label:string, fill:string, stroke:string, fillOpacity?:number,
+   *                strokeWidth?:number, fillSelected?:string, strokeSelected?:string}>} classes
+   * @param {number} [defaultClassIndex] - New value for `defaultAnnotationClass`.
+   *   Unchanged if omitted.
+   *
+   * @example
+   * ```javascript
+   * const classes = await fetch('/api/classes').then(r => r.json());
+   * manager.setClasses(classes, 0);
+   * ```
+   */
+  setClasses(classes, defaultClassIndex) {
+    this.classes = classes;
+    if (defaultClassIndex !== undefined) this.defaultAnnotationClass = defaultClassIndex;
+    for (const anno of this.getAnnotations()) {
+      const isSelected = this.layer.selected?.has(anno.id) ?? false;
+      this._applyStyleToElements(anno, isSelected);
+      anno.needsUpdate = true;
+    }
+    if (this.getAnnotations().length) this.viewer.redraw();
+  }
+
   // ─── Active marker control ────────────────────────────────────────────────
 
   /**
@@ -1428,20 +1489,19 @@ class ManagerSvgAnnotation {
   _getClassStyle(anno, selected = false) {
     const idx = Number(anno.class) || 0;
     const cls = this.classes?.[idx] ?? this.classes?.[0] ?? {};
+    const fill        = cls.fill        ?? this.defaultFill        ?? 'rgba(34,187,85,0.20)';
+    const stroke      = cls.stroke      ?? this.defaultStroke      ?? '#22bb55';
+    const fillOpacity = cls.fillOpacity ?? this.defaultFillOpacity ?? 1;
+    const strokeWidth = cls.strokeWidth ?? this.defaultStrokeWidth ?? 2;
     if (selected) {
       return {
-        fill: cls.fillSelected ?? cls.fill ?? '#ffd700',
-        stroke: cls.strokeSelected ?? cls.stroke ?? '#ffd700',
-        fillOpacity: cls.fillOpacity ?? 0.7,
-        strokeWidth: cls.strokeWidth ?? 2,
+        fill:        cls.fillSelected   ?? this.selectionFill   ?? fill,
+        stroke:      cls.strokeSelected ?? this.selectionStroke ?? stroke,
+        fillOpacity,
+        strokeWidth,
       };
     }
-    return {
-      fill: cls.fill ?? '#ff0000',
-      stroke: cls.stroke ?? '#ff0000',
-      fillOpacity: cls.fillOpacity ?? 0.7,
-      strokeWidth: cls.strokeWidth ?? 2,
-    };
+    return { fill, stroke, fillOpacity, strokeWidth };
   }
 
   /**
@@ -1460,6 +1520,7 @@ class ManagerSvgAnnotation {
     const applyToEl = (el) => {
       if (el.classList?.contains('annotation-disk')) {
         el.setAttribute('fill', style.fill);
+        el.setAttribute('stroke', style.stroke);
         el.setAttribute('opacity', String(style.fillOpacity));
         el.style.cursor = selected ? 'grab' : '';
       } else if (el.classList?.contains('annotation-polyline')) {
@@ -2926,6 +2987,7 @@ class RectMarker extends Marker {
       stroke: style.stroke ?? '#ff0000',
       'stroke-width': sw,
       class: 'annotation-rect',
+      style: _SHADOW,
     });
 
     // Two dots: first corner (anchor) + second corner (follows mouse)
@@ -3226,6 +3288,7 @@ class FreehandMarker extends Marker {
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round',
       fill: 'none',
+      style: _SHADOW,
     });
 
     const hit = Util.createSVGElement('polyline', {
@@ -3300,6 +3363,7 @@ class FreehandMarker extends Marker {
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
           fill: style.fill ?? 'none',
+          style: _SHADOW,
         });
         stroke.parentNode?.replaceChild(polygon, stroke);
         const idx = annotation.elements.indexOf(stroke);
