@@ -1001,9 +1001,10 @@ class ManagerSvgAnnotation {
    * Fires the `'modeChange'` signal when the mode actually changes.
    *
    * @param {'idle'|'create'|'edit'} mode
+   * @param {boolean} [fireEvent=true] Whether to fire the 'modeChange' event if the mode changes.
    * @returns {string} The new mode.
    */
-  setMode(mode) {
+  setMode(mode, fireEvent = true) {
     const valid = ['idle', 'create', 'edit'];
     if (!valid.includes(mode))
       throw new Error(`ManagerSvgAnnotation.setMode: invalid mode '${mode}'. Valid: ${valid.join(', ')}`);
@@ -1024,7 +1025,7 @@ class ManagerSvgAnnotation {
       this.viewer.panzoom.enableDoubleTapZoom = (mode === 'idle');
 
     this._syncPointerEvents();
-    if (mode !== prev) this.emit('modeChange', mode);
+    if (mode !== prev && fireEvent) this.emit('modeChange', mode);
     return mode;
   }
 
