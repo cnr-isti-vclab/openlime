@@ -49,6 +49,7 @@ const core = [
 	'./src/ShaderAnisotropicDiffusion.js',
 	'./src/Controller.js',
 	'./src/Controller2D.js',
+	'./src/ControllerBearing.js',
 	'./src/ControllerPanZoom.js',
 	'./src/PointerManager.js',
 	'./src/Viewer.js',
