@@ -454,7 +454,7 @@
         const manager = new OpenLIME.ManagerSvgAnnotation(lime, {
             // Conservation/restoration semantic classes — assign to any annotation
             // regardless of which marker tool was used to draw it.
-            classes: {
+            semanticClasses: {
                 // default:         { label: 'Default',         fill: 'rgba(34,187,85,0.15)',  stroke: '#22bb55', strokeWidth: 2 },
                 surface:         { label: 'Surface',         fill: 'rgba(34,187,85,0.15)',  stroke: '#22bb55', strokeWidth: 2 },
                 crack:           { label: 'Crack',           fill: 'none',                   stroke: '#e63946', strokeWidth: 1.5 },
@@ -548,7 +548,7 @@
             '7': 'inscription',
         };
 
-        // Demo shortcuts for the new class APIs:
+        // Demo shortcuts for semantic/structural class APIs:
         // - [1..7] assign semantic class to selected annotations
         // - [0] clear semantic class (falls back to manager default)
         // - [u] toggle underEditing structural class on selection
@@ -633,7 +633,7 @@
 
         // When pencil mode is activated, deselect all annotations
         ui.addEvent('pencilEnabled', () => {
-            manager.deselectAll(); // colours restored automatically from classes
+            manager.deselectAll(); // colours restored automatically from semantic/structural styles
             syncMarkerToolbarEnabled();
             if (selectedMarkerKey && markerConfigs[selectedMarkerKey]) {
                 // Re-apply the selected marker so manager mode/options match UI state.

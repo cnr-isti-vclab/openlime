@@ -288,7 +288,7 @@ class Marker {
  * regardless of zoom level.
  *
  * Colors are **not** stored in the marker; they are resolved by
- * `ManagerSvgAnnotation` from its `classes` array and passed as the `style`
+ * `ManagerSvgAnnotation` from its `semanticClasses` map and passed as the `style`
  * parameter to each method.
  *
  * Stored geometry keys on `annotation.data`:
@@ -369,7 +369,7 @@ class DiskMarker extends Marker {
  * - **Escape** cancels and removes the draft annotation.
  *
  * Colors are **not** stored in the marker; they are resolved by
- * `ManagerSvgAnnotation` from its `classes` array and passed as the `style`
+ * `ManagerSvgAnnotation` from its `semanticClasses` map and passed as the `style`
  * parameter to each method.
  *
  * Stored geometry keys on `annotation.data`:
@@ -694,7 +694,7 @@ class PolylineMarker extends Marker {
  * });
  *
  * // Add metadata from outside
- * manager.updateAnnotation(anno.id, { label: 'Crack A', class: 'defect' });
+ * manager.updateAnnotation(anno.id, { label: 'Crack A', semanticClass: 'defect' });
  *
  * // Delete programmatically
  * manager.deleteAnnotation(anno.id);
@@ -820,14 +820,15 @@ class ManagerSvgAnnotation {
       preloadStructuralFilters: true,
       /**
        * Semantic class definitions keyed by class ID.
-       * For backward compatibility, an Array is also accepted and normalized.
        * @type {Object<string, {label:string, fill?:string, stroke?:string,
        *              fillOpacity?:number, strokeWidth?:number,
        *              fillSelected?:string, strokeSelected?:string,
       *              fillUnderEditing?:string, strokeUnderEditing?:string,
-      *              filter?:string, filterSelected?:string, filterUnderEditing?:string}>|Array<Object>}
+      *              filter?:string, filterSelected?:string, filterUnderEditing?:string}>}
        */
-      classes: [{ label: 'Default' }],
+      semanticClasses: {
+        default: { label: 'Default' },
+      },
       /**
        * Structural class definitions used as state overlays.
       * @type {Object<string, {fill?:string, stroke?:string, fillOpacity?:number, strokeWidth?:number, filter?:string}>}
@@ -838,13 +839,8 @@ class ManagerSvgAnnotation {
         underEditing: {},
       },
       /**
-       * Default semantic class assigned to newly created annotations.
-       * @type {string|number}
-       */
-      defaultAnnotationClass: 'default',
-      /**
-       * Alias for `defaultAnnotationClass` (semantic class ID).
-       * @type {string|number}
+        * Default semantic class assigned to newly created annotations.
+        * @type {string}
        */
       defaultSemanticClass: 'default',
       /**
@@ -872,9 +868,8 @@ class ManagerSvgAnnotation {
     this.labelStyle = { ...defaultLabelStyle, ...(this.labelStyle ?? {}) };
 
     // Normalize semantic and structural class registries.
-    this.setSemanticClasses(this.classes, this.defaultSemanticClass ?? this.defaultAnnotationClass, false);
+    this.setSemanticClasses(this.semanticClasses, this.defaultSemanticClass, false);
     this.setStructuralClasses(this.structuralClasses, false);
-    this.defaultAnnotationClass = this.defaultSemanticClass;
 
     // Resolve the semantic class used for grouped annotations.
     // Priority: options.groupAnnotationClass > class labelled 'Group'/'group' > auto-created entry.
@@ -894,7 +889,6 @@ class ManagerSvgAnnotation {
         };
         if (!this.semanticClassOrder.includes('group')) this.semanticClassOrder.push('group');
         this.groupAnnotationClass = 'group';
-        this._syncLegacyClassesArray();
       }
     }
 
@@ -1206,7 +1200,7 @@ class ManagerSvgAnnotation {
    * @param {Object}   [opts.markerOptions] - Override marker constructor options.
    * @param {string}   [opts.label='']
    * @param {string}   [opts.description='']
-   * @param {string}   [opts.class='']
+  * @param {string}   [opts.semanticClass]
    * @param {number}   [opts.publish=1]
    * @param {Object}   [opts.data={}]       - Extra custom data merged into `annotation.data`.
    * @param {boolean}  [opts.select=false]  - Select the annotation after creation.
@@ -1223,8 +1217,7 @@ class ManagerSvgAnnotation {
     const annotation = this.layer.newAnnotation();
     annotation.label = opts.label ?? '';
     annotation.description = opts.description ?? '';
-    const semanticClass = this._resolveSemanticClassId(opts.semanticClass ?? opts.class);
-    annotation.class = semanticClass;
+    const semanticClass = this._resolveSemanticClassId(opts.semanticClass);
     annotation.semanticClass = semanticClass;
     annotation.structuralClass = this._resolveStructuralClassId(opts.structuralClass);
     annotation.type = 'point';
@@ -1278,8 +1271,7 @@ class ManagerSvgAnnotation {
    * @param {Object} patch
    * @param {string}  [patch.label]
    * @param {string}  [patch.description]
-  * @param {string|number|null}  [patch.class]         - Legacy alias for semantic class.
-  * @param {string|number|null}  [patch.semanticClass] - Semantic class id/index.
+  * @param {string|null}         [patch.semanticClass] - Semantic class id or label.
   * @param {string|null}         [patch.structuralClass] - Structural class id.
    * @param {number}  [patch.publish]
   * @param {string|null}  [patch.fill]        - Per-annotation fill override.
@@ -1298,13 +1290,12 @@ class ManagerSvgAnnotation {
       return null;
     }
 
-    const scalarKeys = ['label', 'description', 'class', 'semanticClass', 'structuralClass', 'publish',
+    const scalarKeys = ['label', 'description', 'semanticClass', 'structuralClass', 'publish',
               'fill', 'stroke', 'fillOpacity', 'strokeWidth', 'filter'];
     for (const key of scalarKeys) {
       if (!Object.hasOwn(patch, key)) continue;
-      if (key === 'class' || key === 'semanticClass') {
+      if (key === 'semanticClass') {
         const resolved = this._resolveSemanticClassId(patch[key]);
-        anno.class = resolved;
         anno.semanticClass = resolved;
         continue;
       }
@@ -1485,47 +1476,14 @@ class ManagerSvgAnnotation {
   // ─── Class management ────────────────────────────────────────────────────
 
   /**
-   * Turns a label/id into a stable semantic class ID.
-   * @param {string} raw
-   * @param {number} fallbackIndex
-   * @returns {string}
-   * @private
-   */
-  _toSemanticClassId(raw, fallbackIndex = 0) {
-    const source = String(raw ?? '').trim();
-    if (!source) return `class_${fallbackIndex}`;
-    const id = source
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '_')
-      .replace(/^_+|_+$/g, '');
-    return id || `class_${fallbackIndex}`;
-  }
-
-  /**
-   * Keeps the legacy `classes` array in sync with semantic classes.
-   * @private
-   */
-  _syncLegacyClassesArray() {
-    this.classes = this.semanticClassOrder.map((id) => ({
-      id,
-      ...this.semanticClasses[id],
-    }));
-  }
-
-  /**
    * Resolves a semantic class reference to a class ID in `semanticClasses`.
-   * Supports numeric indexes (legacy), IDs, labels and empty values.
-   * @param {string|number|null|undefined} classRef
+   * Supports IDs, labels and empty values.
+   * @param {string|null|undefined} classRef
    * @returns {string}
    * @private
    */
   _resolveSemanticClassId(classRef) {
     if (classRef == null || classRef === '') return this.defaultSemanticClass;
-
-    const maybeNumber = Number(classRef);
-    if (Number.isInteger(maybeNumber) && String(classRef).trim() !== '') {
-      return this.semanticClassOrder[maybeNumber] ?? this.defaultSemanticClass;
-    }
 
     const id = String(classRef);
     if (this.semanticClasses[id]) return id;
@@ -1677,32 +1635,16 @@ class ManagerSvgAnnotation {
   /**
    * Replaces semantic classes and optionally updates the default semantic class.
    *
-   * @param {Array|Object<string, Object>} classes
-   * @param {string|number} [defaultClass]
+   * @param {Object<string, Object>} semanticClasses
+   * @param {string} [defaultClass]
    * @param {boolean} [repaint=true]
    */
-  setSemanticClasses(classes, defaultClass, repaint = true) {
+  setSemanticClasses(semanticClasses, defaultClass, repaint = true) {
     const byId = {};
     const order = [];
 
-    if (Array.isArray(classes)) {
-      classes.forEach((entry, i) => {
-        if (!entry || typeof entry !== 'object') return;
-        const preferredId = entry.id ?? entry.classId ?? entry.label;
-        let id = this._toSemanticClassId(preferredId, i);
-        let suffix = 1;
-        while (byId[id]) {
-          id = `${this._toSemanticClassId(preferredId, i)}_${suffix++}`;
-        }
-        const cls = { ...entry };
-        delete cls.id;
-        delete cls.classId;
-        if (!cls.label) cls.label = entry.label ?? id;
-        byId[id] = cls;
-        order.push(id);
-      });
-    } else if (classes && typeof classes === 'object') {
-      for (const [id, entry] of Object.entries(classes)) {
+    if (semanticClasses && typeof semanticClasses === 'object') {
+      for (const [id, entry] of Object.entries(semanticClasses)) {
         if (!entry || typeof entry !== 'object') continue;
         byId[id] = { label: entry.label ?? id, ...entry };
         order.push(id);
@@ -1718,11 +1660,9 @@ class ManagerSvgAnnotation {
     this.semanticClassOrder = order;
 
     const resolvedDefault = this._resolveSemanticClassId(
-      defaultClass ?? this.defaultSemanticClass ?? this.defaultAnnotationClass
+      defaultClass ?? this.defaultSemanticClass
     );
     this.defaultSemanticClass = resolvedDefault;
-    this.defaultAnnotationClass = resolvedDefault;
-    this._syncLegacyClassesArray();
 
     if (repaint) this._repaintClassStyles();
   }
@@ -1899,10 +1839,10 @@ class ManagerSvgAnnotation {
   // ─── Internal: style resolution ─────────────────────────────────────────────
 
   /**
-   * Resolves the visual style for `anno` from semantic and structural classes.
+  * Resolves the visual style for `anno` from semantic and structural classes.
    *
    * Fallback order:
-   * - semantic class from `anno.semanticClass` / `anno.class`
+  * - semantic class from `anno.semanticClass`
    * - manager default semantic class
    * - manager-level default fill/stroke options
    *
@@ -1911,15 +1851,13 @@ class ManagerSvgAnnotation {
    * - else if selected, `structuralClasses.selected` is applied
    * - else if `anno.editing`, `structuralClasses.underEditing` is applied
    *
-   * `selected` can be passed as boolean for backward compatibility.
-   *
    * @param {Annotation} anno
    * @param {boolean} [selected=false]
   * @returns {{fill:string, stroke:string, fillOpacity:number, strokeWidth:number, filter:(string|null)}}
    * @private
    */
   _getClassStyle(anno, selected = false) {
-    const semanticId = this._resolveSemanticClassId(anno.semanticClass ?? anno.class);
+    const semanticId = this._resolveSemanticClassId(anno.semanticClass);
     const cls = this.semanticClasses?.[semanticId] ?? {};
 
     let fill        = cls.fill        ?? this.defaultFill        ?? 'rgba(0, 0, 0, 0.30)';
@@ -2800,7 +2738,6 @@ class ManagerSvgAnnotation {
     const annotation = this.layer.newAnnotation();
     annotation.label = '';
     annotation.description = '';
-    annotation.class = this.defaultSemanticClass;
     annotation.semanticClass = this.defaultSemanticClass;
     annotation.structuralClass = null;
     annotation.publish = 1;
@@ -3218,7 +3155,8 @@ class ManagerSvgAnnotation {
         id: anno.id,
         label: anno.label,
         description: anno.description,
-        class: anno.class,
+        semanticClass: anno.semanticClass,
+        structuralClass: anno.structuralClass,
         publish: anno.publish,
         data: JSON.parse(JSON.stringify(anno.data ?? {})),
         svg: anno.svg,
@@ -3231,7 +3169,8 @@ class ManagerSvgAnnotation {
     const groupAnno = this.layer.newAnnotation();
     groupAnno.label = sources.map(a => a.label).filter(Boolean).join(', ') || 'Group';
     groupAnno.description = '';
-    groupAnno.class = this.groupAnnotationClass;//sources[0].class;
+    groupAnno.semanticClass = this.groupAnnotationClass;
+    groupAnno.structuralClass = null;
     groupAnno.publish = sources[0].publish;
     groupAnno.svg = groupedSvgString;
     groupAnno.data._grouped = true;
@@ -3274,7 +3213,7 @@ class ManagerSvgAnnotation {
    * Splits a grouped annotation back into its original individual annotations.
    *
    * Each `<g id="originalId">` inside the group's SVG is extracted and used to
-   * recreate an annotation with the original ID, label, class, and custom data
+  * recreate an annotation with the original ID, label, semantic class, and custom data
    * that were stored at grouping time.
    *
    * @param {string} id - ID of the grouped annotation to ungroup.
@@ -3333,7 +3272,8 @@ class ManagerSvgAnnotation {
         id: origId,
         label: meta.label ?? '',
         description: meta.description ?? '',
-        class: meta.class ?? groupAnno.class,
+        semanticClass: meta.semanticClass ?? groupAnno.semanticClass,
+        structuralClass: meta.structuralClass ?? null,
         publish: meta.publish ?? groupAnno.publish,
         data: meta.data ? JSON.parse(JSON.stringify(meta.data)) : {},
         svg: svgString,
