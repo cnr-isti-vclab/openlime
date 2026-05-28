@@ -6,8 +6,9 @@ import { addSignals } from './Signals.js';
 import { ramerDouglasPeucker, smooth, relaxDenseZigZagPoints } from './Simplify.js';
 
 // CSS drop-shadow() is post-rasterisation (CSS pixels), so the shadow keeps a
-// constant visual size at every zoom level.
-const _SHADOW        = 'filter: drop-shadow(1.5px 1.5px 2.0px rgba(0,0,0,0.80))';
+// constant visual size at every zoom level (unlike SVG feDropShadow in user space).
+const _SHADOW_FILTER = 'drop-shadow(1.5px 1.5px 2.0px rgba(0,0,0,0.80))';
+const _SHADOW        = `filter: ${_SHADOW_FILTER}`;
 const _SHADOW_RUBBER = 'filter: drop-shadow(1px 1px 1.8px rgba(0,0,0,0.40))';
 
 /**
@@ -1456,16 +1457,22 @@ class ManagerSvgAnnotation {
    * @param {Object[]} jsonLdArray
    */
   importAnnotations(jsonLdArray) {
+    let imported = 0;
     for (const entry of jsonLdArray) {
       try {
         const anno = Annotation.fromJsonLd(entry);
         anno.needsUpdate = true;
         this.layer.annotations.push(anno);
+        imported++;
       } catch (err) {
         console.warn('ManagerSvgAnnotation.importAnnotations: skipping entry', entry, err);
       }
     }
-    this.viewer.redraw();
+    if (imported > 0) {
+      this._repaintClassStyles();
+    } else {
+      this.viewer.redraw();
+    }
   }
 
   // ─── Class management ────────────────────────────────────────────────────
@@ -1894,6 +1901,11 @@ class ManagerSvgAnnotation {
     strokeWidth = anno.strokeWidth ?? strokeWidth;
     filter = anno.filter ?? filter;
 
+    // Imported SVG lacks marker inline drop-shadow; match creation-time marker shadow.
+    if (!filter) {
+      filter = _SHADOW_FILTER;
+    }
+
     return { fill, stroke, fillOpacity, strokeWidth, filter };
   }
 
@@ -1921,7 +1933,7 @@ class ManagerSvgAnnotation {
       const baseFilter = (el.dataset?.olBaseFilter ?? '').trim();
 
       if (style.filter) {
-        el.style.filter = baseFilter ? `${style.filter} ${baseFilter}` : style.filter;
+        el.style.filter = style.filter;
       } else if (baseFilter) {
         el.style.filter = baseFilter;
       } else {
