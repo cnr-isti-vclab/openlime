@@ -763,6 +763,8 @@ class ManagerSvgAnnotation {
    * @param {string} [options.labelStyle.fontFamily='sans-serif']
    * @param {string|number} [options.labelStyle.fontWeight=600]
    * @param {string} [options.labelStyle.textFill='#ffffff']
+   * @param {string} [options.labelStyle.textFillSelected]
+   *   Label text colour when the annotation is selected; defaults to resolved shape stroke.
    * @param {string} [options.labelStyle.textStroke='none']
    * @param {number} [options.labelStyle.textStrokeWidthPx=0]
    * @param {string} [options.labelStyle.backgroundFill='rgba(0, 0, 0, 0.72)']
@@ -1973,6 +1975,10 @@ class ManagerSvgAnnotation {
     for (const el of anno.elements ?? []) {
       applyToEl(el);
     }
+
+    if (this.showAnnotationLabels && anno.label?.trim()) {
+      delete anno._labelLayoutCacheKey;
+    }
   }
 
   // ─── Internal: layer resolution ───────────────────────────────────────────
@@ -2104,29 +2110,31 @@ class ManagerSvgAnnotation {
       style = this._getClassStyle(anno, selected);
     }
 
-    this._updateLabelElement(anno, transform);
+    const selected = this.layer.selected?.has(anno.id) ?? false;
+    this._updateLabelElement(anno, transform, selected);
   }
 
   /**
    * Synchronises a text element for the annotation label.
    * Maintains screen-space font size and places it on top of the annotation's bounding box.
    * @param {Annotation} anno 
-   * @param {Object} transform 
+   * @param {Object} transform
+   * @param {boolean} [selected=false]
    * @private
    */
-  _updateLabelElement(anno, transform) {
+  _updateLabelElement(anno, transform, selected = false) {
     const hasLabel = this.showAnnotationLabels && anno.label && anno.label.trim() !== '';
     let labelEl = anno.elements.find(el => el.classList?.contains('annotation-label'));
     let bgEl = anno.elements.find(el => el.classList?.contains('annotation-label-bg'));
 
     if (hasLabel) {
       if (anno.needsUpdate) {
-        delete anno._ocraLabelLayoutKey;
+        delete anno._labelLayoutCacheKey;
       }
 
       const zoom = transform?.z ?? 1;
-      const layoutKey = `${zoom}|${anno.label}|${this._annotationGeometryLayoutKey(anno)}`;
-      if (anno._ocraLabelLayoutKey === layoutKey) {
+      const layoutKey = `${zoom}|${anno.label}|${this._annotationGeometryLayoutKey(anno)}|${selected ? 's' : 'n'}`;
+      if (anno._labelLayoutCacheKey === layoutKey) {
         return;
       }
       const cfg = this.labelStyle ?? {};
@@ -2166,7 +2174,11 @@ class ManagerSvgAnnotation {
       const bgStrokeWidth = (cfg.backgroundStrokeWidthPx ?? 1) / zoom;
       const textStrokeWidth = (cfg.textStrokeWidthPx ?? 0) / zoom;
 
-      labelEl.setAttribute('fill', cfg.textFill ?? '#ffffff');
+      let textFill = cfg.textFill ?? '#ffffff';
+      if (selected) {
+        textFill = cfg.textFillSelected ?? this._getClassStyle(anno, true).stroke ?? textFill;
+      }
+      labelEl.setAttribute('fill', textFill);
       labelEl.setAttribute('font-family', String(cfg.fontFamily ?? 'sans-serif'));
       labelEl.setAttribute('font-weight', String(cfg.fontWeight ?? 600));
       labelEl.setAttribute('stroke', cfg.textStroke ?? 'none');
@@ -2265,14 +2277,14 @@ class ManagerSvgAnnotation {
         bgEl.setAttribute('height', String(bgHeight));
 
         if (labelPositioned) {
-          anno._ocraLabelLayoutKey = layoutKey;
+          anno._labelLayoutCacheKey = layoutKey;
         }
 
       } catch (e) {
         // Safe fallback
       }
     } else {
-      delete anno._ocraLabelLayoutKey;
+      delete anno._labelLayoutCacheKey;
       if (bgEl) {
         const idx = anno.elements.indexOf(bgEl);
         if (idx !== -1) {
