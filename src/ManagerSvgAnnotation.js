@@ -750,6 +750,10 @@ class ManagerSvgAnnotation {
    *   Fill colour for selected annotations. Per-class `fillSelected` overrides this.
    * @param {string} [options.selectionStroke='#aaaa00']
    *   Stroke colour for selected annotations. Per-class `strokeSelected` overrides this.
+  * @param {Object<string, Object>} [options.semanticClasses]
+  *   Semantic class definitions keyed by class ID (e.g. `{ crack: { stroke: '#f00' } }`).
+  * @param {Object<string, Object>} [options.structuralClasses]
+  *   Structural class definitions keyed by class ID (e.g. `default`, `selected`, `underEditing`).
    * @param {Function} [options.onCreate]   - Shorthand: `.addEvent('create', fn)`
    * @param {Function} [options.onUpdate]   - Shorthand: `.addEvent('update', fn)`
    * @param {Function} [options.onDelete]   - Shorthand: `.addEvent('delete', fn)`
@@ -1475,6 +1479,24 @@ class ManagerSvgAnnotation {
     } else {
       this.viewer.redraw();
     }
+
+    this._schedulePostLayoutRedraw();
+  }
+
+  /**
+   * Schedules an extra redraw pass after SVG text/layout settles in DOM.
+   * This keeps annotation label background sizing stable right after imports.
+   * @private
+   */
+  _schedulePostLayoutRedraw() {
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        this.viewer.redraw();
+      });
+    });
   }
 
   // ─── Class management ────────────────────────────────────────────────────
