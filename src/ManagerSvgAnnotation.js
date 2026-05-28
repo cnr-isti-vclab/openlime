@@ -839,11 +839,6 @@ class ManagerSvgAnnotation {
         underEditing: {},
       },
       /**
-        * Default semantic class assigned to newly created annotations.
-        * @type {string}
-       */
-      defaultSemanticClass: 'default',
-      /**
        * When true, vertex-drag listeners and `activeAnnotation` are suppressed
        * whenever more than one annotation is selected.  Handle *visibility* is
        * unaffected: dots still follow `showVertexHandles` regardless.
@@ -868,7 +863,7 @@ class ManagerSvgAnnotation {
     this.labelStyle = { ...defaultLabelStyle, ...(this.labelStyle ?? {}) };
 
     // Normalize semantic and structural class registries.
-    this.setSemanticClasses(this.semanticClasses, this.defaultSemanticClass, false);
+    this.setSemanticClasses(this.semanticClasses, false);
     this.setStructuralClasses(this.structuralClasses, false);
 
     // Resolve the semantic class used for grouped annotations.
@@ -1479,11 +1474,11 @@ class ManagerSvgAnnotation {
    * Resolves a semantic class reference to a class ID in `semanticClasses`.
    * Supports IDs, labels and empty values.
    * @param {string|null|undefined} classRef
-   * @returns {string}
+   * @returns {string|null}
    * @private
    */
   _resolveSemanticClassId(classRef) {
-    if (classRef == null || classRef === '') return this.defaultSemanticClass;
+    if (classRef == null || classRef === '') return null;
 
     const id = String(classRef);
     if (this.semanticClasses[id]) return id;
@@ -1493,7 +1488,7 @@ class ManagerSvgAnnotation {
     );
     if (byLabel) return byLabel;
 
-    return this.defaultSemanticClass;
+    return null;
   }
 
   /**
@@ -1633,13 +1628,12 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Replaces semantic classes and optionally updates the default semantic class.
+   * Replaces semantic classes map.
    *
    * @param {Object<string, Object>} semanticClasses
-   * @param {string} [defaultClass]
    * @param {boolean} [repaint=true]
    */
-  setSemanticClasses(semanticClasses, defaultClass, repaint = true) {
+  setSemanticClasses(semanticClasses, repaint = true) {
     const byId = {};
     const order = [];
 
@@ -1658,11 +1652,6 @@ class ManagerSvgAnnotation {
 
     this.semanticClasses = byId;
     this.semanticClassOrder = order;
-
-    const resolvedDefault = this._resolveSemanticClassId(
-      defaultClass ?? this.defaultSemanticClass
-    );
-    this.defaultSemanticClass = resolvedDefault;
 
     if (repaint) this._repaintClassStyles();
   }
@@ -1699,7 +1688,7 @@ class ManagerSvgAnnotation {
 
   /**
    * Assigns/clears semantic class for an annotation.
-   * Passing `null` or empty string restores the manager default semantic class.
+    * Passing `null` or empty string clears the semantic class.
    *
    * @param {string} id
    * @param {string|number|null} classId
@@ -1713,7 +1702,7 @@ class ManagerSvgAnnotation {
   /**
    * Assigns/clears structural class for an annotation.
    * Passing `null` or empty string clears the structural class and falls back
-   * to semantic class rendering (or manager default semantic class).
+    * to semantic class rendering (or manager base defaults when semantic is absent).
    *
    * @param {string} id
    * @param {string|null} classId
@@ -1843,8 +1832,7 @@ class ManagerSvgAnnotation {
    *
    * Fallback order:
   * - semantic class from `anno.semanticClass`
-   * - manager default semantic class
-   * - manager-level default fill/stroke options
+    * - manager-level default fill/stroke options
    *
    * Structural class behavior:
    * - if `anno.structuralClass` is set and exists, it is applied as overlay
@@ -1858,7 +1846,7 @@ class ManagerSvgAnnotation {
    */
   _getClassStyle(anno, selected = false) {
     const semanticId = this._resolveSemanticClassId(anno.semanticClass);
-    const cls = this.semanticClasses?.[semanticId] ?? {};
+    const cls = semanticId ? (this.semanticClasses?.[semanticId] ?? {}) : {};
 
     let fill        = cls.fill        ?? this.defaultFill        ?? 'rgba(0, 0, 0, 0.30)';
     let stroke      = cls.stroke      ?? this.defaultStroke      ?? '#000000';
@@ -2738,7 +2726,7 @@ class ManagerSvgAnnotation {
     const annotation = this.layer.newAnnotation();
     annotation.label = '';
     annotation.description = '';
-    annotation.semanticClass = this.defaultSemanticClass;
+    annotation.semanticClass = null;
     annotation.structuralClass = null;
     annotation.publish = 1;
     annotation.data = {};
