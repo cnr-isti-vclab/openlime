@@ -453,15 +453,23 @@
         const manager = new OpenLIME.ManagerSvgAnnotation(lime, {
             // Conservation/restoration semantic classes — assign to any annotation
             // regardless of which marker tool was used to draw it.
-            classes: [
-                { label: 'Surface',          fill: 'rgba(34,187,85,0.15)',  stroke: '#22bb55', strokeWidth: 2 },
-                { label: 'Crack',            fill: 'none',                   stroke: '#e63946', strokeWidth: 1.5 },
-                { label: 'Loss',             fill: 'rgba(230,57,70,0.20)',   stroke: '#e63946', strokeWidth: 2 },
-                { label: 'Corrosion',        fill: 'rgba(255,140,0,0.20)',   stroke: '#ff8c00', strokeWidth: 2 },
-                { label: 'Stain',            fill: 'rgba(100,160,255,0.20)', stroke: '#64a0ff', strokeWidth: 2 },
-                { label: 'Previous Repair',  fill: 'rgba(200,100,255,0.15)', stroke: '#c864ff', strokeWidth: 2 },
-                { label: 'Inscription',      fill: 'none',                   stroke: '#ffd700', strokeWidth: 1.5 },
-            ],
+            classes: {
+                default:         { label: 'Default',         fill: 'rgba(34,187,85,0.15)',  stroke: '#22bb55', strokeWidth: 2 },
+                surface:         { label: 'Surface',         fill: 'rgba(34,187,85,0.15)',  stroke: '#22bb55', strokeWidth: 2 },
+                crack:           { label: 'Crack',           fill: 'none',                   stroke: '#e63946', strokeWidth: 1.5 },
+                loss:            { label: 'Loss',            fill: 'rgba(230,57,70,0.20)',   stroke: '#e63946', strokeWidth: 2 },
+                corrosion:       { label: 'Corrosion',       fill: 'rgba(255,140,0,0.20)',   stroke: '#ff8c00', strokeWidth: 2 },
+                stain:           { label: 'Stain',           fill: 'rgba(100,160,255,0.20)', stroke: '#64a0ff', strokeWidth: 2 },
+                previous_repair: { label: 'Previous Repair', fill: 'rgba(200,100,255,0.15)', stroke: '#c864ff', strokeWidth: 2 },
+                inscription:     { label: 'Inscription',     fill: 'none',                   stroke: '#ffd700', strokeWidth: 1.5 },
+            },
+            structuralClasses: {
+                default: {},
+                selected: { stroke: '#aaaa00', fill: 'rgba(255,225,100,0.20)' },
+                // Built-in preloaded filters in ManagerSvgAnnotation:
+                // olime-glow-soft, olime-shadow-soft, olime-outline-soft
+                underEditing: { strokeWidth: 3, fillOpacity: 0.8, filter: 'url(#olime-glow-soft)' },
+            },
             // With singleEditMode, vertex handles are shown only when exactly
             // one annotation is selected; activeAnnotation returns null otherwise.
             singleEditMode: true,
@@ -521,6 +529,61 @@
                     annotations.map(a => ({ id: a.id, label: a.label }))
                 );
             },
+        });
+
+        const semanticHotkeys = {
+            '1': 'surface',
+            '2': 'crack',
+            '3': 'loss',
+            '4': 'corrosion',
+            '5': 'stain',
+            '6': 'previous_repair',
+            '7': 'inscription',
+        };
+
+        // Demo shortcuts for the new class APIs:
+        // - [1..7] assign semantic class to selected annotations
+        // - [0] clear semantic class (falls back to manager default)
+        // - [u] toggle underEditing structural class on selection
+        // - [h] / [Shift+h] set/clear a custom structural class on selection
+        manager.setStructuralClass('hovered', { strokeWidth: 3 });
+        window.addEventListener('keydown', (e) => {
+            if (!manager.active || manager.mode !== 'edit') return;
+            const selectedIds = [...(manager.layer?.selected ?? [])];
+            if (!selectedIds.length) return;
+
+            const semanticId = semanticHotkeys[e.key];
+            if (semanticId) {
+                selectedIds.forEach((id) => manager.setAnnotationSemanticClass(id, semanticId));
+                e.preventDefault();
+                return;
+            }
+
+            if (e.key === '0') {
+                selectedIds.forEach((id) => manager.setAnnotationSemanticClass(id, null));
+                e.preventDefault();
+                return;
+            }
+
+            if (e.key.toLowerCase() === 'u') {
+                const allUnderEditing = selectedIds.every((id) => {
+                    const anno = manager.getAnnotationById(id);
+                    return anno?.structuralClass === 'underEditing';
+                });
+                const targetStructural = allUnderEditing ? null : 'underEditing';
+                // Use the current selection as the input set, then deselect to
+                // make the underEditing glow visible without selected styling.
+                manager.deselectAll();
+                selectedIds.forEach((id) => manager.setAnnotationStructuralClass(id, targetStructural));
+                e.preventDefault();
+                return;
+            }
+
+            if (e.key.toLowerCase() === 'h') {
+                const structuralId = e.shiftKey ? null : 'hovered';
+                selectedIds.forEach((id) => manager.setAnnotationStructuralClass(id, structuralId));
+                e.preventDefault();
+            }
         });
 
         // ── UI ───────────────────────────────────────────────────────────────

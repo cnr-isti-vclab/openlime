@@ -783,22 +783,39 @@ class ManagerSvgAnnotation {
       /** Stroke colour for selected annotations (overridden per-class with `strokeSelected`). @type {string} */
       selectionStroke: '#aaaa00',
       /**
-       * Visual class definitions. Each entry is a named style override; any
-       * property omitted falls back to the manager-level `default*` values.
-       * @type {Array<{label:string, fill?:string, stroke?:string,
-       *              fillOpacity?:number, strokeWidth?:number,
-       *              fillSelected?:string, strokeSelected?:string}>}
+       * When true, preload a small set of reusable structural SVG filters in defs.
+       * @type {boolean}
        */
-      classes: [
-        { label: 'Default' },
-      ],
+      preloadStructuralFilters: true,
       /**
-       * Default class index assigned to newly created annotations.
-       * Change this (or set `annotation.class` manually) to draw new annotations
-       * with a specific style from `classes`.
-       * @type {number}
+       * Semantic class definitions keyed by class ID.
+       * For backward compatibility, an Array is also accepted and normalized.
+       * @type {Object<string, {label:string, fill?:string, stroke?:string,
+       *              fillOpacity?:number, strokeWidth?:number,
+       *              fillSelected?:string, strokeSelected?:string,
+      *              fillUnderEditing?:string, strokeUnderEditing?:string,
+      *              filter?:string, filterSelected?:string, filterUnderEditing?:string}>|Array<Object>}
        */
-      defaultAnnotationClass: 0,
+      classes: [{ label: 'Default' }],
+      /**
+       * Structural class definitions used as state overlays.
+      * @type {Object<string, {fill?:string, stroke?:string, fillOpacity?:number, strokeWidth?:number, filter?:string}>}
+       */
+      structuralClasses: {
+        default: {},
+        selected: {},
+        underEditing: {},
+      },
+      /**
+       * Default semantic class assigned to newly created annotations.
+       * @type {string|number}
+       */
+      defaultAnnotationClass: 'default',
+      /**
+       * Alias for `defaultAnnotationClass` (semantic class ID).
+       * @type {string|number}
+       */
+      defaultSemanticClass: 'default',
       /**
        * When true, vertex-drag listeners and `activeAnnotation` are suppressed
        * whenever more than one annotation is selected.  Handle *visibility* is
@@ -817,20 +834,31 @@ class ManagerSvgAnnotation {
       showVertexHandles: true,
     }, options);
 
-    // Resolve the class index used for grouped annotations.
+    // Normalize semantic and structural class registries.
+    this.setSemanticClasses(this.classes, this.defaultSemanticClass ?? this.defaultAnnotationClass, false);
+    this.setStructuralClasses(this.structuralClasses, false);
+    this.defaultAnnotationClass = this.defaultSemanticClass;
+
+    // Resolve the semantic class used for grouped annotations.
     // Priority: options.groupAnnotationClass > class labelled 'Group'/'group' > auto-created entry.
     if (this.groupAnnotationClass == null) {
-      let idx = this.classes.findIndex(e => e.label === 'group' || e.label === 'Group');
-      if (idx === -1) {
-        idx = this.classes.length;
-        this.classes.push({
+      const existingGroupId = this.semanticClassOrder.find((id) => {
+        const label = this.semanticClasses[id]?.label;
+        return label === 'group' || label === 'Group';
+      });
+      if (existingGroupId) {
+        this.groupAnnotationClass = existingGroupId;
+      } else {
+        this.semanticClasses.group = {
           label: 'Group',
           fill: '#fa5aff',
           stroke: '#fa5aff',
           fillOpacity: 0.7,
-        });
+        };
+        if (!this.semanticClassOrder.includes('group')) this.semanticClassOrder.push('group');
+        this.groupAnnotationClass = 'group';
+        this._syncLegacyClassesArray();
       }
-      this.groupAnnotationClass = idx;
     }
 
     /**
@@ -886,6 +914,7 @@ class ManagerSvgAnnotation {
 
     // Resolve or auto-create the annotation layer
     this._resolveLayer();
+    this._ensureDefaultStructuralFilters();
 
     // Wire selection events from the layer → 'select' signal + vertex-handle visibility
     this.layer.addEvent('selected', (anno) => {
@@ -1157,7 +1186,10 @@ class ManagerSvgAnnotation {
     const annotation = this.layer.newAnnotation();
     annotation.label = opts.label ?? '';
     annotation.description = opts.description ?? '';
-    annotation.class = opts.class ?? this.defaultAnnotationClass;
+    const semanticClass = this._resolveSemanticClassId(opts.semanticClass ?? opts.class);
+    annotation.class = semanticClass;
+    annotation.semanticClass = semanticClass;
+    annotation.structuralClass = this._resolveStructuralClassId(opts.structuralClass);
     annotation.type = 'point';
     annotation.publish = opts.publish ?? 1;
     annotation.data = Object.assign({}, opts.data ?? {});
@@ -1209,12 +1241,15 @@ class ManagerSvgAnnotation {
    * @param {Object} patch
    * @param {string}  [patch.label]
    * @param {string}  [patch.description]
-   * @param {number}  [patch.class]       - Index into `this.classes`.
+  * @param {string|number|null}  [patch.class]         - Legacy alias for semantic class.
+  * @param {string|number|null}  [patch.semanticClass] - Semantic class id/index.
+  * @param {string|null}         [patch.structuralClass] - Structural class id.
    * @param {number}  [patch.publish]
-   * @param {string|null}  [patch.fill]        - Per-annotation fill override.
-   * @param {string|null}  [patch.stroke]      - Per-annotation stroke override.
-   * @param {number|null}  [patch.fillOpacity] - Per-annotation fill-opacity override.
-   * @param {number|null}  [patch.strokeWidth] - Per-annotation stroke-width override.
+  * @param {string|null}  [patch.fill]        - Per-annotation fill override.
+  * @param {string|null}  [patch.stroke]      - Per-annotation stroke override.
+  * @param {number|null}  [patch.fillOpacity] - Per-annotation fill-opacity override.
+  * @param {number|null}  [patch.strokeWidth] - Per-annotation stroke-width override.
+  * @param {string|null}  [patch.filter]      - Per-annotation SVG filter override (`url(#...)`).
    * @param {Object}  [patch.data]        - Merged into annotation.data.
    * @returns {Annotation|null}
    * @fires ManagerSvgAnnotation#update
@@ -1226,10 +1261,21 @@ class ManagerSvgAnnotation {
       return null;
     }
 
-    const scalarKeys = ['label', 'description', 'class', 'publish',
-                        'fill', 'stroke', 'fillOpacity', 'strokeWidth'];
+    const scalarKeys = ['label', 'description', 'class', 'semanticClass', 'structuralClass', 'publish',
+              'fill', 'stroke', 'fillOpacity', 'strokeWidth', 'filter'];
     for (const key of scalarKeys) {
-      if (Object.hasOwn(patch, key)) anno[key] = patch[key];
+      if (!Object.hasOwn(patch, key)) continue;
+      if (key === 'class' || key === 'semanticClass') {
+        const resolved = this._resolveSemanticClassId(patch[key]);
+        anno.class = resolved;
+        anno.semanticClass = resolved;
+        continue;
+      }
+      if (key === 'structuralClass') {
+        anno.structuralClass = this._resolveStructuralClassId(patch[key]);
+        continue;
+      }
+      anno[key] = patch[key];
     }
 
     if (patch.data && typeof patch.data === 'object') {
@@ -1407,23 +1453,310 @@ class ManagerSvgAnnotation {
   // ─── Class management ────────────────────────────────────────────────────
 
   /**
-   * Replaces the classes array and immediately repaints all existing annotations.
-   * Safe to call at any time, including after an async fetch.
-   *
-   * @param {Array<{label:string, fill:string, stroke:string, fillOpacity?:number,
-   *                strokeWidth?:number, fillSelected?:string, strokeSelected?:string}>} classes
-   * @param {number} [defaultClassIndex] - New value for `defaultAnnotationClass`.
-   *   Unchanged if omitted.
-   *
-   * @example
-   * ```javascript
-   * const classes = await fetch('/api/classes').then(r => r.json());
-   * manager.setClasses(classes, 0);
-   * ```
+   * Turns a label/id into a stable semantic class ID.
+   * @param {string} raw
+   * @param {number} fallbackIndex
+   * @returns {string}
+   * @private
    */
-  setClasses(classes, defaultClassIndex) {
-    this.classes = classes;
-    if (defaultClassIndex !== undefined) this.defaultAnnotationClass = defaultClassIndex;
+  _toSemanticClassId(raw, fallbackIndex = 0) {
+    const source = String(raw ?? '').trim();
+    if (!source) return `class_${fallbackIndex}`;
+    const id = source
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    return id || `class_${fallbackIndex}`;
+  }
+
+  /**
+   * Keeps the legacy `classes` array in sync with semantic classes.
+   * @private
+   */
+  _syncLegacyClassesArray() {
+    this.classes = this.semanticClassOrder.map((id) => ({
+      id,
+      ...this.semanticClasses[id],
+    }));
+  }
+
+  /**
+   * Resolves a semantic class reference to a class ID in `semanticClasses`.
+   * Supports numeric indexes (legacy), IDs, labels and empty values.
+   * @param {string|number|null|undefined} classRef
+   * @returns {string}
+   * @private
+   */
+  _resolveSemanticClassId(classRef) {
+    if (classRef == null || classRef === '') return this.defaultSemanticClass;
+
+    const maybeNumber = Number(classRef);
+    if (Number.isInteger(maybeNumber) && String(classRef).trim() !== '') {
+      return this.semanticClassOrder[maybeNumber] ?? this.defaultSemanticClass;
+    }
+
+    const id = String(classRef);
+    if (this.semanticClasses[id]) return id;
+
+    const byLabel = this.semanticClassOrder.find((candidateId) =>
+      this.semanticClasses[candidateId]?.label === id
+    );
+    if (byLabel) return byLabel;
+
+    return this.defaultSemanticClass;
+  }
+
+  /**
+   * Resolves a structural class reference to a class ID in `structuralClasses`.
+   * @param {string|null|undefined} classRef
+   * @returns {string|null}
+   * @private
+   */
+  _resolveStructuralClassId(classRef) {
+    if (classRef == null || classRef === '') return null;
+    const id = String(classRef);
+    return this.structuralClasses?.[id] ? id : null;
+  }
+
+  /**
+   * Ensures a `<defs>` element exists in the annotation SVG layer.
+   * @returns {SVGDefsElement|null}
+   * @private
+   */
+  _getOrCreateSvgDefs() {
+    const svg = this.layer?.svgElement;
+    if (!svg) return null;
+    let defs = svg.querySelector('defs');
+    if (!defs) {
+      defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      svg.prepend(defs);
+    }
+    return defs;
+  }
+
+  /**
+   * Preloads lightweight SVG filters for structural classes.
+   *
+   * Available filter ids:
+   * - `olime-glow-soft`
+   * - `olime-shadow-soft`
+   * - `olime-outline-soft`
+   *
+   * @private
+   */
+  _ensureDefaultStructuralFilters() {
+    if (!this.preloadStructuralFilters) return;
+    const defs = this._getOrCreateSvgDefs();
+    if (!defs) return;
+
+    const ensureFilter = (id, build) => {
+      if (defs.querySelector(`#${id}`)) return;
+      const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+      filter.setAttribute('id', id);
+      filter.setAttribute('x', '-45%');
+      filter.setAttribute('y', '-45%');
+      filter.setAttribute('width', '190%');
+      filter.setAttribute('height', '190%');
+      build(filter);
+      defs.appendChild(filter);
+    };
+
+    ensureFilter('olime-glow-soft', (filter) => {
+      const morph = document.createElementNS('http://www.w3.org/2000/svg', 'feMorphology');
+      morph.setAttribute('in', 'SourceAlpha');
+      morph.setAttribute('operator', 'dilate');
+      morph.setAttribute('radius', '1.2');
+      morph.setAttribute('result', 'expandedAlpha');
+
+      const blur = document.createElementNS('http://www.w3.org/2000/svg', 'feGaussianBlur');
+      blur.setAttribute('in', 'expandedAlpha');
+      blur.setAttribute('stdDeviation', '2.4');
+      blur.setAttribute('result', 'blurredAlpha');
+
+      const flood = document.createElementNS('http://www.w3.org/2000/svg', 'feFlood');
+      flood.setAttribute('flood-color', '#ffd54a');
+      flood.setAttribute('flood-opacity', '0.95');
+      flood.setAttribute('result', 'glowColor');
+
+      const comp = document.createElementNS('http://www.w3.org/2000/svg', 'feComposite');
+      comp.setAttribute('in', 'glowColor');
+      comp.setAttribute('in2', 'blurredAlpha');
+      comp.setAttribute('operator', 'in');
+      comp.setAttribute('result', 'glow');
+
+      const merge = document.createElementNS('http://www.w3.org/2000/svg', 'feMerge');
+      const m1 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
+      m1.setAttribute('in', 'glow');
+      const m2 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
+      m2.setAttribute('in', 'SourceGraphic');
+      merge.appendChild(m1);
+      merge.appendChild(m2);
+
+      filter.appendChild(morph);
+      filter.appendChild(blur);
+      filter.appendChild(flood);
+      filter.appendChild(comp);
+      filter.appendChild(merge);
+    });
+
+    ensureFilter('olime-shadow-soft', (filter) => {
+      const dropShadow = document.createElementNS('http://www.w3.org/2000/svg', 'feDropShadow');
+      dropShadow.setAttribute('dx', '0.8');
+      dropShadow.setAttribute('dy', '0.8');
+      dropShadow.setAttribute('stdDeviation', '1.1');
+      dropShadow.setAttribute('flood-color', '#000000');
+      dropShadow.setAttribute('flood-opacity', '0.55');
+      filter.appendChild(dropShadow);
+    });
+
+    ensureFilter('olime-outline-soft', (filter) => {
+      const morph = document.createElementNS('http://www.w3.org/2000/svg', 'feMorphology');
+      morph.setAttribute('in', 'SourceAlpha');
+      morph.setAttribute('operator', 'dilate');
+      morph.setAttribute('radius', '1.0');
+      morph.setAttribute('result', 'expanded');
+
+      const flood = document.createElementNS('http://www.w3.org/2000/svg', 'feFlood');
+      flood.setAttribute('flood-color', '#ffd54a');
+      flood.setAttribute('flood-opacity', '0.75');
+      flood.setAttribute('result', 'outlineColor');
+
+      const comp = document.createElementNS('http://www.w3.org/2000/svg', 'feComposite');
+      comp.setAttribute('in', 'outlineColor');
+      comp.setAttribute('in2', 'expanded');
+      comp.setAttribute('operator', 'in');
+      comp.setAttribute('result', 'outline');
+
+      const merge = document.createElementNS('http://www.w3.org/2000/svg', 'feMerge');
+      const m1 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
+      m1.setAttribute('in', 'outline');
+      const m2 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
+      m2.setAttribute('in', 'SourceGraphic');
+      merge.appendChild(m1);
+      merge.appendChild(m2);
+
+      filter.appendChild(morph);
+      filter.appendChild(flood);
+      filter.appendChild(comp);
+      filter.appendChild(merge);
+    });
+  }
+
+  /**
+   * Replaces semantic classes and optionally updates the default semantic class.
+   *
+   * @param {Array|Object<string, Object>} classes
+   * @param {string|number} [defaultClass]
+   * @param {boolean} [repaint=true]
+   */
+  setSemanticClasses(classes, defaultClass, repaint = true) {
+    const byId = {};
+    const order = [];
+
+    if (Array.isArray(classes)) {
+      classes.forEach((entry, i) => {
+        if (!entry || typeof entry !== 'object') return;
+        const preferredId = entry.id ?? entry.classId ?? entry.label;
+        let id = this._toSemanticClassId(preferredId, i);
+        let suffix = 1;
+        while (byId[id]) {
+          id = `${this._toSemanticClassId(preferredId, i)}_${suffix++}`;
+        }
+        const cls = { ...entry };
+        delete cls.id;
+        delete cls.classId;
+        if (!cls.label) cls.label = entry.label ?? id;
+        byId[id] = cls;
+        order.push(id);
+      });
+    } else if (classes && typeof classes === 'object') {
+      for (const [id, entry] of Object.entries(classes)) {
+        if (!entry || typeof entry !== 'object') continue;
+        byId[id] = { label: entry.label ?? id, ...entry };
+        order.push(id);
+      }
+    }
+
+    if (!order.length) {
+      byId.default = { label: 'Default' };
+      order.push('default');
+    }
+
+    this.semanticClasses = byId;
+    this.semanticClassOrder = order;
+
+    const resolvedDefault = this._resolveSemanticClassId(
+      defaultClass ?? this.defaultSemanticClass ?? this.defaultAnnotationClass
+    );
+    this.defaultSemanticClass = resolvedDefault;
+    this.defaultAnnotationClass = resolvedDefault;
+    this._syncLegacyClassesArray();
+
+    if (repaint) this._repaintClassStyles();
+  }
+
+  /**
+   * Replaces structural classes map.
+   *
+   * @param {Object<string, Object>} structuralClasses
+   * @param {boolean} [repaint=true]
+   */
+  setStructuralClasses(structuralClasses = {}, repaint = true) {
+    const safe = (structuralClasses && typeof structuralClasses === 'object') ? structuralClasses : {};
+    this.structuralClasses = {
+      default: { ...(safe.default ?? {}) },
+      selected: { ...(safe.selected ?? {}) },
+      underEditing: { ...(safe.underEditing ?? {}) },
+      ...safe,
+    };
+    if (repaint) this._repaintClassStyles();
+  }
+
+  /**
+   * Adds or replaces a single structural class entry.
+   *
+   * @param {string} classId
+   * @param {Object} style
+   * @param {boolean} [repaint=true]
+   */
+  setStructuralClass(classId, style = {}, repaint = true) {
+    if (!classId) return;
+    this.structuralClasses[classId] = { ...(style ?? {}) };
+    if (repaint) this._repaintClassStyles();
+  }
+
+  /**
+   * Assigns/clears semantic class for an annotation.
+   * Passing `null` or empty string restores the manager default semantic class.
+   *
+   * @param {string} id
+   * @param {string|number|null} classId
+   * @returns {Annotation|null}
+   */
+  setAnnotationSemanticClass(id, classId) {
+    const resolved = this._resolveSemanticClassId(classId);
+    return this.updateAnnotation(id, { semanticClass: resolved });
+  }
+
+  /**
+   * Assigns/clears structural class for an annotation.
+   * Passing `null` or empty string clears the structural class and falls back
+   * to semantic class rendering (or manager default semantic class).
+   *
+   * @param {string} id
+   * @param {string|null} classId
+   * @returns {Annotation|null}
+   */
+  setAnnotationStructuralClass(id, classId) {
+    const resolved = this._resolveStructuralClassId(classId);
+    return this.updateAnnotation(id, { structuralClass: resolved });
+  }
+
+  /**
+   * Repaints all annotations based on current class/style registries.
+   * @private
+   */
+  _repaintClassStyles() {
     for (const anno of this.getAnnotations()) {
       const isSelected = this.layer.selected?.has(anno.id) ?? false;
       this._applyStyleToElements(anno, isSelected);
@@ -1488,33 +1821,76 @@ class ManagerSvgAnnotation {
   // ─── Internal: style resolution ─────────────────────────────────────────────
 
   /**
-   * Resolves the visual style for `anno` from `this.classes`.
+   * Resolves the visual style for `anno` from semantic and structural classes.
    *
-   * `anno.class` is treated as a numeric index into `this.classes`.
-   * Falls back to index 0 when the value is not a valid index.
+   * Fallback order:
+   * - semantic class from `anno.semanticClass` / `anno.class`
+   * - manager default semantic class
+   * - manager-level default fill/stroke options
+   *
+   * Structural class behavior:
+   * - if `anno.structuralClass` is set and exists, it is applied as overlay
+   * - else if selected, `structuralClasses.selected` is applied
+   * - else if `anno.editing`, `structuralClasses.underEditing` is applied
+   *
+   * `selected` can be passed as boolean for backward compatibility.
    *
    * @param {Annotation} anno
    * @param {boolean} [selected=false]
-   * @returns {{fill:string, stroke:string, fillOpacity:number, strokeWidth:number}}
+  * @returns {{fill:string, stroke:string, fillOpacity:number, strokeWidth:number, filter:(string|null)}}
    * @private
    */
   _getClassStyle(anno, selected = false) {
-    const idx = Number(anno.class) || 0;
-    const cls = this.classes?.[idx] ?? this.classes?.[0] ?? {};
-    // Per-annotation overrides (set via updateAnnotation) take precedence over the class.
-    const fill        = anno.fill        ?? cls.fill        ?? this.defaultFill        ?? 'rgba(34,187,85,0.20)';
-    const stroke      = anno.stroke      ?? cls.stroke      ?? this.defaultStroke      ?? '#22bb55';
-    const fillOpacity = anno.fillOpacity ?? cls.fillOpacity ?? this.defaultFillOpacity ?? 1;
-    const strokeWidth = anno.strokeWidth ?? cls.strokeWidth ?? this.defaultStrokeWidth ?? 2;
-    if (selected) {
-      return {
-        fill:        cls.fillSelected   ?? this.selectionFill   ?? fill,
-        stroke:      cls.strokeSelected ?? this.selectionStroke ?? stroke,
-        fillOpacity,
-        strokeWidth,
-      };
+    const semanticId = this._resolveSemanticClassId(anno.semanticClass ?? anno.class);
+    const cls = this.semanticClasses?.[semanticId] ?? {};
+
+    let fill        = cls.fill        ?? this.defaultFill        ?? 'rgba(34,187,85,0.20)';
+    let stroke      = cls.stroke      ?? this.defaultStroke      ?? '#22bb55';
+    let fillOpacity = cls.fillOpacity ?? this.defaultFillOpacity ?? 1;
+    let strokeWidth = cls.strokeWidth ?? this.defaultStrokeWidth ?? 2;
+    let filter      = cls.filter      ?? null;
+
+    const structuralClassId = this._resolveStructuralClassId(anno.structuralClass);
+    const hasExplicitStructural = structuralClassId != null;
+    const selectedStructural = this.structuralClasses?.selected ?? {};
+    const editingStructural = this.structuralClasses?.underEditing ?? {};
+    const explicitStructural = hasExplicitStructural ? (this.structuralClasses?.[structuralClassId] ?? {}) : {};
+
+    const shouldApplySelected = !!selected && !hasExplicitStructural;
+    const shouldApplyEditing = !!anno.editing && !hasExplicitStructural;
+
+    if (shouldApplySelected) {
+      fill = cls.fillSelected ?? selectedStructural.fill ?? this.selectionFill ?? fill;
+      stroke = cls.strokeSelected ?? selectedStructural.stroke ?? this.selectionStroke ?? stroke;
+      fillOpacity = selectedStructural.fillOpacity ?? fillOpacity;
+      strokeWidth = selectedStructural.strokeWidth ?? strokeWidth;
+      filter = cls.filterSelected ?? selectedStructural.filter ?? filter;
     }
-    return { fill, stroke, fillOpacity, strokeWidth };
+
+    if (shouldApplyEditing) {
+      fill = cls.fillUnderEditing ?? editingStructural.fill ?? fill;
+      stroke = cls.strokeUnderEditing ?? editingStructural.stroke ?? stroke;
+      fillOpacity = editingStructural.fillOpacity ?? fillOpacity;
+      strokeWidth = editingStructural.strokeWidth ?? strokeWidth;
+      filter = cls.filterUnderEditing ?? editingStructural.filter ?? filter;
+    }
+
+    if (hasExplicitStructural) {
+      fill = explicitStructural.fill ?? fill;
+      stroke = explicitStructural.stroke ?? stroke;
+      fillOpacity = explicitStructural.fillOpacity ?? fillOpacity;
+      strokeWidth = explicitStructural.strokeWidth ?? strokeWidth;
+      filter = explicitStructural.filter ?? filter;
+    }
+
+    // Per-annotation overrides (set via updateAnnotation) take precedence.
+    fill = anno.fill ?? fill;
+    stroke = anno.stroke ?? stroke;
+    fillOpacity = anno.fillOpacity ?? fillOpacity;
+    strokeWidth = anno.strokeWidth ?? strokeWidth;
+    filter = anno.filter ?? filter;
+
+    return { fill, stroke, fillOpacity, strokeWidth, filter };
   }
 
   /**
@@ -1529,23 +1905,48 @@ class ManagerSvgAnnotation {
    * @private
    */
   _applyStyleToElements(anno, selected = false) {
+    this._ensureDefaultStructuralFilters();
     const style = this._getClassStyle(anno, selected);
+    const applyFilter = (el) => {
+      // Markers already set inline CSS filter (e.g. drop-shadow). SVG
+      // presentation attribute `filter` would lose against inline CSS due to
+      // CSS precedence, so we compose everything in `style.filter`.
+      if (el.dataset && el.dataset.olBaseFilter === undefined) {
+        el.dataset.olBaseFilter = (el.style?.filter ?? '').trim();
+      }
+      const baseFilter = (el.dataset?.olBaseFilter ?? '').trim();
+
+      if (style.filter) {
+        el.style.filter = baseFilter ? `${style.filter} ${baseFilter}` : style.filter;
+      } else if (baseFilter) {
+        el.style.filter = baseFilter;
+      } else {
+        el.style.removeProperty('filter');
+      }
+
+      // Keep the presentation attribute clear to avoid conflicting sources.
+      el.removeAttribute('filter');
+    };
     const applyToEl = (el) => {
       if (el.classList?.contains('annotation-disk')) {
+        applyFilter(el);
         el.setAttribute('fill', style.fill);
         el.setAttribute('stroke', style.stroke);
         el.setAttribute('opacity', String(style.fillOpacity));
         el.style.cursor = selected ? 'grab' : '';
       } else if (el.classList?.contains('annotation-polyline')) {
+        applyFilter(el);
         el.setAttribute('stroke', style.stroke);
         if (anno.data._markerClosed) {
           el.setAttribute('fill', style.fill);
         }
       } else if (el.classList?.contains('annotation-rect')) {
+        applyFilter(el);
         el.setAttribute('stroke', style.stroke);
         el.setAttribute('fill', style.fill);
         el.setAttribute('fill-opacity', String(style.fillOpacity));
       } else if (el.classList?.contains('annotation-freehand')) {
+        applyFilter(el);
         el.setAttribute('stroke', style.stroke);
       } else if (el.tagName?.toLowerCase() === 'g' && el.getAttribute('id')) {
         // Grouped annotation: recurse into <g id="originalId"> wrappers
@@ -2294,7 +2695,9 @@ class ManagerSvgAnnotation {
     const annotation = this.layer.newAnnotation();
     annotation.label = '';
     annotation.description = '';
-    annotation.class = this.defaultAnnotationClass;
+    annotation.class = this.defaultSemanticClass;
+    annotation.semanticClass = this.defaultSemanticClass;
+    annotation.structuralClass = null;
     annotation.publish = 1;
     annotation.data = {};
     annotation.data._markerType = this.activeMarker;
