@@ -2271,6 +2271,7 @@ class ManagerSvgAnnotation {
         let textWidth = anno.label.length * (fontSize * 0.6); // Fallback estimate
         let textHeight = fontSize;
         let bboxY = -fontSize * 0.8; // Fallback ascent approximation
+        let bboxMeasured = false;
 
         if (typeof labelEl.getBBox === 'function') {
           try {
@@ -2279,6 +2280,7 @@ class ManagerSvgAnnotation {
               textWidth = textBbox.width;
               textHeight = textBbox.height;
               bboxY = textBbox.y;
+              bboxMeasured = true;
             }
           } catch (e) { }
         }
@@ -2298,7 +2300,7 @@ class ManagerSvgAnnotation {
         bgEl.setAttribute('width', String(bgWidth));
         bgEl.setAttribute('height', String(bgHeight));
 
-        if (labelPositioned) {
+        if (labelPositioned && bboxMeasured) {
           anno._labelLayoutCacheKey = layoutKey;
         }
 
