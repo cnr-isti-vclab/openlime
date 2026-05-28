@@ -1357,6 +1357,9 @@ class ManagerSvgAnnotation {
    * selection.  Call it multiple times to build up a multi-selection
    * one item at a time, or use {@link setSelectedIds} to replace the
    * entire selection atomically.
+  *
+  * Does not implicitly enable pencil mode: callers that need interactive
+  * editing should explicitly call {@link toggle} / {@link setMode}.
    *
    * @param {string}  id          - Annotation ID.
    * @param {boolean} [on=true]   - `true` to select, `false` to deselect.
@@ -1365,11 +1368,6 @@ class ManagerSvgAnnotation {
     if (this._mode === 'create') return;
     const anno = this.layer.getAnnotationById(id);
     if (!anno) return;
-    // Programmatic selection auto-enables the pencil in edit mode.
-    if (!this._pencilEnabled) {
-      this._pencilEnabled = true;
-      this.setMode('edit');
-    }
     this.layer.setSelected(anno, on);
   }
 
@@ -1384,6 +1382,9 @@ class ManagerSvgAnnotation {
    * - Fires one `'selectionChange'` event with the full array of selected
    *   {@link Annotation} objects (in the same order as `ids`).
    * - Vertex-drag handles are attached to the last annotation in `ids`.
+  *
+  * Does not implicitly enable pencil mode: callers that need interactive
+  * editing should explicitly call {@link toggle} / {@link setMode}.
    *
    * @param {string[]} ids - Annotation IDs to select. Duplicates are ignored.
    *                         Pass an empty array to deselect everything.
@@ -1391,12 +1392,6 @@ class ManagerSvgAnnotation {
   setSelectedIds(ids) {
     if (this._mode === 'create') return;
     const unique = [...new Set(ids)];
-
-    // Programmatic selection auto-enables the pencil in edit mode.
-    if (!this._pencilEnabled) {
-      this._pencilEnabled = true;
-      this.setMode('edit');
-    }
 
     // Suppress per-item _updateHandlesVisibility calls during the batch.
     this._batchSelectInProgress = true;
