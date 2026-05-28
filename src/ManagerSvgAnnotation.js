@@ -2052,6 +2052,26 @@ class ManagerSvgAnnotation {
   // ─── Internal: per-frame annotation update ────────────────────────────────
 
   /**
+   * Stable key for label layout cache invalidation when geometry moves.
+   * @param {Annotation} anno
+   * @returns {string}
+   * @private
+   */
+  _annotationGeometryLayoutKey(anno) {
+    const d = anno.data;
+    if (!d) {
+      return '';
+    }
+    if (Array.isArray(d._markerPoints) && d._markerPoints.length > 0) {
+      return d._markerPoints.map((p) => `${p.x},${p.y}`).join('|');
+    }
+    if (d._x != null && d._y != null) {
+      return `${d._x},${d._y}`;
+    }
+    return '';
+  }
+
+  /**
    * Called by `layer.annotationUpdate` on every prefetch cycle.
    * Retrieves the correct marker for this annotation and asks it to update its elements.
    * @param {Annotation} anno
@@ -2088,6 +2108,15 @@ class ManagerSvgAnnotation {
     let bgEl = anno.elements.find(el => el.classList?.contains('annotation-label-bg'));
 
     if (hasLabel) {
+      if (anno.needsUpdate) {
+        delete anno._ocraLabelLayoutKey;
+      }
+
+      const zoom = transform?.z ?? 1;
+      const layoutKey = `${zoom}|${anno.label}|${this._annotationGeometryLayoutKey(anno)}`;
+      if (anno._ocraLabelLayoutKey === layoutKey) {
+        return;
+      }
       const cfg = this.labelStyle ?? {};
       if (!bgEl) {
         bgEl = Util.createSVGElement('rect', {
@@ -2119,7 +2148,6 @@ class ManagerSvgAnnotation {
       }
 
       // Maintain screen-space sizes
-      const zoom = transform?.z ?? 1;
       const fontSize = (cfg.fontSizePx ?? 14) / zoom;
       const padding = (cfg.paddingPx ?? 6) / zoom;
       const cornerRadius = (cfg.borderRadiusPx ?? 4) / zoom;
@@ -2149,6 +2177,7 @@ class ManagerSvgAnnotation {
       bgEl.setAttribute('ry', String(cornerRadius));
 
       // Attempt to calculate position
+      let labelPositioned = false;
       try {
         const nonLabelElements = anno.elements.filter(el => el !== labelEl && el !== bgEl);
         const totalOffsetY = Number(cfg.offsetYPx ?? 8) / zoom;
@@ -2176,13 +2205,16 @@ class ManagerSvgAnnotation {
           if (minX !== Infinity) {
             x = (minX + maxX) / 2;
             anchorTopY = minY;
-          } else if (anno.data._x !== undefined) {
+            labelPositioned = true;
+          } else if (anno.data?._x !== undefined) {
             x = anno.data._x;
             anchorTopY = anno.data._y;
+            labelPositioned = true;
           }
-        } else if (anno.data._x !== undefined) {
+        } else if (anno.data?._x !== undefined) {
           x = anno.data._x;
           anchorTopY = anno.data._y;
+          labelPositioned = true;
         }
 
         // Measure text metrics in local coordinates (baseline at y=0), then
@@ -2220,10 +2252,15 @@ class ManagerSvgAnnotation {
         bgEl.setAttribute('width', String(bgWidth));
         bgEl.setAttribute('height', String(bgHeight));
 
+        if (labelPositioned) {
+          anno._ocraLabelLayoutKey = layoutKey;
+        }
+
       } catch (e) {
         // Safe fallback
       }
     } else {
+      delete anno._ocraLabelLayoutKey;
       if (bgEl) {
         const idx = anno.elements.indexOf(bgEl);
         if (idx !== -1) {

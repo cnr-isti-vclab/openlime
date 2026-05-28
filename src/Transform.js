@@ -283,12 +283,12 @@ class Transform { //FIXME Add translation to P?
 		// PHASE 1: Before animation starts
 		if (time < source.t) {
 			Object.assign(pos, source);
-			pos.isComplete = false; // FIX: always false before start
+			pos.isComplete = false;
 		}
 		// PHASE 2: After animation ends (or duration too short)
 		else if (time > target.t || dt < 0.001) {
 			Object.assign(pos, target);
-			pos.isComplete = false; // FIX: always false before start
+			pos.isComplete = true;
 		}
 		// PHASE 3: During animation
 		else {
@@ -313,7 +313,7 @@ class Transform { //FIXME Add translation to P?
 			pos.z = st * source.z + tt * target.z;
 			pos.a = st * source.a + tt * target.a;
 
-			pos.isComplete = false; // FIX: always false during animation
+			pos.isComplete = false;
 		}
 
 		pos.t = time;

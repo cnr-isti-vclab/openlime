@@ -249,6 +249,12 @@ class LayerSvgAnnotation extends LayerAnnotation {
 
 		if (typeof (this.annotations) == "string") return; //FIXME Is it right? Should we use this.status?
 
+		const transformKey = transform
+			? `${transform.x}|${transform.y}|${transform.z}|${transform.a}`
+			: '';
+		const sameViewTransform = this._lastPrefetchTransformKey === transformKey;
+		this._lastPrefetchTransformKey = transformKey;
+
 		const bBox = this.boundingBox();
 		//this.svgElement.setAttribute('viewBox', `${bBox.xLow} ${bBox.yLow} ${bBox.xHigh - bBox.xLow} ${bBox.yHigh - bBox.yLow}`);
 
@@ -271,45 +277,47 @@ class LayerSvgAnnotation extends LayerAnnotation {
 								} */
 			}
 
-			if (this.annotationUpdate)
-				this.annotationUpdate(anno, transform);
+			const needsDomSync = anno.needsUpdate;
 
-			if (!anno.needsUpdate)
-				continue;
+			if (needsDomSync) {
+				anno.needsUpdate = false;
 
-			anno.needsUpdate = false;
+				for (let e of this.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`))
+					e.remove();
 
-			for (let e of this.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`))
-				e.remove();
+				if (!anno.visible)
+					continue;
 
-			if (!anno.visible)
-				continue;
+				//second time will be 0 elements, but we need to 
+				//store somewhere knowledge of which items in the scene and which still not.
+				for (let child of anno.elements) {
+					let c = child; //.cloneNode(true);
+					c.setAttribute('data-annotation', anno.id);
+					c.setAttribute('data-class', anno.class);
 
-			//second time will be 0 elements, but we need to 
-			//store somewhere knowledge of which items in the scene and which still not.
-			for (let child of anno.elements) {
-				let c = child; //.cloneNode(true);
-				c.setAttribute('data-annotation', anno.id);
-				c.setAttribute('data-class', anno.class);
-
-				//c.setAttribute('data-layer', this.id);
-				c.classList.add('openlime-annotation');
-				if (this.selected.has(anno.id))
-					c.classList.add('selected');
-				this.svgGroup.appendChild(c);
-				c.onpointerdown = (e) => {
-					if (e.button == 0) {
-						e.preventDefault();
-						e.stopPropagation();
-						if (this.onClick && this.onClick(anno, e))
-							return;
-						if (this.selected.has(anno.id))
-							return;
-						this.clearSelected();
-						this.setSelected(anno, true);
+					//c.setAttribute('data-layer', this.id);
+					c.classList.add('openlime-annotation');
+					if (this.selected.has(anno.id))
+						c.classList.add('selected');
+					this.svgGroup.appendChild(c);
+					c.onpointerdown = (e) => {
+						if (e.button == 0) {
+							e.preventDefault();
+							e.stopPropagation();
+							if (this.onClick && this.onClick(anno, e))
+								return;
+							if (this.selected.has(anno.id))
+								return;
+							this.clearSelected();
+							this.setSelected(anno, true);
+						}
 					}
 				}
 			}
+
+			// Markers/labels need elements in the DOM (getBBox). Run after sync, and on view changes.
+			if (this.annotationUpdate && (!sameViewTransform || needsDomSync))
+				this.annotationUpdate(anno, transform);
 		}
 	}
 }
