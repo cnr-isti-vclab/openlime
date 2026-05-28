@@ -447,6 +447,7 @@
         // Fetch a skin (visual elements for the web page)
         OpenLIME.Skin.setUrl('../../skin/skin.svg');
 
+        let idCounter = 0;
         // ── Annotation Manager ───────────────────────────────────────────────
         // Create the manager AFTER layers are registered so it can share their
         // layout when auto-creating the SVG annotation layer.
@@ -454,7 +455,7 @@
             // Conservation/restoration semantic classes — assign to any annotation
             // regardless of which marker tool was used to draw it.
             classes: {
-                default:         { label: 'Default',         fill: 'rgba(34,187,85,0.15)',  stroke: '#22bb55', strokeWidth: 2 },
+                // default:         { label: 'Default',         fill: 'rgba(34,187,85,0.15)',  stroke: '#22bb55', strokeWidth: 2 },
                 surface:         { label: 'Surface',         fill: 'rgba(34,187,85,0.15)',  stroke: '#22bb55', strokeWidth: 2 },
                 crack:           { label: 'Crack',           fill: 'none',                   stroke: '#e63946', strokeWidth: 1.5 },
                 loss:            { label: 'Loss',            fill: 'rgba(230,57,70,0.20)',   stroke: '#e63946', strokeWidth: 2 },
@@ -475,9 +476,15 @@
             singleEditMode: true,
             // Capture viewer state (light direction, render mode, …) in each annotation
             enableState: true,
+            // Demo: custom label style from API (dark red background with 0.3 opacity)
+            labelStyle: {
+                backgroundFill: 'rgba(80, 0, 0, 0.30)',
+            },
 
             // Called whenever a new annotation is created
             onCreate: (anno) => {
+                anno.label = `Anno ${++idCounter}`;
+                console.log(anno);
                 document.getElementById('creation-hint').style.display = 'none';
                 document.getElementById('annotation-toolbar').classList.remove('session-active');
                 console.log('[ManagerSvgAnnotation] CREATE', anno);
@@ -548,6 +555,12 @@
         // - [h] / [Shift+h] set/clear a custom structural class on selection
         manager.setStructuralClass('hovered', { strokeWidth: 3 });
         window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'l') {
+                manager.toggleLabelsVisible();
+                e.preventDefault();
+                return;
+            }
+
             if (!manager.active || manager.mode !== 'edit') return;
             const selectedIds = [...(manager.layer?.selected ?? [])];
             if (!selectedIds.length) return;

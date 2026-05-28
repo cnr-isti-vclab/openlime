@@ -737,9 +737,9 @@ class ManagerSvgAnnotation {
    *   Capture viewer canvas state (e.g. light direction, mode) into each annotation.
    * @param {Function} [options.customState]
    *   Called with `(annotation)` after state capture; use to attach extra custom state.
-   * @param {string} [options.defaultFill='rgba(34,187,85,0.20)']
+  * @param {string} [options.defaultFill='rgba(0, 0, 0, 0.30)']
    *   Default fill colour. Overridden per-class with `fill`.
-   * @param {string} [options.defaultStroke='#22bb55']
+  * @param {string} [options.defaultStroke='#000000']
    *   Default stroke colour. Overridden per-class with `stroke`.
    * @param {number} [options.defaultFillOpacity=1]
    *   Default fill opacity. Overridden per-class with `fillOpacity`.
@@ -754,6 +754,22 @@ class ManagerSvgAnnotation {
    * @param {Function} [options.onDelete]   - Shorthand: `.addEvent('delete', fn)`
    * @param {Function} [options.onSelect]   - Shorthand: `.addEvent('select', fn)` — fires with the last activated annotation
    * @param {Function} [options.onSelectionChange] - Shorthand: `.addEvent('selectionChange', fn)` — fires with the full `Annotation[]` array
+   * @param {boolean} [options.showAnnotationLabels=true]
+   *   Enables/disables annotation label rendering globally.
+   * @param {Object} [options.labelStyle]
+   *   Rendering style for annotation labels and their background box.
+   * @param {number} [options.labelStyle.fontSizePx=14]
+   * @param {string} [options.labelStyle.fontFamily='sans-serif']
+   * @param {string|number} [options.labelStyle.fontWeight=600]
+   * @param {string} [options.labelStyle.textFill='#ffffff']
+   * @param {string} [options.labelStyle.textStroke='none']
+   * @param {number} [options.labelStyle.textStrokeWidthPx=0]
+   * @param {string} [options.labelStyle.backgroundFill='rgba(0, 0, 0, 0.72)']
+   * @param {string} [options.labelStyle.backgroundStroke='rgba(255, 255, 255, 0.22)']
+   * @param {number} [options.labelStyle.backgroundStrokeWidthPx=1]
+   * @param {number} [options.labelStyle.paddingPx=6]
+   * @param {number} [options.labelStyle.borderRadiusPx=4]
+  * @param {number} [options.labelStyle.offsetYPx=8]
    * @param {boolean} [options.singleEditMode=false]
    *   When `true`, vertex-drag listeners (and `activeAnnotation`) are suppressed
    *   when **more than one** annotation is selected — no single annotation can be
@@ -761,6 +777,21 @@ class ManagerSvgAnnotation {
    *   still controlled by `showVertexHandles`.  Defaults to `false`.
    */
   constructor(viewer, options = {}) {
+    const defaultLabelStyle = {
+      fontSizePx: 14,
+      fontFamily: 'sans-serif',
+      fontWeight: 600,
+      textFill: '#ffffff',
+      textStroke: 'none',
+      textStrokeWidthPx: 0,
+      backgroundFill: 'rgba(0, 0, 0, 0.30)',
+      backgroundStroke: 'rgba(255, 255, 255, 0.22)',
+      backgroundStrokeWidthPx: 1,
+      paddingPx: 6,
+      borderRadiusPx: 4,
+      offsetYPx: 4,
+    };
+
     Object.assign(this, {
       viewer,
       layer: null,
@@ -771,9 +802,9 @@ class ManagerSvgAnnotation {
       enableState: true,
       customState: null,
       /** Default fill colour for annotations (overridden per-class with `fill`). @type {string} */
-      defaultFill: 'rgba(34,187,85,0.20)',
+      defaultFill: 'rgba(0, 0, 0, 0.30)',
       /** Default stroke colour for annotations (overridden per-class with `stroke`). @type {string} */
-      defaultStroke: '#22bb55',
+      defaultStroke: '#888888',
       /** Default fill opacity (overridden per-class with `fillOpacity`). @type {number} */
       defaultFillOpacity: 1,
       /** Default stroke width in model units (overridden per-class with `strokeWidth`). @type {number} */
@@ -802,7 +833,7 @@ class ManagerSvgAnnotation {
       * @type {Object<string, {fill?:string, stroke?:string, fillOpacity?:number, strokeWidth?:number, filter?:string}>}
        */
       structuralClasses: {
-        default: {},
+        default: { stroke: '#000000', fill: 'rgba(0, 0, 0, 0.30)' },
         selected: {},
         underEditing: {},
       },
@@ -832,7 +863,13 @@ class ManagerSvgAnnotation {
        * @type {boolean}
        */
       showVertexHandles: true,
+      /** Global toggle for annotation labels. @type {boolean} */
+      showAnnotationLabels: true,
+      /** Label rendering style (text + dark semitransparent background). @type {Object} */
+      labelStyle: defaultLabelStyle,
     }, options);
+
+    this.labelStyle = { ...defaultLabelStyle, ...(this.labelStyle ?? {}) };
 
     // Normalize semantic and structural class registries.
     this.setSemanticClasses(this.classes, this.defaultSemanticClass ?? this.defaultAnnotationClass, false);
@@ -1704,7 +1741,7 @@ class ManagerSvgAnnotation {
   setStructuralClasses(structuralClasses = {}, repaint = true) {
     const safe = (structuralClasses && typeof structuralClasses === 'object') ? structuralClasses : {};
     this.structuralClasses = {
-      default: { ...(safe.default ?? {}) },
+      default: { stroke: '#000000', fill: 'rgba(0, 0, 0, 0.30)', ...(safe.default ?? {}) },
       selected: { ...(safe.selected ?? {}) },
       underEditing: { ...(safe.underEditing ?? {}) },
       ...safe,
@@ -1750,6 +1787,52 @@ class ManagerSvgAnnotation {
   setAnnotationStructuralClass(id, classId) {
     const resolved = this._resolveStructuralClassId(classId);
     return this.updateAnnotation(id, { structuralClass: resolved });
+  }
+
+  /**
+   * Enables/disables annotation label rendering globally.
+   *
+   * @param {boolean} visible
+   * @param {boolean} [repaint=true]
+   */
+  setLabelsVisible(visible, repaint = true) {
+    this.showAnnotationLabels = !!visible;
+    if (repaint) this._repaintClassStyles();
+  }
+
+  /**
+   * Toggles annotation label visibility, or forces a specific visibility.
+   *
+   * @param {boolean} [force]
+   * @param {boolean} [repaint=true]
+   * @returns {boolean} The new label visibility state.
+   */
+  toggleLabelsVisible(force, repaint = true) {
+    if (typeof force === 'boolean') this.showAnnotationLabels = force;
+    else this.showAnnotationLabels = !this.showAnnotationLabels;
+    if (repaint) this._repaintClassStyles();
+    return this.showAnnotationLabels;
+  }
+
+  /**
+   * Returns current global label visibility.
+   * @returns {boolean}
+   */
+  areLabelsVisible() {
+    return !!this.showAnnotationLabels;
+  }
+
+  /**
+   * Updates label rendering style.
+   * Pass only the keys you want to override.
+   *
+   * @param {Object} style
+   * @param {boolean} [repaint=true]
+   */
+  setLabelStyle(style = {}, repaint = true) {
+    if (!style || typeof style !== 'object') return;
+    this.labelStyle = { ...this.labelStyle, ...style };
+    if (repaint) this._repaintClassStyles();
   }
 
   /**
@@ -1844,8 +1927,8 @@ class ManagerSvgAnnotation {
     const semanticId = this._resolveSemanticClassId(anno.semanticClass ?? anno.class);
     const cls = this.semanticClasses?.[semanticId] ?? {};
 
-    let fill        = cls.fill        ?? this.defaultFill        ?? 'rgba(34,187,85,0.20)';
-    let stroke      = cls.stroke      ?? this.defaultStroke      ?? '#22bb55';
+    let fill        = cls.fill        ?? this.defaultFill        ?? 'rgba(0, 0, 0, 0.30)';
+    let stroke      = cls.stroke      ?? this.defaultStroke      ?? '#000000';
     let fillOpacity = cls.fillOpacity ?? this.defaultFillOpacity ?? 1;
     let strokeWidth = cls.strokeWidth ?? this.defaultStrokeWidth ?? 2;
     let filter      = cls.filter      ?? null;
@@ -2068,7 +2151,7 @@ class ManagerSvgAnnotation {
       style = this._getClassStyle(anno, selected);
     }
 
-    this._updateLabelElement(anno, transform, style);
+    this._updateLabelElement(anno, transform);
   }
 
   /**
@@ -2076,19 +2159,18 @@ class ManagerSvgAnnotation {
    * Maintains screen-space font size and places it on top of the annotation's bounding box.
    * @param {Annotation} anno 
    * @param {Object} transform 
-   * @param {Object} style 
    * @private
    */
-  _updateLabelElement(anno, transform, style) {
-    const hasLabel = anno.label && anno.label.trim() !== '';
+  _updateLabelElement(anno, transform) {
+    const hasLabel = this.showAnnotationLabels && anno.label && anno.label.trim() !== '';
     let labelEl = anno.elements.find(el => el.classList?.contains('annotation-label'));
     let bgEl = anno.elements.find(el => el.classList?.contains('annotation-label-bg'));
 
     if (hasLabel) {
+      const cfg = this.labelStyle ?? {};
       if (!bgEl) {
         bgEl = Util.createSVGElement('rect', {
           class: 'annotation-label-bg',
-          fill: 'rgba(0, 0, 0, 0.8)',
           'pointer-events': 'none',
         });
         if (labelEl) {
@@ -2104,9 +2186,8 @@ class ManagerSvgAnnotation {
         labelEl = Util.createSVGElement('text', {
           class: 'annotation-label',
           'text-anchor': 'middle',
-          fill: '#ffffff', // Use white text for better contrast against dark background
           'pointer-events': 'none',
-          style: 'user-select: none; font-family: sans-serif;',
+          style: 'user-select: none;',
         });
         anno.elements.push(labelEl);
         anno.needsUpdate = true;
@@ -2116,15 +2197,31 @@ class ManagerSvgAnnotation {
         labelEl.textContent = anno.label;
       }
 
-      // Use white text and stroke color for background border (if desired), but let's keep it clean
-      labelEl.setAttribute('fill', style.stroke ?? '#ffffffff');
-      // bgEl.setAttribute('stroke', style.stroke ?? 'none');
-
       // Maintain screen-space sizes
       const zoom = transform?.z ?? 1;
-      const fontSize = 14 / zoom;
-      const padding = 6 / zoom;
-      const cornerRadius = 4 / zoom;
+      const fontSize = (cfg.fontSizePx ?? 14) / zoom;
+      const padding = (cfg.paddingPx ?? 6) / zoom;
+      const cornerRadius = (cfg.borderRadiusPx ?? 4) / zoom;
+      const bgStrokeWidth = (cfg.backgroundStrokeWidthPx ?? 1) / zoom;
+      const textStrokeWidth = (cfg.textStrokeWidthPx ?? 0) / zoom;
+
+      labelEl.setAttribute('fill', cfg.textFill ?? '#ffffff');
+      labelEl.setAttribute('font-family', String(cfg.fontFamily ?? 'sans-serif'));
+      labelEl.setAttribute('font-weight', String(cfg.fontWeight ?? 600));
+      labelEl.setAttribute('stroke', cfg.textStroke ?? 'none');
+      if (textStrokeWidth > 0) {
+        labelEl.setAttribute('stroke-width', String(textStrokeWidth));
+      } else {
+        labelEl.removeAttribute('stroke-width');
+      }
+
+      bgEl.setAttribute('fill', cfg.backgroundFill ?? 'rgba(0, 0, 0, 0.72)');
+      bgEl.setAttribute('stroke', cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)');
+      if (bgStrokeWidth > 0) {
+        bgEl.setAttribute('stroke-width', String(bgStrokeWidth));
+      } else {
+        bgEl.removeAttribute('stroke-width');
+      }
 
       labelEl.setAttribute('font-size', String(fontSize));
       bgEl.setAttribute('rx', String(cornerRadius));
@@ -2133,7 +2230,9 @@ class ManagerSvgAnnotation {
       // Attempt to calculate position
       try {
         const nonLabelElements = anno.elements.filter(el => el !== labelEl && el !== bgEl);
-        let x = 0, y = 0;
+        const totalOffsetY = Number(cfg.offsetYPx ?? 8) / zoom;
+        let x = 0;
+        let anchorTopY = null;
 
         if (nonLabelElements.length > 0) {
           let minX = Infinity, minY = Infinity, maxX = -Infinity;
@@ -2155,39 +2254,50 @@ class ManagerSvgAnnotation {
           }
           if (minX !== Infinity) {
             x = (minX + maxX) / 2;
-            y = minY - (8 / zoom); // Add a bit more gap from the box
+            anchorTopY = minY;
           } else if (anno.data._x !== undefined) {
             x = anno.data._x;
-            y = anno.data._y - (8 / zoom);
+            anchorTopY = anno.data._y;
           }
         } else if (anno.data._x !== undefined) {
           x = anno.data._x;
-          y = anno.data._y - (8 / zoom);
+          anchorTopY = anno.data._y;
         }
 
-        labelEl.setAttribute('x', String(x));
-        labelEl.setAttribute('y', String(y));
+        // Measure text metrics in local coordinates (baseline at y=0), then
+        // place the background so its bottom is exactly `offsetYPx` above shape.
+        labelEl.setAttribute('x', '0');
+        labelEl.setAttribute('y', '0');
 
-        // Now calculate background rect size based on text width
         let textWidth = anno.label.length * (fontSize * 0.6); // Fallback estimate
         let textHeight = fontSize;
-        let textY = y - fontSize * 0.8; // Baseline offset approximation
+        let bboxY = -fontSize * 0.8; // Fallback ascent approximation
 
         if (typeof labelEl.getBBox === 'function') {
           try {
             const textBbox = labelEl.getBBox();
-            if (textBbox.width > 0) {
+            if (textBbox.width > 0 || textBbox.height > 0) {
               textWidth = textBbox.width;
               textHeight = textBbox.height;
-              textY = textBbox.y;
+              bboxY = textBbox.y;
             }
           } catch (e) { }
         }
 
-        bgEl.setAttribute('x', String(x - textWidth / 2 - padding));
-        bgEl.setAttribute('y', String(textY - padding));
-        bgEl.setAttribute('width', String(textWidth + padding * 2));
-        bgEl.setAttribute('height', String(textHeight + padding * 2));
+        const bgWidth = textWidth + padding * 2;
+        const bgHeight = textHeight + padding * 2;
+        const targetBottomY = (anchorTopY ?? 0) - totalOffsetY;
+        const bgX = x - bgWidth / 2;
+        const bgY = targetBottomY - bgHeight;
+        const labelY = (bgY + padding) - bboxY;
+
+        labelEl.setAttribute('x', String(x));
+        labelEl.setAttribute('y', String(labelY));
+
+        bgEl.setAttribute('x', String(bgX));
+        bgEl.setAttribute('y', String(bgY));
+        bgEl.setAttribute('width', String(bgWidth));
+        bgEl.setAttribute('height', String(bgHeight));
 
       } catch (e) {
         // Safe fallback
