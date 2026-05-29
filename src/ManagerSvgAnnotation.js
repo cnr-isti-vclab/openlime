@@ -772,6 +772,8 @@ class ManagerSvgAnnotation {
    * @param {string} [options.labelStyle.textStroke='none']
    * @param {number} [options.labelStyle.textStrokeWidthPx=0]
    * @param {string} [options.labelStyle.backgroundFill='rgba(0, 0, 0, 0.72)']
+  * @param {string} [options.labelStyle.backgroundFillSelected]
+  *   Label background colour when the annotation is selected; defaults to `backgroundFill`.
    * @param {string} [options.labelStyle.backgroundStroke='rgba(255, 255, 255, 0.22)']
    * @param {number} [options.labelStyle.backgroundStrokeWidthPx=1]
    * @param {number} [options.labelStyle.paddingPx=6]
@@ -792,6 +794,7 @@ class ManagerSvgAnnotation {
       textStroke: 'none',
       textStrokeWidthPx: 0,
       backgroundFill: 'rgba(0, 0, 0, 0.30)',
+      backgroundFillSelected: undefined,
       backgroundStroke: 'rgba(255, 255, 255, 0.22)',
       backgroundStrokeWidthPx: 1,
       paddingPx: 6,
@@ -2210,7 +2213,11 @@ class ManagerSvgAnnotation {
         labelEl.removeAttribute('stroke-width');
       }
 
-      bgEl.setAttribute('fill', cfg.backgroundFill ?? 'rgba(0, 0, 0, 0.72)');
+      let backgroundFill = cfg.backgroundFill ?? 'rgba(0, 0, 0, 0.72)';
+      if (selected) {
+        backgroundFill = cfg.backgroundFillSelected ?? backgroundFill;
+      }
+      bgEl.setAttribute('fill', backgroundFill);
       bgEl.setAttribute('stroke', cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)');
       if (bgStrokeWidth > 0) {
         bgEl.setAttribute('stroke-width', String(bgStrokeWidth));
