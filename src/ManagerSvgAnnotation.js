@@ -1581,16 +1581,24 @@ class ManagerSvgAnnotation {
     };
 
     ensureFilter('olime-glow-soft', (filter) => {
-      const morph = document.createElementNS('http://www.w3.org/2000/svg', 'feMorphology');
-      morph.setAttribute('in', 'SourceAlpha');
-      morph.setAttribute('operator', 'dilate');
-      morph.setAttribute('radius', '1.2');
-      morph.setAttribute('result', 'expandedAlpha');
+      // Build an outer-edge ring from SourceAlpha so glow affects only contours
+      // and keeps interior fill untouched.
+      const dilate = document.createElementNS('http://www.w3.org/2000/svg', 'feMorphology');
+      dilate.setAttribute('in', 'SourceAlpha');
+      dilate.setAttribute('operator', 'dilate');
+      dilate.setAttribute('radius', '1.2');
+      dilate.setAttribute('result', 'expandedAlpha');
+
+      const outerRing = document.createElementNS('http://www.w3.org/2000/svg', 'feComposite');
+      outerRing.setAttribute('in', 'expandedAlpha');
+      outerRing.setAttribute('in2', 'SourceAlpha');
+      outerRing.setAttribute('operator', 'out');
+      outerRing.setAttribute('result', 'outerRing');
 
       const blur = document.createElementNS('http://www.w3.org/2000/svg', 'feGaussianBlur');
-      blur.setAttribute('in', 'expandedAlpha');
+      blur.setAttribute('in', 'outerRing');
       blur.setAttribute('stdDeviation', '2.4');
-      blur.setAttribute('result', 'blurredAlpha');
+      blur.setAttribute('result', 'blurredRing');
 
       const flood = document.createElementNS('http://www.w3.org/2000/svg', 'feFlood');
       flood.setAttribute('flood-color', '#ffd54a');
@@ -1599,7 +1607,7 @@ class ManagerSvgAnnotation {
 
       const comp = document.createElementNS('http://www.w3.org/2000/svg', 'feComposite');
       comp.setAttribute('in', 'glowColor');
-      comp.setAttribute('in2', 'blurredAlpha');
+      comp.setAttribute('in2', 'blurredRing');
       comp.setAttribute('operator', 'in');
       comp.setAttribute('result', 'glow');
 
@@ -1611,7 +1619,8 @@ class ManagerSvgAnnotation {
       merge.appendChild(m1);
       merge.appendChild(m2);
 
-      filter.appendChild(morph);
+      filter.appendChild(dilate);
+      filter.appendChild(outerRing);
       filter.appendChild(blur);
       filter.appendChild(flood);
       filter.appendChild(comp);
