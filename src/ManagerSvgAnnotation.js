@@ -760,8 +760,13 @@ class ManagerSvgAnnotation {
    * @param {Function} [options.onDelete]   - Shorthand: `.addEvent('delete', fn)`
    * @param {Function} [options.onSelect]   - Shorthand: `.addEvent('select', fn)` — fires with the last activated annotation
    * @param {Function} [options.onSelectionChange] - Shorthand: `.addEvent('selectionChange', fn)` — fires with the full `Annotation[]` array
-   * @param {boolean} [options.showAnnotationLabels=true]
-   *   Enables/disables annotation label rendering globally.
+  * @param {boolean} [options.showAnnotationLabels=true]
+  *   Legacy boolean label visibility (true = all, false = none).
+  * @param {'none'|'all'|'selected'} [options.labelVisibility='all']
+  *   Label rendering mode:
+  *   - `none`: never draw labels
+  *   - `all`: draw labels for all annotations
+  *   - `selected`: draw labels only for selected annotations
    * @param {Object} [options.labelStyle]
    *   Rendering style for annotation labels and their background box.
    * @param {number} [options.labelStyle.fontSizePx=14]
@@ -865,13 +870,20 @@ class ManagerSvgAnnotation {
        * @type {boolean}
        */
       showVertexHandles: true,
-      /** Global toggle for annotation labels. @type {boolean} */
+      /** Legacy global toggle for annotation labels. @type {boolean} */
       showAnnotationLabels: true,
+      /** Tri-state label visibility mode. @type {'none'|'all'|'selected'} */
+      labelVisibility: 'all',
       /** Label rendering style (text + dark semitransparent background). @type {Object} */
       labelStyle: defaultLabelStyle,
     }, options);
 
     this.labelStyle = { ...defaultLabelStyle, ...(this.labelStyle ?? {}) };
+    this.labelVisibility = this._normalizeLabelVisibility(
+      this.labelVisibility,
+      this.showAnnotationLabels ? 'all' : 'none'
+    );
+    this.showAnnotationLabels = this.labelVisibility !== 'none';
 
     // Normalize semantic and structural class registries.
     this.setSemanticClasses(this.semanticClasses, false);
@@ -1759,36 +1771,104 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Enables/disables annotation label rendering globally.
+   * Normalizes tri-state label visibility input.
+   * @param {string|boolean|null|undefined} mode
+   * @param {'none'|'all'|'selected'} [fallback='all']
+   * @returns {'none'|'all'|'selected'}
+   * @private
+   */
+  _normalizeLabelVisibility(mode, fallback = 'all') {
+    if (mode === true) return 'all';
+    if (mode === false) return 'none';
+    if (mode === 'none' || mode === 'all' || mode === 'selected') return mode;
+    return fallback;
+  }
+
+  /**
+   * Returns true when labels are enabled for at least one annotation.
+   * @returns {boolean}
+   * @private
+   */
+  _isAnyLabelVisible() {
+    return this.labelVisibility !== 'none';
+  }
+
+  /**
+   * Returns whether a label should be shown for a specific annotation.
+   * @param {Annotation} anno
+   * @param {boolean} [selected=false]
+   * @returns {boolean}
+   * @private
+   */
+  _shouldShowLabelForAnnotation(anno, selected = false) {
+    if (!anno?.label || anno.label.trim() === '') return false;
+    if (this.labelVisibility === 'none') return false;
+    if (this.labelVisibility === 'selected') return !!selected;
+    return true;
+  }
+
+  /**
+   * Sets tri-state label visibility mode.
+   *
+   * @param {'none'|'all'|'selected'|boolean} mode
+   * @param {boolean} [repaint=true]
+   * @returns {'none'|'all'|'selected'}
+   */
+  setLabelVisibility(mode, repaint = true) {
+    this.labelVisibility = this._normalizeLabelVisibility(mode, this.labelVisibility);
+    this.showAnnotationLabels = this.labelVisibility !== 'none';
+    if (repaint) this._repaintClassStyles();
+    return this.labelVisibility;
+  }
+
+  /**
+   * Returns current tri-state label visibility mode.
+   * @returns {'none'|'all'|'selected'}
+   */
+  getLabelVisibility() {
+    return this.labelVisibility;
+  }
+
+  /**
+   * Backward-compatible boolean API (true = 'all', false = 'none').
    *
    * @param {boolean} visible
    * @param {boolean} [repaint=true]
    */
   setLabelsVisible(visible, repaint = true) {
-    this.showAnnotationLabels = !!visible;
-    if (repaint) this._repaintClassStyles();
+    this.setLabelVisibility(visible ? 'all' : 'none', repaint);
   }
 
   /**
-   * Toggles annotation label visibility, or forces a specific visibility.
+   * Toggles label visibility.
    *
-   * @param {boolean} [force]
+   * - boolean force: legacy behaviour (`true` -> all, `false` -> none)
+   * - string force: explicit tri-state mode (`none|all|selected`)
+   * - undefined: cycle `none -> all -> selected -> none`
+   *
+   * @param {boolean|'none'|'all'|'selected'} [force]
    * @param {boolean} [repaint=true]
-   * @returns {boolean} The new label visibility state.
+   * @returns {'none'|'all'|'selected'} The new label visibility mode.
    */
   toggleLabelsVisible(force, repaint = true) {
-    if (typeof force === 'boolean') this.showAnnotationLabels = force;
-    else this.showAnnotationLabels = !this.showAnnotationLabels;
-    if (repaint) this._repaintClassStyles();
-    return this.showAnnotationLabels;
+    let nextMode;
+    if (typeof force === 'boolean') {
+      nextMode = force ? 'all' : 'none';
+    } else if (typeof force === 'string') {
+      nextMode = this._normalizeLabelVisibility(force, this.labelVisibility);
+    } else {
+      const cycle = { none: 'all', all: 'selected', selected: 'none' };
+      nextMode = cycle[this.labelVisibility] ?? 'all';
+    }
+    return this.setLabelVisibility(nextMode, repaint);
   }
 
   /**
-   * Returns current global label visibility.
+   * Backward-compatible boolean visibility query.
    * @returns {boolean}
    */
   areLabelsVisible() {
-    return !!this.showAnnotationLabels;
+    return this.labelVisibility !== 'none';
   }
 
   /**
@@ -2012,7 +2092,7 @@ class ManagerSvgAnnotation {
       applyToEl(el);
     }
 
-    if (this.showAnnotationLabels && anno.label?.trim()) {
+    if (this._isAnyLabelVisible() && anno.label?.trim()) {
       delete anno._labelLayoutCacheKey;
     }
   }
@@ -2159,7 +2239,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _updateLabelElement(anno, transform, selected = false) {
-    const hasLabel = this.showAnnotationLabels && anno.label && anno.label.trim() !== '';
+    const hasLabel = this._shouldShowLabelForAnnotation(anno, selected);
     let labelEl = anno.elements.find(el => el.classList?.contains('annotation-label'));
     let bgEl = anno.elements.find(el => el.classList?.contains('annotation-label-bg'));
 

@@ -65,6 +65,7 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation'
  * - ruler: Distance measurement
  * - help: Show help dialog
  * - snapshot: Save view as image
+ * - settings: Emit UI settings event
  *
  * Implementation Details
  * 
@@ -190,6 +191,19 @@ class UIBasic {
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 				pencil: { title: 'Pencil', display: false, key: 'p', task: (event) => { this.toggleAnnotations(); } },
+				settings: {
+					title: 'Settings',
+					display: false,
+					key: 's',
+					task: (event) => {
+						this.emit('settings', {
+							event,
+							viewer: this.viewer,
+							ui: this,
+							openlime: this.viewer
+						});
+					}
+				},
 			},
 			postInit: () => { },
 			showScale: true,
@@ -1857,5 +1871,6 @@ addSignals(UIDialog, 'closed');
 addSignals(UIBasic, 'lightdirection');
 addSignals(UIBasic, 'pencilEnabled');
 addSignals(UIBasic, 'pencilDisabled');
+addSignals(UIBasic, 'settings');
 
 export { UIBasic, UIDialog }

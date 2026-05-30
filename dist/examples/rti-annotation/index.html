@@ -221,6 +221,34 @@
             margin-bottom: 0.18rem;
             height: 1rem;
         }
+
+        /* Viewer settings dialog (opened by openlime-settings toolbar button) */
+        #viewerSettingsModal {
+            z-index: 20000;
+        }
+
+        #viewerSettingsModal .modal-dialog {
+            max-width: 420px;
+        }
+
+        #viewerSettingsModal .modal-header,
+        #viewerSettingsModal .modal-footer {
+            padding: 0.45rem 0.7rem;
+        }
+
+        #viewerSettingsModal .modal-title {
+            font-size: 0.95rem;
+        }
+
+        #viewerSettingsModal .modal-body {
+            font-size: 0.8rem;
+            padding: 0.6rem 0.75rem;
+            line-height: 1.25;
+        }
+
+        #viewerSettingsModal .form-check-label {
+            font-size: 0.82rem;
+        }
     </style>
 
 </head>
@@ -420,6 +448,40 @@
         </div>
     </div>
 
+    <div class="modal fade" id="viewerSettingsModal" tabindex="-1" aria-labelledby="viewerSettingsLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-light border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="viewerSettingsLabel">Viewer Settings</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2 fw-semibold">Annotation Labels</div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="label-visibility-mode"
+                            id="label-visibility-none" value="none">
+                        <label class="form-check-label" for="label-visibility-none">None</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="label-visibility-mode"
+                            id="label-visibility-all" value="all">
+                        <label class="form-check-label" for="label-visibility-all">All</label>
+                    </div>
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="radio" name="label-visibility-mode"
+                            id="label-visibility-selected" value="selected">
+                        <label class="form-check-label" for="label-visibility-selected">Selected</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="openlime"></div>
     <input id="anno-load-input" type="file" accept="application/json,.json" style="display:none" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -541,6 +603,8 @@
             },
         });
 
+        manager.setLabelVisibility('selected', false);
+
         const semanticHotkeys = {
             '1': 'surface',
             '2': 'crack',
@@ -649,6 +713,10 @@
             syncMarkerToolbarEnabled();
             hideCtrlHint();
         });
+        ui.addEvent('settings', () => {
+            syncLabelVisibilityControls();
+            if (viewerSettingsModal) viewerSettingsModal.show();
+        });
 
         // ── Marker selector panel ────────────────────────────────────────
         const freehandSettings = {
@@ -677,6 +745,47 @@
         const freehandModal = (window.bootstrap && freehandModalEl)
             ? new bootstrap.Modal(freehandModalEl)
             : null;
+
+        const viewerSettingsModalEl = document.getElementById('viewerSettingsModal');
+        const viewerSettingsModal = (window.bootstrap && viewerSettingsModalEl)
+            ? new bootstrap.Modal(viewerSettingsModalEl)
+            : null;
+        const labelVisibilityInputs = [...document.querySelectorAll('input[name="label-visibility-mode"]')];
+
+        function getCurrentLabelVisibilityMode() {
+            if (typeof manager.getLabelVisibility === 'function') {
+                const mode = manager.getLabelVisibility();
+                if (mode === 'none' || mode === 'all' || mode === 'selected') return mode;
+            }
+            if (typeof manager.areLabelsVisible === 'function') {
+                return manager.areLabelsVisible() ? 'all' : 'none';
+            }
+            return 'all';
+        }
+
+        function applyLabelVisibilityMode(mode) {
+            if (typeof manager.setLabelVisibility === 'function') {
+                manager.setLabelVisibility(mode);
+                return;
+            }
+            if (typeof manager.setLabelsVisible === 'function') {
+                manager.setLabelsVisible(mode !== 'none');
+            }
+        }
+
+        function syncLabelVisibilityControls() {
+            const mode = getCurrentLabelVisibilityMode();
+            for (const input of labelVisibilityInputs) {
+                input.checked = input.value === mode;
+            }
+        }
+
+        for (const input of labelVisibilityInputs) {
+            input.addEventListener('change', (e) => {
+                if (!e.target.checked) return;
+                applyLabelVisibilityMode(e.target.value);
+            });
+        }
 
         function updateFreehandLabels() {
             document.getElementById('fh-sample-distance-value').textContent = Number(freehandSettings.sampleDistance).toFixed(1);
@@ -1092,6 +1201,7 @@
 
         // Show the pencil toggle button in the toolbar
         ui.actions.pencil.display = true;
+        ui.actions.settings.display = true;
 
         // Initial state: marker panel disabled until pencil is enabled.
         syncMarkerToolbarEnabled();
