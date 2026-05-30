@@ -775,11 +775,15 @@ class ManagerSvgAnnotation {
    * @param {string} [options.labelStyle.textFill='#ffffff']
    * @param {string} [options.labelStyle.textFillSelected]
    *   Label text colour when the annotation is selected; defaults to resolved shape stroke.
+   * @param {string} [options.labelStyle.textFillUnderEditing]
+   *   Label text colour when the annotation is under editing; overrides selected label colour.
    * @param {string} [options.labelStyle.textStroke='none']
    * @param {number} [options.labelStyle.textStrokeWidthPx=0]
    * @param {string} [options.labelStyle.backgroundFill='rgba(0, 0, 0, 0.72)']
   * @param {string} [options.labelStyle.backgroundFillSelected]
   *   Label background colour when the annotation is selected; defaults to `backgroundFill`.
+  * @param {string} [options.labelStyle.backgroundFillUnderEditing]
+  *   Label background colour when the annotation is under editing; overrides selected background colour.
    * @param {string} [options.labelStyle.backgroundStroke='rgba(255, 255, 255, 0.22)']
    * @param {number} [options.labelStyle.backgroundStrokeWidthPx=1]
    * @param {number} [options.labelStyle.paddingPx=6]
@@ -797,10 +801,12 @@ class ManagerSvgAnnotation {
       fontFamily: 'sans-serif',
       fontWeight: 600,
       textFill: '#ffffff',
+      textFillUnderEditing: undefined,
       textStroke: 'none',
       textStrokeWidthPx: 0,
       backgroundFill: 'rgba(0, 0, 0, 0.30)',
       backgroundFillSelected: undefined,
+      backgroundFillUnderEditing: undefined,
       backgroundStroke: 'rgba(255, 255, 255, 0.22)',
       backgroundStrokeWidthPx: 1,
       paddingPx: 6,
@@ -2249,7 +2255,9 @@ class ManagerSvgAnnotation {
       }
 
       const zoom = transform?.z ?? 1;
-      const layoutKey = `${zoom}|${anno.label}|${this._annotationGeometryLayoutKey(anno)}|${selected ? 's' : 'n'}`;
+      const structuralClassId = this._resolveStructuralClassId(anno.structuralClass);
+      const isUnderEditing = structuralClassId === 'underEditing' || (!!anno.editing && structuralClassId == null);
+      const layoutKey = `${zoom}|${anno.label}|${this._annotationGeometryLayoutKey(anno)}|${selected ? 's' : 'n'}|${isUnderEditing ? 'e' : 'n'}`;
       if (anno._labelLayoutCacheKey === layoutKey) {
         return;
       }
@@ -2294,6 +2302,9 @@ class ManagerSvgAnnotation {
       if (selected) {
         textFill = cfg.textFillSelected ?? this._getClassStyle(anno, true).stroke ?? textFill;
       }
+      if (isUnderEditing) {
+        textFill = cfg.textFillUnderEditing ?? textFill;
+      }
       labelEl.setAttribute('fill', textFill);
       labelEl.setAttribute('font-family', String(cfg.fontFamily ?? 'sans-serif'));
       labelEl.setAttribute('font-weight', String(cfg.fontWeight ?? 600));
@@ -2307,6 +2318,9 @@ class ManagerSvgAnnotation {
       let backgroundFill = cfg.backgroundFill ?? 'rgba(0, 0, 0, 0.72)';
       if (selected) {
         backgroundFill = cfg.backgroundFillSelected ?? backgroundFill;
+      }
+      if (isUnderEditing) {
+        backgroundFill = cfg.backgroundFillUnderEditing ?? backgroundFill;
       }
       bgEl.setAttribute('fill', backgroundFill);
       bgEl.setAttribute('stroke', cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)');
