@@ -782,9 +782,13 @@ class ManagerSvgAnnotation {
    * @param {string} [options.labelStyle.backgroundFill='rgba(0, 0, 0, 0.72)']
   * @param {string} [options.labelStyle.backgroundFillSelected]
   *   Label background colour when the annotation is selected; defaults to `backgroundFill`.
-  * @param {string} [options.labelStyle.backgroundFillUnderEditing]
-  *   Label background colour when the annotation is under editing; overrides selected background colour.
+   * @param {string} [options.labelStyle.backgroundFillUnderEditing]
+   *   Label background colour when the annotation is under editing; overrides selected background colour.
+   * @param {string} [options.labelStyle.backgroundStrokeUnderEditing]
+   *   Label background stroke when the annotation is under editing; overrides selected/default background stroke.
    * @param {string} [options.labelStyle.backgroundStroke='rgba(255, 255, 255, 0.22)']
+   * @param {number} [options.labelStyle.backgroundStrokeWidthUnderEditingPx]
+   *   Label background stroke width when the annotation is under editing; overrides selected/default stroke width.
    * @param {number} [options.labelStyle.backgroundStrokeWidthPx=1]
    * @param {number} [options.labelStyle.paddingPx=6]
    * @param {number} [options.labelStyle.borderRadiusPx=4]
@@ -807,7 +811,9 @@ class ManagerSvgAnnotation {
       backgroundFill: 'rgba(0, 0, 0, 0.30)',
       backgroundFillSelected: undefined,
       backgroundFillUnderEditing: undefined,
+      backgroundStrokeUnderEditing: undefined,
       backgroundStroke: 'rgba(255, 255, 255, 0.22)',
+      backgroundStrokeWidthUnderEditingPx: undefined,
       backgroundStrokeWidthPx: 1,
       paddingPx: 6,
       borderRadiusPx: 4,
@@ -2295,7 +2301,7 @@ class ManagerSvgAnnotation {
       const fontSize = (cfg.fontSizePx ?? 14) / zoom;
       const padding = (cfg.paddingPx ?? 6) / zoom;
       const cornerRadius = (cfg.borderRadiusPx ?? 4) / zoom;
-      const bgStrokeWidth = (cfg.backgroundStrokeWidthPx ?? 1) / zoom;
+      let bgStrokeWidth = (cfg.backgroundStrokeWidthPx ?? 1) / zoom;
       const textStrokeWidth = (cfg.textStrokeWidthPx ?? 0) / zoom;
 
       let textFill = cfg.textFill ?? '#ffffff';
@@ -2321,9 +2327,13 @@ class ManagerSvgAnnotation {
       }
       if (isUnderEditing) {
         backgroundFill = cfg.backgroundFillUnderEditing ?? backgroundFill;
+        bgStrokeWidth = (cfg.backgroundStrokeWidthUnderEditingPx ?? cfg.backgroundStrokeWidthPx ?? 1) / zoom;
       }
       bgEl.setAttribute('fill', backgroundFill);
-      bgEl.setAttribute('stroke', cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)');
+      const backgroundStroke = isUnderEditing
+        ? (cfg.backgroundStrokeUnderEditing ?? cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)')
+        : (cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)');
+      bgEl.setAttribute('stroke', backgroundStroke);
       if (bgStrokeWidth > 0) {
         bgEl.setAttribute('stroke-width', String(bgStrokeWidth));
       } else {
