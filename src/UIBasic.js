@@ -113,6 +113,9 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation'
  * See the complete example in: {@link https://github.com/cnr-isti-vclab/openlime/tree/main/dist/examples/ui-custom|GitHub ui-custom example}
  */
 class UIBasic {
+	/** @type {UIActions} */
+	actions;
+
 	/**
 	 * Creates a new UIBasic instance
 	 * @param {Viewer} viewer - OpenLIME viewer instance
@@ -375,6 +378,27 @@ class UIBasic {
 
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
+	}
+
+	/**
+	 * Registers a callback for a UI event signal.
+	 * Provided here for type visibility; the runtime implementation is attached by addSignals().
+	 * @param {string} event
+	 * @param {Function} callback
+	 */
+	addEvent(event, callback) {
+		this.signals?.hasOwnProperty(event) || this.initSignals?.();
+		this.signals?.[event]?.push(callback);
+	}
+
+	/**
+	 * Emits a UI event signal.
+	 * Provided here for type visibility; the runtime implementation is attached by addSignals().
+	 * @param {string} event
+	 * @param {...any} args
+	 */
+	emit(event, ...args) {
+		for (const cb of this.signals?.[event] ?? []) cb(...args);
 	}
 
 	/**
@@ -871,7 +895,6 @@ class UIBasic {
 	/**
 	 * Toggles light direction control mode
 	 * @param {boolean} [on] - Force specific state
-	 * @private
 	 */
 	toggleLightController(on) {
 		let div = this.viewer.containerElement;

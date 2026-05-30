@@ -112,12 +112,42 @@ class Transform { //FIXME Add translation to P?
 	 * ```
 	 */
 	constructor(options) {
-		Object.assign(this, { x: 0, y: 0, z: 1, a: 0, t: 0 });
+		this.x = 0;
+		this.y = 0;
+		this.z = 1;
+		this.a = 0;
+		this.t = 0;
 
 		if (!this.t) this.t = performance.now();
 
 		if (typeof (options) == 'object')
 			Object.assign(this, options);
+	}
+
+	/**
+	 * Compatibility alias for anisotropic scale on X.
+	 * OpenLIME uses uniform scale (`z`), so sx maps to z.
+	 * @type {number}
+	 */
+	get sx() {
+		return this.z;
+	}
+
+	set sx(value) {
+		this.z = value;
+	}
+
+	/**
+	 * Compatibility alias for anisotropic scale on Y.
+	 * OpenLIME uses uniform scale (`z`), so sy maps to z.
+	 * @type {number}
+	 */
+	get sy() {
+		return this.z;
+	}
+
+	set sy(value) {
+		this.z = value;
 	}
 
 	/**

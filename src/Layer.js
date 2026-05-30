@@ -26,6 +26,8 @@ import { Util } from './Util.js'
  * @property {Object.<string, Shader>} [shaders] - Map of available shaders
  * @property {Controller[]} [controllers] - Array of active UI controllers
  * @property {Layer} [sourceLayer] - Layer to share tiles with
+ * @property {Layer[]} [layers] - Optional child layers used by derived layer types (e.g. combiner/lens)
+ * @property {Camera} [camera] - Optional camera used by derived layer types
  * @property {number} [pixelSize=0.0] - Physical size of a pixel in mm
  */
 
@@ -71,30 +73,16 @@ import { Util } from './Util.js'
  * ```
  */
 class Layer {
+	/** @type {Controller[]} */
+	controllers;
+
 	/**
 	* Creates a Layer. Additionally, an object literal with Layer `options` can be specified.
 	* Signals are triggered when:
 	* ready: the size and layout of the layer is known
 	* update: some new tile is available, or some visualization parameters has changed
 	* loaded: is fired when all the images needed have been downloaded
-	* @param {Object} [options]
-	* @param {(string|Layout)} options.layout='image' The layout (the format of the input raster images).
-	* @param {string} options.type A string identifier to select the specific derived layer class to instantiate.
-	* @param {string} options.id The layer unique identifier.
-	* @param {string} options.label A string with a more comprehensive definition of the layer. If it exists, it is used in the UI layer menu, otherwise the `id` value is taken.
-	* @param {Transform} options.transform The relative coords from layer to canvas.
-	* @param {bool} options.visible=true Whether to render the layer.
-	* @param {number} options.zindex Stack ordering value for the rendering of layers (higher zindex on top).
-	* @param {bool} options.overlay=false  Whether the layer must be rendered in overlay mode.
-	* @param {number} options.prefetchBorder=1 The threshold (in tile units) around the current camera position for which to prefetch tiles.
-	* @param {number} options.mipmapBias=0.2 Determine which texture is used when scale is not a power of 2. 0: use always the highest resulution, 1 the lowest, 0.5 switch halfway.
-	* @param {('srgb'|'linear')} [options.colorEncoding='srgb'] Main layer color encoding for shader conversion policy.
-	* @param {boolean} [options.isLinear] Legacy alias for colorEncoding (`true` => 'linear', `false` => 'srgb').
-	* @param {Object} options.shaders A map (shadersId, shader) of the shaders usable for the layer rendering. See @link {Shader}.
-	* @param {Controller[]} options.controllers An array of UI device controllers active on the layer.
-	* @param {Layer} options.sourceLayer The layer from which to take the tiles (in order to avoid tile duplication).
-	* @param {Layer} [options.layerSource] Alias for sourceLayer (backward compatibility).
-	* @param {boolean} [options.debug=false] - Enable debug output
+	* @param {LayerOptions} [options={}] Layer configuration.
 	* @throws {Error} If url or layerSource are not provided
 	*/
 	constructor(options) {

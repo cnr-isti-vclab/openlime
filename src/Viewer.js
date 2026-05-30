@@ -105,6 +105,15 @@ import { addSignals } from './Signals.js'
  * ```
  */
 class Viewer {
+	/** @type {Camera} */
+	camera;
+
+	/** @type {PointerManager} */
+	pointerManager;
+
+	/** @type {Controller[]} */
+	controllers;
+
 	/**
 	 * Creates a new Viewer instance
 	 * @param {HTMLElement|string} div - Container element or selector
@@ -121,13 +130,11 @@ class Viewer {
 	 */
 	constructor(div, options) {
 		// Set default properties
-		Object.assign(this, {
-			background: null,
-			autofit: true,
-			canvas: {},
-			camera: new Camera(),
-			idleTime: 60 // in seconds
-		});
+		this.background = null;
+		this.autofit = true;
+		this.canvas = {};
+		this.camera = new Camera();
+		this.idleTime = 60; // in seconds
 
 		// Get container element
 		if (typeof (div) == 'string')
@@ -291,7 +298,6 @@ class Viewer {
 	 * Handles viewer resizing
 	 * @param {number} width - New width in CSS pixels
 	 * @param {number} height - New height in CSS pixels
-	 * @private
 	 * @fires Viewer#resize
 	 */
 	resize(width, height) {
@@ -350,6 +356,19 @@ class Viewer {
 	 */
 	setSplitViewport(enabled, leftLayerIds = [], rightLayerIds = []) {
 		this.canvas.setSplitViewport(enabled, leftLayerIds, rightLayerIds);
+	}
+
+	/**
+	 * Releases viewer resources.
+	 * Alias used by external integrations that expect a `dispose()` lifecycle method.
+	 */
+	dispose() {
+		this.resizeObserver?.disconnect?.();
+		this.animaterequest && cancelAnimationFrame(this.animaterequest);
+		this.animaterequest = null;
+		this.overlayElement?.remove?.();
+		if (this.containerElement?._openlimeViewer === this)
+			delete this.containerElement._openlimeViewer;
 	}
 
 }

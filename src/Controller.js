@@ -40,14 +40,12 @@ class Controller {
 	 * @param {number[]} [options.activeModifiers=[0]] - Array of modifier states that activate this controller
 	 */
 	constructor(options) {
-		Object.assign(this, {
-			active: true,
-			debug: false,
-			panDelay: 50,
-			zoomDelay: 200,
-			priority: 0,
-			activeModifiers: [0]
-		});
+		this.active = true;
+		this.debug = false;
+		this.panDelay = 50;
+		this.zoomDelay = 200;
+		this.priority = 0;
+		this.activeModifiers = [0];
 
 		Object.assign(this, options);
 

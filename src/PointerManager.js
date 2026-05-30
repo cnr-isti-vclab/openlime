@@ -223,7 +223,7 @@ class PointerManager {
 
     /**
      * Registers a complete event handler with multiple callbacks.
-     * @param {Object} handler - Handler object
+     * @param {Object|Controller} handler - Handler object (typically a Controller instance)
      * @param {number} handler.priority - Handler priority (higher = earlier execution)
      * @param {Function} [handler.fingerHover] - Hover callback
      * @param {Function} [handler.fingerSingleTap] - Single tap callback
