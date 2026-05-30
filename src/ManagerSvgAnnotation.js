@@ -756,6 +756,7 @@ class ManagerSvgAnnotation {
   *   Structural class definitions keyed by class ID (e.g. `default`, `selected`, `underEditing`).
    * @param {Function} [options.onCreate]   - Shorthand: `.addEvent('create', fn)`
    * @param {Function} [options.onUpdate]   - Shorthand: `.addEvent('update', fn)`
+   * @param {Function} [options.onEditStart] - Shorthand: `.addEvent('editStart', fn)` — fires with the annotation when the user starts dragging a vertex or disc handle (pointerdown)
    * @param {Function} [options.onDelete]   - Shorthand: `.addEvent('delete', fn)`
    * @param {Function} [options.onSelect]   - Shorthand: `.addEvent('select', fn)` — fires with the last activated annotation
    * @param {Function} [options.onSelectionChange] - Shorthand: `.addEvent('selectionChange', fn)` — fires with the full `Annotation[]` array
@@ -1020,6 +1021,7 @@ class ManagerSvgAnnotation {
     // Shorthand callback registration
     if (options.onCreate) this.addEvent('create', options.onCreate);
     if (options.onUpdate) this.addEvent('update', options.onUpdate);
+    if (options.onEditStart) this.addEvent('editStart', options.onEditStart);
     if (options.onDelete) this.addEvent('delete', options.onDelete);
     if (options.onSelect) this.addEvent('select', options.onSelect);
     if (options.onSelectionChange) this.addEvent('selectionChange', options.onSelectionChange);
@@ -3020,6 +3022,7 @@ class ManagerSvgAnnotation {
         e.preventDefault();
         diskEl.setPointerCapture(e.pointerId);
         this._vertexSession = { annotation, vertexIndex: 0 };
+        this.emit('editStart', annotation);
 
         const onMove = (ev) => {
           if (ev.pointerId !== e.pointerId) return;
@@ -3069,6 +3072,7 @@ class ManagerSvgAnnotation {
         e.preventDefault();
 
         this._vertexSession = { annotation, vertexIndex: idx };
+        this.emit('editStart', annotation);
 
         // setPointerCapture ensures pointermove fires even if the dot element is
         // detached mid-drag by a redraw/syncSvg cycle.  We also capture on
@@ -3446,7 +3450,7 @@ class ManagerSvgAnnotation {
  * @description Fired when a grouped annotation is split back into individuals.
  */
 
-addSignals(ManagerSvgAnnotation, 'create', 'update', 'delete', 'select', 'selectionChange', 'sessionStart', 'sessionCancel', 'modeChange', 'group', 'ungroup');
+addSignals(ManagerSvgAnnotation, 'create', 'update', 'editStart', 'delete', 'select', 'selectionChange', 'sessionStart', 'sessionCancel', 'modeChange', 'group', 'ungroup');
 
 // ─── Built-in: RectMarker ─────────────────────────────────────────────────────
 
