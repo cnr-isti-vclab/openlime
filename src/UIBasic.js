@@ -292,6 +292,7 @@ class UIBasic {
 						const l = this.viewer.canvas.layers[id];
 						if (l) {
 							l.setMode(m);
+							this.updateMenu();
 							this.viewer.redraw();
 						}
 					},
@@ -335,6 +336,7 @@ class UIBasic {
 							const lensLayer = this.viewer.canvas.layers[id];
 							if (lensLayer && lensLayer.setActiveLayer) {
 								lensLayer.setActiveLayer(i);
+								this.updateMenu();
 								this.viewer.redraw();
 							}
 						}
@@ -592,7 +594,10 @@ class UIBasic {
 
 			this.createMenu();
 			this.updateMenu();
-			this.viewer.canvas.addEvent('update', () => this.updateMenu());
+			// Do not tie updateMenu to canvas 'update': that event fires on every pan/zoom
+			// frame, annotation edit, and shader tweak. Menu visuals only depend on layer
+			// visibility, mode, and lens state — refresh via setLayer / setLensForLayer /
+			// toggleLayers(open) / mode onclick / addUniformControlToLayer instead.
 
 			if (this.actions.light && this.actions.light.display === 'auto')
 				this.actions.light.display = true;
@@ -1142,6 +1147,10 @@ class UIBasic {
 				}
 			});
 
+		if (entry.layer) {
+			entry.statusIcon = entry.element.querySelector('.openlime-layer-status');
+		}
+
 		// Wire the lens button if present
 		entry.lensBtnElement = entry.element.querySelector('.openlime-lens-btn');
 		if (entry.lensBtnElement && entry.lensOnclick) {
@@ -1195,28 +1204,36 @@ class UIBasic {
 	* @private
 	*/
 	updateEntry(entry) {
-		let status = entry.status ? entry.status() : '';
-
-		// Update classes
-		entry.element.classList.toggle('active', status == 'active');
-
-		// Update status indicator for layer entries
-		if (entry.layer) {
-			const statusIcon = entry.element.querySelector('.openlime-layer-status');
-			if (statusIcon) {
-				statusIcon.textContent = status == 'active' ? '✓' : '';
-			}
-			// Update lens button active state
-			if (entry.lensBtnElement && entry.lensStatus) {
-				const lensActive = entry.lensStatus() === 'active';
-				entry.lensBtnElement.classList.toggle('active', lensActive);
-				entry.lensBtnElement.title = lensActive ? 'Remove from lens' : 'Show in lens';
+		if ('list' in entry) {
+			for (let e of entry.list) {
+				this.updateEntry(e);
 			}
 		}
 
-		if ('list' in entry)
-			for (let e of entry.list)
-				this.updateEntry(e);
+		if (!entry.element || (!entry.status && !entry.lensStatus)) {
+			return;
+		}
+
+		const status = entry.status ? entry.status() : '';
+		const lensStatus = entry.lensStatus ? entry.lensStatus() : '';
+		const cacheKey = `${status}\0${lensStatus}`;
+		if (entry._menuVisualCache === cacheKey) {
+			return;
+		}
+		entry._menuVisualCache = cacheKey;
+
+		if (entry.status) {
+			entry.element.classList.toggle('active', status == 'active');
+			if (entry.layer && entry.statusIcon) {
+				entry.statusIcon.textContent = status == 'active' ? '✓' : '';
+			}
+		}
+
+		if (entry.lensBtnElement && entry.lensStatus) {
+			const lensActive = lensStatus === 'active';
+			entry.lensBtnElement.classList.toggle('active', lensActive);
+			entry.lensBtnElement.title = lensActive ? 'Remove from lens' : 'Show in lens';
+		}
 	}
 
 	/**
@@ -1273,12 +1290,13 @@ class UIBasic {
 	}
 
 	/**
-	 * Updates the visual state of all menu entries.
-	 * It is safe to call this before initialization completes:
-	 * in that case it will simply do nothing.
+	 * Updates the visual state of all layer-menu entries (active checkmarks, lens buttons).
+	 * Safe before init (no-op without {@link UIBasic#layerMenu}).
+	 *
+	 * Not driven by canvas redraw/update — call after visibility/mode/lens changes, on init,
+	 * when opening the layers panel ({@link UIBasic#toggleLayers}), or when adding uniform UI.
 	 */
 	updateMenu() {
-		// If the menu DOM is not created yet, just skip
 		if (!this.layerMenu) {
 			return;
 		}
