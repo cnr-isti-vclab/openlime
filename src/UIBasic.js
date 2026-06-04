@@ -249,8 +249,8 @@ class UIBasic {
 				if (pencilButton)
 					pencilButton.classList.toggle('openlime-pencil-active', mode !== 'idle');
 				this._setControllersForPencil(mode !== 'idle');
-				if (mode !== 'idle') this.emit('pencilEnabled');
-				else this.emit('pencilDisabled');
+				if (mode === 'idle') this.emit('pencilDisabled');
+				else if (this.annotationManager?.active) this.emit('pencilEnabled');
 			});
 		}
 
