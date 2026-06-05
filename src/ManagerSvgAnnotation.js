@@ -2053,6 +2053,7 @@ class ManagerSvgAnnotation {
   _applyStyleToElements(anno, selected = false) {
     this._ensureDefaultStructuralFilters();
     const style = this._getClassStyle(anno, selected);
+    const interactionCursor = selected ? 'grab' : 'pointer';
     const applyFilter = (el) => {
       // Markers already set inline CSS filter (e.g. drop-shadow). SVG
       // presentation attribute `filter` would lose against inline CSS due to
@@ -2079,24 +2080,35 @@ class ManagerSvgAnnotation {
         el.setAttribute('fill', style.fill);
         el.setAttribute('stroke', style.stroke);
         el.setAttribute('opacity', String(style.fillOpacity));
-        el.style.cursor = selected ? 'grab' : '';
+        el.style.cursor = interactionCursor;
       } else if (el.classList?.contains('annotation-polyline')) {
         applyFilter(el);
         el.setAttribute('stroke', style.stroke);
         if (anno.data._markerClosed) {
           el.setAttribute('fill', style.fill);
         }
+        el.style.cursor = interactionCursor;
+      } else if (el.classList?.contains('annotation-polyline-hit')) {
+        el.style.cursor = interactionCursor;
       } else if (el.classList?.contains('annotation-rect')) {
         applyFilter(el);
         el.setAttribute('stroke', style.stroke);
         el.setAttribute('fill', style.fill);
         el.setAttribute('fill-opacity', String(style.fillOpacity));
+        el.style.cursor = interactionCursor;
       } else if (el.classList?.contains('annotation-freehand')) {
         applyFilter(el);
         el.setAttribute('stroke', style.stroke);
+        if (anno.data._markerClosed) {
+          el.setAttribute('fill', style.fill);
+        }
+        el.style.cursor = interactionCursor;
+      } else if (el.classList?.contains('annotation-freehand-hit')) {
+        el.style.cursor = interactionCursor;
       } else if (el.tagName?.toLowerCase() === 'g' && el.getAttribute('id')) {
         // Grouped annotation: recurse into <g id="originalId"> wrappers
         // to reach the actual annotation elements inside.
+        el.style.cursor = interactionCursor;
         for (const child of el.children ?? []) applyToEl(child);
       }
     };
