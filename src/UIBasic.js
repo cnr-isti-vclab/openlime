@@ -224,7 +224,10 @@ class UIBasic {
 			_pencilControllersLocked: false,
 			_savedControllerStates: null,
 			_savedPanzoomActive: true,
-			_restoreLightActiveAfterPencil: false
+			_restoreLightActiveAfterPencil: false,
+			_temporaryPanOverrideActive: false,
+			_savedPanzoomModifiers: null,
+			_restoreLightActiveAfterTemporaryPan: false
 		});
 
 		Object.assign(this, options);
@@ -591,6 +594,7 @@ class UIBasic {
 
 			document.addEventListener('keydown', (e) => this.keyDown(e), false);
 			document.addEventListener('keyup', (e) => this.keyUp(e), false);
+			window.addEventListener('blur', () => this._endTemporaryPanOverride(), false);
 
 			this.createMenu();
 			this.updateMenu();
@@ -679,6 +683,10 @@ class UIBasic {
 	 * @private
 	 */
 	keyDown(e) {
+		if (e.target != document.body && e.target.closest('input, textarea') != null)
+			return;
+		if (e.ctrlKey && e.shiftKey && !e.altKey)
+			this._beginTemporaryPanOverride();
 	}
 
 	/**
@@ -687,6 +695,10 @@ class UIBasic {
 	 * @private
 	 */
 	keyUp(e) {
+		if (this._temporaryPanOverrideActive && (!e.ctrlKey || !e.shiftKey)) {
+			this._endTemporaryPanOverride();
+		}
+
 		if (e.target != document.body && e.target.closest('input, textarea') != null)
 			return;
 
@@ -703,6 +715,64 @@ class UIBasic {
 				return;
 			}
 		}
+	}
+
+	/**
+	 * Returns true when Ctrl+Shift temporary pan override can be useful.
+	 * @returns {boolean}
+	 * @private
+	 */
+	_canUseTemporaryPanOverride() {
+		return !!(this.lightActive || this.annotationManager?.active);
+	}
+
+	/**
+	 * Temporarily suspends annotation/light interaction so Ctrl+Shift can pan the scene.
+	 * @private
+	 */
+	_beginTemporaryPanOverride() {
+		if (this._temporaryPanOverrideActive) return;
+		if (!this._canUseTemporaryPanOverride()) return;
+
+		this._temporaryPanOverrideActive = true;
+		this._savedPanzoomActive = !!this.panzoom?.active;
+		this._savedPanzoomModifiers = [...(this.panzoom?.activeModifiers ?? [])];
+		this._restoreLightActiveAfterTemporaryPan = !!this.lightActive;
+
+		if (this.annotationManager?.setInteractionSuspended)
+			this.annotationManager.setInteractionSuspended(true);
+
+		if (this._restoreLightActiveAfterTemporaryPan)
+			this.toggleLightController(false);
+
+		if (this.panzoom) {
+			this.panzoom.active = true;
+			if (!this.panzoom.activeModifiers.includes(3))
+				this.panzoom.activeModifiers = [...this.panzoom.activeModifiers, 3];
+		}
+	}
+
+	/**
+	 * Restores the interaction state that was active before Ctrl+Shift temporary pan.
+	 * @private
+	 */
+	_endTemporaryPanOverride() {
+		if (!this._temporaryPanOverrideActive) return;
+
+		if (this.annotationManager?.setInteractionSuspended)
+			this.annotationManager.setInteractionSuspended(false);
+
+		if (this._restoreLightActiveAfterTemporaryPan)
+			this.toggleLightController(true);
+
+		if (this.panzoom) {
+			this.panzoom.activeModifiers = this._savedPanzoomModifiers ?? this.panzoom.activeModifiers;
+			this.panzoom.active = this._savedPanzoomActive;
+		}
+
+		this._savedPanzoomModifiers = null;
+		this._restoreLightActiveAfterTemporaryPan = false;
+		this._temporaryPanOverrideActive = false;
 	}
 
 	/**

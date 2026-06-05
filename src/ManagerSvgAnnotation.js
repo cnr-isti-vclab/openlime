@@ -1018,6 +1018,14 @@ class ManagerSvgAnnotation {
      * @private
      */
     this._pencilEnabled = false;
+    /**
+     * Temporary suspension flag used by external UI overrides (for example
+     * Ctrl+Shift panning) to make the manager fully transparent without
+     * tearing down the current annotation mode/session.
+     * @type {boolean}
+     * @private
+     */
+    this._interactionSuspended = false;
 
     // Resolve or auto-create the annotation layer
     this._resolveLayer();
@@ -1077,7 +1085,7 @@ class ManagerSvgAnnotation {
 
     // Keyboard: Escape cancels, Enter finalises an in-progress drawing
     this._keyHandler = (e) => {
-      if (!this._pencilEnabled) return;
+      if (!this._pencilEnabled || this._interactionSuspended) return;
       if (e.key === 'Escape' && this._session) {
         this._cancelSession();
         e.preventDefault();
@@ -1200,6 +1208,25 @@ class ManagerSvgAnnotation {
    * @type {boolean}
    */
   get active() { return this._pencilEnabled; }
+
+  /**
+   * Temporarily suspends or resumes annotation interaction while preserving the
+   * current pencil state and mode.
+   *
+   * @param {boolean} suspended
+   */
+  setInteractionSuspended(suspended) {
+    const next = !!suspended;
+    if (this._interactionSuspended === next) return;
+    this._interactionSuspended = next;
+    this._syncPointerEvents();
+  }
+
+  /**
+   * Returns true when annotation interaction is temporarily suspended.
+   * @returns {boolean}
+   */
+  get interactionSuspended() { return this._interactionSuspended; }
 
   /**
    * The **active** annotation: the most recently activated one inside the
@@ -2005,7 +2032,7 @@ class ManagerSvgAnnotation {
     //  2. create mode → PointerManager must see every click/drag for drawing
     // In edit mode with pencil enabled, annotations are clickable for selection.
     svgGroup.style.pointerEvents =
-      (!this._pencilEnabled || this._mode === 'create') ? 'none' : '';
+      (!this._pencilEnabled || this._interactionSuspended || this._mode === 'create') ? 'none' : '';
   }
 
   // ─── Internal: style resolution ─────────────────────────────────────────────
@@ -2240,7 +2267,7 @@ class ManagerSvgAnnotation {
     this.layer.onClick = (anno, e) => {
       // Mouse selections are only allowed when the pencil is enabled by the user.
       // Return true to swallow the event (prevent LayerSvgAnnotation's default select).
-      if (!this._pencilEnabled || this._mode !== 'edit') return true;
+      if (!this._pencilEnabled || this._interactionSuspended || this._mode !== 'edit') return true;
       const markerType = anno?.data?._markerType;
       const canTranslateWithShift = markerType && markerType !== 'disk' && !!e?.shiftKey;
       if (canTranslateWithShift) {
@@ -2855,7 +2882,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onDoubleTap(e) {
-    if (!this._pencilEnabled) return;
+    if (!this._pencilEnabled || this._interactionSuspended) return;
     if (this._isUiTarget(e)) return;
     e.preventDefault();
     e.stopPropagation();
@@ -2895,7 +2922,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onHold(e) {
-    if (!this._pencilEnabled) return;
+    if (!this._pencilEnabled || this._interactionSuspended) return;
     if (this._isUiTarget(e)) return;
     if (e.pointerType !== 'pen') return;
 
@@ -2928,7 +2955,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onSingleTap(e) {
-    if (!this._pencilEnabled) return;
+    if (!this._pencilEnabled || this._interactionSuspended) return;
     if (this._isUiTarget(e)) return;
 
     const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
@@ -2979,7 +3006,7 @@ class ManagerSvgAnnotation {
 
   /** Hover → rubber-band update for 'sequence' sessions (mouse up + moving). @private */
   _onHover(e) {
-    if (!this._pencilEnabled) return;
+    if (!this._pencilEnabled || this._interactionSuspended) return;
     if (!this._session) return;
     const pos = this._eventToImageCoords(e);
     const transform = this.viewer.camera.getCurrentTransform(performance.now());
@@ -3000,7 +3027,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onDragStart(e) {
-    if (!this._pencilEnabled) return;
+    if (!this._pencilEnabled || this._interactionSuspended) return;
     if (this._isUiTarget(e)) return;
     // Only intercept while actively creating an annotation
     if (this._mode !== 'create') return;
@@ -3034,6 +3061,7 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onDragMove(e) {
+    if (this._interactionSuspended) return;
     if (!this._session) return;
     const pos = this._eventToImageCoords(e);
     const transform = this.viewer.camera.getCurrentTransform(performance.now());
@@ -3044,6 +3072,7 @@ class ManagerSvgAnnotation {
 
   /** Pan/drag end → finalise 'drag' mode only. 'sequence' finalises on double-tap or pen hold. @private */
   _onDragEnd(e) {
+    if (this._interactionSuspended) return;
     if (!this._session) return;
     if (this._session.marker.interactionMode() === 'drag') {
       this._finalizeSession(e);
