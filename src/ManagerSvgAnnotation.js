@@ -217,6 +217,18 @@ class Marker {
     // no-op by default
   }
 
+  /**
+   * **['edit' mode]** Translates the whole annotation by the supplied delta.
+   * Override in markers that store geometry in `annotation.data`.
+   *
+   * @param {{x:number,y:number}} delta - Translation delta in image coordinates
+   * @param {Object} transform - Current camera transform
+   * @param {Annotation} annotation - The annotation being dragged
+   */
+  translateAnnotation(delta, transform, annotation) {
+    // no-op by default
+  }
+
   // ── Common ──────────────────────────────────────────────────────────────
 
   /**
@@ -653,6 +665,35 @@ class PolylineMarker extends Marker {
     }
   }
 
+  translateAnnotation(delta, transform, annotation) {
+    if (!delta || !annotation.data._markerPoints?.length) return;
+
+    annotation.data._markerPoints = annotation.data._markerPoints.map((p) => ({
+      x: p.x + delta.x,
+      y: p.y + delta.y,
+    }));
+
+    const pts = PolylineMarker._toPointsAttr(annotation.data._markerPoints);
+    const shape = annotation.elements.find(
+      el => el.classList?.contains('annotation-polyline'));
+    if (shape) shape.setAttribute('points', pts);
+
+    const hitEl = annotation.elements.find(
+      el => el.classList?.contains('annotation-polyline-hit'));
+    if (hitEl) hitEl.setAttribute('points', pts);
+
+    const handles = annotation.elements.find(
+      el => el.classList?.contains('annotation-vertex-handles'));
+    if (handles) {
+      annotation.data._markerPoints.forEach((p, idx) => {
+        const dot = handles.children[idx];
+        if (!dot) return;
+        dot.setAttribute('cx', String(p.x));
+        dot.setAttribute('cy', String(p.y));
+      });
+    }
+  }
+
   serialize() {
     return {
       type: this.type,
@@ -937,6 +978,11 @@ class ManagerSvgAnnotation {
      * @type {{annotation, vertexIndex}|null}
      */
     this._vertexSession = null;
+    /**
+     * Active whole-annotation drag session in edit mode.
+     * @type {{annotation}|null}
+     */
+    this._annotationDragSession = null;
     /**
      * The annotation whose vertex handles are currently visible and whose
      * vertex-drag listeners are attached.  In a multi-selection this is the
@@ -2195,6 +2241,16 @@ class ManagerSvgAnnotation {
       // Mouse selections are only allowed when the pencil is enabled by the user.
       // Return true to swallow the event (prevent LayerSvgAnnotation's default select).
       if (!this._pencilEnabled || this._mode !== 'edit') return true;
+      const markerType = anno?.data?._markerType;
+      const canTranslateWithShift = markerType && markerType !== 'disk' && !!e?.shiftKey;
+      if (canTranslateWithShift) {
+        if (!this.layer.selected.has(anno.id)) {
+          this.layer.clearSelected();
+          this.layer.setSelected(anno, true);
+        }
+        this._startAnnotationTranslateDrag(anno, e);
+        return true;
+      }
       // Record that the click landed on an annotation so _onSingleTap can
       // distinguish this from a click on the empty canvas background.
       this._lastClickWasOnAnnotation = true;
@@ -2205,6 +2261,71 @@ class ManagerSvgAnnotation {
       }
       return false; // let LayerSvgAnnotation's default single-select run
     };
+  }
+
+  /**
+   * Starts a whole-annotation drag session from the same `pointerdown` used by
+   * `LayerSvgAnnotation` to report clicks, so Shift+drag can select and move in
+   * a single gesture.
+   *
+   * @param {Annotation} annotation
+   * @param {PointerEvent} e
+   * @private
+   */
+  _startAnnotationTranslateDrag(annotation, e) {
+    const markerType = annotation?.data?._markerType;
+    if (!markerType || markerType === 'disk') return;
+
+    e.stopPropagation?.();
+    e.preventDefault?.();
+
+    let lastPos = this._eventToImageCoords(e);
+    this._annotationDragSession = { annotation };
+    this.emit('editStart', annotation);
+    e.currentTarget?.setPointerCapture?.(e.pointerId);
+
+    const onMove = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      if (!this._annotationDragSession) { cleanup(); return; }
+
+      const pos = this._eventToImageCoords(ev);
+      const delta = {
+        x: pos.x - lastPos.x,
+        y: pos.y - lastPos.y,
+      };
+      lastPos = pos;
+
+      if (delta.x === 0 && delta.y === 0) return;
+
+      try {
+        const marker = this._instantiateMarker(markerType, {});
+        const transform = this.viewer.camera.getCurrentTransform(performance.now());
+        marker.translateAnnotation(delta, transform, annotation);
+      } catch {
+        return;
+      }
+
+      annotation.needsUpdate = true;
+      this.viewer.redraw();
+    };
+
+    const onUp = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      cleanup();
+      this._annotationDragSession = null;
+      annotation.syncSvg?.();
+      this.emit('update', annotation);
+    };
+
+    const cleanup = () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
   }
 
   // ─── Internal: per-frame annotation update ────────────────────────────────
@@ -3726,6 +3847,17 @@ class RectMarker extends Marker {
     this._rebuildHandles(annotation, transform);
   }
 
+  translateAnnotation(delta, transform, annotation) {
+    const c = annotation.data._markerCorners;
+    if (!c || !delta) return;
+    annotation.data._markerCorners = c.map((corner) => ({
+      x: corner.x + delta.x,
+      y: corner.y + delta.y,
+    }));
+    this._updateRectGeometry(annotation);
+    this._rebuildHandles(annotation, transform);
+  }
+
   // ── Zoom-responsive sizes ─────────────────────────────────────────────────
 
   updateElements(elements, transform, annotation, style = {}) {
@@ -4075,6 +4207,21 @@ class FreehandMarker extends Marker {
 
   canFinalize(annotation) {
     return (annotation.data?._markerPoints?.length ?? 0) >= 2;
+  }
+
+  translateAnnotation(delta, transform, annotation) {
+    if (!delta || !annotation.data._markerPoints?.length) return;
+
+    annotation.data._markerPoints = annotation.data._markerPoints.map((p) => ({
+      x: p.x + delta.x,
+      y: p.y + delta.y,
+    }));
+
+    const attr = FreehandMarker._toPointsAttr(annotation.data._markerPoints);
+    const stroke = annotation.elements.find(el => el.classList?.contains('annotation-freehand'));
+    const hit = annotation.elements.find(el => el.classList?.contains('annotation-freehand-hit'));
+    if (stroke) stroke.setAttribute('points', attr);
+    if (hit) hit.setAttribute('points', attr);
   }
 
   shouldStayInCreateModeAfterFinalize(annotation) {
