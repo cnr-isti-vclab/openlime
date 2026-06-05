@@ -227,7 +227,9 @@ class UIBasic {
 			_restoreLightActiveAfterPencil: false,
 			_temporaryPanOverrideActive: false,
 			_savedPanzoomModifiers: null,
-			_restoreLightActiveAfterTemporaryPan: false
+			_restoreLightActiveAfterTemporaryPan: false,
+			_temporaryPanOverrideSavedPanzoomActive: null,
+			_temporaryPanOverrideSavedPanzoomModifiers: null
 		});
 
 		Object.assign(this, options);
@@ -735,8 +737,8 @@ class UIBasic {
 		if (!this._canUseTemporaryPanOverride()) return;
 
 		this._temporaryPanOverrideActive = true;
-		this._savedPanzoomActive = !!this.panzoom?.active;
-		this._savedPanzoomModifiers = [...(this.panzoom?.activeModifiers ?? [])];
+		this._temporaryPanOverrideSavedPanzoomActive = !!this.panzoom?.active;
+		this._temporaryPanOverrideSavedPanzoomModifiers = [...(this.panzoom?.activeModifiers ?? [])];
 		this._restoreLightActiveAfterTemporaryPan = !!this.lightActive;
 
 		if (this.annotationManager?.setInteractionSuspended)
@@ -766,11 +768,12 @@ class UIBasic {
 			this.toggleLightController(true);
 
 		if (this.panzoom) {
-			this.panzoom.activeModifiers = this._savedPanzoomModifiers ?? this.panzoom.activeModifiers;
-			this.panzoom.active = this._savedPanzoomActive;
+			this.panzoom.activeModifiers = this._temporaryPanOverrideSavedPanzoomModifiers ?? this.panzoom.activeModifiers;
+			this.panzoom.active = this._temporaryPanOverrideSavedPanzoomActive;
 		}
 
-		this._savedPanzoomModifiers = null;
+		this._temporaryPanOverrideSavedPanzoomActive = null;
+		this._temporaryPanOverrideSavedPanzoomModifiers = null;
 		this._restoreLightActiveAfterTemporaryPan = false;
 		this._temporaryPanOverrideActive = false;
 	}
