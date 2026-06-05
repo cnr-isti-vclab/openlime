@@ -367,6 +367,15 @@ class DiskMarker extends Marker {
   serialize() {
     return { type: this.type, radius: this.radius };
   }
+
+  translateAnnotation(delta, transform, annotation) {
+    if (!delta) return;
+    const next = {
+      x: (annotation.data._x ?? 0) + delta.x,
+      y: (annotation.data._y ?? 0) + delta.y,
+    };
+    this.moveVertex(0, next, transform, annotation);
+  }
 }
 
 // ─── Built-in: PolylineMarker ─────────────────────────────────────────────────
@@ -2269,12 +2278,9 @@ class ManagerSvgAnnotation {
       // Return true to swallow the event (prevent LayerSvgAnnotation's default select).
       if (!this._pencilEnabled || this._interactionSuspended || this._mode !== 'edit') return true;
       const markerType = anno?.data?._markerType;
-      const canTranslateWithShift = markerType && markerType !== 'disk' && !!e?.shiftKey;
+      const canTranslateWithShift = !!markerType && !!e?.shiftKey;
       if (canTranslateWithShift) {
-        if (!this.layer.selected.has(anno.id)) {
-          this.layer.clearSelected();
-          this.layer.setSelected(anno, true);
-        }
+        this._selectOnlyAnnotation(anno);
         this._startAnnotationTranslateDrag(anno, e);
         return true;
       }
@@ -2291,6 +2297,18 @@ class ManagerSvgAnnotation {
   }
 
   /**
+   * Replaces the current selection with a single annotation.
+   *
+   * @param {Annotation} annotation
+   * @private
+   */
+  _selectOnlyAnnotation(annotation) {
+    if (!annotation) return;
+    if (this.layer.selected?.size === 1 && this.layer.selected.has(annotation.id)) return;
+    this.setSelectedIds([annotation.id]);
+  }
+
+  /**
    * Starts a whole-annotation drag session from the same `pointerdown` used by
    * `LayerSvgAnnotation` to report clicks, so Shift+drag can select and move in
    * a single gesture.
@@ -2301,8 +2319,9 @@ class ManagerSvgAnnotation {
    */
   _startAnnotationTranslateDrag(annotation, e) {
     const markerType = annotation?.data?._markerType;
-    if (!markerType || markerType === 'disk') return;
+    if (!markerType) return;
 
+    this._selectOnlyAnnotation(annotation);
     e.stopPropagation?.();
     e.preventDefault?.();
 
@@ -3156,10 +3175,15 @@ class ManagerSvgAnnotation {
       for (const anno of this.layer.annotations) {
         const isSelected = selectedIds.has(anno.id);
         const isInSession = this._session?.annotation === anno;
+        const markerType = anno.data?._markerType;
         const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
         if (handles) {
           if ((isSelected && this.showVertexHandles) || isInSession) handles.removeAttribute('visibility');
           else handles.setAttribute('visibility', 'hidden');
+        }
+        if (markerType === 'disk') {
+          if (isSelected) this._attachVertexDragListeners(anno);
+          else this._detachVertexDragListeners(anno);
         }
         this._applyStyleToElements(anno, isSelected);
         anno.needsUpdate = true;
@@ -3195,6 +3219,7 @@ class ManagerSvgAnnotation {
     for (const anno of this.layer.annotations) {
       const isSelected = selectedIds.has(anno.id);
       const isInSession = this._session?.annotation === anno;
+      const markerType = anno.data?._markerType;
 
       // Show vertex handles for ALL selected annotations (when the feature is enabled).
       // Always show handles on the annotation currently being drawn (session active).
@@ -3202,6 +3227,10 @@ class ManagerSvgAnnotation {
       if (handles) {
         if ((isSelected && this.showVertexHandles) || isInSession) handles.removeAttribute('visibility');
         else handles.setAttribute('visibility', 'hidden');
+      }
+      if (markerType === 'disk') {
+        if (isSelected) this._attachVertexDragListeners(anno);
+        else if (anno !== nextActive) this._detachVertexDragListeners(anno);
       }
 
       this._applyStyleToElements(anno, isSelected);
@@ -3284,6 +3313,7 @@ class ManagerSvgAnnotation {
     if (diskEl && !diskEl._vertexDragHandler) {
       diskEl._vertexDragHandler = (e) => {
         if (e.button !== 0) return;
+        this._selectOnlyAnnotation(annotation);
         e.stopPropagation();
         e.preventDefault();
         diskEl.setPointerCapture(e.pointerId);
@@ -3332,6 +3362,7 @@ class ManagerSvgAnnotation {
 
       dot._vertexDragHandler = (e) => {
         if (e.button !== 0) return;
+        this._selectOnlyAnnotation(annotation);
         // Prevent the event from bubbling to handles.onpointerdown (stopPropagation)
         // and from being treated as a pan by PointerManager.
         e.stopPropagation();
