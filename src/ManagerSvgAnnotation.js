@@ -3052,12 +3052,18 @@ class ManagerSvgAnnotation {
     if (this._mode !== 'create') return;
 
     const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
-    if (markerMode !== 'drag' && markerMode !== 'sequence') return;
+    const isPenTapFallback = markerMode === 'tap' && e.pointerType === 'pen';
+    if (markerMode !== 'drag' && markerMode !== 'sequence' && !isPenTapFallback) return;
 
     // Block panzoom/light from receiving this pan
     e.preventDefault?.();
 
     const pos = this._eventToImageCoords(e);
+
+    if (isPenTapFallback) {
+      this.createAnnotation(pos);
+      return;
+    }
 
     if (markerMode === 'drag') {
       this._startSession(pos, e);
