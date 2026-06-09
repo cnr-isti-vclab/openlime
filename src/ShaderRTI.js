@@ -498,7 +498,7 @@ class PTM {
 	static lightWeights(v) {
 		let b = [1.0, v[0], v[1], v[0] * v[0], v[0] * v[1], v[1] * v[1]];
 		let base = new Float32Array(18);
-		for (let i = 0; i < 18; i++)
+		for (let i = 0; i < 6; i++)
 			base[3 * i] = base[3 * i + 1] = base[3 * i + 2] = b[i];
 		return base;
 	}
