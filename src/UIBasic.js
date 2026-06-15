@@ -188,6 +188,7 @@ class UIBasic {
 				bearing: { title: 'Bearing', display: false, key: 'b', task: (event) => { this.toggleBearingController(); } },
 				light: { title: 'Light', display: 'auto', key: 'l', task: (event) => { this.toggleLightController(); } },
 				ruler: { title: 'Ruler', display: false, task: (event) => { this.toggleRuler(); } },
+				info: { title: 'Annotation info', display: false, key: 'i', task: (event) => { this.toggleAnnotationInfo(undefined, event); } },
 				help: { title: 'Help', display: false, key: '?', task: (event) => { this.toggleHelp(this.actions.help); }, html: '<p>Help here!</p>' }, //FIXME Why a boolean in toggleHelp?
 				snapshot: { title: 'Snapshot', display: false, task: (event) => { this.snapshot() } }, //FIXME not work!
 				pencil: { title: 'Pencil', display: false, key: 'p', task: (event) => { this.toggleAnnotations(); } },
@@ -221,6 +222,7 @@ class UIBasic {
 			annotationManager: null,
 			layerVisibilityMode: 'exclusive',
 			lensLayer: null,
+			_annotationInfoActive: false,
 			_pencilControllersLocked: false,
 			_savedControllerStates: null,
 			_savedPanzoomActive: true,
@@ -256,6 +258,10 @@ class UIBasic {
 				this._setControllersForPencil(mode !== 'idle');
 				if (mode === 'idle') this.emit('pencilDisabled');
 				else if (this.annotationManager?.active) this.emit('pencilEnabled');
+			});
+			this.annotationManager.addEvent('selectionChange', (annotations) => {
+				if (!this._annotationInfoActive) return;
+				this._emitAnnotationInfo({ annotations, source: 'selectionChange' });
 			});
 		}
 
@@ -1797,6 +1803,62 @@ class UIBasic {
 	}
 
 	/**
+	 * Toggles viewer-only annotation inspection.
+	 * When active, annotations can be selected and observed without enabling edit mode.
+	 *
+	 * @param {boolean} [force] - Force a specific state; toggles if omitted.
+	 * @returns {boolean} Whether annotation inspection is active.
+	 */
+	toggleAnnotationInfo(force, originalEvent = null) {
+		if (!this.annotationManager) return false;
+		const active = force === undefined ? !this._annotationInfoActive : !!force;
+		this._annotationInfoActive = active;
+		this.annotationManager.setInspectEnabled(active);
+
+		const infoButton = this.viewer.containerElement
+			.querySelector('.openlime-button.openlime-info');
+		if (infoButton)
+			infoButton.classList.toggle('openlime-info-active', active);
+
+		this.emit('annotationInfoToggle', {
+			active,
+			originalEvent,
+			manager: this.annotationManager,
+			layer: this.annotationManager.layer
+		});
+
+		if (active) this._emitAnnotationInfo({ source: 'toggle', originalEvent });
+		return active;
+	}
+
+	/**
+	 * Emits the current annotation inspection payload for external UI hooks.
+	 * @param {Object} [options]
+	 * @param {Annotation[]} [options.annotations]
+	 * @param {string} [options.source='manual']
+	 * @param {Event|PointerEvent} [options.originalEvent]
+	 * @private
+	 */
+	_emitAnnotationInfo({ annotations = null, source = 'manual', originalEvent = null } = {}) {
+		if (!this.annotationManager) return;
+		const selectedAnnotations = Array.isArray(annotations)
+			? annotations
+			: [...(this.annotationManager.layer?.selected ?? [])]
+				.map(id => this.annotationManager.layer.getAnnotationById(id))
+				.filter(Boolean);
+		this.emit('annotationInfo', {
+			source,
+			originalEvent,
+			active: this._annotationInfoActive,
+			manager: this.annotationManager,
+			layer: this.annotationManager.layer,
+			activeAnnotation: this.annotationManager.activeAnnotation,
+			selectedAnnotations,
+			selectedIds: selectedAnnotations.map(annotation => annotation.id)
+		});
+	}
+
+	/**
 	 * Sets or clears the base layer inside the LensLayer.
 	 * If the requested layer is already in the lens, it is removed (toggle off).
 	 * Otherwise the layer is set as the lens base and all other layers are
@@ -1963,5 +2025,7 @@ addSignals(UIBasic, 'lightdirection');
 addSignals(UIBasic, 'pencilEnabled');
 addSignals(UIBasic, 'pencilDisabled');
 addSignals(UIBasic, 'settings');
+addSignals(UIBasic, 'annotationInfo');
+addSignals(UIBasic, 'annotationInfoToggle');
 
 export { UIBasic, UIDialog }
