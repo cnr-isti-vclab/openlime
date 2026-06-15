@@ -1332,6 +1332,7 @@ class ManagerSvgAnnotation {
     annotation.description = opts.description ?? '';
     const semanticClass = this._resolveSemanticClassId(opts.semanticClass);
     annotation.semanticClass = semanticClass;
+    annotation.class = semanticClass;
     annotation.structuralClass = this._resolveStructuralClassId(opts.structuralClass);
     annotation.type = 'point';
     annotation.publish = opts.publish ?? 1;
@@ -1410,6 +1411,7 @@ class ManagerSvgAnnotation {
       if (key === 'semanticClass') {
         const resolved = this._resolveSemanticClassId(patch[key]);
         anno.semanticClass = resolved;
+        anno.class = resolved;
         continue;
       }
       if (key === 'structuralClass') {
@@ -2157,6 +2159,11 @@ class ManagerSvgAnnotation {
       el.removeAttribute('filter');
     };
     const applyToEl = (el) => {
+      if (el.setAttribute) {
+        el.setAttribute('data-class', anno.semanticClass ?? anno.class ?? '');
+        el.setAttribute('data-semantic-class', anno.semanticClass ?? '');
+        el.setAttribute('data-structural-class', anno.structuralClass ?? '');
+      }
       if (el.classList?.contains('annotation-disk')) {
         applyFilter(el);
         el.setAttribute('fill', style.fill);
@@ -2405,19 +2412,18 @@ class ManagerSvgAnnotation {
    */
   _onAnnotationUpdate(anno, transform) {
     const markerType = anno.data?._markerType ?? this.activeMarker;
+    const selected = this.layer.selected?.has(anno.id) ?? false;
     let style = {};
     try {
       const marker = this._instantiateMarker(markerType, this.markerOptions);
-      const selected = this.layer.selected?.has(anno.id) ?? false;
       style = this._getClassStyle(anno, selected);
       marker.updateElements(anno.elements, transform, anno, style);
     } catch {
       // Unknown marker type — silently ignore for robustness
-      const selected = this.layer.selected?.has(anno.id) ?? false;
       style = this._getClassStyle(anno, selected);
     }
 
-    const selected = this.layer.selected?.has(anno.id) ?? false;
+    this._applyStyleToElements(anno, selected);
     this._updateLabelElement(anno, transform, selected);
   }
 

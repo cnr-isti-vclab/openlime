@@ -269,6 +269,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 				let element = parser.parseFromString(anno.svg, "image/svg+xml").documentElement;
 				anno.elements = [...element.children]
 				anno.ready = true;
+				anno.needsUpdate = true;
 
 				/*				} else if(this.svgXML) {
 									a.svgElement = this.svgXML.querySelector(`#${a.id}`);
@@ -293,7 +294,9 @@ class LayerSvgAnnotation extends LayerAnnotation {
 				for (let child of anno.elements) {
 					let c = child; //.cloneNode(true);
 					c.setAttribute('data-annotation', anno.id);
-					c.setAttribute('data-class', anno.class);
+					c.setAttribute('data-class', anno.semanticClass ?? anno.class ?? '');
+					c.setAttribute('data-semantic-class', anno.semanticClass ?? '');
+					c.setAttribute('data-structural-class', anno.structuralClass ?? '');
 
 					//c.setAttribute('data-layer', this.id);
 					c.classList.add('openlime-annotation');
@@ -330,4 +333,3 @@ class LayerSvgAnnotation extends LayerAnnotation {
 Layer.prototype.types['svg_annotations'] = (options) => { return new LayerSvgAnnotation(options); }
 
 export { LayerSvgAnnotation }
-
