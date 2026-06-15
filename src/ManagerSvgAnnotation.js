@@ -1028,6 +1028,14 @@ class ManagerSvgAnnotation {
      */
     this._pencilEnabled = false;
     /**
+     * Whether viewer-only inspection is enabled.
+     * When `true`, annotations stay clickable/selectable even with pencil off,
+     * but editing affordances remain disabled.
+     * @type {boolean}
+     * @private
+     */
+    this._inspectEnabled = false;
+    /**
      * Temporary suspension flag used by external UI overrides (for example
      * Ctrl+Shift panning) to make the manager fully transparent without
      * tearing down the current annotation mode/session.
@@ -1206,6 +1214,24 @@ class ManagerSvgAnnotation {
   }
 
   /**
+   * Enables or disables viewer-only annotation inspection.
+   *
+   * Inspection allows click selection and external reactions without entering
+   * edit mode or showing vertex handles.
+   *
+   * @param {boolean} enabled
+   * @returns {boolean} `true` if inspection is now enabled.
+   */
+  setInspectEnabled(enabled) {
+    const next = !!enabled;
+    if (this._inspectEnabled === next) return this._inspectEnabled;
+    this._inspectEnabled = next;
+    if (!next) this.deselectAll();
+    this._syncPointerEvents();
+    return this._inspectEnabled;
+  }
+
+  /**
    * Current interaction mode: `'idle'`, `'create'`, or `'edit'`.
    * @type {string}
    */
@@ -1217,6 +1243,12 @@ class ManagerSvgAnnotation {
    * @type {boolean}
    */
   get active() { return this._pencilEnabled; }
+
+  /**
+   * `true` when viewer-only inspection is enabled.
+   * @type {boolean}
+   */
+  get inspectActive() { return this._inspectEnabled; }
 
   /**
    * Temporarily suspends or resumes annotation interaction while preserving the
@@ -2037,13 +2069,14 @@ class ManagerSvgAnnotation {
   _syncPointerEvents() {
     const svgGroup = this.layer?.svgGroup;
     if (!svgGroup) return;
+    const allowSelection = this._inspectEnabled || (this._pencilEnabled && this._mode === 'edit');
     // pointer-events: none in three cases:
     //  1. pencil disabled → annotations must be fully transparent to the user;
     //     all clicks/drags must reach the canvas (panzoom, light, …)
     //  2. create mode → PointerManager must see every click/drag for drawing
     // In edit mode with pencil enabled, annotations are clickable for selection.
     svgGroup.style.pointerEvents =
-      (!this._pencilEnabled || this._interactionSuspended || this._mode === 'create') ? 'none' : '';
+      (!allowSelection || this._interactionSuspended || this._mode === 'create') ? 'none' : '';
   }
 
   // ─── Internal: style resolution ─────────────────────────────────────────────
@@ -2281,11 +2314,16 @@ class ManagerSvgAnnotation {
    */
   _wireClickHandler() {
     this.layer.onClick = (anno, e) => {
-      // Mouse selections are only allowed when the pencil is enabled by the user.
+      const canSelect = !this._interactionSuspended
+        && (this._inspectEnabled || (this._pencilEnabled && this._mode === 'edit'));
+      const canEdit = !this._interactionSuspended
+        && this._pencilEnabled
+        && this._mode === 'edit';
+      // Mouse selections are only allowed when the tool is in inspect or edit mode.
       // Return true to swallow the event (prevent LayerSvgAnnotation's default select).
-      if (!this._pencilEnabled || this._interactionSuspended || this._mode !== 'edit') return true;
+      if (!canSelect) return true;
       const markerType = anno?.data?._markerType;
-      const canTranslateWithShift = !!markerType && !!e?.shiftKey;
+      const canTranslateWithShift = canEdit && !!markerType && !!e?.shiftKey;
       if (canTranslateWithShift) {
         this._selectOnlyAnnotation(anno);
         this._startAnnotationTranslateDrag(anno, e);
@@ -3176,6 +3214,7 @@ class ManagerSvgAnnotation {
 
     // `layer.selected` is the authoritative source of truth.
     const selectedIds = this.layer.selected; // Set<string>
+    const canEditSelection = this._pencilEnabled && this._mode === 'edit';
 
     // ── singleEditMode: suppress drag listeners when >1 annotation is selected ──
     // Handle *visibility* is still governed by `showVertexHandles` (orthogonal flag).
@@ -3190,11 +3229,11 @@ class ManagerSvgAnnotation {
         const markerType = anno.data?._markerType;
         const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
         if (handles) {
-          if ((isSelected && this.showVertexHandles) || isInSession) handles.removeAttribute('visibility');
+          if ((isSelected && this.showVertexHandles && canEditSelection) || isInSession) handles.removeAttribute('visibility');
           else handles.setAttribute('visibility', 'hidden');
         }
         if (markerType === 'disk') {
-          if (isSelected) this._attachVertexDragListeners(anno);
+          if (isSelected && canEditSelection) this._attachVertexDragListeners(anno);
           else this._detachVertexDragListeners(anno);
         }
         this._applyStyleToElements(anno, isSelected);
@@ -3223,7 +3262,7 @@ class ManagerSvgAnnotation {
 
     // ── Manage drag-listener attachment ──────────────────────────────────
     // Detach from the old active annotation when it changes.
-    if (this._selectedAnnotation && this._selectedAnnotation !== nextActive) {
+    if (this._selectedAnnotation && (this._selectedAnnotation !== nextActive || !canEditSelection)) {
       this._detachVertexDragListeners(this._selectedAnnotation);
     }
 
@@ -3237,11 +3276,11 @@ class ManagerSvgAnnotation {
       // Always show handles on the annotation currently being drawn (session active).
       const handles = anno.elements?.find(el => el.classList?.contains('annotation-vertex-handles'));
       if (handles) {
-        if ((isSelected && this.showVertexHandles) || isInSession) handles.removeAttribute('visibility');
+        if ((isSelected && this.showVertexHandles && canEditSelection) || isInSession) handles.removeAttribute('visibility');
         else handles.setAttribute('visibility', 'hidden');
       }
       if (markerType === 'disk') {
-        if (isSelected) this._attachVertexDragListeners(anno);
+        if (isSelected && canEditSelection) this._attachVertexDragListeners(anno);
         else if (anno !== nextActive) this._detachVertexDragListeners(anno);
       }
 
@@ -3250,7 +3289,7 @@ class ManagerSvgAnnotation {
     }
 
     // Attach drag listeners to the new active annotation (only if it changed).
-    if (nextActive && nextActive !== this._selectedAnnotation) {
+    if (canEditSelection && nextActive && nextActive !== this._selectedAnnotation) {
       this._attachVertexDragListeners(nextActive);
     }
 
