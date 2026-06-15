@@ -333,7 +333,11 @@ vec4 data() {
 				case 'diffuse':
 					if (this.colorspace == 'lrgb' || this.colorspace == 'rgb')
 						str += `
-vec4 diffuse = texture(plane0, v_texcoord);
+vec4 c = texture(plane0, v_texcoord);
+vec3 diffuse;	
+diffuse.x += (c.x - bias[0].x)*scale[0].x;
+diffuse.y += (c.y - bias[0].y)*scale[0].y;
+diffuse.z += (c.z - bias[0].z)*scale[0].z;
 float s = dot(light, normal);
 color = vec4(s * diffuse.xyz, 1);
 `;
