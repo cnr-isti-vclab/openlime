@@ -139,6 +139,43 @@
             color: #ffffff;
         }
 
+        #inspect-panel {
+            display: none;
+            position: fixed;
+            top: 90px;
+            right: 10px;
+            z-index: 1000;
+            width: min(340px, calc(100vw - 20px));
+            pointer-events: auto;
+        }
+
+        #inspect-panel .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(2px);
+            border-color: rgba(255, 255, 255, 0.42);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            color: #ffffff;
+        }
+
+        #inspect-panel .empty {
+            opacity: 0.8;
+            font-style: italic;
+        }
+
+        #inspect-panel .meta-label {
+            opacity: 0.75;
+            min-width: 88px;
+        }
+
+        #inspect-panel dl {
+            margin-bottom: 0;
+        }
+
+        #inspect-panel dd {
+            margin-bottom: 0.35rem;
+            word-break: break-word;
+        }
+
         /* Interaction hint — always visible except during active sessions */
         #ctrl-hint {
             display: block;
@@ -308,6 +345,37 @@
     <div id="ctrl-hint">
         Select a marker button to draw &nbsp;·&nbsp; Click to select &nbsp;·&nbsp; <b>Ctrl+click</b> (or
         <b>&#8984;+click</b>) to multi-select
+    </div>
+    <div id="selection-panel" style="position:fixed; top:10px; right:10px; z-index:999; width:280px;">
+        <div class="card">
+            <div class="card-body py-2 px-3">
+                <div class="small text-uppercase opacity-75 mb-1">Edit selection</div>
+                <div id="selection-info" class="small">none</div>
+            </div>
+        </div>
+    </div>
+    <div id="inspect-panel">
+        <div class="card">
+            <div class="card-body py-2 px-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="small text-uppercase opacity-75">Annotation Viewer</div>
+                    <span id="inspect-count" class="badge text-bg-secondary">0</span>
+                </div>
+                <div id="inspect-empty" class="small empty">Enable the info tool, then click an annotation to inspect it.</div>
+                <div id="inspect-content" style="display:none">
+                    <div id="inspect-title" class="fw-semibold mb-1">Untitled annotation</div>
+                    <div id="inspect-description" class="small mb-2 opacity-90"></div>
+                    <dl class="small">
+                        <div class="d-flex gap-2"><dt class="meta-label">ID</dt><dd id="inspect-id"></dd></div>
+                        <div class="d-flex gap-2"><dt class="meta-label">Semantic</dt><dd id="inspect-semantic"></dd></div>
+                        <div class="d-flex gap-2"><dt class="meta-label">Structural</dt><dd id="inspect-structural"></dd></div>
+                        <div class="d-flex gap-2"><dt class="meta-label">Selected IDs</dt><dd id="inspect-selected-ids"></dd></div>
+                    </dl>
+                    <div class="small text-uppercase opacity-75 mt-2 mb-1">Custom data</div>
+                    <pre id="inspect-data" class="small mb-0" style="white-space:pre-wrap; word-break:break-word;"></pre>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="modal fade" id="freehandSettingsModal" tabindex="-1" aria-labelledby="freehandSettingsLabel"
@@ -529,6 +597,7 @@
             structuralClasses: {
                 default: {},
                 selected: { stroke: '#aaaa00', fill: 'rgba(255,225,100,0.20)' },
+                inspectSelected: { stroke: '#7fd4ff', fill: 'rgba(90,180,255,0.18)' },
                 // Built-in preloaded filters in ManagerSvgAnnotation:
                 // olime-glow-soft, olime-shadow-soft, olime-outline-soft
                 underEditing: { strokeWidth: 3, fillOpacity: 0.8, filter: 'url(#olime-glow-soft)' },
@@ -675,6 +744,8 @@
 
         const EDIT_HINT_TEXT =
             'Click to select \u00b7 <b>Ctrl+click</b> (or <b>&#8984;+click</b>) for multi-select';
+        const VIEW_HINT_TEXT =
+            'Viewer mode: click to inspect \u00b7 <b>Ctrl+click</b> (or <b>&#8984;+click</b>) for multi-select';
         const MARKER_HINTS = {
             disk: '<b>Disk</b>: double-click on canvas to create',
             polyline: '<b>Polyline</b>: single-click to start/add points \u00b7 double-click to finish',
@@ -691,6 +762,50 @@
 
         function hideCtrlHint() {
             document.getElementById('ctrl-hint').style.display = 'none';
+        }
+
+        function setInspectPanelVisible(visible) {
+            document.getElementById('inspect-panel').style.display = visible ? 'block' : 'none';
+        }
+
+        function resetInspectPanel() {
+            document.getElementById('inspect-count').textContent = '0';
+            document.getElementById('inspect-empty').style.display = 'block';
+            document.getElementById('inspect-content').style.display = 'none';
+            document.getElementById('inspect-title').textContent = 'Untitled annotation';
+            document.getElementById('inspect-description').textContent = '';
+            document.getElementById('inspect-id').textContent = '';
+            document.getElementById('inspect-semantic').textContent = '';
+            document.getElementById('inspect-structural').textContent = '';
+            document.getElementById('inspect-selected-ids').textContent = '';
+            document.getElementById('inspect-data').textContent = '';
+        }
+
+        function renderInspectPanel(payload) {
+            const activeAnnotation = payload?.activeAnnotation ?? null;
+            const selectedAnnotations = payload?.selectedAnnotations ?? [];
+            const selectedIds = payload?.selectedIds ?? [];
+            document.getElementById('inspect-count').textContent = String(selectedAnnotations.length);
+
+            if (!activeAnnotation) {
+                document.getElementById('inspect-empty').textContent =
+                    selectedAnnotations.length
+                        ? 'Selection active, but no single active annotation is available.'
+                        : 'Enable the info tool, then click an annotation to inspect it.';
+                document.getElementById('inspect-empty').style.display = 'block';
+                document.getElementById('inspect-content').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('inspect-empty').style.display = 'none';
+            document.getElementById('inspect-content').style.display = 'block';
+            document.getElementById('inspect-title').textContent = activeAnnotation.label || 'Untitled annotation';
+            document.getElementById('inspect-description').textContent = activeAnnotation.description || 'No description';
+            document.getElementById('inspect-id').textContent = activeAnnotation.id || '';
+            document.getElementById('inspect-semantic').textContent = activeAnnotation.semanticClass || activeAnnotation.class || 'none';
+            document.getElementById('inspect-structural').textContent = activeAnnotation.structuralClass || 'none';
+            document.getElementById('inspect-selected-ids').textContent = selectedIds.length ? selectedIds.join(', ') : 'none';
+            document.getElementById('inspect-data').textContent = JSON.stringify(activeAnnotation.data || {}, null, 2);
         }
 
         function syncMarkerToolbarEnabled() {
@@ -711,11 +826,29 @@
         });
         ui.addEvent('pencilDisabled', () => {
             syncMarkerToolbarEnabled();
-            hideCtrlHint();
+            if (!manager.inspectActive) hideCtrlHint();
         });
         ui.addEvent('settings', () => {
             syncLabelVisibilityControls();
             if (viewerSettingsModal) viewerSettingsModal.show();
+        });
+        ui.addEvent('annotationInfoToggle', ({ active }) => {
+            setInspectPanelVisible(active);
+            if (active) {
+                setCtrlHint(VIEW_HINT_TEXT);
+                renderInspectPanel({
+                    activeAnnotation: manager.getActiveAnnotation(),
+                    selectedAnnotations: manager.getSelectedAnnotations(),
+                    selectedIds: manager.getSelectedIds(),
+                });
+            } else {
+                resetInspectPanel();
+                if (manager.active) setCtrlHint(EDIT_HINT_TEXT);
+                else hideCtrlHint();
+            }
+        });
+        ui.addEvent('annotationInfo', (payload) => {
+            renderInspectPanel(payload);
         });
 
         // ── Marker selector panel ────────────────────────────────────────
@@ -1185,7 +1318,7 @@
                 selectionPanel.style.display = mode === 'edit' ? 'block' : 'none';
             }
             // Restore ctrl-hint when returning to edit mode (was hidden during creation session)
-            if (mode === 'edit') {
+            if (mode === 'edit' && !manager.inspectActive) {
                 setCtrlHint(EDIT_HINT_TEXT);
             }
             if (mode !== 'edit') {
@@ -1201,10 +1334,12 @@
 
         // Show the pencil toggle button in the toolbar
         ui.actions.pencil.display = true;
+        ui.actions.info.display = true;
         ui.actions.settings.display = true;
 
         // Initial state: marker panel disabled until pencil is enabled.
         syncMarkerToolbarEnabled();
+        resetInspectPanel();
 
         OpenLIME.HSH.minElevation = 0.2;
 

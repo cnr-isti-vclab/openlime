@@ -259,9 +259,9 @@ class UIBasic {
 				if (mode === 'idle') this.emit('pencilDisabled');
 				else if (this.annotationManager?.active) this.emit('pencilEnabled');
 			});
-			this.annotationManager.addEvent('selectionChange', (annotations) => {
+			this.annotationManager.addEvent('annotationSelectionChange', (payload) => {
 				if (!this._annotationInfoActive) return;
-				this._emitAnnotationInfo({ annotations, source: 'selectionChange' });
+				this.emit('annotationInfo', payload);
 			});
 		}
 
@@ -1826,36 +1826,7 @@ class UIBasic {
 			manager: this.annotationManager,
 			layer: this.annotationManager.layer
 		});
-
-		if (active) this._emitAnnotationInfo({ source: 'toggle', originalEvent });
 		return active;
-	}
-
-	/**
-	 * Emits the current annotation inspection payload for external UI hooks.
-	 * @param {Object} [options]
-	 * @param {Annotation[]} [options.annotations]
-	 * @param {string} [options.source='manual']
-	 * @param {Event|PointerEvent} [options.originalEvent]
-	 * @private
-	 */
-	_emitAnnotationInfo({ annotations = null, source = 'manual', originalEvent = null } = {}) {
-		if (!this.annotationManager) return;
-		const selectedAnnotations = Array.isArray(annotations)
-			? annotations
-			: [...(this.annotationManager.layer?.selected ?? [])]
-				.map(id => this.annotationManager.layer.getAnnotationById(id))
-				.filter(Boolean);
-		this.emit('annotationInfo', {
-			source,
-			originalEvent,
-			active: this._annotationInfoActive,
-			manager: this.annotationManager,
-			layer: this.annotationManager.layer,
-			activeAnnotation: this.annotationManager.activeAnnotation,
-			selectedAnnotations,
-			selectedIds: selectedAnnotations.map(annotation => annotation.id)
-		});
 	}
 
 	/**
