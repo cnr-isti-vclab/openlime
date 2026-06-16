@@ -1566,6 +1566,7 @@ class ManagerSvgAnnotation {
    * @param {Object} [options={}]
    * @param {string} [options.source='programmatic']
    * @param {Event|PointerEvent|null} [options.originalEvent=null]
+   * @param {'preserve'|'edit'} [options.interactionMode='preserve']
    * @returns {Annotation[]}
    */
   selectAnnotations(ids, append = false, options = {}) {
@@ -1574,7 +1575,8 @@ class ManagerSvgAnnotation {
       : (ids ?? []);
     this._applySelectionIds(nextIds, {
       source: options.source ?? 'programmatic',
-      originalEvent: options.originalEvent ?? null
+      originalEvent: options.originalEvent ?? null,
+      interactionMode: options.interactionMode ?? 'preserve'
     });
     return this.getSelectedAnnotations();
   }
@@ -1596,9 +1598,17 @@ class ManagerSvgAnnotation {
    *
    * @param {string[]} ids - Annotation IDs to select. Duplicates are ignored.
    *                         Pass an empty array to deselect everything.
+   * @param {Object} [options={}]
+   * @param {string} [options.source='programmatic']
+   * @param {Event|PointerEvent|null} [options.originalEvent=null]
+   * @param {'preserve'|'edit'} [options.interactionMode='preserve']
    */
-  setSelectedIds(ids) {
-    this._applySelectionIds(ids, { source: 'programmatic' });
+  setSelectedIds(ids, options = {}) {
+    this._applySelectionIds(ids, {
+      source: options.source ?? 'programmatic',
+      originalEvent: options.originalEvent ?? null,
+      interactionMode: options.interactionMode ?? 'preserve'
+    });
   }
 
   /**
@@ -2169,15 +2179,40 @@ class ManagerSvgAnnotation {
   }
 
   /**
+   * Prepares interaction state for a programmatic selection request.
+   *
+   * - `preserve`: keep the current pencil/inspect/mode state untouched.
+   * - `edit`: enter editor context before applying the selection.
+   *
+   * @param {'preserve'|'edit'} [interactionMode='preserve']
+   * @returns {'preserve'|'edit'}
+   * @private
+   */
+  _prepareInteractionForProgrammaticSelection(interactionMode = 'preserve') {
+    const normalized = interactionMode ?? 'preserve';
+    if (!['preserve', 'edit'].includes(normalized))
+      throw new Error(`ManagerSvgAnnotation: invalid interactionMode '${normalized}'. Valid: preserve, edit`);
+
+    if (normalized === 'edit') {
+      if (!this._pencilEnabled) this._pencilEnabled = true;
+      if (this._mode !== 'edit') this.setMode('edit');
+    }
+
+    return normalized;
+  }
+
+  /**
    * Applies a full selection set atomically and emits one public event.
    *
    * @param {string[]} ids
    * @param {Object} [options={}]
    * @param {string} [options.source='programmatic']
    * @param {Event|PointerEvent|null} [options.originalEvent=null]
+   * @param {'preserve'|'edit'} [options.interactionMode='preserve']
    * @private
    */
   _applySelectionIds(ids, options = {}) {
+    this._prepareInteractionForProgrammaticSelection(options.interactionMode ?? 'preserve');
     if (this._mode === 'create') return;
     const unique = [...new Set(ids ?? [])];
 

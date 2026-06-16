@@ -656,7 +656,7 @@
             },
 
             // Called whenever the multi-selection set changes:
-            //   plain click, Ctrl+click, setSelectedIds(), deselectAll(), …
+            //   plain click, Ctrl+click, selectAnnotations(), deselectAll(), …
             // `annotations` is the full Annotation[] currently selected.
             onSelectionChange: (annotations) => {
                 const info = document.getElementById('selection-info');
@@ -1104,7 +1104,15 @@
             clearMarkerSelectionUI();
             selectedMarkerKey = null;
             manager.setActiveMarker('disk');
-            if (manager.active) manager.setMode('edit');
+            const selectedIds = manager.getSelectedIds();
+            if (selectedIds.length) {
+                manager.selectAnnotations(selectedIds, false, {
+                    interactionMode: 'edit',
+                    source: 'demo-edit-button'
+                });
+            } else if (manager.active) {
+                manager.setMode('edit');
+            }
             setCtrlHint(EDIT_HINT_TEXT);
         }
 
