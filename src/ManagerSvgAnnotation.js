@@ -2359,7 +2359,8 @@ class ManagerSvgAnnotation {
   _applyStyleToElements(anno, selected = false) {
     this._ensureDefaultStructuralFilters();
     const style = this._getClassStyle(anno, selected);
-    const interactionCursor = selected ? 'grab' : 'pointer';
+    const canEdit = this._pencilEnabled && this._mode === 'edit';
+    const interactionCursor = canEdit ? (selected ? 'grab' : 'pointer') : '';
     const applyFilter = (el) => {
       // Markers already set inline CSS filter (e.g. drop-shadow). SVG
       // presentation attribute `filter` would lose against inline CSS due to
