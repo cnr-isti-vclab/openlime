@@ -674,6 +674,79 @@
 
         manager.setLabelVisibility('selected', false);
 
+        const defaultAnnotationsData = [
+            {
+                label: 'Demo polygon 1',
+                description: 'Default startup annotation for RTI inspection mode.',
+                geometry: {
+                    _markerType: 'polyline',
+                    _markerClosed: true,
+                    _markerPoints: [
+                        { x: 155.33123028391174, y: 653.3880126182966 },
+                        { x: 180.53838065194532, y: 589.3669821240799 },
+                        { x: 271.44900105152476, y: 618.1619348054679 },
+                    ],
+                },
+            },
+            {
+                label: 'Demo polygon 2',
+                description: 'Secondary startup annotation for RTI inspection mode.',
+                geometry: {
+                    _markerType: 'polyline',
+                    _markerClosed: true,
+                    _markerPoints: [
+                        { x: 373.7287066246057, y: 229.09358569926394 },
+                        { x: 511.6298633017875, y: 177.6067297581493 },
+                        { x: 590.8517350157729, y: 242.96529968454263 },
+                        { x: 486.1997896950579, y: 297.0010515247109 },
+                    ],
+                },
+            },
+            {
+                label: 'Demo polygon 3',
+                description: 'Tertiary startup annotation for RTI inspection mode.',
+                geometry: {
+                    _markerType: 'polyline',
+                    _markerClosed: true,
+                    _markerPoints: [
+                        { x: 598.3932702418508, y: 520.8454258675079 },
+                        { x: 747.2807570977918, y: 404.1934805467929 },
+                        { x: 810.3007360672975, y: 490.7592008412198 },
+                        { x: 686.3007360672975, y: 576.9379600420609 },
+                    ],
+                },
+            },
+        ];
+
+        const defaultAnnotations = defaultAnnotationsData.map((entry) => {
+            const points = entry.geometry._markerPoints.map((p) => `${p.x},${p.y}`).join(' ');
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="${points}" class="annotation-polyline" stroke="#22bb55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(34,187,85,0.15)"></polygon>
+                    <polygon points="${points}" class="annotation-polyline-hit" stroke="transparent" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="transparent"></polygon>
+                    <g class="annotation-vertex-handles" visibility="hidden">
+                        ${entry.geometry._markerPoints.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="5" fill="#fff" stroke="#333" stroke-width="2" class="annotation-vertex-dot"></circle>`).join('')}
+                    </g>
+                </svg>`;
+
+            return new OpenLIME.Annotation({
+                label: entry.label,
+                description: entry.description,
+                class: 'surface',
+                semanticClass: 'surface',
+                svg,
+                data: structuredClone(entry.geometry),
+                visible: true,
+                ready: false,
+                needsUpdate: true,
+            });
+        });
+
+        manager.layer.annotations.push(...defaultAnnotations);
+        manager.selectAnnotations([defaultAnnotations[0].id], false, {
+            source: 'programmatic',
+        });
+
         const semanticHotkeys = {
             '1': 'surface',
             '2': 'crack',
@@ -1343,6 +1416,7 @@
         // Show the pencil toggle button in the toolbar
         ui.actions.pencil.display = true;
         ui.actions.info.display = true;
+        ui.actions.info.active = true;
         ui.actions.settings.display = true;
 
         // Initial state: marker panel disabled until pencil is enabled.

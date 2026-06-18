@@ -673,6 +673,8 @@ class UIBasic {
 				if (!activeLightController || activeLightController === this)
 					this.toggleLightController();
 			}
+			if (this.actions.info && this.actions.info.active)
+				this.toggleAnnotationInfo(true);
 			if (this.actions.layers && this.actions.layers.active)
 				this.toggleLayers();
 
@@ -1813,6 +1815,8 @@ class UIBasic {
 		if (!this.annotationManager) return false;
 		const active = force === undefined ? !this._annotationInfoActive : !!force;
 		this._annotationInfoActive = active;
+		if (this.actions.info)
+			this.actions.info.active = active;
 		this.annotationManager.setInspectEnabled(active);
 
 		const infoButton = this.viewer.containerElement
