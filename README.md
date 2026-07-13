@@ -83,6 +83,21 @@ Techniques and applications:
 ## Acknowledgments
 **OpenLIME** research and development received funding from the EU under Grant Agreement 101157364 – ECHOES and from Sardinian Regional Authorities under project XDATA (RAS Art9 LR 20/2015). Project REFLEX (PRIN2022, EU Next-GenerationEU PNRR M4C2 Inv. 1.1) contributed to supporting the study of NeuralRTI components. 
 
+## ECHOES OCRA integration
+
+The `ocra-integration` branch was developed to enable the integration of OpenLIME into [ECHOES OCRA](https://www.echoes-eccch.eu/), one of the ECHOES vertical applications. It provides the 2D and RTI viewer layer used by OCRA for the creation, editing, and inspection of geometry annotations.
+
+The integration introduced `ManagerSvgAnnotation.js`, a modular, GUI-independent annotation manager that lets OCRA control annotations externally through a stable API. OCRA remains responsible for annotation metadata, persistence, collaboration, and its domain model, while OpenLIME manages interactive geometry in the viewer.
+
+The main OpenLIME extensions developed for ECHOES include:
+
+- Annotation lifecycle and selection APIs, with create, update, delete, import/export, multi-selection, programmatic selection, and selection-change events.
+- An extensible marker architecture and geometry tools, including disk, polyline, polygon, rectangle, freehand, contour snapping, simplification, relaxation, and nested grouping support.
+- Improved editing and device interactions, including more reliable selection and deselection, vertex and shape editing, shift-drag selection/movement, pan overrides, and pen fallback for tap markers.
+- Semantic, structural class-based styling and filtering, per-annotation fill and stroke overrides, and more consistent labels and shadows.
+- Clear inspection and editing flows through explicit selection-preservation and edit modes, plus reliable restoration of imported SVG styles.
+- RTI-specific improvements, including correct diffuse-shading texture-channel decoding and default annotation/inspection initialization.
+
 ## Using OpenLIME in your project
 
 ### Via CDN (recommended for quick start)
