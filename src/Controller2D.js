@@ -42,6 +42,7 @@ class Controller2D extends Controller {
 	 * @param {updatePosition} [options.onPanEnd] - Callback for pan end event
 	 * @param {boolean} [options.active=true] - Whether the controller is active
 	 * @param {number[]} [options.activeModifiers=[0]] - Array of active modifier states
+	 * @param {number[]} [options.panMouseButtons] - Mouse buttons allowed to pan: 0 left, 1 middle, 2 right
 	 */
 	constructor(callback, options) {
 		super(options);
@@ -114,7 +115,7 @@ class Controller2D extends Controller {
 	 * @override
 	 */
 	panStart(e) {
-		if (!this.active || !this.activeModifiers.includes(this.modifierState(e)))
+		if (!this.active || !this.activeModifiers.includes(this.modifierState(e)) || !this.matchesMouseButton(e))
 			return;
 
 		if (this.relative) {

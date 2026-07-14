@@ -25,6 +25,7 @@ class ControllerPanZoom extends Controller {
 	 * @param {number} [options.zoomAmount=1.2] - The zoom multiplier for wheel/double-tap events
 	 * @param {boolean} [options.controlZoom=false] - If true, requires Ctrl key to be pressed for zoom operations
 	 * @param {boolean} [options.useGLcoords=false] - If true, uses WebGL coordinate system instead of HTML
+	 * @param {number[]} [options.panMouseButtons] - Mouse buttons allowed to pan: 0 left, 1 middle, 2 right
 	 * @param {number} [options.panDelay] - Delay for pan animations
 	 * @param {number} [options.zoomDelay] - Delay for zoom animations
 	 */
@@ -53,7 +54,7 @@ class ControllerPanZoom extends Controller {
 	 * @param {PointerEvent} e - The pointer event that initiated the pan
 	 */
 	panStart(e) {
-		if (!this.active || this.panning || !this.activeModifiers.includes(this.modifierState(e)))
+		if (!this.active || this.panning || !this.activeModifiers.includes(this.modifierState(e)) || !this.matchesMouseButton(e))
 			return;
 		this.panning = true;
 
