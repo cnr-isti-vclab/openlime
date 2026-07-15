@@ -2,10 +2,41 @@ import { Skin } from './Skin.js';
 import { Util } from './Util.js';
 
 /**
- * Optional DOM adapter for ActionRegistry. The mount container may live
- * anywhere in the document, including outside the Viewer element.
+ * Decides whether an action belongs in a toolbar.
+ * @callback ToolbarActionFilter
+ * @param {ActionState} action
+ * @returns {boolean}
+ */
+
+/**
+ * @typedef {Object} ToolbarViewOptions
+ * @property {HTMLElement|string} container Element or selector receiving the toolbar.
+ * @property {string[]|ToolbarActionFilter|null} [actions=null] Action allow-list or filter callback.
+ * @property {string} [className=''] Additional class applied to the toolbar element.
+ * @property {boolean} [tooltips=true] Add native `title` tooltips to buttons.
+ * @property {boolean} [external=true] Use static external-toolbar positioning instead of the legacy viewer overlay.
+ */
+
+/**
+ * Optional DOM adapter for {@link ActionRegistry}. The mount container may live
+ * anywhere in the document, including outside the {@link Viewer} element.
+ * State changes are reflected automatically; applications may omit this class and
+ * bind their own HTML, React, Vue, or other framework components to the registry.
+ *
+ * @example
+ * const toolbar = new ToolbarView(tools, {
+ *     container: '#viewer-toolbar',
+ *     actions: ['home', 'zoomIn', 'zoomOut', 'light']
+ * });
+ * await toolbar.ready;
  */
 class ToolbarView {
+	/**
+	 * Creates and immediately mounts a toolbar.
+	 * @param {ViewerTools} tools Headless viewer tools instance.
+	 * @param {ToolbarViewOptions} [options={}] Rendering and mount options.
+	 * @throws {Error} If `tools` or the mount container is missing.
+	 */
 	constructor(tools, options = {}) {
 		if (!tools?.actions) throw new Error('ToolbarView: missing ViewerTools instance');
 		const container = typeof options.container === 'string'
@@ -42,6 +73,11 @@ class ToolbarView {
 		this.ready = this.render();
 	}
 
+	/**
+	 * Rebuilds visible buttons from current registry state.
+	 * A render superseded by a newer registry change exits without mutating the DOM.
+	 * @returns {Promise<void>}
+	 */
 	async render() {
 		const version = ++this._renderVersion;
 		const actions = this.tools.actions.list({ visibleOnly: true })
@@ -80,6 +116,12 @@ class ToolbarView {
 		this._buttons = buttons;
 	}
 
+	/**
+	 * Tests registry visibility and the optional toolbar-specific filter.
+	 * @param {ActionState} action
+	 * @returns {boolean}
+	 * @private
+	 */
 	_shouldShow(action) {
 		if (!action.visible) return false;
 		const allowed = this.options.actions;
@@ -88,6 +130,12 @@ class ToolbarView {
 		return allowed.includes(action.id);
 	}
 
+	/**
+	 * Synchronizes an existing button without replacing its SVG element.
+	 * @param {HTMLButtonElement} button
+	 * @param {ActionState} action
+	 * @private
+	 */
 	_syncButton(button, action) {
 		button.disabled = !action.enabled;
 		button.setAttribute('aria-label', action.title);
@@ -101,6 +149,12 @@ class ToolbarView {
 		}
 	}
 
+	/**
+	 * Resolves the icon forms accepted by {@link ActionDefinition#icon}.
+	 * @param {string|SVGElement} icon Skin selector, SVG markup, URL, or SVG node.
+	 * @returns {Promise<string|SVGElement>}
+	 * @private
+	 */
 	async _resolveIcon(icon) {
 		if (typeof icon !== 'string') return icon.cloneNode(true);
 		if (Util.isSVGString(icon)) return Util.SVGFromString(icon);
@@ -108,6 +162,7 @@ class ToolbarView {
 		return Util.loadSVG(icon);
 	}
 
+	/** Removes registry listeners and the toolbar DOM element. */
 	destroy() {
 		this._renderVersion++;
 		this.tools.actions.removeEvent('change', this._onActionChange);

@@ -3,10 +3,60 @@ import { ActionRegistry } from './ActionRegistry.js';
 import { ToolCoordinator } from './ToolCoordinator.js';
 
 /**
- * Headless, extensible facade over Viewer capabilities.
- * Features register actions and controllers; visual components subscribe to it.
+ * @typedef {Object} ViewerToolContext
+ * @property {Viewer} viewer Viewer extended by the feature.
+ * @property {ViewerTools} tools Owning headless facade.
+ * @property {ActionRegistry} actions Shared action registry.
+ * @property {ToolCoordinator} interactions Shared interaction coordinator.
+ */
+
+/**
+ * @template T
+ * @typedef {Object} ViewerToolInstallation
+ * @property {T} [api] Public API returned by {@link ViewerTools#getFeature}.
+ * @property {function(): void} [destroy] Feature cleanup callback.
+ */
+
+/**
+ * Releases resources owned by an installed viewer feature.
+ * @callback ViewerToolCleanup
+ * @returns {void}
+ */
+
+/**
+ * @template T
+ * @typedef {Object} ViewerToolFeature
+ * @property {string} id Stable, unique feature identifier.
+ * @property {function(ViewerToolContext): (ViewerToolInstallation<T>|ViewerToolCleanup|undefined)} install Installs the feature.
+ * @property {T} [api] Optional public API used when `install()` does not return one.
+ */
+
+/**
+ * @typedef {Object} ViewerToolsOptions
+ * @property {Array<ViewerToolFeature<*>|function(): ViewerToolFeature<*>>} [features=[]] Features installed in declaration order.
+ * @property {EventTarget|null} [shortcutTarget=document] Keyboard event target; use `null` to disable shortcuts.
+ */
+
+/**
+ * Headless, extensible facade over {@link Viewer} capabilities.
+ * Features register commands and interaction lifecycles; any DOM or framework UI can
+ * observe {@link ViewerTools#actions} and execute the same commands.
+ *
+ * @example
+ * const tools = new ViewerTools(viewer, {
+ *     features: basicViewerFeatures({ snapshot: true })
+ * });
+ * tools.execute('zoomIn');
+ * const light = tools.getFeature('light');
+ * light.setDirection(0.4, -0.2);
  */
 class ViewerTools {
+	/**
+	 * Creates the feature facade and installs the requested features.
+	 * @param {Viewer} viewer Viewer to extend.
+	 * @param {ViewerToolsOptions} [options={}] Feature and keyboard configuration.
+	 * @throws {Error} If no viewer is supplied or a feature cannot be installed.
+	 */
 	constructor(viewer, options = {}) {
 		if (!viewer) throw new Error('ViewerTools: missing viewer');
 		this.viewer = viewer;
@@ -30,6 +80,41 @@ class ViewerTools {
 		for (const feature of options.features ?? []) this.addFeature(feature);
 	}
 
+	/**
+	 * Subscribes to a feature lifecycle signal. Runtime behavior is supplied by {@link addSignals}.
+	 * @param {'featureChange'} event Signal name.
+	 * @param {Function} callback Listener callback.
+	 * @returns {void}
+	 */
+	addEvent(event, callback) {
+		this.signals?.hasOwnProperty(event) || this.initSignals?.();
+		this.signals?.[event]?.push(callback);
+	}
+
+	/**
+	 * Removes one listener, or every feature listener when callback is omitted.
+	 * @param {'featureChange'} event Signal name.
+	 * @param {Function} [callback] Listener to remove.
+	 * @returns {boolean}
+	 */
+	removeEvent(event, callback) {
+		if (!this.signals?.[event]) return false;
+		if (callback === undefined) {
+			const found = this.signals[event].length > 0;
+			this.signals[event] = [];
+			return found;
+		}
+		const length = this.signals[event].length;
+		this.signals[event] = this.signals[event].filter(listener => listener !== callback);
+		return length !== this.signals[event].length;
+	}
+
+	/**
+	 * Installs a feature and exposes its optional API.
+	 * @param {ViewerToolFeature<*>|function(): ViewerToolFeature<*>} feature Feature object or factory.
+	 * @returns {*} Feature API, or `null` when none is exposed.
+	 * @throws {Error} If the definition is invalid or its identifier is already installed.
+	 */
 	addFeature(feature) {
 		if (typeof feature === 'function') feature = feature();
 		if (!feature?.id || typeof feature.install !== 'function')
@@ -54,6 +139,11 @@ class ViewerTools {
 		return record.api;
 	}
 
+	/**
+	 * Removes a feature and invokes its cleanup callback.
+	 * @param {string} id Feature identifier.
+	 * @returns {boolean} `true` when a feature was removed.
+	 */
 	removeFeature(id) {
 		const record = this._features.get(id);
 		if (!record) return false;
@@ -63,14 +153,30 @@ class ViewerTools {
 		return true;
 	}
 
+	/**
+	 * Retrieves the public API exposed by an installed feature.
+	 * @param {string} id Feature identifier.
+	 * @returns {*|null}
+	 */
 	getFeature(id) {
 		return this._features.get(id)?.api ?? null;
 	}
 
+	/**
+	 * Executes a registered action.
+	 * @param {string} id Action identifier.
+	 * @param {Event|null} [event=null] Originating DOM event.
+	 * @param {*} [data] Optional application payload.
+	 * @returns {*} Action result; see {@link ActionRegistry#execute}.
+	 */
 	execute(id, event = null, data = undefined) {
 		return this.actions.execute(id, event, data);
 	}
 
+	/**
+	 * Removes keyboard listeners and installed features in reverse installation order.
+	 * The viewer and application-owned layers are not destroyed.
+	 */
 	destroy() {
 		this.interactions.resume(this._temporaryPanToken);
 		this._shortcutTarget?.removeEventListener?.('keydown', this._onKeyDown, false);
@@ -81,6 +187,11 @@ class ViewerTools {
 		this.actions.destroy();
 	}
 
+	/**
+	 * Handles shortcut dispatch and temporary Ctrl+Shift pan restoration.
+	 * @param {KeyboardEvent} event
+	 * @private
+	 */
 	_handleShortcut(event) {
 		if (!event.ctrlKey || !event.shiftKey) this.interactions.resume(this._temporaryPanToken);
 		if (event.defaultPrevented) return;
@@ -92,6 +203,14 @@ class ViewerTools {
 		this.execute(action.id, event);
 	}
 }
+
+/**
+ * Fired after a feature is installed or removed.
+ * @event ViewerTools#featureChange
+ * @type {Object}
+ * @property {string} id Feature identifier.
+ * @property {boolean} installed New installation state.
+ */
 
 addSignals(ViewerTools, 'featureChange');
 

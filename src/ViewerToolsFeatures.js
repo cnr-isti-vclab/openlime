@@ -3,12 +3,178 @@ import { ControllerPanZoom } from './ControllerPanZoom.js';
 import { Ruler } from './Ruler.js';
 import { addSignals } from './Signals.js';
 
-/** Public, GUI-independent API exposed by the light feature. */
+/**
+ * Toggles or forces an interactive tool state.
+ * @callback ToggleToolState
+ * @param {boolean} [force] Desired state; omit to toggle.
+ * @returns {boolean}
+ */
+
+/**
+ * @typedef {Object} LightDirection
+ * @property {number} x Horizontal component in `[-1, 1]`.
+ * @property {number} y Vertical component in `[-1, 1]`.
+ */
+
+/**
+ * @typedef {Object} NavigationToolsOptions
+ * @property {ControllerPanZoom} [controller] Existing controller to reuse.
+ * @property {string} [group='primary-pointer-tool'] Interaction group.
+ * @property {boolean} [controlZoom=false] Require the configured modifier for wheel zoom.
+ * @property {number} [duration=250] Camera animation duration in milliseconds.
+ * @property {number} [zoomStep=1.25] Zoom multiplier.
+ * @property {number} [rotationStep=-45] Rotation increment in degrees.
+ * @property {boolean} [showRotate=false] Initial visibility of the rotate action.
+ */
+
+/**
+ * @typedef {Object} FullscreenToolOptions
+ * @property {HTMLElement} [element] Element entering fullscreen; defaults to the viewer container.
+ */
+
+/**
+ * @typedef {Object} SnapshotToolOptions
+ * @property {string} [mimeType='image/png'] Canvas export MIME type.
+ * @property {string} [filename='snapshot.png'] Suggested download filename.
+ */
+
+/**
+ * @typedef {Object} LayerToolsOptions
+ * @property {'exclusive'|'nonExclusive'} [visibilityMode='exclusive'] Base-layer visibility policy.
+ * @property {string} [actionPrefix='layer:'] Prefix for generated layer action identifiers.
+ * @property {string|SVGElement} [icon='.openlime-layers'] Icon used by generated actions.
+ * @property {boolean} [actionsVisible=false] Expose generated layer actions to visual adapters.
+ */
+
+/**
+ * @typedef {Object} LightToolOptions
+ * @property {string} [group='primary-pointer-tool'] Interaction group.
+ * @property {number} [priority=0] Pointer controller priority.
+ */
+
+/**
+ * @typedef {Object} RulerToolOptions
+ * @property {number|null} [pixelSize] Physical scale used by the ruler.
+ * @property {string} [group='primary-pointer-tool'] Interaction group.
+ * @property {Object} [rulerOptions] Options forwarded to {@link Ruler}.
+ */
+
+/**
+ * @typedef {Object} AnnotationToolsOptions
+ * @property {string} [group='primary-pointer-tool'] Interaction group.
+ */
+
+/**
+ * @typedef {Object} BasicViewerFeaturesOptions
+ * @property {NavigationToolsOptions} [navigation]
+ * @property {FullscreenToolOptions} [fullscreen]
+ * @property {LayerToolsOptions} [layers]
+ * @property {LightToolOptions} [light]
+ * @property {number|null} [pixelSize] Install the ruler feature when provided.
+ * @property {RulerToolOptions} [ruler]
+ * @property {ManagerSvgAnnotation} [annotationManager] Install annotation integration for this manager.
+ * @property {AnnotationToolsOptions} [annotations]
+ * @property {boolean|SnapshotToolOptions} [snapshot=false] Install snapshot support.
+ */
+
+/**
+ * @typedef {Object} NavigationToolsAPI
+ * @property {ControllerPanZoom} panzoom Installed or reused navigation controller.
+ */
+
+/**
+ * @typedef {Object} FullscreenToolAPI
+ * @property {function(): Promise<void>} toggle Toggles fullscreen for the configured element.
+ */
+
+/**
+ * @typedef {Object} SnapshotToolAPI
+ * @property {function(): void} capture Captures and downloads the current canvas.
+ */
+
+/**
+ * @typedef {Object} LayerToolState
+ * @property {string} id Viewer layer identifier.
+ * @property {Layer} layer Layer instance.
+ * @property {boolean} visible Current visibility.
+ */
+
+/**
+ * Applies the configured layer visibility policy.
+ * @callback SetLayerVisibility
+ * @param {string|Layer} layerOrId Layer instance or viewer layer identifier.
+ * @returns {boolean}
+ */
+
+/**
+ * @typedef {Object} LayerToolsAPI
+ * @property {SetLayerVisibility} setLayer Applies the configured visibility policy.
+ * @property {function(): LayerToolState[]} list Lists current viewer layers.
+ */
+
+/**
+ * @typedef {Object} LightToolsAPI
+ * @property {Controller2D} controller Directional-light pointer controller.
+ * @property {LightDirection} direction Current light direction.
+ * @property {function(number, number, number=, string=): boolean} setDirection Applies a light direction.
+ * @property {ToggleToolState} setActive Toggles or forces light interaction.
+ */
+
+/**
+ * @typedef {Object} RulerToolsAPI
+ * @property {Ruler} ruler Measurement controller.
+ * @property {ToggleToolState} setActive Toggles or forces ruler interaction.
+ */
+
+/**
+ * @typedef {Object} AnnotationToolsAPI
+ * @property {ManagerSvgAnnotation} manager Adapted annotation manager.
+ * @property {ToggleToolState} setActive Toggles or forces annotation interaction.
+ */
+
+/**
+ * Public, GUI-independent API exposed by {@link lightTool}.
+ * The observable direction is shared by viewer interaction and external controls.
+ */
 class LightToolAPI {
+	/**
+	 * @param {function(number, number, number, string): void} applyDirection Applies direction to viewer layers.
+	 * @param {function(boolean=): boolean} setActive Changes the coordinated tool state.
+	 */
 	constructor(applyDirection, setActive) {
+		/** @type {LightDirection} */
 		this.direction = Object.freeze({ x: 0, y: 0 });
 		this._applyDirection = applyDirection;
 		this._setActive = setActive;
+	}
+
+	/**
+	 * Subscribes to light direction changes. Runtime behavior is supplied by {@link addSignals}.
+	 * @param {'change'} event Signal name.
+	 * @param {function(LightDirection, Object): void} callback Listener callback.
+	 * @returns {void}
+	 */
+	addEvent(event, callback) {
+		this.signals?.hasOwnProperty(event) || this.initSignals?.();
+		this.signals?.[event]?.push(callback);
+	}
+
+	/**
+	 * Removes one listener, or every change listener when callback is omitted.
+	 * @param {'change'} event Signal name.
+	 * @param {Function} [callback] Listener to remove.
+	 * @returns {boolean}
+	 */
+	removeEvent(event, callback) {
+		if (!this.signals?.[event]) return false;
+		if (callback === undefined) {
+			const found = this.signals[event].length > 0;
+			this.signals[event] = [];
+			return found;
+		}
+		const length = this.signals[event].length;
+		this.signals[event] = this.signals[event].filter(listener => listener !== callback);
+		return length !== this.signals[event].length;
 	}
 
 	/**
@@ -17,6 +183,7 @@ class LightToolAPI {
 	 * @param {number} y Vertical component in [-1, 1]
 	 * @param {number} [duration=0] Animation duration in milliseconds
 	 * @param {string} [source='external'] Origin of the change
+	 * @returns {boolean} `false` when either component is not finite.
 	 */
 	setDirection(x, y, duration = 0, source = 'external') {
 		x = Math.max(-1, Math.min(1, Number(x)));
@@ -28,13 +195,33 @@ class LightToolAPI {
 		return true;
 	}
 
+	/**
+	 * Toggles or forces interactive light control on the viewer.
+	 * @param {boolean} [on] Desired state; omit to toggle.
+	 * @returns {boolean}
+	 */
 	setActive(on) {
 		return this._setActive(on);
 	}
 }
 
+/**
+ * Fired whenever light direction changes from either the viewer or an external control.
+ * @event LightToolAPI#change
+ * @type {Object}
+ * @property {LightDirection} direction New direction.
+ * @property {Object} details Change metadata.
+ * @property {string} details.source Change origin.
+ * @property {LightToolAPI} details.api Emitting API instance.
+ */
+
 addSignals(LightToolAPI, 'change');
 
+/**
+ * Creates navigation commands and a coordinated pan/zoom fallback tool.
+ * @param {NavigationToolsOptions} [options={}]
+ * @returns {ViewerToolFeature<NavigationToolsAPI>}
+ */
 function navigationTools(options = {}) {
 	return {
 		id: 'navigation',
@@ -83,6 +270,11 @@ function navigationTools(options = {}) {
 	};
 }
 
+/**
+ * Creates a fullscreen action synchronized with browser fullscreen state.
+ * @param {FullscreenToolOptions} [options={}]
+ * @returns {ViewerToolFeature<FullscreenToolAPI>}
+ */
 function fullscreenTool(options = {}) {
 	return {
 		id: 'fullscreen',
@@ -110,6 +302,13 @@ function fullscreenTool(options = {}) {
 	};
 }
 
+/**
+ * Creates a canvas snapshot action and capture API.
+ * The viewer canvas must be readable (for WebGL this commonly requires
+ * `preserveDrawingBuffer: true` and non-tainted image sources).
+ * @param {SnapshotToolOptions} [options={}]
+ * @returns {ViewerToolFeature<SnapshotToolAPI>}
+ */
 function snapshotTool(options = {}) {
 	return {
 		id: 'snapshot',
@@ -129,6 +328,12 @@ function snapshotTool(options = {}) {
 	};
 }
 
+/**
+ * Creates dynamic actions and a public API for viewer layer visibility.
+ * Layers added or removed after installation are tracked automatically.
+ * @param {LayerToolsOptions} [options={}]
+ * @returns {ViewerToolFeature<LayerToolsAPI>}
+ */
 function layerTools(options = {}) {
 	return {
 		id: 'layers',
@@ -200,6 +405,11 @@ function layerTools(options = {}) {
 	};
 }
 
+/**
+ * Creates directional-light interaction for every light-capable viewer layer.
+ * @param {LightToolOptions} [options={}]
+ * @returns {ViewerToolFeature<LightToolsAPI>}
+ */
 function lightTool(options = {}) {
 	return {
 		id: 'light',
@@ -284,6 +494,11 @@ function lightTool(options = {}) {
 	};
 }
 
+/**
+ * Creates the measurement ruler and registers it as an exclusive pointer tool.
+ * @param {RulerToolOptions} [options={}]
+ * @returns {ViewerToolFeature<RulerToolsAPI>}
+ */
 function rulerTool(options = {}) {
 	return {
 		id: 'ruler',
@@ -320,6 +535,12 @@ function rulerTool(options = {}) {
 	};
 }
 
+/**
+ * Adapts a {@link ManagerSvgAnnotation} to the common action and interaction APIs.
+ * @param {ManagerSvgAnnotation} manager Annotation manager owned by the application.
+ * @param {AnnotationToolsOptions} [options={}]
+ * @returns {ViewerToolFeature<AnnotationToolsAPI>}
+ */
 function annotationTools(manager, options = {}) {
 	return {
 		id: 'annotations',
@@ -355,6 +576,22 @@ function annotationTools(manager, options = {}) {
 	};
 }
 
+/**
+ * Builds the standard feature set used by simple viewers and external GUIs.
+ * Navigation, fullscreen, layers, and light are always included. Ruler,
+ * annotations, and snapshots are opt-in.
+ * @param {BasicViewerFeaturesOptions} [options={}]
+ * @returns {Array.<ViewerToolFeature.<*>>}
+ *
+ * @example
+ * const tools = new ViewerTools(viewer, {
+ *     features: basicViewerFeatures({
+ *         layers: { visibilityMode: 'exclusive' },
+ *         annotationManager,
+ *         snapshot: true
+ *     })
+ * });
+ */
 function basicViewerFeatures(options = {}) {
 	const features = [
 		navigationTools(options.navigation),
