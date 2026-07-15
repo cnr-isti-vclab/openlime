@@ -187,14 +187,14 @@
 	gap: 4px;
 }
 
-.openlime-toolbar-external .openlime-toolbar-action {
+.openlime-toolbar .openlime-toolbar-action {
 	border: 0;
 	padding: 0;
 	background: transparent;
 	color: inherit;
 }
 
-.openlime-toolbar-external .openlime-toolbar-action:disabled {
+.openlime-toolbar .openlime-toolbar-action:disabled {
 	opacity: 0.35;
 	filter: grayscale(1);
 }

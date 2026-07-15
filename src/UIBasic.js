@@ -1,13 +1,20 @@
 import { Skin } from './Skin'
-import { Util } from './Util'
-import { Controller2D } from './Controller2D'
 import { ControllerBearing } from './ControllerBearing'
-import { ControllerPanZoom } from './ControllerPanZoom'
-import { Ruler } from "./Ruler"
 import { ScaleBar } from './ScaleBar'
 import { addSignals } from './Signals'
 import { Minimap } from './Minimap'
 import { LayerSvgAnnotation } from './LayerSvgAnnotation'
+import { ViewerTools } from './ViewerTools.js'
+import { ToolbarView } from './ToolbarView.js'
+import {
+	navigationTools,
+	fullscreenTool,
+	snapshotTool,
+	layerTools,
+	lightTool,
+	rulerTool,
+	annotationTools
+} from './ViewerToolsFeatures.js'
 
 /**
  * @typedef {Object} UIAction
@@ -31,6 +38,7 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation'
  * @property {number} [pixelSize] - Pixel size for scale bar
  * @property {string} [attribution] - Attribution HTML string
  * @property {boolean} [autoFit] - Automatically fit camera on start
+ * @property {HTMLElement|string|null} [toolbarContainer=null] - Optional container, also outside the viewer, where the default toolbar is mounted
  * // Aggiungere qui altre proprietà note di configurazione
  */
 
@@ -219,6 +227,9 @@ class UIBasic {
 			menu: [],
 			minimap: null,
 			minimapOptions: null,
+			toolbarContainer: null,
+			toolbarView: null,
+			tools: null,
 			annotationManager: null,
 			layerVisibilityMode: 'exclusive',
 			lensLayer: null,
@@ -234,7 +245,24 @@ class UIBasic {
 			_temporaryPanOverrideSavedPanzoomModifiers: null
 		});
 
+		const defaultActions = this.actions;
+		this._defaultActionTasks = new Map(
+			Object.entries(defaultActions).map(([name, action]) => [name, action.task])
+		);
+		this._customActionTasks = new Set(
+			Object.entries(options?.actions ?? {})
+				.filter(([, action]) => Object.prototype.hasOwnProperty.call(action, 'task'))
+				.map(([name]) => name)
+		);
 		Object.assign(this, options);
+		if (options?.actions) {
+			this.actions = { ...defaultActions };
+			for (const [name, action] of Object.entries(options.actions)) {
+				this.actions[name] = this.actions[name]
+					? { ...this.actions[name], ...action }
+					: action;
+			}
+		}
 		if (this.layerVisibilityMode === 'toggle') this.layerVisibilityMode = 'nonExclusive';
 		if (this.layerVisibilityMode === 'radio') this.layerVisibilityMode = 'exclusive';
 		this.layerVisibilityMode = (this.layerVisibilityMode === 'nonExclusive') ? 'nonExclusive' : 'exclusive';
@@ -250,34 +278,26 @@ class UIBasic {
 		// in index.html (e.g. annotation color reset) are notified when the manager's
 		// mode is changed programmatically (e.g. via an Edit button).
 		if (this.annotationManager?.addEvent) {
-			this.annotationManager.addEvent('modeChange', (mode) => {
+			this._onAnnotationModeChange = (mode) => {
 				const pencilButton = this.viewer.containerElement
 					.querySelector('.openlime-button.openlime-pencil');
 				if (pencilButton)
 					pencilButton.classList.toggle('openlime-pencil-active', mode !== 'idle');
-				this._setControllersForPencil(mode !== 'idle');
 				if (mode === 'idle') this.emit('pencilDisabled');
 				else if (this.annotationManager?.active) this.emit('pencilEnabled');
-			});
-			this.annotationManager.addEvent('annotationSelectionChange', (payload) => {
+			};
+			this._onAnnotationSelectionChange = (payload) => {
 				if (!this._annotationInfoActive) return;
 				this.emit('annotationInfo', payload);
-			});
+			};
+			this.annotationManager.addEvent('modeChange', this._onAnnotationModeChange);
+			this.annotationManager.addEvent('annotationSelectionChange', this._onAnnotationSelectionChange);
 		}
 
-		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
-			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
-
-		this.panzoom = new ControllerPanZoom(this.viewer.camera, {
-			priority: -1000,
-			activeModifiers: [0, 1],
-			controlZoom: this.controlZoomMessage != null
-		});
-		if (this.controlZoomMessage)
-			this.panzoom.addEvent('nowheel', () => { this.showOverlayMessage(this.controlZoomMessage); });
-		this.viewer.addController(this.panzoom);
-		//this.viewer.pointerManager.onEvent(this.panzoom); //register wheel, doubleclick, pan and pinch
-		// this.viewer.pointerManager.on("fingerSingleTap", { "fingerSingleTap": (e) => { this.showInfo(e); }, priority: 10000 });
+		if (this.autoFit) {
+			this._onAutoFitUpdateSize = () => this.viewer.camera.fitCameraBox(0);
+			this.viewer.canvas.addEvent('updateSize', this._onAutoFitUpdateSize);
+		}
 
 		/*let element = entry.element;
 		let group = element.getAttribute('data-group');
@@ -365,43 +385,10 @@ class UIBasic {
 			this.menu.push(layerEntry);
 		}
 
-		let controller = new Controller2D(
-			(x, y) => {
-				for (let layer of lightLayers)
-					layer.setLight([x, y], 0);
-				if (this.showLightDirections)
-					this.updateLightDirections(x, y);
-				this.emit('lightdirection', [x, y, Math.sqrt(1 - x * x + y * y)]);
-			}, {
-			// TODO: IS THIS OK? It was false before
-			active: false,
-			activeModifiers: [2, 4],
-			control: 'light',
-			onPanStart: this.showLightDirections ? () => {
-				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(false));
-				this.enableLightDirections(true);
-			} : null,
-			onPanEnd: this.showLightDirections ? () => {
-				Object.values(this.viewer.canvas.layers).filter(l => l.annotations != null).forEach(l => l.setVisible(true));
-				this.enableLightDirections(false);
-			} : null,
-			relative: true
-		});
-
-		controller.priority = 0;
-		this.viewer.pointerManager.onEvent(controller);
-		this.lightcontroller = controller;
-
-		let lightLayers = [];
-		for (let [id, layer] of Object.entries(this.viewer.canvas.layers))
-			if (layer.controls.light) lightLayers.push(layer);
-
-		if (lightLayers.length) {
+		const lightLayers = Object.values(this.viewer.canvas.layers)
+			.filter(layer => layer.controls?.light);
+		if (lightLayers.length)
 			this.createLightDirections();
-			for (let layer of lightLayers) {
-				this.onLayerAdded(layer);
-			}
-		}
 
 		if (queueMicrotask) queueMicrotask(() => { this.init() }); //allows modification of actions and layers before init.
 		else setTimeout(() => { this.init(); }, 0);
@@ -426,6 +413,110 @@ class UIBasic {
 	 */
 	emit(event, ...args) {
 		for (const cb of this.signals?.[event] ?? []) cb(...args);
+	}
+
+	/**
+	 * Builds the headless feature composition used by the legacy UIBasic facade.
+	 * UIBasic owns only views/widgets; controllers and commands live in ViewerTools.
+	 * @private
+	 */
+	_initViewerTools() {
+		const features = [
+			navigationTools({ controlZoom: this.controlZoomMessage != null }),
+			fullscreenTool(),
+			layerTools({ visibilityMode: this.layerVisibilityMode }),
+			lightTool(),
+			rulerTool({ pixelSize: this.pixelSize }),
+			snapshotTool()
+		];
+		if (this.annotationManager)
+			features.push(annotationTools(this.annotationManager));
+
+		this.tools = new ViewerTools(this.viewer, { features });
+		this.panzoom = this.tools.getFeature('navigation')?.panzoom ?? null;
+		this.lightcontroller = this.tools.getFeature('light')?.controller ?? null;
+		this.ruler = this.tools.getFeature('ruler')?.ruler ?? null;
+
+		if (this.controlZoomMessage && this.panzoom?.addEvent) {
+			this._onNoWheel = () => this.showOverlayMessage(this.controlZoomMessage);
+			this.panzoom.addEvent('nowheel', this._onNoWheel);
+		}
+
+		const lightApi = this.tools.getFeature('light');
+		if (lightApi) {
+			this._onLightDirection = ({ x, y }) => {
+				this.lightActive = this.tools.interactions.isActive('light');
+				if (this.showLightDirections) this.updateLightDirections(x, y);
+				const z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
+				this.emit('lightdirection', [x, y, z]);
+			};
+			lightApi.addEvent('change', this._onLightDirection);
+		}
+
+		this._legacyActionIds = {
+			home: 'home', fullscreen: 'fullscreen', zoomin: 'zoomIn',
+			zoomout: 'zoomOut', rotate: 'rotate', light: 'light',
+			ruler: 'ruler', snapshot: 'snapshot', pencil: 'annotations'
+		};
+		this._legacyNamesByActionId = Object.fromEntries(
+			Object.entries(this._legacyActionIds).map(([legacy, id]) => [id, legacy])
+		);
+
+		for (const [name, legacy] of Object.entries(this.actions)) {
+			const id = this._legacyActionIds[name] ?? name;
+			const existing = this.tools.actions.get(id);
+			const visible = legacy.display === true;
+			const definition = {
+				title: legacy.title ?? name,
+				icon: legacy.icon ?? `.openlime-${name}`,
+				shortcut: legacy.key ?? null,
+				visible,
+				active: !!legacy.active,
+				order: Object.keys(this.actions).indexOf(name),
+				metadata: { ...(existing?.metadata ?? {}), legacyName: name }
+			};
+			if (this._customActionTasks.has(name) || legacy.task !== this._defaultActionTasks.get(name))
+				definition.execute = ({ event }) => legacy.task?.(event);
+			if (existing) {
+				this.tools.actions.update(id, definition);
+			} else {
+				this.tools.actions.register({
+					id,
+					...definition,
+					enabled: name !== 'pencil' || !!this.annotationManager,
+					execute: ({ event }) => legacy.task?.(event)
+				});
+			}
+		}
+
+		this._onToolActionChange = action => {
+			const name = action.metadata?.legacyName ?? this._legacyNamesByActionId[action.id];
+			const legacy = this.actions[name];
+			if (!legacy) return;
+			legacy.active = !!action.active;
+			legacy.enabled = !!action.enabled;
+			if (name === 'light') {
+				this.lightActive = !!action.active;
+				if (this.showLightDirections) this.enableLightDirections(this.lightActive);
+			}
+		};
+		this.tools.actions.addEvent('change', this._onToolActionChange);
+	}
+
+	_setPixelSize(pixelSize) {
+		if (!pixelSize) return;
+		this.pixelSize = pixelSize;
+		const rulerFeature = this.tools?.getFeature('ruler');
+		if (rulerFeature?.ruler) rulerFeature.ruler.pixelSize = pixelSize;
+		this.tools?.actions.update('ruler', { enabled: true });
+	}
+
+	async _syncLegacyActionElements() {
+		await this.toolbarView?.ready;
+		for (const [name, legacy] of Object.entries(this.actions)) {
+			const id = this._legacyActionIds?.[name] ?? name;
+			legacy.element = this.toolbarView?._buttons.get(id)?.querySelector('svg') ?? null;
+		}
 	}
 
 	/**
@@ -457,6 +548,8 @@ class UIBasic {
 	 * @private
 	 */
 	destroyOverlayMessage() {
+		if (!this.overlayMessage) return;
+		clearTimeout(this.overlayMessage.timeout);
 		this.overlayMessage.background.remove();
 		this.overlayMessage = null;
 	}
@@ -500,6 +593,7 @@ class UIBasic {
 	 * @private
 	 */
 	updateLightDirections(lx, ly) {
+		if (!this.lightDirections) this.createLightDirections();
 		let lines = [...this.lightDirections.children];
 		for (let line of lines) {
 			let x = line.pos[0];
@@ -518,6 +612,10 @@ class UIBasic {
 	 * @private
 	 */
 	enableLightDirections(show) {
+		if (!this.lightDirections) {
+			if (!show) return;
+			this.createLightDirections();
+		}
 		this.lightDirections.style.display = show ? 'block' : 'none';
 	}
 
@@ -582,6 +680,7 @@ class UIBasic {
 		const active = this.viewer.containerElement.classList.toggle('openlime-bearing-active', on);
 		this.bearingOverlay.style.display = active ? 'block' : 'none';
 		this.bearingController.active = active;
+		this.tools?.actions.update('bearing', { active });
 		if (active) {
 			this.updateBearingOverlay();
 			this._bearingUpdateHandler = () => this.updateBearingOverlay();
@@ -598,11 +697,12 @@ class UIBasic {
 	 * @async
 	 */
 	init() {
+		if (this._initialized || this._destroyed) return;
+		this._initialized = true;
 		(async () => {
-
-			document.addEventListener('keydown', (e) => this.keyDown(e), false);
-			document.addEventListener('keyup', (e) => this.keyUp(e), false);
-			window.addEventListener('blur', () => this._endTemporaryPanOverride(), false);
+			if (this.actions.light && this.actions.light.display === 'auto')
+				this.actions.light.display = true;
+			this._initViewerTools();
 
 			this.createMenu();
 			this.updateMenu();
@@ -610,10 +710,6 @@ class UIBasic {
 			// frame, annotation edit, and shader tweak. Menu visuals only depend on layer
 			// visibility, mode, and lens state — refresh via setLayer / setLensForLayer /
 			// toggleLayers(open) / mode onclick / addUniformControlToLayer instead.
-
-			if (this.actions.light && this.actions.light.display === 'auto')
-				this.actions.light.display = true;
-
 
 			if (this.skin)
 				await this.loadSkin();
@@ -627,30 +723,32 @@ class UIBasic {
 			 */
 			if (this.showScale) {
 				if (this.pixelSize) {
+					this._setPixelSize(this.pixelSize);
 					this.scalebar = new ScaleBar(this.pixelSize, this.viewer, this.scaleBarOptions);
 				}
 				else {
-					let createScaleBar = () => {
+					this._createScaleBarWhenReady = () => {
 						for (const [id, layer] of Object.entries(this.viewer.canvas.layers)) {
-							this.pixelSize = layer.pixelSizePerMM();
-							if (this.pixelSize) {
-								this.scalebar = new ScaleBar(this.pixelSize, this.viewer, this.scaleBarOptions);
+							const pixelSize = layer.pixelSizePerMM();
+							if (pixelSize) {
+								this._setPixelSize(pixelSize);
+								this.scalebar = new ScaleBar(pixelSize, this.viewer, this.scaleBarOptions);
 								break;
 							}
 						}
 					}
 					if (this.viewer.canvas.ready)
-						createScaleBar();
+						this._createScaleBarWhenReady();
 					else
-						this.viewer.canvas.addEvent('ready', createScaleBar);
+						this.viewer.canvas.addEvent('ready', this._createScaleBarWhenReady);
 				}
 			}
 
 			if (this.attribution) {
-				var p = document.createElement('p');
-				p.classList.add('openlime-attribution');
-				p.innerHTML = this.attribution;
-				this.viewer.containerElement.appendChild(p);
+				this.attributionElement = document.createElement('p');
+				this.attributionElement.classList.add('openlime-attribution');
+				this.attributionElement.innerHTML = this.attribution;
+				this.viewer.containerElement.appendChild(this.attributionElement);
 			}
 
 			// Layer visibility policy init:
@@ -660,19 +758,13 @@ class UIBasic {
 				const baseLayers = Object.values(this.viewer.canvas.layers)
 					.filter(layer => !layer.overlay);
 				if (baseLayers.length > 0) {
-					const first = baseLayers[0];
-					for (const layer of baseLayers)
-						layer.setVisible(layer === first);
+					this.tools.getFeature('layers')?.setLayer(baseLayers[0]);
 				}
 			}
-			this._syncLightControllers();
 			this.updateMenu();
 
-			if (this.actions.light && this.actions.light.active) {
-				const activeLightController = this.viewer.activeLightController;
-				if (!activeLightController || activeLightController === this)
-					this.toggleLightController();
-			}
+			if (this.actions.light && this.actions.light.active)
+				this.toggleLightController(true);
 			if (this.actions.info && this.actions.info.active)
 				this.toggleAnnotationInfo(true);
 			if (this.actions.layers && this.actions.layers.active)
@@ -741,25 +833,7 @@ class UIBasic {
 	 * @private
 	 */
 	_beginTemporaryPanOverride() {
-		if (this._temporaryPanOverrideActive) return;
-		if (!this._canUseTemporaryPanOverride()) return;
-
-		this._temporaryPanOverrideActive = true;
-		this._temporaryPanOverrideSavedPanzoomActive = !!this.panzoom?.active;
-		this._temporaryPanOverrideSavedPanzoomModifiers = [...(this.panzoom?.activeModifiers ?? [])];
-		this._restoreLightActiveAfterTemporaryPan = !!this.lightActive;
-
-		if (this.annotationManager?.setInteractionSuspended)
-			this.annotationManager.setInteractionSuspended(true);
-
-		if (this._restoreLightActiveAfterTemporaryPan)
-			this.toggleLightController(false);
-
-		if (this.panzoom) {
-			this.panzoom.active = true;
-			if (!this.panzoom.activeModifiers.includes(3))
-				this.panzoom.activeModifiers = [...this.panzoom.activeModifiers, 3];
-		}
+		this.tools?.interactions.suspend('primary-pointer-tool', 'ui-basic-temporary-pan');
 	}
 
 	/**
@@ -767,23 +841,7 @@ class UIBasic {
 	 * @private
 	 */
 	_endTemporaryPanOverride() {
-		if (!this._temporaryPanOverrideActive) return;
-
-		if (this.annotationManager?.setInteractionSuspended)
-			this.annotationManager.setInteractionSuspended(false);
-
-		if (this._restoreLightActiveAfterTemporaryPan)
-			this.toggleLightController(true);
-
-		if (this.panzoom) {
-			this.panzoom.activeModifiers = this._temporaryPanOverrideSavedPanzoomModifiers ?? this.panzoom.activeModifiers;
-			this.panzoom.active = this._temporaryPanOverrideSavedPanzoomActive;
-		}
-
-		this._temporaryPanOverrideSavedPanzoomActive = null;
-		this._temporaryPanOverrideSavedPanzoomModifiers = null;
-		this._restoreLightActiveAfterTemporaryPan = false;
-		this._temporaryPanOverrideActive = false;
+		this.tools?.interactions.resume('ui-basic-temporary-pan');
 	}
 
 	/**
@@ -793,82 +851,16 @@ class UIBasic {
 	 * @async
 	 */
 	async loadSkin() {
-		let toolbar = document.createElement('div');
-		toolbar.classList.add('openlime-toolbar');
-		this.viewer.containerElement.appendChild(toolbar);
-
-		//toolbar manually created with parameters (padding, etc) + css for toolbar positioning and size.
-		if (1) {
-
-			let padding = 10;
-			let x = 0;
-			let h = 0;
-			for (let [name, action] of Object.entries(this.actions)) {
-
-				if (action.display !== true)
-					continue;
-
-				if ('icon' in action) {
-					if (typeof action.icon == 'string') {
-						if (Util.isSVGString(action.icon)) {
-							action.icon = Util.SVGFromString(action.icon);
-						} else {
-							action.icon = await Util.loadSVG(action.icon);
-						}
-						action.icon.classList.add('openlime-button');
-					}
-				} else {
-					action.icon = '.openlime-' + name;
-				}
-
-				action.element = await Skin.appendIcon(toolbar, action.icon);
-
-				if (this.enableTooltip) {
-					let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-					title.textContent = action.title;
-					if (action.element)
-						action.element.appendChild(title);
-				}
-			}
-
-		}
-
-		if (0) {  //single svg toolbar
-			let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-			toolbar.appendChild(svg); ui.toggleLightController();
-			let x = padding;
-			let h = 0;
-			for (let [name, action] of Object.entries(this.actions)) {
-				if (action.display !== true)
-					continue;
-				let element = skin.querySelector('.openlime-' + name).cloneNode(true);
-				if (!element) continue;
-				svg.appendChild(element);
-				let box = element.getBBox();
-				h = Math.max(h, box.height);
-				let tlist = element.transform.baseVal;
-				if (tlist.numberOfItems == 0)
-					tlist.appendItem(svg.createSVGTransform());
-				tlist.getItem(0).setTranslate(-box.x + x, -box.y);
-				x += box.width + padding;
-			}
-
-			svg.setAttribute('viewBox', `0 0 ${x} ${h}`);
-			svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-		}
-
-
-
-		//TODO: not needed, probably. Toolbar build from the skin directly
-		if (0) {
-			toolbar.appendChild(skin);
-
-			let w = skin.getAttribute('width');
-			let h = skin.getAttribute('height');
-			let viewbox = skin.getAttribute('viewBox');
-			if (!viewbox)
-				skin.setAttribute('viewBox', `0 0 ${w} ${h}`);
-		}
+		const container = typeof this.toolbarContainer === 'string'
+			? document.querySelector(this.toolbarContainer)
+			: (this.toolbarContainer ?? this.viewer.containerElement);
+		this.toolbarView = new ToolbarView(this.tools, {
+			container,
+			actions: Object.keys(this.actions).map(name => this._legacyActionIds[name] ?? name),
+			tooltips: this.enableTooltip,
+			external: container !== this.viewer.containerElement
+		});
+		await this._syncLegacyActionElements();
 	}
 
 	/**
@@ -876,30 +868,7 @@ class UIBasic {
 	 * @private
 	 */
 	setupActions() {
-		for (let [name, action] of Object.entries(this.actions)) {
-			let element = action.element;
-			if (!element)
-				continue;
-			// let pointerManager = new PointerManager(element);
-			// pointerManager.onEvent({ fingerSingleTap: action.task, priority: -2000 });
-			element.addEventListener('click', (e) => {
-				if (this._isPencilToolLockActive() && name !== 'pencil') {
-					e.preventDefault();
-					e.stopPropagation();
-					return;
-				}
-				action.task(e);
-				e.preventDefault();
-			});
-		}
-		let items = document.querySelectorAll('.openlime-layers-button');
-		for (let item of items) {
-			let id = item.getAttribute('data-layer');
-			if (!id) continue;
-			item.addEventListener('click', () => {
-				this.setLayer(this.viewer.layers[id]);
-			});
-		}
+		this._syncLegacyActionElements();
 	}
 
 	/**
@@ -922,46 +891,8 @@ class UIBasic {
 	 * @private
 	 */
 	_setControllersForPencil(pencilOn) {
-		if (pencilOn) {
-			if (this._pencilControllersLocked) return;
-
-			this._savedControllerStates = new Map(
-				(this.viewer.controllers || []).map(c => [c, !!c.active])
-			);
-			this._savedPanzoomActive = !!this.panzoom?.active;
-			this._restoreLightActiveAfterPencil = !!this.lightActive;
-
-			if (this._restoreLightActiveAfterPencil) {
-				this.toggleLightController(false);
-			}
-
-			for (const c of this.viewer.controllers || []) {
-				c.active = false;
-			}
-			if (this.panzoom) this.panzoom.active = false;
-			this._pencilControllersLocked = true;
-			this._syncToolbarLockForPencil();
-			return;
-		}
-
-		if (!this._pencilControllersLocked) return;
-
-		if (this._restoreLightActiveAfterPencil) {
-			this.toggleLightController(true);
-			if (this.panzoom) this.panzoom.active = this._savedPanzoomActive;
-		} else if (this._savedControllerStates) {
-			for (const c of this.viewer.controllers || []) {
-				if (this._savedControllerStates.has(c)) {
-					c.active = this._savedControllerStates.get(c);
-				}
-			}
-			if (this.panzoom) this.panzoom.active = this._savedPanzoomActive;
-		}
-
-		this._savedControllerStates = null;
-		this._restoreLightActiveAfterPencil = false;
-		this._pencilControllersLocked = false;
-		this._syncToolbarLockForPencil();
+		if (!this.tools || !this.annotationManager) return;
+		this.tools.interactions.toggle('annotations', pencilOn);
 	}
 
 	/**
@@ -997,20 +928,10 @@ class UIBasic {
 	 * @param {boolean} [on] - Force specific state
 	 */
 	toggleLightController(on) {
-		let div = this.viewer.containerElement;
-		let active = div.classList.toggle('openlime-light-active', on);
-		this.lightActive = active;
-		this.setActiveControllers(!active);
-		for (let layer of Object.values(this.viewer.canvas.layers))
-			for (let c of layer.controllers)
-				if (c.control == 'light')
-					c.activeModifiers = active ? [0, 2, 4] : [2, 4];  //nothing, shift and alt
-		this._syncLightControllers();
-
-		if (active)
-			this.viewer.setActiveLightController(this);
-		else
-			this.viewer.clearActiveLightController(this);
+		const result = this.tools?.getFeature('light')?.setActive(on);
+		this.lightActive = this.tools?.interactions.isActive('light') ?? false;
+		if (this.showLightDirections) this.enableLightDirections(this.lightActive);
+		return result;
 	}
 
 	/**
@@ -1020,19 +941,7 @@ class UIBasic {
 	 * @param {boolean} on - Whether this controller should be active
 	 */
 	setActive(on) {
-		if (on) {
-			this.toggleLightController(true);
-			return;
-		}
-
-		let div = this.viewer.containerElement;
-		div.classList.toggle('openlime-light-active', false);
-		this.lightActive = false;
-		this.setActiveControllers(true);
-		for (let layer of Object.values(this.viewer.canvas.layers))
-			for (let c of layer.controllers)
-				if (c.control == 'light')
-					c.active = false;
+		return this.toggleLightController(on);
 	}
 
 	/**
@@ -1041,13 +950,7 @@ class UIBasic {
 	 * @param {Layer} layer - Newly added layer
 	 */
 	onLayerAdded(layer) {
-		if (!layer || !layer.controls || !layer.controls.light || !this.lightcontroller)
-			return;
-
-		if (!layer.controllers.includes(this.lightcontroller)) {
-			this.lightcontroller.setPosition(0.5, 0.5);
-			layer.controllers.push(this.lightcontroller);
-		}
+		return layer;
 	}
 
 	/**
@@ -1056,22 +959,7 @@ class UIBasic {
 	 * @private
 	 */
 	toggleFullscreen() {
-		let canvas = this.viewer.canvasElement;
-		let div = this.viewer.containerElement;
-		let active = div.classList.toggle('openlime-fullscreen-active');
-
-		if (!active) {
-			var request = document.exitFullscreen || document.webkitExitFullscreen ||
-				document.mozCancelFullScreen || document.msExitFullscreen;
-			request.call(document); document.querySelector('.openlime-scale > line');
-
-			this.viewer.resize(canvas.offsetWidth, canvas.offsetHeight);
-		} else {
-			var request = div.requestFullscreen || div.webkitRequestFullscreen ||
-				div.mozRequestFullScreen || div.msRequestFullscreen;
-			request.call(div);
-		}
-		this.viewer.resize(canvas.offsetWidth, canvas.offsetHeight);
+		return this.tools?.getFeature('fullscreen')?.toggle();
 	}
 
 	/**
@@ -1079,19 +967,7 @@ class UIBasic {
 	 * @private
 	 */
 	toggleRuler() {
-		const div = this.viewer.containerElement;
-		const rl = div.querySelector('.openlime-button.openlime-ruler');
-		const active = rl.classList.toggle('openlime-ruler-active');
-		this.setActiveControllers(!active);
-		if (!this.ruler) {
-			this.ruler = new Ruler(this.viewer, this.pixelSize);
-			this.viewer.pointerManager.onEvent(this.ruler);
-		}
-
-		if (!this.ruler.enabled)
-			this.ruler.start();
-		else
-			this.ruler.end();
+		return this.tools?.getFeature('ruler')?.setActive();
 	}
 
 	/**
@@ -1104,6 +980,7 @@ class UIBasic {
 		if (!help.dialog) {
 			help.dialog = new UIDialog(this.viewer.containerElement, { modal: true, class: 'openlime-help-dialog' });
 			help.dialog.setContent(help.html);
+			help.dialog.show();
 		} else
 			help.dialog.toggle(on);
 	}
@@ -1113,13 +990,7 @@ class UIBasic {
 	 * @private
 	 */
 	snapshot() {
-		var e = document.createElement('a');
-		e.setAttribute('href', this.viewer.canvas.canvasElement.toDataURL());
-		e.setAttribute('download', 'snapshot.png');
-		e.style.display = 'none';
-		document.body.appendChild(e);
-		e.click();
-		document.body.removeChild(e);
+		return this.tools?.getFeature('snapshot')?.capture();
 	}
 
 	/* Layer management */
@@ -1354,9 +1225,13 @@ class UIBasic {
 	* Toggles layer menu visibility with animation
 	* @private
 	*/
-	toggleLayers() {
+	toggleLayers(on) {
+		if (!this.layerMenu) return false;
+		const open = on === undefined
+			? !this.layerMenu.classList.contains('open')
+			: !!on;
 		// Add more sophisticated toggle with animation
-		if (this.layerMenu.classList.contains('open')) {
+		if (!open) {
 			// Closing the menu
 			this.layerMenu.classList.add('closing');
 			setTimeout(() => {
@@ -1368,6 +1243,8 @@ class UIBasic {
 			this.layerMenu.classList.add('open');
 			this.updateMenu(); // Ensure menu is up to date when opening
 		}
+		this.tools?.actions.update('layers', { active: open });
+		return open;
 	}
 
 	/**
@@ -1414,34 +1291,9 @@ class UIBasic {
 	 * @param {Layer|string} layer_on - Layer or layer ID to activate
 	 */
 	setLayer(layer_on) {
-		if (typeof layer_on == 'string')
-			layer_on = this.viewer.canvas.layers[layer_on];
-
-		if (!layer_on) return;
-
-		if (this.layerVisibilityMode === 'nonExclusive' || layer_on.overlay) {
-			// Toggle this layer's visibility independently.
-			layer_on.setVisible(!layer_on.visible);
-		} else {
-			// Exclusive behaviour for base layers: selecting one hides the others.
-			const defaultLightControllerOwns = !this.viewer.activeLightController || this.viewer.activeLightController === this;
-			for (let layer of Object.values(this.viewer.canvas.layers)) {
-				if (layer.overlay) continue;
-				layer.setVisible(layer === layer_on);
-				for (let c of layer.controllers) {
-					if (c.control == 'light' && defaultLightControllerOwns) {
-						c.active = true;
-						c.activeModifiers = this.lightActive ? [0, 2, 4] : [2, 4];
-					}
-				}
-			}
-		}
-
-		// Keep light controllers in sync with global multi-layer visibility.
-		this._syncLightControllers();
-
+		const changed = this.tools?.getFeature('layers')?.setLayer(layer_on) ?? false;
 		this.updateMenu();
-		this.viewer.redraw();
+		return changed;
 	}
 
 	/**
@@ -1451,24 +1303,7 @@ class UIBasic {
 	 * @private
 	 */
 	_syncLightControllers() {
-		let hasVisibleLightLayer = false;
-		for (let layer of Object.values(this.viewer.canvas.layers)) {
-			if (!layer.visible) continue;
-			for (let c of layer.controllers) {
-				if (c.control == 'light') {
-					hasVisibleLightLayer = true;
-					break;
-				}
-			}
-			if (hasVisibleLightLayer) break;
-		}
-
-		for (let layer of Object.values(this.viewer.canvas.layers)) {
-			for (let c of layer.controllers) {
-				if (c.control == 'light')
-					c.active = this.lightActive && hasVisibleLightLayer;
-			}
-		}
+		return this.tools?.interactions.isActive('light') ?? false;
 	}
 
 	/**
@@ -1797,11 +1632,7 @@ class UIBasic {
 	 * @param {boolean} [force] - Force a specific state; toggles if omitted.
 	 */
 	toggleAnnotations(force) {
-		if (this.annotationManager) {
-			this.annotationManager.toggle(force);
-			// Button state and pencilEnabled/pencilDisabled signals are handled
-			// by the 'modeChange' listener wired in the constructor.
-		}
+		return this.tools?.getFeature('annotations')?.setActive(force) ?? false;
 	}
 
 	/**
@@ -1817,6 +1648,7 @@ class UIBasic {
 		this._annotationInfoActive = active;
 		if (this.actions.info)
 			this.actions.info.active = active;
+		this.tools?.actions.update('info', { active });
 		this.annotationManager.setInspectEnabled(active);
 
 		const infoButton = this.viewer.containerElement
@@ -1854,6 +1686,53 @@ class UIBasic {
 
 		this.updateMenu();
 		this.viewer.redraw();
+	}
+
+	/**
+	 * Releases views, feature controllers and listeners owned by this UI.
+	 * The Viewer itself and application-owned layers are left untouched.
+	 */
+	destroy() {
+		if (this._destroyed) return;
+		this._destroyed = true;
+		this.toolbarView?.destroy();
+		this.toolbarView = null;
+
+		if (this._onToolActionChange)
+			this.tools?.actions.removeEvent('change', this._onToolActionChange);
+		const lightApi = this.tools?.getFeature('light');
+		if (lightApi && this._onLightDirection)
+			lightApi.removeEvent('change', this._onLightDirection);
+		if (this.panzoom && this._onNoWheel)
+			this.panzoom.removeEvent('nowheel', this._onNoWheel);
+
+		if (this.annotationManager && this._onAnnotationModeChange)
+			this.annotationManager.removeEvent('modeChange', this._onAnnotationModeChange);
+		if (this.annotationManager && this._onAnnotationSelectionChange)
+			this.annotationManager.removeEvent('annotationSelectionChange', this._onAnnotationSelectionChange);
+		if (this._onAutoFitUpdateSize)
+			this.viewer.canvas.removeEvent('updateSize', this._onAutoFitUpdateSize);
+		if (this._createScaleBarWhenReady)
+			this.viewer.canvas.removeEvent('ready', this._createScaleBarWhenReady);
+		if (this._bearingUpdateHandler)
+			this.viewer.canvas.removeEvent('update', this._bearingUpdateHandler);
+
+		if (this.bearingController)
+			this.viewer.pointerManager.offEvent(this.bearingController);
+		this.minimap?.destroy?.();
+		this.scalebar?.destroy?.();
+		this.tools?.destroy();
+		this.tools = null;
+
+		for (const action of Object.values(this.actions ?? {}))
+			action.dialog?.destroy?.();
+		this.layerMenu?.remove();
+		this.lightDirections?.remove();
+		this.bearingOverlay?.remove();
+		this.attributionElement?.remove();
+		this.destroyOverlayMessage();
+
+		if (this.viewer.ui === this) delete this.viewer.ui;
 	}
 
 	// closeLayersMenu() {
@@ -1979,6 +1858,13 @@ class UIDialog { //FIXME standalone class
 		const newVisibility = force === undefined ? !this.visible : force;
 		this.element.classList.toggle('hidden', !newVisibility);
 		this.visible = newVisibility;
+	}
+
+	destroy() {
+		this.element?.remove();
+		this.element = null;
+		this.dialog = null;
+		this.content = null;
 	}
 }
 

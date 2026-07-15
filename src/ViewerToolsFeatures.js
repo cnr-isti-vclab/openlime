@@ -88,18 +88,24 @@ function fullscreenTool(options = {}) {
 		id: 'fullscreen',
 		install({ viewer, actions }) {
 			const element = options.element ?? viewer.containerElement;
-			const sync = () => actions.update('fullscreen', {
-				active: document.fullscreenElement === element
-			});
+			const sync = () => {
+				const active = document.fullscreenElement === element;
+				element.classList.toggle('openlime-fullscreen-active', active);
+				actions.update('fullscreen', { active });
+			};
+			const toggle = async () => {
+				if (document.fullscreenElement === element) await document.exitFullscreen();
+				else await element.requestFullscreen();
+			};
 			const unregister = actions.register({
 				id: 'fullscreen', title: 'Fullscreen', icon: '.openlime-fullscreen', shortcut: 'f', order: 50,
-				execute: async () => {
-					if (document.fullscreenElement === element) await document.exitFullscreen();
-					else await element.requestFullscreen();
-				}
+				execute: toggle
 			});
 			document.addEventListener('fullscreenchange', sync);
-			return { destroy() { document.removeEventListener('fullscreenchange', sync); unregister(); } };
+			return {
+				api: { toggle },
+				destroy() { document.removeEventListener('fullscreenchange', sync); unregister(); }
+			};
 		}
 	};
 }
@@ -108,16 +114,17 @@ function snapshotTool(options = {}) {
 	return {
 		id: 'snapshot',
 		install({ viewer, actions }) {
+			const capture = () => {
+				const link = document.createElement('a');
+				link.href = viewer.canvasElement.toDataURL(options.mimeType ?? 'image/png');
+				link.download = options.filename ?? 'snapshot.png';
+				link.click();
+			};
 			const unregister = actions.register({
 				id: 'snapshot', title: 'Snapshot', icon: '.openlime-snapshot', order: 90,
-				execute: () => {
-					const link = document.createElement('a');
-					link.href = viewer.canvasElement.toDataURL(options.mimeType ?? 'image/png');
-					link.download = options.filename ?? 'snapshot.png';
-					link.click();
-				}
+				execute: capture
 			});
-			return { destroy: unregister };
+			return { api: { capture }, destroy: unregister };
 		}
 	};
 }
