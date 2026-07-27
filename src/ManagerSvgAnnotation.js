@@ -1474,15 +1474,22 @@ class ManagerSvgAnnotation {
   * @param {number|null}  [patch.strokeWidth] - Per-annotation stroke-width override.
   * @param {string|null}  [patch.filter]      - Per-annotation SVG filter override (`url(#...)`).
    * @param {Object}  [patch.data]        - Merged into annotation.data.
+   * @param {Object}  [options]
+   * @param {boolean} [options.emitEvent=true] - When `false`, apply the patch without
+   *   firing `'update'`. Use for style/class-only host sync so consumers do not treat
+   *   it as a user geometry edit (which would trigger API PATCHes).
    * @returns {Annotation|null}
    * @fires ManagerSvgAnnotation#update
    */
-  updateAnnotation(id, patch) {
+  updateAnnotation(id, patch, options = {}) {
     const anno = this.getAnnotationById(id);
     if (!anno) {
       console.warn(`ManagerSvgAnnotation.updateAnnotation: annotation '${id}' not found.`);
       return null;
     }
+
+    const emitEvent = options.emitEvent !== false;
+    let changed = false;
 
     const scalarKeys = ['label', 'description', 'semanticClass', 'structuralClass', 'publish',
               'fill', 'stroke', 'fillOpacity', 'strokeWidth', 'filter'];
@@ -1490,19 +1497,34 @@ class ManagerSvgAnnotation {
       if (!Object.hasOwn(patch, key)) continue;
       if (key === 'semanticClass') {
         const resolved = this._resolveSemanticClassId(patch[key]);
-        anno.semanticClass = resolved;
-        anno.class = resolved;
+        if ((anno.semanticClass ?? null) !== (resolved ?? null) || (anno.class ?? null) !== (resolved ?? null)) {
+          anno.semanticClass = resolved;
+          anno.class = resolved;
+          changed = true;
+        }
         continue;
       }
       if (key === 'structuralClass') {
-        anno.structuralClass = this._resolveStructuralClassId(patch[key]);
+        const resolved = this._resolveStructuralClassId(patch[key]);
+        if ((anno.structuralClass ?? null) !== (resolved ?? null)) {
+          anno.structuralClass = resolved;
+          changed = true;
+        }
         continue;
       }
-      anno[key] = patch[key];
+      if (anno[key] !== patch[key]) {
+        anno[key] = patch[key];
+        changed = true;
+      }
     }
 
     if (patch.data && typeof patch.data === 'object') {
       Object.assign(anno.data, patch.data);
+      changed = true;
+    }
+
+    if (!changed) {
+      return anno;
     }
 
     const styleChanged = scalarKeys.slice(2).some(k => Object.hasOwn(patch, k));
@@ -1513,7 +1535,9 @@ class ManagerSvgAnnotation {
 
     anno.needsUpdate = true;
     this.viewer.redraw();
-    this.emit('update', anno);
+    if (emitEvent) {
+      this.emit('update', anno);
+    }
     return anno;
   }
 
@@ -1939,7 +1963,8 @@ class ManagerSvgAnnotation {
    */
   setAnnotationSemanticClass(id, classId) {
     const resolved = this._resolveSemanticClassId(classId);
-    return this.updateAnnotation(id, { semanticClass: resolved });
+    // Style-only: do not emit `'update'` (reserved for geometry/content edits).
+    return this.updateAnnotation(id, { semanticClass: resolved }, { emitEvent: false });
   }
 
   /**
@@ -1953,7 +1978,8 @@ class ManagerSvgAnnotation {
    */
   setAnnotationStructuralClass(id, classId) {
     const resolved = this._resolveStructuralClassId(classId);
-    return this.updateAnnotation(id, { structuralClass: resolved });
+    // Style-only: do not emit `'update'` (reserved for geometry/content edits).
+    return this.updateAnnotation(id, { structuralClass: resolved }, { emitEvent: false });
   }
 
   /**
