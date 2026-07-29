@@ -2713,7 +2713,9 @@ class ManagerSvgAnnotation {
       const zoom = transform?.z ?? 1;
       const structuralClassId = this._resolveStructuralClassId(anno.structuralClass);
       const isUnderEditing = structuralClassId === 'underEditing' || (!!anno.editing && structuralClassId == null);
-      const layoutKey = `${zoom}|${anno.label}|${this._annotationGeometryLayoutKey(anno)}|${selected ? 's' : 'n'}|${isUnderEditing ? 'e' : 'n'}`;
+      const isGhost = structuralClassId === 'ghost';
+      const isOrphan = structuralClassId === 'orphan';
+      const layoutKey = `${zoom}|${anno.label}|${this._annotationGeometryLayoutKey(anno)}|${selected ? 's' : 'n'}|${isUnderEditing ? 'e' : 'n'}|${isGhost ? 'g' : 'n'}|${isOrphan ? 'o' : 'n'}`;
       if (anno._labelLayoutCacheKey === layoutKey) {
         return;
       }
@@ -2758,6 +2760,12 @@ class ManagerSvgAnnotation {
       if (selected) {
         textFill = cfg.textFillSelected ?? this._getClassStyle(anno, true).stroke ?? textFill;
       }
+      if (isOrphan) {
+        textFill = cfg.textFillOrphan ?? textFill;
+      }
+      if (isGhost) {
+        textFill = cfg.textFillGhost ?? textFill;
+      }
       if (isUnderEditing) {
         textFill = cfg.textFillUnderEditing ?? textFill;
       }
@@ -2775,6 +2783,14 @@ class ManagerSvgAnnotation {
       if (selected) {
         backgroundFill = cfg.backgroundFillSelected ?? backgroundFill;
       }
+      if (isOrphan) {
+        backgroundFill = cfg.backgroundFillOrphan ?? backgroundFill;
+        bgStrokeWidth = (cfg.backgroundStrokeWidthOrphanPx ?? cfg.backgroundStrokeWidthPx ?? 1) / zoom;
+      }
+      if (isGhost) {
+        backgroundFill = cfg.backgroundFillGhost ?? backgroundFill;
+        bgStrokeWidth = (cfg.backgroundStrokeWidthGhostPx ?? cfg.backgroundStrokeWidthPx ?? 1) / zoom;
+      }
       if (isUnderEditing) {
         backgroundFill = cfg.backgroundFillUnderEditing ?? backgroundFill;
         bgStrokeWidth = (cfg.backgroundStrokeWidthUnderEditingPx ?? cfg.backgroundStrokeWidthPx ?? 1) / zoom;
@@ -2782,7 +2798,11 @@ class ManagerSvgAnnotation {
       bgEl.setAttribute('fill', backgroundFill);
       const backgroundStroke = isUnderEditing
         ? (cfg.backgroundStrokeUnderEditing ?? cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)')
-        : (cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)');
+        : isGhost
+          ? (cfg.backgroundStrokeGhost ?? cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)')
+          : isOrphan
+            ? (cfg.backgroundStrokeOrphan ?? cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)')
+            : (cfg.backgroundStroke ?? 'rgba(255, 255, 255, 0.22)');
       bgEl.setAttribute('stroke', backgroundStroke);
       if (bgStrokeWidth > 0) {
         bgEl.setAttribute('stroke-width', String(bgStrokeWidth));
