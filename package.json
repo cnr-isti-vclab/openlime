@@ -59,6 +59,7 @@
   ],
   "scripts": {
     "start": "webpack-dev-server",
+    "dev": "python3 -m http.server 8080 --directory dist",
     "build": "webpack -c webpack.config.js --mode development",
     "rollup": "rollup -c rollup.config.js --extend",
     "build-types": "rm -rf dist/types && tsc -p tsconfig.types.json && find dist/types -maxdepth 1 -name '*.d.ts' ! -name 'index.d.ts' -printf \"export * from './%f';\\n\" | sed \"s/\\.d\\.ts';$/';/\" > dist/types/index.d.ts",
