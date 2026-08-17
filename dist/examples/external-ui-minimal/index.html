@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Minimal external UI</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: system-ui, sans-serif;
+        }
+
+        body { display: grid; grid-template-rows: auto 1fr; }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #d5d9df;
+        }
+
+        h1 { margin: 0 auto 0 0; font-size: 18px; }
+
+        #controls { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        button {
+            padding: 7px 10px;
+            border: 1px solid #aeb7c2;
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+        }
+
+        button:disabled { cursor: default; opacity: 0.45; }
+        button.active { background: #dbeeff; border-color: #3b82c4; }
+
+        /* Base layout required by Viewer: the canvas must fill its container. */
+        .openlime {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #111;
+            touch-action: none;
+        }
+
+        .openlime > canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .openlime-overlay {
+            position: absolute;
+            inset: 0;
+        }
+    </style>
+</head>
+<body>
+    <!--
+        This toolbar is ordinary application HTML. It is not created by UIBasic
+        or ToolbarView and can therefore be placed anywhere in the page.
+    -->
+    <header>
+        <h1>Minimal external UI</h1>
+        <nav id="controls" aria-label="Viewer controls">
+            <button type="button" data-action="home">Home</button>
+            <button type="button" data-action="zoomIn">Zoom in</button>
+            <button type="button" data-action="zoomOut">Zoom out</button>
+            <button type="button" data-action="fullscreen">Fullscreen</button>
+        </nav>
+    </header>
+
+    <div class="openlime" aria-label="Image viewer"></div>
+
+    <script src="../../js/openlime.js"></script>
+    <script>
+        // 1. Create the viewer and add normal OpenLIME content.
+        const viewer = new OpenLIME.Viewer('.openlime', { background: 'black' });
+
+        viewer.addLayer('image', new OpenLIME.Layer({
+            layout: 'image',
+            type: 'image',
+            url: '../../assets/lime/image/lime.jpg'
+        }));
+
+        // 2. ViewerTools contains behavior, not visual controls.
+        //    These two feature factories register home, zoom and fullscreen actions.
+        const tools = new OpenLIME.ViewerTools(viewer, {
+            features: [
+                OpenLIME.navigationTools(),
+                OpenLIME.fullscreenTool()
+            ]
+        });
+
+        // 3. Connect application buttons to actions.
+        //    data-action="zoomIn" becomes button.dataset.action === "zoomIn".
+        document.querySelectorAll('[data-action]').forEach(button => {
+            button.addEventListener('click', event => {
+                tools.execute(button.dataset.action, event);
+            });
+        });
+
+        // 4. Keep external controls synchronized with OpenLIME state.
+        //    Fullscreen is toggled by the browser, so its active state can also
+        //    change without clicking this particular button.
+        tools.actions.addEvent('change', action => {
+            const button = document.querySelector(`[data-action="${action.id}"]`);
+            if (!button) return;
+            button.disabled = !action.enabled;
+            button.classList.toggle('active', action.active);
+            button.setAttribute('aria-pressed', String(action.active));
+        });
+    </script>
+</body>
+</html>

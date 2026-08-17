@@ -12,6 +12,31 @@ const _SHADOW        = `filter: ${_SHADOW_FILTER}`;
 const _SHADOW_RUBBER = 'filter: drop-shadow(1px 1px 1.8px rgba(0,0,0,0.40))';
 
 /**
+ * @typedef {Object} SemanticClassStyle
+ * @property {string} label - Human-readable class label.
+ * @property {string} [fill] - Fill colour.
+ * @property {string} [stroke] - Stroke colour.
+ * @property {number} [fillOpacity] - Fill opacity.
+ * @property {number} [strokeWidth] - Stroke width in model units.
+ * @property {string} [fillSelected] - Fill colour for selected annotations.
+ * @property {string} [strokeSelected] - Stroke colour for selected annotations.
+ * @property {string} [fillUnderEditing] - Fill colour while editing.
+ * @property {string} [strokeUnderEditing] - Stroke colour while editing.
+ * @property {string} [filter] - SVG filter for the default state.
+ * @property {string} [filterSelected] - SVG filter for the selected state.
+ * @property {string} [filterUnderEditing] - SVG filter while editing.
+ */
+
+/**
+ * @typedef {Object} StructuralClassStyle
+ * @property {string} [fill] - Fill colour.
+ * @property {string} [stroke] - Stroke colour.
+ * @property {number} [fillOpacity] - Fill opacity.
+ * @property {number} [strokeWidth] - Stroke width in model units.
+ * @property {string} [filter] - SVG filter.
+ */
+
+/**
  * @file ManagerSvgAnnotation.js
  *
  * GUI-free annotation manager for OpenLIME.
@@ -810,6 +835,7 @@ class ManagerSvgAnnotation {
    * @param {Function} [options.onDelete]   - Shorthand: `.addEvent('delete', fn)`
    * @param {Function} [options.onSelect]   - Shorthand: `.addEvent('select', fn)` — fires with the last activated annotation
    * @param {Function} [options.onSelectionChange] - Shorthand: `.addEvent('selectionChange', fn)` — fires with the full `Annotation[]` array
+   * @param {Function} [options.onAnnotationSelectionChange] - Shorthand: `.addEvent('annotationSelectionChange', fn)` — fires with a stable payload for viewer/editor selection sync
   * @param {boolean} [options.showAnnotationLabels=true]
   *   Legacy boolean label visibility (true = all, false = none).
   * @param {'none'|'all'|'selected'} [options.labelVisibility='all']
@@ -898,18 +924,14 @@ class ManagerSvgAnnotation {
       preloadStructuralFilters: true,
       /**
        * Semantic class definitions keyed by class ID.
-       * @type {Object<string, {label:string, fill?:string, stroke?:string,
-       *              fillOpacity?:number, strokeWidth?:number,
-       *              fillSelected?:string, strokeSelected?:string,
-      *              fillUnderEditing?:string, strokeUnderEditing?:string,
-      *              filter?:string, filterSelected?:string, filterUnderEditing?:string}>}
+       * @type {Object.<string, SemanticClassStyle>}
        */
       semanticClasses: {
         default: { label: 'Default' },
       },
       /**
        * Structural class definitions used as state overlays.
-      * @type {Object<string, {fill?:string, stroke?:string, fillOpacity?:number, strokeWidth?:number, filter?:string}>}
+       * @type {Object.<string, StructuralClassStyle>}
        */
       structuralClasses: {
         default: { stroke: '#000000', fill: 'rgba(0, 0, 0, 0.30)' },
@@ -1019,6 +1041,15 @@ class ManagerSvgAnnotation {
     this._lastClickWasOnAnnotation = false;
 
     /**
+     * Pending metadata attached to the next emitted public selection event.
+     * Filled by click/programmatic selection paths and consumed once the
+     * selection mutation has been applied.
+     * @type {{source: string, originalEvent: (Event|PointerEvent|null)}|null}
+     * @private
+     */
+    this._pendingSelectionEventMeta = null;
+
+    /**
      * Whether the pencil has been explicitly enabled by the user.
      * When `false` the manager is completely transparent: all pointer events
      * pass through unchanged and OpenLIME behaves as if the manager did not exist.
@@ -1058,10 +1089,7 @@ class ManagerSvgAnnotation {
       // method calls _updateHandlesVisibility once at the end instead.
       if (this._batchSelectInProgress) return;
       this._updateHandlesVisibility(anno);
-      if (anno) this.emit('select', anno);
-      const all = [...this.layer.selected]
-        .map(id => this.layer.getAnnotationById(id)).filter(Boolean);
-      this.emit('selectionChange', all);
+      this._emitSelectionEvents(anno, this._consumeQueuedSelectionEvent());
     });
 
     // ── Pointer handlers ────────────────────────────────────────────────
@@ -1120,6 +1148,7 @@ class ManagerSvgAnnotation {
     if (options.onDelete) this.addEvent('delete', options.onDelete);
     if (options.onSelect) this.addEvent('select', options.onSelect);
     if (options.onSelectionChange) this.addEvent('selectionChange', options.onSelectionChange);
+    if (options.onAnnotationSelectionChange) this.addEvent('annotationSelectionChange', options.onAnnotationSelectionChange);
     if (options.onSessionStart) this.addEvent('sessionStart', options.onSessionStart);
     if (options.onSessionCancel) this.addEvent('sessionCancel', options.onSessionCancel);
   }
@@ -1175,10 +1204,6 @@ class ManagerSvgAnnotation {
     if (this._mode === 'create' && mode !== 'create' && this._session)
       this._cancelSession();
 
-    // Clear selection when leaving edit mode
-    if (this._mode === 'edit' && mode !== 'edit')
-      this.deselectAll();
-
     const prev = this._mode;
     this._mode = mode;
 
@@ -1228,6 +1253,7 @@ class ManagerSvgAnnotation {
     this._inspectEnabled = next;
     if (!next) this.deselectAll();
     this._syncPointerEvents();
+    this._updateHandlesVisibility(this.activeAnnotation);
     return this._inspectEnabled;
   }
 
@@ -1292,6 +1318,32 @@ class ManagerSvgAnnotation {
   }
 
   /**
+   * Stable public accessor for the current active annotation.
+   * @returns {Annotation|null}
+   */
+  getActiveAnnotation() {
+    return this.activeAnnotation;
+  }
+
+  /**
+   * Returns the currently selected annotation IDs.
+   * @returns {string[]}
+   */
+  getSelectedIds() {
+    return [...(this.layer?.selected ?? [])];
+  }
+
+  /**
+   * Returns the currently selected annotations.
+   * @returns {Annotation[]}
+   */
+  getSelectedAnnotations() {
+    return this.getSelectedIds()
+      .map(id => this.layer?.getAnnotationById(id))
+      .filter(Boolean);
+  }
+
+  /**
    * Programmatically finalises the current sequence/drag creation.
    * Equivalent to pressing Enter. No-op if no creation is in progress.
    * @returns {Annotation|null} The created annotation, or null.
@@ -1310,9 +1362,27 @@ class ManagerSvgAnnotation {
    * an empty array.
    */
   deselectAll() {
+    return this.clearSelection({ source: 'clear' });
+  }
+
+  /**
+   * Clears the current selection and emits stable public selection events.
+   *
+   * @param {Object} [options={}]
+   * @param {string} [options.source='clear']
+   * @param {Event|PointerEvent|null} [options.originalEvent=null]
+   * @returns {Annotation[]} Empty selection array.
+   */
+  clearSelection(options = {}) {
+    if (this._mode === 'create') return [];
     this.layer.clearSelected();
     this._updateHandlesVisibility(null);
-    this.emit('selectionChange', []);
+    this._emitSelectionEvents(null, {
+      source: options.source ?? 'clear',
+      originalEvent: options.originalEvent ?? null,
+      emitLegacySelect: false
+    });
+    return [];
   }
 
   /**
@@ -1364,6 +1434,7 @@ class ManagerSvgAnnotation {
     annotation.description = opts.description ?? '';
     const semanticClass = this._resolveSemanticClassId(opts.semanticClass);
     annotation.semanticClass = semanticClass;
+    annotation.class = semanticClass;
     annotation.structuralClass = this._resolveStructuralClassId(opts.structuralClass);
     annotation.type = 'point';
     annotation.publish = opts.publish ?? 1;
@@ -1442,6 +1513,7 @@ class ManagerSvgAnnotation {
       if (key === 'semanticClass') {
         const resolved = this._resolveSemanticClassId(patch[key]);
         anno.semanticClass = resolved;
+        anno.class = resolved;
         continue;
       }
       if (key === 'structuralClass') {
@@ -1504,7 +1576,31 @@ class ManagerSvgAnnotation {
     if (this._mode === 'create') return;
     const anno = this.layer.getAnnotationById(id);
     if (!anno) return;
+    this._queueSelectionEvent('programmatic');
     this.layer.setSelected(anno, on);
+  }
+
+  /**
+   * Public selection API for viewer/editor integrations.
+   *
+   * @param {string[]} ids
+   * @param {boolean} [append=false]
+   * @param {Object} [options={}]
+   * @param {string} [options.source='programmatic']
+   * @param {Event|PointerEvent|null} [options.originalEvent=null]
+   * @param {'preserve'|'edit'} [options.interactionMode='preserve']
+   * @returns {Annotation[]}
+   */
+  selectAnnotations(ids, append = false, options = {}) {
+    const nextIds = append
+      ? [...new Set([...this.getSelectedIds(), ...(ids ?? [])])]
+      : (ids ?? []);
+    this._applySelectionIds(nextIds, {
+      source: options.source ?? 'programmatic',
+      originalEvent: options.originalEvent ?? null,
+      interactionMode: options.interactionMode ?? 'preserve'
+    });
+    return this.getSelectedAnnotations();
   }
 
   /**
@@ -1524,31 +1620,17 @@ class ManagerSvgAnnotation {
    *
    * @param {string[]} ids - Annotation IDs to select. Duplicates are ignored.
    *                         Pass an empty array to deselect everything.
+   * @param {Object} [options={}]
+   * @param {string} [options.source='programmatic']
+   * @param {Event|PointerEvent|null} [options.originalEvent=null]
+   * @param {'preserve'|'edit'} [options.interactionMode='preserve']
    */
-  setSelectedIds(ids) {
-    if (this._mode === 'create') return;
-    const unique = [...new Set(ids)];
-
-    // Suppress per-item _updateHandlesVisibility calls during the batch.
-    this._batchSelectInProgress = true;
-    this.layer.clearSelected();
-    for (const id of unique) {
-      const anno = this.layer.getAnnotationById(id);
-      if (anno) this.layer.setSelected(anno, true);
-    }
-    this._batchSelectInProgress = false;
-
-    // Single visual + vertex-handle update for the whole new selection.
-    const lastAnno = unique.length > 0
-      ? this.layer.getAnnotationById(unique[unique.length - 1])
-      : null;
-    this._updateHandlesVisibility(lastAnno);
-
-    // Emit events once.
-    if (lastAnno) this.emit('select', lastAnno);
-    const selected = [...this.layer.selected]
-      .map(id => this.layer.getAnnotationById(id)).filter(Boolean);
-    this.emit('selectionChange', selected);
+  setSelectedIds(ids, options = {}) {
+    this._applySelectionIds(ids, {
+      source: options.source ?? 'programmatic',
+      originalEvent: options.originalEvent ?? null,
+      interactionMode: options.interactionMode ?? 'preserve'
+    });
   }
 
   /**
@@ -2046,6 +2128,134 @@ class ManagerSvgAnnotation {
     this._syncPointerEvents(); // re-evaluate pointer-events for new interaction mode
   }
 
+  /**
+   * Queues metadata for the next public selection event.
+   *
+   * @param {string} source
+   * @param {Event|PointerEvent|null} [originalEvent=null]
+   * @private
+   */
+  _queueSelectionEvent(source, originalEvent = null) {
+    this._pendingSelectionEventMeta = {
+      source: source ?? 'programmatic',
+      originalEvent: originalEvent ?? null
+    };
+  }
+
+  /**
+   * Consumes the pending selection event metadata, falling back to defaults.
+   *
+   * @param {Object} [fallback={}]
+   * @param {string} [fallback.source='programmatic']
+   * @param {Event|PointerEvent|null} [fallback.originalEvent=null]
+   * @returns {{source: string, originalEvent: (Event|PointerEvent|null)}}
+   * @private
+   */
+  _consumeQueuedSelectionEvent(fallback = {}) {
+    const meta = this._pendingSelectionEventMeta ?? null;
+    this._pendingSelectionEventMeta = null;
+    return {
+      source: meta?.source ?? fallback.source ?? 'programmatic',
+      originalEvent: meta?.originalEvent ?? fallback.originalEvent ?? null
+    };
+  }
+
+  /**
+   * Builds the stable public payload for selection-related events.
+   *
+   * @param {Object} [options={}]
+   * @param {string} [options.source='programmatic']
+   * @param {Event|PointerEvent|null} [options.originalEvent=null]
+   * @returns {{activeAnnotation: Annotation|null, selectedAnnotations: Annotation[], selectedIds: string[], originalEvent: (Event|PointerEvent|null), source: string, manager: ManagerSvgAnnotation, layer: LayerSvgAnnotation}}
+   * @private
+   */
+  _buildSelectionEventPayload(options = {}) {
+    const selectedAnnotations = this.getSelectedAnnotations();
+    return {
+      activeAnnotation: this.getActiveAnnotation(),
+      selectedAnnotations,
+      selectedIds: selectedAnnotations.map(annotation => annotation.id),
+      originalEvent: options.originalEvent ?? null,
+      source: options.source ?? 'programmatic',
+      manager: this,
+      layer: this.layer
+    };
+  }
+
+  /**
+   * Emits legacy and rich selection events together.
+   *
+   * @param {Annotation|null} changedAnno
+   * @param {Object} [options={}]
+   * @param {string} [options.source='programmatic']
+   * @param {Event|PointerEvent|null} [options.originalEvent=null]
+   * @param {boolean} [options.emitLegacySelect=true]
+   * @private
+   */
+  _emitSelectionEvents(changedAnno, options = {}) {
+    const emitLegacySelect = options.emitLegacySelect !== false;
+    const payload = this._buildSelectionEventPayload(options);
+    if (changedAnno && emitLegacySelect) this.emit('select', changedAnno);
+    this.emit('selectionChange', payload.selectedAnnotations);
+    this.emit('annotationSelectionChange', payload);
+  }
+
+  /**
+   * Prepares interaction state for a programmatic selection request.
+   *
+   * - `preserve`: keep the current pencil/inspect/mode state untouched.
+   * - `edit`: enter editor context before applying the selection.
+   *
+   * @param {'preserve'|'edit'} [interactionMode='preserve']
+   * @returns {'preserve'|'edit'}
+   * @private
+   */
+  _prepareInteractionForProgrammaticSelection(interactionMode = 'preserve') {
+    const normalized = interactionMode ?? 'preserve';
+    if (!['preserve', 'edit'].includes(normalized))
+      throw new Error(`ManagerSvgAnnotation: invalid interactionMode '${normalized}'. Valid: preserve, edit`);
+
+    if (normalized === 'edit') {
+      if (!this._pencilEnabled) this._pencilEnabled = true;
+      if (this._mode !== 'edit') this.setMode('edit');
+    }
+
+    return normalized;
+  }
+
+  /**
+   * Applies a full selection set atomically and emits one public event.
+   *
+   * @param {string[]} ids
+   * @param {Object} [options={}]
+   * @param {string} [options.source='programmatic']
+   * @param {Event|PointerEvent|null} [options.originalEvent=null]
+   * @param {'preserve'|'edit'} [options.interactionMode='preserve']
+   * @private
+   */
+  _applySelectionIds(ids, options = {}) {
+    this._prepareInteractionForProgrammaticSelection(options.interactionMode ?? 'preserve');
+    if (this._mode === 'create') return;
+    const unique = [...new Set(ids ?? [])];
+
+    this._batchSelectInProgress = true;
+    this.layer.clearSelected();
+    for (const id of unique) {
+      const anno = this.layer.getAnnotationById(id);
+      if (anno) this.layer.setSelected(anno, true);
+    }
+    this._batchSelectInProgress = false;
+
+    const lastAnno = unique.length > 0
+      ? this.layer.getAnnotationById(unique[unique.length - 1])
+      : null;
+    this._updateHandlesVisibility(lastAnno);
+    this._emitSelectionEvents(lastAnno, {
+      source: options.source ?? 'programmatic',
+      originalEvent: options.originalEvent ?? null
+    });
+  }
+
   // ─── Internal: pointer-events management ────────────────────────────────────
 
   /**
@@ -2109,18 +2319,21 @@ class ManagerSvgAnnotation {
     const structuralClassId = this._resolveStructuralClassId(anno.structuralClass);
     const hasExplicitStructural = structuralClassId != null;
     const selectedStructural = this.structuralClasses?.selected ?? {};
+    const inspectSelectedStructural = this.structuralClasses?.inspectSelected ?? {};
     const editingStructural = this.structuralClasses?.underEditing ?? {};
     const explicitStructural = hasExplicitStructural ? (this.structuralClasses?.[structuralClassId] ?? {}) : {};
+    const isInspectSelected = !!selected && (!this._pencilEnabled || this._mode !== 'edit');
 
     const shouldApplySelected = !!selected && !hasExplicitStructural;
     const shouldApplyEditing = !!anno.editing && !hasExplicitStructural;
 
     if (shouldApplySelected) {
-      fill = cls.fillSelected ?? selectedStructural.fill ?? this.selectionFill ?? fill;
-      stroke = cls.strokeSelected ?? selectedStructural.stroke ?? this.selectionStroke ?? stroke;
-      fillOpacity = selectedStructural.fillOpacity ?? fillOpacity;
-      strokeWidth = selectedStructural.strokeWidth ?? strokeWidth;
-      filter = cls.filterSelected ?? selectedStructural.filter ?? filter;
+      const resolvedSelectedStructural = isInspectSelected ? inspectSelectedStructural : selectedStructural;
+      fill = cls.fillSelected ?? resolvedSelectedStructural.fill ?? selectedStructural.fill ?? this.selectionFill ?? fill;
+      stroke = cls.strokeSelected ?? resolvedSelectedStructural.stroke ?? selectedStructural.stroke ?? this.selectionStroke ?? stroke;
+      fillOpacity = resolvedSelectedStructural.fillOpacity ?? selectedStructural.fillOpacity ?? fillOpacity;
+      strokeWidth = resolvedSelectedStructural.strokeWidth ?? selectedStructural.strokeWidth ?? strokeWidth;
+      filter = cls.filterSelected ?? resolvedSelectedStructural.filter ?? selectedStructural.filter ?? filter;
     }
 
     if (shouldApplyEditing) {
@@ -2168,7 +2381,12 @@ class ManagerSvgAnnotation {
   _applyStyleToElements(anno, selected = false) {
     this._ensureDefaultStructuralFilters();
     const style = this._getClassStyle(anno, selected);
-    const interactionCursor = selected ? 'grab' : 'pointer';
+    const canEdit = this._pencilEnabled && this._mode === 'edit';
+    const canInspect = this._inspectEnabled;
+    const canInteract = !this._interactionSuspended && (canEdit || canInspect);
+    const interactionCursor = canInteract
+      ? (canEdit ? (selected ? 'grab' : 'pointer') : 'pointer')
+      : '';
     const applyFilter = (el) => {
       // Markers already set inline CSS filter (e.g. drop-shadow). SVG
       // presentation attribute `filter` would lose against inline CSS due to
@@ -2190,6 +2408,15 @@ class ManagerSvgAnnotation {
       el.removeAttribute('filter');
     };
     const applyToEl = (el) => {
+      if (el.setAttribute) {
+        el.setAttribute('data-class', anno.semanticClass ?? anno.class ?? '');
+        el.setAttribute('data-semantic-class', anno.semanticClass ?? '');
+        el.setAttribute('data-structural-class', anno.structuralClass ?? '');
+        el.setAttribute('data-selected', selected ? 'true' : 'false');
+        el.setAttribute('data-selection-mode',
+          selected ? ((!this._pencilEnabled || this._mode !== 'edit') ? 'inspect' : 'edit') : 'none');
+        el.setAttribute('data-editing', anno.editing ? 'true' : 'false');
+      }
       if (el.classList?.contains('annotation-disk')) {
         applyFilter(el);
         el.setAttribute('fill', style.fill);
@@ -2318,6 +2545,7 @@ class ManagerSvgAnnotation {
       const markerType = anno?.data?._markerType;
       const canTranslateWithShift = canEdit && !!markerType && !!e?.shiftKey;
       if (canTranslateWithShift) {
+        this._queueSelectionEvent('click', e);
         this._selectOnlyAnnotation(anno);
         this._startAnnotationTranslateDrag(anno, e);
         return true;
@@ -2326,10 +2554,12 @@ class ManagerSvgAnnotation {
       // distinguish this from a click on the empty canvas background.
       this._lastClickWasOnAnnotation = true;
       if (e?.ctrlKey || e?.metaKey) {
+        this._queueSelectionEvent('multiselect', e);
         const nowSelected = !this.layer.selected.has(anno.id);
         this.layer.setSelected(anno, nowSelected);
         return true; // prevent default clear-all + select-one
       }
+      this._queueSelectionEvent('click', e);
       return false; // let LayerSvgAnnotation's default single-select run
     };
   }
@@ -2443,19 +2673,18 @@ class ManagerSvgAnnotation {
    */
   _onAnnotationUpdate(anno, transform) {
     const markerType = anno.data?._markerType ?? this.activeMarker;
+    const selected = this.layer.selected?.has(anno.id) ?? false;
     let style = {};
     try {
       const marker = this._instantiateMarker(markerType, this.markerOptions);
-      const selected = this.layer.selected?.has(anno.id) ?? false;
       style = this._getClassStyle(anno, selected);
       marker.updateElements(anno.elements, transform, anno, style);
     } catch {
       // Unknown marker type — silently ignore for robustness
-      const selected = this.layer.selected?.has(anno.id) ?? false;
       style = this._getClassStyle(anno, selected);
     }
 
-    const selected = this.layer.selected?.has(anno.id) ?? false;
+    this._applyStyleToElements(anno, selected);
     this._updateLabelElement(anno, transform, selected);
   }
 
@@ -3792,7 +4021,13 @@ class ManagerSvgAnnotation {
  * @description Fired when a grouped annotation is split back into individuals.
  */
 
-addSignals(ManagerSvgAnnotation, 'create', 'update', 'editStart', 'delete', 'select', 'selectionChange', 'sessionStart', 'sessionCancel', 'modeChange', 'group', 'ungroup');
+/**
+ * @event ManagerSvgAnnotation#annotationSelectionChange
+ * @type {{activeAnnotation: Annotation|null, selectedAnnotations: Annotation[], selectedIds: string[], originalEvent: (Event|PointerEvent|null), source: string, manager: ManagerSvgAnnotation, layer: LayerSvgAnnotation}}
+ * @description Fired whenever the selection changes, both from user interaction and programmatic APIs.
+ */
+
+addSignals(ManagerSvgAnnotation, 'create', 'update', 'editStart', 'delete', 'select', 'selectionChange', 'annotationSelectionChange', 'sessionStart', 'sessionCancel', 'modeChange', 'group', 'ungroup');
 
 // ─── Built-in: RectMarker ─────────────────────────────────────────────────────
 

@@ -53,6 +53,9 @@ const core = [
 	'./src/ControllerPanZoom.js',
 	'./src/PointerManager.js',
 	'./src/Viewer.js',
+	'./src/ActionRegistry.js',
+	'./src/ToolCoordinator.js',
+	'./src/ViewerTools.js',
 	'./src/CoordinateSystem.js',
 	'./src/BoundingBox.js',
 	'./src/GeoreferenceManager.js',
@@ -74,7 +77,9 @@ const ui = [
 	'./src/Ruler.js',
 	'./src/ScaleBar.js',
 	'./src/Draggable.js',
-	'./src/LightSphereController.js'
+	'./src/LightSphereController.js',
+	'./src/ViewerToolsFeatures.js',
+	'./src/ToolbarView.js'
 ];
 
 const lens = [
@@ -94,9 +99,9 @@ const rti = [
 	'./src/ShaderNeural.js'
 ];
 
-const rsc = [
-	'./src/LayerRSC.js',
-	'./src/ShaderRSc.js'
+const rilsr = [
+	'./src/LayerRILSR.js',
+	'./src/ShaderRILSR.js'
 ];
 
 
@@ -119,7 +124,7 @@ const loader = [
 	'./src/ManifestLoader.js'
 ];
 
-const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rsc, ...lens, ...annotation, ...loader];
+const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rilsr, ...lens, ...annotation, ...loader];
 
 module.exports = [
 	{

@@ -34,11 +34,15 @@ class Annotation {
    * @param {boolean} [options.editing=false] - Indicates if annotation is being edited.
    */
   constructor(options = {}) {
+    const legacyClass = options.class ?? null;
+    const semanticClass = options.semanticClass ?? legacyClass;
     // Set default properties
     this.id = options.id ?? Annotation.generateUUID();
     this.label = options.label ?? '';
     this.description = options.description ?? null;
-    this.class = options.class ?? null;
+    this.class = legacyClass ?? semanticClass;
+    this.semanticClass = semanticClass;
+    this.structuralClass = options.structuralClass ?? null;
     this.target = options.target ?? null;
     this.svg = options.svg ?? null;
     this.type = options.type ?? '';
@@ -163,8 +167,21 @@ class Annotation {
         const field = propertyMap[item.purpose];
         if (field) {
           options[field] = item.value;
+          if (field === 'class' && options.semanticClass == null) {
+            options.semanticClass = item.value;
+          }
         }
       }
+    }
+
+    if (entry.class != null && options.class == null) {
+      options.class = entry.class;
+    }
+    if (entry.semanticClass != null) {
+      options.semanticClass = entry.semanticClass;
+    }
+    if (entry.structuralClass != null) {
+      options.structuralClass = entry.structuralClass;
     }
     
     // Process target selector if present
@@ -199,10 +216,11 @@ class Annotation {
       });
     }
     
-    if (this.class !== null) {
+    const semanticClass = this.semanticClass ?? this.class;
+    if (semanticClass !== null) {
       body.push({ 
         type: 'TextualBody', 
-        value: this.class, 
+        value: semanticClass, 
         purpose: 'classifying' 
       });
     }
@@ -221,6 +239,9 @@ class Annotation {
       id: this.id,
       type: "Annotation",
       body: body,
+      class: this.class ?? semanticClass ?? null,
+      semanticClass: semanticClass ?? null,
+      structuralClass: this.structuralClass ?? null,
       target: { selector: {} }
     };
     

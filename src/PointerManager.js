@@ -257,6 +257,22 @@ class PointerManager {
     }
 
     /**
+     * Unregisters a handler previously passed to {@link PointerManager#onEvent}.
+     * Pointer-specific observers created during an active gesture expire with
+     * that gesture; all persistent observers are removed here.
+     * @param {Object|Controller} handler
+     */
+    offEvent(handler) {
+        if (!handler) return;
+        const eventTypes = [
+            'fingerHover', 'fingerSingleTap', 'fingerDoubleTap', 'fingerHold',
+            'mouseWheel', 'wentIdle', 'activeAgain', 'fingerMovingStart',
+            'fingerDown'
+        ];
+        for (const eventType of eventTypes) this.broadcastOff(eventType, handler);
+    }
+
+    /**
      * Registers callbacks for pan gestures (start, move, and end).
      * 
      * @param {Object} handler - The handler object containing pan gesture callbacks.
