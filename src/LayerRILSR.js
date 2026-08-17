@@ -70,6 +70,7 @@ class LayerRILSR extends Layer {
 		this._responseTransferReady = false;
 		this._responseTransferTimer = null;
 		this._responseTransferSharpness = null;
+		this._responseTransferPendingSharpness = null;
 
 		this.shaders['rilsr'] = new ShaderRILSR({ debug: false });
 		this.setShader('rilsr');
@@ -103,6 +104,27 @@ class LayerRILSR extends Layer {
 	 */
 	setLight(light, dt) {
 		this.setControl('light', light, dt);
+	}
+
+	/**
+	 * Sets response-transfer sharpness and invalidates the shared transformed atlas.
+	 * Derived lens layers forward the cache parameter to their source layer while
+	 * retaining the same value in their own shader state.
+	 * @param {number} value Sharpness in the inclusive range `[-1, 1]`.
+	 */
+	setResponseSharpness(value) {
+		this.shader.setResponseSharpness(value);
+		const root = this.sourceLayer || this;
+		if (root !== this) root.shader.setResponseSharpness(value);
+		root._queueResponseTransferAtlasUpdate();
+	}
+
+	/**
+	 * Sets the directional contrast gain for this RILSR rendering layer.
+	 * @param {number} value Non-negative directional gain.
+	 */
+	setResponseDirectionalGain(value) {
+		this.shader.setResponseDirectionalGain(value);
 	}
 
 
@@ -277,14 +299,6 @@ class LayerRILSR extends Layer {
 			const tileX = atom % atomsPerRow;
 			const tileY = Math.floor(atom / atomsPerRow);
 
-			for (let channel = 0; channel < 3; ++channel) {
-				means[atom * 4 + channel] = mean[channel];
-				gains[atom * 4 + channel] = energy[channel] > epsilon && responseScale[channel] > epsilon &&
-					Math.sqrt(transferredEnergy[channel]) > epsilon ? 1 : 0;
-			}
-			means[atom * 4 + 3] = 1;
-			gains[atom * 4 + 3] = 1;
-
 			for (let y = 0; y < tileHeight; ++y) {
 				for (let x = 0; x < tileWidth; ++x) {
 					const sample = y * tileWidth + x;
@@ -323,6 +337,14 @@ class LayerRILSR extends Layer {
 					transferredEnergy[channel] += centered * centered;
 				}
 
+			for (let channel = 0; channel < 3; ++channel) {
+				means[atom * 4 + channel] = mean[channel];
+				gains[atom * 4 + channel] = energy[channel] > epsilon && responseScale[channel] > epsilon &&
+					Math.sqrt(transferredEnergy[channel]) > epsilon ? 1 : 0;
+			}
+			means[atom * 4 + 3] = 1;
+			gains[atom * 4 + 3] = 1;
+
 			for (let y = 0; y < tileHeight; ++y) {
 				for (let x = 0; x < tileWidth; ++x) {
 					const sample = y * tileWidth + x;
@@ -360,6 +382,7 @@ class LayerRILSR extends Layer {
 		this._uploadResponseTransferTexture(gl, responseMeans, result.means, result.means.length / 4, 1);
 		this._uploadResponseTransferTexture(gl, responseGains, result.gains, result.gains.length / 4, 1);
 		this._responseTransferSharpness = sharpness;
+		this._responseTransferPendingSharpness = null;
 		this._responseTransferReady = true;
 	}
 
@@ -370,18 +393,24 @@ class LayerRILSR extends Layer {
 		if (!this._responseTransferReady || !this.gl) return;
 		const sharpness = this.shader.uniforms.response_sharpness?.value;
 		if (!Number.isFinite(sharpness) || sharpness === this._responseTransferSharpness) return;
+		if (sharpness === this._responseTransferPendingSharpness) return;
 		clearTimeout(this._responseTransferTimer);
+		this._responseTransferPendingSharpness = sharpness;
 		this._responseTransferTimer = setTimeout(() => {
 			const responseAtlas = this._responseTransferTexture('response_dict');
 			const responseMeans = this._responseTransferTexture('response_mean');
 			const responseGains = this._responseTransferTexture('response_gain');
 			const dictionaryTexture = this._responseTransferTexture('dict');
-			const result = this._buildResponseTransferAtlas(this.shader.uniforms.response_sharpness.value);
-			if (!responseAtlas || !responseMeans || !responseGains || !dictionaryTexture || !result) return;
+			const result = this._buildResponseTransferAtlas(sharpness);
+			if (!responseAtlas || !responseMeans || !responseGains || !dictionaryTexture || !result) {
+				this._responseTransferPendingSharpness = null;
+				return;
+			}
 			this._uploadResponseTransferTexture(this.gl, responseAtlas, result.atlas, dictionaryTexture.width, dictionaryTexture.height);
 			this._uploadResponseTransferTexture(this.gl, responseMeans, result.means, result.means.length / 4, 1);
 			this._uploadResponseTransferTexture(this.gl, responseGains, result.gains, result.gains.length / 4, 1);
-			this._responseTransferSharpness = this.shader.uniforms.response_sharpness.value;
+			this._responseTransferSharpness = sharpness;
+			this._responseTransferPendingSharpness = null;
 			this.emit('update');
 		}, 100);
 	}
