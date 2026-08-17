@@ -10,7 +10,12 @@ import { Util } from './Util.js'
  * @typedef {Object} ShaderRILSR~Options
  * Configuration options for the RILSR shader.
  * @property {string} [mode='light'] - Initial rendering mode. Use `'edge'` for
- * the photometric edge map derived from changes in sparse-code support.
+ * the photometric edge map or `'dictionary-response-transfer'` for the
+ * response-transfer relighting.
+ * @property {number} [responseSharpness=0.9] - Dictionary response sharpness
+ * in `[-1, 1]`.
+ * @property {number} [responseDirectionalGain=1.5] - Directional response
+ * contrast gain.
  * @property {string} [type='rilsr'] - Representation type.
  */
 
@@ -48,7 +53,7 @@ class ShaderRILSR extends Shader {
 		super(options);
 
 		Object.assign(this, {
-			modes: ['light', 'edge', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'], 
+			modes: ['light', 'edge', 'dictionary-response-transfer', 'dictionary-response-transfer-intensity', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
 			mode: 'light',
 			type: ['ksvd'],
 		});
@@ -59,8 +64,9 @@ class ShaderRILSR extends Shader {
 
 	/**
 	 * Sets the rendering mode
-	 * @param {string} mode - One of: 'light', 'edge', 'avg', 'idx00', 'idx01',
-	 * 'coef00', 'coef01', 'dictionary', or 'debug'.
+	 * @param {string} mode - One of: 'light', 'edge',
+	 * 'dictionary-response-transfer', 'dictionary-response-transfer-intensity',
+	 * 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary', or 'debug'.
 	 * @throws {Error} If mode is not recognized
 	 */
 	setMode(mode) {
@@ -68,6 +74,28 @@ class ShaderRILSR extends Shader {
 			throw Error("Unknown mode: " + mode);
 		this.mode = mode;
 		this.needsUpdate = true;
+	}
+
+	/**
+	 * Sets the unified sharpness used by dictionary-response-transfer modes.
+	 * @param {number} value Sharpness in the inclusive range `[-1, 1]`.
+	 */
+	setResponseSharpness(value) {
+		const sharpness = Number(value);
+		if (!Number.isFinite(sharpness) || sharpness < -1 || sharpness > 1)
+			throw new Error('Response sharpness must be a finite value in [-1, 1].');
+		this.setUniform('response_sharpness', sharpness);
+	}
+
+	/**
+	 * Sets the directional contrast gain used by dictionary-response-transfer modes.
+	 * @param {number} value Non-negative directional gain.
+	 */
+	setResponseDirectionalGain(value) {
+		const gain = Number(value);
+		if (!Number.isFinite(gain) || gain < 0)
+			throw new Error('Response directional gain must be a non-negative finite value.');
+		this.setUniform('response_directional_gain', gain);
 	}
 
 	updateUniforms(gl) {
@@ -168,7 +196,11 @@ class ShaderRILSR extends Shader {
 			dictionary_atlas_atom_tile_size: { type: 'vec2', needsUpdate: false, size: 1, value: atom_size},
 			dictionary_atom_count_x: { type: 'int', needsUpdate: false, size: 1, value: atom_count_x},
 			sparsity_multiplier: { type: 'int', needsUpdate: false, size: 1, value: sparsity_multiplier}, 
+			response_sharpness: { type: 'float', needsUpdate: true, size: 1, value: 0.9 },
+			response_directional_gain: { type: 'float', needsUpdate: true, size: 1, value: 1.5 },
 		});
+		if (this.responseSharpness !== undefined) this.setResponseSharpness(this.responseSharpness);
+		if (this.responseDirectionalGain !== undefined) this.setResponseDirectionalGain(this.responseDirectionalGain);
 
 		// Print all registered uniforms to console
 		Object.entries(this.uniforms).forEach(([key, uniform]) => {
@@ -346,6 +378,56 @@ vec3 photometric_edge() {
 		return 'vec3 color = photometric_edge();\n';
 	}
 
+	/**
+	 * Returns GLSL for the defaults used by the offline
+	 * `dictionary-response-transfer --sharpness --directional-gain --intensity`
+	 * command: unified peak enhancement, max-absolute normalization, retained
+	 * atom mean, recentering, and residual-energy preservation.
+	 *
+	 * The transformed atlas is generated and cached by {@link LayerRILSR} when
+	 * sharpness changes. This shader only performs the final bilinear lookup and
+	 * applies directional gain to the cached residual.
+	 *
+	 * @returns {string} GLSL helper functions.
+	 * @private
+	 */
+	dictionary_response_transfer_helpers_str() {
+		return `
+vec3 dictionary_response_transfer_value(uint atom_index, vec2 light_dir_uv) {
+	vec2 atom_uv = dictionary_uv_from_index_tile_xy(atom_index, light_dir_uv.x, light_dir_uv.y);
+	vec3 transferred = texture(response_dict, atom_uv).rgb;
+	vec3 mean = texelFetch(response_mean, ivec2(int(atom_index), 0), 0).rgb;
+	vec3 gain_mask = texelFetch(response_gain, ivec2(int(atom_index), 0), 0).rgb;
+	vec3 gained = mean + max(response_directional_gain, 0.0) * (transferred - mean);
+	return mix(transferred, gained, gain_mask);
+}
+`;
+	}
+
+	/**
+	 * Returns GLSL that reconstructs with transformed dictionary responses.
+	 * @param {boolean} [intensityOnly=false] Return the auxiliary `--intensity`
+	 * response instead of the normal mean-plus-directional reconstruction.
+	 * @returns {string}
+	 * @private
+	 */
+	sparse_coding_response_transfer_str(intensityOnly = false) {
+		let str = `
+	vec2 light_dir_uv = uv_from_light_direction(light);
+	vec3 directional = vec3(0.0);
+`;
+		const sparsityMultiplier = this.config.input_params.sparsity_multiplier;
+		for (let i = 0; i < sparsityMultiplier; ++i) {
+			const coefficientName = 'coef' + Util.padZeros(i, 2);
+			const indexName = 'idx' + Util.padZeros(i, 2);
+			str += `\tdirectional += response_transfer_contribution(${i}, ${coefficientName}, ${indexName}, light_dir_uv);\n`;
+		}
+		str += intensityOnly
+			? '\tvec3 color = vec3(0.5 + dot(directional, vec3(1.0 / 3.0)));\n'
+			: '\tvec3 color = texture(avg, v_texcoord).rgb * average_scale + average_min + directional;\n';
+		return str;
+	}
+
 
 	// RILSR relighting shader part
 	sparse_coding_relight_str() {
@@ -372,11 +454,16 @@ vec3 photometric_edge() {
 
 	fragShaderSrc() {
 		const sparsity_multiplier = this.config.input_params.sparsity_multiplier;
+		const isResponseTransferMode = this.mode === 'dictionary-response-transfer' ||
+			this.mode === 'dictionary-response-transfer-intensity';
 		let str = `
 
 in vec2 v_texcoord;
 uniform vec3 light;
 uniform sampler2D dict;
+uniform sampler2D response_dict;
+uniform sampler2D response_mean;
+uniform sampler2D response_gain;
 uniform vec2 dictionary_size;
 uniform vec2  dictionary_atlas_atom_tile_size;
 uniform int   dictionary_atom_count_x;
@@ -387,6 +474,8 @@ uniform vec3 average_min;
 uniform vec3 average_scale;
 uniform vec3 coefficients_min[${sparsity_multiplier}];
 uniform vec3 coefficients_scale[${sparsity_multiplier}];
+uniform float response_sharpness;
+uniform float response_directional_gain;
 
 ${this.photometric_edge_helpers_str()}
 
@@ -419,6 +508,8 @@ vec2 dictionary_uv_from_index_tile_xy(uint tile_index, float x, float y) {
 	return res;
 }
 
+${isResponseTransferMode ? this.dictionary_response_transfer_helpers_str() : ''}
+
 vec3 contribution(int index, sampler2D coef_sampler, usampler2D idx_sampler, vec2 light_dir_uv) {
 	vec3 result = vec3(0,0,0);
 
@@ -450,6 +541,18 @@ vec3 contribution(int index, sampler2D coef_sampler, usampler2D idx_sampler, vec
 	return result;
 }
 
+${isResponseTransferMode ? `vec3 response_transfer_contribution(int index, sampler2D coef_sampler, usampler2D idx_sampler, vec2 light_dir_uv) {
+	vec3 result = vec3(0.0);
+	vec3 coef = texture(coef_sampler, v_texcoord).rgb * coefficients_scale[index] + coefficients_min[index];
+	uvec3 atom_indices = decode_sparse_indices(idx_sampler, v_texcoord);
+	uint entries[3] = uint[](atom_indices.r, atom_indices.g, atom_indices.b);
+	float weights[3] = float[](coef.r, coef.g, coef.b);
+	for (int entry = 0; entry < 3; ++entry)
+		result += dictionary_response_transfer_value(entries[entry], light_dir_uv) * weights[entry];
+	return result;
+}
+` : ''}
+
 vec4 data() {
 		`;
 
@@ -459,6 +562,12 @@ vec4 data() {
 				break;
 			case 'edge' :
 				str += this.get_photometric_edge_str();
+				break;
+			case 'dictionary-response-transfer' :
+				str += this.sparse_coding_response_transfer_str();
+				break;
+			case 'dictionary-response-transfer-intensity' :
+				str += this.sparse_coding_response_transfer_str(true);
 				break;
 			case 'avg' : 
 				str += this.get_average_color_str();

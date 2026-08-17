@@ -179,6 +179,9 @@ class Raster16Bit extends Raster {
     // Store dimensions
     this.width = imageData.width;
     this.height = imageData.height;
+    // Keep CPU data for clients that need to derive a second GPU texture from
+    // the decoded image (for example the RILSR response-transfer atlas).
+    this.sourceData = imageData.data;
 
     if (this.debug) {
       console.log(`Creating texture: ${this.width}x${this.height}`);

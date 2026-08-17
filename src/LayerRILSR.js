@@ -67,9 +67,13 @@ class LayerRILSR extends Layer {
 			throw "Rasters options should be empty!";
 
 		this.lightDirs_ = [];
+		this._responseTransferReady = false;
+		this._responseTransferTimer = null;
+		this._responseTransferSharpness = null;
 
 		this.shaders['rilsr'] = new ShaderRILSR({ debug: false });
 		this.setShader('rilsr');
+		this.shader.addEvent('update', () => this._queueResponseTransferAtlasUpdate());
 
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
@@ -177,6 +181,209 @@ class LayerRILSR extends Layer {
 				percentileLuminance: null
 			}
 		};
+	}
+
+	/**
+	 * Returns the shared static-texture descriptor for a uniform.
+	 * @param {string} uniform Texture uniform name.
+	 * @returns {Object|undefined}
+	 * @private
+	 */
+	_responseTransferTexture(uniform) {
+		return this.staticTextures.find(texture => texture.uniform === uniform);
+	}
+
+	/**
+	 * Creates or replaces a linearly filtered RGBA16F texture.
+	 * @param {WebGL2RenderingContext} gl
+	 * @param {Object} target Shared static-texture descriptor.
+	 * @param {Float32Array} data Texture data.
+	 * @param {number} width Texture width.
+	 * @param {number} height Texture height.
+	 * @private
+	 */
+	_uploadResponseTransferTexture(gl, target, data, width, height) {
+		if (!target.texture) target.texture = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, target.texture);
+		gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, width, height, 0, gl.RGBA, gl.FLOAT, data);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		target.width = width;
+		target.height = height;
+	}
+
+	/**
+	 * Builds the transformed dictionary atlas once for a sharpness value.
+	 *
+	 * This is the atlas-domain equivalent of the offline response-transfer
+	 * command. Rendering subsequently samples the cached atlas normally instead
+	 * of recomputing 32×32 response statistics for every image pixel.
+	 *
+	 * @param {number} sharpness Unified response-transfer sharpness.
+	 * @returns {{atlas: Float32Array, means: Float32Array, gains: Float32Array}|null}
+	 * @private
+	 */
+	_buildResponseTransferAtlas(sharpness) {
+		const config = this.shader.config;
+		const dictionaryTexture = this._responseTransferTexture('dict');
+		const source = dictionaryTexture?.sourceData;
+		if (!config || !(source instanceof Float32Array)) return null;
+
+		const { input_params: input, output_params: output } = config;
+		const tileWidth = input.dictionary_atlas_atom_tile_w;
+		const tileHeight = input.dictionary_atlas_atom_tile_h;
+		const atomCount = input.dictionary_atom_count;
+		const atomsPerRow = input.dictionary_atlas_atom_tile_nx || output.dictionary_atlas_atom_tile_nx;
+		const atlasWidth = dictionaryTexture.width;
+		const atlasHeight = dictionaryTexture.height;
+		if (!Number.isInteger(tileWidth) || !Number.isInteger(tileHeight) || !Number.isInteger(atomCount) ||
+			!Number.isInteger(atomsPerRow) || atlasWidth <= 0 || atlasHeight <= 0 || source.length !== atlasWidth * atlasHeight * 4)
+			return null;
+
+		const minimum = output.dictionary_quantizer_min_max.map(range => range[0]);
+		const scale = output.dictionary_quantizer_min_max.map(range => range[1] - range[0]);
+		const sampleCount = tileWidth * tileHeight;
+		const atlas = new Float32Array(source.length);
+		const means = new Float32Array(atomCount * 4);
+		const gains = new Float32Array(atomCount * 4);
+		const values = new Float32Array(sampleCount * 3);
+		const transferred = new Float32Array(sampleCount * 3);
+		const epsilon = 1e-8;
+		const q = Math.max(-1, Math.min(1, Number(sharpness)));
+
+		const transfer = value => {
+			const magnitude = Math.abs(value);
+			let transformed = magnitude;
+			if (q > 0) {
+				const t = Math.max(0, Math.min(1, (magnitude - 0.15) / 0.6));
+				const gate = t * t * t * (t * (t * 6 - 15) + 10);
+				transformed = (1 - q) * magnitude + q * magnitude * gate;
+			} else if (q < 0) {
+				const rational = 1.25 * magnitude / (magnitude + 0.25);
+				transformed = (1 + q) * magnitude - q * rational;
+			}
+			return Math.sign(value) * transformed;
+		};
+
+		for (let atom = 0; atom < atomCount; ++atom) {
+			const mean = [0, 0, 0];
+			const responseScale = [0, 0, 0];
+			const energy = [0, 0, 0];
+			const transferredMean = [0, 0, 0];
+			const transferredEnergy = [0, 0, 0];
+			const tileX = atom % atomsPerRow;
+			const tileY = Math.floor(atom / atomsPerRow);
+
+			for (let channel = 0; channel < 3; ++channel) {
+				means[atom * 4 + channel] = mean[channel];
+				gains[atom * 4 + channel] = energy[channel] > epsilon && responseScale[channel] > epsilon &&
+					Math.sqrt(transferredEnergy[channel]) > epsilon ? 1 : 0;
+			}
+			means[atom * 4 + 3] = 1;
+			gains[atom * 4 + 3] = 1;
+
+			for (let y = 0; y < tileHeight; ++y) {
+				for (let x = 0; x < tileWidth; ++x) {
+					const sample = y * tileWidth + x;
+					const sourceOffset = ((tileY * tileHeight + y) * atlasWidth + tileX * tileWidth + x) * 4;
+					for (let channel = 0; channel < 3; ++channel) {
+						const value = source[sourceOffset + channel] * scale[channel] + minimum[channel];
+						values[sample * 3 + channel] = value;
+						mean[channel] += value;
+					}
+				}
+			}
+			for (let channel = 0; channel < 3; ++channel) mean[channel] /= sampleCount;
+
+			for (let sample = 0; sample < sampleCount; ++sample) {
+				for (let channel = 0; channel < 3; ++channel) {
+					const residual = values[sample * 3 + channel] - mean[channel];
+					responseScale[channel] = Math.max(responseScale[channel], Math.abs(residual));
+					energy[channel] += residual * residual;
+				}
+			}
+
+			for (let sample = 0; sample < sampleCount; ++sample) {
+				for (let channel = 0; channel < 3; ++channel) {
+					const residual = values[sample * 3 + channel] - mean[channel];
+					const normalized = Math.max(-1, Math.min(1, residual / Math.max(responseScale[channel], epsilon)));
+					const value = transfer(normalized);
+					transferred[sample * 3 + channel] = value;
+					transferredMean[channel] += value;
+				}
+			}
+			for (let channel = 0; channel < 3; ++channel) transferredMean[channel] /= sampleCount;
+
+			for (let sample = 0; sample < sampleCount; ++sample)
+				for (let channel = 0; channel < 3; ++channel) {
+					const centered = transferred[sample * 3 + channel] - transferredMean[channel];
+					transferredEnergy[channel] += centered * centered;
+				}
+
+			for (let y = 0; y < tileHeight; ++y) {
+				for (let x = 0; x < tileWidth; ++x) {
+					const sample = y * tileWidth + x;
+					const destinationOffset = ((tileY * tileHeight + y) * atlasWidth + tileX * tileWidth + x) * 4;
+					for (let channel = 0; channel < 3; ++channel) {
+						const hasSignal = energy[channel] > epsilon && responseScale[channel] > epsilon;
+						const hasTransferredSignal = Math.sqrt(transferredEnergy[channel]) > epsilon;
+						const value = !hasSignal ? mean[channel]
+							: !hasTransferredSignal ? values[sample * 3 + channel]
+							: mean[channel] + (transferred[sample * 3 + channel] - transferredMean[channel]) *
+								Math.sqrt(energy[channel]) / Math.sqrt(transferredEnergy[channel]);
+						atlas[destinationOffset + channel] = value;
+					}
+					atlas[destinationOffset + 3] = 1;
+				}
+			}
+		}
+		return { atlas, means, gains };
+	}
+
+	/** @private */
+	_initializeResponseTransferAtlases(gl) {
+		const responseAtlas = this._responseTransferTexture('response_dict');
+		const responseMeans = this._responseTransferTexture('response_mean');
+		const responseGains = this._responseTransferTexture('response_gain');
+		if (!responseAtlas || !responseMeans || !responseGains) return;
+		const sharpness = this.shader.uniforms.response_sharpness?.value ?? 0.9;
+		const result = this._buildResponseTransferAtlas(sharpness);
+		if (!result) {
+			console.warn('RILSR response transfer requires a decoded floating-point dictionary atlas.');
+			return;
+		}
+		const dictionaryTexture = this._responseTransferTexture('dict');
+		this._uploadResponseTransferTexture(gl, responseAtlas, result.atlas, dictionaryTexture.width, dictionaryTexture.height);
+		this._uploadResponseTransferTexture(gl, responseMeans, result.means, result.means.length / 4, 1);
+		this._uploadResponseTransferTexture(gl, responseGains, result.gains, result.gains.length / 4, 1);
+		this._responseTransferSharpness = sharpness;
+		this._responseTransferReady = true;
+	}
+
+	/** @private */
+	_queueResponseTransferAtlasUpdate() {
+		const root = this.sourceLayer || this;
+		if (root !== this) return root._queueResponseTransferAtlasUpdate();
+		if (!this._responseTransferReady || !this.gl) return;
+		const sharpness = this.shader.uniforms.response_sharpness?.value;
+		if (!Number.isFinite(sharpness) || sharpness === this._responseTransferSharpness) return;
+		clearTimeout(this._responseTransferTimer);
+		this._responseTransferTimer = setTimeout(() => {
+			const responseAtlas = this._responseTransferTexture('response_dict');
+			const responseMeans = this._responseTransferTexture('response_mean');
+			const responseGains = this._responseTransferTexture('response_gain');
+			const dictionaryTexture = this._responseTransferTexture('dict');
+			const result = this._buildResponseTransferAtlas(this.shader.uniforms.response_sharpness.value);
+			if (!responseAtlas || !responseMeans || !responseGains || !dictionaryTexture || !result) return;
+			this._uploadResponseTransferTexture(this.gl, responseAtlas, result.atlas, dictionaryTexture.width, dictionaryTexture.height);
+			this._uploadResponseTransferTexture(this.gl, responseMeans, result.means, result.means.length / 4, 1);
+			this._uploadResponseTransferTexture(this.gl, responseGains, result.gains, result.gains.length / 4, 1);
+			this._responseTransferSharpness = this.shader.uniforms.response_sharpness.value;
+			this.emit('update');
+		}, 100);
 	}
 
 	/**
@@ -299,6 +506,16 @@ class LayerRILSR extends Layer {
 				});
 			}
 
+			// Shared, runtime-generated textures used only by the cached
+			// dictionary-response-transfer shader modes. They are populated after
+			// the source dictionary texture has been decoded and uploaded.
+			this.staticTextures.push(
+				{ uniform: 'response_dict', texture: null, width: 0, height: 0, loaded: true },
+				{ uniform: 'response_mean', texture: null, width: 0, height: 0, loaded: true },
+				{ uniform: 'response_gain', texture: null, width: 0, height: 0, loaded: true }
+			);
+			this.onFirstDraw = gl => this._initializeResponseTransferAtlases(gl);
+
 			// AVG 
 			console.log("Set Raster AVG ", configPaths.avgpath)
 			urls.push(configPaths.avgpath);
@@ -360,12 +577,12 @@ class LayerRILSR extends Layer {
 	 */
 	interpolateControls() {
 		let done = super.interpolateControls();
-		if (!done) {
-			let light = this.controls['light'].current.value;
-			//this.shader.setLight(light);
-			let rotated = Transform.rotate(light[0], light[1], this.worldRotation * Math.PI);
-			this.shader.setLight([rotated.x, rotated.y]);
-		}
+		// Always synchronize the shader with the current control value. A control
+		// can already be complete before this layer is drawn (notably when it is
+		// rendered only through a lens), but its target may still be a new light.
+		const light = this.controls['light'].current.value;
+		const rotated = Transform.rotate(light[0], light[1], this.worldRotation * Math.PI);
+		this.shader.setLight([rotated.x, rotated.y]);
 		return done;
 	}
 

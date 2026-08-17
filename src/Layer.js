@@ -842,6 +842,9 @@ class Layer {
 			config.texture = texture;
 			config.width = raster.width;
 			config.height = raster.height;
+			// Optional decoded source retained by custom raster loaders. Static
+			// derivative textures can reuse it without requesting the asset again.
+			config.sourceData = raster.sourceData;
 			config.loaded = true;
 
 			this.emit('update');
