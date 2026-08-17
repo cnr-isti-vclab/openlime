@@ -12,6 +12,31 @@ const _SHADOW        = `filter: ${_SHADOW_FILTER}`;
 const _SHADOW_RUBBER = 'filter: drop-shadow(1px 1px 1.8px rgba(0,0,0,0.40))';
 
 /**
+ * @typedef {Object} SemanticClassStyle
+ * @property {string} label - Human-readable class label.
+ * @property {string} [fill] - Fill colour.
+ * @property {string} [stroke] - Stroke colour.
+ * @property {number} [fillOpacity] - Fill opacity.
+ * @property {number} [strokeWidth] - Stroke width in model units.
+ * @property {string} [fillSelected] - Fill colour for selected annotations.
+ * @property {string} [strokeSelected] - Stroke colour for selected annotations.
+ * @property {string} [fillUnderEditing] - Fill colour while editing.
+ * @property {string} [strokeUnderEditing] - Stroke colour while editing.
+ * @property {string} [filter] - SVG filter for the default state.
+ * @property {string} [filterSelected] - SVG filter for the selected state.
+ * @property {string} [filterUnderEditing] - SVG filter while editing.
+ */
+
+/**
+ * @typedef {Object} StructuralClassStyle
+ * @property {string} [fill] - Fill colour.
+ * @property {string} [stroke] - Stroke colour.
+ * @property {number} [fillOpacity] - Fill opacity.
+ * @property {number} [strokeWidth] - Stroke width in model units.
+ * @property {string} [filter] - SVG filter.
+ */
+
+/**
  * @file ManagerSvgAnnotation.js
  *
  * GUI-free annotation manager for OpenLIME.
@@ -899,18 +924,14 @@ class ManagerSvgAnnotation {
       preloadStructuralFilters: true,
       /**
        * Semantic class definitions keyed by class ID.
-       * @type {Object<string, {label:string, fill?:string, stroke?:string,
-       *              fillOpacity?:number, strokeWidth?:number,
-       *              fillSelected?:string, strokeSelected?:string,
-      *              fillUnderEditing?:string, strokeUnderEditing?:string,
-      *              filter?:string, filterSelected?:string, filterUnderEditing?:string}>}
+       * @type {Object.<string, SemanticClassStyle>}
        */
       semanticClasses: {
         default: { label: 'Default' },
       },
       /**
        * Structural class definitions used as state overlays.
-      * @type {Object<string, {fill?:string, stroke?:string, fillOpacity?:number, strokeWidth?:number, filter?:string}>}
+       * @type {Object.<string, StructuralClassStyle>}
        */
       structuralClasses: {
         default: { stroke: '#000000', fill: 'rgba(0, 0, 0, 0.30)' },

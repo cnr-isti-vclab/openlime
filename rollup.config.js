@@ -99,9 +99,9 @@ const rti = [
 	'./src/ShaderNeural.js'
 ];
 
-const rsc = [
-	'./src/LayerRSC.js',
-	'./src/ShaderRSc.js'
+const rilsr = [
+	'./src/LayerRILSR.js',
+	'./src/ShaderRILSR.js'
 ];
 
 
@@ -124,7 +124,7 @@ const loader = [
 	'./src/ManifestLoader.js'
 ];
 
-const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rsc, ...lens, ...annotation, ...loader];
+const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rilsr, ...lens, ...annotation, ...loader];
 
 module.exports = [
 	{
