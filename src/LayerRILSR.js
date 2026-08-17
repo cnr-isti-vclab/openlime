@@ -15,6 +15,8 @@ import { Png16Loader } from './Png16Loader.js'
  * @property {boolean} [normals=false] - Whether to load normal maps
  * @property {string} [server] - IIP server URL (for IIP layout)
  * @property {number} [worldRotation=0] - Global rotation offset
+ * @property {number} [edgeCoefficientThreshold=0] - Relative soft threshold
+ * used by photometric edge detection
  * @extends LayerOptions
  */
 
@@ -72,7 +74,10 @@ class LayerRILSR extends Layer {
 		this._responseTransferSharpness = null;
 		this._responseTransferPendingSharpness = null;
 
-		this.shaders['rilsr'] = new ShaderRILSR({ debug: false });
+		this.shaders['rilsr'] = new ShaderRILSR({
+			debug: false,
+			edgeCoefficientThreshold: this.edgeCoefficientThreshold ?? 0
+		});
 		this.setShader('rilsr');
 		this.shader.addEvent('update', () => this._queueResponseTransferAtlasUpdate());
 
@@ -125,6 +130,14 @@ class LayerRILSR extends Layer {
 	 */
 	setResponseDirectionalGain(value) {
 		this.shader.setResponseDirectionalGain(value);
+	}
+
+	/**
+	 * Sets the relative soft threshold used by photometric edge detection.
+	 * @param {number} value Relative threshold in the inclusive range `[0, 1]`.
+	 */
+	setEdgeCoefficientThreshold(value) {
+		this.shader.setEdgeCoefficientThreshold(value);
 	}
 
 

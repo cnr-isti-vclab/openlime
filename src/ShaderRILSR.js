@@ -16,6 +16,9 @@ import { Util } from './Util.js'
  * in `[-1, 1]`.
  * @property {number} [responseDirectionalGain=1.5] - Directional response
  * contrast gain.
+ * @property {number} [edgeCoefficientThreshold=0] - Relative soft threshold
+ * applied to sparse coefficients in edge mode. `0` preserves the unfiltered
+ * weighted-Jaccard response.
  * @property {string} [type='rilsr'] - Representation type.
  */
 
@@ -96,6 +99,18 @@ class ShaderRILSR extends Shader {
 		if (!Number.isFinite(gain) || gain < 0)
 			throw new Error('Response directional gain must be a non-negative finite value.');
 		this.setUniform('response_directional_gain', gain);
+	}
+
+	/**
+	 * Sets the relative soft threshold used by photometric edge detection.
+	 * Each support weight becomes max(|coefficient| - threshold * maxWeight, 0).
+	 * @param {number} value Relative threshold in the inclusive range `[0, 1]`.
+	 */
+	setEdgeCoefficientThreshold(value) {
+		const threshold = Number(value);
+		if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1)
+			throw new Error('Edge coefficient threshold must be a finite value in [0, 1].');
+		this.setUniform('edge_coefficient_threshold', threshold);
 	}
 
 	updateUniforms(gl) {
@@ -198,9 +213,12 @@ class ShaderRILSR extends Shader {
 			sparsity_multiplier: { type: 'int', needsUpdate: false, size: 1, value: sparsity_multiplier}, 
 			response_sharpness: { type: 'float', needsUpdate: true, size: 1, value: 0.9 },
 			response_directional_gain: { type: 'float', needsUpdate: true, size: 1, value: 1.5 },
+			edge_coefficient_threshold: { type: 'float', needsUpdate: true, size: 1, value: 0 },
 		});
 		if (this.responseSharpness !== undefined) this.setResponseSharpness(this.responseSharpness);
 		if (this.responseDirectionalGain !== undefined) this.setResponseDirectionalGain(this.responseDirectionalGain);
+		if (this.edgeCoefficientThreshold !== undefined)
+			this.setEdgeCoefficientThreshold(this.edgeCoefficientThreshold);
 
 		// Print all registered uniforms to console
 		Object.entries(this.uniforms).forEach(([key, uniform]) => {
@@ -261,8 +279,8 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 	/**
 	 * Returns GLSL implementing the photometric edge detector used by LumiLab.
 	 *
-	 * Each pixel is represented by its sparse atom support and the absolute value
-	 * of its coefficients. The response is the squared median, over the valid
+	 * Each pixel is represented by its sparse atom support and optionally
+	 * soft-thresholded absolute coefficients. The response is the squared median, over the valid
 	 * 8-neighbourhood, of the coefficient-weighted Jaccard distances. Repeated
 	 * atom indices are merged before the distance is calculated.
 	 *
@@ -293,6 +311,18 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 			return src;
 		};
 		const entryRef = (prefix, entry, kind) => `${prefix}_${kind}${entry.suffix}.${entry.channel}`;
+		const maxWeight = prefix => supportEntries
+			.map(entry => entryRef(prefix, entry, 'weight'))
+			.reduce((result, weight) => `max(${result}, ${weight})`);
+		const applyThreshold = prefix => {
+			let src = `\tfloat ${prefix}_max_weight = ${maxWeight(prefix)};\n`;
+			src += `\tfloat ${prefix}_cutoff = edge_coefficient_threshold * ${prefix}_max_weight;\n`;
+			for (const entry of supportEntries) {
+				const weight = entryRef(prefix, entry, 'weight');
+				src += `\t${weight} = max(${weight} - ${prefix}_cutoff, 0.0);\n`;
+			}
+			return src;
+		};
 		const sumWeights = prefix => supportEntries
 			.map(entry => entryRef(prefix, entry, 'weight'))
 			.join(' + ');
@@ -328,6 +358,7 @@ vec3 decode_sparse_coefficients(int group, sampler2D coefficient_sampler, vec2 u
 
 float weighted_jaccard_distance(vec2 center_uv, vec2 neighbor_uv) {
 ${sampleSupport('center', 'center_uv')}${sampleSupport('neighbor', 'neighbor_uv')}
+${applyThreshold('center')}${applyThreshold('neighbor')}
 	float center_total_weight = ${sumWeights('center')};
 	float neighbor_total_weight = ${sumWeights('neighbor')};
 	float intersection = 0.0;
@@ -476,6 +507,7 @@ uniform vec3 coefficients_min[${sparsity_multiplier}];
 uniform vec3 coefficients_scale[${sparsity_multiplier}];
 uniform float response_sharpness;
 uniform float response_directional_gain;
+uniform float edge_coefficient_threshold;
 
 ${this.photometric_edge_helpers_str()}
 

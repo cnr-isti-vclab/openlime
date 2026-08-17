@@ -12,6 +12,7 @@ import { ShaderLens } from './ShaderLens.js'
  * @property {number[]} [borderColor=[0.078, 0.078, 0.078, 1]] - RGBA border color
  * @property {number} [borderWidth=12] - Border width in pixels
  * @property {boolean} [borderEnable=false] - Whether to show lens border
+ * @property {number} [smoothing=0] - Gaussian smoothing strength in [0, 1]
  * @property {Object} [dashboard=null] - Dashboard UI component for lens control
  * @property {Camera} camera - Camera instance (required)
  * @extends LayerCombinerOptions
@@ -76,6 +77,7 @@ class LayerLens extends LayerCombiner {
 			borderColor: [0.078, 0.078, 0.078, 1],
 			borderWidth: 12,
 			borderEnable: false,
+			smoothing: 0,
 			dashboard: null,
 			activeLayerIndex: 0,
 			colorEncoding: 'linear',
@@ -91,7 +93,7 @@ class LayerLens extends LayerCombiner {
 		this.activeLayerIndex = Math.max(0, Math.min(options.activeLayerIndex, this.layers.length - 1));
 
 		// Create shader lens - only single layer rendering now
-		let shader = new ShaderLens();
+		let shader = new ShaderLens({ smoothing: this.smoothing });
 		this.shaders['lens'] = shader;
 		this.setShader('lens');
 
@@ -136,6 +138,15 @@ class LayerLens extends LayerCombiner {
 			return;
 		}
 		this.activeLayerIndex = index;
+		this.emit('update');
+	}
+
+	/**
+	 * Sets optional Gaussian smoothing of the composed lens image.
+	 * @param {number} value Smoothing strength in the inclusive range [0, 1].
+	 */
+	setSmoothing(value) {
+		this.shader.setSmoothing(value);
 		this.emit('update');
 	}
 
