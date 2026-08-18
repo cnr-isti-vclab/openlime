@@ -18,6 +18,12 @@ import { Util } from './Util.js'
  * contrast gain.
  * @property {number} [edgeDictionaryCutoff=0.2] - Semantic distance below
  * which dictionary-equivalent atom substitutions are suppressed.
+ * @property {number} [coherenceLow=0] - Lower unnormalized response-coherence bound.
+ * @property {number} [coherenceHigh=0.02] - Upper unnormalized response-coherence bound.
+ * @property {number} [coherenceNormalizedLow=0.95] - Lower normalized
+ * response-coherence bound.
+ * @property {number} [coherenceNormalizedHigh=0.995] - Upper normalized
+ * response-coherence bound.
  * @property {string} [type='rilsr'] - Representation type.
  */
 
@@ -55,7 +61,7 @@ class ShaderRILSR extends Shader {
 		super(options);
 
 		Object.assign(this, {
-			modes: ['light', 'edge', 'dictionary-response-transfer', 'dictionary-response-transfer-intensity', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
+			modes: ['light', 'edge', 'response-coherence', 'response-coherence-normalized', 'dictionary-response-transfer', 'dictionary-response-transfer-intensity', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
 			mode: 'light',
 			type: ['ksvd'],
 		});
@@ -67,6 +73,7 @@ class ShaderRILSR extends Shader {
 	/**
 	 * Sets the rendering mode
 	 * @param {string} mode - One of: 'light', 'edge',
+	 * 'response-coherence', 'response-coherence-normalized',
 	 * 'dictionary-response-transfer', 'dictionary-response-transfer-intensity',
 	 * 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary', or 'debug'.
 	 * @throws {Error} If mode is not recognized
@@ -98,6 +105,26 @@ class ShaderRILSR extends Shader {
 		if (!Number.isFinite(gain) || gain < 0)
 			throw new Error('Response directional gain must be a non-negative finite value.');
 		this.setUniform('response_directional_gain', gain);
+	}
+
+	/**
+	 * Sets the response-coherence similarity interval used by smoothstep.
+	 * @param {number} low Lower bound.
+	 * @param {number} high Upper bound.
+	 */
+	setResponseCoherenceRange(low, high, normalized = false) {
+		const lower = Number(low);
+		const upper = Number(high);
+		if (!Number.isFinite(lower) || !Number.isFinite(upper) || lower >= upper)
+			throw new Error('Response coherence bounds must be finite and satisfy low < high.');
+		const suffix = normalized ? '_normalized' : '';
+		this.setUniform(`response_coherence${suffix}_low`, lower);
+		this.setUniform(`response_coherence${suffix}_high`, upper);
+	}
+
+	/** @private */
+	setResponseCoherenceEnabled(enabled) {
+		this.setUniform('response_coherence_enabled', Boolean(enabled));
 	}
 
 	/** @private */
@@ -216,14 +243,26 @@ class ShaderRILSR extends Shader {
 			sparsity_multiplier: { type: 'int', needsUpdate: false, size: 1, value: sparsity_multiplier}, 
 			response_sharpness: { type: 'float', needsUpdate: true, size: 1, value: 0.9 },
 			response_directional_gain: { type: 'float', needsUpdate: true, size: 1, value: 1.5 },
+			response_coherence_low: { type: 'float', needsUpdate: true, size: 1, value: 0.0 },
+			response_coherence_high: { type: 'float', needsUpdate: true, size: 1, value: 0.02 },
+			response_coherence_normalized_low: { type: 'float', needsUpdate: true, size: 1, value: 0.95 },
+			response_coherence_normalized_high: { type: 'float', needsUpdate: true, size: 1, value: 0.995 },
+			response_coherence_enabled: { type: 'bool', needsUpdate: true, size: 1, value: false },
 			edge_dictionary_distance_enabled: { type: 'bool', needsUpdate: true, size: 1, value: false },
 			edge_dictionary_cutoff: { type: 'float', needsUpdate: true, size: 1, value: 0.2 },
 		});
 		if (this.responseSharpness !== undefined) this.setResponseSharpness(this.responseSharpness);
 		if (this.responseDirectionalGain !== undefined) this.setResponseDirectionalGain(this.responseDirectionalGain);
+		this.setResponseCoherenceRange(this.coherenceLow ?? 0.0, this.coherenceHigh ?? 0.02);
+		this.setResponseCoherenceRange(
+			this.coherenceNormalizedLow ?? 0.95,
+			this.coherenceNormalizedHigh ?? 0.995,
+			true
+		);
+		this.setResponseCoherenceEnabled(config._dictionaryGramAvailable === true);
 		if (this.edgeDictionaryCutoff !== undefined)
 			this.setEdgeDictionaryCutoff(this.edgeDictionaryCutoff);
-		this.setDictionaryDistanceEnabled(config._dictionaryCosineDistanceAvailable === true);
+		this.setDictionaryDistanceEnabled(config._dictionaryGramAvailable === true);
 
 		// Print all registered uniforms to console
 		Object.entries(this.uniforms).forEach(([key, uniform]) => {
@@ -285,8 +324,8 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 	 * Returns GLSL implementing the photometric edge detector used by LumiLab.
 	 *
 	 * Each pixel is represented by its sparse atom support and absolute
-	 * coefficients. When the optional dictionary
-	 * cosine-distance matrix is available, a symmetric three-dominant-atom
+	 * coefficients. When the optional dictionary Gram matrix is available, a
+	 * symmetric three-dominant-atom distance derived from it
 	 * distance replaces the categorical Jaccard comparison. The response is the
 	 * squared median over the valid 8-neighbourhood. Repeated atom indices are
 	 * merged before the distance is calculated.
@@ -313,7 +352,7 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 		for (let group = 0; group < groupCount; ++group) {
 			const suffix = Util.padZeros(group, 2);
 			sampleSupport += `\tuvec3 indices${suffix} = decode_sparse_indices(idx${suffix}, uv);\n`;
-			sampleSupport += `\tvec3 weights${suffix} = abs(decode_sparse_coefficients(${group}, coef${suffix}, uv));\n`;
+			sampleSupport += `\tvec3 weights${suffix} = decode_sparse_coefficients(${group}, coef${suffix}, uv);\n`;
 			for (const channel of channels) {
 				sampleSupport += `\tsupport.indices[${entryIndex}] = indices${suffix}.${channel};\n`;
 				sampleSupport += `\tsupport.weights[${entryIndex}] = weights${suffix}.${channel};\n`;
@@ -362,12 +401,14 @@ float weighted_jaccard_distance(SparseSupport center, SparseSupport neighbor) {
 	float neighbor_total = 0.0;
 	float intersection = 0.0;
 	for (int i = 0; i < EDGE_SUPPORT_SIZE; ++i) {
-		center_total += center.weights[i];
-		neighbor_total += neighbor.weights[i];
-		if (center.weights[i] <= 0.0) continue;
+		float center_weight = abs(center.weights[i]);
+		float neighbor_weight = abs(neighbor.weights[i]);
+		center_total += center_weight;
+		neighbor_total += neighbor_weight;
+		if (center_weight <= 0.0) continue;
 		for (int j = 0; j < EDGE_SUPPORT_SIZE; ++j) {
-			if (neighbor.weights[j] > 0.0 && center.indices[i] == neighbor.indices[j]) {
-				intersection += min(center.weights[i], neighbor.weights[j]);
+			if (abs(neighbor.weights[j]) > 0.0 && center.indices[i] == neighbor.indices[j]) {
+				intersection += min(center_weight, abs(neighbor.weights[j]));
 				break;
 			}
 		}
@@ -381,7 +422,7 @@ void dominant_support(SparseSupport support, out uvec3 indices, out vec3 weights
 	float sorted_weights[EDGE_SUPPORT_SIZE];
 	for (int i = 0; i < EDGE_SUPPORT_SIZE; ++i) {
 		sorted_indices[i] = support.indices[i];
-		sorted_weights[i] = support.weights[i];
+		sorted_weights[i] = abs(support.weights[i]);
 	}
 	for (int rank = 0; rank < EDGE_DOMINANT_SIZE; ++rank) {
 		int best = rank;
@@ -398,8 +439,11 @@ void dominant_support(SparseSupport support, out uvec3 indices, out vec3 weights
 	weights = vec3(sorted_weights[0], sorted_weights[1], sorted_weights[2]);
 }
 
-float dictionary_pair_cost(uint a, uint b) {
-	return texelFetch(dictionary_cosine_distance, ivec2(int(b), int(a)), 0).r;
+float dictionary_pair_cost(uint a, uint b, float a_energy, float b_energy) {
+	float denominator = sqrt(max(0.0, a_energy) * max(0.0, b_energy));
+	if (denominator <= 1e-12) return a == b ? 0.0 : 1.0;
+	float cosine = texelFetch(dictionary_gram, ivec2(int(b), int(a)), 0).r / denominator;
+	return clamp(1.0 - abs(cosine), 0.0, 1.0);
 }
 
 float dictionary_support_distance(SparseSupport center, SparseSupport neighbor) {
@@ -416,10 +460,16 @@ float dictionary_support_distance(SparseSupport center, SparseSupport neighbor) 
 	center_weights /= center_total;
 	neighbor_weights /= neighbor_total;
 
+	float center_energies[3];
+	float neighbor_energies[3];
+	for (int i = 0; i < 3; ++i) {
+		center_energies[i] = texelFetch(dictionary_gram, ivec2(int(center_indices[i]), int(center_indices[i])), 0).r;
+		neighbor_energies[i] = texelFetch(dictionary_gram, ivec2(int(neighbor_indices[i]), int(neighbor_indices[i])), 0).r;
+	}
 	float pair_costs[9];
 	for (int i = 0; i < 3; ++i)
 		for (int j = 0; j < 3; ++j)
-			pair_costs[i * 3 + j] = dictionary_pair_cost(center_indices[i], neighbor_indices[j]);
+			pair_costs[i * 3 + j] = dictionary_pair_cost(center_indices[i], neighbor_indices[j], center_energies[i], neighbor_energies[j]);
 
 	float forward = 0.0;
 	float backward = 0.0;
@@ -445,6 +495,22 @@ float sparse_support_distance(SparseSupport center, SparseSupport neighbor) {
 	float cutoff = clamp(edge_dictionary_cutoff, 0.0, 1.0);
 	float gate = smoothstep(cutoff, min(1.0, cutoff + DICTIONARY_GATE_SOFTNESS), dictionary_distance);
 	return jaccard * gate;
+}
+
+float dictionary_gram_value(uint a, uint b) {
+	return texelFetch(dictionary_gram, ivec2(int(b), int(a)), 0).r;
+}
+
+float directional_response_inner_product(SparseSupport first, SparseSupport second) {
+	float result = 0.0;
+	for (int i = 0; i < EDGE_SUPPORT_SIZE; ++i) {
+		if (first.weights[i] == 0.0) continue;
+		for (int j = 0; j < EDGE_SUPPORT_SIZE; ++j) {
+			if (second.weights[j] == 0.0) continue;
+			result += first.weights[i] * dictionary_gram_value(first.indices[i], second.indices[j]) * second.weights[j];
+		}
+	}
+	return result;
 }
 
 float median_distance(float distances[8], int count) {
@@ -481,6 +547,41 @@ vec3 photometric_edge() {
 	float edge_strength = median_distance(distances, count);
 	edge_strength *= edge_strength;
 	return vec3(edge_strength);
+}
+
+vec3 directional_response_coherence(bool normalize_energy) {
+	if (!response_coherence_enabled) return vec3(0.0);
+	float coherence_low = normalize_energy
+		? response_coherence_normalized_low
+		: response_coherence_low;
+	float coherence_high = normalize_energy
+		? response_coherence_normalized_high
+		: response_coherence_high;
+	vec2 texel_size = vec2(1.0) / tileSize;
+	SparseSupport center;
+	sample_sparse_support(v_texcoord, center);
+	float center_energy = normalize_energy
+		? max(0.0, directional_response_inner_product(center, center))
+		: 0.0;
+	float similarities[8];
+	int count = 0;
+	for (int dy = -1; dy <= 1; ++dy) {
+		for (int dx = -1; dx <= 1; ++dx) {
+			if (dx == 0 && dy == 0) continue;
+			vec2 neighbor_uv = v_texcoord + texel_size * vec2(float(dx), float(dy));
+			if (neighbor_uv.x < 0.0 || neighbor_uv.y < 0.0 || neighbor_uv.x >= 1.0 || neighbor_uv.y >= 1.0) continue;
+			SparseSupport neighbor;
+			sample_sparse_support(neighbor_uv, neighbor);
+			float coherence = directional_response_inner_product(center, neighbor);
+			if (normalize_energy) {
+				float neighbor_energy = max(0.0, directional_response_inner_product(neighbor, neighbor));
+				coherence /= sqrt(center_energy) * sqrt(neighbor_energy) + 1e-8;
+				coherence = clamp(coherence, -1.0, 1.0);
+			}
+			similarities[count++] = smoothstep(coherence_low, coherence_high, coherence);
+		}
+	}
+	return vec3(1.0 - median_distance(similarities, count));
 }
 `;
 	}
@@ -592,9 +693,14 @@ uniform vec3 coefficients_min[${sparsity_multiplier}];
 uniform vec3 coefficients_scale[${sparsity_multiplier}];
 uniform float response_sharpness;
 uniform float response_directional_gain;
+uniform float response_coherence_low;
+uniform float response_coherence_high;
+uniform float response_coherence_normalized_low;
+uniform float response_coherence_normalized_high;
+uniform bool response_coherence_enabled;
 uniform bool edge_dictionary_distance_enabled;
 uniform float edge_dictionary_cutoff;
-uniform sampler2D dictionary_cosine_distance;
+uniform sampler2D dictionary_gram;
 
 ${this.photometric_edge_helpers_str()}
 
@@ -681,6 +787,12 @@ vec4 data() {
 				break;
 			case 'edge' :
 				str += this.get_photometric_edge_str();
+				break;
+			case 'response-coherence' :
+				str += 'vec3 color = directional_response_coherence(false);\n';
+				break;
+			case 'response-coherence-normalized' :
+				str += 'vec3 color = directional_response_coherence(true);\n';
 				break;
 			case 'dictionary-response-transfer' :
 				str += this.sparse_coding_response_transfer_str();

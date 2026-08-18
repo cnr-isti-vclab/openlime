@@ -17,6 +17,14 @@ import { Png16Loader } from './Png16Loader.js'
  * @property {number} [worldRotation=0] - Global rotation offset
  * @property {number} [edgeDictionaryCutoff=0.2] - Semantic cutoff used by
  * dictionary-aware edge suppression
+ * @property {number} [coherenceLow=0] - Lower unnormalized directional-response
+ * coherence bound
+ * @property {number} [coherenceHigh=0.02] - Upper unnormalized directional-response
+ * coherence bound
+ * @property {number} [coherenceNormalizedLow=0.95] - Lower normalized
+ * directional-response coherence bound
+ * @property {number} [coherenceNormalizedHigh=0.995] - Upper normalized
+ * directional-response coherence bound
  * @extends LayerOptions
  */
 
@@ -73,11 +81,15 @@ class LayerRILSR extends Layer {
 		this._responseTransferTimer = null;
 		this._responseTransferSharpness = null;
 		this._responseTransferPendingSharpness = null;
-		this._dictionaryCosineDistanceData = null;
+		this._dictionaryGramData = null;
 
 		this.shaders['rilsr'] = new ShaderRILSR({
 			debug: false,
-			edgeDictionaryCutoff: this.edgeDictionaryCutoff ?? 0.2
+			edgeDictionaryCutoff: this.edgeDictionaryCutoff ?? 0.2,
+			coherenceLow: this.coherenceLow ?? 0.0,
+			coherenceHigh: this.coherenceHigh ?? 0.02,
+			coherenceNormalizedLow: this.coherenceNormalizedLow ?? 0.95,
+			coherenceNormalizedHigh: this.coherenceNormalizedHigh ?? 0.995
 		});
 		this.setShader('rilsr');
 		this.shader.addEvent('update', () => this._queueResponseTransferAtlasUpdate());
@@ -142,73 +154,67 @@ class LayerRILSR extends Layer {
 	}
 
 	/**
-	 * Loads and quantizes the optional dictionary cosine-distance matrix.
-	 * The stored float32 values are converted to normalized bytes so the GPU
-	 * lookup texture occupies only K x K bytes and remains cache-friendly.
+	 * Sets the similarity range used by both directional-response coherence modes.
+	 * @param {number} low Lower smoothstep bound.
+	 * @param {number} high Upper smoothstep bound.
+	 * @param {boolean} [normalized=false] Set the normalized-mode range.
+	 */
+	setResponseCoherenceRange(low, high, normalized = false) {
+		this.shader.setResponseCoherenceRange(low, high, normalized);
+	}
+
+	/**
+	 * Loads the precomputed D^T D / L dictionary Gram matrix as float32.
 	 * @param {Object} config Parsed RILSR configuration.
 	 * @param {string} infoUrl URL of info.json.
-	 * @returns {Promise<Uint8Array|null>}
+	 * @returns {Promise<Float32Array|null>}
 	 * @private
 	 */
-	async _loadDictionaryCosineDistance(config, infoUrl) {
-		if (config.output_params.dictionary_cosine_distance_format !== 'raw')
-			return null;
-		if (config.output_params.dictionary_cosine_distance_absolute !== true) {
-			console.warn('RILSR dictionary-aware edges require a sign-invariant cosine-distance matrix.');
-			return null;
-		}
-
+	async _loadDictionaryGram(config, infoUrl) {
+		if (config.output_params.dictionary_gram_format !== 'raw') return null;
 		const atomCount = config.input_params.dictionary_atom_count || config.output_params.dictionary_cols;
 		if (!Number.isInteger(atomCount) || atomCount <= 0) return null;
-		const url = `${Util.dirname(infoUrl)}/dictionary_cosine_distance.raw`;
+		const url = `${Util.dirname(infoUrl)}/dictionary_gram.raw`;
 		try {
 			const response = await fetch(url);
-			if (!response.ok)
-				throw new Error(`HTTP ${response.status}`);
+			if (!response.ok) throw new Error(`HTTP ${response.status}`);
 			const buffer = await response.arrayBuffer();
 			const expectedBytes = atomCount * atomCount * Float32Array.BYTES_PER_ELEMENT;
 			if (buffer.byteLength !== expectedBytes)
 				throw new Error(`expected ${expectedBytes} bytes, received ${buffer.byteLength}`);
-
-			const source = new Float32Array(buffer);
-			const quantized = new Uint8Array(source.length);
-			for (let i = 0; i < source.length; ++i) {
-				const distance = source[i];
-				if (!Number.isFinite(distance))
-					throw new Error(`non-finite value at entry ${i}`);
-				quantized[i] = Math.round(Math.max(0, Math.min(1, distance)) * 255);
-			}
-			return quantized;
+			const data = new Float32Array(buffer);
+			for (let i = 0; i < data.length; ++i)
+				if (!Number.isFinite(data[i])) throw new Error(`non-finite value at entry ${i}`);
+			return data;
 		} catch (error) {
-			console.warn(`Unable to load RILSR dictionary cosine distances from ${url}: ${error.message}`);
+			console.warn(`Unable to load RILSR dictionary Gram matrix from ${url}: ${error.message}`);
 			return null;
 		}
 	}
 
 	/** @private */
-	_initializeDictionaryCosineDistance(gl) {
-		const target = this._responseTransferTexture('dictionary_cosine_distance');
+	_initializeDictionaryGram(gl) {
+		const target = this._responseTransferTexture('dictionary_gram');
 		if (!target) return;
 		const atomCount = this.shader.config.input_params.dictionary_atom_count ||
 			this.shader.config.output_params.dictionary_cols;
-		const available = this._dictionaryCosineDistanceData instanceof Uint8Array &&
-			this._dictionaryCosineDistanceData.length === atomCount * atomCount;
-		const data = available ? this._dictionaryCosineDistanceData : new Uint8Array([0]);
+		const available = this._dictionaryGramData instanceof Float32Array &&
+			this._dictionaryGramData.length === atomCount * atomCount;
+		const data = available ? this._dictionaryGramData : new Float32Array([0]);
 		const size = available ? atomCount : 1;
 
 		if (!target.texture) target.texture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, target.texture);
 		gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, size, size, 0, gl.RED, gl.UNSIGNED_BYTE, data);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, size, size, 0, gl.RED, gl.FLOAT, data);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		target.width = size;
 		target.height = size;
-		this.shader.setDictionaryDistanceEnabled(available);
+		this.shader.setResponseCoherenceEnabled(available);
 	}
-
 
 	static async pngLoaderToFloat(tile, gl, options) {
 		const { width, height, data16, components } = await Png16Loader.load(tile.url);
@@ -582,7 +588,7 @@ class LayerRILSR extends Layer {
 			const sm = json.input_params.sparsity_multiplier;
 			console.log("INPUT", json.input_params);
 			const configPaths = this.imageUrl(json, url, sm);
-			const cosineDistancePromise = this._loadDictionaryCosineDistance(json, url);
+			const dictionaryGramPromise = this._loadDictionaryGram(json, url);
 
 			this.shader.init(json);
 			const urls = [];
@@ -625,13 +631,14 @@ class LayerRILSR extends Layer {
 				{ uniform: 'response_dict', texture: null, width: 0, height: 0, loaded: true },
 				{ uniform: 'response_mean', texture: null, width: 0, height: 0, loaded: true },
 				{ uniform: 'response_gain', texture: null, width: 0, height: 0, loaded: true },
-				{ uniform: 'dictionary_cosine_distance', texture: null, width: 0, height: 0, loaded: true }
+				{ uniform: 'dictionary_gram', texture: null, width: 0, height: 0, loaded: true }
 			);
-			this._dictionaryCosineDistanceData = await cosineDistancePromise;
-			json._dictionaryCosineDistanceAvailable = this._dictionaryCosineDistanceData !== null;
-			this.shader.setDictionaryDistanceEnabled(json._dictionaryCosineDistanceAvailable);
+			this._dictionaryGramData = await dictionaryGramPromise;
+			json._dictionaryGramAvailable = this._dictionaryGramData !== null;
+			this.shader.setDictionaryDistanceEnabled(json._dictionaryGramAvailable);
+			this.shader.setResponseCoherenceEnabled(json._dictionaryGramAvailable);
 			this.onFirstDraw = gl => {
-				this._initializeDictionaryCosineDistance(gl);
+				this._initializeDictionaryGram(gl);
 				this._initializeResponseTransferAtlases(gl);
 			};
 
