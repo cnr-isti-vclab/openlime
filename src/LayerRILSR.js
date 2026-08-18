@@ -15,8 +15,8 @@ import { Png16Loader } from './Png16Loader.js'
  * @property {boolean} [normals=false] - Whether to load normal maps
  * @property {string} [server] - IIP server URL (for IIP layout)
  * @property {number} [worldRotation=0] - Global rotation offset
- * @property {number} [edgeCoefficientThreshold=0] - Relative soft threshold
- * used by photometric edge detection
+ * @property {number} [edgeDictionaryCutoff=0.2] - Semantic cutoff used by
+ * dictionary-aware edge suppression
  * @extends LayerOptions
  */
 
@@ -73,10 +73,11 @@ class LayerRILSR extends Layer {
 		this._responseTransferTimer = null;
 		this._responseTransferSharpness = null;
 		this._responseTransferPendingSharpness = null;
+		this._dictionaryCosineDistanceData = null;
 
 		this.shaders['rilsr'] = new ShaderRILSR({
 			debug: false,
-			edgeCoefficientThreshold: this.edgeCoefficientThreshold ?? 0
+			edgeDictionaryCutoff: this.edgeDictionaryCutoff ?? 0.2
 		});
 		this.setShader('rilsr');
 		this.shader.addEvent('update', () => this._queueResponseTransferAtlasUpdate());
@@ -133,11 +134,79 @@ class LayerRILSR extends Layer {
 	}
 
 	/**
-	 * Sets the relative soft threshold used by photometric edge detection.
-	 * @param {number} value Relative threshold in the inclusive range `[0, 1]`.
+	 * Sets the semantic cutoff for dictionary-aware edge suppression.
+	 * @param {number} value Cosine-distance cutoff in the inclusive range `[0, 1]`.
 	 */
-	setEdgeCoefficientThreshold(value) {
-		this.shader.setEdgeCoefficientThreshold(value);
+	setEdgeDictionaryCutoff(value) {
+		this.shader.setEdgeDictionaryCutoff(value);
+	}
+
+	/**
+	 * Loads and quantizes the optional dictionary cosine-distance matrix.
+	 * The stored float32 values are converted to normalized bytes so the GPU
+	 * lookup texture occupies only K x K bytes and remains cache-friendly.
+	 * @param {Object} config Parsed RILSR configuration.
+	 * @param {string} infoUrl URL of info.json.
+	 * @returns {Promise<Uint8Array|null>}
+	 * @private
+	 */
+	async _loadDictionaryCosineDistance(config, infoUrl) {
+		if (config.output_params.dictionary_cosine_distance_format !== 'raw')
+			return null;
+		if (config.output_params.dictionary_cosine_distance_absolute !== true) {
+			console.warn('RILSR dictionary-aware edges require a sign-invariant cosine-distance matrix.');
+			return null;
+		}
+
+		const atomCount = config.input_params.dictionary_atom_count || config.output_params.dictionary_cols;
+		if (!Number.isInteger(atomCount) || atomCount <= 0) return null;
+		const url = `${Util.dirname(infoUrl)}/dictionary_cosine_distance.raw`;
+		try {
+			const response = await fetch(url);
+			if (!response.ok)
+				throw new Error(`HTTP ${response.status}`);
+			const buffer = await response.arrayBuffer();
+			const expectedBytes = atomCount * atomCount * Float32Array.BYTES_PER_ELEMENT;
+			if (buffer.byteLength !== expectedBytes)
+				throw new Error(`expected ${expectedBytes} bytes, received ${buffer.byteLength}`);
+
+			const source = new Float32Array(buffer);
+			const quantized = new Uint8Array(source.length);
+			for (let i = 0; i < source.length; ++i) {
+				const distance = source[i];
+				if (!Number.isFinite(distance))
+					throw new Error(`non-finite value at entry ${i}`);
+				quantized[i] = Math.round(Math.max(0, Math.min(1, distance)) * 255);
+			}
+			return quantized;
+		} catch (error) {
+			console.warn(`Unable to load RILSR dictionary cosine distances from ${url}: ${error.message}`);
+			return null;
+		}
+	}
+
+	/** @private */
+	_initializeDictionaryCosineDistance(gl) {
+		const target = this._responseTransferTexture('dictionary_cosine_distance');
+		if (!target) return;
+		const atomCount = this.shader.config.input_params.dictionary_atom_count ||
+			this.shader.config.output_params.dictionary_cols;
+		const available = this._dictionaryCosineDistanceData instanceof Uint8Array &&
+			this._dictionaryCosineDistanceData.length === atomCount * atomCount;
+		const data = available ? this._dictionaryCosineDistanceData : new Uint8Array([0]);
+		const size = available ? atomCount : 1;
+
+		if (!target.texture) target.texture = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, target.texture);
+		gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, size, size, 0, gl.RED, gl.UNSIGNED_BYTE, data);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		target.width = size;
+		target.height = size;
+		this.shader.setDictionaryDistanceEnabled(available);
 	}
 
 
@@ -513,6 +582,7 @@ class LayerRILSR extends Layer {
 			const sm = json.input_params.sparsity_multiplier;
 			console.log("INPUT", json.input_params);
 			const configPaths = this.imageUrl(json, url, sm);
+			const cosineDistancePromise = this._loadDictionaryCosineDistance(json, url);
 
 			this.shader.init(json);
 			const urls = [];
@@ -554,9 +624,16 @@ class LayerRILSR extends Layer {
 			this.staticTextures.push(
 				{ uniform: 'response_dict', texture: null, width: 0, height: 0, loaded: true },
 				{ uniform: 'response_mean', texture: null, width: 0, height: 0, loaded: true },
-				{ uniform: 'response_gain', texture: null, width: 0, height: 0, loaded: true }
+				{ uniform: 'response_gain', texture: null, width: 0, height: 0, loaded: true },
+				{ uniform: 'dictionary_cosine_distance', texture: null, width: 0, height: 0, loaded: true }
 			);
-			this.onFirstDraw = gl => this._initializeResponseTransferAtlases(gl);
+			this._dictionaryCosineDistanceData = await cosineDistancePromise;
+			json._dictionaryCosineDistanceAvailable = this._dictionaryCosineDistanceData !== null;
+			this.shader.setDictionaryDistanceEnabled(json._dictionaryCosineDistanceAvailable);
+			this.onFirstDraw = gl => {
+				this._initializeDictionaryCosineDistance(gl);
+				this._initializeResponseTransferAtlases(gl);
+			};
 
 			// AVG 
 			console.log("Set Raster AVG ", configPaths.avgpath)

@@ -12,7 +12,7 @@ import { ShaderLens } from './ShaderLens.js'
  * @property {number[]} [borderColor=[0.078, 0.078, 0.078, 1]] - RGBA border color
  * @property {number} [borderWidth=12] - Border width in pixels
  * @property {boolean} [borderEnable=false] - Whether to show lens border
- * @property {number} [smoothing=0] - Gaussian smoothing strength in [0, 1]
+ * @property {boolean} [medianFilter=false] - Enable a 3x3 median filter
  * @property {Object} [dashboard=null] - Dashboard UI component for lens control
  * @property {Camera} camera - Camera instance (required)
  * @extends LayerCombinerOptions
@@ -77,7 +77,7 @@ class LayerLens extends LayerCombiner {
 			borderColor: [0.078, 0.078, 0.078, 1],
 			borderWidth: 12,
 			borderEnable: false,
-			smoothing: 0,
+			medianFilter: false,
 			dashboard: null,
 			activeLayerIndex: 0,
 			colorEncoding: 'linear',
@@ -93,7 +93,7 @@ class LayerLens extends LayerCombiner {
 		this.activeLayerIndex = Math.max(0, Math.min(options.activeLayerIndex, this.layers.length - 1));
 
 		// Create shader lens - only single layer rendering now
-		let shader = new ShaderLens({ smoothing: this.smoothing });
+		let shader = new ShaderLens({ medianFilter: this.medianFilter });
 		this.shaders['lens'] = shader;
 		this.setShader('lens');
 
@@ -142,11 +142,11 @@ class LayerLens extends LayerCombiner {
 	}
 
 	/**
-	 * Sets optional Gaussian smoothing of the composed lens image.
-	 * @param {number} value Smoothing strength in the inclusive range [0, 1].
+	 * Enables or disables median filtering of the composed lens image.
+	 * @param {boolean} enabled Whether the 3x3 median filter is enabled.
 	 */
-	setSmoothing(value) {
-		this.shader.setSmoothing(value);
+	setMedianFilter(enabled) {
+		this.shader.setMedianFilter(enabled);
 		this.emit('update');
 	}
 

@@ -16,9 +16,8 @@ import { Util } from './Util.js'
  * in `[-1, 1]`.
  * @property {number} [responseDirectionalGain=1.5] - Directional response
  * contrast gain.
- * @property {number} [edgeCoefficientThreshold=0] - Relative soft threshold
- * applied to sparse coefficients in edge mode. `0` preserves the unfiltered
- * weighted-Jaccard response.
+ * @property {number} [edgeDictionaryCutoff=0.2] - Semantic distance below
+ * which dictionary-equivalent atom substitutions are suppressed.
  * @property {string} [type='rilsr'] - Representation type.
  */
 
@@ -101,16 +100,20 @@ class ShaderRILSR extends Shader {
 		this.setUniform('response_directional_gain', gain);
 	}
 
+	/** @private */
+	setDictionaryDistanceEnabled(enabled) {
+		this.setUniform('edge_dictionary_distance_enabled', Boolean(enabled));
+	}
+
 	/**
-	 * Sets the relative soft threshold used by photometric edge detection.
-	 * Each support weight becomes max(|coefficient| - threshold * maxWeight, 0).
-	 * @param {number} value Relative threshold in the inclusive range `[0, 1]`.
+	 * Sets the semantic cutoff used to suppress equivalent atom substitutions.
+	 * @param {number} value Cosine-distance cutoff in the inclusive range `[0, 1]`.
 	 */
-	setEdgeCoefficientThreshold(value) {
-		const threshold = Number(value);
-		if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1)
-			throw new Error('Edge coefficient threshold must be a finite value in [0, 1].');
-		this.setUniform('edge_coefficient_threshold', threshold);
+	setEdgeDictionaryCutoff(value) {
+		const cutoff = Number(value);
+		if (!Number.isFinite(cutoff) || cutoff < 0 || cutoff > 1)
+			throw new Error('Edge dictionary cutoff must be a finite value in [0, 1].');
+		this.setUniform('edge_dictionary_cutoff', cutoff);
 	}
 
 	updateUniforms(gl) {
@@ -213,12 +216,14 @@ class ShaderRILSR extends Shader {
 			sparsity_multiplier: { type: 'int', needsUpdate: false, size: 1, value: sparsity_multiplier}, 
 			response_sharpness: { type: 'float', needsUpdate: true, size: 1, value: 0.9 },
 			response_directional_gain: { type: 'float', needsUpdate: true, size: 1, value: 1.5 },
-			edge_coefficient_threshold: { type: 'float', needsUpdate: true, size: 1, value: 0 },
+			edge_dictionary_distance_enabled: { type: 'bool', needsUpdate: true, size: 1, value: false },
+			edge_dictionary_cutoff: { type: 'float', needsUpdate: true, size: 1, value: 0.2 },
 		});
 		if (this.responseSharpness !== undefined) this.setResponseSharpness(this.responseSharpness);
 		if (this.responseDirectionalGain !== undefined) this.setResponseDirectionalGain(this.responseDirectionalGain);
-		if (this.edgeCoefficientThreshold !== undefined)
-			this.setEdgeCoefficientThreshold(this.edgeCoefficientThreshold);
+		if (this.edgeDictionaryCutoff !== undefined)
+			this.setEdgeDictionaryCutoff(this.edgeDictionaryCutoff);
+		this.setDictionaryDistanceEnabled(config._dictionaryCosineDistanceAvailable === true);
 
 		// Print all registered uniforms to console
 		Object.entries(this.uniforms).forEach(([key, uniform]) => {
@@ -279,10 +284,12 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 	/**
 	 * Returns GLSL implementing the photometric edge detector used by LumiLab.
 	 *
-	 * Each pixel is represented by its sparse atom support and optionally
-	 * soft-thresholded absolute coefficients. The response is the squared median, over the valid
-	 * 8-neighbourhood, of the coefficient-weighted Jaccard distances. Repeated
-	 * atom indices are merged before the distance is calculated.
+	 * Each pixel is represented by its sparse atom support and absolute
+	 * coefficients. When the optional dictionary
+	 * cosine-distance matrix is available, a symmetric three-dominant-atom
+	 * distance replaces the categorical Jaccard comparison. The response is the
+	 * squared median over the valid 8-neighbourhood. Repeated atom indices are
+	 * merged before the distance is calculated.
 	 *
 	 * @returns {string} GLSL helper functions for the current sparse layout.
 	 * @private
@@ -301,50 +308,29 @@ vec3 ` + param_name + ` = vec3(index.r, index.g, index.b) * scale;
 				supportEntries.push({ group, suffix, channel });
 		}
 
-		const sampleSupport = (prefix, uv) => {
-			let src = '';
-			for (let group = 0; group < groupCount; ++group) {
-				const suffix = Util.padZeros(group, 2);
-				src += `\tuvec3 ${prefix}_idx${suffix} = decode_sparse_indices(idx${suffix}, ${uv});\n`;
-				src += `\tvec3 ${prefix}_weight${suffix} = abs(decode_sparse_coefficients(${group}, coef${suffix}, ${uv}));\n`;
+		let sampleSupport = '';
+		let entryIndex = 0;
+		for (let group = 0; group < groupCount; ++group) {
+			const suffix = Util.padZeros(group, 2);
+			sampleSupport += `\tuvec3 indices${suffix} = decode_sparse_indices(idx${suffix}, uv);\n`;
+			sampleSupport += `\tvec3 weights${suffix} = abs(decode_sparse_coefficients(${group}, coef${suffix}, uv));\n`;
+			for (const channel of channels) {
+				sampleSupport += `\tsupport.indices[${entryIndex}] = indices${suffix}.${channel};\n`;
+				sampleSupport += `\tsupport.weights[${entryIndex}] = weights${suffix}.${channel};\n`;
+				++entryIndex;
 			}
-			return src;
-		};
-		const entryRef = (prefix, entry, kind) => `${prefix}_${kind}${entry.suffix}.${entry.channel}`;
-		const maxWeight = prefix => supportEntries
-			.map(entry => entryRef(prefix, entry, 'weight'))
-			.reduce((result, weight) => `max(${result}, ${weight})`);
-		const applyThreshold = prefix => {
-			let src = `\tfloat ${prefix}_max_weight = ${maxWeight(prefix)};\n`;
-			src += `\tfloat ${prefix}_cutoff = edge_coefficient_threshold * ${prefix}_max_weight;\n`;
-			for (const entry of supportEntries) {
-				const weight = entryRef(prefix, entry, 'weight');
-				src += `\t${weight} = max(${weight} - ${prefix}_cutoff, 0.0);\n`;
-			}
-			return src;
-		};
-		const sumWeights = prefix => supportEntries
-			.map(entry => entryRef(prefix, entry, 'weight'))
-			.join(' + ');
-		const mergedWeight = (prefix, reference) => supportEntries
-			.map(entry => `(${entryRef(prefix, entry, 'idx')} == ${reference} ? ${entryRef(prefix, entry, 'weight')} : 0.0)`)
-			.join(' + ');
-
-		let intersection = '';
-		for (let i = 0; i < supportEntries.length; ++i) {
-			const entry = supportEntries[i];
-			const centerIndex = entryRef('center', entry, 'idx');
-			const isFirstOccurrence = supportEntries
-				.slice(0, i)
-				.map(previous => `${centerIndex} != ${entryRef('center', previous, 'idx')}`)
-				.join(' && ') || 'true';
-			intersection += `\tif (${isFirstOccurrence}) {\n`;
-			intersection += `\t\tfloat center_merged_weight = ${mergedWeight('center', centerIndex)};\n`;
-			intersection += `\t\tfloat neighbor_merged_weight = ${mergedWeight('neighbor', centerIndex)};\n`;
-			intersection += '\t\tintersection += min(center_merged_weight, neighbor_merged_weight);\n\t}\n';
 		}
 
+		const supportSize = supportEntries.length;
 		return `
+const int EDGE_SUPPORT_SIZE = ${supportSize};
+const int EDGE_DOMINANT_SIZE = ${Math.min(3, supportSize)};
+
+struct SparseSupport {
+	uint indices[EDGE_SUPPORT_SIZE];
+	float weights[EDGE_SUPPORT_SIZE];
+};
+
 uvec3 decode_sparse_indices(usampler2D index_sampler, vec2 uv) {
 	uvec4 packed = texture(index_sampler, uv);
 	uint decoded = (packed.r << 0) | (packed.g << 8) | (packed.b << 16) | (packed.a << 24);
@@ -356,14 +342,109 @@ vec3 decode_sparse_coefficients(int group, sampler2D coefficient_sampler, vec2 u
 	return texture(coefficient_sampler, uv).rgb * coefficients_scale[group] + coefficients_min[group];
 }
 
-float weighted_jaccard_distance(vec2 center_uv, vec2 neighbor_uv) {
-${sampleSupport('center', 'center_uv')}${sampleSupport('neighbor', 'neighbor_uv')}
-${applyThreshold('center')}${applyThreshold('neighbor')}
-	float center_total_weight = ${sumWeights('center')};
-	float neighbor_total_weight = ${sumWeights('neighbor')};
+void sample_sparse_support(vec2 uv, out SparseSupport support) {
+${sampleSupport}
+	// Merge repeated indices once here so all distance measures consume the
+	// same compact support and the center support can be reused by 8 neighbours.
+	for (int i = 0; i < EDGE_SUPPORT_SIZE; ++i) {
+		for (int j = 0; j < i; ++j) {
+			if (support.indices[i] == support.indices[j]) {
+				support.weights[j] += support.weights[i];
+				support.weights[i] = 0.0;
+				break;
+			}
+		}
+	}
+}
+
+float weighted_jaccard_distance(SparseSupport center, SparseSupport neighbor) {
+	float center_total = 0.0;
+	float neighbor_total = 0.0;
 	float intersection = 0.0;
-${intersection}	float union_weight = center_total_weight + neighbor_total_weight - intersection;
-	return union_weight == 0.0 ? 0.0 : 1.0 - intersection / union_weight;
+	for (int i = 0; i < EDGE_SUPPORT_SIZE; ++i) {
+		center_total += center.weights[i];
+		neighbor_total += neighbor.weights[i];
+		if (center.weights[i] <= 0.0) continue;
+		for (int j = 0; j < EDGE_SUPPORT_SIZE; ++j) {
+			if (neighbor.weights[j] > 0.0 && center.indices[i] == neighbor.indices[j]) {
+				intersection += min(center.weights[i], neighbor.weights[j]);
+				break;
+			}
+		}
+	}
+	float union_weight = center_total + neighbor_total - intersection;
+	return union_weight <= 0.0 ? 0.0 : 1.0 - intersection / union_weight;
+}
+
+void dominant_support(SparseSupport support, out uvec3 indices, out vec3 weights) {
+	uint sorted_indices[EDGE_SUPPORT_SIZE];
+	float sorted_weights[EDGE_SUPPORT_SIZE];
+	for (int i = 0; i < EDGE_SUPPORT_SIZE; ++i) {
+		sorted_indices[i] = support.indices[i];
+		sorted_weights[i] = support.weights[i];
+	}
+	for (int rank = 0; rank < EDGE_DOMINANT_SIZE; ++rank) {
+		int best = rank;
+		for (int i = rank + 1; i < EDGE_SUPPORT_SIZE; ++i)
+			if (sorted_weights[i] > sorted_weights[best]) best = i;
+		uint index_swap = sorted_indices[rank];
+		float weight_swap = sorted_weights[rank];
+		sorted_indices[rank] = sorted_indices[best];
+		sorted_weights[rank] = sorted_weights[best];
+		sorted_indices[best] = index_swap;
+		sorted_weights[best] = weight_swap;
+	}
+	indices = uvec3(sorted_indices[0], sorted_indices[1], sorted_indices[2]);
+	weights = vec3(sorted_weights[0], sorted_weights[1], sorted_weights[2]);
+}
+
+float dictionary_pair_cost(uint a, uint b) {
+	return texelFetch(dictionary_cosine_distance, ivec2(int(b), int(a)), 0).r;
+}
+
+float dictionary_support_distance(SparseSupport center, SparseSupport neighbor) {
+	uvec3 center_indices;
+	uvec3 neighbor_indices;
+	vec3 center_weights;
+	vec3 neighbor_weights;
+	dominant_support(center, center_indices, center_weights);
+	dominant_support(neighbor, neighbor_indices, neighbor_weights);
+	float center_total = center_weights.x + center_weights.y + center_weights.z;
+	float neighbor_total = neighbor_weights.x + neighbor_weights.y + neighbor_weights.z;
+	if (center_total <= 1e-8 || neighbor_total <= 1e-8)
+		return weighted_jaccard_distance(center, neighbor);
+	center_weights /= center_total;
+	neighbor_weights /= neighbor_total;
+
+	float pair_costs[9];
+	for (int i = 0; i < 3; ++i)
+		for (int j = 0; j < 3; ++j)
+			pair_costs[i * 3 + j] = dictionary_pair_cost(center_indices[i], neighbor_indices[j]);
+
+	float forward = 0.0;
+	float backward = 0.0;
+	for (int i = 0; i < 3; ++i) {
+		float best_forward = 1.0;
+		float best_backward = 1.0;
+		for (int j = 0; j < 3; ++j) {
+			best_forward = min(best_forward, pair_costs[i * 3 + j]);
+			best_backward = min(best_backward, pair_costs[j * 3 + i]);
+		}
+		forward += center_weights[i] * best_forward;
+		backward += neighbor_weights[i] * best_backward;
+	}
+	return clamp(0.5 * (forward + backward), 0.0, 1.0);
+}
+
+float sparse_support_distance(SparseSupport center, SparseSupport neighbor) {
+	float jaccard = weighted_jaccard_distance(center, neighbor);
+	if (!edge_dictionary_distance_enabled) return jaccard;
+	if (edge_dictionary_cutoff <= 0.0) return jaccard;
+	float dictionary_distance = dictionary_support_distance(center, neighbor);
+	const float DICTIONARY_GATE_SOFTNESS = 0.08;
+	float cutoff = clamp(edge_dictionary_cutoff, 0.0, 1.0);
+	float gate = smoothstep(cutoff, min(1.0, cutoff + DICTIONARY_GATE_SOFTNESS), dictionary_distance);
+	return jaccard * gate;
 }
 
 float median_distance(float distances[8], int count) {
@@ -383,6 +464,8 @@ float median_distance(float distances[8], int count) {
 
 vec3 photometric_edge() {
 	vec2 texel_size = vec2(1.0) / tileSize;
+	SparseSupport center;
+	sample_sparse_support(v_texcoord, center);
 	float distances[8];
 	int count = 0;
 	for (int dy = -1; dy <= 1; ++dy) {
@@ -390,7 +473,9 @@ vec3 photometric_edge() {
 			if (dx == 0 && dy == 0) continue;
 			vec2 neighbor_uv = v_texcoord + texel_size * vec2(float(dx), float(dy));
 			if (neighbor_uv.x < 0.0 || neighbor_uv.y < 0.0 || neighbor_uv.x >= 1.0 || neighbor_uv.y >= 1.0) continue;
-			distances[count++] = weighted_jaccard_distance(v_texcoord, neighbor_uv);
+			SparseSupport neighbor;
+			sample_sparse_support(neighbor_uv, neighbor);
+			distances[count++] = sparse_support_distance(center, neighbor);
 		}
 	}
 	float edge_strength = median_distance(distances, count);
@@ -507,7 +592,9 @@ uniform vec3 coefficients_min[${sparsity_multiplier}];
 uniform vec3 coefficients_scale[${sparsity_multiplier}];
 uniform float response_sharpness;
 uniform float response_directional_gain;
-uniform float edge_coefficient_threshold;
+uniform bool edge_dictionary_distance_enabled;
+uniform float edge_dictionary_cutoff;
+uniform sampler2D dictionary_cosine_distance;
 
 ${this.photometric_edge_helpers_str()}
 

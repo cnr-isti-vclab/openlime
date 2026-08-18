@@ -7,14 +7,14 @@ import { Shader } from './Shader.js'
  * @property {number[]} u_width_height - Viewport dimensions [width, height]
  * @property {number[]} u_border_color - RGBA border color [r, g, b, a]
  * @property {boolean} u_border_enable - Whether to show lens border
- * @property {number} u_smoothing - Gaussian smoothing strength in [0, 1]
+ * @property {boolean} u_median_filter - Whether to apply a 3x3 median filter
  */
 
 /**
  * @typedef {Object} ShaderLens~Options
  * Configuration options for lens shader
  * @property {string} [label='ShaderLens'] - Display label
- * @property {number} [smoothing=0] - Gaussian smoothing strength in [0, 1]
+ * @property {boolean} [medianFilter=false] - Enable the 3x3 median filter
  * @property {boolean} [overlayLayerEnabled=false] - Enable overlay layer
  * @property {Object} [uniforms] - Custom uniform values
  * @extends Shader~Options
@@ -99,9 +99,9 @@ class ShaderLens extends Shader {
             u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1, 1] },
             u_border_color: { type: 'vec4', needsUpdate: true, size: 4, value: [0.8, 0.8, 0.8, 1] },
             u_border_enable: { type: 'bool', needsUpdate: true, size: 1, value: false },
-            u_smoothing: { type: 'float', needsUpdate: true, size: 1, value: 0 }
+            u_median_filter: { type: 'bool', needsUpdate: true, size: 1, value: false }
         });
-        this.setSmoothing(options.smoothing ?? 0);
+        this.setMedianFilter(options.medianFilter ?? false);
         this.label = "ShaderLens";
         this.needsUpdate = true;
     }
@@ -121,15 +121,11 @@ class ShaderLens extends Shader {
     }
 
     /**
-     * Sets the strength of the optional 3x3 Gaussian low-pass filter.
-     * A value of zero bypasses the additional texture samples.
-     * @param {number} value Smoothing strength in the inclusive range [0, 1].
+     * Enables or disables the optional component-wise 3x3 median filter.
+     * @param {boolean} enabled Whether median filtering is enabled.
      */
-    setSmoothing(value) {
-        const strength = Number(value);
-        if (!Number.isFinite(strength) || strength < 0 || strength > 1)
-            throw new Error('Lens smoothing must be a finite value in [0, 1].');
-        this.setUniform('u_smoothing', strength);
+    setMedianFilter(enabled) {
+        this.setUniform('u_median_filter', Boolean(enabled));
     }
 
     /**
@@ -150,28 +146,31 @@ class ShaderLens extends Shader {
         uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
         uniform vec4 u_border_color;
         uniform bool u_border_enable;
-        uniform float u_smoothing;
+        uniform bool u_median_filter;
         in vec2 v_texcoord;
 
         vec4 sourceColor() {
             vec4 center = texture(source0, v_texcoord);
-            float strength = clamp(u_smoothing, 0.0, 1.0);
-            if (strength <= 0.0) return center;
+            if (!u_median_filter) return center;
 
-            // Normalized binomial kernel (1 2 1)^T (1 2 1). It strongly
-            // attenuates pixel-scale noise while retaining broader edges.
             vec2 d = vec2(1.0) / u_width_height;
-            vec4 filtered = center * 4.0;
-            filtered += texture(source0, v_texcoord + vec2(-d.x, 0.0)) * 2.0;
-            filtered += texture(source0, v_texcoord + vec2( d.x, 0.0)) * 2.0;
-            filtered += texture(source0, v_texcoord + vec2(0.0, -d.y)) * 2.0;
-            filtered += texture(source0, v_texcoord + vec2(0.0,  d.y)) * 2.0;
-            filtered += texture(source0, v_texcoord + vec2(-d.x, -d.y));
-            filtered += texture(source0, v_texcoord + vec2( d.x, -d.y));
-            filtered += texture(source0, v_texcoord + vec2(-d.x,  d.y));
-            filtered += texture(source0, v_texcoord + vec2( d.x,  d.y));
-            filtered *= 1.0 / 16.0;
-            return mix(center, filtered, strength);
+            vec4 samples[9];
+            int sample_index = 0;
+            for (int y = -1; y <= 1; ++y)
+                for (int x = -1; x <= 1; ++x)
+                    samples[sample_index++] = texture(source0, v_texcoord + d * vec2(float(x), float(y)));
+
+            // Component-wise sorting retains the original edge amplitudes while
+            // removing isolated bright or dark pixels instead of averaging them.
+            for (int i = 0; i < 9; ++i) {
+                for (int j = i + 1; j < 9; ++j) {
+                    vec4 lower = min(samples[i], samples[j]);
+                    vec4 upper = max(samples[i], samples[j]);
+                    samples[i] = lower;
+                    samples[j] = upper;
+                }
+            }
+            return samples[4];
         }
 
         vec4 lensColor(in vec4 c_in, in vec4 c_border, in vec4 c_out,
