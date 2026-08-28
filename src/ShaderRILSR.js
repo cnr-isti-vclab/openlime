@@ -183,6 +183,8 @@ class ShaderRILSR extends Shader {
 	 */
 	init(config) {
 		this.config = config;
+		this.hasMask = typeof config.input_params.mask === 'string' &&
+			config.input_params.mask.length > 0;
 
 		// SAMPLERS
 		let sampler_counter = 0;
@@ -196,6 +198,8 @@ class ShaderRILSR extends Shader {
 			const sampler_name = 'coef' + Util.padZeros(i, 2);
 			this.samplers.push({ id: sampler_counter++, name: sampler_name, samplerType: 'sampler2D' });
 		}
+		if (this.hasMask)
+			this.samplers.push({ id: sampler_counter++, name: 'mask', samplerType: 'sampler2D' });
 		
 		// UNIFORMS
 		// Average stored in 8 bit png
@@ -780,6 +784,8 @@ ${isResponseTransferMode ? `vec3 response_transfer_contribution(int index, sampl
 
 vec4 data() {
 		`;
+		if (this.hasMask)
+			str += '\tif (texture(mask, v_texcoord).r <= 0.0) discard;\n';
 
 		switch(this.mode) {
 			case 'light' :

@@ -44,6 +44,7 @@ import { Png16Loader } from './Png16Loader.js'
  * - avg.jpg or avg.dzi: Average image plane
  * - sparse_index_XX.png or sparse_index_XX.dzi: Index planes mapping pixels to dictionary elements
  * - sparse_coeff_XX.jpg or sparse_coeff_XX.dzi: Coefficient planes with weights for dictionary elements 
+ * - mask.dzi (optional): Black pixels are discarded before rendering
  * 
  * @extends Layer
  * 
@@ -512,7 +513,8 @@ class LayerRILSR extends Layer {
 	 *   dictpath: string,
 	 *   avgpath: string,
 	 *   idxpaths: string[],
-	 *   coefpaths: string[]
+	 *   coefpaths: string[],
+	 *   maskpath: string|null
 	 * }}
 	 * @private
 	 */
@@ -527,6 +529,10 @@ class LayerRILSR extends Layer {
 
 		console.log("Extensions: dict", extDict, ", avg", extAvg, ", coef", extCoef, ", idx", extIdx);
 		// Select extensions by layout
+		const mask = json.input_params.mask;
+		const maskpath = typeof mask === 'string' && mask.length > 0
+			? (/^(?:[a-z][a-z0-9+.-]*:)?\//i.test(mask) ? mask : `${basepath}/${mask}`)
+			: null;
 		const makePaths = (extDict, extAvg, extIdx, extCoef) => {
 			const idxpaths = [];
 			const coefpaths = [];
@@ -539,7 +545,8 @@ class LayerRILSR extends Layer {
 				dictpath: `${basepath}/dictionary_atlas${extDict}`,
 				avgpath: `${basepath}/avg${extAvg}`,
 				idxpaths,
-				coefpaths
+				coefpaths,
+				maskpath
 			};
 		};
 
@@ -663,6 +670,12 @@ class LayerRILSR extends Layer {
 				// Use coefficients with nearest filtering to avoid interpolation artifacts
 				const raster_coef = new Raster({ format: 'vec3', filterLinear: false, buildMipmaps:false });
 				this.rasters.push(raster_coef);
+			}
+
+			if (configPaths.maskpath) {
+				urls.push(configPaths.maskpath);
+				// A binary mask must not be interpolated at tile edges.
+				this.rasters.push(new Raster({ format: 'vec3', filterLinear: false, buildMipmaps: false }));
 			}
 			this.layout.setUrls(urls);
 			const tld = json.output_params.lights;
