@@ -25,6 +25,8 @@ import { Png16Loader } from './Png16Loader.js'
  * directional-response coherence bound
  * @property {number} [coherenceNormalizedHigh=0.995] - Upper normalized
  * directional-response coherence bound
+ * @property {number} [dictionaryFamilyCount=12] - Number of runtime dictionary
+ * families in the dominant-family diagnostic
  * @extends LayerOptions
  */
 
@@ -83,6 +85,8 @@ class LayerRILSR extends Layer {
 		this._responseTransferSharpness = null;
 		this._responseTransferPendingSharpness = null;
 		this._dictionaryGramData = null;
+		this._dictionaryFamilyData = null;
+		this._dictionaryFamilyCount = this.dictionaryFamilyCount ?? 12;
 
 		this.shaders['rilsr'] = new ShaderRILSR({
 			debug: false,
@@ -90,7 +94,8 @@ class LayerRILSR extends Layer {
 			coherenceLow: this.coherenceLow ?? 0.0,
 			coherenceHigh: this.coherenceHigh ?? 0.02,
 			coherenceNormalizedLow: this.coherenceNormalizedLow ?? 0.95,
-			coherenceNormalizedHigh: this.coherenceNormalizedHigh ?? 0.995
+			coherenceNormalizedHigh: this.coherenceNormalizedHigh ?? 0.995,
+			dictionaryFamilyCount: this._dictionaryFamilyCount
 		});
 		this.setShader('rilsr');
 		this.shader.addEvent('update', () => this._queueResponseTransferAtlasUpdate());
@@ -165,6 +170,28 @@ class LayerRILSR extends Layer {
 	}
 
 	/**
+	 * Rebuilds the runtime atom-family lookup from the dictionary Gram matrix.
+	 * Derived layers forward the shared lookup update to their source layer.
+	 * @param {number} value Integer family count in [2, 255].
+	 */
+	setDictionaryFamilyCount(value) {
+		const root = this.sourceLayer || this;
+		root._setDictionaryFamilyCount(value);
+		this.shader.setDictionaryFamilyCount(value);
+	}
+
+	/** @private */
+	_setDictionaryFamilyCount(value) {
+		this.shader.setDictionaryFamilyCount(value);
+		this._dictionaryFamilyCount = Number(value);
+		this._dictionaryFamilyData = this._buildDictionaryFamilies(this._dictionaryFamilyCount);
+		const available = this._dictionaryFamilyData !== null;
+		this.shader.setDictionaryFamiliesEnabled(available);
+		if (this.gl) this._initializeDictionaryFamilies(this.gl);
+		this.emit('update');
+	}
+
+	/**
 	 * Loads the precomputed D^T D / L dictionary Gram matrix as float32.
 	 * @param {Object} config Parsed RILSR configuration.
 	 * @param {string} infoUrl URL of info.json.
@@ -215,6 +242,125 @@ class LayerRILSR extends Layer {
 		target.width = size;
 		target.height = size;
 		this.shader.setResponseCoherenceEnabled(available);
+	}
+
+	/**
+	 * Clusters atoms with deterministic, density-aware k-medoids in absolute
+	 * cosine space. Unlike pure farthest-point sampling, the initialization
+	 * avoids spending a family on an isolated dictionary outlier; a short
+	 * medoid-refinement pass then makes every family representative of its
+	 * assigned cluster. The output is a compact atom-index -> family-index
+	 * lookup for the shader.
+	 * @param {number} requestedCount Number of families.
+	 * @returns {Uint8Array|null}
+	 * @private
+	 */
+	_buildDictionaryFamilies(requestedCount) {
+		const atomCount = this.shader.config.input_params.dictionary_atom_count ||
+			this.shader.config.output_params.dictionary_cols;
+		const gram = this._dictionaryGramData;
+		if (!(gram instanceof Float32Array) || gram.length !== atomCount * atomCount)
+			return null;
+		const familyCount = Math.min(requestedCount, atomCount);
+		if (!Number.isInteger(familyCount) || familyCount < 2) return null;
+		const energies = new Float32Array(atomCount);
+		for (let atom = 0; atom < atomCount; ++atom)
+			energies[atom] = Math.max(0, gram[atom * atomCount + atom]);
+		const similarity = (a, b) => {
+			const denominator = Math.sqrt(energies[a] * energies[b]);
+			return denominator > 1e-12
+				? Math.min(1, Math.abs(gram[a * atomCount + b] / denominator))
+				: (a === b ? 1 : 0);
+		};
+		// Density is the total similarity to the full dictionary. It favours
+		// representatives of populated response families over isolated atoms.
+		const densities = new Float32Array(atomCount);
+		let firstMedoid = 0;
+		for (let atom = 0; atom < atomCount; ++atom) {
+			let density = 0;
+			for (let other = 0; other < atomCount; ++other)
+				density += similarity(atom, other);
+			densities[atom] = density;
+			if (density > densities[firstMedoid]) firstMedoid = atom;
+		}
+		const medoids = [firstMedoid];
+		while (medoids.length < familyCount) {
+			let candidate = 0;
+			let highestScore = -Infinity;
+			for (let atom = 0; atom < atomCount; ++atom) {
+				if (medoids.includes(atom)) continue;
+				let bestSimilarity = 0;
+				for (const medoid of medoids)
+					bestSimilarity = Math.max(bestSimilarity, similarity(atom, medoid));
+				const score = densities[atom] * (1.0 - bestSimilarity);
+				if (score > highestScore) {
+					highestScore = score;
+					candidate = atom;
+				}
+			}
+			medoids.push(candidate);
+		}
+		const families = new Uint8Array(atomCount);
+		const assignFamilies = () => {
+			for (let atom = 0; atom < atomCount; ++atom) {
+				let bestFamily = 0;
+				let bestSimilarity = -1;
+				for (let family = 0; family < medoids.length; ++family) {
+					const value = similarity(atom, medoids[family]);
+					if (value > bestSimilarity) {
+						bestSimilarity = value;
+						bestFamily = family;
+					}
+				}
+				families[atom] = bestFamily;
+			}
+		};
+		// A few deterministic k-medoids updates are sufficient for the small
+		// (typically 512 atom) dictionary and are run only when the UI changes F.
+		for (let iteration = 0; iteration < 4; ++iteration) {
+			assignFamilies();
+			let changed = false;
+			for (let family = 0; family < familyCount; ++family) {
+				let bestMedoid = medoids[family];
+				let bestTotalSimilarity = -Infinity;
+				for (let candidate = 0; candidate < atomCount; ++candidate) {
+					if (families[candidate] !== family) continue;
+					let totalSimilarity = 0;
+					for (let member = 0; member < atomCount; ++member)
+						if (families[member] === family)
+							totalSimilarity += similarity(candidate, member);
+					if (totalSimilarity > bestTotalSimilarity) {
+						bestTotalSimilarity = totalSimilarity;
+						bestMedoid = candidate;
+					}
+				}
+				if (bestMedoid !== medoids[family]) {
+					medoids[family] = bestMedoid;
+					changed = true;
+				}
+			}
+			if (!changed) break;
+		}
+		assignFamilies();
+		return families;
+	}
+
+	/** @private */
+	_initializeDictionaryFamilies(gl) {
+		const target = this._responseTransferTexture('dictionary_families');
+		if (!target) return;
+		const data = this._dictionaryFamilyData || new Uint8Array([0]);
+		if (!target.texture) target.texture = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, target.texture);
+		gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8UI, data.length, 1, 0, gl.RED_INTEGER, gl.UNSIGNED_BYTE, data);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		target.width = data.length;
+		target.height = 1;
+		this.shader.setDictionaryFamiliesEnabled(this._dictionaryFamilyData !== null);
 	}
 
 	static async pngLoaderToFloat(tile, gl, options) {
@@ -638,14 +784,19 @@ class LayerRILSR extends Layer {
 				{ uniform: 'response_dict', texture: null, width: 0, height: 0, loaded: true },
 				{ uniform: 'response_mean', texture: null, width: 0, height: 0, loaded: true },
 				{ uniform: 'response_gain', texture: null, width: 0, height: 0, loaded: true },
-				{ uniform: 'dictionary_gram', texture: null, width: 0, height: 0, loaded: true }
+				{ uniform: 'dictionary_gram', texture: null, width: 0, height: 0, loaded: true },
+				{ uniform: 'dictionary_families', texture: null, width: 0, height: 0, loaded: true }
 			);
 			this._dictionaryGramData = await dictionaryGramPromise;
 			json._dictionaryGramAvailable = this._dictionaryGramData !== null;
+			this._dictionaryFamilyData = this._buildDictionaryFamilies(this._dictionaryFamilyCount);
+			json._dictionaryFamiliesAvailable = this._dictionaryFamilyData !== null;
 			this.shader.setDictionaryDistanceEnabled(json._dictionaryGramAvailable);
 			this.shader.setResponseCoherenceEnabled(json._dictionaryGramAvailable);
+			this.shader.setDictionaryFamiliesEnabled(json._dictionaryFamiliesAvailable);
 			this.onFirstDraw = gl => {
 				this._initializeDictionaryGram(gl);
+				this._initializeDictionaryFamilies(gl);
 				this._initializeResponseTransferAtlases(gl);
 			};
 

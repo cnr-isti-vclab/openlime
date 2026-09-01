@@ -24,6 +24,8 @@ import { Util } from './Util.js'
  * response-coherence bound.
  * @property {number} [coherenceNormalizedHigh=0.995] - Upper normalized
  * response-coherence bound.
+ * @property {number} [dictionaryFamilyCount=12] - Number of runtime dictionary
+ * families used by the dominant-family diagnostic mode.
  * @property {string} [type='rilsr'] - Representation type.
  */
 
@@ -61,7 +63,7 @@ class ShaderRILSR extends Shader {
 		super(options);
 
 		Object.assign(this, {
-			modes: ['light', 'edge', 'response-coherence', 'response-coherence-normalized', 'dictionary-response-transfer', 'dictionary-response-transfer-intensity', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
+			modes: ['light', 'edge', 'response-coherence', 'response-coherence-normalized', 'dictionary-response-transfer', 'dictionary-response-transfer-intensity', 'dominant-family', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
 			mode: 'light',
 			type: ['ksvd'],
 		});
@@ -75,6 +77,7 @@ class ShaderRILSR extends Shader {
 	 * @param {string} mode - One of: 'light', 'edge',
 	 * 'response-coherence', 'response-coherence-normalized',
 	 * 'dictionary-response-transfer', 'dictionary-response-transfer-intensity',
+	 * 'dominant-family',
 	 * 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary', or 'debug'.
 	 * @throws {Error} If mode is not recognized
 	 */
@@ -141,6 +144,22 @@ class ShaderRILSR extends Shader {
 		if (!Number.isFinite(cutoff) || cutoff < 0 || cutoff > 1)
 			throw new Error('Edge dictionary cutoff must be a finite value in [0, 1].');
 		this.setUniform('edge_dictionary_cutoff', cutoff);
+	}
+
+	/**
+	 * Sets the number of dictionary families used by the dominant-family mode.
+	 * @param {number} value Integer family count in the inclusive range [2, 255].
+	 */
+	setDictionaryFamilyCount(value) {
+		const count = Number(value);
+		if (!Number.isInteger(count) || count < 2 || count > 255)
+			throw new Error('Dictionary family count must be an integer in [2, 255].');
+		this.setUniform('dictionary_family_count', count);
+	}
+
+	/** @private */
+	setDictionaryFamiliesEnabled(enabled) {
+		this.setUniform('dictionary_families_enabled', Boolean(enabled));
 	}
 
 	updateUniforms(gl) {
@@ -254,6 +273,8 @@ class ShaderRILSR extends Shader {
 			response_coherence_enabled: { type: 'bool', needsUpdate: true, size: 1, value: false },
 			edge_dictionary_distance_enabled: { type: 'bool', needsUpdate: true, size: 1, value: false },
 			edge_dictionary_cutoff: { type: 'float', needsUpdate: true, size: 1, value: 0.2 },
+			dictionary_family_count: { type: 'int', needsUpdate: true, size: 1, value: 12 },
+			dictionary_families_enabled: { type: 'bool', needsUpdate: true, size: 1, value: false },
 		});
 		if (this.responseSharpness !== undefined) this.setResponseSharpness(this.responseSharpness);
 		if (this.responseDirectionalGain !== undefined) this.setResponseDirectionalGain(this.responseDirectionalGain);
@@ -267,6 +288,9 @@ class ShaderRILSR extends Shader {
 		if (this.edgeDictionaryCutoff !== undefined)
 			this.setEdgeDictionaryCutoff(this.edgeDictionaryCutoff);
 		this.setDictionaryDistanceEnabled(config._dictionaryGramAvailable === true);
+		if (this.dictionaryFamilyCount !== undefined)
+			this.setDictionaryFamilyCount(this.dictionaryFamilyCount);
+		this.setDictionaryFamiliesEnabled(config._dictionaryFamiliesAvailable === true);
 
 		// Print all registered uniforms to console
 		Object.entries(this.uniforms).forEach(([key, uniform]) => {
@@ -587,6 +611,42 @@ vec3 directional_response_coherence(bool normalize_energy) {
 	}
 	return vec3(1.0 - median_distance(similarities, count));
 }
+
+vec3 family_palette(uint family) {
+	// Golden-ratio hue steps provide distinct, deterministic family colours
+	// without requiring a second palette texture.
+	float h = fract(float(family) * 0.61803398875 + 0.07);
+	vec3 p = abs(fract(vec3(h) + vec3(0.0, 0.6666667, 0.3333333)) * 6.0 - 3.0);
+	return clamp(p - 1.0, 0.0, 1.0);
+}
+
+vec3 dominant_dictionary_family() {
+	if (!dictionary_families_enabled) return vec3(0.0);
+	SparseSupport support;
+	sample_sparse_support(v_texcoord, support);
+	int dominant = 0;
+	float first = -1.0;
+	float second = 0.0;
+	float total = 0.0;
+	for (int i = 0; i < EDGE_SUPPORT_SIZE; ++i) {
+		float weight = abs(support.weights[i]);
+		total += weight;
+		if (weight > first) {
+			second = first;
+			first = weight;
+			dominant = i;
+		} else if (weight > second) {
+			second = weight;
+		}
+	}
+	if (first <= 0.0 || total <= 0.0) return vec3(0.0);
+	uint family = texelFetch(dictionary_families, ivec2(int(support.indices[dominant]), 0), 0).r;
+	family = family % uint(max(dictionary_family_count, 1));
+	float dominance = first / total;
+	float confidence = clamp((first - max(0.0, second)) / first, 0.0, 1.0);
+	// Value is dominance; saturation encodes the separation from the runner-up.
+	return mix(vec3(dominance), family_palette(family) * dominance, 0.25 + 0.75 * confidence);
+}
 `;
 	}
 
@@ -705,6 +765,9 @@ uniform bool response_coherence_enabled;
 uniform bool edge_dictionary_distance_enabled;
 uniform float edge_dictionary_cutoff;
 uniform sampler2D dictionary_gram;
+uniform usampler2D dictionary_families;
+uniform int dictionary_family_count;
+uniform bool dictionary_families_enabled;
 
 ${this.photometric_edge_helpers_str()}
 
@@ -805,6 +868,9 @@ vec4 data() {
 				break;
 			case 'dictionary-response-transfer-intensity' :
 				str += this.sparse_coding_response_transfer_str(true);
+				break;
+			case 'dominant-family' :
+				str += 'vec3 color = dominant_dictionary_family();\n';
 				break;
 			case 'avg' : 
 				str += this.get_average_color_str();
