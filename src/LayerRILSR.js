@@ -27,6 +27,10 @@ import { Png16Loader } from './Png16Loader.js'
  * directional-response coherence bound
  * @property {number} [dictionaryFamilyCount=12] - Number of runtime dictionary
  * families in the dominant-family diagnostic
+ * @property {number} [atlasIntensityPowerAlpha=1] - Atlas intensity-power
+ * exponent in the inclusive range `[0.125, 8]`
+ * @property {boolean} [atlasIntensityPowerPreserveEnergy=true] - Preserve the
+ * squared RGB energy of each transformed atlas tile
  * @extends LayerOptions
  */
 
@@ -84,6 +88,12 @@ class LayerRILSR extends Layer {
 		this._responseTransferTimer = null;
 		this._responseTransferSharpness = null;
 		this._responseTransferPendingSharpness = null;
+		this._atlasIntensityPowerReady = false;
+		this._atlasIntensityPowerTimer = null;
+		this._atlasIntensityPowerAlpha = null;
+		this._atlasIntensityPowerPreserveEnergy = null;
+		this._atlasIntensityPowerPendingAlpha = null;
+		this._atlasIntensityPowerPendingPreserveEnergy = null;
 		this._dictionaryGramData = null;
 		this._dictionaryFamilyData = null;
 		this._dictionaryFamilyCount = this.dictionaryFamilyCount ?? 12;
@@ -95,7 +105,9 @@ class LayerRILSR extends Layer {
 			coherenceHigh: this.coherenceHigh ?? 0.02,
 			coherenceNormalizedLow: this.coherenceNormalizedLow ?? 0.95,
 			coherenceNormalizedHigh: this.coherenceNormalizedHigh ?? 0.995,
-			dictionaryFamilyCount: this._dictionaryFamilyCount
+			dictionaryFamilyCount: this._dictionaryFamilyCount,
+			atlasIntensityPowerAlpha: this.atlasIntensityPowerAlpha ?? 1.0,
+			atlasIntensityPowerPreserveEnergy: this.atlasIntensityPowerPreserveEnergy ?? true
 		});
 		this.setShader('rilsr');
 		this.shader.addEvent('update', () => this._queueResponseTransferAtlasUpdate());
@@ -149,6 +161,29 @@ class LayerRILSR extends Layer {
 	 */
 	setResponseDirectionalGain(value) {
 		this.shader.setResponseDirectionalGain(value);
+	}
+
+	/**
+	 * Sets the exponent for atlas intensity-power relighting and rebuilds the
+	 * shared transformed dictionary atlas.
+	 * @param {number} value Exponent in the inclusive range `[0.125, 8]`.
+	 */
+	setAtlasIntensityPowerAlpha(value) {
+		this.shader.setAtlasIntensityPowerAlpha(value);
+		const root = this.sourceLayer || this;
+		if (root !== this) root.shader.setAtlasIntensityPowerAlpha(value);
+		root._queueAtlasIntensityPowerUpdate();
+	}
+
+	/**
+	 * Enables or disables energy preservation for atlas intensity-power.
+	 * @param {boolean} enabled Whether each transformed atlas tile is rescaled.
+	 */
+	setAtlasIntensityPowerPreserveEnergy(enabled) {
+		this.shader.setAtlasIntensityPowerPreserveEnergy(enabled);
+		const root = this.sourceLayer || this;
+		if (root !== this) root.shader.setAtlasIntensityPowerPreserveEnergy(enabled);
+		root._queueAtlasIntensityPowerUpdate();
 	}
 
 	/**
@@ -600,6 +635,140 @@ class LayerRILSR extends Layer {
 		return { atlas, means, gains };
 	}
 
+	/**
+	 * Builds the atlas-intensity-power transform specified by LumiLab. Each
+	 * atlas texel is treated as one signed RGB vector: its direction is retained
+	 * and only its magnitude is mapped relative to the tile maximum.
+	 *
+	 * @param {number} alpha Intensity exponent in `[0.125, 8]`.
+	 * @param {boolean} preserveEnergy Rescale each tile to its input energy.
+	 * @returns {Float32Array|null}
+	 * @private
+	 */
+	_buildAtlasIntensityPowerAtlas(alpha, preserveEnergy) {
+		const config = this.shader.config;
+		const dictionaryTexture = this._responseTransferTexture('dict');
+		const source = dictionaryTexture?.sourceData;
+		if (!config || !(source instanceof Float32Array)) return null;
+
+		const { input_params: input, output_params: output } = config;
+		const tileWidth = input.dictionary_atlas_atom_tile_w;
+		const tileHeight = input.dictionary_atlas_atom_tile_h;
+		const atomCount = input.dictionary_atom_count;
+		const atomsPerRow = input.dictionary_atlas_atom_tile_nx || output.dictionary_atlas_atom_tile_nx;
+		const atlasWidth = dictionaryTexture.width;
+		const atlasHeight = dictionaryTexture.height;
+		if (!Number.isInteger(tileWidth) || !Number.isInteger(tileHeight) || !Number.isInteger(atomCount) ||
+			!Number.isInteger(atomsPerRow) || atlasWidth <= 0 || atlasHeight <= 0 || source.length !== atlasWidth * atlasHeight * 4)
+			return null;
+
+		const minimum = output.dictionary_quantizer_min_max.map(range => range[0]);
+		const scale = output.dictionary_quantizer_min_max.map(range => range[1] - range[0]);
+		const atlas = new Float32Array(source.length);
+		const exponent = Math.max(0.125, Math.min(8, Number(alpha)));
+		const epsilon = 1e-8;
+
+		for (let atom = 0; atom < atomCount; ++atom) {
+			const tileX = atom % atomsPerRow;
+			const tileY = Math.floor(atom / atomsPerRow);
+			let maximumIntensity = 0;
+			let originalEnergy = 0;
+			for (let y = 0; y < tileHeight; ++y) {
+				for (let x = 0; x < tileWidth; ++x) {
+					const offset = ((tileY * tileHeight + y) * atlasWidth + tileX * tileWidth + x) * 4;
+					const r = source[offset] * scale[0] + minimum[0];
+					const g = source[offset + 1] * scale[1] + minimum[1];
+					const b = source[offset + 2] * scale[2] + minimum[2];
+					const intensity = Math.hypot(r, g, b);
+					maximumIntensity = Math.max(maximumIntensity, intensity);
+					originalEnergy += intensity * intensity;
+				}
+			}
+			let transformedEnergy = 0;
+			for (let y = 0; y < tileHeight; ++y) {
+				for (let x = 0; x < tileWidth; ++x) {
+					const offset = ((tileY * tileHeight + y) * atlasWidth + tileX * tileWidth + x) * 4;
+					const r = source[offset] * scale[0] + minimum[0];
+					const g = source[offset + 1] * scale[1] + minimum[1];
+					const b = source[offset + 2] * scale[2] + minimum[2];
+					const intensity = Math.hypot(r, g, b);
+					const transformedIntensity = maximumIntensity > epsilon && intensity > epsilon
+						? maximumIntensity * Math.pow(intensity / maximumIntensity, exponent)
+						: 0;
+					const factor = intensity > epsilon ? transformedIntensity / intensity : 0;
+					atlas[offset] = r * factor;
+					atlas[offset + 1] = g * factor;
+					atlas[offset + 2] = b * factor;
+					atlas[offset + 3] = 1;
+					transformedEnergy += transformedIntensity * transformedIntensity;
+				}
+			}
+			if (preserveEnergy && transformedEnergy > epsilon) {
+				const energyScale = Math.sqrt(originalEnergy / transformedEnergy);
+				for (let y = 0; y < tileHeight; ++y)
+					for (let x = 0; x < tileWidth; ++x) {
+						const offset = ((tileY * tileHeight + y) * atlasWidth + tileX * tileWidth + x) * 4;
+						atlas[offset] *= energyScale;
+						atlas[offset + 1] *= energyScale;
+						atlas[offset + 2] *= energyScale;
+					}
+			}
+		}
+		return atlas;
+	}
+
+	/** @private */
+	_initializeAtlasIntensityPowerAtlas(gl) {
+		const target = this._responseTransferTexture('atlas_intensity_power_dict');
+		const dictionaryTexture = this._responseTransferTexture('dict');
+		if (!target || !dictionaryTexture) return;
+		const alpha = this.shader.uniforms.atlas_intensity_power_alpha?.value ?? 1.0;
+		const preserveEnergy = this.shader.uniforms.atlas_intensity_power_preserve_energy?.value ?? true;
+		const atlas = this._buildAtlasIntensityPowerAtlas(alpha, preserveEnergy);
+		if (!atlas) {
+			console.warn('RILSR atlas intensity-power requires a decoded floating-point dictionary atlas.');
+			return;
+		}
+		this._uploadResponseTransferTexture(gl, target, atlas, dictionaryTexture.width, dictionaryTexture.height);
+		this._atlasIntensityPowerAlpha = alpha;
+		this._atlasIntensityPowerPreserveEnergy = preserveEnergy;
+		this._atlasIntensityPowerPendingAlpha = null;
+		this._atlasIntensityPowerPendingPreserveEnergy = null;
+		this._atlasIntensityPowerReady = true;
+	}
+
+	/** @private */
+	_queueAtlasIntensityPowerUpdate() {
+		const root = this.sourceLayer || this;
+		if (root !== this) return root._queueAtlasIntensityPowerUpdate();
+		if (!this._atlasIntensityPowerReady || !this.gl) return;
+		const alpha = this.shader.uniforms.atlas_intensity_power_alpha?.value;
+		const preserveEnergy = this.shader.uniforms.atlas_intensity_power_preserve_energy?.value ?? true;
+		if (!Number.isFinite(alpha) || (alpha === this._atlasIntensityPowerAlpha &&
+			preserveEnergy === this._atlasIntensityPowerPreserveEnergy)) return;
+		if (alpha === this._atlasIntensityPowerPendingAlpha &&
+			preserveEnergy === this._atlasIntensityPowerPendingPreserveEnergy) return;
+		clearTimeout(this._atlasIntensityPowerTimer);
+		this._atlasIntensityPowerPendingAlpha = alpha;
+		this._atlasIntensityPowerPendingPreserveEnergy = preserveEnergy;
+		this._atlasIntensityPowerTimer = setTimeout(() => {
+			const target = this._responseTransferTexture('atlas_intensity_power_dict');
+			const dictionaryTexture = this._responseTransferTexture('dict');
+			const atlas = this._buildAtlasIntensityPowerAtlas(alpha, preserveEnergy);
+			if (!target || !dictionaryTexture || !atlas) {
+				this._atlasIntensityPowerPendingAlpha = null;
+				this._atlasIntensityPowerPendingPreserveEnergy = null;
+				return;
+			}
+			this._uploadResponseTransferTexture(this.gl, target, atlas, dictionaryTexture.width, dictionaryTexture.height);
+			this._atlasIntensityPowerAlpha = alpha;
+			this._atlasIntensityPowerPreserveEnergy = preserveEnergy;
+			this._atlasIntensityPowerPendingAlpha = null;
+			this._atlasIntensityPowerPendingPreserveEnergy = null;
+			this.emit('update');
+		}, 100);
+	}
+
 	/** @private */
 	_initializeResponseTransferAtlases(gl) {
 		const responseAtlas = this._responseTransferTexture('response_dict');
@@ -784,6 +953,7 @@ class LayerRILSR extends Layer {
 				{ uniform: 'response_dict', texture: null, width: 0, height: 0, loaded: true },
 				{ uniform: 'response_mean', texture: null, width: 0, height: 0, loaded: true },
 				{ uniform: 'response_gain', texture: null, width: 0, height: 0, loaded: true },
+				{ uniform: 'atlas_intensity_power_dict', texture: null, width: 0, height: 0, loaded: true },
 				{ uniform: 'dictionary_gram', texture: null, width: 0, height: 0, loaded: true },
 				{ uniform: 'dictionary_families', texture: null, width: 0, height: 0, loaded: true }
 			);
@@ -798,6 +968,7 @@ class LayerRILSR extends Layer {
 				this._initializeDictionaryGram(gl);
 				this._initializeDictionaryFamilies(gl);
 				this._initializeResponseTransferAtlases(gl);
+				this._initializeAtlasIntensityPowerAtlas(gl);
 			};
 
 			// AVG 

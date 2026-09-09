@@ -16,6 +16,10 @@ import { Util } from './Util.js'
  * in `[-1, 1]`.
  * @property {number} [responseDirectionalGain=1.5] - Directional response
  * contrast gain.
+ * @property {number} [atlasIntensityPowerAlpha=1] - Atlas intensity-power
+ * exponent in `[0.125, 8]`.
+ * @property {boolean} [atlasIntensityPowerPreserveEnergy=true] - Preserve the
+ * squared RGB energy of each atlas tile after the intensity-power transfer.
  * @property {number} [edgeDictionaryCutoff=0.2] - Semantic distance below
  * which dictionary-equivalent atom substitutions are suppressed.
  * @property {number} [coherenceLow=0] - Lower unnormalized response-coherence bound.
@@ -63,7 +67,7 @@ class ShaderRILSR extends Shader {
 		super(options);
 
 		Object.assign(this, {
-			modes: ['light', 'edge', 'response-coherence', 'response-coherence-normalized', 'dictionary-response-transfer', 'dictionary-response-transfer-intensity', 'dominant-family', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
+			modes: ['light', 'edge', 'response-coherence', 'response-coherence-normalized', 'dictionary-response-transfer', 'dictionary-response-transfer-intensity', 'atlas-intensity-power', 'dominant-family', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
 			mode: 'light',
 			type: ['ksvd'],
 		});
@@ -77,6 +81,7 @@ class ShaderRILSR extends Shader {
 	 * @param {string} mode - One of: 'light', 'edge',
 	 * 'response-coherence', 'response-coherence-normalized',
 	 * 'dictionary-response-transfer', 'dictionary-response-transfer-intensity',
+	 * 'atlas-intensity-power',
 	 * 'dominant-family',
 	 * 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary', or 'debug'.
 	 * @throws {Error} If mode is not recognized
@@ -108,6 +113,25 @@ class ShaderRILSR extends Shader {
 		if (!Number.isFinite(gain) || gain < 0)
 			throw new Error('Response directional gain must be a non-negative finite value.');
 		this.setUniform('response_directional_gain', gain);
+	}
+
+	/**
+	 * Sets the exponent used by the atlas intensity-power relighting mode.
+	 * @param {number} value Exponent in the inclusive range `[0.125, 8]`.
+	 */
+	setAtlasIntensityPowerAlpha(value) {
+		const alpha = Number(value);
+		if (!Number.isFinite(alpha) || alpha < 0.125 || alpha > 8)
+			throw new Error('Atlas intensity-power alpha must be a finite value in [0.125, 8].');
+		this.setUniform('atlas_intensity_power_alpha', alpha);
+	}
+
+	/**
+	 * Enables or disables per-tile energy preservation for atlas intensity-power.
+	 * @param {boolean} enabled Whether transformed tiles retain their input energy.
+	 */
+	setAtlasIntensityPowerPreserveEnergy(enabled) {
+		this.setUniform('atlas_intensity_power_preserve_energy', Boolean(enabled));
 	}
 
 	/**
@@ -266,6 +290,8 @@ class ShaderRILSR extends Shader {
 			sparsity_multiplier: { type: 'int', needsUpdate: false, size: 1, value: sparsity_multiplier}, 
 			response_sharpness: { type: 'float', needsUpdate: true, size: 1, value: 0.9 },
 			response_directional_gain: { type: 'float', needsUpdate: true, size: 1, value: 1.5 },
+			atlas_intensity_power_alpha: { type: 'float', needsUpdate: true, size: 1, value: 1.0 },
+			atlas_intensity_power_preserve_energy: { type: 'bool', needsUpdate: true, size: 1, value: true },
 			response_coherence_low: { type: 'float', needsUpdate: true, size: 1, value: 0.0 },
 			response_coherence_high: { type: 'float', needsUpdate: true, size: 1, value: 0.02 },
 			response_coherence_normalized_low: { type: 'float', needsUpdate: true, size: 1, value: 0.95 },
@@ -278,6 +304,10 @@ class ShaderRILSR extends Shader {
 		});
 		if (this.responseSharpness !== undefined) this.setResponseSharpness(this.responseSharpness);
 		if (this.responseDirectionalGain !== undefined) this.setResponseDirectionalGain(this.responseDirectionalGain);
+		if (this.atlasIntensityPowerAlpha !== undefined)
+			this.setAtlasIntensityPowerAlpha(this.atlasIntensityPowerAlpha);
+		if (this.atlasIntensityPowerPreserveEnergy !== undefined)
+			this.setAtlasIntensityPowerPreserveEnergy(this.atlasIntensityPowerPreserveEnergy);
 		this.setResponseCoherenceRange(this.coherenceLow ?? 0.0, this.coherenceHigh ?? 0.02);
 		this.setResponseCoherenceRange(
 			this.coherenceNormalizedLow ?? 0.95,
@@ -709,6 +739,26 @@ vec3 dictionary_response_transfer_value(uint atom_index, vec2 light_dir_uv) {
 		return str;
 	}
 
+	/**
+	 * Reconstructs from the cached atlas whose per-tile RGB-vector intensities
+	 * have been raised to the current intensity-power exponent.
+	 * @returns {string}
+	 * @private
+	 */
+	sparse_coding_atlas_intensity_power_str() {
+		let str = `
+	vec2 light_dir_uv = uv_from_light_direction(light);
+	vec3 directional = vec3(0.0);
+`;
+		const sparsityMultiplier = this.config.input_params.sparsity_multiplier;
+		for (let i = 0; i < sparsityMultiplier; ++i) {
+			const coefficientName = 'coef' + Util.padZeros(i, 2);
+			const indexName = 'idx' + Util.padZeros(i, 2);
+			str += `\tdirectional += atlas_intensity_power_contribution(${i}, ${coefficientName}, ${indexName}, light_dir_uv);\n`;
+		}
+		return str + '\tvec3 color = texture(avg, v_texcoord).rgb * average_scale + average_min + directional;\n';
+	}
+
 
 	// RILSR relighting shader part
 	sparse_coding_relight_str() {
@@ -737,6 +787,7 @@ vec3 dictionary_response_transfer_value(uint atom_index, vec2 light_dir_uv) {
 		const sparsity_multiplier = this.config.input_params.sparsity_multiplier;
 		const isResponseTransferMode = this.mode === 'dictionary-response-transfer' ||
 			this.mode === 'dictionary-response-transfer-intensity';
+		const isAtlasIntensityPowerMode = this.mode === 'atlas-intensity-power';
 		let str = `
 
 in vec2 v_texcoord;
@@ -745,6 +796,7 @@ uniform sampler2D dict;
 uniform sampler2D response_dict;
 uniform sampler2D response_mean;
 uniform sampler2D response_gain;
+uniform sampler2D atlas_intensity_power_dict;
 uniform vec2 dictionary_size;
 uniform vec2  dictionary_atlas_atom_tile_size;
 uniform int   dictionary_atom_count_x;
@@ -757,6 +809,7 @@ uniform vec3 coefficients_min[${sparsity_multiplier}];
 uniform vec3 coefficients_scale[${sparsity_multiplier}];
 uniform float response_sharpness;
 uniform float response_directional_gain;
+uniform float atlas_intensity_power_alpha;
 uniform float response_coherence_low;
 uniform float response_coherence_high;
 uniform float response_coherence_normalized_low;
@@ -845,6 +898,20 @@ ${isResponseTransferMode ? `vec3 response_transfer_contribution(int index, sampl
 }
 ` : ''}
 
+${isAtlasIntensityPowerMode ? `vec3 atlas_intensity_power_contribution(int index, sampler2D coef_sampler, usampler2D idx_sampler, vec2 light_dir_uv) {
+	vec3 result = vec3(0.0);
+	vec3 coefficients = texture(coef_sampler, v_texcoord).rgb * coefficients_scale[index] + coefficients_min[index];
+	uvec3 atom_indices = decode_sparse_indices(idx_sampler, v_texcoord);
+	uint entries[3] = uint[](atom_indices.r, atom_indices.g, atom_indices.b);
+	float weights[3] = float[](coefficients.r, coefficients.g, coefficients.b);
+	for (int entry = 0; entry < 3; ++entry) {
+		vec2 atom_uv = dictionary_uv_from_index_tile_xy(entries[entry], light_dir_uv.x, light_dir_uv.y);
+		result += texture(atlas_intensity_power_dict, atom_uv).rgb * weights[entry];
+	}
+	return result;
+}
+` : ''}
+
 vec4 data() {
 		`;
 		if (this.hasMask)
@@ -868,6 +935,9 @@ vec4 data() {
 				break;
 			case 'dictionary-response-transfer-intensity' :
 				str += this.sparse_coding_response_transfer_str(true);
+				break;
+			case 'atlas-intensity-power' :
+				str += this.sparse_coding_atlas_intensity_power_str();
 				break;
 			case 'dominant-family' :
 				str += 'vec3 color = dominant_dictionary_family();\n';
