@@ -256,7 +256,7 @@ class FocusContext {
      */
     static getCanvasBorder(focus, context) {
         // Return the min distance in canvas pixel of the lens center from the boundary.
-        const radiusFactorFromBoundary = 1.5;
+        const radiusFactorFromBoundary = 1.1;
         return context.z * focus.radius * radiusFactorFromBoundary; // Distance Lens Center Canvas Border
     }
 

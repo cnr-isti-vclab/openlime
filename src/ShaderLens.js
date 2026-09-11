@@ -89,9 +89,11 @@ class ShaderLens extends Shader {
     constructor(options = {}) {
         super(options);
 
-        // Only one sampler needed for single layer rendering
+        // The second sampler is a 256-entry luminance CDF used only when
+        // local histogram equalization is enabled by LayerLens.
         this.samplers = [
-            { id: 0, name: 'source0' }
+            { id: 0, name: 'source0' },
+            { id: 1, name: 'equalize_lut' }
         ];
 
         this.registerUniforms({
@@ -99,7 +101,8 @@ class ShaderLens extends Shader {
             u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1, 1] },
             u_border_color: { type: 'vec4', needsUpdate: true, size: 4, value: [0.8, 0.8, 0.8, 1] },
             u_border_enable: { type: 'bool', needsUpdate: true, size: 1, value: false },
-            u_median_filter: { type: 'bool', needsUpdate: true, size: 1, value: false }
+            u_median_filter: { type: 'bool', needsUpdate: true, size: 1, value: false },
+            u_equalize: { type: 'bool', needsUpdate: true, size: 1, value: false }
         });
         this.setMedianFilter(options.medianFilter ?? false);
         this.label = "ShaderLens";
@@ -128,6 +131,11 @@ class ShaderLens extends Shader {
         this.setUniform('u_median_filter', Boolean(enabled));
     }
 
+    /** Enables local histogram-equalization through the supplied CDF LUT. */
+    setEqualize(enabled) {
+        this.setUniform('u_equalize', Boolean(enabled));
+    }
+
     /**
      * Generates fragment shader source code.
      * 
@@ -147,11 +155,16 @@ class ShaderLens extends Shader {
         uniform vec4 u_border_color;
         uniform bool u_border_enable;
         uniform bool u_median_filter;
+        uniform bool u_equalize;
         in vec2 v_texcoord;
 
         vec4 sourceColor() {
             vec4 center = texture(source0, v_texcoord);
-            if (!u_median_filter) return center;
+            if (!u_median_filter) {
+                if (!u_equalize) return center;
+                float equalized = texture(equalize_lut, vec2(clamp(center.r, 0.0, 1.0), 0.5)).r;
+                return vec4(vec3(equalized), center.a);
+            }
 
             vec2 d = vec2(1.0) / u_width_height;
             vec4 samples[9];
@@ -170,7 +183,10 @@ class ShaderLens extends Shader {
                     samples[j] = upper;
                 }
             }
-            return samples[4];
+            vec4 filtered = samples[4];
+            if (!u_equalize) return filtered;
+            float equalized = texture(equalize_lut, vec2(clamp(filtered.r, 0.0, 1.0), 0.5)).r;
+            return vec4(vec3(equalized), filtered.a);
         }
 
         vec4 lensColor(in vec4 c_in, in vec4 c_border, in vec4 c_out,

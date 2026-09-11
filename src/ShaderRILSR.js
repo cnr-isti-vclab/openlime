@@ -67,7 +67,7 @@ class ShaderRILSR extends Shader {
 		super(options);
 
 		Object.assign(this, {
-			modes: ['light', 'edge', 'response-coherence', 'response-coherence-normalized', 'dictionary-response-transfer', 'dictionary-response-transfer-intensity', 'atlas-intensity-power', 'dominant-family', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
+			modes: ['light', 'grayscale', 'edge', 'response-coherence', 'response-coherence-normalized', 'dictionary-response-transfer', 'dictionary-response-transfer-intensity', 'atlas-intensity-power', 'dominant-family', 'debug', 'avg', 'idx00', 'idx01', 'coef00', 'coef01', 'dictionary'],
 			mode: 'light',
 			type: ['ksvd'],
 		});
@@ -78,7 +78,7 @@ class ShaderRILSR extends Shader {
 
 	/**
 	 * Sets the rendering mode
-	 * @param {string} mode - One of: 'light', 'edge',
+	 * @param {string} mode - One of: 'light', 'grayscale', 'edge',
 	 * 'response-coherence', 'response-coherence-normalized',
 	 * 'dictionary-response-transfer', 'dictionary-response-transfer-intensity',
 	 * 'atlas-intensity-power',
@@ -785,6 +785,7 @@ vec3 dictionary_response_transfer_value(uint atom_index, vec2 light_dir_uv) {
 
 	fragShaderSrc() {
 		const sparsity_multiplier = this.config.input_params.sparsity_multiplier;
+		const isGrayscaleMode = this.mode === 'grayscale';
 		const isResponseTransferMode = this.mode === 'dictionary-response-transfer' ||
 			this.mode === 'dictionary-response-transfer-intensity';
 		const isAtlasIntensityPowerMode = this.mode === 'atlas-intensity-power';
@@ -919,6 +920,7 @@ vec4 data() {
 
 		switch(this.mode) {
 			case 'light' :
+			case 'grayscale' :
 				str += this.sparse_coding_relight_str();
 				break;
 			case 'edge' :
@@ -969,6 +971,8 @@ vec4 data() {
 		
 		str += 	`
 	${this.decodeColorSnippet('color')}
+	${isGrayscaleMode ? `float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
+	color = vec3(luminance);` : ''}
 	${this.encodeColorSnippet('color')}
 	return vec4(color,1);
 }
