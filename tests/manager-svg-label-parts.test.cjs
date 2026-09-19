@@ -106,6 +106,94 @@ test('structured parts render in order with circular inverse badges and literal 
   assert.equal(Number(bg.getAttribute('y')) + Number(bg.getAttribute('height')), 16);
 });
 
+test('explicit breaks form left-aligned rows with a zoom-stable gap and widest-row background', async () => {
+  const { manager, annotation } = setup(await Manager);
+  manager.labelStyle.lineGapPx = 6;
+  annotation.labelParts = [
+    { type: 'badge', text: 'G123' }, { type: 'text', text: ' Lacuna' },
+    { type: 'break' },
+    { type: 'badge', text: 'D4' }, { type: 'text', text: ' Corrosion' },
+  ];
+  manager._updateLabelElement(annotation, { z: 1 });
+  const group = node(annotation, 'annotation-label-parts');
+  const bg = node(annotation, 'annotation-label-bg');
+  const [first, , firstText, second, , secondText] = group.children;
+  const left = circle => Number(circle.getAttribute('cx')) - Number(circle.getAttribute('r'));
+  const gap = () => Number(second.getAttribute('cy')) - Number(second.getAttribute('r'))
+    - Number(first.getAttribute('cy')) - Number(first.getAttribute('r'));
+  assert.deepEqual(group.children.map(el => el.tagName), ['circle', 'text', 'text', 'circle', 'text', 'text']);
+  assert.ok(Math.abs(left(first) - left(second)) < 1e-9);
+  assert.ok(Number(second.getAttribute('cy')) > Number(first.getAttribute('cy')));
+  assert.ok(Math.abs(gap() - 6) < 1e-9);
+  const firstWidth = Number(first.getAttribute('r')) * 2 + firstText.getBBox().width;
+  const secondWidth = Number(second.getAttribute('r')) * 2 + secondText.getBBox().width;
+  assert.ok(secondWidth > firstWidth);
+  assert.ok(Math.abs(Number(bg.getAttribute('width')) - secondWidth - 12) < 1e-9);
+  assert.ok(Math.abs(Number(bg.getAttribute('height'))
+    - (2 * Number(first.getAttribute('r')) + 2 * Number(second.getAttribute('r')) + 6 + 12)) < 1e-9);
+  assert.equal(Number(bg.getAttribute('y')) + Number(bg.getAttribute('height')), 16);
+  assert.equal(firstText.textContent, ' Lacuna');
+  assert.equal(secondText.textContent, ' Corrosion');
+
+  const size = { width: Number(bg.getAttribute('width')), height: Number(bg.getAttribute('height')),
+    radius: Number(first.getAttribute('r')) };
+  manager._updateLabelElement(annotation, { z: 2 });
+  const [zoomFirst, , , zoomSecond] = group.children;
+  const zoomGap = Number(zoomSecond.getAttribute('cy')) - Number(zoomSecond.getAttribute('r'))
+    - Number(zoomFirst.getAttribute('cy')) - Number(zoomFirst.getAttribute('r'));
+  assert.ok(Math.abs(zoomGap * 2 - 6) < 1e-9);
+  assert.ok(Math.abs(Number(bg.getAttribute('width')) * 2 - size.width) < 1e-9);
+  assert.ok(Math.abs(Number(bg.getAttribute('height')) * 2 - size.height) < 1e-9);
+  assert.equal(Number(zoomFirst.getAttribute('r')) * 2, size.radius);
+
+  manager._updateLabelElement(annotation, { z: 2 }, true);
+  assert.equal(group.children[0].getAttribute('fill'), 'yellow');
+  assert.equal(group.children[1].getAttribute('fill'), 'blue');
+  assert.equal(group.children[3].getAttribute('fill'), 'yellow');
+  assert.equal(group.children[4].getAttribute('fill'), 'blue');
+  annotation.structuralClass = 'underEditing';
+  manager._updateLabelElement(annotation, { z: 2 }, true);
+  assert.equal(group.children[3].getAttribute('fill'), 'red');
+  assert.equal(group.children[4].getAttribute('fill'), 'green');
+});
+
+test('multiline parts update, hide, and switch to single-line parts or a plain label', async () => {
+  const { manager, annotation } = setup(await Manager);
+  annotation.labelParts = [
+    { type: 'badge', text: 'G2' }, { type: 'text', text: ' Lacuna' },
+    { type: 'break' }, { type: 'badge', text: 'D4' }, { type: 'text', text: ' Corrosion' },
+  ];
+  manager._updateLabelElement(annotation, { z: 1 });
+  const bg = node(annotation, 'annotation-label-bg');
+  const multilineHeight = Number(bg.getAttribute('height'));
+  annotation.labelParts[4].text = ' Very long corrosion';
+  manager._updateLabelElement(annotation, { z: 1 });
+  assert.equal(node(annotation, 'annotation-label-parts').children[5].textContent, ' Very long corrosion');
+
+  manager.labelVisibility = 'selected';
+  manager._updateLabelElement(annotation, { z: 1 }, false);
+  assert.equal(node(annotation, 'annotation-label-parts'), undefined);
+  manager._updateLabelElement(annotation, { z: 1 }, true);
+  assert.ok(node(annotation, 'annotation-label-parts'));
+  manager.labelVisibility = 'none';
+  manager._updateLabelElement(annotation, { z: 1 }, true);
+  assert.equal(node(annotation, 'annotation-label-bg'), undefined);
+
+  manager.labelVisibility = 'all';
+  annotation.labelParts = [{ type: 'badge', text: 'G2' }, { type: 'text', text: ' Lacuna' }];
+  manager._updateLabelElement(annotation, { z: 1 });
+  const group = node(annotation, 'annotation-label-parts');
+  assert.equal(Number(group.children[0].getAttribute('cy')), 0);
+  assert.ok(Number(node(annotation, 'annotation-label-bg').getAttribute('height')) < multilineHeight);
+  annotation.labelParts = [{ type: 'break' }];
+  manager._updateLabelElement(annotation, { z: 1 });
+  assert.equal(node(annotation, 'annotation-label-parts'), undefined);
+  delete annotation.labelParts;
+  manager._updateLabelElement(annotation, { z: 1 });
+  assert.equal(node(annotation, 'annotation-label').textContent, 'Plain');
+  assert.equal(node(annotation, 'annotation-label-parts'), undefined);
+});
+
 test('zoom, selection, structural colors, cache, visibility, and plain-label fallback', async () => {
   const { manager, annotation } = setup(await Manager);
   manager._updateLabelElement(annotation, { z: 1 });
@@ -155,8 +243,11 @@ test('updateAnnotation changes presentation parts without writing annotation dat
   manager.viewer = { redraw() { redraws++; } };
   manager.emit = () => {};
   const data = annotation.data;
-  manager.updateAnnotation('one', { labelParts: [{ type: 'badge', text: 'X9' }] });
+  manager.updateAnnotation('one', { labelParts: [
+    { type: 'badge', text: 'X9' }, { type: 'break' }, { type: 'text', text: ' Detail' },
+  ] });
   assert.equal(annotation.labelParts[0].text, 'X9');
+  assert.equal(annotation.labelParts[1].type, 'break');
   assert.equal(annotation.data, data);
   assert.equal(redraws, 1);
   manager.updateAnnotation('one', { labelParts: null });

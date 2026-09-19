@@ -14,8 +14,10 @@ const _SHADOW_RUBBER = 'filter: drop-shadow(1px 1px 1.8px rgba(0,0,0,0.40))';
 /**
  * One literal, ordered part of an annotation's display label.
  * @typedef {Object} AnnotationLabelPart
- * @property {string} type - `badge` for a circular badge or `text` for plain text.
- * @property {string} text - Text displayed verbatim in an SVG text node.
+ * @property {string} type - `badge` for a circular badge, `text` for plain text,
+ *   or `break` to start a new row.
+ * @property {string} [text] - Literal SVG text for `badge` and `text` parts;
+ *   omitted for `break`.
  */
 
 /**
@@ -849,6 +851,8 @@ class ManagerSvgAnnotation {
    *   Label background stroke width when the annotation is under editing; overrides selected/default stroke width.
    * @param {number} [options.labelStyle.backgroundStrokeWidthPx=1]
    * @param {number} [options.labelStyle.paddingPx=6]
+   * @param {number} [options.labelStyle.lineGapPx=4]
+   *   Space between explicit `labelParts` rows, measured in screen pixels.
    * @param {number} [options.labelStyle.borderRadiusPx=4]
   * @param {number} [options.labelStyle.offsetYPx=8]
    * @param {boolean} [options.singleEditMode=false]
@@ -874,6 +878,7 @@ class ManagerSvgAnnotation {
       backgroundStrokeWidthUnderEditingPx: undefined,
       backgroundStrokeWidthPx: 1,
       paddingPx: 6,
+      lineGapPx: 4,
       borderRadiusPx: 4,
       offsetYPx: 4,
     };
@@ -1400,8 +1405,9 @@ class ManagerSvgAnnotation {
    * @param {Object}   [opts.markerOptions] - Override marker constructor options.
    * @param {string}   [opts.label='']
    * @param {AnnotationLabelPart[]} [opts.labelParts]
-   *   Optional ordered presentation parts. Badges are circular with inverse
-   *   label colours. Part text is rendered literally, never as SVG markup.
+   *   Optional ordered presentation parts. A `{type:'break'}` part starts a
+   *   new row; rows share a left edge and never wrap automatically. Badges are
+   *   circular with inverse label colours. Part text is rendered literally.
    *   Omit this property to use the unchanged plain `label` renderer.
    * @param {string}   [opts.description='']
   * @param {string}   [opts.semanticClass]
@@ -2722,28 +2728,33 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Builds ordered label parts in local coordinates around (0, 0).
-   * All dimensions are divided by zoom, keeping the finished row in screen
-   * pixels. SVG textContent keeps part values literal, including markup-like text.
+   * Builds ordered label rows in local coordinates around (0, 0). A `break`
+   * starts a row, including an empty row when breaks are consecutive. Each row
+   * begins at the same left edge of the widest row. SVG textContent keeps part
+   * values literal, including markup-like text.
    * @param {SVGGElement} group
    * @param {AnnotationLabelPart[]} parts
    * @param {number} fontSize - Font size in SVG coordinates.
    * @param {number} zoom
+   * @param {number} lineGap - Gap between rows in SVG coordinates.
    * @param {string} textFill
    * @param {string} backgroundFill
    * @returns {{width:number,height:number,measured:boolean}}
    * @private
    */
-  _layoutLabelParts(group, parts, fontSize, zoom, textFill, backgroundFill) {
+  _layoutLabelParts(group, parts, fontSize, zoom, lineGap, textFill, backgroundFill) {
     group.replaceChildren();
-    const items = [];
-    let width = 0;
-    let height = fontSize;
+    const rows = [{ items: [], width: 0, height: fontSize }];
     let measured = true;
     const innerPadding = 4 / zoom;
 
     for (const part of parts) {
+      if (part?.type === 'break') {
+        rows.push({ items: [], width: 0, height: fontSize });
+        continue;
+      }
       if (part?.type !== 'badge' && part?.type !== 'text') continue;
+      const row = rows[rows.length - 1];
       const value = String(part.text ?? '');
       const textEl = Util.createSVGElement('text', {
         'text-anchor': part.type === 'badge' ? 'middle' : 'start',
@@ -2779,33 +2790,40 @@ class ManagerSvgAnnotation {
       if (part.type === 'badge') {
         diameter = Math.max(textWidth + 2 * innerPadding,
           textHeight + 2 * innerPadding, fontSize + 2 * innerPadding);
-        height = Math.max(height, diameter);
+        row.height = Math.max(row.height, diameter);
       } else {
-        height = Math.max(height, textHeight);
+        row.height = Math.max(row.height, textHeight);
       }
-      items.push({ textEl, textWidth, textHeight, textY, diameter, badge: part.type === 'badge' });
-      width += diameter || textWidth;
+      row.items.push({ textEl, textWidth, textHeight, textY, diameter, badge: part.type === 'badge' });
+      row.width += diameter || textWidth;
     }
 
-    let left = -width / 2;
-    for (const item of items) {
-      const { textEl, textWidth, textHeight, textY, diameter, badge } = item;
-      if (badge) {
-        const centerX = left + diameter / 2;
-        const circle = Util.createSVGElement('circle', {
-          cx: centerX, cy: 0, r: diameter / 2,
-          fill: textFill, stroke: 'none',
-        });
-        group.insertBefore(circle, textEl);
-        textEl.setAttribute('x', String(centerX));
-        textEl.setAttribute('fill', backgroundFill);
-        textEl.setAttribute('stroke', 'none');
-        left += diameter;
-      } else {
-        textEl.setAttribute('x', String(left));
-        left += textWidth;
+    const width = Math.max(...rows.map(row => row.width));
+    const height = rows.reduce((sum, row) => sum + row.height, 0) + lineGap * (rows.length - 1);
+    let top = -height / 2;
+    for (const row of rows) {
+      let left = -width / 2;
+      const centerY = top + row.height / 2;
+      for (const item of row.items) {
+        const { textEl, textWidth, textHeight, textY, diameter, badge } = item;
+        if (badge) {
+          const centerX = left + diameter / 2;
+          const circle = Util.createSVGElement('circle', {
+            cx: centerX, cy: centerY, r: diameter / 2,
+            fill: textFill, stroke: 'none',
+          });
+          group.insertBefore(circle, textEl);
+          textEl.setAttribute('x', String(centerX));
+          textEl.setAttribute('fill', backgroundFill);
+          textEl.setAttribute('stroke', 'none');
+          left += diameter;
+        } else {
+          textEl.setAttribute('x', String(left));
+          left += textWidth;
+        }
+        textEl.setAttribute('y', String(centerY - textY - textHeight / 2));
       }
-      textEl.setAttribute('y', String(-textY - textHeight / 2));
+      top += row.height + lineGap;
     }
     return { width, height, measured };
   }
@@ -3022,6 +3040,7 @@ class ManagerSvgAnnotation {
 
         if (parts) {
           const metrics = this._layoutLabelParts(partsEl, parts, fontSize, zoom,
+            Math.max(0, Number(cfg.lineGapPx ?? 4)) / zoom,
             textFill, backgroundFill);
           textWidth = metrics.width;
           textHeight = metrics.height;

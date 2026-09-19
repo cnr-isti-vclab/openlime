@@ -16,6 +16,7 @@ jsconfig.json
 .env
 CLAUDE.md
 __pycache__
+tmp/
 
 # Editor backup files
 *~
