@@ -12,6 +12,13 @@ const _SHADOW        = `filter: ${_SHADOW_FILTER}`;
 const _SHADOW_RUBBER = 'filter: drop-shadow(1px 1px 1.8px rgba(0,0,0,0.40))';
 
 /**
+ * One literal, ordered part of an annotation's display label.
+ * @typedef {Object} AnnotationLabelPart
+ * @property {string} type - `badge` for a circular badge or `text` for plain text.
+ * @property {string} text - Text displayed verbatim in an SVG text node.
+ */
+
+/**
  * @file ManagerSvgAnnotation.js
  *
  * GUI-free annotation manager for OpenLIME.
@@ -1392,6 +1399,10 @@ class ManagerSvgAnnotation {
    * @param {string}   [opts.markerType]    - Override the active marker type.
    * @param {Object}   [opts.markerOptions] - Override marker constructor options.
    * @param {string}   [opts.label='']
+   * @param {AnnotationLabelPart[]} [opts.labelParts]
+   *   Optional ordered presentation parts. Badges are circular with inverse
+   *   label colours. Part text is rendered literally, never as SVG markup.
+   *   Omit this property to use the unchanged plain `label` renderer.
    * @param {string}   [opts.description='']
   * @param {string}   [opts.semanticClass]
    * @param {number}   [opts.publish=1]
@@ -1409,6 +1420,7 @@ class ManagerSvgAnnotation {
     // Create a bare annotation through the layer (ensures proper SVG element wrapping)
     const annotation = this.layer.newAnnotation();
     annotation.label = opts.label ?? '';
+    if (opts.labelParts !== undefined) annotation.labelParts = opts.labelParts;
     annotation.description = opts.description ?? '';
     const semanticClass = this._resolveSemanticClassId(opts.semanticClass);
     annotation.semanticClass = semanticClass;
@@ -1464,6 +1476,9 @@ class ManagerSvgAnnotation {
    * @param {string} id - Annotation ID.
    * @param {Object} patch
    * @param {string}  [patch.label]
+   * @param {AnnotationLabelPart[]|null} [patch.labelParts]
+   *   Replace or clear the ordered presentation parts without changing geometry
+   *   or persistent annotation data. `null` restores plain `label` rendering.
    * @param {string}  [patch.description]
   * @param {string|null}         [patch.semanticClass] - Semantic class id or label.
   * @param {string|null}         [patch.structuralClass] - Structural class id.
@@ -1493,6 +1508,18 @@ class ManagerSvgAnnotation {
 
     const scalarKeys = ['label', 'description', 'semanticClass', 'structuralClass', 'publish',
               'fill', 'stroke', 'fillOpacity', 'strokeWidth', 'filter'];
+    if (Object.hasOwn(patch, 'labelParts')) {
+      const parts = patch.labelParts;
+      if (parts == null) {
+        if (anno.labelParts !== undefined) {
+          delete anno.labelParts;
+          changed = true;
+        }
+      } else if (JSON.stringify(anno.labelParts) !== JSON.stringify(parts)) {
+        anno.labelParts = parts;
+        changed = true;
+      }
+    }
     for (const key of scalarKeys) {
       if (!Object.hasOwn(patch, key)) continue;
       if (key === 'semanticClass') {
@@ -2013,7 +2040,9 @@ class ManagerSvgAnnotation {
    * @private
    */
   _shouldShowLabelForAnnotation(anno, selected = false) {
-    if (!anno?.label || anno.label.trim() === '') return false;
+    if (Array.isArray(anno?.labelParts)) {
+      if (!anno.labelParts.some(part => (part?.type === 'badge' || part?.type === 'text') && String(part.text ?? '').trim())) return false;
+    } else if (!anno?.label || anno.label.trim() === '') return false;
     if (this.labelVisibility === 'none') return false;
     if (this.labelVisibility === 'selected') return !!selected;
     return true;
@@ -2462,7 +2491,7 @@ class ManagerSvgAnnotation {
       applyToEl(el);
     }
 
-    if (this._isAnyLabelVisible() && anno.label?.trim()) {
+    if (this._isAnyLabelVisible() && (anno.label?.trim() || anno.labelParts?.length)) {
       delete anno._labelLayoutCacheKey;
     }
   }
@@ -2693,8 +2722,97 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Synchronises a text element for the annotation label.
-   * Maintains screen-space font size and places it on top of the annotation's bounding box.
+   * Builds ordered label parts in local coordinates around (0, 0).
+   * All dimensions are divided by zoom, keeping the finished row in screen
+   * pixels. SVG textContent keeps part values literal, including markup-like text.
+   * @param {SVGGElement} group
+   * @param {AnnotationLabelPart[]} parts
+   * @param {number} fontSize - Font size in SVG coordinates.
+   * @param {number} zoom
+   * @param {string} textFill
+   * @param {string} backgroundFill
+   * @returns {{width:number,height:number,measured:boolean}}
+   * @private
+   */
+  _layoutLabelParts(group, parts, fontSize, zoom, textFill, backgroundFill) {
+    group.replaceChildren();
+    const items = [];
+    let width = 0;
+    let height = fontSize;
+    let measured = true;
+    const innerPadding = 4 / zoom;
+
+    for (const part of parts) {
+      if (part?.type !== 'badge' && part?.type !== 'text') continue;
+      const value = String(part.text ?? '');
+      const textEl = Util.createSVGElement('text', {
+        'text-anchor': part.type === 'badge' ? 'middle' : 'start',
+        'xml:space': 'preserve',
+        style: 'white-space: pre;',
+      });
+      textEl.textContent = value;
+      group.appendChild(textEl);
+
+      let textWidth = value.length * fontSize * 0.6;
+      let textHeight = fontSize;
+      let textY = -fontSize * 0.8;
+      let partMeasured = false;
+      if (typeof textEl.getBBox === 'function') {
+        try {
+          const box = textEl.getBBox();
+          if (box.width > 0 || box.height > 0) {
+            textWidth = box.width;
+            textHeight = box.height;
+            textY = box.y;
+            partMeasured = true;
+          }
+          // Some SVG implementations give whitespace a zero bounding box.
+          if (typeof textEl.getComputedTextLength === 'function') {
+            const advance = textEl.getComputedTextLength();
+            if (advance > 0) textWidth = advance;
+          }
+        } catch { /* Retry after the SVG node reaches the DOM. */ }
+      }
+      if (value && !partMeasured) measured = false;
+
+      let diameter = 0;
+      if (part.type === 'badge') {
+        diameter = Math.max(textWidth + 2 * innerPadding,
+          textHeight + 2 * innerPadding, fontSize + 2 * innerPadding);
+        height = Math.max(height, diameter);
+      } else {
+        height = Math.max(height, textHeight);
+      }
+      items.push({ textEl, textWidth, textHeight, textY, diameter, badge: part.type === 'badge' });
+      width += diameter || textWidth;
+    }
+
+    let left = -width / 2;
+    for (const item of items) {
+      const { textEl, textWidth, textHeight, textY, diameter, badge } = item;
+      if (badge) {
+        const centerX = left + diameter / 2;
+        const circle = Util.createSVGElement('circle', {
+          cx: centerX, cy: 0, r: diameter / 2,
+          fill: textFill, stroke: 'none',
+        });
+        group.insertBefore(circle, textEl);
+        textEl.setAttribute('x', String(centerX));
+        textEl.setAttribute('fill', backgroundFill);
+        textEl.setAttribute('stroke', 'none');
+        left += diameter;
+      } else {
+        textEl.setAttribute('x', String(left));
+        left += textWidth;
+      }
+      textEl.setAttribute('y', String(-textY - textHeight / 2));
+    }
+    return { width, height, measured };
+  }
+
+  /**
+   * Synchronises the plain label or its ordered SVG parts with a background.
+   * Maintains screen-space sizing and places it above the annotation's bounding box.
    * @param {Annotation} anno 
    * @param {Object} transform
    * @param {boolean} [selected=false]
@@ -2702,8 +2820,22 @@ class ManagerSvgAnnotation {
    */
   _updateLabelElement(anno, transform, selected = false) {
     const hasLabel = this._shouldShowLabelForAnnotation(anno, selected);
+    const parts = Array.isArray(anno.labelParts) ? anno.labelParts : null;
     let labelEl = anno.elements.find(el => el.classList?.contains('annotation-label'));
+    let partsEl = anno.elements.find(el => el.classList?.contains('annotation-label-parts'));
     let bgEl = anno.elements.find(el => el.classList?.contains('annotation-label-bg'));
+
+    // The plain text and structured renderers own separate nodes. Discard the
+    // inactive one when callers add or clear labelParts on a live annotation.
+    const obsolete = parts ? labelEl : partsEl;
+    if (obsolete) {
+      anno.elements.splice(anno.elements.indexOf(obsolete), 1);
+      obsolete.remove();
+      anno.needsUpdate = true;
+      delete anno._labelLayoutCacheKey;
+      if (parts) labelEl = null;
+      else partsEl = null;
+    }
 
     if (hasLabel) {
       if (anno.needsUpdate) {
@@ -2715,7 +2847,7 @@ class ManagerSvgAnnotation {
       const isUnderEditing = structuralClassId === 'underEditing' || (!!anno.editing && structuralClassId == null);
       const isGhost = structuralClassId === 'ghost';
       const isOrphan = structuralClassId === 'orphan';
-      const layoutKey = `${zoom}|${anno.label}|${this._annotationGeometryLayoutKey(anno)}|${selected ? 's' : 'n'}|${isUnderEditing ? 'e' : 'n'}|${isGhost ? 'g' : 'n'}|${isOrphan ? 'o' : 'n'}`;
+      const layoutKey = `${zoom}|${parts ? JSON.stringify(parts) : anno.label}|${this._annotationGeometryLayoutKey(anno)}|${selected ? 's' : 'n'}|${isUnderEditing ? 'e' : 'n'}|${isGhost ? 'g' : 'n'}|${isOrphan ? 'o' : 'n'}`;
       if (anno._labelLayoutCacheKey === layoutKey) {
         return;
       }
@@ -2725,8 +2857,8 @@ class ManagerSvgAnnotation {
           class: 'annotation-label-bg',
           'pointer-events': 'none',
         });
-        if (labelEl) {
-          const idx = anno.elements.indexOf(labelEl);
+        if (labelEl || partsEl) {
+          const idx = anno.elements.indexOf(labelEl ?? partsEl);
           anno.elements.splice(idx, 0, bgEl);
         } else {
           anno.elements.push(bgEl);
@@ -2734,7 +2866,15 @@ class ManagerSvgAnnotation {
         anno.needsUpdate = true;
       }
 
-      if (!labelEl) {
+      if (parts && !partsEl) {
+        partsEl = Util.createSVGElement('g', {
+          class: 'annotation-label-parts',
+          'pointer-events': 'none',
+          style: 'user-select: none;',
+        });
+        anno.elements.push(partsEl);
+        anno.needsUpdate = true;
+      } else if (!parts && !labelEl) {
         labelEl = Util.createSVGElement('text', {
           class: 'annotation-label',
           'text-anchor': 'middle',
@@ -2745,7 +2885,7 @@ class ManagerSvgAnnotation {
         anno.needsUpdate = true;
       }
 
-      if (labelEl.textContent !== anno.label) {
+      if (!parts && labelEl.textContent !== anno.label) {
         labelEl.textContent = anno.label;
       }
 
@@ -2769,14 +2909,15 @@ class ManagerSvgAnnotation {
       if (isUnderEditing) {
         textFill = cfg.textFillUnderEditing ?? textFill;
       }
-      labelEl.setAttribute('fill', textFill);
-      labelEl.setAttribute('font-family', String(cfg.fontFamily ?? 'sans-serif'));
-      labelEl.setAttribute('font-weight', String(cfg.fontWeight ?? 600));
-      labelEl.setAttribute('stroke', cfg.textStroke ?? 'none');
+      const contentEl = partsEl ?? labelEl;
+      contentEl.setAttribute('fill', textFill);
+      contentEl.setAttribute('font-family', String(cfg.fontFamily ?? 'sans-serif'));
+      contentEl.setAttribute('font-weight', String(cfg.fontWeight ?? 600));
+      contentEl.setAttribute('stroke', cfg.textStroke ?? 'none');
       if (textStrokeWidth > 0) {
-        labelEl.setAttribute('stroke-width', String(textStrokeWidth));
+        contentEl.setAttribute('stroke-width', String(textStrokeWidth));
       } else {
-        labelEl.removeAttribute('stroke-width');
+        contentEl.removeAttribute('stroke-width');
       }
 
       let backgroundFill = cfg.backgroundFill ?? 'rgba(0, 0, 0, 0.72)';
@@ -2810,14 +2951,14 @@ class ManagerSvgAnnotation {
         bgEl.removeAttribute('stroke-width');
       }
 
-      labelEl.setAttribute('font-size', String(fontSize));
+      contentEl.setAttribute('font-size', String(fontSize));
       bgEl.setAttribute('rx', String(cornerRadius));
       bgEl.setAttribute('ry', String(cornerRadius));
 
       // Attempt to calculate position
       let labelPositioned = false;
       try {
-        const nonLabelElements = anno.elements.filter(el => el !== labelEl && el !== bgEl);
+        const nonLabelElements = anno.elements.filter(el => el !== labelEl && el !== partsEl && el !== bgEl);
         const totalOffsetY = Number(cfg.offsetYPx ?? 8) / zoom;
         let x = 0;
         let anchorTopY = null;
@@ -2857,15 +2998,17 @@ class ManagerSvgAnnotation {
 
         // Measure text metrics in local coordinates (baseline at y=0), then
         // place the background so its bottom is exactly `offsetYPx` above shape.
-        labelEl.setAttribute('x', '0');
-        labelEl.setAttribute('y', '0');
+        if (!parts) {
+          labelEl.setAttribute('x', '0');
+          labelEl.setAttribute('y', '0');
+        }
 
         let textWidth = anno.label.length * (fontSize * 0.6); // Fallback estimate
         let textHeight = fontSize;
         let bboxY = -fontSize * 0.8; // Fallback ascent approximation
         let bboxMeasured = false;
 
-        if (typeof labelEl.getBBox === 'function') {
+        if (!parts && typeof labelEl.getBBox === 'function') {
           try {
             const textBbox = labelEl.getBBox();
             if (textBbox.width > 0 || textBbox.height > 0) {
@@ -2877,6 +3020,15 @@ class ManagerSvgAnnotation {
           } catch (e) { }
         }
 
+        if (parts) {
+          const metrics = this._layoutLabelParts(partsEl, parts, fontSize, zoom,
+            textFill, backgroundFill);
+          textWidth = metrics.width;
+          textHeight = metrics.height;
+          bboxY = -metrics.height / 2;
+          bboxMeasured = metrics.measured;
+        }
+
         const bgWidth = textWidth + padding * 2;
         const bgHeight = textHeight + padding * 2;
         const targetBottomY = (anchorTopY ?? 0) - totalOffsetY;
@@ -2884,8 +3036,12 @@ class ManagerSvgAnnotation {
         const bgY = targetBottomY - bgHeight;
         const labelY = (bgY + padding) - bboxY;
 
-        labelEl.setAttribute('x', String(x));
-        labelEl.setAttribute('y', String(labelY));
+        if (parts) {
+          partsEl.setAttribute('transform', `translate(${x} ${labelY})`);
+        } else {
+          labelEl.setAttribute('x', String(x));
+          labelEl.setAttribute('y', String(labelY));
+        }
 
         bgEl.setAttribute('x', String(bgX));
         bgEl.setAttribute('y', String(bgY));
@@ -2914,6 +3070,14 @@ class ManagerSvgAnnotation {
         if (idx !== -1) {
           anno.elements.splice(idx, 1);
           labelEl.remove();
+          anno.needsUpdate = true;
+        }
+      }
+      if (partsEl) {
+        const idx = anno.elements.indexOf(partsEl);
+        if (idx !== -1) {
+          anno.elements.splice(idx, 1);
+          partsEl.remove();
           anno.needsUpdate = true;
         }
       }
