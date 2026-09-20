@@ -3363,20 +3363,21 @@ class ManagerSvgAnnotation {
   }
 
   /**
-   * Double-tap — unified entry point to creation:
+   * Double-tap — starts or finishes drawing when creation is armed:
    *
-   * - Any mode, no session, 'sequence' marker → enter create, start drawing session
-   * - Any mode, no session, 'drag' marker     → enter create, arm drag (next drag starts rect)
-   * - Create mode, session active, 'sequence' → add last vertex + finalise
+   * - Create mode, no session, 'sequence' marker → start drawing session
+   * - Create mode, no session, 'drag' marker     → leave the next drag to start drawing
+   * - Active 'sequence' session                 → add last vertex + finalise
    *
-  * Note: `toggle()` enters `'edit'` mode (not `'create'`).  Sequence/drag
-  * drawing can start here on double-click; tap markers are created with a
-  * single click once create mode is active.
+   * Without an active session, double-taps in edit mode pass through so
+   * selection and vertex editing remain available. `setActiveMarker()` arms
+   * create mode; tap markers are created with a single click in that mode.
    * @private
    */
   _onDoubleTap(e) {
     if (!this._pencilEnabled || this._interactionSuspended) return;
     if (this._isUiTarget(e)) return;
+    if (!this._session && this._mode !== 'create') return;
     e.preventDefault();
     e.stopPropagation();
 
@@ -3392,17 +3393,16 @@ class ManagerSvgAnnotation {
       return;
     }
 
-    // No active session → enter create mode and start sequence/drag creation.
+    // No active session: create mode was explicitly armed.
     if (markerMode === 'tap') return;
 
-    this.setMode('create');
     const pos = this._eventToImageCoords(e);
 
     if (markerMode === 'sequence') {
       // Polyline/Polygon: double-click places the first vertex
       this._startSession(pos, e);
     }
-    // 'drag': create mode is now armed; the next drag gesture will start the session
+    // 'drag': the next drag gesture will start the session
   }
 
   /**
