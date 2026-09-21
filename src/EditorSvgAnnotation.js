@@ -615,7 +615,7 @@ class EditorSvgAnnotation {
 		}
 		
 		// Remove SVG elements from the canvas
-		this.layer.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`).forEach(e => e.remove());
+		this.layer.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`).forEach(e => e.remove());
 
 		// Remove entry from the list
 		let list = this.layer.annotationsListEntry.element.parentElement.querySelector('.openlime-list');

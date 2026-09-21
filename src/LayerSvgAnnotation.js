@@ -79,7 +79,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			overlayElement: null,   //reference to canvas overlayElement. TODO: check if really needed.
 			shadow: true,           //svg attached as shadow node (so style apply only the svg layer)
 			svgElement: null, 		//the svg layer
-			svgGroup: null,
+			svgGeometryGroup: null,
+			svgLabelGroup: null,
 			onClick: null,			//callback function
 			classes: {
 				'': { stroke: '#000', label: '' },
@@ -104,8 +105,14 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	createOverlaySVGElement() {
 		this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svgElement.classList.add('openlime-svgoverlay');
-		this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-		this.svgElement.append(this.svgGroup);
+
+		// Keep labels in a later SVG paint layer than geometry, hit targets, and handles.
+		this.svgGeometryGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+		this.svgGeometryGroup.classList.add('openlime-annotation-geometry');
+		this.svgLabelGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+		this.svgLabelGroup.classList.add('openlime-annotation-labels');
+		this.svgLabelGroup.setAttribute('pointer-events', 'none');
+		this.svgElement.append(this.svgGeometryGroup, this.svgLabelGroup);
 
 		// Check if the shadow root already exists before attaching
 		let root = this.overlayElement;
@@ -154,8 +161,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	 * Clears all annotation selections
 	 */
 	clearSelected() {
-		if (this.svgGroup)
-			this.svgGroup.querySelectorAll('[data-annotation]').forEach((e) => e.classList.remove('selected'));
+		if (this.svgElement)
+			this.svgElement.querySelectorAll('[data-annotation]').forEach((e) => e.classList.remove('selected'));
 		super.clearSelected();
 	}
 
@@ -180,8 +187,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	 * @override
 	 */
 	deleteAnnotationById(id) {
-		if (this.svgGroup)
-			this.svgGroup.querySelectorAll(`[data-annotation="${id}"]`).forEach((e) => e.remove());
+		if (this.svgElement)
+			this.svgElement.querySelectorAll(`[data-annotation="${id}"]`).forEach((e) => e.remove());
 
 		return super.deleteAnnotationById(id);
 	}
@@ -213,7 +220,8 @@ class LayerSvgAnnotation extends LayerAnnotation {
 		this.svgElement.setAttribute('viewBox', `${-viewport.w / 2} ${-viewport.h / 2} ${viewport.w} ${viewport.h}`);
 
 		const svgTransform = this.getSvgGroupTransform(transform);
-		this.svgGroup.setAttribute("transform", svgTransform);
+		this.svgGeometryGroup.setAttribute("transform", svgTransform);
+		this.svgLabelGroup.setAttribute("transform", svgTransform);
 		return true;
 	}
 
@@ -283,7 +291,7 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			if (needsDomSync) {
 				anno.needsUpdate = false;
 
-				for (let e of this.svgGroup.querySelectorAll(`[data-annotation="${anno.id}"]`))
+				for (let e of this.svgElement.querySelectorAll(`[data-annotation="${anno.id}"]`))
 					e.remove();
 
 				if (!anno.visible)
@@ -302,7 +310,12 @@ class LayerSvgAnnotation extends LayerAnnotation {
 					c.classList.add('openlime-annotation');
 					if (this.selected.has(anno.id))
 						c.classList.add('selected');
-					this.svgGroup.appendChild(c);
+					const isLabel = ['annotation-label', 'annotation-label-bg', 'annotation-label-parts']
+						.some(className => c.classList.contains(className));
+					if (isLabel)
+						c.setAttribute('pointer-events', 'none');
+					const group = isLabel ? this.svgLabelGroup : this.svgGeometryGroup;
+					group.appendChild(c);
 					c.onpointerdown = (e) => {
 						if (e.button == 0) {
 							e.preventDefault();

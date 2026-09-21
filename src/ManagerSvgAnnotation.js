@@ -36,7 +36,7 @@ const _SHADOW_RUBBER = 'filter: drop-shadow(1px 1px 1.8px rgba(0,0,0,0.40))';
  *  │  │  (extensible)    │   │  (auto-created or injected)      │    │
  *  │  │                  │   │                                  │    │
  *  │  │  'disk'     →tap │   │  annotations[]                   │    │
- *  │  │  'polyline' →seq │   │  svgGroup (DOM)                  │    │
+ *  │  │  'polyline' →seq │   │  geometry + label groups (DOM)  │    │
  *  │  │  'rect'     →drg │   │  annotationUpdate hook ──────┐   │    │
  *  │  │  …               │   │                              │   │    │
  *  │  └──────────────────┘   └──────────────────────────────┼───┘    │
@@ -1381,8 +1381,8 @@ class ManagerSvgAnnotation {
    */
   destroy() {
     document.removeEventListener('keydown', this._keyHandler);
-    const svgGroup = this.layer?.svgGroup;
-    if (svgGroup) svgGroup.style.pointerEvents = ''; // restore
+    const geometryGroup = this.layer?.svgGeometryGroup;
+    if (geometryGroup) geometryGroup.style.pointerEvents = ''; // restore
     if (this._session) this._cancelSession();
     if (this._selectedAnnotation) this._detachVertexDragListeners(this._selectedAnnotation);
   }
@@ -2298,7 +2298,7 @@ class ManagerSvgAnnotation {
   // ─── Internal: pointer-events management ────────────────────────────────────
 
   /**
-   * Sets `pointer-events: none` on the annotation SVG group when pencil mode is
+   * Sets `pointer-events: none` on the annotation geometry group when pencil mode is
    * active AND the current marker uses 'sequence' or 'drag' interaction.
    *
    * **Why this is needed:**
@@ -2314,15 +2314,15 @@ class ManagerSvgAnnotation {
    * @private
    */
   _syncPointerEvents() {
-    const svgGroup = this.layer?.svgGroup;
-    if (!svgGroup) return;
+    const geometryGroup = this.layer?.svgGeometryGroup;
+    if (!geometryGroup) return;
     const allowSelection = this._inspectEnabled || (this._pencilEnabled && this._mode === 'edit');
     // pointer-events: none in three cases:
     //  1. pencil disabled → annotations must be fully transparent to the user;
     //     all clicks/drags must reach the canvas (panzoom, light, …)
     //  2. create mode → PointerManager must see every click/drag for drawing
     // In edit mode with pencil enabled, annotations are clickable for selection.
-    svgGroup.style.pointerEvents =
+    geometryGroup.style.pointerEvents =
       (!allowSelection || this._interactionSuspended || this._mode === 'create') ? 'none' : '';
   }
 
