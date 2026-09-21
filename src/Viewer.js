@@ -8,6 +8,7 @@ import { addSignals } from './Signals.js'
  * @typedef {Object} ViewerOptions
  * @property {string} [background] - CSS background style
  * @property {boolean} [autofit=true] - Auto-fit camera
+ * @property {boolean} [fitCameraOnResize=true] - Fit the camera after canvas size changes; set to false to preserve the current pan, zoom, and rotation in embedded layouts
  * @property {Object} [canvas] - Canvas options
  * @property {Camera} [camera] - Custom camera
  * @property {number} [idleTime=60] - Idle timeout seconds
@@ -119,6 +120,7 @@ class Viewer {
 	 * @param {HTMLElement|string} div - Container element or selector
 	 * @param {ViewerOptions} [options] - Configuration options
 	 * @param {number} [options.idleTime=60] - Seconds of inactivity before idle event
+	 * @param {boolean} [options.fitCameraOnResize=true] - Whether resize events fit the scene or preserve the current camera transform
 	 * @throws {Error} If container element not found
 	 * 
 	 * Component Setup:
@@ -132,6 +134,7 @@ class Viewer {
 		// Set default properties
 		this.background = null;
 		this.autofit = true;
+		this.fitCameraOnResize = true;
 		this.canvas = {};
 		this.camera = new Camera();
 		this.idleTime = 60; // in seconds
@@ -174,10 +177,10 @@ class Viewer {
 				this.camera.fitCameraBox(0);
 			});
 
-			// For updateSize events, only fit if we have at least one ready layer
+			// Resizing preserves legacy auto-fit by default; embedded viewers can opt out.
 			this.canvas.addEvent('updateSize', () => {
 				const hasReadyLayers = Object.values(this.canvas.layers).some(layer => layer.status === 'ready');
-				if (hasReadyLayers) {
+				if (this.fitCameraOnResize && hasReadyLayers) {
 					this.camera.fitCameraBox(0);
 				}
 			});
@@ -307,7 +310,7 @@ class Viewer {
 		this.canvasElement.height = height;
 
 		let view = { x: 0, y: 0, dx: width, dy: height, w: width, h: height };
-		this.camera.setViewport(view);
+		this.camera.setViewport(view, !this.fitCameraOnResize);
 		this.canvas.updateSize();
 		this.emit('resize', view);
 

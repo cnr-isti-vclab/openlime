@@ -64,9 +64,14 @@ class Camera {
 	/**
 	* Updates the viewport while maintaining the camera position as close as possible to the previous one.
 	* @param {Viewport} view - The new viewport in CSS coordinates
+	* @param {boolean} [preserveTransform=false] - Keep pan, zoom, and rotation unchanged instead of adjusting zoom for the new viewport
 	*/
-	setViewport(view) {
+	setViewport(view, preserveTransform = false) {
 		if (this.viewport) {
+			if (preserveTransform) {
+				this.viewport = view;
+				return;
+			}
 			let rz = Math.sqrt((view.w / this.viewport.w) * (view.h / this.viewport.h));
 			this.viewport = view;
 			const { x, y, z, a } = this.target;

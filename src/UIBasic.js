@@ -30,7 +30,6 @@ import { LayerSvgAnnotation } from './LayerSvgAnnotation'
  * @property {Object} [menu] - Menu configuration object
  * @property {number} [pixelSize] - Pixel size for scale bar
  * @property {string} [attribution] - Attribution HTML string
- * @property {boolean} [autoFit] - Automatically fit camera on start
  * // Aggiungere qui altre proprietà note di configurazione
  */
 
@@ -176,7 +175,6 @@ class UIBasic {
 			viewer: viewer,
 			camera: viewer.camera,
 			skin: Skin.url || 'skin/skin.svg',
-			autoFit: true, //FIXME to be moved in the viewer?
 			//skinCSS: 'skin.css', // TODO: probably not useful
 			actions: {
 				home: { title: 'Home', display: true, key: 'Home', task: (event) => { if (camera.boundingBox) camera.fitCameraBox(250); } },
@@ -264,9 +262,6 @@ class UIBasic {
 				this.emit('annotationInfo', payload);
 			});
 		}
-
-		if (this.autoFit) //FIXME Check if fitCamera is triggered only if the layer is loaded. Is updateSize the right event?
-			this.viewer.canvas.addEvent('updateSize', () => this.viewer.camera.fitCameraBox(0));
 
 		this.panzoom = new ControllerPanZoom(this.viewer.camera, {
 			priority: -1000,
