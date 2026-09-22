@@ -3448,53 +3448,68 @@ class ManagerSvgAnnotation {
    * @private
    */
   _onSingleTap(e) {
-    if (!this._pencilEnabled || this._interactionSuspended) return;
+    if (this._interactionSuspended) return;
     if (this._isUiTarget(e)) return;
 
-    const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
+    // Drawing and edit-mode handling remains exclusively under the pencil.
+    // Inspection, however, can select annotations with the pencil disabled,
+    // so its empty-background deselection is handled below as well.
+    if (this._pencilEnabled) {
+      const markerMode = this._instantiateMarker(this.activeMarker, this.markerOptions).interactionMode();
 
-    if (!this._session && this._mode === 'create' && markerMode === 'tap') {
-      e.preventDefault?.();
-      e.stopPropagation?.();
-      const pos = this._eventToImageCoords(e);
-      this.createAnnotation(pos);
-      return;
+      if (!this._session && this._mode === 'create' && markerMode === 'tap') {
+        e.preventDefault?.();
+        e.stopPropagation?.();
+        const pos = this._eventToImageCoords(e);
+        this.createAnnotation(pos);
+        return;
+      }
+
+      // In create mode, sequence markers start on first single-click.
+      if (!this._session && this._mode === 'create' && markerMode === 'sequence') {
+        e.preventDefault?.();
+        e.stopPropagation?.();
+        const pos = this._eventToImageCoords(e);
+        this._startSession(pos, e);
+        return;
+      }
+
+      if (!this._session && this._mode === 'create') {
+        return;
+      }
+
+      // Mid-drawing: add a vertex (only for sequence/polyline markers)
+      if (this._session) {
+        if (markerMode !== 'sequence') return;
+        e.preventDefault?.();
+        e.stopPropagation?.();
+        const pos = this._eventToImageCoords(e);
+        const transform = this.viewer.camera.getCurrentTransform(performance.now());
+        this._session.marker.addVertex(pos, transform, this._session.annotation);
+        this._session.annotation.needsUpdate = true;
+        this.viewer.redraw();
+        return;
+      }
     }
 
-    // In create mode, sequence markers start on first single-click.
-    if (!this._session && this._mode === 'create' && markerMode === 'sequence') {
-      e.preventDefault?.();
-      e.stopPropagation?.();
-      const pos = this._eventToImageCoords(e);
-      this._startSession(pos, e);
-      return;
-    }
+    // Never clear a selection while a drawing session is in progress, even if
+    // the pencil was disabled externally without finalising that session.
+    if (this._session) return;
 
-    if (!this._session && this._mode === 'create') {
-      return;
-    }
-
-    // Mid-drawing: add a vertex (only for sequence/polyline markers)
-    if (this._session) {
-      if (markerMode !== 'sequence') return;
-      e.preventDefault?.();
-      e.stopPropagation?.();
-      const pos = this._eventToImageCoords(e);
-      const transform = this.viewer.camera.getCurrentTransform(performance.now());
-      this._session.marker.addVertex(pos, transform, this._session.annotation);
-      this._session.annotation.needsUpdate = true;
-      this.viewer.redraw();
-      return;
-    }
-
-    // No session in edit mode: clicking empty area clears the current selection.
     // Determine annotation-hit directly from the current event target to avoid
     // stale state when annotation clicks are handled by LayerSvgAnnotation.
     const wasOnAnnotation = !!(e.target?.closest?.('.openlime-annotation'));
     this._lastClickWasOnAnnotation = false;
 
-    if (this._mode !== 'edit') this.setMode('edit');
-    if (!wasOnAnnotation) this.deselectAll();
+    // Pencil edit mode keeps its historical behaviour, including returning to
+    // edit mode after an annotation click. Inspect-only mode must not change
+    // modes, but it does clear selection when the viewer background is tapped.
+    if (this._pencilEnabled) {
+      if (this._mode !== 'edit') this.setMode('edit');
+      if (!wasOnAnnotation) this.deselectAll();
+    } else if (this._inspectEnabled && !wasOnAnnotation) {
+      this.deselectAll();
+    }
   }
 
   /** Hover → rubber-band update for 'sequence' sessions (mouse up + moving). @private */

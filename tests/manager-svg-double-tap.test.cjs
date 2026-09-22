@@ -125,3 +125,76 @@ test('double-tap still finalizes an active sequence session', async () => {
   assert.equal(event.prevented, 1);
   assert.equal(event.stopped, 1);
 });
+
+function singleTapTarget(onAnnotation = false) {
+  return {
+    target: {
+      closest: selector => onAnnotation && selector === '.openlime-annotation' ? {} : null,
+    },
+  };
+}
+
+test('inspect-only background tap clears selection and emits an empty selection payload', async () => {
+  const manager = Object.create((await Manager).prototype);
+  const selected = new Set(['selected']);
+  const emitted = [];
+  manager._mode = 'idle';
+  manager._pencilEnabled = false;
+  manager._inspectEnabled = true;
+  manager._session = null;
+  manager.layer = {
+    layout: {},
+    selected,
+    clearSelected() { selected.clear(); },
+  };
+  manager._updateHandlesVisibility = () => {};
+  manager.emit = (name, payload) => emitted.push([name, payload]);
+
+  manager._onSingleTap(singleTapTarget());
+
+  assert.equal(selected.size, 0);
+  const event = emitted.find(([name]) => name === 'annotationSelectionChange');
+  assert.deepEqual(Array.from(event[1].selectedIds), []);
+});
+
+test('inspect-only taps on annotation geometry, labels, and vertices retain selection', async () => {
+  const manager = Object.create((await Manager).prototype);
+  manager._mode = 'idle';
+  manager._pencilEnabled = false;
+  manager._inspectEnabled = true;
+  manager._session = null;
+  manager.layer = { layout: {}, selected: new Set(['selected']) };
+  manager.deselectAll = () => assert.fail('annotation tap must retain selection');
+
+  for (const part of ['geometry', 'label', 'vertex']) {
+    manager._onSingleTap(singleTapTarget(true));
+    assert.ok(manager.layer.selected.has('selected'), `${part} tap retained selection`);
+  }
+});
+
+test('an active creation session never clears selection on a background tap', async () => {
+  const manager = Object.create((await Manager).prototype);
+  const vertices = [];
+  manager._mode = 'create';
+  manager._pencilEnabled = true;
+  manager._inspectEnabled = true;
+  manager._session = {
+    annotation: { needsUpdate: false },
+    marker: { addVertex: (...args) => vertices.push(args) },
+  };
+  manager.activeMarker = 'polyline';
+  manager.markerOptions = {};
+  manager.layer = { layout: {}, selected: new Set(['selected']) };
+  manager._instantiateMarker = () => ({ interactionMode: () => 'sequence' });
+  manager._eventToImageCoords = () => ({ x: 12, y: 34 });
+  manager.viewer = {
+    camera: { getCurrentTransform: () => ({ z: 1 }) },
+    redraw() {},
+  };
+  manager.deselectAll = () => assert.fail('drawing session must retain selection');
+
+  manager._onSingleTap(singleTapTarget());
+
+  assert.equal(vertices.length, 1);
+  assert.ok(manager.layer.selected.has('selected'));
+});
