@@ -1,6 +1,7 @@
 import { Annotation } from './Annotation.js';
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js';
 import { CoordinateSystem } from './CoordinateSystem.js';
+import { BoundingBox } from './BoundingBox.js';
 import { Util } from './Util.js';
 import { addSignals } from './Signals.js';
 import { ramerDouglasPeucker, smooth, relaxDenseZigZagPoints } from './Simplify.js';
@@ -1704,6 +1705,158 @@ class ManagerSvgAnnotation {
    */
   getAnnotations() {
     return this.layer.annotations ?? [];
+  }
+
+  /**
+   * Frames the union of the requested annotations using the camera only.
+   * The returned bounds are in annotation image coordinates (origin at top left).
+   * Missing IDs and annotations without measurable geometry are ignored.
+   *
+   * @param {string[]} annotationIds - IDs managed by this annotation layer.
+   * @param {Object} [options={}]
+   * @param {number} [options.duration=250] - Animation time in milliseconds.
+   * @param {number} [options.padding=0.08] - Fraction reserved on each side of the usable viewport.
+   * @param {{top?:number,right?:number,bottom?:number,left?:number}} [options.insets]
+   *   CSS-pixel space occupied by application overlays.
+   * @param {boolean} [options.onlyIfNeeded=true] - Skip framing when all geometry is already visible.
+   * @returns {{moved:boolean,fullyVisible:boolean,bounds:{xLow:number,yLow:number,xHigh:number,yHigh:number}|null}}
+   */
+  focusAnnotations(annotationIds, options = {}) {
+    const result = { moved: false, fullyVisible: false, bounds: null };
+    const camera = this.viewer?.camera;
+    const layer = this.layer;
+    if (!camera?.viewport || !layer?.layout || !layer?.transform || !Array.isArray(annotationIds)) return result;
+
+    const bounds = new BoundingBox();
+    let found = false;
+    const ids = new Set(annotationIds);
+    for (const annotation of layer.annotations ?? []) {
+      if (!ids.has(annotation.id)) continue;
+      const box = this._annotationGeometryBounds(annotation);
+      if (!box) continue;
+      bounds.mergePoint({ x: box.xLow, y: box.yLow });
+      bounds.mergePoint({ x: box.xHigh, y: box.yHigh });
+      found = true;
+    }
+    if (!found) return result;
+    result.bounds = { xLow: bounds.xLow, yLow: bounds.yLow, xHigh: bounds.xHigh, yHigh: bounds.yHigh };
+
+    const viewport = camera.viewport;
+    const insets = options.insets ?? {};
+    const inset = side => Math.max(0, Number(insets[side]) || 0);
+    const usable = new BoundingBox({
+      xLow: viewport.x + inset('left'), yLow: viewport.y + inset('bottom'),
+      xHigh: viewport.x + viewport.dx - inset('right'), yHigh: viewport.y + viewport.dy - inset('top'),
+    });
+    if (usable.isEmpty()) return result;
+
+    // Annotation SVG uses image coordinates, with Y increasing downwards.
+    const layoutBox = layer.layout.boundingBox();
+    const w = layoutBox.width(), h = layoutBox.height();
+    if (!(w > 0 && h > 0)) return result;
+    const layerBox = new BoundingBox({
+      xLow: bounds.xLow - w / 2, xHigh: bounds.xHigh - w / 2,
+      yLow: h / 2 - bounds.yHigh, yHigh: h / 2 - bounds.yLow,
+    });
+    const contains = box => box.xLow >= usable.xLow - 1e-7 &&
+      box.xHigh <= usable.xHigh + 1e-7 &&
+      box.yLow >= usable.yLow - 1e-7 &&
+      box.yHigh <= usable.yHigh + 1e-7;
+    const displayed = CoordinateSystem.fromLayerBoxToViewportBox(
+      layerBox, camera, layer.transform, false
+    );
+    result.fullyVisible = contains(displayed);
+    if (options.onlyIfNeeded !== false && result.fullyVisible) return result;
+
+    const padding = Math.max(0, Math.min(0.49, Number(options.padding ?? 0.08) || 0));
+    const frameW = usable.width() * (1 - 2 * padding);
+    const frameH = usable.height() * (1 - 2 * padding);
+    const current = camera.getCurrentTransform(performance.now());
+    const radians = current.a * Math.PI / 180;
+    const cos = Math.cos(radians), sin = Math.sin(radians);
+    // Rotate all four layer corners. Rotating a scene-space AABB would
+    // overestimate a layer that itself has a rotation.
+    const rotated = new BoundingBox();
+    const scene = new BoundingBox();
+    for (let i = 0; i < 4; i++) {
+      const corner = layerBox.corner(i);
+      const p = layer.transform.apply(corner.x, corner.y);
+      scene.mergePoint(p);
+      rotated.mergePoint({ x: cos * p.x - sin * p.y, y: sin * p.x + cos * p.y });
+    }
+    let zoom = Math.min(
+      rotated.width() > 0 ? frameW / rotated.width() : Infinity,
+      rotated.height() > 0 ? frameH / rotated.height() : Infinity,
+      current.z // Focusing may pan, but never zooms in.
+    );
+    if (!Number.isFinite(zoom)) zoom = current.z;
+    if (camera.bounded) zoom = Math.min(Math.max(zoom, camera.minZoom), camera.maxZoom);
+    const center = scene.center();
+    const rotatedCenter = { x: cos * center.x - sin * center.y, y: sin * center.x + cos * center.y };
+    const usableCenter = usable.center();
+    const x = usableCenter.x - viewport.w / 2 - zoom * rotatedCenter.x;
+    const y = usableCenter.y - viewport.h / 2 - zoom * rotatedCenter.y;
+    const unchanged = Math.abs(x - current.x) < 1e-7 &&
+      Math.abs(y - current.y) < 1e-7 && Math.abs(zoom - current.z) < 1e-7;
+    if (unchanged) return result;
+
+    camera.setPosition(options.duration ?? 250, x, y, zoom, current.a);
+    const target = camera.target;
+    result.moved = Math.abs(target.x - current.x) >= 1e-7 ||
+      Math.abs(target.y - current.y) >= 1e-7 || Math.abs(target.z - current.z) >= 1e-7;
+    const targetViewportBox = CoordinateSystem.getFromLayerToViewportTransformNoCamera(
+      target, viewport, layer.transform
+    ).transformBox(layerBox);
+    result.fullyVisible = contains(targetViewportBox);
+    return result;
+  }
+
+  /** @private Returns the image-space box of drawing geometry, excluding UI. */
+  _annotationGeometryBounds(annotation) {
+    const bounds = new BoundingBox();
+    let found = false;
+    const excluded = [
+      'annotation-label', 'annotation-label-bg', 'annotation-label-parts',
+      'annotation-vertex-handles', 'annotation-vertex-dot', 'annotation-polyline-hit',
+      'annotation-freehand-hit', 'annotation-polyline-rubber',
+    ];
+    const visit = (element, matrix) => {
+      if (excluded.some(name => element?.classList?.contains?.(name))) return;
+      // Preserve transforms on nested SVG groups without altering annotation DOM.
+      const local = element?.transform?.baseVal?.consolidate?.()?.matrix;
+      if (local) {
+        matrix = {
+          a: matrix.a * local.a + matrix.c * local.b,
+          b: matrix.b * local.a + matrix.d * local.b,
+          c: matrix.a * local.c + matrix.c * local.d,
+          d: matrix.b * local.c + matrix.d * local.d,
+          e: matrix.a * local.e + matrix.c * local.f + matrix.e,
+          f: matrix.b * local.e + matrix.d * local.f + matrix.f,
+        };
+      }
+      if (element?.children?.length) {
+        for (const child of element.children) visit(child, matrix);
+        return;
+      }
+      if (typeof element?.getBBox !== 'function') return;
+      try {
+        const box = element.getBBox();
+        if (![box.x, box.y, box.width, box.height].every(Number.isFinite)) return;
+        for (const [px, py] of [
+          [box.x, box.y], [box.x + box.width, box.y],
+          [box.x, box.y + box.height], [box.x + box.width, box.y + box.height],
+        ]) {
+          bounds.mergePoint({
+            x: matrix.a * px + matrix.c * py + matrix.e,
+            y: matrix.b * px + matrix.d * py + matrix.f,
+          });
+        }
+        found = true;
+      } catch { /* Detached SVG geometry may not have a measurable box yet. */ }
+    };
+    const identity = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+    for (const element of annotation?.elements ?? []) visit(element, identity);
+    return found ? bounds : null;
   }
 
   // ─── Import / Export ──────────────────────────────────────────────────────

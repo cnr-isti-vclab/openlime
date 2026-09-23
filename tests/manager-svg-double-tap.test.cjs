@@ -12,6 +12,7 @@ async function loadManager() {
     './Annotation.js': { Annotation: class {} },
     './LayerSvgAnnotation.js': { LayerSvgAnnotation: class {} },
     './CoordinateSystem.js': { CoordinateSystem: class {} },
+    './BoundingBox.js': { BoundingBox: class {} },
     './Util.js': { Util: {} },
     './Signals.js': { addSignals() {} },
     './Simplify.js': { ramerDouglasPeucker() {}, smooth() {}, relaxDenseZigZagPoints() {} },
