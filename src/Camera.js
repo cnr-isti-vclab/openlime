@@ -134,9 +134,10 @@ class Camera {
 	 * @param {number} z - Zoom factor
 	 * @param {number} a - Rotation angle in degrees
 	 * @param {string} [easing] - Easing function name for animation
+	 * @param {Object} [framingViewport] - Unoccluded viewport used for translation bounds
 	 * @fires Camera#update
 	 */
-	setPosition(dt, x, y, z, a, easing) {
+	setPosition(dt, x, y, z, a, easing, framingViewport = this.viewport) {
 		/**
 		* The event is fired when the camera target is changed.
 		* @event Camera#update
@@ -147,8 +148,10 @@ class Camera {
 		this.easing = easing || this.easing;
 
 		if (this.bounded && this.viewport) {
-			const sw = this.viewport.dx;
-			const sh = this.viewport.dy;
+			const sw = framingViewport.dx;
+			const sh = framingViewport.dy;
+			const cx = framingViewport.x - this.viewport.x + (sw - this.viewport.dx) / 2;
+			const cy = framingViewport.y - this.viewport.y + (sh - this.viewport.dy) / 2;
 
 			//
 			let xform = new Transform({ x: x, y: y, z: z, a: a, t: 0 });
@@ -161,10 +164,10 @@ class Camera {
 			// if (scaled-image-size < screen) it remains fully contained
 			// else the scaled-image boundary closest to the screen cannot enter the screen.
 			const dx = Math.abs(bw - sw) / 2;// + this.boundingBox.center().x- tbox.center().x;
-			x = Math.min(Math.max(-dx, x), dx);
+			x = Math.min(Math.max(cx - dx, x), cx + dx);
 
 			const dy = Math.abs(bh - sh) / 2;// + this.boundingBox.center().y - tbox.center().y;
-			y = Math.min(Math.max(-dy, y), dy);
+			y = Math.min(Math.max(cy - dy, y), cy + dy);
 		}
 
 		let now = performance.now();

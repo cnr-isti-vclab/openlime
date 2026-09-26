@@ -1728,7 +1728,7 @@ class ManagerSvgAnnotation {
     if (!camera?.viewport || !layer?.layout || !layer?.transform || !Array.isArray(annotationIds)) return result;
 
     const bounds = new BoundingBox();
-    let found = false;
+    let measured = 0;
     const ids = new Set(annotationIds);
     for (const annotation of layer.annotations ?? []) {
       if (!ids.has(annotation.id)) continue;
@@ -1736,9 +1736,10 @@ class ManagerSvgAnnotation {
       if (!box) continue;
       bounds.mergePoint({ x: box.xLow, y: box.yLow });
       bounds.mergePoint({ x: box.xHigh, y: box.yHigh });
-      found = true;
+      measured++;
     }
-    if (!found) return result;
+    // Do not report the selection visible while some SVG shapes are still missing.
+    if (ids.size === 0 || measured !== ids.size) return result;
     result.bounds = { xLow: bounds.xLow, yLow: bounds.yLow, xHigh: bounds.xHigh, yHigh: bounds.yHigh };
 
     const viewport = camera.viewport;
@@ -1790,7 +1791,12 @@ class ManagerSvgAnnotation {
       current.z // Focusing may pan, but never zooms in.
     );
     if (!Number.isFinite(zoom)) zoom = current.z;
-    if (camera.bounded) zoom = Math.min(Math.max(zoom, camera.minZoom), camera.maxZoom);
+    if (camera.bounded) {
+      // A sidebar reduces the area in which the scene must fit, including its
+      // minimum zoom. Full-viewport limits would keep geometry behind overlays.
+      const visibleFraction = Math.min(usable.width() / viewport.dx, usable.height() / viewport.dy);
+      zoom = Math.min(Math.max(zoom, camera.minZoom * visibleFraction), camera.maxZoom);
+    }
     const center = scene.center();
     const rotatedCenter = { x: cos * center.x - sin * center.y, y: sin * center.x + cos * center.y };
     const usableCenter = usable.center();
@@ -1800,7 +1806,9 @@ class ManagerSvgAnnotation {
       Math.abs(y - current.y) < 1e-7 && Math.abs(zoom - current.z) < 1e-7;
     if (unchanged) return result;
 
-    camera.setPosition(options.duration ?? 250, x, y, zoom, current.a);
+    camera.setPosition(options.duration ?? 250, x, y, zoom, current.a, undefined, {
+      ...viewport, x: usable.xLow, y: usable.yLow, dx: usable.width(), dy: usable.height(),
+    });
     const target = camera.target;
     result.moved = Math.abs(target.x - current.x) >= 1e-7 ||
       Math.abs(target.y - current.y) >= 1e-7 || Math.abs(target.z - current.z) >= 1e-7;
