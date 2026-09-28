@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLIME - Application-owned GUI</title>
+    <link rel="stylesheet" href="../../css/skin.css">
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: system-ui, sans-serif;
+            background: #11151a;
+            color: #edf2f7;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            min-height: 64px;
+            padding: 10px 18px;
+            border-bottom: 1px solid #34404d;
+            background: #1b222b;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 650;
+        }
+
+        header p {
+            margin: 3px 0 0;
+            color: #9eabb9;
+            font-size: 12px;
+        }
+
+        #navigation-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        button, select {
+            min-height: 36px;
+            padding: 7px 11px;
+            border: 1px solid #465566;
+            border-radius: 7px;
+            background: #27313c;
+            color: inherit;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        button:hover:not(:disabled), select:hover { background: #334151; }
+        button:focus-visible, select:focus-visible, input:focus-visible {
+            outline: 2px solid #67b7ff;
+            outline-offset: 2px;
+        }
+        button:disabled { cursor: default; opacity: 0.4; }
+        button.active {
+            border-color: #67b7ff;
+            background: #164d78;
+            color: white;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 280px;
+            min-height: 0;
+        }
+
+        .openlime {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            background: #050607;
+        }
+
+        aside {
+            overflow: auto;
+            padding: 16px;
+            border-left: 1px solid #34404d;
+            background: #1b222b;
+        }
+
+        fieldset {
+            margin: 0 0 18px;
+            padding: 12px;
+            border: 1px solid #3a4654;
+            border-radius: 9px;
+        }
+
+        legend {
+            padding: 0 6px;
+            color: #b8c5d3;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        #dataset-controls label {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px;
+            align-items: center;
+            padding: 5px 0;
+            cursor: pointer;
+        }
+
+        #mode-select { width: 100%; }
+
+        .hint, #viewer-status {
+            color: #9eabb9;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        #viewer-status {
+            padding: 9px;
+            border-radius: 7px;
+            background: #111820;
+        }
+
+        #light-pad {
+            position: relative;
+            width: 150px;
+            aspect-ratio: 1;
+            margin: 4px auto 10px;
+            border: 1px solid #536273;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, #354252 0, #18212b 70%);
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        #light-pad::before,
+        #light-pad::after {
+            content: "";
+            position: absolute;
+            background: #ffffff22;
+            pointer-events: none;
+        }
+
+        #light-pad::before { left: 50%; top: 8%; bottom: 8%; width: 1px; }
+        #light-pad::after { top: 50%; left: 8%; right: 8%; height: 1px; }
+
+        #light-dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 14px;
+            height: 14px;
+            border: 2px solid white;
+            border-radius: 50%;
+            background: #ffc928;
+            box-shadow: 0 0 12px #ffc928aa;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        @media (max-width: 760px) {
+            body { overflow: auto; }
+            header { align-items: flex-start; flex-direction: column; }
+            main { grid-template-columns: 1fr; grid-template-rows: minmax(420px, 65vh) auto; }
+            aside { border-top: 1px solid #34404d; border-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>OpenLIME · application-owned GUI</h1>
+            <p>No UIBasic and no ToolbarView: every control belongs to the host application.</p>
+        </div>
+        <nav id="navigation-controls" aria-label="Viewer controls">
+            <button type="button" data-action="home">Home</button>
+            <button type="button" data-action="zoomIn">Zoom +</button>
+            <button type="button" data-action="zoomOut">Zoom −</button>
+            <button type="button" data-action="light" aria-pressed="false">Light tool</button>
+            <button type="button" data-action="fullscreen" aria-pressed="false">Fullscreen</button>
+            <button type="button" data-action="snapshot">Snapshot</button>
+        </nav>
+    </header>
+
+    <main>
+        <div class="openlime" aria-label="RTI viewer"></div>
+
+        <aside aria-label="External viewer settings">
+            <fieldset>
+                <legend>Dataset</legend>
+                <div id="dataset-controls"></div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Rendering mode</legend>
+                <select id="mode-select" aria-label="RTI rendering mode"></select>
+            </fieldset>
+
+            <fieldset>
+                <legend>Light direction</legend>
+                <div id="light-pad" role="slider" tabindex="0"
+                     aria-label="Light direction" aria-valuetext="center">
+                    <span id="light-dot"></span>
+                </div>
+                <div class="hint">
+                    Drag here to set the light numerically, or activate “Light tool”
+                    and drag directly on the image. Hold Ctrl+Shift to pan temporarily.
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>State</legend>
+                <div id="viewer-status" aria-live="polite">Initializing…</div>
+            </fieldset>
+        </aside>
+    </main>
+
+    <script src="../../js/openlime.js"></script>
+    <script>
+        const viewer = new OpenLIME.Viewer('.openlime', {
+            background: 'black',
+            canvas: { preserveDrawingBuffer: true }
+        });
+
+        const datasets = [
+            { id: 'coin0', label: 'PTM · image', layout: 'image', url: '../../assets/rti/ptm/info.json' },
+            { id: 'coin1', label: 'HSH · deepzoom', layout: 'deepzoom', url: '../../assets/rti/hsh/info.json' },
+            { id: 'coin2', label: 'BLN · tarzoom', layout: 'tarzoom', url: '../../assets/rti/bln/info.json' },
+            { id: 'coin3', label: 'YBLN · itarzoom', layout: 'itarzoom', url: '../../assets/rti/ybln/info.json' }
+        ];
+
+        for (const dataset of datasets) {
+            viewer.addLayer(dataset.id, new OpenLIME.Layer({
+                label: dataset.label,
+                layout: dataset.layout,
+                type: 'rti',
+                url: dataset.url,
+                normals: false
+            }));
+        }
+
+        OpenLIME.HSH.minElevation = 0.2;
+
+        const tools = new OpenLIME.ViewerTools(viewer, {
+            features: OpenLIME.basicViewerFeatures({
+                layers: { visibilityMode: 'exclusive' },
+                snapshot: true
+            })
+        });
+
+        // Plain application buttons execute registered actions. They do not
+        // know anything about OpenLIME controllers or internal DOM elements.
+        document.querySelectorAll('[data-action]').forEach(button => {
+            button.addEventListener('click', event => {
+                tools.execute(button.dataset.action, event);
+            });
+        });
+
+        function syncActionControl(action) {
+            const button = document.querySelector(`[data-action="${action.id}"]`);
+            if (!button) return;
+            button.disabled = !action.enabled;
+            button.classList.toggle('active', !!action.active);
+            if (button.hasAttribute('aria-pressed'))
+                button.setAttribute('aria-pressed', String(!!action.active));
+        }
+
+        tools.actions.list().forEach(syncActionControl);
+        tools.actions.addEvent('change', action => {
+            syncActionControl(action);
+            if (action.metadata?.layerId) syncLayerControls();
+        });
+
+        // Build the dataset selector from the public API of the layer feature.
+        const layerApi = tools.getFeature('layers');
+        const datasetControls = document.querySelector('#dataset-controls');
+        for (const { id, layer } of layerApi.list()) {
+            const label = document.createElement('label');
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'dataset';
+            radio.value = id;
+            radio.addEventListener('change', () => tools.execute(`layer:${id}`));
+            label.append(radio, document.createTextNode(layer.label || id));
+            datasetControls.appendChild(label);
+        }
+
+        const modeSelect = document.querySelector('#mode-select');
+        modeSelect.addEventListener('change', () => {
+            const layer = activeLayer();
+            if (!layer) return;
+            layer.setMode(modeSelect.value);
+            viewer.redraw();
+            updateStatus();
+        });
+
+        function activeLayer() {
+            return Object.values(viewer.canvas.layers).find(layer => layer.visible && !layer.overlay) || null;
+        }
+
+        function syncLayerControls() {
+            const layer = activeLayer();
+            if (!layer) return;
+            const radio = document.querySelector(`#dataset-controls input[value="${layer.id}"]`);
+            if (radio) radio.checked = true;
+
+            const modes = layer.getModes();
+            const currentMode = layer.getMode();
+            modeSelect.replaceChildren(...modes.map(mode => {
+                const option = document.createElement('option');
+                option.value = mode;
+                option.textContent = mode;
+                option.selected = mode === currentMode;
+                return option;
+            }));
+            updateStatus();
+        }
+
+        // This custom light pad directly drives the public layer API. It is an
+        // example of a domain-specific control that does not need an OpenLIME view.
+        const lightPad = document.querySelector('#light-pad');
+        const lightDot = document.querySelector('#light-dot');
+        const lightApi = tools.getFeature('light');
+
+        function renderLightDirection(light) {
+            lightDot.style.left = `${(light.x + 1) * 50}%`;
+            lightDot.style.top = `${(1 - light.y) * 50}%`;
+            lightPad.setAttribute(
+                'aria-valuetext',
+                `x ${light.x.toFixed(2)}, y ${light.y.toFixed(2)}`
+            );
+            updateStatus(light);
+        }
+
+        lightApi.addEvent('change', renderLightDirection);
+
+        function setLightFromClient(clientX, clientY) {
+            const rect = lightPad.getBoundingClientRect();
+            let x = 2 * (clientX - rect.left) / rect.width - 1;
+            let y = 1 - 2 * (clientY - rect.top) / rect.height;
+            const length = Math.hypot(x, y);
+            if (length > 1) { x /= length; y /= length; }
+
+            lightApi.setDirection(x, y, 0, 'external-pad');
+        }
+
+        lightPad.addEventListener('pointerdown', event => {
+            lightPad.setPointerCapture(event.pointerId);
+            setLightFromClient(event.clientX, event.clientY);
+        });
+        lightPad.addEventListener('pointermove', event => {
+            if (lightPad.hasPointerCapture(event.pointerId))
+                setLightFromClient(event.clientX, event.clientY);
+        });
+        lightPad.addEventListener('keydown', event => {
+            const step = event.shiftKey ? 0.1 : 0.03;
+            const rect = lightPad.getBoundingClientRect();
+            const dotRect = lightDot.getBoundingClientRect();
+            let x = dotRect.left + dotRect.width / 2;
+            let y = dotRect.top + dotRect.height / 2;
+            if (event.key === 'ArrowLeft') x -= rect.width * step / 2;
+            else if (event.key === 'ArrowRight') x += rect.width * step / 2;
+            else if (event.key === 'ArrowUp') y -= rect.height * step / 2;
+            else if (event.key === 'ArrowDown') y += rect.height * step / 2;
+            else return;
+            event.preventDefault();
+            setLightFromClient(x, y);
+        });
+
+        let lastLight = { x: 0, y: 0 };
+        function updateStatus(light = lastLight) {
+            lastLight = light;
+            const layer = activeLayer();
+            const activeTool = tools.interactions.activeInGroup('primary-pointer-tool') || 'none';
+            document.querySelector('#viewer-status').textContent =
+                `Layer: ${layer?.label || 'none'} · Mode: ${layer?.getMode?.() || 'n/a'} · ` +
+                `Tool: ${activeTool} · Light: ${light.x.toFixed(2)}, ${light.y.toFixed(2)}`;
+        }
+
+        tools.interactions.addEvent('change', () => updateStatus());
+        renderLightDirection(lightApi.direction);
+
+        // Select one base layer explicitly; the layer feature hides the others.
+        tools.execute('layer:coin0');
+        syncLayerControls();
+
+        window.addEventListener('beforeunload', () => {
+            lightApi.removeEvent('change', renderLightDirection);
+            tools.destroy();
+        }, { once: true });
+    </script>
+</body>
+</html>

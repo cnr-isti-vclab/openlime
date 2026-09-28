@@ -29,8 +29,6 @@
 
 .openlime-scale {
 	position: absolute;
-<<<<<<< HEAD
-=======
 	bottom: calc(5vh + 10px);
 	right: 0px;
 	left: auto;
@@ -38,7 +36,6 @@
 	height: 40px;
 	padding: 15px;
 	fill: white;
->>>>>>> devel
 	z-index: 1000;
 	pointer-events: none;
 }
@@ -178,6 +175,30 @@
 .openlime-toolbar .openlime-button:hover {
 	cursor: pointer;
 	opacity: 70%;
+}
+
+/* ToolbarView: opt-in toolbar mounted outside the viewer container. */
+.openlime-toolbar.openlime-toolbar-external {
+	position: static;
+	align-items: center;
+	gap: 4px;
+}
+
+.openlime-toolbar .openlime-toolbar-action {
+	border: 0;
+	padding: 0;
+	background: transparent;
+	color: inherit;
+}
+
+.openlime-toolbar .openlime-toolbar-action:disabled {
+	opacity: 0.35;
+	filter: grayscale(1);
+}
+
+.openlime-toolbar-external .openlime-toolbar-action.active path[style] {
+	fill: #ff0 !important;
+	stroke: #ff0 !important;
 }
 
 .openlime-light .openlime-bulb path[style] {

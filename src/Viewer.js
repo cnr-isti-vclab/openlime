@@ -247,8 +247,19 @@ class Viewer {
 	 * @param {Controller} controller An OpenLIME controller.
 	 */
 	addController(controller) {
+		if (this.controllers.includes(controller)) return controller;
 		this.controllers.push(controller);
 		this.pointerManager.onEvent(controller);
+		return controller;
+	}
+
+	/** Removes a controller and detaches it from pointer event dispatch. */
+	removeController(controller) {
+		const index = this.controllers.indexOf(controller);
+		if (index < 0) return false;
+		this.controllers.splice(index, 1);
+		this.pointerManager.offEvent(controller);
+		return true;
 	}
 
 	/**
@@ -267,10 +278,13 @@ class Viewer {
 	 * ```
 	 */
 	addLayer(id, layer) {
+		const replaced = this.canvas.layers[id];
 		this.canvas.addLayer(id, layer);
 		layer.viewer = this;
+		if (replaced && replaced !== layer) this.emit('layerRemoved', id, replaced);
 		if (this.activeLightController && typeof this.activeLightController.onLayerAdded === 'function')
 			this.activeLightController.onLayerAdded(layer);
+		this.emit('layerAdded', id, layer);
 		this.redraw();
 	}
 
@@ -279,7 +293,10 @@ class Viewer {
 	 * @fires Canvas#update
 	 */
 	clearLayers() {
+		const removed = Object.entries(this.canvas.layers);
 		this.canvas.clearLayers();
+		for (const [id, layer] of removed) this.emit('layerRemoved', id, layer);
+		this.emit('layersCleared');
 		this.redraw();
 	}
 
@@ -289,10 +306,11 @@ class Viewer {
 	 * @fires Canvas#update
 	 */
 	removeLayer(layer) {
-		if (typeof (layer) == 'string')
-			layer = this.canvas.layers[layer];
+		let id = typeof layer === 'string' ? layer : layer?.id;
+		if (typeof (layer) == 'string') layer = this.canvas.layers[layer];
 		if (layer) {
 			this.canvas.removeLayer(layer);
+			this.emit('layerRemoved', id, layer);
 			this.redraw();
 		}
 	}
@@ -375,7 +393,6 @@ class Viewer {
 	}
 
 }
-addSignals(Viewer, 'draw');
-addSignals(Viewer, 'resize'); //args: viewport
+addSignals(Viewer, 'draw', 'resize', 'layerAdded', 'layerRemoved', 'layersCleared');
 
 export { Viewer };

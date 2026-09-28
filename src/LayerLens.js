@@ -12,6 +12,8 @@ import { ShaderLens } from './ShaderLens.js'
  * @property {number[]} [borderColor=[0.078, 0.078, 0.078, 1]] - RGBA border color
  * @property {number} [borderWidth=12] - Border width in pixels
  * @property {boolean} [borderEnable=false] - Whether to show lens border
+ * @property {boolean} [medianFilter=false] - Enable a 3x3 median filter
+ * @property {boolean} [equalize=false] - Enable local histogram equalization
  * @property {Object} [dashboard=null] - Dashboard UI component for lens control
  * @property {Camera} camera - Camera instance (required)
  * @extends LayerCombinerOptions
@@ -76,6 +78,8 @@ class LayerLens extends LayerCombiner {
 			borderColor: [0.078, 0.078, 0.078, 1],
 			borderWidth: 12,
 			borderEnable: false,
+			medianFilter: false,
+			equalize: false,
 			dashboard: null,
 			activeLayerIndex: 0,
 			colorEncoding: 'linear',
@@ -91,7 +95,7 @@ class LayerLens extends LayerCombiner {
 		this.activeLayerIndex = Math.max(0, Math.min(options.activeLayerIndex, this.layers.length - 1));
 
 		// Create shader lens - only single layer rendering now
-		let shader = new ShaderLens();
+		let shader = new ShaderLens({ medianFilter: this.medianFilter });
 		this.shaders['lens'] = shader;
 		this.setShader('lens');
 
@@ -104,6 +108,11 @@ class LayerLens extends LayerCombiner {
 		this.oldCenter = [-9999, -9999];
 
 		this.useGL = true;
+		this.equalize = Boolean(options.equalize);
+		this._equalizeLutTexture = null;
+		this._equalizeLastUpdate = -Infinity;
+		this._equalizeNeedsUpdate = true;
+		this.shader.setEqualize(this.equalize);
 
 		if (this.dashboard) this.dashboard.lensLayer = this;
 	}
@@ -136,7 +145,102 @@ class LayerLens extends LayerCombiner {
 			return;
 		}
 		this.activeLayerIndex = index;
+		this._equalizeNeedsUpdate = true;
 		this.emit('update');
+	}
+
+	/** @override */
+	deleteFramebuffers() {
+		super.deleteFramebuffers();
+		if (this._equalizeLutTexture && this.gl) {
+			this.gl.deleteTexture(this._equalizeLutTexture);
+			this._equalizeLutTexture = null;
+		}
+		this._equalizeNeedsUpdate = true;
+	}
+
+	/**
+	 * Enables or disables median filtering of the composed lens image.
+	 * @param {boolean} enabled Whether the 3x3 median filter is enabled.
+	 */
+	setMedianFilter(enabled) {
+		this.shader.setMedianFilter(enabled);
+		this.emit('update');
+	}
+
+	/**
+	 * Enables local histogram equalization for the active lens layer.
+	 * The CDF is sampled from the lens framebuffer and refreshed at most every
+	 * 150 ms while the lens or illumination changes.
+	 * @param {boolean} enabled Whether to apply the lens CDF lookup.
+	 */
+	setEqualize(enabled) {
+		this.equalize = Boolean(enabled);
+		this._equalizeNeedsUpdate = true;
+		this.shader.setEqualize(this.equalize);
+		this.emit('update');
+	}
+
+	/** @private */
+	_ensureEqualizeLutTexture() {
+		if (this._equalizeLutTexture) return;
+		const gl = this.gl;
+		const identity = new Uint8Array(256);
+		for (let i = 0; i < identity.length; ++i) identity[i] = i;
+		this._equalizeLutTexture = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, this._equalizeLutTexture);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 256, 1, 0, gl.RED, gl.UNSIGNED_BYTE, identity);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	}
+
+	/** @private */
+	_updateEqualizeLut(lensViewport, lensUniforms) {
+		if (!this.equalize) return;
+		const now = performance.now();
+		if (!this._equalizeNeedsUpdate && now - this._equalizeLastUpdate < 150) return;
+
+		const gl = this.gl;
+		const x = Math.max(0, lensViewport.x);
+		const y = Math.max(0, lensViewport.y);
+		const right = Math.min(this.layout.width, lensViewport.x + lensViewport.dx);
+		const top = Math.min(this.layout.height, lensViewport.y + lensViewport.dy);
+		const width = Math.max(0, right - x);
+		const height = Math.max(0, top - y);
+		if (!width || !height) return;
+
+		const pixels = new Uint8Array(width * height * 4);
+		gl.readPixels(x, y, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+		const histogram = new Uint32Array(256);
+		let count = 0;
+		for (let row = 0; row < height; ++row) {
+			for (let column = 0; column < width; ++column) {
+				const dx = x + column + 0.5 - lensUniforms[0];
+				const dy = y + row + 0.5 - lensUniforms[1];
+				if (dx * dx + dy * dy > lensUniforms[2] * lensUniforms[2]) continue;
+				const offset = (row * width + column) * 4;
+				if (pixels[offset + 3] === 0) continue;
+				histogram[pixels[offset]]++;
+				count++;
+			}
+		}
+		if (!count) return;
+
+		const lut = new Uint8Array(256);
+		let cumulative = 0;
+		let cdfMin = 0;
+		for (let i = 0; i < 256; ++i) {
+			cumulative += histogram[i];
+			if (!cdfMin && cumulative) cdfMin = cumulative;
+			lut[i] = count === cdfMin ? i : Math.round(255 * Math.max(0, cumulative - cdfMin) / (count - cdfMin));
+		}
+		this._ensureEqualizeLutTexture();
+		gl.bindTexture(gl.TEXTURE_2D, this._equalizeLutTexture);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 256, 1, 0, gl.RED, gl.UNSIGNED_BYTE, lut);
+		this._equalizeLastUpdate = now;
+		this._equalizeNeedsUpdate = false;
 	}
 
 	/**
@@ -278,15 +382,16 @@ class LayerLens extends LayerCombiner {
 		const activeFramebuffer = this.canvas.getActiveFramebuffer();
 
 		// Draw ONLY the active layer within the viewport enclosing the lens
+		const vl = this.getLensInViewportCoords(transform, viewport);
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers[0]);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 		this.layers[this.activeLayerIndex].draw(transform, lensViewport);
+		this._updateEqualizeLut(lensViewport, vl);
 
 		// Restore the active framebuffer from Canvas
 		this.canvas.setActiveFramebuffer(activeFramebuffer);
 
 		// Set in the lensShader the proper lens position wrt the window viewport
-		const vl = this.getLensInViewportCoords(transform, viewport);
 		this.shader.setLensUniforms(vl, [viewport.w, viewport.h], borderColor, this.borderEnable);
 
 		this.prepareWebGL();
@@ -295,6 +400,10 @@ class LayerLens extends LayerCombiner {
 		gl.uniform1i(this.shader.samplers[0].location, 0);
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
+		this._ensureEqualizeLutTexture();
+		gl.uniform1i(this.shader.samplers[1].location, 1);
+		gl.activeTexture(gl.TEXTURE1);
+		gl.bindTexture(gl.TEXTURE_2D, this._equalizeLutTexture);
 
 		// Get texture coords of the lensViewport with respect to the framebuffer sz
 		const lx = lensViewport.x / lensViewport.w;

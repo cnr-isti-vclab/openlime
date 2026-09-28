@@ -322,8 +322,17 @@ class ControllerFocusContext extends ControllerLens {
         // Bring focus within context constraints
         FocusContext.adaptContextPosition(this.camera.viewport, focus, context);
 
-        // Set new focus and context in camera and lens
-        this.camera.setPosition(this.zoomDelay, context.x, context.y, context.z, context.a);
+        // Focus+Context deliberately keeps the selected focus anchored even
+        // when that requires temporary image margins. Applying Camera's hard
+        // dataset clamp here can snap an off-centre lens sideways as the image
+        // crosses the viewport size. Other camera interactions remain bounded.
+        const bounded = this.camera.bounded;
+        this.camera.bounded = false;
+        try {
+            this.camera.setPosition(this.zoomDelay, context.x, context.y, context.z, context.a);
+        } finally {
+            this.camera.bounded = bounded;
+        }
         this.lensLayer.setRadius(focus.radius, this.zoomDelay);
     }
 

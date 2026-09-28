@@ -7,12 +7,14 @@ import { Shader } from './Shader.js'
  * @property {number[]} u_width_height - Viewport dimensions [width, height]
  * @property {number[]} u_border_color - RGBA border color [r, g, b, a]
  * @property {boolean} u_border_enable - Whether to show lens border
+ * @property {boolean} u_median_filter - Whether to apply a 3x3 median filter
  */
 
 /**
  * @typedef {Object} ShaderLens~Options
  * Configuration options for lens shader
  * @property {string} [label='ShaderLens'] - Display label
+ * @property {boolean} [medianFilter=false] - Enable the 3x3 median filter
  * @property {boolean} [overlayLayerEnabled=false] - Enable overlay layer
  * @property {Object} [uniforms] - Custom uniform values
  * @extends Shader~Options
@@ -84,20 +86,25 @@ class ShaderLens extends Shader {
      * });
      * ```
      */
-    constructor(options) {
+    constructor(options = {}) {
         super(options);
 
-        // Only one sampler needed for single layer rendering
+        // The second sampler is a 256-entry luminance CDF used only when
+        // local histogram equalization is enabled by LayerLens.
         this.samplers = [
-            { id: 0, name: 'source0' }
+            { id: 0, name: 'source0' },
+            { id: 1, name: 'equalize_lut' }
         ];
 
         this.registerUniforms({
             u_lens: { type: 'vec4', needsUpdate: true, size: 4, value: [0, 0, 100, 10] },
             u_width_height: { type: 'vec2', needsUpdate: true, size: 2, value: [1, 1] },
             u_border_color: { type: 'vec4', needsUpdate: true, size: 4, value: [0.8, 0.8, 0.8, 1] },
-            u_border_enable: { type: 'bool', needsUpdate: true, size: 1, value: false }
+            u_border_enable: { type: 'bool', needsUpdate: true, size: 1, value: false },
+            u_median_filter: { type: 'bool', needsUpdate: true, size: 1, value: false },
+            u_equalize: { type: 'bool', needsUpdate: true, size: 1, value: false }
         });
+        this.setMedianFilter(options.medianFilter ?? false);
         this.label = "ShaderLens";
         this.needsUpdate = true;
     }
@@ -114,6 +121,19 @@ class ShaderLens extends Shader {
         this.setUniform('u_width_height', windowWH);
         this.setUniform('u_border_color', borderColor);
         this.setUniform('u_border_enable', borderEnable);
+    }
+
+    /**
+     * Enables or disables the optional component-wise 3x3 median filter.
+     * @param {boolean} enabled Whether median filtering is enabled.
+     */
+    setMedianFilter(enabled) {
+        this.setUniform('u_median_filter', Boolean(enabled));
+    }
+
+    /** Enables local histogram-equalization through the supplied CDF LUT. */
+    setEqualize(enabled) {
+        this.setUniform('u_equalize', Boolean(enabled));
     }
 
     /**
@@ -134,7 +154,40 @@ class ShaderLens extends Shader {
         uniform vec2 u_width_height; // Keep wh to map to pixels. TexCoords cannot be integer unless using texture_rectangle
         uniform vec4 u_border_color;
         uniform bool u_border_enable;
+        uniform bool u_median_filter;
+        uniform bool u_equalize;
         in vec2 v_texcoord;
+
+        vec4 sourceColor() {
+            vec4 center = texture(source0, v_texcoord);
+            if (!u_median_filter) {
+                if (!u_equalize) return center;
+                float equalized = texture(equalize_lut, vec2(clamp(center.r, 0.0, 1.0), 0.5)).r;
+                return vec4(vec3(equalized), center.a);
+            }
+
+            vec2 d = vec2(1.0) / u_width_height;
+            vec4 samples[9];
+            int sample_index = 0;
+            for (int y = -1; y <= 1; ++y)
+                for (int x = -1; x <= 1; ++x)
+                    samples[sample_index++] = texture(source0, v_texcoord + d * vec2(float(x), float(y)));
+
+            // Component-wise sorting retains the original edge amplitudes while
+            // removing isolated bright or dark pixels instead of averaging them.
+            for (int i = 0; i < 9; ++i) {
+                for (int j = i + 1; j < 9; ++j) {
+                    vec4 lower = min(samples[i], samples[j]);
+                    vec4 upper = max(samples[i], samples[j]);
+                    samples[i] = lower;
+                    samples[j] = upper;
+                }
+            }
+            vec4 filtered = samples[4];
+            if (!u_equalize) return filtered;
+            float equalized = texture(equalize_lut, vec2(clamp(filtered.r, 0.0, 1.0), 0.5)).r;
+            return vec4(vec3(equalized), filtered.a);
+        }
 
         vec4 lensColor(in vec4 c_in, in vec4 c_border, in vec4 c_out,
             float r, float R, float B) {
@@ -162,7 +215,7 @@ class ShaderLens extends Shader {
             float dy = v_texcoord.y * u_width_height.y - u_lens.y;
             float r = sqrt(dx*dx + dy*dy);
 
-            vec4 c_in = texture(source0, v_texcoord);
+            vec4 c_in = sourceColor();
             vec4 c_out = u_border_color; c_out.a=0.0;
             
             color = lensColor(c_in, u_border_color, c_out, r, u_lens.z, u_lens.w);

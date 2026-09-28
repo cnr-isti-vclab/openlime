@@ -69,9 +69,20 @@ class Ruler extends Units {
 			this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 			this.svg.append(this.svgGroup);
 			this.overlay.appendChild(this.svg);
-			this.viewer.addEvent('draw', () => this.update());
+			this._onDraw = () => this.update();
+			this.viewer.addEvent('draw', this._onDraw);
 			this.update();
 		}
+	}
+
+	/** Releases DOM and viewer listeners owned by the ruler. */
+	destroy() {
+		if (this.enabled) this.end();
+		if (this._onDraw) this.viewer.removeEvent('draw', this._onDraw);
+		this._onDraw = null;
+		this.svg?.remove();
+		this.svg = null;
+		this.svgGroup = null;
 	}
 
 	/**

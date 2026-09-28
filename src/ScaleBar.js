@@ -142,7 +142,15 @@ class ScaleBar extends Units {
 		this.svg.appendChild(this.line);
 		this.svg.appendChild(this.text);
 		this.viewer.containerElement.appendChild(this.svg);
-		this.viewer.addEvent('draw', () => { this.updateScale(); });
+		this._onDraw = () => { this.updateScale(); };
+		this.viewer.addEvent('draw', this._onDraw);
+	}
+
+	/** Releases the viewer listener and removes the scale bar DOM. */
+	destroy() {
+		if (this._onDraw) this.viewer.removeEvent('draw', this._onDraw);
+		this._onDraw = null;
+		this.svg?.remove();
 	}
 
 	setPosition(position = 'bottom-left', offsetX = 0, offsetY = 0) {

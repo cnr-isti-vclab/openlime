@@ -192,6 +192,47 @@ Here's a simple example of how to create a viewer with a single image layer:
 </html>
 ```
 
+### Headless tools and an external toolbar
+
+`ViewerTools` exposes viewer commands and their state without creating a GUI.
+Applications can bind these commands to their own components, or use the
+optional `ToolbarView` adapter in any DOM container, including one outside the
+viewer:
+
+```html
+<div id="application-toolbar"></div>
+<div id="viewer"></div>
+```
+
+```javascript
+const viewer = new OpenLIME.Viewer('#viewer');
+const tools = new OpenLIME.ViewerTools(viewer, {
+  features: OpenLIME.basicViewerFeatures({
+    pixelSize: 0.02,
+    annotationManager,
+    snapshot: true
+  })
+});
+
+const toolbar = new OpenLIME.ToolbarView(tools, {
+  container: '#application-toolbar',
+  actions: ['home', 'zoomIn', 'zoomOut', 'fullscreen', 'light', 'ruler', 'annotations']
+});
+
+// Alternatively, drive the headless API from application-owned controls.
+document.querySelector('#custom-home').addEventListener('click', () => tools.execute('home'));
+tools.actions.addEvent('change', (action) => console.log(action.id, action.active));
+
+// Dispose adapters and tools when the application is unmounted.
+toolbar.destroy();
+tools.destroy();
+```
+
+New functionality can be installed as a feature implementing
+`{ id, install(context) }`. Its `install` method registers actions and returns
+an optional `{ api, destroy }` object, keeping domain logic independent from
+the toolbar implementation.
+
 For multi-resolution images:
 
 ```javascript
