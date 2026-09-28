@@ -45,6 +45,19 @@ test('an RTI layer derived through sourceLayer shares resources and supports RTI
   baseRtiLayer.shader.init(rtiConfig);
   baseRtiLayer.rasters.push({ id: 'coefficient-plane' });
   baseRtiLayer.staticTextures.push({ id: 'static-texture' });
+  const cachedTile = {
+    index: 0,
+    x: 0,
+    y: 0,
+    level: 0,
+    w: 512,
+    h: 512,
+    size: 512 * 512 * 4,
+    missing: 1,
+    tex: [{ id: 'cached-coefficient-plane' }],
+  };
+  baseRtiLayer.tiles.set(cachedTile.index, cachedTile);
+  baseRtiLayer.layout.status = 'ready';
 
   const derived = new Layer({
     type: 'rti',
@@ -59,6 +72,7 @@ test('an RTI layer derived through sourceLayer shares resources and supports RTI
   assert.notEqual(derived.rasters, baseRtiLayer.rasters);
   assert.equal(derived.rasters[0], baseRtiLayer.rasters[0]);
   assert.equal(derived.staticTextures, baseRtiLayer.staticTextures);
+  assert.equal(cachedTile.missing, 0);
 
   derived.shader.setMode('light');
   assert.equal(derived.shader.mode, 'light');

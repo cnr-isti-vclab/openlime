@@ -1134,7 +1134,7 @@ class Layer {
 		if (!this.shader || !this.layout || this.layout.status != 'ready')
 			return;
 
-		for (let tile of this.tiles) {
+		for (let tile of this.tiles.values()) {
 			tile.missing = this.shader.samplers.length;
 			for (let sampler of this.shader.samplers) {
 				if (tile.tex[sampler.id])
