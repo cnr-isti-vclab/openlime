@@ -381,9 +381,7 @@ class Canvas {
 
 		for (let layer of Object.values(this.layers)) {
 			this.attachLayerRendererContext(layer);
-			layer.clear();
-			if (layer.shader)
-				layer.shader.restoreWebGL(this.gl);
+			this.restoreLayerWebGL(layer);
 		}
 		this.prefetch();
 		this.emit('update');
@@ -405,6 +403,23 @@ class Canvas {
 		if (Array.isArray(layer.layers)) {
 			for (const child of layer.layers)
 				this.attachLayerRendererContext(child);
+		}
+	}
+
+	/**
+	 * Clears GPU resources and restores shaders for a layer subtree after a
+	 * WebGL context restoration. Child layers remain composite-owned.
+	 *
+	 * @param {Layer} layer - Layer root to restore
+	 */
+	restoreLayerWebGL(layer) {
+		layer.clear();
+		if (layer.shader)
+			layer.shader.restoreWebGL(this.gl);
+
+		if (Array.isArray(layer.layers)) {
+			for (const child of layer.layers)
+				this.restoreLayerWebGL(child);
 		}
 	}
 

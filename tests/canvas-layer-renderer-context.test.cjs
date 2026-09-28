@@ -55,6 +55,7 @@ test('Canvas propagates renderer context through nested combiners to an RTI chil
     gl,
     overlayElement,
     isSrgbSimplified: false,
+    useOffscreenFramebuffer: false,
     prefetch() {},
     emit() {},
     updateSize() {},
@@ -70,4 +71,33 @@ test('Canvas propagates renderer context through nested combiners to an RTI chil
     assert.equal(layer.overlayElement, overlayElement);
     assert.equal(layer.isSrgbSimplified, false);
   }
+});
+
+
+test('Canvas restores nested composite layers and RTI shaders after context loss', async () => {
+  const { Canvas, LayerCombiner, LayerRTI } = await loadLayersAndCanvas();
+  const rtiChild = new LayerRTI({ url: 'base/info.json' });
+  const nestedCombiner = new LayerCombiner({ layers: [rtiChild] });
+  const composite = new LayerCombiner({ layers: [nestedCombiner] });
+  const gl = { label: 'restored-webgl2' };
+  const canvas = Object.assign(Object.create(Canvas.prototype), {
+    layers: { composite },
+    gl,
+    overlayElement: {},
+    isSrgbSimplified: false,
+    useOffscreenFramebuffer: false,
+    prefetch() {},
+    emit() {},
+  });
+  const layerTree = [composite, nestedCombiner, rtiChild];
+  const cleared = [];
+  for (const layer of layerTree) layer.clear = () => cleared.push(layer);
+  const restoredShaders = [];
+  rtiChild.shader.restoreWebGL = restoredGl => restoredShaders.push(restoredGl);
+
+  canvas.restoreWebGL();
+
+  assert.deepEqual(cleared, layerTree);
+  assert.deepEqual(restoredShaders, [gl]);
+  assert.deepEqual(Object.keys(canvas.layers), ['composite']);
 });
