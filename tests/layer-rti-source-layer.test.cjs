@@ -43,6 +43,11 @@ test('an RTI layer derived through sourceLayer shares resources and supports RTI
   const baseRtiLayer = new LayerRTI({ url: 'base/info.json' });
   baseRtiLayer.json = rtiConfig;
   baseRtiLayer.shader.init(rtiConfig);
+  const sourceProgram = { id: "source-program" };
+  const sourceSamplerLocation = { id: "source-sampler-location" };
+  baseRtiLayer.shader.program = sourceProgram;
+  baseRtiLayer.shader.samplers[0].location = sourceSamplerLocation;
+  baseRtiLayer.shader.uniforms.light.value = [0.4, -0.2, Math.sqrt(0.8)];
   baseRtiLayer.rasters.push({ id: 'coefficient-plane' });
   baseRtiLayer.staticTextures.push({ id: 'static-texture' });
   const cachedTile = {
@@ -73,11 +78,23 @@ test('an RTI layer derived through sourceLayer shares resources and supports RTI
   assert.equal(derived.rasters[0], baseRtiLayer.rasters[0]);
   assert.equal(derived.staticTextures, baseRtiLayer.staticTextures);
   assert.equal(cachedTile.missing, 0);
+  assert.notEqual(derived.shader, baseRtiLayer.shader);
+  assert.notEqual(derived.shader.samplers, baseRtiLayer.shader.samplers);
+  assert.notEqual(derived.shader.samplers[0], baseRtiLayer.shader.samplers[0]);
+  assert.notEqual(derived.shader.uniforms, baseRtiLayer.shader.uniforms);
+  assert.notEqual(derived.shader.uniforms.light, baseRtiLayer.shader.uniforms.light);
+  assert.notEqual(derived.shader.program, sourceProgram);
+  assert.equal(baseRtiLayer.shader.samplers[0].location, sourceSamplerLocation);
+  const derivedSamplerLocation = { id: "derived-sampler-location" };
+  derived.shader.samplers[0].location = derivedSamplerLocation;
+  assert.equal(baseRtiLayer.shader.samplers[0].location, sourceSamplerLocation);
+  assert.deepEqual(derived.controls.light.current.value, [0.4, -0.2]);
 
   derived.shader.setMode('light');
   assert.equal(derived.shader.mode, 'light');
   derived.shader.setMode('gray_diffuse');
   assert.equal(derived.shader.mode, 'gray_diffuse');
+  assert.equal(baseRtiLayer.shader.mode, 'light');
 });
 
 test('a primary RTI layer still rejects directly supplied rasters', async () => {

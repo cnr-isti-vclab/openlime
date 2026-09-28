@@ -90,15 +90,23 @@ class LayerRTI extends Layer {
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 
 		if (this.sourceLayer) {
-			// For derived RTI layers, copy the shader and set mode
+			// The derived layer owns a new shader program and its WebGL state.
+			// RTI metadata is immutable input; sampler, uniform, filter, and
+			// program objects must never be copied from the source shader.
 			this.normals = this.sourceLayer.normals;
 			this.shaders['rti'] = new ShaderRTI({ normals: this.normals });
 			if (this.json) {
 				this.shaders['rti'].init(this.json);
 			}
-			Object.assign(this.shaders['rti'], this.sourceLayer.shader);
+			const sourceLight = this.sourceLayer.shader.uniforms.light?.value;
 			this.setShader('rti');
-			if (this.mode) this.shader.setMode(this.mode);
+			if (sourceLight) {
+				const light = sourceLight.slice(0, 2);
+				for (const state of [this.controls.light.source, this.controls.light.target, this.controls.light.current])
+					state.value = light.slice();
+				this.shader.setLight(light);
+			}
+			this.shader.setMode(this.mode ?? this.sourceLayer.shader.mode);
 			this.status = 'ready';
 			this.emit('ready');
 		} else {
