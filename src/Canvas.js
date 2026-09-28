@@ -380,13 +380,32 @@ class Canvas {
 		}
 
 		for (let layer of Object.values(this.layers)) {
-			layer.gl = this.gl;
+			this.attachLayerRendererContext(layer);
 			layer.clear();
 			if (layer.shader)
 				layer.shader.restoreWebGL(this.gl);
 		}
 		this.prefetch();
 		this.emit('update');
+	}
+
+	/**
+	 * Assigns renderer-owned context to a layer and its nested composite children.
+	 * Child layers remain owned by their composite and are not registered in
+	 * Canvas.layers or given Canvas event listeners.
+	 *
+	 * @param {Layer} layer - Layer root to attach to this renderer context
+	 */
+	attachLayerRendererContext(layer) {
+		layer.gl = this.gl;
+		layer.canvas = this;
+		layer.overlayElement = this.overlayElement;
+		layer.isSrgbSimplified = this.isSrgbSimplified;
+
+		if (Array.isArray(layer.layers)) {
+			for (const child of layer.layers)
+				this.attachLayerRendererContext(child);
+		}
 	}
 
 	/**
@@ -414,10 +433,7 @@ class Canvas {
 		});
 		layer.addEvent('update', () => { this.emit('update'); });
 		layer.addEvent('updateSize', () => { this.updateSize(); });
-		layer.gl = this.gl;
-		layer.canvas = this;
-		layer.overlayElement = this.overlayElement;
-		layer.isSrgbSimplified = this.isSrgbSimplified;
+		this.attachLayerRendererContext(layer);
 		this.layers[id] = layer;
 		this.prefetch();
 	}
