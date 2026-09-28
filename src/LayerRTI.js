@@ -75,9 +75,15 @@ class LayerRTI extends Layer {
 	 * @throws {Error} If url is not provided
 	 */
 	constructor(options) {
+		// Keep the primary-layer contract tied to the caller's options. After
+		// Layer.init(), rasters may legitimately have been inherited from a
+		// source layer, so inspecting this.rasters there cannot distinguish the
+		// two cases.
+		const hasSourceLayer = !!options?.sourceLayer;
+		const hasRasterOptions = !!options?.rasters && Object.keys(options.rasters).length != 0;
 		super(options);
 
-		if (Object.keys(this.rasters).length != 0)
+		if (!hasSourceLayer && hasRasterOptions)
 			throw "Rasters options should be empty!";
 
 		this.addControl('light', [0, 0]);
