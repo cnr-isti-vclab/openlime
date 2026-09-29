@@ -17,7 +17,7 @@ class Units {
 	 */
 	constructor(options) {
 		this.units = ["km", "m", "cm", "mm", "µm"],
-			this.allUnits = { "µm": 0.001, "mm": 1, "cm": 10, "m": 1000, "km": 1e6, "in": 254, "ft": 254 * 12 }
+			this.allUnits = { "µm": 0.001, "mm": 1, "cm": 10, "m": 1000, "km": 1e6, "in": 25.4, "ft": 304.8 }
 		this.precision = 2;
 		if (options)
 			Object.assign(this, options);
