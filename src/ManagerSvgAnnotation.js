@@ -28,6 +28,7 @@ const _SHADOW_RUBBER = 'filter: drop-shadow(1px 1px 1.8px rgba(0,0,0,0.40))';
  * @property {string} [stroke] - Stroke colour.
  * @property {number} [fillOpacity] - Fill opacity.
  * @property {number} [strokeWidth] - Stroke width in model units.
+ * @property {number} [radiusScale] - Disk radius multiplier.
  * @property {string} [fillSelected] - Fill colour for selected annotations.
  * @property {string} [strokeSelected] - Stroke colour for selected annotations.
  * @property {string} [fillUnderEditing] - Fill colour while editing.
@@ -43,6 +44,7 @@ const _SHADOW_RUBBER = 'filter: drop-shadow(1px 1px 1.8px rgba(0,0,0,0.40))';
  * @property {string} [stroke] - Stroke colour.
  * @property {number} [fillOpacity] - Fill opacity.
  * @property {number} [strokeWidth] - Stroke width in model units.
+ * @property {number} [radiusScale] - Disk radius multiplier.
  * @property {string} [filter] - SVG filter.
  */
 
@@ -360,7 +362,7 @@ class DiskMarker extends Marker {
   }
 
   createElement(pos, transform, annotation, style = {}) {
-    const modelRadius = this.radius / (transform?.z ?? 1);
+    const modelRadius = this.radius * (style.radiusScale ?? 1) / (transform?.z ?? 1);
 
     const sw = (style.strokeWidth ?? 2) / (transform?.z ?? 1);
     const circle = Util.createSVGElement('circle', {
@@ -378,7 +380,7 @@ class DiskMarker extends Marker {
   }
 
   updateElements(elements, transform, annotation, style = {}) {
-    const modelRadius = this.radius / (transform?.z ?? 1);
+    const modelRadius = this.radius * (style.radiusScale ?? 1) / (transform?.z ?? 1);
     const sw = (style.strokeWidth ?? 2) / (transform?.z ?? 1);
     for (const el of elements) {
       if (el.classList?.contains('annotation-disk')) {
@@ -1499,7 +1501,7 @@ class ManagerSvgAnnotation {
    * `data` is **merged** (not replaced) into `annotation.data`.
    *
    * Per-annotation colour overrides (`fill`, `stroke`, `fillOpacity`,
-   * `strokeWidth`) take precedence over the class palette.  Pass `null` to
+   * `strokeWidth`, `radiusScale`) take precedence over the class palette.  Pass `null` to
    * remove an override and fall back to the class colour.
    *
    * @param {string} id - Annotation ID.
@@ -1516,6 +1518,7 @@ class ManagerSvgAnnotation {
   * @param {string|null}  [patch.stroke]      - Per-annotation stroke override.
   * @param {number|null}  [patch.fillOpacity] - Per-annotation fill-opacity override.
   * @param {number|null}  [patch.strokeWidth] - Per-annotation stroke-width override.
+  * @param {number|null}  [patch.radiusScale] - Per-annotation disk-radius multiplier.
   * @param {string|null}  [patch.filter]      - Per-annotation SVG filter override (`url(#...)`).
    * @param {Object}  [patch.data]        - Merged into annotation.data.
    * @param {Object}  [options]
@@ -1536,7 +1539,7 @@ class ManagerSvgAnnotation {
     let changed = false;
 
     const scalarKeys = ['label', 'description', 'semanticClass', 'structuralClass', 'publish',
-              'fill', 'stroke', 'fillOpacity', 'strokeWidth', 'filter'];
+              'fill', 'stroke', 'fillOpacity', 'strokeWidth', 'radiusScale', 'filter'];
     if (Object.hasOwn(patch, 'labelParts')) {
       const parts = patch.labelParts;
       if (parts == null) {
@@ -2525,7 +2528,7 @@ class ManagerSvgAnnotation {
    *
    * @param {Annotation} anno
    * @param {boolean} [selected=false]
-  * @returns {{fill:string, stroke:string, fillOpacity:number, strokeWidth:number, filter:(string|null)}}
+  * @returns {{fill:string, stroke:string, fillOpacity:number, strokeWidth:number, radiusScale:number, filter:(string|null)}}
    * @private
    */
   _getClassStyle(anno, selected = false) {
@@ -2536,6 +2539,7 @@ class ManagerSvgAnnotation {
     let stroke      = cls.stroke      ?? this.defaultStroke      ?? '#000000';
     let fillOpacity = cls.fillOpacity ?? this.defaultFillOpacity ?? 1;
     let strokeWidth = cls.strokeWidth ?? this.defaultStrokeWidth ?? 2;
+    let radiusScale = cls.radiusScale ?? 1;
     let filter      = cls.filter      ?? null;
 
     const structuralClassId = this._resolveStructuralClassId(anno.structuralClass);
@@ -2555,6 +2559,7 @@ class ManagerSvgAnnotation {
       stroke = cls.strokeSelected ?? resolvedSelectedStructural.stroke ?? selectedStructural.stroke ?? this.selectionStroke ?? stroke;
       fillOpacity = resolvedSelectedStructural.fillOpacity ?? selectedStructural.fillOpacity ?? fillOpacity;
       strokeWidth = resolvedSelectedStructural.strokeWidth ?? selectedStructural.strokeWidth ?? strokeWidth;
+      radiusScale = resolvedSelectedStructural.radiusScale ?? selectedStructural.radiusScale ?? radiusScale;
       filter = cls.filterSelected ?? resolvedSelectedStructural.filter ?? selectedStructural.filter ?? filter;
     }
 
@@ -2563,6 +2568,7 @@ class ManagerSvgAnnotation {
       stroke = cls.strokeUnderEditing ?? editingStructural.stroke ?? stroke;
       fillOpacity = editingStructural.fillOpacity ?? fillOpacity;
       strokeWidth = editingStructural.strokeWidth ?? strokeWidth;
+      radiusScale = editingStructural.radiusScale ?? radiusScale;
       filter = cls.filterUnderEditing ?? editingStructural.filter ?? filter;
     }
 
@@ -2571,6 +2577,7 @@ class ManagerSvgAnnotation {
       stroke = explicitStructural.stroke ?? stroke;
       fillOpacity = explicitStructural.fillOpacity ?? fillOpacity;
       strokeWidth = explicitStructural.strokeWidth ?? strokeWidth;
+      radiusScale = explicitStructural.radiusScale ?? radiusScale;
       filter = explicitStructural.filter ?? filter;
     }
 
@@ -2579,6 +2586,7 @@ class ManagerSvgAnnotation {
     stroke = anno.stroke ?? stroke;
     fillOpacity = anno.fillOpacity ?? fillOpacity;
     strokeWidth = anno.strokeWidth ?? strokeWidth;
+    radiusScale = anno.radiusScale ?? radiusScale;
     filter = anno.filter ?? filter;
 
     // Imported SVG lacks marker inline drop-shadow; match creation-time marker shadow.
@@ -2586,7 +2594,7 @@ class ManagerSvgAnnotation {
       filter = _SHADOW_FILTER;
     }
 
-    return { fill, stroke, fillOpacity, strokeWidth, filter };
+    return { fill, stroke, fillOpacity, strokeWidth, radiusScale, filter };
   }
 
   /**
