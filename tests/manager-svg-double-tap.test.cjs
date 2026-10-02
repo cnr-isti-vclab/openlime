@@ -199,3 +199,70 @@ test('an active creation session never clears selection on a background tap', as
   assert.equal(vertices.length, 1);
   assert.ok(manager.layer.selected.has('selected'));
 });
+
+test('Ctrl vertex-drag mode leaves disk and polyline vertices selectable without moving them', async () => {
+  const manager = Object.create((await Manager).prototype);
+  manager.vertexDragModifier = 'ctrl';
+  manager._selectOnlyAnnotation = () => assert.fail('a plain click must not start a drag');
+
+  const attachTarget = () => {
+    const listeners = new Map();
+    return {
+      classList: { contains: (name) => name === 'annotation-disk' },
+      addEventListener: (name, handler) => listeners.set(name, handler),
+      listeners,
+    };
+  };
+  const disk = attachTarget();
+  const dot = attachTarget();
+  dot.classList = { contains: (name) => name === 'annotation-vertex-dot' };
+  const annotation = {
+    elements: [disk, { classList: { contains: (name) => name === 'annotation-vertex-handles' }, children: [dot] }],
+  };
+
+  manager._attachVertexDragListeners(annotation);
+  const plainClick = { button: 0, ctrlKey: false, metaKey: false };
+  disk.listeners.get('pointerdown')(plainClick);
+  dot.listeners.get('pointerdown')(plainClick);
+});
+
+test('Ctrl vertex-drag mode does not turn a late-bound vertex click into a selection toggle', async () => {
+  const manager = Object.create((await Manager).prototype);
+  const dot = {};
+  let selected = 0;
+  let attached = 0;
+  let replayed = 0;
+  Object.assign(manager, {
+    _interactionSuspended: false,
+    _inspectEnabled: false,
+    _pencilEnabled: true,
+    _mode: 'edit',
+    vertexDragModifier: 'ctrl',
+    layer: { onClick: null, selected: new Set() },
+    _selectOnlyAnnotation: () => { selected++; },
+    _attachVertexDragListeners: () => {
+      attached++;
+      dot._vertexDragHandler = () => { replayed++; };
+    },
+  });
+  manager._wireClickHandler();
+  const handled = manager.layer.onClick({ data: { _markerType: 'polyline' } }, {
+    ctrlKey: true,
+    target: { closest: (selector) => selector === '.annotation-vertex-dot' ? dot : null },
+  });
+
+  assert.equal(handled, true);
+  assert.equal(selected, 1);
+  assert.equal(attached, 1);
+  assert.equal(replayed, 1);
+});
+
+test('the tap immediately after a vertex drag preserves the selection', async () => {
+  const manager = Object.create((await Manager).prototype);
+  manager._interactionSuspended = false;
+  manager._suppressSelectionUntil = performance.now() + 100;
+  manager.layer = { layout: {} };
+  manager.deselectAll = () => assert.fail('post-drag tap must not deselect');
+
+  manager._onSingleTap({ target: { closest: () => null } });
+});

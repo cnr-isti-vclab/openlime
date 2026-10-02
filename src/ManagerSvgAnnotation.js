@@ -888,6 +888,9 @@ class ManagerSvgAnnotation {
    *   when **more than one** annotation is selected — no single annotation can be
    *   vertex-dragged in a multi-selection.  Handle *visibility* is orthogonal and
    *   still controlled by `showVertexHandles`.  Defaults to `false`.
+   * @param {'none'|'ctrl'} [options.vertexDragModifier='none']
+   *   Modifier required to drag an individual vertex. `'ctrl'` also accepts
+   *   Command on macOS; whole-annotation translation remains Shift+drag.
    */
   constructor(viewer, options = {}) {
     const defaultLabelStyle = {
@@ -960,6 +963,8 @@ class ManagerSvgAnnotation {
        * @type {boolean}
        */
       singleEditMode: false,
+      /** Modifier required to drag a vertex; Command is accepted as Ctrl on macOS. */
+      vertexDragModifier: 'none',
       /**
        * When true (default), vertex-handle dots are shown on selected annotations
        * in edit mode, allowing the user to drag individual vertices.
@@ -1029,6 +1034,8 @@ class ManagerSvgAnnotation {
      * @type {{annotation}|null}
      */
     this._annotationDragSession = null;
+    /** Ignore the tap synthesized immediately after releasing a vertex drag. */
+    this._suppressSelectionUntil = 0;
     /**
      * The annotation whose vertex handles are currently visible and whose
      * vertex-drag listeners are attached.  In a multi-selection this is the
@@ -2773,6 +2780,19 @@ class ManagerSvgAnnotation {
       // Return true to swallow the event (prevent LayerSvgAnnotation's default select).
       if (!canSelect) return true;
       const markerType = anno?.data?._markerType;
+      const vertexTarget = e?.target?.closest?.('.annotation-vertex-dot')
+        ?? (markerType === 'disk' ? e?.target?.closest?.('.annotation-disk') : null);
+      // Vertex listeners are attached after SVG synchronisation. If a click reaches
+      // the layer before that attachment, keep it from becoming Ctrl's normal
+      // multi-selection toggle; attach and replay it instead.
+      if (vertexTarget && this.vertexDragModifier === 'ctrl') {
+        this._selectOnlyAnnotation(anno);
+        if (e?.ctrlKey || e?.metaKey) {
+          this._attachVertexDragListeners(anno);
+          vertexTarget._vertexDragHandler?.(e);
+        }
+        return true;
+      }
       const canTranslateWithShift = canEdit && !!markerType && !!e?.shiftKey;
       if (canTranslateWithShift) {
         this._queueSelectionEvent('click', e);
@@ -3641,6 +3661,8 @@ class ManagerSvgAnnotation {
   _onSingleTap(e) {
     if (this._interactionSuspended) return;
     if (this._isUiTarget(e)) return;
+    if (this._suppressSelectionUntil > performance.now()) return;
+    this._suppressSelectionUntil = 0;
 
     // Drawing and edit-mode handling remains exclusively under the pencil.
     // Inspection, however, can select annotations with the pencil disabled,
@@ -4000,6 +4022,7 @@ class ManagerSvgAnnotation {
     if (diskEl && !diskEl._vertexDragHandler) {
       diskEl._vertexDragHandler = (e) => {
         if (e.button !== 0) return;
+        if (this.vertexDragModifier === 'ctrl' && !e.ctrlKey && !e.metaKey) return;
         this._selectOnlyAnnotation(annotation);
         e.stopPropagation();
         e.preventDefault();
@@ -4022,6 +4045,7 @@ class ManagerSvgAnnotation {
         const onUp = (ev) => {
           if (ev.pointerId !== e.pointerId) return;
           cleanup();
+          this._suppressSelectionUntil = performance.now() + 250;
           this._vertexSession = null;
           annotation.syncSvg?.();
           this.emit('update', annotation);
@@ -4049,6 +4073,7 @@ class ManagerSvgAnnotation {
 
       dot._vertexDragHandler = (e) => {
         if (e.button !== 0) return;
+        if (this.vertexDragModifier === 'ctrl' && !e.ctrlKey && !e.metaKey) return;
         this._selectOnlyAnnotation(annotation);
         // Prevent the event from bubbling to handles.onpointerdown (stopPropagation)
         // and from being treated as a pan by PointerManager.
@@ -4080,6 +4105,7 @@ class ManagerSvgAnnotation {
         const onUp = (ev) => {
           if (ev.pointerId !== e.pointerId) return;
           cleanup();
+          this._suppressSelectionUntil = performance.now() + 250;
           this._vertexSession = null;
           annotation.syncSvg?.();
           this.emit('update', annotation);
