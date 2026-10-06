@@ -324,7 +324,11 @@ vec4 texsample(sampler2D sampler, vec2 coord) {
 				case 'mycc': str += MYCC.render(this.njpegs, this.yccplanes[0]); break;
 			}
 
-		str += `
+		str += `		
+vec3 computeHSHNormal(vec4 hsh) {
+	vec3 n = vec3(hsh.g, hsh.a, (hsh.b + 0.398942) * 0.5);
+	return length(n) < 1e-5 ? vec3(0.0, 0.0, 1.0) : normalize(n);
+}
 
 vec4 data() {
 
@@ -346,10 +350,27 @@ vec4 data() {
 				str += `
 	vec3 normal = texsample(normals, v_texcoord).xyz * 2.0 - 1.0;
 	normal = normalize(normal);		
-	//vec3 normal = (texsample(normals, v_texcoord).zyx *2.0) - 1.0;
-	//normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
 `;
-			else
+			 else if (this.type == 'hsh') {
+				if (this.colorspace == 'rgb')
+					str += `
+	vec4 hsh = vec4(
+		dot((texsample(plane0, v_texcoord).xyz - bias[0]) * scale[0], vec3(1.0)),
+		dot((texsample(plane1, v_texcoord).xyz - bias[1]) * scale[1], vec3(1.0)),
+		dot((texsample(plane2, v_texcoord).xyz - bias[2]) * scale[2], vec3(1.0)),
+		dot((texsample(plane3, v_texcoord).xyz - bias[3]) * scale[3], vec3(1.0)));
+	vec3 normal = computeHSHNormal(hsh);
+`;
+				else if (this.colorspace == 'lrgb')
+					str += `
+	vec4 hsh = vec4(
+		(texsample(plane1, v_texcoord).r - bias[1].r) * scale[1].r,
+		(texsample(plane1, v_texcoord).g - bias[1].g) * scale[1].g,
+		(texsample(plane1, v_texcoord).b - bias[1].b) * scale[1].b,
+		(texsample(plane2, v_texcoord).r - bias[2].r) * scale[2].r);
+	vec3 normal = computeHSHNormal(hsh);
+`;
+			} else //fallback to 3 lights.
 				str += `
 	vec3 normal;
 	normal.x = dot(render(base ).xyz, vec3(1));
@@ -435,9 +456,7 @@ vec4 render(vec3 base[np1]) {
 			str += `
 	{
 		vec4 c = texsample(plane${j}, v_texcoord);
-		rgb.x += base[${j}].x*(c.x - bias[${j}].x)*scale[${j}].x;
-		rgb.y += base[${j}].y*(c.y - bias[${j}].y)*scale[${j}].y;
-		rgb.z += base[${j}].z*(c.z - bias[${j}].z)*scale[${j}].z;
+		rgb.xyz += base[${j}].xyz*(c.xyz - bias[${j}])*scale[${j}];
 	}
 `;
 		}
