@@ -67,7 +67,7 @@ class ShaderRTI extends Shader {
 		super({});
 
 		Object.assign(this, {
-			modes: ['light', 'normals', 'diffuse', 'gray_diffuse', 'specular', 'sketch'],
+			modes: ['light', 'normals', 'diffuse', 'diffuse_gain', 'specular', 'sketch'],
 			mode: 'normal',
 			type: ['ptm', 'hsh', 'sh', 'rbf', 'bln'],
 			colorspaces: ['lrgb', 'rgb', 'mrgb', 'mycc'],
@@ -100,7 +100,7 @@ class ShaderRTI extends Shader {
 
 	/**
 	 * Sets the rendering mode
-	 * @param {string} mode - One of: 'light', 'normals', 'diffuse', 'gray_diffuse', 'specular'
+	 * @param {string} mode - One of: 'light', 'normals', 'diffuse', 'diffuse_gain', 'specular'
 	 * @throws {Error} If mode is not recognized
 	 */
 	setMode(mode) {
@@ -143,6 +143,7 @@ class ShaderRTI extends Shader {
 		if (this.mode == 'light')
 			this.lightWeights(light, 'base');
 		this.setUniform('light', light);
+		this.lightWeights(light, 'currentBase');
 	}
 
 	/**
@@ -151,6 +152,10 @@ class ShaderRTI extends Shader {
 	 */
 	setSpecularExp(value) {
 		this.setUniform('specular_exp', value);
+	}
+
+	setDiffuseGain(value) {
+		this.setUniform('diffuse_gain', value);
 	}
 
 	setSketchWidth(value) {
@@ -212,16 +217,19 @@ class ShaderRTI extends Shader {
 		this.uniforms = {
 			light: { type: 'vec3', needsUpdate: true, size: 3, value: [0.0, 0.0, 1] },
 			specular_exp: { type: 'float', needsUpdate: false, size: 1, value: 10 },
+			diffuse_gain: { type: 'float', needsUpdate: false, size: 1, value: 1 },
 			sketch_width: { type: 'float', needsUpdate: false, size: 1, value: 0.5 },
 			sketch_radius: { type: 'float', needsUpdate: false, size: 1, value: 0.5 },
 			bias: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.bias },
 			scale: { type: 'vec3', needsUpdate: true, size: this.nplanes / 3, value: this.scale },
 			base: { type: 'vec3', needsUpdate: true, size: this.nplanes },
+			currentBase: { type: 'vec3', needsUpdate: true, size: this.nplanes },
 			base1: { type: 'vec3', needsUpdate: false, size: this.nplanes },
 			base2: { type: 'vec3', needsUpdate: false, size: this.nplanes }
 		}
 
 		this.lightWeights([0, 0, 1], 'base');
+		this.lightWeights([0, 0, 1], 'currentBase');
 		this.isSrgbSimplified = false;
 
 		this.isLinear = true; //processing color space and initial colorspace are the same so no conversion
@@ -289,12 +297,14 @@ const mat3 T = mat3(8.1650e-01, 4.7140e-01, 4.7140e-01,
 
 uniform vec3 light;
 uniform float specular_exp;
+uniform float diffuse_gain;
 uniform float sketch_width;
 uniform float sketch_radius;
 uniform vec3 bias[np1];
 uniform vec3 scale[np1];
 
 uniform ${basetype} base[np1];
+uniform ${basetype} currentBase[np1];
 uniform ${basetype} base1[np1];
 uniform ${basetype} base2[np1];
 `;
@@ -312,6 +322,26 @@ vec4 texsample(sampler2D sampler, vec2 coord) {
 	return texture(sampler, coord);
 //${this.isLinear? 'return srgb2linear(texture(sampler, coord));' : 'return texture(sampler, coord);'}
 }
+
+float ptmDiffuseGain(float a0, float a1, float a2, float a3, float a4, float a5,
+					float nu, float nv, float lu, float lv, float gain) {
+	float gainedA0 = gain * a0;
+	float gainedA1 = gain * a1;
+	float gainedA2 = gain * a2;
+	float a3t = 2.0 * a0 * nu + a2 * nv;
+	float gainedA3 = (1.0 - gain) * a3t + a3;
+	float a4t = 2.0 * a1 * nv + a2 * nu;
+	float gainedA4 = (1.0 - gain) * a4t + a4;
+	float gainedA5 = (1.0 - gain) *
+		(a0 * nu * nu + a1 * nv * nv + a2 * nu * nv) +
+		(a3 - gainedA3) * nu + (a4 - gainedA4) * nv + a5;
+	return gainedA0 * lu * lu + gainedA1 * lv * lv + gainedA2 * lu * lv +
+		gainedA3 * lu + gainedA4 * lv + gainedA5;
+}
+
+float getLuminance(vec3 color) {
+	return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
 `;
 
 		if(this.mode == 'sketch')
@@ -328,6 +358,25 @@ vec4 texsample(sampler2D sampler, vec2 coord) {
 vec3 computeHSHNormal(vec4 hsh) {
 	vec3 n = vec3(hsh.g, hsh.a, (hsh.b + 0.398942) * 0.5);
 	return length(n) < 1e-5 ? vec3(0.0, 0.0, 1.0) : normalize(n);
+}
+
+vec3 computePTMNormal(vec3 linear, vec3 quadratic) {
+	// linear = [1, x, y], quadratic = [x2, xy, y2]
+	float denom = 4.0 * quadratic.x * quadratic.z - quadratic.y * quadratic.y;
+	vec2 peak = vec2(0.0);
+	if (quadratic.x < 0.0 && denom > 1e-5) {
+		peak.x = (linear.z * quadratic.y - 2.0 * linear.y * quadratic.z) / denom;
+		peak.y = (linear.y * quadratic.y - 2.0 * linear.z * quadratic.x) / denom;
+	} else {
+		vec2 gradient = linear.yz;
+		float gradientLengthSq = dot(gradient, gradient);
+		if (gradientLengthSq > 1e-6)
+			peak = gradient / sqrt(gradientLengthSq);
+	}
+	float peakLengthSq = dot(peak, peak);
+	if (peakLengthSq > 1.0)
+		peak /= sqrt(peakLengthSq);
+	return vec3(peak, sqrt(max(0.0, 1.0 - dot(peak, peak))));
 }
 
 vec4 data() {
@@ -351,6 +400,24 @@ vec4 data() {
 	vec3 normal = texsample(normals, v_texcoord).xyz * 2.0 - 1.0;
 	normal = normalize(normal);		
 `;
+/*			else if (this.type == 'ptm' && this.colorspace == 'lrgb')
+				str += `
+	vec3 linear = (texsample(plane1, v_texcoord).xyz - bias[1]) * scale[1];
+	vec3 quadratic = (texsample(plane2, v_texcoord).xyz - bias[2]) * scale[2];
+	vec3 normal = computePTMNormal(linear, quadratic);
+`;
+			else if (this.type == 'ptm' && this.colorspace == 'rgb')
+				str += `
+	vec3 linear = vec3(
+		dot((texsample(plane0, v_texcoord).xyz - bias[0]) * scale[0], vec3(1.0)),
+		dot((texsample(plane1, v_texcoord).xyz - bias[1]) * scale[1], vec3(1.0)),
+		dot((texsample(plane2, v_texcoord).xyz - bias[2]) * scale[2], vec3(1.0)));
+	vec3 quadratic = vec3(
+		dot((texsample(plane3, v_texcoord).xyz - bias[3]) * scale[3], vec3(1.0)),
+		dot((texsample(plane4, v_texcoord).xyz - bias[4]) * scale[4], vec3(1.0)),
+		dot((texsample(plane5, v_texcoord).xyz - bias[5]) * scale[5], vec3(1.0)));
+	vec3 normal = computePTMNormal(linear, quadratic);
+`; */
 			 else if (this.type == 'hsh') {
 				if (this.colorspace == 'rgb')
 					str += `
@@ -397,10 +464,46 @@ color = vec4(s * diffuse.xyz, 1);
 color = vec4(vec3(dot(light, normal)), 1);
 `;
 					break;
-				case 'gray_diffuse':
-					str += `
-color = vec4(vec3(dot(light, normal)), 1);
+				case 'diffuse_gain':
+					if (this.type == 'ptm' && this.colorspace == 'lrgb')
+						str += `
+	vec3 baseColor = (texsample(plane0, v_texcoord).xyz - bias[0]) * scale[0];
+	vec3 linear = (texsample(plane1, v_texcoord).xyz - bias[1]) * scale[1];
+	vec3 quadratic = (texsample(plane2, v_texcoord).xyz - bias[2]) * scale[2];
+	float luminance = ptmDiffuseGain(quadratic.r, quadratic.b, quadratic.g,
+		linear.g, linear.b, linear.r, normal.x, normal.y,
+		light.x, light.y, diffuse_gain);
+	color = vec4(baseColor * luminance, 1.0);
 `;
+					else if (this.type == 'ptm' && this.colorspace == 'rgb')
+						str += `
+	vec3 coeff0 = (texsample(plane0, v_texcoord).xyz - bias[0]) * scale[0];
+	vec3 coeff1 = (texsample(plane1, v_texcoord).xyz - bias[1]) * scale[1];
+	vec3 coeff2 = (texsample(plane2, v_texcoord).xyz - bias[2]) * scale[2];
+	vec3 coeff3 = (texsample(plane3, v_texcoord).xyz - bias[3]) * scale[3];
+	vec3 coeff4 = (texsample(plane4, v_texcoord).xyz - bias[4]) * scale[4];
+	vec3 coeff5 = (texsample(plane5, v_texcoord).xyz - bias[5]) * scale[5];
+	vec3 baseRGB = coeff0 + coeff1 * light.x + coeff2 * light.y +
+		coeff3 * light.x * light.x + coeff4 * light.x * light.y +
+		coeff5 * light.y * light.y;
+	vec3 gainedRGB = vec3(
+		ptmDiffuseGain(coeff3.r, coeff5.r, coeff4.r, coeff1.r, coeff2.r, coeff0.r, normal.x, normal.y, light.x, light.y, diffuse_gain),
+		ptmDiffuseGain(coeff3.g, coeff5.g, coeff4.g, coeff1.g, coeff2.g, coeff0.g, normal.x, normal.y, light.x, light.y, diffuse_gain),
+		ptmDiffuseGain(coeff3.b, coeff5.b, coeff4.b, coeff1.b, coeff2.b, coeff0.b, normal.x, normal.y, light.x, light.y, diffuse_gain));
+	float baseLum = max(getLuminance(baseRGB), 1e-5);
+	float gainedLum = max(getLuminance(gainedRGB), 0.0);
+	float structuralScale = gainedLum / baseLum;
+	vec3 finalColor = baseRGB * structuralScale;
+	color = vec4(finalColor, 1.0);
+`;
+					else 
+						str += `
+	vec3 baseRGB = render(currentBase).xyz;
+	float NoL = max(dot(normal, light), 0.0);
+	float slopeEnhancement = pow(NoL, diffuse_gain);
+	color = vec4(max(baseRGB * slopeEnhancement, vec3(0.0)), 1.0);
+`;
+
 					break;
 				case 'specular':
 				default: str += `

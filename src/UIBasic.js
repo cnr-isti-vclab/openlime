@@ -218,6 +218,9 @@ class UIBasic {
 				};
 				if (m == 'specular' && layer.shader.setSpecularExp)
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSpecularExp(e.target.value); } }];
+				if (m == 'diffuse_gain' && layer.shader.setDiffuseGain)
+					mode.list = [{ slider: '', min: 1, max: 5, step: 0.1, value: 1,
+						oninput: (e) => { layer.shader.setDiffuseGain(e.target.value); } }];
 				if (m == 'sketch' && layer.shader.setSketchWidth) {
 					mode.list = [{ slider: '', oninput: (e) => { layer.shader.setSketchWidth(e.target.value); } }];
 					mode.list.push({ slider: '', oninput: (e) => { layer.shader.setSketchRadius(e.target.value); } });
@@ -754,9 +757,12 @@ class UIBasic {
 			}
 		} else if ('slider' in entry) {
 			let value = ('value' in entry) ? entry['value'] : 50;
+			let min = ('min' in entry) ? entry['min'] : 1;
+			let max = ('max' in entry) ? entry['max'] : 100;
+			let step = ('step' in entry) ? entry['step'] : 1;
 			html += `
 			<div class="openlime-slider-container" data-slider-id="${entry.id}">
-					<input type="range" min="1" max="100" value="${value}" class="openlime-slider ${classes}" ${id}>
+					<input type="range" min="${min}" max="${max}" step="${step}" value="${value}" class="openlime-slider ${classes}" ${id}>
 					<span class="openlime-slider-value">${value}</span>
 			</div>`;
 		}
