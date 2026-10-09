@@ -468,14 +468,14 @@ color = vec4(vec3(dot(light, normal)), 1);
 					if (this.type == 'ptm' && this.colorspace == 'lrgb')
 						str += `
 	vec3 baseColor = (texsample(plane0, v_texcoord).xyz - bias[0]) * scale[0];
-	vec3 linear = (texsample(plane1, v_texcoord).xyz - bias[1]) * scale[1];
+	vec3 linear    = (texsample(plane1, v_texcoord).xyz - bias[1]) * scale[1];
 	vec3 quadratic = (texsample(plane2, v_texcoord).xyz - bias[2]) * scale[2];
 	float luminance = ptmDiffuseGain(quadratic.r, quadratic.b, quadratic.g,
 		linear.g, linear.b, linear.r, normal.x, normal.y,
 		light.x, light.y, diffuse_gain);
 	color = vec4(baseColor * luminance, 1.0);
 `;
-					else if (this.type == 'ptm' && this.colorspace == 'rgb')
+					else if (this.type == 'ptm' && this.colorspace == 'rgb' && this.nplanes == 18)
 						str += `
 	vec3 coeff0 = (texsample(plane0, v_texcoord).xyz - bias[0]) * scale[0];
 	vec3 coeff1 = (texsample(plane1, v_texcoord).xyz - bias[1]) * scale[1];

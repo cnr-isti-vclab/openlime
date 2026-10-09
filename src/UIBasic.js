@@ -205,7 +205,7 @@ class UIBasic {
 			let modes = []
 			for (let m of layer.getModes()) {
 				let mode = {
-					button: m,
+					button: m == 'diffuse_gain' ? 'diffuse gain' : m,
 					mode: m,
 					layer: id,
 					// FIXED: use the ID to retrieve the correct layer

@@ -264,25 +264,35 @@ function rtiTest(dataset) {
 
 	Cache.maxRequestRate = 30;
 	let layer0 = new Layer({ 
-		label: '4',
+		label: 'HSH',
 		layout: 'deepzoom',
 		type:'rti',
-//		url: 'assets/rti/hsh/info.json',
-		url: 'assets/rti/hsh/info.json',
+		url: 'assets/rti/hsh/info.json',		
 		normals: false
 	});
 	layer0.layout.cachelevels = 0;
-	lime.canvas.addLayer('coin', layer0);
+	lime.canvas.addLayer('coinhsh', layer0);
 
-	let layer1 = new Layer({
+	let layer1 = new Layer({ 
+		label: 'PTM',
+		layout: 'image',
+		type:'rti',
+		url: 'assets/rti/ptm/info.json',		
+		normals: false
+	});
+	layer1.layout.cachelevels = 0;
+	lime.canvas.addLayer('coinptm', layer1);
+
+
+	/*let layer1 = new Layer({
 		type: 'image',
 		url: './assets/lighthouse/image/lighthouse-kdmap.jpg',
 		layout: 'image',
 		zindex: 0,
 		transform: { x: 0, y: 0, z: 1, a: 0 },
 		visible: false
-	});
-	lime.canvas.addLayer('test', layer1);
+	}); 
+	lime.canvas.addLayer('test', layer1); */
 
 
 	// let layer0 = new Layer({ 
@@ -307,8 +317,8 @@ function rtiTest(dataset) {
 
 	let ui = new UIBasic(lime);
 	lime.camera.maxFixedZoom = 4;
-	ui.menu[0].section = "Prova";
-	ui.menu.push({ html: "<p>Prova</p>" });
+	//ui.menu[0].section = "Prova";
+	//ui.menu.push({ html: "<p>Prova</p>" });
 	ui.scale = 0.002;
 	//the light is turned on by default in the ui, turn it off if you don't want it
 	//ui.actions.light.active = false;
