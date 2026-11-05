@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>OpenLIME - Scene tree</title>
+	<link rel="stylesheet" href="../examples.css">
+	<style>
+		.scene-layout { display: flex; gap: 24px; align-items: flex-start; }
+		.openlime-scene-tree, .scene-draw { margin: 0; padding: 12px 16px; min-width: 280px; background: #f6f6f6; }
+		.openlime-scene-tree ul { margin: 4px 0 4px 18px; padding: 0; }
+		.openlime-scene-tree li { list-style: none; margin: 4px 0; }
+		.openlime-scene-node[data-effective="false"] { opacity: 0.45; }
+		.openlime-scene-heading label, .openlime-scene-lens label, .openlime-scene-control { display: flex; gap: 6px; align-items: center; }
+		.openlime-scene-node select, .openlime-scene-control input { margin-left: 22px; }
+		.scene-draw li[data-visible="false"] { opacity: 0.45; }
+	</style>
+</head>
+<body>
+	<h1>OpenLIME - Scene tree</h1>
+	<p>Two placements of one frozen asset. The tree calls the scene commands. The list is the canvas projection.</p>
+	<div class="scene-layout">
+		<ul class="tree"></ul>
+		<ul class="draw"></ul>
+	</div>
+	<script type="module">
+		import { SceneSession } from '../../../src/scene/SceneSession.js';
+		import { SceneProjection } from '../../../src/scene/SceneProjection.js';
+		import { SceneTree } from '../../../src/scene/SceneTree.js';
+
+		const scene = await fetch('scene.json').then(response => response.json());
+		const asset = await fetch('lighthouse.json').then(response => response.json());
+		const session = SceneSession.open(scene, { assets: { [asset.id]: asset } });
+		const draw = document.querySelector('.draw');
+
+		function createLayer(options) {
+			const layer = {
+				...options,
+				transform: { ...(options.transform || {}) },
+				sourceLayer: options.sourceLayer || null,
+				derive(extra) {
+					return {
+						...extra,
+						transform: { ...(extra.transform || {}) },
+						sourceLayer: layer,
+						derived: true
+					};
+				}
+			};
+			return layer;
+		}
+
+		const projection = new SceneProjection(session, { layers: {} }, { createLayer });
+		const tree = document.querySelector('.tree');
+		new SceneTree(session, tree);
+
+		function paint() {
+			draw.replaceChildren();
+			const rows = Object.values(projection.target.layers).sort((a, b) => (a.zindex || 0) - (b.zindex || 0));
+			for (const layer of rows) {
+				const item = document.createElement('li');
+				item.dataset.visible = layer.visible === false ? 'false' : 'true';
+				const mode = layer.mode ? ' · ' + layer.mode : '';
+				const child = layer.layers && layer.layers[0] ? ' · lens ' + (layer.layers[0].mode || layer.layers[0].url) : '';
+				item.textContent = (layer.id || 'layer') + (layer.visible === false ? ' hidden' : ' visible') + mode + child;
+				draw.append(item);
+			}
+		}
+		session.addListener(paint);
+		paint();
+	</script>
+</body>
+</html>

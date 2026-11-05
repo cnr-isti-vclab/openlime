@@ -124,6 +124,7 @@ const loader = [
 	'./src/ManifestLoader.js',
 	'./src/scene/SceneSession.js',
 	'./src/scene/SceneProjection.js',
+	'./src/scene/SceneTree.js',
 	'./src/scene/createOpenLIMELayer.js'
 ];
 

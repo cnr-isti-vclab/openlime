@@ -1,0 +1,69 @@
+{
+  "format": "openlime-asset",
+  "formatVersion": "1.0.0",
+  "id": "urn:example:lighthouse",
+  "sources": {
+    "color": { "id": "urn:example:source:color", "uri": "../../assets/lime/image/lime.jpg", "bounds": { "width": 800, "height": 600 } },
+    "infra": { "id": "urn:example:source:infra", "uri": "../../assets/lime/image/lime.jpg", "bounds": { "width": 800, "height": 600 } },
+    "rti": { "id": "urn:example:source:rti", "uri": "info.json", "layout": { "type": "image" }, "bounds": { "width": 800, "height": 600 } }
+  },
+  "root": "root",
+  "nodes": {
+    "root": {
+      "type": "group",
+      "label": "Lighthouse",
+      "activation": { "mode": "stack" },
+      "children": ["study", "rti"],
+      "spatial": { "space": { "id": "urn:example:frame:lighthouse:root", "type": "cartesian2d" } }
+    },
+    "study": {
+      "type": "group",
+      "label": "Technical study",
+      "activation": { "mode": "exclusive", "required": true },
+      "children": ["color", "infra"]
+    },
+    "color": {
+      "type": "layer",
+      "label": "Visible",
+      "renderer": { "type": "openlime:image", "source": "color" },
+      "renderings": [{ "id": "color", "label": "Color" }],
+      "defaultRendering": "color"
+    },
+    "infra": {
+      "type": "layer",
+      "label": "Infrared",
+      "renderer": { "type": "openlime:image", "source": "infra" },
+      "renderings": [{ "id": "color", "label": "Color" }],
+      "defaultRendering": "color"
+    },
+    "rti": {
+      "type": "layer",
+      "label": "RTI",
+      "renderer": { "type": "openlime:rti", "source": "rti" },
+      "renderings": [
+        { "id": "relight", "label": "Relight", "shader": "rti", "mode": "light", "controls": { "light": [0, 0] }, "exposeControls": ["light"] },
+        { "id": "normals", "label": "Normals", "shader": "rti", "mode": "normals" }
+      ],
+      "defaultRendering": "relight"
+    }
+  },
+  "lensProfiles": {
+    "inspect": {
+      "type": "openlime:circular-lens",
+      "label": "Inspection",
+      "host": "rti",
+      "background": {
+        "default": "light",
+        "choices": [{ "id": "light", "label": "Light", "target": { "kind": "layer", "node": "rti", "rendering": "relight" } }]
+      },
+      "foreground": {
+        "default": "normals",
+        "choices": [
+          { "id": "normals", "label": "Normals", "target": { "kind": "layer", "node": "rti", "rendering": "normals" } },
+          { "id": "infra", "label": "Infrared", "target": { "kind": "layer", "node": "infra", "rendering": "color" } }
+        ]
+      },
+      "geometry": { "shape": "circle", "coordinateSpace": "asset", "defaultCenter": [0, 0], "defaultRadius": 180 }
+    }
+  }
+}

@@ -216,7 +216,8 @@ function buildGraph(scene, assetByInstance, diagnostics) {
 		parent: null,
 		children: [],
 		local: new Similarity(),
-		activation: null
+		activation: null,
+		label: scene.label || 'Scene'
 	};
 	nodes.set('', sceneRoot);
 
@@ -234,7 +235,8 @@ function buildGraph(scene, assetByInstance, diagnostics) {
 			children: [],
 			local: placement,
 			activation: null,
-			assetId: asset.id
+			assetId: asset.id,
+			label: instance.label || instance.id
 		};
 		nodes.set(instance.id, instanceNode);
 		sceneRoot.children.push(instance.id);
@@ -263,6 +265,7 @@ function buildGraph(scene, assetByInstance, diagnostics) {
 				local,
 				assetToLocal,
 				activation: spec.type === 'group' ? activationOf(spec) : null,
+				label: spec.label || nodeId,
 				renderings: spec.type === 'layer' ? spec.renderings : null,
 				defaultRendering: spec.defaultRendering || null
 			});
