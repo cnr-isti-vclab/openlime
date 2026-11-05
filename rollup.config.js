@@ -121,7 +121,8 @@ const annotation = [
 ];
 
 const loader = [
-	'./src/ManifestLoader.js'
+	'./src/ManifestLoader.js',
+	'./src/scene/SceneSession.js'
 ];
 
 const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rilsr, ...lens, ...annotation, ...loader];
