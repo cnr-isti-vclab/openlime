@@ -1,5 +1,5 @@
 import { SceneValidationError } from './SceneSession.js';
-import { adapterFor, validateRendererOptions } from './adapters.js';
+import { adapterFor, validateRendererOptions, validatePreset } from './adapters.js';
 
 const FIT_POLICIES = ['active', 'all', 'declared'];
 
@@ -62,9 +62,10 @@ function finiteBox(value) {
 }
 
 /**
- * Projects effective leaves onto a canvas.
- * Each leaf gets its own layer object. A shared source key records that two
- * leaves read the same pixels. derive() is left for a second shader context.
+ * Projects effective leaves onto a canvas and mounts enabled lenses.
+ * Each main leaf gets its own layer. A lens foreground that shares a source
+ * calls derive(), so the two contexts do not share a shader object.
+ * Lens children stay on the lens and out of Canvas.layers.
  */
 class SceneProjection {
 	constructor(session, target, options = {}) {
@@ -77,10 +78,25 @@ class SceneProjection {
 		this.session = session;
 		this.target = target;
 		this.createLayer = options.createLayer;
+		this.createLens = options.createLens || (spec => ({
+			type: 'lens',
+			overlay: true,
+			layers: [],
+			camera: spec.camera || null,
+			activeLayerIndex: 0,
+			center: [0, 0],
+			radius: 100,
+			setCenter(x, y) { this.center = [x, y]; },
+			setRadius(radius) { this.radius = radius; },
+			setActiveLayer(index) { this.activeLayerIndex = index; }
+		}));
 		this.resolveUrl = options.resolveUrl || (source => source.uri || '');
 		this.getLocalBounds = options.getLocalBounds || null;
 		this.byNode = new Map();
 		this.bySource = new Map();
+		this.owners = new Map();
+		this.lenses = new Map();
+		this.lensChildren = new Map();
 		this.fitBounds = null;
 		this.redraws = 0;
 		this.reconcile();
@@ -118,7 +134,9 @@ class SceneProjection {
 		const diagnostics = [];
 		const leaves = structuralLeaves(this.session);
 		const planned = leaves.map((node, zindex) => this.planLeaf(node, zindex, diagnostics));
+		const lensPlans = this.planLenses(diagnostics);
 		if (diagnostics.some(item => item.severity === 'error')) throw new SceneValidationError(diagnostics);
+		this.applyBackgrounds(planned, lensPlans);
 
 		const wanted = new Set(planned.map(item => item.node.qualifiedId));
 		for (const id of [...this.byNode.keys()]) {
@@ -129,7 +147,7 @@ class SceneProjection {
 			let entry = this.byNode.get(item.node.qualifiedId);
 			if (!entry || entry.key !== item.key) {
 				if (entry) this.drop(item.node.qualifiedId);
-				const layer = this.createLayer(item.options);
+				const layer = this.materialize(item, false);
 				entry = { layer, key: item.key };
 				this.byNode.set(item.node.qualifiedId, entry);
 				this.rememberSource(item, item.node.qualifiedId);
@@ -138,6 +156,15 @@ class SceneProjection {
 			assignTransform(entry.layer, item.similarity);
 			entry.layer.visible = item.visible;
 			entry.layer.zindex = item.zindex;
+			this.applyPreset(entry.layer, item);
+		}
+
+		const activeLensIds = new Set(lensPlans.filter(lens => lens.active).map(lens => lens.canvasId));
+		for (const id of [...this.lenses.keys()]) {
+			if (!activeLensIds.has(id)) this.dropLens(id);
+		}
+		for (const lens of lensPlans) {
+			if (lens.active) this.syncLens(lens);
 		}
 
 		this.fitBounds = this.computeFit(planned);
@@ -188,13 +215,17 @@ class SceneProjection {
 		});
 		const similarity = this.canvasTransform(node);
 		const visible = this.session.effectiveEnabled(node.qualifiedId);
+		const preset = this.presetFor(node, null, diagnostics);
+		if (!preset) return null;
 		return {
 			node,
+			adapter,
 			key,
 			similarity,
 			visible,
 			zindex,
 			source,
+			preset,
 			record: { type: adapter.type, uri, revision: source.revision || '', layout, options: pixelOptions },
 			options: {
 				type: adapter.layerType,
@@ -207,6 +238,232 @@ class SceneProjection {
 				transform: { x: similarity.x, y: similarity.y, a: similarity.a, z: similarity.z }
 			}
 		};
+	}
+
+	/** The document preset for a layer, plus control overrides. Null when the preset is not applicable. */
+	presetFor(node, override, diagnostics) {
+		const assetState = this.session.state.assets[node.instanceId];
+		const spec = this.session.assetByInstance.get(node.instanceId).nodes[node.nodeId];
+		const adapter = adapterFor(spec.renderer?.type);
+		const renderings = node.renderings || [];
+		const renderingId = override?.rendering || assetState?.layers?.[node.nodeId]?.rendering || node.defaultRendering;
+		const preset = renderings.find(item => item.id === renderingId);
+		if (!preset || !adapter) {
+			diagnostics.push({
+				severity: 'error',
+				code: 'PRESET_UNKNOWN',
+				path: '/nodes/' + node.nodeId + '/renderings',
+				message: `Layer "${node.nodeId}" has no preset "${renderingId}".`
+			});
+			return null;
+		}
+		validatePreset(adapter, preset, '/nodes/' + node.nodeId + '/renderings/' + preset.id, diagnostics);
+		const stateControls = assetState?.layers?.[node.nodeId]?.renderingState?.[preset.id]?.controls || {};
+		const slotControls = override?.controls || {};
+		return {
+			...preset,
+			shader: preset.shader || adapter.defaultShader,
+			controls: { ...(preset.controls || {}), ...stateControls, ...slotControls }
+		};
+	}
+
+	/** Enabled lenses whose host is effectively active replace that host's main preset. */
+	planLenses(diagnostics) {
+		const plans = [];
+		for (const instance of this.session.scene.assets || []) {
+			const asset = this.session.assetByInstance.get(instance.id);
+			const lensState = this.session.state.assets[instance.id]?.lenses || {};
+			for (const [profileId, profile] of Object.entries(asset?.lensProfiles || {})) {
+				const state = lensState[profileId];
+				if (!state) continue;
+				const hostQualifiedId = instance.id + '/' + profile.host;
+				const background = this.planChoice(instance.id, profile, state, 'background', diagnostics);
+				const foreground = this.planChoice(instance.id, profile, state, 'foreground', diagnostics);
+				plans.push({
+					canvasId: 'lens:' + instance.id + '/' + profileId,
+					profileId,
+					instanceId: instance.id,
+					hostQualifiedId,
+					active: state.enabled === true && this.session.effectiveEnabled(hostQualifiedId),
+					background,
+					foreground,
+					geometry: this.sceneGeometry(instance.id, state.geometry)
+				});
+			}
+		}
+		return plans;
+	}
+
+	planChoice(instanceId, profile, state, slot, diagnostics) {
+		const choiceId = state[slot];
+		const choice = (profile[slot]?.choices || []).find(item => item.id === choiceId);
+		if (!choice) {
+			diagnostics.push({
+				severity: 'error',
+				code: 'LENS_CHOICE',
+				path: '/lensProfiles/' + profile.host + '/' + slot,
+				message: `Lens slot "${slot}" has no choice "${choiceId}".`
+			});
+			return null;
+		}
+		const target = choice.target || {};
+		if (target.kind === 'subtree') {
+			diagnostics.push({
+				severity: 'error',
+				code: 'LENS_SUBTREE',
+				path: '/lensProfiles/' + profile.host,
+				message: 'Subtree lens targets are not implemented.'
+			});
+			return null;
+		}
+		const node = this.session.getNode(instanceId + '/' + target.node);
+		if (!node || node.type !== 'layer') return null;
+		const described = this.planLeaf(node, 0, diagnostics);
+		if (!described) return null;
+		const rendering = target.kind === 'active-layer' ? null : target.rendering;
+		const preset = this.presetFor(node, {
+			rendering,
+			controls: state.slotState?.[slot]?.controls || {}
+		}, diagnostics);
+		if (!preset) return null;
+		return { ...described, preset, node };
+	}
+
+	/** Map an asset-space lens circle through the instance placement. LayerLens then projects it to the viewport. */
+	sceneGeometry(instanceId, geometry) {
+		const placement = this.session.worldTransform(instanceId);
+		const center = geometry?.center || [0, 0];
+		const placed = placement.apply(center[0] || 0, center[1] || 0);
+		return { center: [placed.x, placed.y], radius: (geometry?.radius || 0) * placement.z };
+	}
+
+	/** The background target occupies the host's canvas slot. The host's own preset is not drawn again. */
+	applyBackgrounds(planned, lensPlans) {
+		for (const lens of lensPlans) {
+			if (!lens.active || !lens.background) continue;
+			const host = planned.find(item => item && item.node.qualifiedId === lens.hostQualifiedId);
+			if (!host) continue;
+			const background = lens.background;
+			host.key = background.key;
+			host.adapter = background.adapter;
+			host.similarity = background.similarity;
+			host.source = background.source;
+			host.record = background.record;
+			host.preset = background.preset;
+			host.options = {
+				...background.options,
+				visible: host.visible,
+				zindex: host.zindex,
+				transform: {
+					x: background.similarity.x,
+					y: background.similarity.y,
+					a: background.similarity.a,
+					z: background.similarity.z
+				}
+			};
+		}
+	}
+
+	/** Create a primary layer, or derive a second context that must own its shader. */
+	materialize(item, derive) {
+		const owner = this.owners.get(item.key);
+		let layer;
+		if (derive && owner) {
+			layer = typeof owner.derive === 'function'
+				? owner.derive(item.options)
+				: this.createLayer({ ...item.options, sourceLayer: owner });
+			layer.sourceLayer = layer.sourceLayer || owner;
+			layer.shader = null;
+		} else {
+			layer = this.createLayer(item.options);
+			if (!this.owners.has(item.key)) this.owners.set(item.key, layer);
+		}
+		this.applyPreset(layer, item);
+		return layer;
+	}
+
+	/** Copy the preset onto the layer. The shader object stays with that layer. */
+	applyPreset(layer, item) {
+		const preset = item.preset;
+		if (!preset) return;
+		layer.renderingId = preset.id;
+		layer.mode = preset.mode || null;
+		layer.shaderId = preset.shader;
+		if (!layer.shader) layer.shader = { id: preset.shader, mode: layer.mode };
+		layer.shader.id = preset.shader;
+		layer.shader.mode = layer.mode;
+		layer.parameters = { ...(preset.parameters || {}) };
+		layer.controls = { ...(preset.controls || {}) };
+		const adapter = item.adapter;
+		if (adapter) {
+			for (const [name, value] of Object.entries(preset.parameters || {})) {
+				const method = adapter.parameters[name];
+				if (method && typeof layer[method] === 'function') layer[method](value);
+				else if (method && typeof layer.shader?.[method] === 'function') layer.shader[method](value);
+			}
+		}
+		if (typeof layer.setMode === 'function' && preset.mode) layer.setMode(preset.mode);
+	}
+
+	/** Mount one lens overlay. Its foreground child is not registered on the canvas. */
+	syncLens(plan) {
+		let entry = this.lenses.get(plan.canvasId);
+		if (!entry) {
+			const lens = this.createLens({ camera: this.target.camera, geometry: plan.geometry });
+			if (!Array.isArray(lens.layers)) lens.layers = [];
+			entry = { lens, child: null, key: null };
+			this.lenses.set(plan.canvasId, entry);
+			this.attach(plan.canvasId, lens);
+		}
+		const foreground = plan.foreground;
+		if (!entry.child || entry.key !== foreground.key) {
+			entry.child = this.materialize(foreground, true);
+			entry.key = foreground.key;
+			this.rememberSource(foreground, plan.canvasId + ':foreground');
+		} else {
+			this.applyPreset(entry.child, foreground);
+		}
+		assignTransform(entry.child, foreground.similarity);
+		entry.child.visible = true;
+		entry.lens.layers = [entry.child];
+		if (typeof entry.lens.setActiveLayer === 'function') entry.lens.setActiveLayer(0);
+		else entry.lens.activeLayerIndex = 0;
+		const [x, y] = plan.geometry.center;
+		if (typeof entry.lens.setCenter === 'function') entry.lens.setCenter(x, y);
+		else entry.lens.center = [x, y];
+		if (typeof entry.lens.setRadius === 'function') entry.lens.setRadius(plan.geometry.radius);
+		else entry.lens.radius = plan.geometry.radius;
+		this.lensChildren.set(plan.canvasId, entry.child);
+		if (entry.child.id && this.target.layers[entry.child.id] === entry.child) delete this.target.layers[entry.child.id];
+	}
+
+	dropLens(id) {
+		const entry = this.lenses.get(id);
+		this.lenses.delete(id);
+		this.lensChildren.delete(id);
+		if (entry?.key) {
+			const record = this.bySource.get(entry.key);
+			if (record) {
+				record.nodes = record.nodes.filter(nodeId => nodeId !== id + ':foreground');
+				if (record.nodes.length === 0) this.bySource.delete(entry.key);
+			}
+		}
+		if (entry?.child && this.owners.get(entry.key) === entry.child) this.owners.delete(entry.key);
+		if (typeof this.target.removeLayer === 'function') this.target.removeLayer(id);
+		else delete this.target.layers[id];
+	}
+
+	/**
+	 * Visit canvas layers and lens-owned children, matching Canvas.restoreLayerWebGL.
+	 * Children are reached even though they are absent from Canvas.layers.
+	 */
+	visitLayers(visitor) {
+		const walk = (layer) => {
+			if (!layer) return;
+			visitor(layer);
+			for (const child of layer.layers || []) walk(child);
+		};
+		for (const layer of Object.values(this.target.layers)) walk(layer);
 	}
 
 	rememberSource(item, qualifiedId) {
@@ -286,10 +543,11 @@ class SceneProjection {
 		camera.updateBounds(this.fitBounds, Number.isFinite(minScale) ? minScale : 0);
 	}
 
-	/** Stop listening and remove the projected layers. */
+	/** Stop listening and remove the projected layers, including lens overlays. */
 	dispose() {
 		if (this.unsubscribe) this.unsubscribe();
 		this.unsubscribe = null;
+		for (const id of [...this.lenses.keys()]) this.dropLens(id);
 		for (const id of [...this.byNode.keys()]) this.drop(id);
 	}
 }

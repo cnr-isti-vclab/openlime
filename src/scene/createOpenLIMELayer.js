@@ -1,4 +1,5 @@
 import { Layer } from '../Layer.js';
+import { LayerLens } from '../LayerLens.js';
 import { Transform } from '../Transform.js';
 import '../LayerImage.js';
 import '../LayerRTI.js';
@@ -27,4 +28,18 @@ function createOpenLIMELayer(options) {
 	});
 }
 
-export { createOpenLIMELayer };
+/**
+ * Builds the lens overlay for one profile. The camera is required by LayerLens.
+ * Foreground children are attached later and are not passed to the canvas.
+ * @param {Object} spec
+ * @returns {LayerLens}
+ */
+function createOpenLIMELens(spec) {
+	return new LayerLens({
+		camera: spec.camera,
+		overlay: true,
+		radius: spec.geometry?.radius ?? 100
+	});
+}
+
+export { createOpenLIMELayer, createOpenLIMELens };

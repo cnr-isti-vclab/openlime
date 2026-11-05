@@ -129,12 +129,17 @@ function validateLenses(asset, path, diagnostics) {
 			if (choiceList.length === 0) {
 				push(diagnostics, 'error', 'LENS_CHOICES', path + '/lensProfiles/' + id + '/' + slot, `Lens "${id}" ${slot} needs at least one choice.`);
 			}
-			const choiceIds = new Set(choiceList.map(choice => choice.id));
-			if (!choiceIds.has(profile[slot]?.default)) {
-				push(diagnostics, 'error', 'LENS_DEFAULT', path + '/lensProfiles/' + id + '/' + slot + '/default', `Lens "${id}" ${slot} default is not a choice.`);
-			}
+			const choiceIds = new Set();
 			for (const choice of choiceList) {
+				if (!choice.id || choiceIds.has(choice.id)) {
+					push(diagnostics, 'error', 'LENS_CHOICE', path + '/lensProfiles/' + id + '/' + slot, `Lens "${id}" ${slot} choice ids must be unique.`);
+				}
+				choiceIds.add(choice.id);
 				const target = choice.target || {};
+				if (target.kind === 'subtree') {
+					push(diagnostics, 'error', 'LENS_SUBTREE', path + '/lensProfiles/' + id, `Lens "${id}" subtree targets are not implemented.`);
+					continue;
+				}
 				const targetNode = asset.nodes[target.node];
 				if (!targetNode || targetNode.type !== 'layer') {
 					push(diagnostics, 'error', 'LENS_TARGET', path + '/lensProfiles/' + id, `Lens "${id}" points at missing layer "${target.node}".`);
@@ -145,6 +150,16 @@ function validateLenses(asset, path, diagnostics) {
 					push(diagnostics, 'error', 'LENS_RENDERING', path + '/lensProfiles/' + id, `Lens "${id}" rendering "${target.rendering}" is not on "${target.node}".`);
 				}
 			}
+			if (!choiceIds.has(profile[slot]?.default)) {
+				push(diagnostics, 'error', 'LENS_DEFAULT', path + '/lensProfiles/' + id + '/' + slot + '/default', `Lens "${id}" ${slot} default is not a choice.`);
+			}
+		}
+		const space = profile.geometry?.coordinateSpace || 'asset';
+		if (space !== 'asset') {
+			push(diagnostics, 'error', 'LENS_SPACE', path + '/lensProfiles/' + id + '/geometry/coordinateSpace', `Lens coordinate space "${space}" is not supported. Use "asset".`);
+		}
+		if (profile.type && profile.type !== 'openlime:circular-lens') {
+			push(diagnostics, 'error', 'LENS_TYPE', path + '/lensProfiles/' + id + '/type', `Unsupported lens type "${profile.type}".`);
 		}
 	}
 }
@@ -308,10 +323,37 @@ function freshState(scene, assetByInstance, diagnostics) {
 			enabled,
 			selections,
 			layers: initial.layers || {},
-			lenses: initial.lenses || {}
+			lenses: normalizeLenses(asset, initial.lenses || {}, diagnostics)
 		};
 	}
 	return state;
+}
+
+/** Fill lens choice, geometry, and enabled flags. At most one enabled profile per host. */
+function normalizeLenses(asset, stored, diagnostics) {
+	const lenses = {};
+	const enabledHost = new Map();
+	for (const [id, profile] of Object.entries(asset.lensProfiles || {})) {
+		const previous = stored[id] || {};
+		const geometry = previous.geometry || {};
+		let enabled = previous.enabled === true;
+		if (enabled && enabledHost.has(profile.host)) {
+			enabled = false;
+			push(diagnostics, 'warning', 'LENS_HOST_EXCLUSIVE', '/lensProfiles/' + id, `Host "${profile.host}" already has an enabled lens. "${id}" was turned off.`);
+		}
+		if (enabled) enabledHost.set(profile.host, id);
+		lenses[id] = {
+			enabled,
+			background: previous.background || profile.background?.default || null,
+			foreground: previous.foreground || profile.foreground?.default || null,
+			slotState: previous.slotState || { background: {}, foreground: {} },
+			geometry: {
+				center: geometry.center || profile.geometry?.defaultCenter || [0, 0],
+				radius: geometry.radius === undefined ? (profile.geometry?.defaultRadius ?? 100) : geometry.radius
+			}
+		};
+	}
+	return lenses;
 }
 
 /**
@@ -527,7 +569,7 @@ class SceneSession {
 		});
 	}
 
-	/** Store the active preset id. Applying the shader is left to a later phase. */
+	/** Select a preset listed on the layer. The projection applies it on the next reconcile. */
 	setLayerRendering(instanceId, nodeId, renderingId) {
 		this.transaction(() => {
 			const node = this.requireNode(instanceId, nodeId);
@@ -535,6 +577,65 @@ class SceneSession {
 			if (!known) throw new Error(`Unknown rendering "${renderingId}".`);
 			const layers = this.state.assets[instanceId].layers;
 			layers[nodeId] = { ...(layers[nodeId] || {}), rendering: renderingId };
+		});
+	}
+
+	/** Set one control on a layer preset. Slot controls stay on the lens state. */
+	setLayerControl(instanceId, nodeId, renderingId, controlId, value) {
+		this.transaction(() => {
+			const rendering = this.renderingOf(instanceId, nodeId, renderingId);
+			this.assertControl(rendering, controlId);
+			const layers = this.state.assets[instanceId].layers;
+			const entry = { ...(layers[nodeId] || {}) };
+			const renderingState = { ...(entry.renderingState || {}) };
+			const current = { ...(renderingState[renderingId] || {}) };
+			current.controls = { ...(current.controls || {}), [controlId]: value };
+			renderingState[renderingId] = current;
+			entry.renderingState = renderingState;
+			layers[nodeId] = entry;
+		});
+	}
+
+	/** Enable one lens. Another enabled profile on the same host is turned off in this transaction. */
+	setLensEnabled(instanceId, profileId, enabled) {
+		this.transaction(() => {
+			const profile = this.lensProfile(instanceId, profileId);
+			const lenses = this.state.assets[instanceId].lenses;
+			if (enabled) {
+				for (const [otherId, other] of Object.entries(this.lensProfiles(instanceId))) {
+					if (otherId !== profileId && other.host === profile.host) lenses[otherId].enabled = false;
+				}
+			}
+			lenses[profileId].enabled = !!enabled;
+		});
+	}
+
+	/** Select the choice id of one lens slot. */
+	selectLensChoice(instanceId, profileId, slot, choiceId) {
+		this.transaction(() => {
+			const profile = this.lensProfile(instanceId, profileId);
+			if (slot !== 'background' && slot !== 'foreground') throw new Error(`Unknown lens slot "${slot}".`);
+			const choices = profile[slot]?.choices || [];
+			if (!choices.some(choice => choice.id === choiceId)) throw new Error(`Unknown ${slot} choice "${choiceId}".`);
+			this.state.assets[instanceId].lenses[profileId][slot] = choiceId;
+		});
+	}
+
+	/** Set a control on one lens slot without changing the layer's main preset state. */
+	setLensControl(instanceId, profileId, slot, controlId, value) {
+		this.transaction(() => {
+			const profile = this.lensProfile(instanceId, profileId);
+			if (slot !== 'background' && slot !== 'foreground') throw new Error(`Unknown lens slot "${slot}".`);
+			const choice = (profile[slot]?.choices || []).find(item => item.id === this.state.assets[instanceId].lenses[profileId][slot]);
+			const node = this.requireNode(instanceId, choice?.target?.node);
+			const renderingId = choice?.target?.rendering || node.defaultRendering;
+			this.assertControl(this.renderingOf(instanceId, node.nodeId, renderingId), controlId);
+			const lens = this.state.assets[instanceId].lenses[profileId];
+			const slotState = { ...(lens.slotState || {}) };
+			const current = { ...(slotState[slot] || {}) };
+			current.controls = { ...(current.controls || {}), [controlId]: value };
+			slotState[slot] = current;
+			lens.slotState = slotState;
 		});
 	}
 
@@ -566,6 +667,30 @@ class SceneSession {
 		const child = this.getNode(instanceId + '/' + childId);
 		if (!child || child.parent !== group.qualifiedId) throw new Error(`"${childId}" is not a child of "${groupId}".`);
 		this.state.assets[instanceId].selections[groupId] = childId;
+	}
+
+	lensProfiles(instanceId) {
+		return this.assetByInstance.get(instanceId)?.lensProfiles || {};
+	}
+
+	lensProfile(instanceId, profileId) {
+		const profile = this.lensProfiles(instanceId)[profileId];
+		if (!profile) throw new Error(`Unknown lens "${profileId}".`);
+		if (!this.state.assets[instanceId]?.lenses[profileId]) throw new Error(`Unknown lens "${profileId}".`);
+		return profile;
+	}
+
+	renderingOf(instanceId, nodeId, renderingId) {
+		const node = this.requireNode(instanceId, nodeId);
+		const rendering = (node.renderings || []).find(item => item.id === renderingId);
+		if (!rendering) throw new Error(`Unknown rendering "${renderingId}".`);
+		return rendering;
+	}
+
+	assertControl(rendering, controlId) {
+		if (Array.isArray(rendering.exposeControls) && !rendering.exposeControls.includes(controlId)) {
+			throw new Error(`Control "${controlId}" is not exposed by "${rendering.id}".`);
+		}
 	}
 
 	requireNode(instanceId, nodeId) {
