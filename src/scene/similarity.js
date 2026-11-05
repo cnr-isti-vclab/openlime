@@ -34,6 +34,7 @@ class Similarity {
 		return new Similarity({ x: -rotated.x, y: -rotated.y, z: 1 / this.z, a: -this.a });
 	}
 
+	/** Apply this similarity first, then `next`. Use `local.compose(parent)`. */
 	compose(next) {
 		const combined = this.copy();
 		combined.z *= next.z;
@@ -97,10 +98,12 @@ function parseSimilarity(value, path, diagnostics) {
 	return new Similarity({ x, y, a: rotation, z: scale });
 }
 
+/** Node and instance ids: a letter, then letters, digits, or . _ : - */
 function isLocalId(id) {
 	return typeof id === 'string' && LOCAL_ID.test(id);
 }
 
+/** Asset, scene, and space ids: a URI or URN, with no whitespace. */
 function isGlobalId(id) {
 	return typeof id === 'string' && id.includes(':') && !/\s/.test(id);
 }

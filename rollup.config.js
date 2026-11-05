@@ -122,7 +122,9 @@ const annotation = [
 
 const loader = [
 	'./src/ManifestLoader.js',
-	'./src/scene/SceneSession.js'
+	'./src/scene/SceneSession.js',
+	'./src/scene/SceneProjection.js',
+	'./src/scene/createOpenLIMELayer.js'
 ];
 
 const allModules = [...core, ...extra, ...ui, ...rti, ...brdf, ...rilsr, ...lens, ...annotation, ...loader];

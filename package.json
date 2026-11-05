@@ -67,7 +67,7 @@
     "nodemon": "nodemon --watch ./src --exec npm run rollup",
     "doc": "jsdoc -c jsdoc/jsdoc.json -R README.md && mkdir -p docs/img && cp -r jsdoc/static/img/* docs/img/",
     "update-readme": "node utils/update-readme.js",
-    "test:scene": "node --test tests/scene/phase1.test.mjs",
+		"test:scene": "node --test tests/scene/",
     "prepublishOnly": "npm run update-readme && npm run rollup && npm run build-types && npm run doc"
   },
   "devDependencies": {

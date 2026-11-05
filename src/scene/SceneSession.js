@@ -1,5 +1,6 @@
 import { Similarity, parseSimilarity, isLocalId, isGlobalId } from './similarity.js';
 
+/** Thrown when a document or a command has at least one error diagnostic. */
 class SceneValidationError extends Error {
 	constructor(diagnostics) {
 		const errors = diagnostics.filter(item => item.severity === 'error');
@@ -28,6 +29,7 @@ function activationOf(node) {
 	return { mode, required: mode === 'exclusive' && activation.required !== false };
 }
 
+/** Check one frozen asset: root group, tree, sources, presets, and lens references. */
 function validateAsset(asset, path, diagnostics) {
 	if (!asset || asset.format !== 'openlime-asset') {
 		push(diagnostics, 'error', 'FORMAT', path + '/format', 'Asset format must be openlime-asset.');
@@ -155,6 +157,7 @@ function resolveAsset(instance, index, options, diagnostics) {
 	return null;
 }
 
+/** Check the scene envelope: id, scene space, and the flat list of asset instances. */
 function validateScene(scene, diagnostics) {
 	if (!scene || scene.format !== 'openlime-scene') {
 		push(diagnostics, 'error', 'FORMAT', '/format', 'Scene format must be openlime-scene.');
@@ -183,6 +186,10 @@ function validateScene(scene, diagnostics) {
 	}
 }
 
+/**
+ * Build the live graph: scene root, one instance group per asset, then the frozen nodes.
+ * Qualified ids are `instanceId/nodeId`. The scene root id is `''`.
+ */
 function buildGraph(scene, assetByInstance, diagnostics) {
 	const nodes = new Map();
 	const sceneRoot = {
@@ -227,6 +234,9 @@ function buildGraph(scene, assetByInstance, diagnostics) {
 			const parentQualified = parentNodeId ? instance.id + '/' + parentNodeId : instance.id;
 			const qualifiedId = instance.id + '/' + nodeId;
 			const local = parseSimilarity(spec.spatial?.toParent, '/nodes/' + nodeId + '/spatial/toParent', diagnostics) || new Similarity();
+			const assetToLocal = spec.type === 'layer'
+				? parseSimilarity(spec.spatial?.assetToLocal, '/nodes/' + nodeId + '/spatial/assetToLocal', diagnostics) || new Similarity()
+				: null;
 			nodes.set(qualifiedId, {
 				qualifiedId,
 				instanceId: instance.id,
@@ -236,6 +246,7 @@ function buildGraph(scene, assetByInstance, diagnostics) {
 				parent: parentQualified,
 				children: [],
 				local,
+				assetToLocal,
 				activation: spec.type === 'group' ? activationOf(spec) : null,
 				renderings: spec.type === 'layer' ? spec.renderings : null,
 				defaultRendering: spec.defaultRendering || null
@@ -262,6 +273,7 @@ function findParent(asset, nodeId) {
 	return null;
 }
 
+/** Initial camera, instance placement, enabled flags, and exclusive selections. */
 function freshState(scene, assetByInstance, diagnostics) {
 	const state = {
 		camera: { x: 0, y: 0, z: 1, a: 0, ...(scene.initialState?.camera || {}) },
@@ -302,6 +314,10 @@ function freshState(scene, assetByInstance, diagnostics) {
 	return state;
 }
 
+/**
+ * A mounted scene: frozen documents, the live graph, and mutable state.
+ * Commands go through `transaction` and notify listeners once on success.
+ */
 class SceneSession {
 	constructor(scene, assetByInstance, nodes, state, diagnostics) {
 		this.scene = scene;
@@ -309,8 +325,43 @@ class SceneSession {
 		this.nodes = nodes;
 		this.state = state;
 		this.diagnostics = diagnostics;
+		this.listeners = new Set();
 	}
 
+	/** Called once after a successful command. Returns an unsubscribe function. */
+	addListener(listener) {
+		this.listeners.add(listener);
+		return () => this.listeners.delete(listener);
+	}
+
+	publish() {
+		for (const listener of this.listeners) listener();
+	}
+
+	/** Mount one asset file as a scene with a single identity placement. */
+	static openAsset(assetDocument, options = {}) {
+		return SceneSession.open(syntheticScene(assetDocument, options), options);
+	}
+
+	/** Import a flat manifest. Events, plugins, and connections are dropped. */
+	static openLegacy(manifest, options = {}) {
+		const id = options.assetId || 'urn:openlime:legacy';
+		const session = SceneSession.open(syntheticScene(legacyManifestToAsset(manifest, id), {
+			sceneId: options.sceneId || 'urn:openlime:legacy:scene',
+			instanceId: options.instanceId || 'legacy',
+			viewer: manifest.viewer
+		}), options);
+		if (manifest.events) push(session.diagnostics, 'warning', 'EVENTS_DROPPED', '/events', 'Legacy events are dropped.');
+		if (manifest.plugins) push(session.diagnostics, 'warning', 'PLUGINS_DROPPED', '/plugins', 'Legacy plugins are dropped.');
+		if (manifest.connections) push(session.diagnostics, 'warning', 'CONNECTIONS_DROPPED', '/connections', 'Unresolved legacy connections are dropped.');
+		push(session.diagnostics, 'warning', 'LEGACY_LOCAL_IDS', '/id', 'This import minted local ids. Annotation reuse needs a host asset id.');
+		return session;
+	}
+
+	/**
+	 * Open an openlime-scene document.
+	 * Pass missing assets in `options.assets`, keyed by asset id. Inline `document` wins.
+	 */
 	static open(sceneDocument, options = {}) {
 		const diagnostics = [];
 		const scene = clone(sceneDocument);
@@ -366,6 +417,7 @@ class SceneSession {
 		return descendants;
 	}
 
+	/** Parent enabled, own flag, and exclusive selection. Descendant flags are not cleared. */
 	effectiveEnabled(qualifiedId) {
 		const node = this.getNode(qualifiedId);
 		if (!node) return false;
@@ -381,6 +433,7 @@ class SceneSession {
 		return this.state.assets[node.instanceId].enabled[node.nodeId] !== false;
 	}
 
+	/** Transform inside the asset. Placement is not included. */
 	assetTransform(qualifiedId) {
 		const node = this.getNode(qualifiedId);
 		if (!node || node.role !== 'node') return new Similarity();
@@ -389,12 +442,14 @@ class SceneSession {
 		return node.local.compose(this.assetTransform(parent.qualifiedId));
 	}
 
+	/** Local transform first, then ancestors, then the instance placement. */
 	worldTransform(qualifiedId) {
 		const node = this.getNode(qualifiedId);
 		if (!node || node.role === 'scene') return new Similarity();
 		return node.local.compose(this.worldTransform(node.parent));
 	}
 
+	/** Effectively visible layers, back to front. Groups stay on the graph and are omitted here. */
 	activeLeaves() {
 		const leaves = [];
 		const walk = (id) => {
@@ -408,20 +463,24 @@ class SceneSession {
 		return leaves;
 	}
 
+	/** Map a point from one instance's asset space into scene space. */
 	assetToScene(instanceId, point) {
 		const placed = this.worldTransform(instanceId).apply(point.x, point.y);
 		return { x: placed.x, y: placed.y };
 	}
 
+	/** Inverse of `assetToScene` for the same instance. */
 	sceneToAsset(instanceId, point) {
 		const placed = this.worldTransform(instanceId).inverse().apply(point.x, point.y);
 		return { x: placed.x, y: placed.y };
 	}
 
+	/** Plain snapshot of camera, instances, and per-asset state. */
 	exportState() {
 		return clone(this.state);
 	}
 
+	/** Replace state in one transaction. Unknown instances throw and roll back. */
 	importState(next) {
 		this.transaction(() => {
 			if (next.camera) Object.assign(this.state.camera, next.camera);
@@ -444,6 +503,7 @@ class SceneSession {
 		});
 	}
 
+	/** Show or hide one asset instance. Other instances are left alone. */
 	setInstanceEnabled(instanceId, enabled) {
 		this.transaction(() => {
 			if (!this.state.instances[instanceId]) throw new Error(`Unknown instance "${instanceId}".`);
@@ -451,6 +511,7 @@ class SceneSession {
 		});
 	}
 
+	/** Toggle one asset node. A group hides its subtree without clearing descendant flags. */
 	setNodeEnabled(instanceId, nodeId, enabled) {
 		this.transaction(() => {
 			const node = this.requireNode(instanceId, nodeId);
@@ -459,12 +520,14 @@ class SceneSession {
 		});
 	}
 
+	/** Select the active child of an exclusive group. Null is allowed only when the group is optional. */
 	selectGroupChild(instanceId, groupId, childId) {
 		this.transaction(() => {
 			this.assignSelection(instanceId, groupId, childId);
 		});
 	}
 
+	/** Store the active preset id. Applying the shader is left to a later phase. */
 	setLayerRendering(instanceId, nodeId, renderingId) {
 		this.transaction(() => {
 			const node = this.requireNode(instanceId, nodeId);
@@ -475,6 +538,7 @@ class SceneSession {
 		});
 	}
 
+	/** Move one instance. Asset-local transforms and the source document stay unchanged. */
 	setAssetTransform(instanceId, transform) {
 		this.transaction(() => {
 			this.applyPlacement(instanceId, transform);
@@ -510,6 +574,7 @@ class SceneSession {
 		return node;
 	}
 
+	/** Run `change`. On failure restore state and placements. On success notify listeners once. */
 	transaction(change) {
 		const previous = clone(this.state);
 		const locals = new Map();
@@ -521,9 +586,36 @@ class SceneSession {
 			for (const [id, local] of locals) this.nodes.get(id).local = local;
 			throw error;
 		}
+		try {
+			this.publish();
+		} catch (error) {
+			this.state = previous;
+			for (const [id, local] of locals) this.nodes.get(id).local = local;
+			try { this.publish(); } catch { /* The original command error is the one to report. */ }
+			throw error;
+		}
 	}
 }
 
+/** Wrap one asset as a scene with a single instance at identity placement. */
+function syntheticScene(asset, options = {}) {
+	const spaceId = asset.nodes?.[asset.root]?.spatial?.space?.id;
+	return {
+		format: 'openlime-scene',
+		formatVersion: '1.0.0',
+		id: options.sceneId || asset.id + ':scene',
+		root: { spatial: { space: { id: spaceId ? spaceId + ':scene' : 'urn:openlime:scene', type: 'cartesian2d' }, ...(options.extent ? { extent: options.extent } : {}) } },
+		viewer: options.viewer,
+		assets: [{
+			id: options.instanceId || 'asset',
+			asset: asset.id,
+			document: asset,
+			transform: { type: 'identity' }
+		}]
+	};
+}
+
+/** Turn a flat `layers` map into one stack-rooted asset. Ids are document-local. */
 function legacyManifestToAsset(manifest, id = 'urn:openlime:legacy') {
 	const entries = Object.entries(manifest.layers || {});
 	entries.sort((a, b) => (a[1].zindex || 0) - (b[1].zindex || 0));
