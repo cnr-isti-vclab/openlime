@@ -1,0 +1,70 @@
+{
+  "format": "openlime-asset",
+  "formatVersion": "1.0.0",
+  "id": "urn:example:lime",
+  "sources": {
+    "color": { "id": "urn:example:source:color", "uri": "../../assets/lime/image/lime.jpg", "bounds": { "width": 3184, "height": 2024 } },
+    "filtered": { "id": "urn:example:source:filtered", "uri": "../../assets/lime/image/lime_fx.jpg", "bounds": { "width": 3184, "height": 2024 } },
+    "rti": { "id": "urn:example:source:rti", "uri": "../../assets/rti/ptm/info.json", "layout": { "type": "image" }, "bounds": { "width": 1024, "height": 1024 } }
+  },
+  "root": "root",
+  "nodes": {
+    "root": {
+      "type": "group",
+      "label": "Lime",
+      "activation": { "mode": "stack" },
+      "children": ["study", "rti"],
+      "spatial": { "space": { "id": "urn:example:frame:lime:root", "type": "cartesian2d" } }
+    },
+    "study": {
+      "type": "group",
+      "label": "Photograph",
+      "activation": { "mode": "exclusive", "required": true },
+      "children": ["color", "filtered"]
+    },
+    "color": {
+      "type": "layer",
+      "label": "Visible",
+      "renderer": { "type": "openlime:image", "source": "color" },
+      "renderings": [{ "id": "color", "label": "Color" }],
+      "defaultRendering": "color"
+    },
+    "filtered": {
+      "type": "layer",
+      "label": "Filtered",
+      "renderer": { "type": "openlime:image", "source": "filtered" },
+      "renderings": [{ "id": "color", "label": "Color" }],
+      "defaultRendering": "color"
+    },
+    "rti": {
+      "type": "layer",
+      "label": "RTI coin",
+      "spatial": { "toParent": { "type": "similarity2d", "translation": [0, 1700] } },
+      "renderer": { "type": "openlime:rti", "source": "rti" },
+      "renderings": [
+        { "id": "relight", "label": "Relight", "shader": "rti", "mode": "light", "controls": { "light": [0.2, 0.2] }, "exposeControls": ["light"] },
+        { "id": "normals", "label": "Normals", "shader": "rti", "mode": "normals" }
+      ],
+      "defaultRendering": "relight"
+    }
+  },
+  "lensProfiles": {
+    "inspect": {
+      "type": "openlime:circular-lens",
+      "label": "Inspection",
+      "host": "color",
+      "background": {
+        "default": "color",
+        "choices": [{ "id": "color", "label": "Visible", "target": { "kind": "layer", "node": "color", "rendering": "color" } }]
+      },
+      "foreground": {
+        "default": "filtered",
+        "choices": [
+          { "id": "filtered", "label": "Filtered", "target": { "kind": "layer", "node": "filtered", "rendering": "color" } },
+          { "id": "normals", "label": "Coin normals", "target": { "kind": "layer", "node": "rti", "rendering": "normals" } }
+        ]
+      },
+      "geometry": { "shape": "circle", "coordinateSpace": "asset", "defaultCenter": [0, 0], "defaultRadius": 500 }
+    }
+  }
+}

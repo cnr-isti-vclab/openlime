@@ -59,29 +59,36 @@ class LayerImage extends Layer {
 	 * @throws {Error} If no URL is provided and layout has no URLs
 	 */
 	constructor(options) {
+		// A derived image shares the source rasters. The empty-rasters check
+		// applies only to a primary layer, as it does for LayerRTI.
+		const hasSourceLayer = !!options?.sourceLayer;
+		const hasRasterOptions = !!options?.rasters && Object.keys(options.rasters).length != 0;
 		super(options);
 
-		if (Object.keys(this.rasters).length != 0)
+		if (!hasSourceLayer && hasRasterOptions)
 			throw "Rasters options should be empty!";
 
-		if (this.url)
-			this.layout.setUrls([this.url]);
-		else if (this.layout.urls.length == 0)
-			throw "Missing options.url parameter";
+		if (!hasSourceLayer) {
+			if (this.url)
+				this.layout.setUrls([this.url]);
+			else if (this.layout.urls.length == 0)
+				throw "Missing options.url parameter";
 
-		const rasterFormat = this.format != null ? this.format : 'vec4';
-		let raster = new Raster({ format: rasterFormat }); //FIXME select format for GEO stuff
+			const rasterFormat = this.format != null ? this.format : 'vec4';
+			this.rasters.push(new Raster({ format: rasterFormat }));
+		}
 
-		this.rasters.push(raster);
-
-
-		let shader = new Shader({
+		const rasterFormat = this.format != null ? this.format : (this.rasters[0]?.format || 'vec4');
+		const shader = new Shader({
 			'label': 'Rgb',
 			'samplers': [{ id: 0, name: 'source', type: rasterFormat }]
 		});
-
 		this.shaders = { 'standard': shader };
 		this.setShader('standard');
+		if (hasSourceLayer) {
+			this.status = 'ready';
+			this.emit('ready');
+		}
 	}
 }
 

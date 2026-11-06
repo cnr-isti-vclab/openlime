@@ -76,6 +76,18 @@ function validateAsset(asset, path, diagnostics) {
 		}
 		if (node.type === 'layer') validateLayer(node, nodes, asset.sources || {}, path + '/nodes/' + id, diagnostics);
 	}
+	const seenCrs = new Set();
+	const inheritCrs = (id, inherited) => {
+		if (seenCrs.has(id) || !nodes[id]) return;
+		seenCrs.add(id);
+		const own = nodes[id].spatial?.space?.crs;
+		if (own && inherited && own !== inherited) {
+			push(diagnostics, 'error', 'CRS_INCOMPATIBLE', path + '/nodes/' + id + '/spatial/space/crs', `CRS "${own}" does not match the parent CRS "${inherited}".`);
+		}
+		const crs = own || inherited || null;
+		for (const childId of nodes[id].children || []) inheritCrs(childId, crs);
+	};
+	if (nodes[rootId]) inheritCrs(rootId, null);
 	if (parentOf.has(rootId)) {
 		push(diagnostics, 'error', 'ROOT_CHILD', path + '/root', 'The asset root cannot also be a child.');
 	}
@@ -137,7 +149,7 @@ function validateLenses(asset, path, diagnostics) {
 				choiceIds.add(choice.id);
 				const target = choice.target || {};
 				if (target.kind === 'subtree') {
-					push(diagnostics, 'error', 'LENS_SUBTREE', path + '/lensProfiles/' + id, `Lens "${id}" subtree targets are not implemented.`);
+					validateSubtreeTarget(asset, id, target, path, diagnostics);
 					continue;
 				}
 				const targetNode = asset.nodes[target.node];
@@ -162,6 +174,48 @@ function validateLenses(asset, path, diagnostics) {
 			push(diagnostics, 'error', 'LENS_TYPE', path + '/lensProfiles/' + id + '/type', `Unsupported lens type "${profile.type}".`);
 		}
 	}
+}
+
+/** A subtree target names a group. Overrides may change enabled flags, selection, and presets for that lens context only. */
+function validateSubtreeTarget(asset, lensId, target, path, diagnostics) {
+	const group = asset.nodes[target.node];
+	if (!group || group.type !== 'group') {
+		push(diagnostics, 'error', 'LENS_TARGET', path + '/lensProfiles/' + lensId, `Subtree target "${target.node}" must be a group in this asset.`);
+		return;
+	}
+	const under = descendantIds(asset, target.node);
+	const overrides = target.stateOverrides || {};
+	for (const nodeId of Object.keys(overrides.enabled || {})) {
+		if (!under.has(nodeId)) {
+			push(diagnostics, 'error', 'SUBTREE_OVERRIDE', path + '/lensProfiles/' + lensId, `Override "${nodeId}" is not inside "${target.node}".`);
+		}
+	}
+	for (const [groupId, childId] of Object.entries(overrides.selections || {})) {
+		const selectedGroup = asset.nodes[groupId];
+		if (!under.has(groupId) || selectedGroup?.type !== 'group' || !(selectedGroup.children || []).includes(childId)) {
+			push(diagnostics, 'error', 'SUBTREE_OVERRIDE', path + '/lensProfiles/' + lensId, `Override selection "${groupId}" / "${childId}" is not a child inside "${target.node}".`);
+		}
+	}
+	for (const [nodeId, layerState] of Object.entries(overrides.layers || {})) {
+		const node = asset.nodes[nodeId];
+		const renderingIds = new Set((node?.renderings || []).map(rendering => rendering.id));
+		if (!under.has(nodeId) || node?.type !== 'layer' || !renderingIds.has(layerState?.rendering)) {
+			push(diagnostics, 'error', 'SUBTREE_OVERRIDE', path + '/lensProfiles/' + lensId, `Override rendering "${layerState?.rendering}" is not on "${nodeId}".`);
+		}
+	}
+}
+
+function descendantIds(asset, rootId) {
+	const ids = new Set([rootId]);
+	const walk = (id) => {
+		for (const childId of asset.nodes[id]?.children || []) {
+			if (ids.has(childId)) continue;
+			ids.add(childId);
+			walk(childId);
+		}
+	};
+	walk(rootId);
+	return ids;
 }
 
 function resolveAsset(instance, index, options, diagnostics) {

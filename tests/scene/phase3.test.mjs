@@ -265,6 +265,28 @@ test('the lens follows placement and suspends while its host is inactive', () =>
 	assert.equal(target.layers['only/rti'].mode, 'light');
 });
 
+test('each instance lens is placed on that copy and draws above the leaves', () => {
+	const asset = document();
+	const session = SceneSession.open({
+		format: 'openlime-scene',
+		formatVersion: '1.0.0',
+		id: 'urn:example:wall',
+		root: { spatial: { space: { id: 'urn:example:frame:wall:root', type: 'cartesian2d' } } },
+		assets: [
+			{ id: 'left', asset: asset.id, document: asset, transform: { type: 'similarity2d', translation: [-400, 0] } },
+			{ id: 'right', asset: asset.id, document: asset, transform: { type: 'similarity2d', translation: [400, 0] } }
+		]
+	});
+	const { target } = project(session);
+	const top = Math.max(...Object.values(target.layers).filter(layer => !String(layer.id).startsWith('lens:')).map(layer => layer.zindex));
+	const left = target.layers['lens:left/inspect'];
+	const right = target.layers['lens:right/inspect'];
+	assert.ok(left.zindex > top);
+	assert.ok(right.zindex > top);
+	assert.deepEqual(left.center, [-390, 0]);
+	assert.deepEqual(right.center, [410, 0]);
+});
+
 test('enabling a second lens on the same host turns the first one off', () => {
 	const session = open();
 	const { target } = project(session);
@@ -275,7 +297,7 @@ test('enabling a second lens on the same host turns the first one off', () => {
 	assert.ok(target.layers['lens:only/other']);
 });
 
-test('rejects viewport lens space and subtree targets', () => {
+test('rejects viewport lens space and a subtree that is not a group', () => {
 	const space = document();
 	space.lensProfiles.inspect.geometry.coordinateSpace = 'viewport-css';
 	assert.throws(() => SceneSession.open({
@@ -287,7 +309,7 @@ test('rejects viewport lens space and subtree targets', () => {
 	}), SceneValidationError);
 
 	const subtree = document();
-	subtree.lensProfiles.inspect.foreground.choices[0].target = { kind: 'subtree', node: 'root' };
+	subtree.lensProfiles.inspect.foreground.choices[0].target = { kind: 'subtree', node: 'rti' };
 	assert.throws(() => SceneSession.open({
 		format: 'openlime-scene',
 		formatVersion: '1.0.0',

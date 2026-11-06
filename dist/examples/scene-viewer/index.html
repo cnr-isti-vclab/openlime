@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>OpenLIME - Scene viewer</title>
+	<link rel="stylesheet" href="../../css/skin.css">
+	<link rel="stylesheet" href="../../css/light.css">
+	<link rel="stylesheet" href="../examples.css">
+	<style>
+		body { overflow: hidden; }
+		h1, p { margin-left: 16px; }
+		p { margin-top: 0; max-width: 70rem; }
+		.scene-layout { display: flex; height: calc(100% - 92px); }
+		.openlime-scene-tree {
+			width: 300px;
+			margin: 0;
+			padding: 12px 16px;
+			overflow: auto;
+			background: #343434;
+			box-sizing: border-box;
+		}
+		.openlime-scene-tree ul { margin: 4px 0 4px 18px; padding: 0; }
+		.openlime-scene-tree li { list-style: none; margin: 4px 0; color: #fff; }
+		.openlime-scene-node[data-effective="false"] { opacity: 0.45; }
+		.openlime-scene-heading label, .openlime-scene-lens label, .openlime-scene-control { display: flex; gap: 6px; align-items: center; }
+		.openlime-scene-node select, .openlime-scene-control input { margin-left: 22px; }
+		.scene-layout .openlime { flex: 1; height: 100%; position: relative; }
+		.openlime-layers-menu { display: none; }
+	</style>
+</head>
+<body>
+	<h1>OpenLIME - Scene viewer</h1>
+	<p>Two placements of one asset. The tree drives the canvas: hide a copy, switch the photograph, relight the coin, or open the inspection lens.</p>
+	<div class="scene-layout">
+		<ul class="tree"></ul>
+		<div class="openlime"></div>
+	</div>
+	<script src="../../js/openlime.js"></script>
+	<script type="module">
+		import { SceneSession } from '../../../src/scene/SceneSession.js';
+		import { SceneProjection } from '../../../src/scene/SceneProjection.js';
+		import { SceneTree } from '../../../src/scene/SceneTree.js';
+
+		const scene = await fetch('scene.json').then(response => response.json());
+		const asset = await fetch('lime.json').then(response => response.json());
+		const session = SceneSession.open(scene, { assets: { [asset.id]: asset } });
+		const viewer = new OpenLIME.Viewer('.openlime', { background: '#222' });
+
+		function createLayer(options) {
+			const layer = new OpenLIME.Layer({
+				type: options.type,
+				url: options.url,
+				layout: options.layout,
+				label: options.label,
+				visible: options.visible,
+				zindex: options.zindex,
+				normals: options.normals,
+				sourceLayer: options.sourceLayer,
+				transform: new OpenLIME.Transform({
+					x: options.transform?.x || 0,
+					y: options.transform?.y || 0,
+					a: options.transform?.a || 0,
+					z: options.transform?.z === undefined ? 1 : options.transform.z
+				})
+			});
+			// The published bundle rejects an image constructed with sourceLayer.
+			// A second image context shares the tiles and owns a new shader.
+			layer.derive = (extra) => {
+				if ((extra.type || layer.type) !== 'rti') {
+					const derived = new OpenLIME.Layer({
+						sourceLayer: layer,
+						label: extra.label,
+						visible: extra.visible,
+						zindex: extra.zindex,
+						transform: new OpenLIME.Transform({
+							x: extra.transform?.x || 0,
+							y: extra.transform?.y || 0,
+							a: extra.transform?.a || 0,
+							z: extra.transform?.z === undefined ? 1 : extra.transform.z
+						})
+					});
+					const shader = new OpenLIME.Shader({
+						label: 'Rgb',
+						samplers: [{ id: 0, name: 'source', type: 'vec4' }]
+					});
+					derived.shaders = { standard: shader };
+					derived.setShader('standard');
+					derived.status = 'ready';
+					derived.derive = (next) => layer.derive(next);
+					return derived;
+				}
+				return createLayer({ ...extra, sourceLayer: layer });
+			};
+			return layer;
+		}
+
+		function createLens(spec) {
+			return new OpenLIME.LayerLens({
+				camera: viewer.camera,
+				overlay: true,
+				borderEnable: true,
+				radius: spec.geometry?.radius ?? 200
+			});
+		}
+
+		new SceneProjection(session, viewer.canvas, { createLayer, createLens });
+		new SceneTree(session, document.querySelector('.tree'));
+
+		const lensControllers = new Set();
+		function attachLenses() {
+			for (const layer of Object.values(viewer.canvas.layers)) {
+				if (!layer.shaders || !layer.shaders.lens || lensControllers.has(layer)) continue;
+				const controller = new OpenLIME.ControllerLens({
+					lensLayer: layer,
+					camera: viewer.camera
+				});
+				viewer.pointerManager.onEvent(controller);
+				layer.controllers.push(controller);
+				lensControllers.add(layer);
+			}
+		}
+		session.addListener(attachLenses);
+		attachLenses();
+
+		OpenLIME.Skin.setUrl('../../skin/skin.svg');
+		const ui = new OpenLIME.UIBasic(viewer, { layerVisibilityMode: 'nonExclusive' });
+		ui.actions.light.display = false;
+		ui.actions.layers.display = false;
+		ui.actions.zoomin.display = true;
+		ui.actions.zoomout.display = true;
+	</script>
+</body>
+</html>

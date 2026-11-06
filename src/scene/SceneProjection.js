@@ -307,15 +307,7 @@ class SceneProjection {
 			return null;
 		}
 		const target = choice.target || {};
-		if (target.kind === 'subtree') {
-			diagnostics.push({
-				severity: 'error',
-				code: 'LENS_SUBTREE',
-				path: '/lensProfiles/' + profile.host,
-				message: 'Subtree lens targets are not implemented.'
-			});
-			return null;
-		}
+		if (target.kind === 'subtree') return this.planSubtree(instanceId, target, diagnostics);
 		const node = this.session.getNode(instanceId + '/' + target.node);
 		if (!node || node.type !== 'layer') return null;
 		const described = this.planLeaf(node, 0, diagnostics);
@@ -329,6 +321,67 @@ class SceneProjection {
 		return { ...described, preset, node };
 	}
 
+	/**
+	 * Leaves of a group, each with its own layer description.
+	 * The group itself is not a layer. Overrides apply only inside this lens context.
+	 */
+	planSubtree(instanceId, target, diagnostics) {
+		const group = this.session.getNode(instanceId + '/' + target.node);
+		if (!group || group.type !== 'group') {
+			diagnostics.push({
+				severity: 'error',
+				code: 'LENS_TARGET',
+				path: '/lensProfiles',
+				message: `Subtree target "${target.node}" must be a group.`
+			});
+			return null;
+		}
+		const overrides = target.stateOverrides || {};
+		const leaves = [];
+		const describe = (node) => {
+			const described = this.planLeaf(node, leaves.length, diagnostics);
+			if (!described) return;
+			const rendering = overrides.layers?.[node.nodeId]?.rendering;
+			if (rendering) {
+				const preset = this.presetFor(node, { rendering }, diagnostics);
+				if (preset) described.preset = preset;
+			}
+			leaves.push(described);
+		};
+		const walk = (node) => {
+			if (node.type === 'layer') {
+				describe(node);
+				return;
+			}
+			if (node.activation?.mode === 'exclusive') {
+				const selected = overrides.selections?.[node.nodeId] ?? this.session.state.assets[instanceId].selections[node.nodeId];
+				const child = selected ? this.session.getNode(instanceId + '/' + selected) : null;
+				if (child && this.subtreeIncludes(instanceId, child, overrides)) walk(child);
+				return;
+			}
+			for (const childId of node.children) {
+				const child = this.session.getNode(childId);
+				if (child && this.subtreeIncludes(instanceId, child, overrides)) walk(child);
+			}
+		};
+		walk(group);
+		return {
+			kind: 'subtree',
+			node: group,
+			leaves,
+			key: leaves.map(leaf => leaf.node.qualifiedId + ':' + leaf.key + ':' + leaf.preset?.id).join('|')
+		};
+	}
+
+	/** Session enabled flags, replaced by a lens override when the target sets one. */
+	subtreeIncludes(instanceId, node, overrides) {
+		if (node.role !== 'node') return false;
+		const override = overrides.enabled?.[node.nodeId];
+		if (override === false) return false;
+		if (override === true) return true;
+		return this.session.state.assets[instanceId].enabled[node.nodeId] !== false;
+	}
+
 	/** Map an asset-space lens circle through the instance placement. LayerLens then projects it to the viewport. */
 	sceneGeometry(instanceId, geometry) {
 		const placement = this.session.worldTransform(instanceId);
@@ -340,7 +393,7 @@ class SceneProjection {
 	/** The background target occupies the host's canvas slot. The host's own preset is not drawn again. */
 	applyBackgrounds(planned, lensPlans) {
 		for (const lens of lensPlans) {
-			if (!lens.active || !lens.background) continue;
+			if (!lens.active || !lens.background || lens.background.kind === 'subtree') continue;
 			const host = planned.find(item => item && item.node.qualifiedId === lens.hostQualifiedId);
 			if (!host) continue;
 			const background = lens.background;
@@ -373,7 +426,7 @@ class SceneProjection {
 				? owner.derive(item.options)
 				: this.createLayer({ ...item.options, sourceLayer: owner });
 			layer.sourceLayer = layer.sourceLayer || owner;
-			layer.shader = null;
+			if (!layer.shader || layer.shader === owner.shader) layer.shader = null;
 		} else {
 			layer = this.createLayer(item.options);
 			if (!this.owners.has(item.key)) this.owners.set(item.key, layer);
@@ -391,9 +444,17 @@ class SceneProjection {
 		layer.shaderId = preset.shader;
 		if (!layer.shader) layer.shader = { id: preset.shader, mode: layer.mode };
 		layer.shader.id = preset.shader;
-		layer.shader.mode = layer.mode;
+		if (typeof layer.shader.setMode === 'function' && preset.mode) layer.shader.setMode(preset.mode);
+		else layer.shader.mode = layer.mode;
 		layer.parameters = { ...(preset.parameters || {}) };
-		layer.controls = { ...(preset.controls || {}) };
+		const controls = preset.controls || {};
+		if (typeof layer.setControl === 'function') {
+			for (const [name, value] of Object.entries(controls)) {
+				if (layer.controls?.[name]?.current && Array.isArray(value)) layer.setControl(name, value, 0);
+			}
+		} else {
+			layer.controls = { ...controls };
+		}
 		const adapter = item.adapter;
 		if (adapter) {
 			for (const [name, value] of Object.entries(preset.parameters || {})) {
@@ -403,6 +464,16 @@ class SceneProjection {
 			}
 		}
 		if (typeof layer.setMode === 'function' && preset.mode) layer.setMode(preset.mode);
+	}
+
+	/** One step above the highest projected leaf, shared by every lens overlay. */
+	overlayZIndex() {
+		let top = -1;
+		for (const entry of this.byNode.values()) {
+			const z = entry.layer?.zindex;
+			if (Number.isFinite(z)) top = Math.max(top, z);
+		}
+		return top + 1;
 	}
 
 	/** Mount one lens overlay. Its foreground child is not registered on the canvas. */
@@ -416,6 +487,25 @@ class SceneProjection {
 			this.attach(plan.canvasId, lens);
 		}
 		const foreground = plan.foreground;
+		if (foreground.kind === 'subtree') this.syncSubtree(entry, plan, foreground);
+		else this.syncForegroundLayer(entry, plan, foreground);
+		entry.lens.layers = [entry.child];
+		if (typeof entry.lens.setActiveLayer === 'function') entry.lens.setActiveLayer(0);
+		else entry.lens.activeLayerIndex = 0;
+		const [x, y] = plan.geometry.center;
+		if (typeof entry.lens.setCenter === 'function') entry.lens.setCenter(x, y);
+		else entry.lens.center = [x, y];
+		// Canvas paints by zindex only. A lens must follow every leaf, or a later instance covers it.
+		entry.lens.zindex = this.overlayZIndex();
+		if (typeof entry.lens.setRadius === 'function') entry.lens.setRadius(plan.geometry.radius);
+		else entry.lens.radius = plan.geometry.radius;
+		this.lensChildren.set(plan.canvasId, entry.child);
+		if (entry.child.id && this.target.layers[entry.child.id] === entry.child) delete this.target.layers[entry.child.id];
+		if (typeof this.target.attachLayerRendererContext === 'function') this.target.attachLayerRendererContext(entry.lens);
+	}
+
+	/** One derived layer for a single-layer foreground. */
+	syncForegroundLayer(entry, plan, foreground) {
 		if (!entry.child || entry.key !== foreground.key) {
 			entry.child = this.materialize(foreground, true);
 			entry.key = foreground.key;
@@ -425,28 +515,52 @@ class SceneProjection {
 		}
 		assignTransform(entry.child, foreground.similarity);
 		entry.child.visible = true;
-		entry.lens.layers = [entry.child];
-		if (typeof entry.lens.setActiveLayer === 'function') entry.lens.setActiveLayer(0);
-		else entry.lens.activeLayerIndex = 0;
-		const [x, y] = plan.geometry.center;
-		if (typeof entry.lens.setCenter === 'function') entry.lens.setCenter(x, y);
-		else entry.lens.center = [x, y];
-		if (typeof entry.lens.setRadius === 'function') entry.lens.setRadius(plan.geometry.radius);
-		else entry.lens.radius = plan.geometry.radius;
-		this.lensChildren.set(plan.canvasId, entry.child);
-		if (entry.child.id && this.target.layers[entry.child.id] === entry.child) delete this.target.layers[entry.child.id];
+	}
+
+	/**
+	 * One stack of derived leaves. The stack is what the lens draws.
+	 * Neither the stack nor its leaves are registered on the canvas.
+	 */
+	syncSubtree(entry, plan, foreground) {
+		if (!entry.child || entry.child.type !== 'stack' || entry.key !== foreground.key) {
+			const layers = foreground.leaves.map(leaf => {
+				const layer = this.materialize(leaf, true);
+				assignTransform(layer, leaf.similarity);
+				layer.visible = true;
+				this.rememberSource(leaf, plan.canvasId + ':foreground:' + leaf.node.nodeId);
+				return layer;
+			});
+			entry.child = {
+				type: 'stack',
+				id: plan.canvasId + ':stack',
+				layers,
+				draw(transform, viewport) {
+					let done = true;
+					for (const layer of this.layers) {
+						if (layer.visible === false) continue;
+						if (typeof layer.draw === 'function') done = layer.draw(transform, viewport) && done;
+					}
+					return done;
+				}
+			};
+			entry.key = foreground.key;
+		} else {
+			foreground.leaves.forEach((leaf, index) => {
+				const layer = entry.child.layers[index];
+				this.applyPreset(layer, leaf);
+				assignTransform(layer, leaf.similarity);
+				layer.visible = true;
+			});
+		}
 	}
 
 	dropLens(id) {
 		const entry = this.lenses.get(id);
 		this.lenses.delete(id);
 		this.lensChildren.delete(id);
-		if (entry?.key) {
-			const record = this.bySource.get(entry.key);
-			if (record) {
-				record.nodes = record.nodes.filter(nodeId => nodeId !== id + ':foreground');
-				if (record.nodes.length === 0) this.bySource.delete(entry.key);
-			}
+		for (const [key, record] of [...this.bySource.entries()]) {
+			record.nodes = record.nodes.filter(nodeId => nodeId !== id + ':foreground' && !String(nodeId).startsWith(id + ':foreground:'));
+			if (record.nodes.length === 0) this.bySource.delete(key);
 		}
 		if (entry?.child && this.owners.get(entry.key) === entry.child) this.owners.delete(entry.key);
 		if (typeof this.target.removeLayer === 'function') this.target.removeLayer(id);

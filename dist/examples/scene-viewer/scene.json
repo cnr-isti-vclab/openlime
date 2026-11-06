@@ -1,0 +1,24 @@
+{
+  "format": "openlime-scene",
+  "formatVersion": "1.0.0",
+  "id": "urn:example:wall",
+  "label": "Wall comparison",
+  "root": { "spatial": { "space": { "id": "urn:example:frame:wall:root", "type": "cartesian2d" } } },
+  "viewer": { "fitPolicy": "active", "autofit": false },
+  "assets": [
+    {
+      "id": "left",
+      "label": "Left",
+      "asset": "urn:example:lime",
+      "url": "lime.json",
+      "transform": { "type": "similarity2d", "translation": [-1800, 0] }
+    },
+    {
+      "id": "right",
+      "label": "Right",
+      "asset": "urn:example:lime",
+      "url": "lime.json",
+      "transform": { "type": "similarity2d", "translation": [1800, 0] }
+    }
+  ]
+}
