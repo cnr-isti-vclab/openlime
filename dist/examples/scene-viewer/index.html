@@ -47,64 +47,16 @@
 		const session = SceneSession.open(scene, { assets: { [asset.id]: asset } });
 		const viewer = new OpenLIME.Viewer('.openlime', { background: '#222' });
 
-		function createLayer(options) {
-			const layer = new OpenLIME.Layer({
-				type: options.type,
-				url: options.url,
-				layout: options.layout,
-				label: options.label,
-				visible: options.visible,
-				zindex: options.zindex,
-				normals: options.normals,
-				sourceLayer: options.sourceLayer,
-				transform: new OpenLIME.Transform({
-					x: options.transform?.x || 0,
-					y: options.transform?.y || 0,
-					a: options.transform?.a || 0,
-					z: options.transform?.z === undefined ? 1 : options.transform.z
-				})
-			});
-			// The published bundle rejects an image constructed with sourceLayer.
-			// A second image context shares the tiles and owns a new shader.
-			layer.derive = (extra) => {
-				if ((extra.type || layer.type) !== 'rti') {
-					const derived = new OpenLIME.Layer({
-						sourceLayer: layer,
-						label: extra.label,
-						visible: extra.visible,
-						zindex: extra.zindex,
-						transform: new OpenLIME.Transform({
-							x: extra.transform?.x || 0,
-							y: extra.transform?.y || 0,
-							a: extra.transform?.a || 0,
-							z: extra.transform?.z === undefined ? 1 : extra.transform.z
-						})
-					});
-					const shader = new OpenLIME.Shader({
-						label: 'Rgb',
-						samplers: [{ id: 0, name: 'source', type: 'vec4' }]
-					});
-					derived.shaders = { standard: shader };
-					derived.setShader('standard');
-					derived.status = 'ready';
-					derived.derive = (next) => layer.derive(next);
-					return derived;
-				}
-				return createLayer({ ...extra, sourceLayer: layer });
-			};
-			return layer;
-		}
-
 		function createLens(spec) {
-			return new OpenLIME.LayerLens({
-				camera: viewer.camera,
-				overlay: true,
-				borderEnable: true,
-				radius: spec.geometry?.radius ?? 200
-			});
+			const lens = OpenLIME.createOpenLIMELens(spec);
+			lens.borderEnable = true;
+			return lens;
 		}
 
-		new SceneProjection(session, viewer.canvas, { createLayer, createLens });
+		new SceneProjection(session, viewer.canvas, {
+			createLayer: OpenLIME.createOpenLIMELayer,
+			createLens
+		});
 		new SceneTree(session, document.querySelector('.tree'));
 
 		const lensControllers = new Set();

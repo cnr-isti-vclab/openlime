@@ -7,11 +7,14 @@ import '../LayerRTI.js';
 /**
  * Builds a real OpenLIME layer from a projection description.
  * The scene graph keeps a Similarity. This is the copy onto Transform.
+ * Without sourceLayer this is a primary layer. derive() calls this function
+ * again with that layer as sourceLayer, so the second context keeps the tiles
+ * and owns a new LayerImage or LayerRTI shader.
  * @param {Object} options
  * @returns {Layer}
  */
 function createOpenLIMELayer(options) {
-	return new Layer({
+	const spec = {
 		type: options.type,
 		url: options.url,
 		layout: options.layout,
@@ -25,7 +28,11 @@ function createOpenLIMELayer(options) {
 			a: options.transform?.a || 0,
 			z: options.transform?.z === undefined ? 1 : options.transform.z
 		})
-	});
+	};
+	if (options.sourceLayer) spec.sourceLayer = options.sourceLayer;
+	const layer = new Layer(spec);
+	layer.derive = (extra) => createOpenLIMELayer({ ...extra, sourceLayer: layer });
+	return layer;
 }
 
 /**
