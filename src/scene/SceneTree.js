@@ -258,6 +258,9 @@ function renderControl(documentRef, row, rendering, control) {
 		const input = documentRef.createElement('input');
 		input.type = 'number';
 		input.step = '0.1';
+		input.style.flex = '0 0 5em';
+		input.style.width = '5em';
+		input.style.minWidth = '0';
 		input.value = String(component);
 		input.dataset.action = 'control';
 		input.dataset.instanceId = row.instanceId;
