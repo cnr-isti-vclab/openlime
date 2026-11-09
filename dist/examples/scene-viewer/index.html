@@ -71,9 +71,18 @@
 			return lens;
 		}
 
+		function createController(spec) {
+			const controller = OpenLIME.createOpenLIMEController(spec);
+			viewer.pointerManager.onEvent(controller);
+			spec.lensLayer.controllers.push(controller);
+			return controller;
+		}
+
 		new SceneProjection(session, viewer.canvas, {
 			createLayer: OpenLIME.createOpenLIMELayer,
-			createLens
+			createLens,
+			createController,
+			releaseController: controller => viewer.pointerManager.offEvent(controller)
 		});
 		new SceneTree(session, document.querySelector('.tree'));
 		const drawer = document.querySelector('.scene-drawer');
@@ -83,22 +92,6 @@
 			drawer.title = collapsed ? 'Show scene' : 'Hide scene';
 			drawer.textContent = collapsed ? '›' : '‹';
 		});
-
-		const lensControllers = new Set();
-		function attachLenses() {
-			for (const layer of Object.values(viewer.canvas.layers)) {
-				if (!layer.shaders || !layer.shaders.lens || lensControllers.has(layer)) continue;
-				const controller = new OpenLIME.ControllerLens({
-					lensLayer: layer,
-					camera: viewer.camera
-				});
-				viewer.pointerManager.onEvent(controller);
-				layer.controllers.push(controller);
-				lensControllers.add(layer);
-			}
-		}
-		session.addListener(attachLenses);
-		attachLenses();
 
 		OpenLIME.Skin.setUrl('../../skin/skin.svg');
 		const ui = new OpenLIME.UIBasic(viewer, { layerVisibilityMode: 'nonExclusive' });

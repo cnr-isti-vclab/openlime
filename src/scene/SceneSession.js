@@ -1,5 +1,13 @@
 import { Similarity, parseSimilarity, isLocalId, isGlobalId } from './similarity.js';
 
+/** Controllers a lens profile may name. Omitted means the plain lens controller. */
+const LENS_CONTROLLERS = new Set(['openlime:controller-lens', 'openlime:controller-focus-context']);
+
+/** The controller id stored on a lens profile, or the plain lens controller when it is omitted. */
+function lensControllerId(profile) {
+	return profile?.controller || 'openlime:controller-lens';
+}
+
 /** Thrown when a document or a command has at least one error diagnostic. */
 class SceneValidationError extends Error {
 	constructor(diagnostics) {
@@ -172,6 +180,9 @@ function validateLenses(asset, path, diagnostics) {
 		}
 		if (profile.type && profile.type !== 'openlime:circular-lens') {
 			push(diagnostics, 'error', 'LENS_TYPE', path + '/lensProfiles/' + id + '/type', `Unsupported lens type "${profile.type}".`);
+		}
+		if (!LENS_CONTROLLERS.has(lensControllerId(profile))) {
+			push(diagnostics, 'error', 'LENS_CONTROLLER', path + '/lensProfiles/' + id + '/controller', `Unsupported lens controller "${profile.controller}".`);
 		}
 	}
 }
@@ -838,4 +849,4 @@ function legacyManifestToAsset(manifest, id = 'urn:openlime:legacy') {
 	};
 }
 
-export { SceneSession, SceneValidationError, legacyManifestToAsset };
+export { SceneSession, SceneValidationError, legacyManifestToAsset, lensControllerId };

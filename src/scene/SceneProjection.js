@@ -1,4 +1,4 @@
-import { SceneValidationError } from './SceneSession.js';
+import { SceneValidationError, lensControllerId } from './SceneSession.js';
 import { adapterFor, validateRendererOptions, validatePreset } from './adapters.js';
 
 const FIT_POLICIES = ['active', 'all', 'declared'];
@@ -78,6 +78,8 @@ class SceneProjection {
 		this.session = session;
 		this.target = target;
 		this.createLayer = options.createLayer;
+		this.createController = options.createController || null;
+		this.releaseController = options.releaseController || null;
 		this.createLens = options.createLens || (spec => ({
 			type: 'lens',
 			overlay: true,
@@ -287,7 +289,8 @@ class SceneProjection {
 					active: state.enabled === true && this.session.effectiveEnabled(hostQualifiedId),
 					background,
 					foreground,
-					geometry: this.sceneGeometry(instance.id, state.geometry)
+					geometry: this.sceneGeometry(instance.id, state.geometry),
+					controller: lensControllerId(profile)
 				});
 			}
 		}
@@ -482,9 +485,18 @@ class SceneProjection {
 		if (!entry) {
 			const lens = this.createLens({ camera: this.target.camera, geometry: plan.geometry });
 			if (!Array.isArray(lens.layers)) lens.layers = [];
-			entry = { lens, child: null, key: null };
+			entry = { lens, child: null, key: null, controller: null };
 			this.lenses.set(plan.canvasId, entry);
 			this.attach(plan.canvasId, lens);
+			lens.controllerType = plan.controller;
+			if (this.createController) {
+				entry.controller = this.createController({
+					type: plan.controller,
+					lensLayer: lens,
+					camera: this.target.camera || null,
+					canvas: this.target
+				});
+			}
 		}
 		const foreground = plan.foreground;
 		if (foreground.kind === 'subtree') this.syncSubtree(entry, plan, foreground);
@@ -556,6 +568,7 @@ class SceneProjection {
 
 	dropLens(id) {
 		const entry = this.lenses.get(id);
+		if (entry?.controller && this.releaseController) this.releaseController(entry.controller);
 		this.lenses.delete(id);
 		this.lensChildren.delete(id);
 		for (const [key, record] of [...this.bySource.entries()]) {

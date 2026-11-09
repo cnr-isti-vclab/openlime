@@ -63,14 +63,14 @@ class FocusContext {
         focus.position.x += deltaFocus.x;
         focus.position.y += deltaFocus.y;
 
-        // Clamp lens position on dataset boundaries
-        if (Math.abs(focus.position.x) > imageSize.w / 2) {
-            focus.position.x = imageSize.w / 2 * Math.sign(focus.position.x);
-        }
-
-        if (Math.abs(focus.position.y) > imageSize.h / 2) {
-            focus.position.y = imageSize.h / 2 * Math.sign(focus.position.y);
-        }
+        // The dataset box is not always centered on the origin. A raised layer
+        // moves yHigh above height/2 and yLow above -height/2.
+        const xLow = Number.isFinite(imageSize.xLow) ? imageSize.xLow : -imageSize.w / 2;
+        const xHigh = Number.isFinite(imageSize.xHigh) ? imageSize.xHigh : imageSize.w / 2;
+        const yLow = Number.isFinite(imageSize.yLow) ? imageSize.yLow : -imageSize.h / 2;
+        const yHigh = Number.isFinite(imageSize.yHigh) ? imageSize.yHigh : imageSize.h / 2;
+        focus.position.x = Math.min(xHigh, Math.max(xLow, focus.position.x));
+        focus.position.y = Math.min(yHigh, Math.max(yLow, focus.position.y));
     }
 
     /**

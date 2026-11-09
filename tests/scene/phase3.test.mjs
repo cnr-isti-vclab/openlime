@@ -105,7 +105,7 @@ function open(extra = {}) {
 	});
 }
 
-function project(session) {
+function project(session, extra = {}) {
 	const created = [];
 	const target = { layers: {}, redraws: 0, requestRedraw() { this.redraws += 1; } };
 	const projection = new SceneProjection(session, target, {
@@ -131,7 +131,8 @@ function project(session) {
 			};
 			created.push(layer);
 			return layer;
-		}
+		},
+		...extra
 	});
 	return { target, created, projection };
 }
@@ -295,6 +296,54 @@ test('enabling a second lens on the same host turns the first one off', () => {
 	assert.equal(session.state.assets.only.lenses.other.enabled, true);
 	assert.equal(target.layers['lens:only/inspect'], undefined);
 	assert.ok(target.layers['lens:only/other']);
+});
+
+test('the lens controller is named by the asset', () => {
+	const session = open();
+	const made = [];
+	const released = [];
+	const { target } = project(session, {
+		createController(spec) {
+			made.push(spec);
+			return { type: spec.type };
+		},
+		releaseController(controller) { released.push(controller.type); }
+	});
+	assert.equal(made[0].type, 'openlime:controller-lens');
+	assert.equal(made[0].lensLayer, target.layers['lens:only/inspect']);
+	assert.equal(made[0].canvas, target);
+	assert.equal(target.layers['lens:only/inspect'].controllerType, 'openlime:controller-lens');
+	session.setNodeEnabled('only', 'rti', false);
+	assert.deepEqual(released, ['openlime:controller-lens']);
+
+	const focus = document();
+	focus.lensProfiles.inspect.controller = 'openlime:controller-focus-context';
+	const focusMade = [];
+	const focusSession = SceneSession.open({
+		format: 'openlime-scene',
+		formatVersion: '1.0.0',
+		id: 'urn:example:wall',
+		root: { spatial: { space: { id: 'urn:example:frame:wall:root', type: 'cartesian2d' } } },
+		assets: [{ id: 'only', asset: focus.id, document: focus, transform: { type: 'identity' } }]
+	});
+	const { target: focusTarget } = project(focusSession, {
+		createController(spec) {
+			focusMade.push(spec.type);
+			return { type: spec.type };
+		}
+	});
+	assert.equal(focusTarget.layers['lens:only/inspect'].controllerType, 'openlime:controller-focus-context');
+	assert.deepEqual(focusMade, ['openlime:controller-focus-context']);
+
+	const unknown = document();
+	unknown.lensProfiles.inspect.controller = 'openlime:controller-pan';
+	assert.throws(() => SceneSession.open({
+		format: 'openlime-scene',
+		formatVersion: '1.0.0',
+		id: 'urn:example:wall',
+		root: { spatial: { space: { id: 'urn:example:frame:wall:root', type: 'cartesian2d' } } },
+		assets: [{ id: 'only', asset: unknown.id, document: unknown, transform: { type: 'identity' } }]
+	}), error => error.diagnostics.some(item => item.code === 'LENS_CONTROLLER'));
 });
 
 test('rejects viewport lens space and a subtree that is not a group', () => {

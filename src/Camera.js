@@ -159,15 +159,19 @@ class Camera {
 			const bw = tbox.width();
 			const bh = tbox.height();
 
-			// Screen space offset between image boundary and screen boundary
-			// Do not let transform offet go beyond this limit.
-			// if (scaled-image-size < screen) it remains fully contained
-			// else the scaled-image boundary closest to the screen cannot enter the screen.
-			const dx = Math.abs(bw - sw) / 2;// + this.boundingBox.center().x- tbox.center().x;
-			x = Math.min(Math.max(cx - dx, x), cx + dx);
-
-			const dy = Math.abs(bh - sh) / 2;// + this.boundingBox.center().y - tbox.center().y;
-			y = Math.min(Math.max(cy - dy, y), cy + dy);
+			// Screen space offset between image boundary and screen boundary.
+			// Do not let the transform go beyond this limit.
+			// If the scaled image is smaller than the screen, it stays fully inside.
+			// Otherwise the image boundary closest to the screen cannot enter the screen.
+			// The transformed box center is translation plus the dataset center, so an
+			// off-centre dataset shifts the whole limit by that amount.
+			const center = tbox.center();
+			const ox = center.x - x;
+			const oy = center.y - y;
+			const dx = Math.abs(bw - sw) / 2;
+			const dy = Math.abs(bh - sh) / 2;
+			x = Math.min(Math.max(cx - dx - ox, x), cx + dx - ox);
+			y = Math.min(Math.max(cy - dy - oy, y), cy + dy - oy);
 		}
 
 		let now = performance.now();

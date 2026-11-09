@@ -64,13 +64,14 @@ class ControllerFocusContext extends ControllerLens {
         }
 
         let callback = () => {
-            const discardHidden = true;
             const bbox = this.camera.boundingBox;
+            if (!bbox || bbox.isEmpty()) return;
             this.maxDatasetSize = Math.max(bbox.width(), bbox.height());
             this.minDatasetSize = Math.min(bbox.width(), bbox.height());
-            this.setDatasetDimensions(bbox.width(), bbox.height());
+            this.setDatasetDimensions(bbox);
         };
         this.canvas.addEvent('updateSize', callback);
+        callback();
 
         this.imageSize = { w: 1, h: 1 };
         this.FocusContextEnabled = true;
@@ -383,7 +384,7 @@ class ControllerFocusContext extends ControllerLens {
 
             let focus = this.getFocus();
             if (this.FocusContextEnabled) {
-                FocusContext.pan(this.camera.viewport, focus, context, lensDeltaPosition, this.imageSize);
+                FocusContext.pan(this.camera.viewport, focus, context, lensDeltaPosition, this.datasetSize());
                 this.camera.setPosition(this.updateDelay, context.x, context.y, context.z, context.a);
             } else {
                 focus.position.x += lensDeltaPosition.x;
@@ -424,13 +425,39 @@ class ControllerFocusContext extends ControllerLens {
     }
 
     /**
-     * Sets the dimensions of the dataset (image) being visualized.
-     * @param {number} width - Dataset width
-     * @param {number} height - Dataset height
-     * @private
+     * Records the dataset box. A BoundingBox keeps its offset; two numbers keep the old centered box.
+     * @param {BoundingBox|number} boxOrWidth
+     * @param {number} [height]
      */
-    setDatasetDimensions(width, height) {
-        this.imageSize = { w: width, h: height };
+    setDatasetDimensions(boxOrWidth, height) {
+        if (boxOrWidth && typeof boxOrWidth === 'object') {
+            this.imageSize = {
+                w: boxOrWidth.width(),
+                h: boxOrWidth.height(),
+                xLow: boxOrWidth.xLow,
+                yLow: boxOrWidth.yLow,
+                xHigh: boxOrWidth.xHigh,
+                yHigh: boxOrWidth.yHigh
+            };
+            return;
+        }
+        this.imageSize = { w: boxOrWidth, h: height };
+    }
+
+    /** Live camera box, so a lens opened after the last resize still sees the offset. */
+    datasetSize() {
+        const bbox = this.camera.boundingBox;
+        if (bbox && typeof bbox.isEmpty === 'function' && !bbox.isEmpty()) {
+            return {
+                w: bbox.width(),
+                h: bbox.height(),
+                xLow: bbox.xLow,
+                yLow: bbox.yLow,
+                xHigh: bbox.xHigh,
+                yHigh: bbox.yHigh
+            };
+        }
+        return this.imageSize;
     }
 
     /**

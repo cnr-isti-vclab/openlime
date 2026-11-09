@@ -1,8 +1,16 @@
 import { Layer } from '../Layer.js';
 import { LayerLens } from '../LayerLens.js';
 import { Transform } from '../Transform.js';
+import { ControllerLens } from '../ControllerLens.js';
+import { ControllerFocusContext } from '../ControllerFocusContext.js';
 import '../LayerImage.js';
 import '../LayerRTI.js';
+
+/** Asset controller ids and the classes that implement them. */
+const lensControllers = {
+	'openlime:controller-lens': ControllerLens,
+	'openlime:controller-focus-context': ControllerFocusContext
+};
 
 /**
  * Builds a real OpenLIME layer from a projection description.
@@ -49,4 +57,25 @@ function createOpenLIMELens(spec) {
 	});
 }
 
-export { createOpenLIMELayer, createOpenLIMELens };
+/**
+ * Builds the pointer controller named by a lens profile.
+ * The caller registers it with the viewer pointer manager.
+ * @param {Object} spec
+ * @param {string} spec.type - `openlime:controller-lens` or `openlime:controller-focus-context`
+ * @param {Layer} spec.lensLayer
+ * @param {Object} spec.camera
+ * @param {Object} spec.canvas - Required by the focus-context controller
+ * @returns {ControllerLens}
+ */
+function createOpenLIMEController(spec) {
+	const type = spec.type || 'openlime:controller-lens';
+	const Controller = lensControllers[type];
+	if (!Controller) throw new Error(`Unsupported lens controller "${type}".`);
+	return new Controller({
+		lensLayer: spec.lensLayer,
+		camera: spec.camera,
+		canvas: spec.canvas
+	});
+}
+
+export { createOpenLIMELayer, createOpenLIMELens, createOpenLIMEController };

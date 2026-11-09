@@ -51,6 +51,7 @@
   "lensProfiles": {
     "inspect": {
       "type": "openlime:circular-lens",
+      "controller": "openlime:controller-focus-context",
       "label": "Inspection",
       "host": "color",
       "background": {
