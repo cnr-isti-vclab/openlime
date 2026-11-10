@@ -5,22 +5,40 @@ const { spawnSync } = require('child_process');
 const projectRoot = path.join(__dirname, '..');
 const defaultTypesDir = path.join(projectRoot, 'dist', 'types');
 
+function collectDeclarationModules(typesDir, relativeDir = '') {
+  const absoluteDir = relativeDir ? path.join(typesDir, relativeDir) : typesDir;
+  const modules = [];
+
+  for (const entry of fs.readdirSync(absoluteDir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      modules.push(...collectDeclarationModules(typesDir, path.join(relativeDir, entry.name)));
+      continue;
+    }
+    if (!entry.isFile() || !entry.name.endsWith('.d.ts') || entry.name === 'index.d.ts') {
+      continue;
+    }
+    const modulePath = path.join(relativeDir, entry.name.slice(0, -'.d.ts'.length))
+      .split(path.sep)
+      .join('/');
+    modules.push(modulePath);
+  }
+
+  return modules;
+}
+
 function writeTypesIndex(typesDir) {
   if (!fs.existsSync(typesDir) || !fs.statSync(typesDir).isDirectory()) {
     throw new Error(`Types directory does not exist: ${typesDir}`);
   }
 
-  const declarations = fs.readdirSync(typesDir, { withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.name.endsWith('.d.ts') && entry.name !== 'index.d.ts')
-    .map(entry => entry.name)
-    .sort();
+  const declarations = collectDeclarationModules(typesDir).sort();
 
   if (declarations.length === 0) {
     throw new Error(`No declaration files found in: ${typesDir}`);
   }
 
   const barrel = declarations
-    .map(file => `export * from './${file.slice(0, -'.d.ts'.length)}';`)
+    .map(modulePath => `export * from './${modulePath}';`)
     .join('\n') + '\n';
 
   const indexPath = path.join(typesDir, 'index.d.ts');
