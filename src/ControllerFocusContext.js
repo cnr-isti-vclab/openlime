@@ -65,7 +65,7 @@ class ControllerFocusContext extends ControllerLens {
 
         let callback = () => {
             const bbox = this.camera.boundingBox;
-            if (!bbox || bbox.isEmpty()) return;
+            if (!bbox || typeof bbox.isEmpty !== 'function' || bbox.isEmpty()) return;
             this.maxDatasetSize = Math.max(bbox.width(), bbox.height());
             this.minDatasetSize = Math.min(bbox.width(), bbox.height());
             this.setDatasetDimensions(bbox);

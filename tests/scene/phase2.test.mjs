@@ -54,6 +54,10 @@ function project(session, options = {}) {
 	return { target, created, projection };
 }
 
+function boxCoords(box) {
+	return { xLow: box.xLow, yLow: box.yLow, xHigh: box.xHigh, yHigh: box.yHigh };
+}
+
 test('copies the composed similarity onto the layer transform', () => {
 	const document = asset();
 	document.nodes.base.spatial = {
@@ -145,10 +149,11 @@ test('placement update reuses the layer and moves the fit box', () => {
 		{ id: 'only', asset: document.id, document, transform: { type: 'identity' } }
 	], { viewer: { fitPolicy: 'active' } }));
 	const { target, projection } = project(session);
-	assert.deepEqual(projection.fitBounds, { xLow: -50, yLow: -50, xHigh: 50, yHigh: 50 });
+	assert.deepEqual(boxCoords(projection.fitBounds), { xLow: -50, yLow: -50, xHigh: 50, yHigh: 50 });
+	assert.equal(typeof projection.fitBounds.isEmpty, 'function');
 	session.setAssetTransform('only', { type: 'similarity2d', translation: [200, 0] });
 	assert.equal(target.layers['only/base'].transform.x, 200);
-	assert.deepEqual(projection.fitBounds, { xLow: 150, yLow: -50, xHigh: 250, yHigh: 50 });
+	assert.deepEqual(boxCoords(projection.fitBounds), { xLow: 150, yLow: -50, xHigh: 250, yHigh: 50 });
 });
 
 test('fit all keeps hidden leaves and declared uses the scene extent', () => {
@@ -167,7 +172,7 @@ test('fit all keeps hidden leaves and declared uses the scene extent', () => {
 	], { viewer: { fitPolicy: 'all' } }));
 	const allProjection = project(all).projection;
 	all.setNodeEnabled('only', 'other', false);
-	assert.deepEqual(allProjection.fitBounds, { xLow: -50, yLow: -50, xHigh: 210, yHigh: 50 });
+	assert.deepEqual(boxCoords(allProjection.fitBounds), { xLow: -50, yLow: -50, xHigh: 210, yHigh: 50 });
 
 	const declared = SceneSession.open(scene([
 		{ id: 'only', asset: document.id, document, transform: { type: 'identity' } }
@@ -180,7 +185,7 @@ test('fit all keeps hidden leaves and declared uses the scene extent', () => {
 			}
 		}
 	}));
-	assert.deepEqual(project(declared).projection.fitBounds, { xLow: -10, yLow: -5, xHigh: 30, yHigh: 15 });
+	assert.deepEqual(boxCoords(project(declared).projection.fitBounds), { xLow: -10, yLow: -5, xHigh: 30, yHigh: 15 });
 });
 
 test('active fit ignores a hidden instance of a shared source', () => {
@@ -192,7 +197,28 @@ test('active fit ignores a hidden instance of a shared source', () => {
 	const { projection } = project(session);
 	assert.equal(projection.fitBounds.xHigh, 250);
 	session.setInstanceEnabled('right', false);
-	assert.deepEqual(projection.fitBounds, { xLow: -50, yLow: -50, xHigh: 50, yHigh: 50 });
+	assert.deepEqual(boxCoords(projection.fitBounds), { xLow: -50, yLow: -50, xHigh: 50, yHigh: 50 });
+});
+
+test('applyFit installs a BoundingBox on the camera', () => {
+	const document = asset();
+	const session = SceneSession.open(scene([
+		{ id: 'only', asset: document.id, document, transform: { type: 'identity' } }
+	], { viewer: { fitPolicy: 'active' } }));
+	const camera = {
+		viewport: { dx: 100, dy: 100 },
+		boundingBox: null,
+		updateBounds(box) { this.boundingBox = box; }
+	};
+	const target = { layers: {}, camera, requestRedraw() {} };
+	const projection = new SceneProjection(session, target, {
+		createLayer(layerOptions) {
+			return { ...layerOptions, transform: { ...layerOptions.transform }, width: 100, height: 100 };
+		}
+	});
+	assert.equal(typeof camera.boundingBox.isEmpty, 'function');
+	assert.equal(camera.boundingBox.isEmpty(), false);
+	assert.deepEqual(boxCoords(camera.boundingBox), boxCoords(projection.fitBounds));
 });
 
 test('RTI normals changes the source key and unknown options are rejected', () => {

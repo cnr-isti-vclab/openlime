@@ -1,3 +1,4 @@
+import { BoundingBox } from '../BoundingBox.js';
 import { SceneValidationError, lensControllerId } from './SceneSession.js';
 import { adapterFor, validateRendererOptions, validatePreset } from './adapters.js';
 
@@ -41,12 +42,10 @@ function centerBox(width, height) {
 	return { xLow: -width / 2, yLow: -height / 2, xHigh: width / 2, yHigh: height / 2 };
 }
 
+/** Real BoundingBox so Camera.updateBounds keeps an isEmpty/width API for lens controllers. */
 function asFitBox(box) {
 	if (!box) return null;
-	const fitted = { xLow: box.xLow, yLow: box.yLow, xHigh: box.xHigh, yHigh: box.yHigh };
-	Object.defineProperty(fitted, 'width', { value() { return this.xHigh - this.xLow; } });
-	Object.defineProperty(fitted, 'height', { value() { return this.yHigh - this.yLow; } });
-	return fitted;
+	return new BoundingBox({ xLow: box.xLow, yLow: box.yLow, xHigh: box.xHigh, yHigh: box.yHigh });
 }
 
 function finiteBox(value) {
@@ -158,7 +157,15 @@ class SceneProjection {
 			assignTransform(entry.layer, item.similarity);
 			entry.layer.visible = item.visible;
 			entry.layer.zindex = item.zindex;
+			const previousMode = entry.layer.mode;
 			this.applyPreset(entry.layer, item);
+			// RTI mode changes (e.g. light ↔ normals) mutate shader state on the host.
+			// Derived lens children must be rebuilt; applyPreset alone leaves a stale program.
+			if (previousMode !== entry.layer.mode) {
+				for (const lensEntry of this.lenses.values()) {
+					if (lensEntry.child?.sourceLayer === entry.layer) lensEntry.key = null;
+				}
+			}
 		}
 
 		const activeLensIds = new Set(lensPlans.filter(lens => lens.active).map(lens => lens.canvasId));
@@ -432,7 +439,8 @@ class SceneProjection {
 			if (!layer.shader || layer.shader === owner.shader) layer.shader = null;
 		} else {
 			layer = this.createLayer(item.options);
-			if (!this.owners.has(item.key)) this.owners.set(item.key, layer);
+			// Only primary layers own the shared source cache. A derive fallback must not.
+			if (!derive && !this.owners.has(item.key)) this.owners.set(item.key, layer);
 		}
 		this.applyPreset(layer, item);
 		return layer;
@@ -518,8 +526,20 @@ class SceneProjection {
 
 	/** One derived layer for a single-layer foreground. */
 	syncForegroundLayer(entry, plan, foreground) {
-		if (!entry.child || entry.key !== foreground.key) {
-			entry.child = this.materialize(foreground, true);
+		const sameHostSource = foreground.node?.qualifiedId === plan.hostQualifiedId;
+		const hostLayer = sameHostSource ? this.byNode.get(plan.hostQualifiedId)?.layer : null;
+		const needsNew = !entry.child
+			|| entry.key !== foreground.key
+			|| (hostLayer && entry.child.sourceLayer !== hostLayer);
+		if (needsNew) {
+			if (hostLayer && typeof hostLayer.derive === 'function') {
+				entry.child = hostLayer.derive(foreground.options);
+				entry.child.sourceLayer = entry.child.sourceLayer || hostLayer;
+				if (!entry.child.shader || entry.child.shader === hostLayer.shader) entry.child.shader = null;
+				this.applyPreset(entry.child, foreground);
+			} else {
+				entry.child = this.materialize(foreground, true);
+			}
 			entry.key = foreground.key;
 			this.rememberSource(foreground, plan.canvasId + ':foreground');
 		} else {

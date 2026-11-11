@@ -152,6 +152,21 @@ test('offers only the listed presets and applies the active one', () => {
 	assert.equal(target.layers['only/rti'].parameters.specularExponent, 40);
 });
 
+test('re-enables a host-shared lens after the host RTI mode changes', () => {
+	const session = open();
+	const { target } = project(session);
+	assert.ok(target.layers['lens:only/inspect']);
+	session.setLayerRendering('only', 'rti', 'normals');
+	assert.equal(target.layers['only/rti'].mode, 'light', 'lens background keeps the host on relight');
+	session.setLensEnabled('only', 'inspect', false);
+	assert.equal(target.layers['only/rti'].mode, 'normals');
+	session.setLayerRendering('only', 'rti', 'relight');
+	session.setLensEnabled('only', 'inspect', true);
+	assert.ok(target.layers['lens:only/inspect']);
+	assert.equal(target.layers['lens:only/inspect'].layers[0].mode, 'normals');
+	assert.equal(target.layers['only/rti'].mode, 'light');
+});
+
 test('rejects a mode or parameter the adapter does not offer', () => {
 	const asset = document();
 	asset.nodes.rti.renderings.push(rendering('relief', 'relief'));
