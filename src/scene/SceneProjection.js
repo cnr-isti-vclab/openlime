@@ -588,7 +588,10 @@ class SceneProjection {
 
 	dropLens(id) {
 		const entry = this.lenses.get(id);
-		if (entry?.controller && this.releaseController) this.releaseController(entry.controller);
+		if (entry?.controller) {
+			if (this.releaseController) this.releaseController(entry.controller);
+			if (typeof entry.controller.dispose === 'function') entry.controller.dispose();
+		}
 		this.lenses.delete(id);
 		this.lensChildren.delete(id);
 		for (const [key, record] of [...this.bySource.entries()]) {

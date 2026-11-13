@@ -86,6 +86,7 @@ const lens = [
 	'./src/LayerLens.js',
 	'./src/ControllerLens.js',
 	'./src/FocusContext.js',
+	'./src/FocusContextGroup.js',
 	'./src/ControllerFocusContext.js',
 	'./src/LensDashboard.js',
 	'./src/LensDashboardNavigator.js',

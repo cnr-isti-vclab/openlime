@@ -1,12 +1,22 @@
 import { ControllerLens } from './ControllerLens.js'
 import { CoordinateSystem } from './CoordinateSystem.js';
 import { FocusContext } from './FocusContext.js';
+import { focusContextGroupFor } from './FocusContextGroup.js';
 import { addSignals } from './Signals.js'
 
 /**
  * Controller for handling Focus+Context visualization interactions.
  * Manages lens-based focus region and context region interactions including
  * panning, zooming, and lens radius adjustments.
+ *
+ * Multiple instances that share a camera cooperate through FocusContextGroup:
+ * a lens hit is handled by that lens (and promotes it to active); clicks outside
+ * every lens are handled only by the active controller's context path.
+ * 
+ * Call dispose() when removing a controller while the viewer/camera stay alive
+ * (e.g. disabling a lens), so it leaves the shared group. Full viewer teardown
+ * that drops the camera is enough for WeakMap cleanup; dispose is then optional.
+ *
  * @fires ControllerFocusContext#panStart - Emitted when a pan operation begins, with timestamp
  * @fires ControllerFocusContext#panEnd - Emitted when a pan operation ends, with timestamp
  * @fires ControllerFocusContext#pinchStart - Emitted when a pinch operation begins, with timestamp
@@ -71,6 +81,7 @@ class ControllerFocusContext extends ControllerLens {
             this.setDatasetDimensions(bbox);
         };
         this.canvas.addEvent('updateSize', callback);
+        this._updateSizeCallback = callback;
         callback();
 
         this.imageSize = { w: 1, h: 1 };
@@ -93,7 +104,27 @@ class ControllerFocusContext extends ControllerLens {
         this.initialPinchDistance = 1;
         this.initialPinchRadius = 1;
         this.initialPinchPos = { x: 0, y: 0 };
+
+        this._focusGroup = focusContextGroupFor(this.camera);
+        this._focusGroup.register(this);
+
         addSignals(ControllerFocusContext, 'panStart', 'panEnd', 'pinchStart', 'pinchEnd');
+    }
+
+    /** Leave the shared multi-lens group. Call when the controller is released. 
+    * Unregister from the shared FocusContextGroup. Needed when the controller is
+    * released but the camera remains in use. 
+    * This is not needed for full viewer teardown that drops the camera, 
+    * because the camera is released from the WeakMap automatically. */
+    dispose() {
+        if (this._updateSizeCallback && this.canvas && typeof this.canvas.removeEvent === 'function') {
+            this.canvas.removeEvent('updateSize', this._updateSizeCallback);
+        }
+        this._updateSizeCallback = null;
+        if (this._focusGroup) {
+            this._focusGroup.unregister(this);
+            this._focusGroup = null;
+        }
     }
 
     /**
@@ -104,25 +135,33 @@ class ControllerFocusContext extends ControllerLens {
     panStart(e) {
         if (!this.active)
             return;
+
         const p = this.getScenePosition(e);
+        const role = this._focusGroup ? this._focusGroup.roleFor(this, p) : 'lens';
+        if (role === 'ignore') return;
+
         this.panning = false;
+        this.panningCamera = false;
         this.insideLens = this.isInsideLens(p);
         const startPos = this.getPixelPosition(e);
 
-        if (this.lensLayer.visible && this.insideLens.inside) {
+        if (role === 'lens') {
             const lc = CoordinateSystem.fromSceneToViewport(this.getFocus().position, this.camera, this.useGL);
 
             this.centerToClickOffset = { x: startPos.x - lc.x, y: startPos.y - lc.y };
             this.currentClickPos = { x: startPos.x, y: startPos.y };
+            this.previousClickPos = { x: startPos.x, y: startPos.y };
             this.panning = true;
+        } else if (this.enableDirectContextControl) {
+            this.startPos = startPos;
+            this.currentClickPos = { x: startPos.x, y: startPos.y };
+            this.initialTransform = this.camera.getCurrentTransform(performance.now());
+            this.camera.target = this.initialTransform.copy(); //stop animation.
+            this.panningCamera = true;
         } else {
-            if (this.enableDirectContextControl) {
-                this.startPos = startPos;
-                this.initialTransform = this.camera.getCurrentTransform(performance.now());
-                this.camera.target = this.initialTransform.copy(); //stop animation.
-                this.panningCamera = true;
-            }
+            return;
         }
+
         e.preventDefault();
         this.emit('panStart', Date.now());
         // Activate a timeout to call update() in order to update position also when mouse is clicked but steady
@@ -162,11 +201,15 @@ class ControllerFocusContext extends ControllerLens {
         const p0 = this.getScenePosition(e1);
         const p1 = this.getScenePosition(e2);
         const p = { x: (p0.x + p1.x) * 0.5, y: (p0.y + p1.y) * 0.5 };
+        const role = this._focusGroup ? this._focusGroup.roleFor(this, p) : 'lens';
+        if (role === 'ignore') return;
+
         this.initialPinchPos = { x: (e1.offsetX + e2.offsetX) * 0.5, y: (e1.offsetY + e2.offsetY) * 0.5 };
         this.insideLens = this.isInsideLens(p);
         this.zooming = true;
         this.initialPinchDistance = this.distance(e1, e2);
         this.initialPinchRadius = this.lensLayer.getRadius();
+        this._pinchRole = role;
 
         e1.preventDefault();
         this.emit('pinchStart', Date.now());
@@ -182,18 +225,16 @@ class ControllerFocusContext extends ControllerLens {
         if (this.zooming) {
             const d = this.distance(e1, e2);
             const scale = d / (this.initialPinchDistance + 0.00001);
-            if (this.lensLayer.visible && this.insideLens.inside) {
+            if (this._pinchRole === 'lens' || (this.lensLayer.visible && this.insideLens.inside)) {
                 const newRadius = scale * this.initialPinchRadius;
                 const currentRadius = this.lensLayer.getRadius();
                 const dz = newRadius / currentRadius;
                 // Zoom around initial pinch pos, and not current center to avoid unwanted drifts
                 this.updateRadiusAndScale(dz);
                 //this.initialPinchDistance = d;
-            } else {
-                if (this.enableDirectContextControl) {
-                    this.updateScale(this.initialPinchPos.x, this.initialPinchPos.y, scale);
-                    this.initialPinchDistance = d;
-                }
+            } else if (this._pinchRole === 'context' && this.enableDirectContextControl) {
+                this.updateScale(this.initialPinchPos.x, this.initialPinchPos.y, scale);
+                this.initialPinchDistance = d;
             }
         }
     }
@@ -208,6 +249,7 @@ class ControllerFocusContext extends ControllerLens {
      */
     pinchEnd(e, x, y, scale) {
         this.zooming = false;
+        this._pinchRole = null;
         this.emit('pinchEnd', Date.now());
     }
 
@@ -294,16 +336,19 @@ class ControllerFocusContext extends ControllerLens {
     mouseWheel(e) {
         if(!this.active) return;
         const p = this.getScenePosition(e);
+        const role = this._focusGroup ? this._focusGroup.roleFor(this, p) : 'lens';
+        if (role === 'ignore') return;
+
         this.insideLens = this.isInsideLens(p);
         const dz = e.deltaY > 0 ? this.zoomAmount : 1 / this.zoomAmount;
-        if (this.lensLayer.visible && this.insideLens.inside) {
+        if (role === 'lens') {
             this.updateRadiusAndScale(dz);
+        } else if (this.enableDirectContextControl) {
+            // Invert scale when updating scale instead of lens radius, to obtain the same zoom direction
+            const pixel = this.getPixelPosition(e);
+            this.updateScale(pixel.x, pixel.y, 1 / dz);
         } else {
-            if (this.enableDirectContextControl) {
-                // Invert scale when updating scale instead of lens radius, to obtain the same zoom direction
-                const p = this.getPixelPosition(e);
-                this.updateScale(p.x, p.y, 1 / dz);
-            }
+            return;
         }
         e.preventDefault();
     }
