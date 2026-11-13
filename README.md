@@ -146,15 +146,16 @@ import OpenLIME from 'openlime';
 
 ### Basic Usage Example
 
-Here's a simple example of how to create a viewer with a single image layer:
+Here's a simple example of how to create a viewer with a single image layer. Replace `path/to/your/image.jpg` with your image URL or a path relative to the HTML file:
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>OpenLIME Basic Example</title>
-  <link rel="stylesheet" href="https://unpkg.com/openlime@1.2.6/dist/css/lime.css">
+  <link rel="stylesheet" href="https://unpkg.com/openlime@1.2.6/dist/css/skin.css">
   <style>
     #viewer {
       width: 100%;
@@ -163,28 +164,24 @@ Here's a simple example of how to create a viewer with a single image layer:
   </style>
 </head>
 <body>
-  <div id="viewer"></div>
+  <div id="viewer" class="openlime"></div>
 
   <script src="https://unpkg.com/openlime@1.2.6/dist/js/openlime.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       // Create a viewer
-      const viewer = new OpenLIME.Viewer('viewer', {
-        prefetchBorder: 1,
-        layout: 'basic'
-      });
+      const viewer = new OpenLIME.Viewer('#viewer');
 
       // Create and add an image layer
       const imageLayer = new OpenLIME.LayerImage({
-        id: 'base-image',
         layout: 'image',
         url: 'path/to/your/image.jpg'
       });
       
-      viewer.addLayer(imageLayer);
+      viewer.addLayer('base-image', imageLayer);
       
       // Add pan/zoom controller
-      const controller = new OpenLIME.ControllerPanZoom();
+      const controller = new OpenLIME.ControllerPanZoom(viewer.camera);
       viewer.addController(controller);
     });
   </script>
