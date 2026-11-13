@@ -66,8 +66,9 @@ class FocusContextGroup {
 	}
 }
 
-/** use weakmap so camera is released from the map when not used anymore
- * Kind of singletone for each camera
+/** 
+ * Kind of singletone for each camera.
+ * Use weakmap so camera is released from the map when not used anymore
  */
 const groupsByCamera = new WeakMap(); 
 
