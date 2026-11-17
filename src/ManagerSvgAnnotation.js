@@ -3293,11 +3293,27 @@ class ManagerSvgAnnotation {
         const targetBottomY = (anchorTopY ?? 0) - totalOffsetY;
         const bgX = x - bgWidth / 2;
         const bgY = targetBottomY - bgHeight;
-        const labelY = (bgY + padding) - bboxY;
 
+        // Scene mode's group transform includes scale(1,-1) for Y-up scene coords in SVG.
+        // Counter-scale label glyphs at the anchor so text stays upright (AABB bg is fine as-is).
+        // After scale(1,-1), local bbox [bboxY, bboxY+textHeight] maps to
+        // [-(bboxY+textHeight), -bboxY], so the baseline must shift by +bboxY+textHeight
+        // (not -bboxY) to keep the glyphs vertically padded inside the background.
+        const sceneMode = this.coordinateSpace === 'scene';
+        const labelY = sceneMode
+          ? (bgY + padding) + bboxY + textHeight
+          : (bgY + padding) - bboxY;
         if (parts) {
-          partsEl.setAttribute('transform', `translate(${x} ${labelY})`);
+          partsEl.setAttribute(
+            'transform',
+            sceneMode ? `translate(${x} ${labelY}) scale(1 -1)` : `translate(${x} ${labelY})`,
+          );
+        } else if (sceneMode) {
+          labelEl.setAttribute('transform', `translate(${x} ${labelY}) scale(1 -1)`);
+          labelEl.setAttribute('x', '0');
+          labelEl.setAttribute('y', '0');
         } else {
+          labelEl.removeAttribute('transform');
           labelEl.setAttribute('x', String(x));
           labelEl.setAttribute('y', String(labelY));
         }

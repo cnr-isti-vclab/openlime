@@ -129,7 +129,7 @@ test('layer-image draw transform keeps layout corner offset', async () => {
   assert.match(svg, /scale\(2 2\)/);
 });
 
-test('scene draw transform uses camera only (no layout corner)', async () => {
+test('scene draw transform flips Y for SVG and skips layout corner', async () => {
   const { LayerSvgAnnotation, Transform } = await loadLayerSvg();
   const layer = new LayerSvgAnnotation({ coordinateSpace: 'scene' });
   assert.equal(layer.coordinateSpace, 'scene');
@@ -137,6 +137,7 @@ test('scene draw transform uses camera only (no layout corner)', async () => {
   assert.equal(svg.includes('translate(-50 -50)'), false);
   assert.match(svg, /translate\(10 -20\)/);
   assert.match(svg, /scale\(2 2\)/);
+  assert.match(svg, /scale\(1 -1\)/);
 });
 
 test('scene mode maps canvas HTML through scene space', async () => {

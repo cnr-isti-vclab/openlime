@@ -241,13 +241,13 @@ class LayerSvgAnnotation extends LayerAnnotation {
 	 * @returns {string} SVG transform attribute value
 	 */
 	getSvgGroupTransform(transform, inverse = false) {
-		// Scene mode: SVG user units are already scene coords (Y up). Map with camera only;
-		// reflectY bridges scene Y-up to SVG's Y-down display. No layout-corner offset.
+		// Scene mode: SVG user units are scene coords (Y up). SVG itself is Y-down, so
+		// scale(1,-1) first, then the same reflectY(camera) path as layer-image (no layout corner).
 		if (this.coordinateSpace === 'scene') {
 			const t = CoordinateSystem.reflectY(transform);
 			return inverse ?
-				`scale(${1 / t.z} ${1 / t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
-				`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z})`;
+				`scale(1 -1) scale(${1 / t.z} ${1 / t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
+				`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z}) scale(1 -1)`;
 		}
 
 		let t = this.transform.compose(transform);
