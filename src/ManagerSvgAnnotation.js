@@ -2,6 +2,7 @@ import { Annotation } from './Annotation.js';
 import { LayerSvgAnnotation } from './LayerSvgAnnotation.js';
 import { CoordinateSystem } from './CoordinateSystem.js';
 import { BoundingBox } from './BoundingBox.js';
+import { Transform } from './Transform.js';
 import { Util } from './Util.js';
 import { addSignals } from './Signals.js';
 import { ramerDouglasPeucker, smooth, relaxDenseZigZagPoints } from './Simplify.js';
@@ -891,6 +892,10 @@ class ManagerSvgAnnotation {
    * @param {'none'|'ctrl'} [options.vertexDragModifier='none']
    *   Modifier required to drag an individual vertex. `'ctrl'` also accepts
    *   Command on macOS; whole-annotation translation remains Shift+drag.
+   * @param {'layer-image'|'scene'} [options.coordinateSpace='layer-image']
+   *   Space used for create/edit/import SVG user units and for drawing:
+   *   - `layer-image`: managed layer image pixels (origin top-left, Y down) — default
+   *   - `scene`: shared scene space (origin center, Y up); SvgSelector coords must match
    */
   constructor(viewer, options = {}) {
     const defaultLabelStyle = {
@@ -980,6 +985,11 @@ class ManagerSvgAnnotation {
       labelVisibility: 'all',
       /** Label rendering style (text + dark semitransparent background). @type {Object} */
       labelStyle: defaultLabelStyle,
+      /**
+       * Annotation coordinate space for pointer I/O, SVG geometry, and draw.
+       * @type {'layer-image'|'scene'}
+       */
+      coordinateSpace: 'layer-image',
     }, options);
 
     this.labelStyle = { ...defaultLabelStyle, ...(this.labelStyle ?? {}) };
@@ -988,6 +998,7 @@ class ManagerSvgAnnotation {
       this.showAnnotationLabels ? 'all' : 'none'
     );
     this.showAnnotationLabels = this.labelVisibility !== 'none';
+    this.coordinateSpace = this.coordinateSpace === 'scene' ? 'scene' : 'layer-image';
 
     // Normalize semantic and structural class registries.
     this.setSemanticClasses(this.semanticClasses, false);
@@ -1741,7 +1752,8 @@ class ManagerSvgAnnotation {
 
   /**
    * Frames the union of the requested annotations using the camera only.
-   * The returned bounds are in annotation image coordinates (origin at top left).
+   * Returned bounds are in the active annotation coordinate space
+   * (`layer-image`: origin top-left Y down; `scene`: scene origin Y up).
    * Missing IDs and annotations without measurable geometry are ignored.
    *
    * @param {string[]} annotationIds - IDs managed by this annotation layer.
@@ -1783,20 +1795,33 @@ class ManagerSvgAnnotation {
     });
     if (usable.isEmpty()) return result;
 
-    // Annotation SVG uses image coordinates, with Y increasing downwards.
-    const layoutBox = layer.layout.boundingBox();
-    const w = layoutBox.width(), h = layoutBox.height();
-    if (!(w > 0 && h > 0)) return result;
-    const layerBox = new BoundingBox({
-      xLow: bounds.xLow - w / 2, xHigh: bounds.xHigh - w / 2,
-      yLow: h / 2 - bounds.yHigh, yHigh: h / 2 - bounds.yLow,
-    });
+    const sceneMode = this.coordinateSpace === 'scene';
+    let layerBox;
+    let toScene;
+    if (sceneMode) {
+      // SVG user units are already scene coords (Y up).
+      layerBox = new BoundingBox({
+        xLow: bounds.xLow, xHigh: bounds.xHigh,
+        yLow: bounds.yLow, yHigh: bounds.yHigh,
+      });
+      toScene = new Transform();
+    } else {
+      // Annotation SVG uses image coordinates, with Y increasing downwards.
+      const layoutBox = layer.layout.boundingBox();
+      const w = layoutBox.width(), h = layoutBox.height();
+      if (!(w > 0 && h > 0)) return result;
+      layerBox = new BoundingBox({
+        xLow: bounds.xLow - w / 2, xHigh: bounds.xHigh - w / 2,
+        yLow: h / 2 - bounds.yHigh, yHigh: h / 2 - bounds.yLow,
+      });
+      toScene = layer.transform;
+    }
     const contains = box => box.xLow >= usable.xLow - 1e-7 &&
       box.xHigh <= usable.xHigh + 1e-7 &&
       box.yLow >= usable.yLow - 1e-7 &&
       box.yHigh <= usable.yHigh + 1e-7;
     const displayed = CoordinateSystem.fromLayerBoxToViewportBox(
-      layerBox, camera, layer.transform, false
+      layerBox, camera, toScene, false
     );
     result.fullyVisible = contains(displayed);
     if (options.onlyIfNeeded !== false && result.fullyVisible) return result;
@@ -1813,7 +1838,7 @@ class ManagerSvgAnnotation {
     const scene = new BoundingBox();
     for (let i = 0; i < 4; i++) {
       const corner = layerBox.corner(i);
-      const p = layer.transform.apply(corner.x, corner.y);
+      const p = toScene.apply(corner.x, corner.y);
       scene.mergePoint(p);
       rotated.mergePoint({ x: cos * p.x - sin * p.y, y: sin * p.x + cos * p.y });
     }
@@ -1845,7 +1870,7 @@ class ManagerSvgAnnotation {
     result.moved = Math.abs(target.x - current.x) >= 1e-7 ||
       Math.abs(target.y - current.y) >= 1e-7 || Math.abs(target.z - current.z) >= 1e-7;
     const targetViewportBox = CoordinateSystem.getFromLayerToViewportTransformNoCamera(
-      target, viewport, layer.transform
+      target, viewport, toScene
     ).transformBox(layerBox);
     result.fullyVisible = contains(targetViewportBox);
     return result;
@@ -2710,6 +2735,7 @@ class ManagerSvgAnnotation {
   _resolveLayer() {
     // If a layer was passed explicitly, use it.
     if (this.layer instanceof LayerSvgAnnotation) {
+      this.layer.coordinateSpace = this.coordinateSpace;
       this._wireAnnotationUpdate();
       return;
     }
@@ -2719,17 +2745,20 @@ class ManagerSvgAnnotation {
       .find(l => l instanceof LayerSvgAnnotation);
     if (existing) {
       this.layer = existing;
+      this.layer.coordinateSpace = this.coordinateSpace;
       this._wireAnnotationUpdate();
       return;
     }
 
     // Auto-create a new layer, sharing layout/transform with the first base layer
+    // (layout still needed for readiness; scene mode draw ignores layer placement).
     const baseLayer = Object.values(this.viewer.canvas.layers).find(l => !l.overlay)
       ?? Object.values(this.viewer.canvas.layers)[0];
 
     const layerOptions = {
       label: this.layerLabel,
       annotations: [],
+      coordinateSpace: this.coordinateSpace,
     };
 
     if (baseLayer) {
@@ -3329,31 +3358,53 @@ class ManagerSvgAnnotation {
   // ─── Internal: coordinate mapping ────────────────────────────────────────
 
   /**
-   * Converts a pointer event's client coordinates to image (model) coordinates
-   * for the managed layer, taking the camera transform and layer transform into account.
+   * Converts canvas-HTML coordinates to the active annotation coordinate space.
+   * @param {{x:number,y:number}} canvasPoint
+   * @returns {{x: number, y: number}|null}
+   * @private
+   */
+  _canvasHtmlToAnnotationCoords(canvasPoint) {
+    if (!this.viewer?.camera) return null;
+    if (this.coordinateSpace === 'scene') {
+      return CoordinateSystem.fromCanvasHtmlToScene(canvasPoint, this.viewer.camera, false);
+    }
+    if (!this.layer?.layout || !this.layer?.transform) return null;
+    const bb = this.layer.layout.boundingBox();
+    const size = { w: bb.width(), h: bb.height() };
+    if (!(size.w > 0 && size.h > 0)) return null;
+    return CoordinateSystem.fromCanvasHtmlToImage(
+      canvasPoint, this.viewer.camera, this.layer.transform, size, false
+    );
+  }
+
+  /**
+   * Converts a pointer event's client coordinates to annotation coordinates
+   * (`layer-image` or `scene`, see `coordinateSpace`).
    *
    * @param {PointerEvent|MouseEvent} e
-   * @returns {{x: number, y: number}} Position in image space
+   * @returns {{x: number, y: number}}
    * @private
    */
   _eventToImageCoords(e) {
     const rect = this.viewer.canvasElement.getBoundingClientRect();
     const p = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    const bb = this.layer.layout.boundingBox();
-    const size = { w: bb.width(), h: bb.height() };
-    return CoordinateSystem.fromCanvasHtmlToImage(
-      p, this.viewer.camera, this.layer.transform, size, false
-    );
+    return this._canvasHtmlToAnnotationCoords(p) ?? { x: 0, y: 0 };
   }
 
   /**
-   * Converts an image-space point (x right, y down) to canvas HTML coordinates.
+   * Converts an annotation-space point to canvas HTML coordinates.
    * @param {{x:number,y:number}} p
    * @returns {{x:number,y:number}|null}
    * @private
    */
   _imageToCanvasHtml(p) {
-    if (!this.layer?.layout || !this.layer?.transform || !this.viewer?.camera) return null;
+    if (!this.viewer?.camera) return null;
+    if (this.coordinateSpace === 'scene') {
+      const x = Number(p.x), y = Number(p.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+      return CoordinateSystem.fromSceneToCanvasHtml({ x, y }, this.viewer.camera, false);
+    }
+    if (!this.layer?.layout || !this.layer?.transform) return null;
     const bb = this.layer.layout.boundingBox();
     const size = { w: bb.width(), h: bb.height() };
     if (!(size.w > 0 && size.h > 0)) return null;
@@ -3527,15 +3578,7 @@ class ManagerSvgAnnotation {
       y: canvasPoint.y + (snappedCanvas.y - canvasPoint.y) * strength,
     };
 
-    const bb = this.layer.layout.boundingBox();
-    const size = { w: bb.width(), h: bb.height() };
-    return CoordinateSystem.fromCanvasHtmlToImage(
-      blendedCanvas,
-      this.viewer.camera,
-      this.layer.transform,
-      size,
-      false,
-    );
+    return this._canvasHtmlToAnnotationCoords(blendedCanvas) ?? base;
   }
 
   /**

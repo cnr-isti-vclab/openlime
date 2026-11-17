@@ -874,13 +874,21 @@ class EditorSvgAnnotation {
 			x: e.clientX - rect.left,
 			y: e.clientY - rect.top
 		};
-		const layerT = this.layer.transform;
 		const useGL = false;
-		const layerbb = this.layer.layout.boundingBox();
-		const layerSize = { w: layerbb.width(), h: layerbb.height() };
-		let pos = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
-		p.x += 1;
-		let pos1 = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
+		let pos;
+		let pos1;
+		if (this.layer.coordinateSpace === 'scene') {
+			pos = CoordinateSystem.fromCanvasHtmlToScene(p, this.viewer.camera, useGL);
+			p.x += 1;
+			pos1 = CoordinateSystem.fromCanvasHtmlToScene(p, this.viewer.camera, useGL);
+		} else {
+			const layerT = this.layer.transform;
+			const layerbb = this.layer.layout.boundingBox();
+			const layerSize = { w: layerbb.width(), h: layerbb.height() };
+			pos = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
+			p.x += 1;
+			pos1 = CoordinateSystem.fromCanvasHtmlToImage(p, this.viewer.camera, layerT, layerSize, useGL);
+		}
 		pos.pixelSize = Math.abs(pos1.x - pos.x);
 		return pos;
 	}

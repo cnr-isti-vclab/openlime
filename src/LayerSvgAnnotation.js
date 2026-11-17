@@ -85,9 +85,18 @@ class LayerSvgAnnotation extends LayerAnnotation {
 			classes: {
 				'': { stroke: '#000', label: '' },
 			},
-			annotationUpdate: null
+			annotationUpdate: null,
+			/**
+			 * Annotation SVG user units:
+			 * - `layer-image`: image pixels of this layer (origin top-left, Y down) — default
+			 * - `scene`: shared scene space (origin center, Y up), independent of base-layer placement
+			 * @type {'layer-image'|'scene'}
+			 */
+			coordinateSpace: 'layer-image',
 		}, options);
 		super(options);
+		this.coordinateSpace = this.coordinateSpace === 'scene' ? 'scene' : 'layer-image';
+
 		for (const [key, value] of Object.entries(this.classes)) {
 			this.style += `[data-class=${key}] { ` + Object.entries(value).map(g => `${g[0]}: ${g[1]};`).join('\n') + '}';
 		}
@@ -227,11 +236,20 @@ class LayerSvgAnnotation extends LayerAnnotation {
 
 	/**
 	 * Calculates SVG group transform string
-	 * @param {Transform} transform - Current view transform
+	 * @param {Transform} transform - Current view transform (camera)
 	 * @param {boolean} [inverse=false] - Whether to return inverse transform
 	 * @returns {string} SVG transform attribute value
 	 */
 	getSvgGroupTransform(transform, inverse = false) {
+		// Scene mode: SVG user units are already scene coords (Y up). Map with camera only;
+		// reflectY bridges scene Y-up to SVG's Y-down display. No layout-corner offset.
+		if (this.coordinateSpace === 'scene') {
+			const t = CoordinateSystem.reflectY(transform);
+			return inverse ?
+				`scale(${1 / t.z} ${1 / t.z}) rotate(${t.a} 0 0) translate(${-t.x} ${-t.y})` :
+				`translate(${t.x} ${t.y}) rotate(${-t.a} 0 0) scale(${t.z} ${t.z})`;
+		}
+
 		let t = this.transform.compose(transform);
 		let c = this.boundingBox().corner(0);
 		// FIXME CHECK IT: Convert from GL to SVG, but without any scaling. It just needs to reflect around 0,
