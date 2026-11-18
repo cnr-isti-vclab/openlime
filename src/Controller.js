@@ -46,7 +46,8 @@ class Controller {
 			panDelay: 50,
 			zoomDelay: 200,
 			priority: 0,
-			activeModifiers: [0]
+			activeModifiers: [0],
+			panMouseButtons: null
 		});
 
 		Object.assign(this, options);
@@ -70,6 +71,35 @@ class Controller {
 		if (e.altKey) state += 4;
 
 		return state;
+	}
+
+	/**
+	 * Checks whether a mouse event matches a configured list of allowed buttons.
+	 * Non-mouse pointers are accepted so touch and pen interactions keep working.
+	 * @param {PointerEvent} e - The pointer event to check
+	 * @param {number[]} [buttons=this.panMouseButtons] - Allowed mouse buttons: 0 left, 1 middle, 2 right
+	 * @returns {boolean} True if the event matches or no mouse-button filter is configured
+	 */
+	matchesMouseButton(e, buttons = this.panMouseButtons) {
+		if ((e.pointerType && e.pointerType !== 'mouse') || !Array.isArray(buttons))
+			return true;
+
+		if (buttons.includes(e.button))
+			return true;
+
+		if (typeof e.buttons === 'number') {
+			const mouseButtonMasks = {
+				0: 1,
+				1: 4,
+				2: 2
+			};
+			return buttons.some(button => {
+				const mask = mouseButtonMasks[button];
+				return mask && (e.buttons & mask) === mask;
+			});
+		}
+
+		return false;
 	}
 
 	/**

@@ -179,6 +179,10 @@ class Viewer {
 		this.pointerManager = new PointerManager(this.overlayElement, { idleTime: this.idleTime });
 
 		// Prevent context menu
+		this.overlayElement.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			return false;
+		});
 		this.canvasElement.addEventListener('contextmenu', (e) => {
 			e.preventDefault();
 			return false;
