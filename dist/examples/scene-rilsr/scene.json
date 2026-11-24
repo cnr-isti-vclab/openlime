@@ -1,0 +1,17 @@
+{
+  "format": "openlime-scene",
+  "formatVersion": "1.0.0",
+  "id": "urn:example:rilsr-scene",
+  "label": "RILSR scene",
+  "root": { "spatial": { "space": { "id": "urn:example:frame:rilsr-scene:root", "type": "cartesian2d" } } },
+  "viewer": { "fitPolicy": "active", "autofit": true },
+  "assets": [
+    {
+      "id": "main",
+      "label": "Item 3",
+      "asset": "urn:example:rilsr:item3",
+      "url": "asset.json",
+      "transform": { "type": "identity" }
+    }
+  ]
+}

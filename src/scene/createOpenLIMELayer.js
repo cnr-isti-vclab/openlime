@@ -5,6 +5,7 @@ import { ControllerLens } from '../ControllerLens.js';
 import { ControllerFocusContext } from '../ControllerFocusContext.js';
 import '../LayerImage.js';
 import '../LayerRTI.js';
+import '../LayerRILSR.js';
 
 /** Asset controller ids and the classes that implement them. */
 const lensControllers = {
@@ -17,27 +18,23 @@ const lensControllers = {
  * The scene graph keeps a Similarity. This is the copy onto Transform.
  * Without sourceLayer this is a primary layer. derive() calls this function
  * again with that layer as sourceLayer, so the second context keeps the tiles
- * and owns a new LayerImage or LayerRTI shader.
+ * and owns a new shader for that layer type.
+ * Adapter fields (url, layout, channels, normals, …) pass through as-is.
  * @param {Object} options
  * @returns {Layer}
  */
 function createOpenLIMELayer(options) {
+	const { transform, sourceLayer, ...fields } = options;
 	const spec = {
-		type: options.type,
-		url: options.url,
-		layout: options.layout,
-		label: options.label,
-		visible: options.visible,
-		zindex: options.zindex,
-		normals: options.normals,
+		...fields,
 		transform: new Transform({
-			x: options.transform?.x || 0,
-			y: options.transform?.y || 0,
-			a: options.transform?.a || 0,
-			z: options.transform?.z === undefined ? 1 : options.transform.z
+			x: transform?.x || 0,
+			y: transform?.y || 0,
+			a: transform?.a || 0,
+			z: transform?.z === undefined ? 1 : transform.z
 		})
 	};
-	if (options.sourceLayer) spec.sourceLayer = options.sourceLayer;
+	if (sourceLayer) spec.sourceLayer = sourceLayer;
 	const layer = new Layer(spec);
 	layer.derive = (extra) => createOpenLIMELayer({ ...extra, sourceLayer: layer });
 	return layer;

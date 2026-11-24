@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>OpenLIME - Scene RILSR</title>
+	<link rel="stylesheet" href="../../css/skin.css">
+	<link rel="stylesheet" href="../../css/light.css">
+	<link rel="stylesheet" href="../examples.css">
+	<style>
+		body { overflow: hidden; display: flex; flex-direction: column; height: 100%; }
+		h1, p { margin-left: 16px; flex: none; }
+		p { margin-top: 0; max-width: 70rem; }
+		.scene-layout { display: flex; flex: 1; min-height: 0; }
+		.openlime-scene-tree {
+			width: 300px;
+			margin: 0;
+			padding: 12px 16px;
+			overflow: auto;
+			background: #343434;
+			box-sizing: border-box;
+			flex: none;
+		}
+		.scene-layout.is-collapsed .openlime-scene-tree { display: none; }
+		.scene-drawer {
+			flex: none;
+			width: 16px;
+			border: 0;
+			padding: 0;
+			background: #2a2a2a;
+			color: #fff;
+			cursor: pointer;
+		}
+		.openlime-scene-tree ul { margin: 4px 0 4px 18px; padding: 0; }
+		.openlime-scene-tree li { list-style: none; margin: 4px 0; color: #fff; }
+		.openlime-scene-node[data-effective="false"] { opacity: 0.45; }
+		.openlime-scene-heading label, .openlime-scene-lens label, .openlime-scene-control { display: flex; gap: 6px; align-items: center; }
+		.openlime-scene-node select, .openlime-scene-control { margin-left: 22px; }
+		.scene-layout .openlime { flex: 1; height: 100%; position: relative; }
+		.openlime-layers-menu { display: none; }
+		.scene-layout .openlime-toolbar { z-index: 2; }
+		.scene-layout .openlime-toolbar path[style],
+		.scene-layout .openlime-toolbar text {
+			fill: #fff !important;
+			stroke: #fff !important;
+		}
+	</style>
+</head>
+<body>
+	<h1>OpenLIME - Scene RILSR</h1>
+	<p>
+		Loads a RILSR package through <code>SceneSession</code> / <code>SceneProjection</code>
+		with renderer <code>openlime:rilsr</code>. Use the tree to switch presets; drag light from the toolbar.
+	</p>
+	<div class="scene-layout">
+		<ul class="tree" id="scene-tree"></ul>
+		<button class="scene-drawer" type="button" aria-expanded="true" aria-controls="scene-tree" title="Hide scene">‹</button>
+		<div class="openlime"></div>
+	</div>
+	<script src="../../js/openlime.js"></script>
+	<script type="module">
+		import { SceneSession } from '../../../src/scene/SceneSession.js';
+		import { SceneProjection } from '../../../src/scene/SceneProjection.js';
+		import { SceneTree } from '../../../src/scene/SceneTree.js';
+
+		const scene = await fetch('scene.json').then(response => response.json());
+		const asset = await fetch('asset.json').then(response => response.json());
+		const session = SceneSession.open(scene, { assets: { [asset.id]: asset } });
+		const viewer = new OpenLIME.Viewer('.openlime', { background: '#222' });
+
+		new SceneProjection(session, viewer.canvas, {
+			createLayer: OpenLIME.createOpenLIMELayer
+		});
+		new SceneTree(session, document.querySelector('.tree'));
+
+		const drawer = document.querySelector('.scene-drawer');
+		drawer.addEventListener('click', () => {
+			const collapsed = document.querySelector('.scene-layout').classList.toggle('is-collapsed');
+			drawer.setAttribute('aria-expanded', String(!collapsed));
+			drawer.title = collapsed ? 'Show scene' : 'Hide scene';
+			drawer.textContent = collapsed ? '›' : '‹';
+		});
+
+		OpenLIME.Skin.setUrl('../../skin/skin.svg');
+		const ui = new OpenLIME.UIBasic(viewer, { layerVisibilityMode: 'nonExclusive' });
+		ui.actions.layers.display = false;
+		ui.actions.zoomin.display = false;
+		ui.actions.zoomout.display = false;
+	</script>
+</body>
+</html>

@@ -1,6 +1,13 @@
 import { BoundingBox } from '../BoundingBox.js';
 import { SceneValidationError, lensControllerId } from './SceneSession.js';
-import { adapterFor, validateRendererOptions, validatePreset } from './adapters.js';
+import {
+	adapterFor,
+	validateRendererOptions,
+	validatePreset,
+	resolveRendererSources,
+	buildSourceKey,
+	buildSourceRecord
+} from './adapters.js';
 
 const FIT_POLICIES = ['active', 'all', 'declared'];
 
@@ -200,32 +207,27 @@ class SceneProjection {
 			return null;
 		}
 		validateRendererOptions(adapter, renderer.options, path, diagnostics);
-		const source = asset.sources?.[renderer.source];
-		if (!source || !source.uri) {
-			diagnostics.push({
-				severity: 'error',
-				code: 'MISSING_SOURCE',
-				path: path + '/source',
-				message: `Layer "${node.nodeId}" needs a source with a uri.`
-			});
-			return null;
-		}
-		if (diagnostics.some(item => item.severity === 'error')) return null;
+		const binding = resolveRendererSources(adapter, renderer, asset.sources || {}, path, diagnostics);
+		if (!binding || diagnostics.some(item => item.severity === 'error')) return null;
 
-		const pixelOptions = adapter.pixelOptions(renderer.options || {});
-		const uri = this.resolveUrl(source, asset);
-		const layout = source.layout?.type || source.layout || 'image';
-		const key = JSON.stringify({
-			type: adapter.type,
-			uri,
-			revision: source.revision || '',
-			layout,
-			options: pixelOptions
-		});
+		const resolveUrl = (source) => this.resolveUrl(source, asset);
+		const ctx = {
+			asset,
+			renderer,
+			resolveUrl,
+			...(binding.kind === 'channels'
+				? { channels: binding.channels }
+				: { source: binding.source })
+		};
+		const key = buildSourceKey(adapter, ctx, binding);
+		const record = buildSourceRecord(adapter, ctx, binding);
 		const similarity = this.canvasTransform(node);
 		const visible = this.session.effectiveEnabled(node.qualifiedId);
 		const preset = this.presetFor(node, null, diagnostics);
 		if (!preset) return null;
+		const fields = typeof adapter.buildLayerFields === 'function'
+			? adapter.buildLayerFields(ctx)
+			: {};
 		return {
 			node,
 			adapter,
@@ -233,18 +235,17 @@ class SceneProjection {
 			similarity,
 			visible,
 			zindex,
-			source,
+			source: binding.kind === 'single' ? binding.source : null,
+			channels: binding.kind === 'channels' ? binding.channels : null,
 			preset,
-			record: { type: adapter.type, uri, revision: source.revision || '', layout, options: pixelOptions },
+			record,
 			options: {
 				type: adapter.layerType,
-				url: uri,
-				layout,
 				label: spec.label,
 				visible,
 				zindex,
-				normals: pixelOptions.normals,
-				transform: { x: similarity.x, y: similarity.y, a: similarity.a, z: similarity.z }
+				transform: { x: similarity.x, y: similarity.y, a: similarity.a, z: similarity.z },
+				...fields
 			}
 		};
 	}
@@ -645,12 +646,23 @@ class SceneProjection {
 		else delete this.target.layers[id];
 	}
 
+	/** Single source, or the first channel source when binding is multi-channel. */
+	boundsSource(item) {
+		if (item?.source) return item.source;
+		if (item?.channels) {
+			for (const source of Object.values(item.channels)) {
+				if (source) return source;
+			}
+		}
+		return null;
+	}
+
 	localBounds(layer, source) {
 		if (this.getLocalBounds) return finiteBox(this.getLocalBounds(layer, source));
 		if (layer && Number.isFinite(layer.width) && layer.width > 0 && Number.isFinite(layer.height) && layer.height > 0) {
 			return centerBox(layer.width, layer.height);
 		}
-		return finiteBox(source.bounds);
+		return finiteBox(source?.bounds);
 	}
 
 	/** Bounds for `active` leaves, every leaf (`all`), or the declared scene extent. */
@@ -662,7 +674,7 @@ class SceneProjection {
 			if (!item) continue;
 			if (policy === 'active' && !item.visible) continue;
 			const layer = this.byNode.get(item.node.qualifiedId)?.layer;
-			const local = this.localBounds(layer, item.source);
+			const local = this.localBounds(layer, this.boundsSource(item));
 			if (!local) continue;
 			for (const corner of [
 				[local.xLow, local.yLow],
@@ -686,7 +698,7 @@ class SceneProjection {
 		for (const item of planned) {
 			if (!item) continue;
 			if (policy === 'active' && !item.visible) continue;
-			if (this.localBounds(this.byNode.get(item.node.qualifiedId)?.layer, item.source)) {
+			if (this.localBounds(this.byNode.get(item.node.qualifiedId)?.layer, this.boundsSource(item))) {
 				minScale = Math.min(minScale, item.similarity.z);
 			}
 		}

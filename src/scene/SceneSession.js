@@ -1,4 +1,5 @@
 import { Similarity, parseSimilarity, isLocalId, isGlobalId } from './similarity.js';
+import { adapterFor } from './adapters.js';
 
 /** Controllers a lens profile may name. Omitted means the plain lens controller. */
 const LENS_CONTROLLERS = new Set(['openlime:controller-lens', 'openlime:controller-focus-context']);
@@ -121,9 +122,28 @@ function validateAsset(asset, path, diagnostics) {
 }
 
 function validateLayer(node, nodes, sources, path, diagnostics) {
-	const sourceKey = node.renderer?.source;
-	if (sourceKey && !sources[sourceKey]) {
-		push(diagnostics, 'error', 'MISSING_SOURCE', path + '/renderer/source', `Unknown source "${sourceKey}".`);
+	const renderer = node.renderer || {};
+	const adapter = adapterFor(renderer.type);
+	if (adapter?.sourceBinding === 'channels') {
+		const map = renderer.sources || {};
+		const roles = adapter.channelRoles || { required: [], optional: [] };
+		for (const role of [...(roles.required || []), ...(roles.optional || [])]) {
+			const sourceId = map[role];
+			if (!sourceId) continue;
+			if (!sources[sourceId]) {
+				push(diagnostics, 'error', 'MISSING_SOURCE', path + '/renderer/sources/' + role, `Unknown source "${sourceId}".`);
+			}
+		}
+		for (const role of roles.required || []) {
+			if (!map[role]) {
+				push(diagnostics, 'error', 'MISSING_CHANNEL', path + '/renderer/sources/' + role, `Renderer requires channel "${role}".`);
+			}
+		}
+	} else {
+		const sourceKey = renderer.source;
+		if (sourceKey && !sources[sourceKey]) {
+			push(diagnostics, 'error', 'MISSING_SOURCE', path + '/renderer/source', `Unknown source "${sourceKey}".`);
+		}
 	}
 	const renderings = node.renderings || [];
 	const ids = new Set();

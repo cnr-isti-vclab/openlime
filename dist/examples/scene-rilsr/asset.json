@@ -1,0 +1,36 @@
+{
+  "format": "openlime-asset",
+  "formatVersion": "1.0.0",
+  "id": "urn:example:rilsr:item3",
+  "sources": {
+    "rilsr": {
+      "id": "urn:example:source:rilsr:item3",
+      "uri": "../../assets/rsc/item3_dzi/info.json",
+      "layout": { "type": "deepzoom" },
+      "bounds": { "width": 402, "height": 395 }
+    }
+  },
+  "root": "root",
+  "nodes": {
+    "root": {
+      "type": "group",
+      "label": "RILSR sample",
+      "activation": { "mode": "stack" },
+      "children": ["rilsr"],
+      "spatial": { "space": { "id": "urn:example:frame:rilsr:root", "type": "cartesian2d" } }
+    },
+    "rilsr": {
+      "type": "layer",
+      "label": "Item 3",
+      "renderer": { "type": "openlime:rilsr", "source": "rilsr" },
+      "renderings": [
+        { "id": "relight", "label": "Relight", "shader": "rilsr", "mode": "light", "controls": { "light": [0.25, 0.2] }, "exposeControls": ["light"] },
+        { "id": "grayscale", "label": "Grayscale", "shader": "rilsr", "mode": "grayscale" },
+        { "id": "edge", "label": "Edge", "shader": "rilsr", "mode": "edge" },
+        { "id": "avg", "label": "Average", "shader": "rilsr", "mode": "avg" },
+        { "id": "dictionary", "label": "Dictionary", "shader": "rilsr", "mode": "dictionary" }
+      ],
+      "defaultRendering": "relight"
+    }
+  }
+}
