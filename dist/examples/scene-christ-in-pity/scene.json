@@ -1,0 +1,17 @@
+{
+  "format": "openlime-scene",
+  "formatVersion": "1.0.0",
+  "id": "urn:example:christ-in-pity-scene",
+  "label": "Christ in Pity comparison",
+  "root": { "spatial": { "space": { "id": "urn:example:frame:christ-in-pity-scene:root", "type": "cartesian2d" } } },
+  "viewer": { "fitPolicy": "active", "autofit": true },
+  "assets": [
+    {
+      "id": "main",
+      "label": "Christ in Pity",
+      "asset": "urn:example:christ-in-pity",
+      "url": "asset.json",
+      "transform": { "type": "identity" }
+    }
+  ]
+}

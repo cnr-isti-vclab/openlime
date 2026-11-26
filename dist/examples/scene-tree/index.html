@@ -23,10 +23,9 @@
 		<ul class="tree"></ul>
 		<ul class="draw"></ul>
 	</div>
+	<script src="../../js/openlime.js"></script>
 	<script type="module">
-		import { SceneSession } from '../../../src/scene/SceneSession.js';
-		import { SceneProjection } from '../../../src/scene/SceneProjection.js';
-		import { SceneTree } from '../../../src/scene/SceneTree.js';
+		const { SceneSession, SceneProjection, SceneTree } = OpenLIME;
 
 		const scene = await fetch('scene.json').then(response => response.json());
 		const asset = await fetch('lighthouse.json').then(response => response.json());

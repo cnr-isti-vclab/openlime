@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>OpenLIME - Christ in Pity</title>
+	<link rel="stylesheet" href="../../css/skin.css">
+	<link rel="stylesheet" href="../../css/light.css">
+	<link rel="stylesheet" href="../examples.css">
+	<style>
+		body { overflow: hidden; display: flex; flex-direction: column; height: 100%; margin: 0; }
+		.page-header {
+			flex: none;
+			display: flex;
+			align-items: baseline;
+			gap: 1.5rem;
+			padding: 12px 16px 8px;
+			flex-wrap: wrap;
+		}
+		.page-header h1 { margin: 0; font-size: 1.35rem; }
+		.page-header .blurb { margin: 0; color: #555; max-width: 48rem; }
+		.fps-meter {
+			margin-left: auto;
+			font-variant-numeric: tabular-nums;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 0.95rem;
+			padding: 4px 10px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			background: #f7f7f7;
+			min-width: 6.5rem;
+			text-align: right;
+		}
+		.scene-layout { display: flex; flex: 1; min-height: 0; }
+		.format-panel {
+			width: 260px;
+			margin: 0;
+			padding: 12px 16px;
+			overflow: auto;
+			background: #343434;
+			color: #fff;
+			box-sizing: border-box;
+			flex: none;
+		}
+		.format-panel h2 { margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
+		.format-panel p.note { margin: 0 0 12px; font-size: 0.8rem; color: #bbb; line-height: 1.35; }
+		.format-panel label {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			margin: 6px 0;
+			cursor: pointer;
+		}
+		.format-panel .hint { display: block; margin: 2px 0 0 22px; font-size: 0.75rem; color: #999; }
+		.scene-layout .openlime { flex: 1; height: 100%; position: relative; }
+		.openlime-layers-menu { display: none; }
+		.scene-layout .openlime-toolbar { z-index: 2; }
+		.scene-layout .openlime-toolbar path[style],
+		.scene-layout .openlime-toolbar text {
+			fill: #fff !important;
+			stroke: #fff !important;
+		}
+		#error {
+			display: none;
+			margin: 0 16px 8px;
+			padding: 8px 12px;
+			background: #ffe8e8;
+			border: 1px solid #e0a0a0;
+			color: #700;
+			max-width: 60rem;
+		}
+		#error.visible { display: block; }
+	</style>
+</head>
+<body>
+	<header class="page-header">
+		<h1>Christ in Pity</h1>
+		<p class="blurb">
+			Same capture, stacked encodings via the scene loader (identity placement).
+			Switch format below; light from the toolbar.
+		</p>
+		<div class="fps-meter" id="fps" title="viewer.canvas.fps">FPS —</div>
+	</header>
+	<div id="error"></div>
+	<div class="scene-layout">
+		<aside class="format-panel" id="formats">
+			<h2>Encoding</h2>
+			<p class="note">
+				Data lives outside git under <code>dist/assets/ChristInPity</code>
+				(symlink to a local copy). See <code>README.md</code>.
+			</p>
+		</aside>
+		<div class="openlime"></div>
+	</div>
+	<script src="../../js/openlime.js"></script>
+	<script type="module">
+		const { SceneSession, SceneProjection } = OpenLIME;
+
+		const FORMATS = [
+			{ id: 'hsh', label: 'HSH 27', kind: 'openlime:rti' },
+			{ id: 'ptm', label: 'PTM 18', kind: 'openlime:rti' },
+			{ id: 'rbf', label: 'RBF 18', kind: 'openlime:rti' },
+			{ id: 'rilsr', label: 'RILSR', kind: 'openlime:rilsr' },
+			{
+				id: 'neural',
+				label: 'Neural RTI',
+				kind: 'openlime:neural',
+				hint: 'This export’s info.json is training metadata; classic OpenLIME NeuralRTI expects weights/biases in config.'
+			}
+		];
+
+		const errorEl = document.getElementById('error');
+		const formatsEl = document.getElementById('formats');
+		const fpsEl = document.getElementById('fps');
+
+		function showError(message) {
+			errorEl.textContent = message;
+			errorEl.classList.add('visible');
+		}
+
+		const probe = await fetch('../../assets/ChristInPity/readme.txt', { method: 'HEAD' });
+		if (!probe.ok) {
+			showError('Missing dataset: link or copy ChristInPity under dist/assets/ChristInPity (see README.md).');
+		}
+
+		const scene = await fetch('scene.json').then(response => response.json());
+		const asset = await fetch('asset.json').then(response => response.json());
+		const session = SceneSession.open(scene, { assets: { [asset.id]: asset } });
+		const selected = session.state.assets.main.selections.formats || 'hsh';
+
+		for (const format of FORMATS) {
+			const label = document.createElement('label');
+			const input = document.createElement('input');
+			input.type = 'radio';
+			input.name = 'encoding';
+			input.value = format.id;
+			input.checked = format.id === selected;
+			input.addEventListener('change', () => {
+				if (input.checked) session.selectGroupChild('main', 'formats', format.id);
+			});
+			label.append(input, document.createTextNode(format.label));
+			formatsEl.append(label);
+			if (format.hint) {
+				const hint = document.createElement('span');
+				hint.className = 'hint';
+				hint.textContent = format.hint;
+				formatsEl.append(hint);
+			}
+		}
+
+		const viewer = new OpenLIME.Viewer('.openlime', { background: '#222' });
+		new SceneProjection(session, viewer.canvas, {
+			createLayer: OpenLIME.createOpenLIMELayer
+		});
+
+		OpenLIME.Skin.setUrl('../../skin/skin.svg');
+		const ui = new OpenLIME.UIBasic(viewer, { layerVisibilityMode: 'nonExclusive' });
+		ui.actions.layers.display = false;
+		ui.actions.zoomin.display = false;
+		ui.actions.zoomout.display = false;
+
+		function tickFps() {
+			const fps = viewer.canvas?.fps;
+			fpsEl.textContent = Number.isFinite(fps) ? `FPS ${fps.toFixed(1)}` : 'FPS —';
+			requestAnimationFrame(tickFps);
+		}
+		requestAnimationFrame(tickFps);
+	</script>
+</body>
+</html>

@@ -11,6 +11,8 @@ dist/examples/npm-demo/assets
 dist/examples/npm-demo/skin
 paper/
 dist/assets/local
+# Large local datasets (symlink or copy; not shipped)
+dist/assets/ChristInPity
 scratch
 jsconfig.json
 .env

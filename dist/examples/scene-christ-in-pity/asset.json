@@ -1,0 +1,103 @@
+{
+  "format": "openlime-asset",
+  "formatVersion": "1.0.0",
+  "id": "urn:example:christ-in-pity",
+  "initialState": {
+    "selections": { "formats": "hsh" }
+  },
+  "sources": {
+    "hsh": {
+      "id": "urn:example:source:christ-in-pity:hsh",
+      "uri": "../../assets/ChristInPity/t01-hsh27/info.json",
+      "layout": { "type": "image" },
+      "bounds": { "width": 3427, "height": 4117 }
+    },
+    "ptm": {
+      "id": "urn:example:source:christ-in-pity:ptm",
+      "uri": "../../assets/ChristInPity/t01-ptm18/info.json",
+      "layout": { "type": "image" },
+      "bounds": { "width": 3427, "height": 4117 }
+    },
+    "rbf": {
+      "id": "urn:example:source:christ-in-pity:rbf",
+      "uri": "../../assets/ChristInPity/t01-rbf18/info.json",
+      "layout": { "type": "image" },
+      "bounds": { "width": 3427, "height": 4117 }
+    },
+    "rilsr": {
+      "id": "urn:example:source:christ-in-pity:rilsr",
+      "uri": "../../assets/ChristInPity/rilsr/info.json",
+      "layout": { "type": "image" },
+      "bounds": { "width": 3427, "height": 4117 }
+    },
+    "neural": {
+      "id": "urn:example:source:christ-in-pity:neural",
+      "uri": "../../assets/ChristInPity/nrti/info.json",
+      "layout": { "type": "image" },
+      "bounds": { "width": 3427, "height": 4117 }
+    }
+  },
+  "root": "root",
+  "nodes": {
+    "root": {
+      "type": "group",
+      "label": "Christ in Pity",
+      "activation": { "mode": "stack" },
+      "children": ["formats"],
+      "spatial": { "space": { "id": "urn:example:frame:christ-in-pity:root", "type": "cartesian2d" } }
+    },
+    "formats": {
+      "type": "group",
+      "label": "Encodings",
+      "activation": { "mode": "exclusive", "required": true },
+      "children": ["hsh", "ptm", "rbf", "rilsr", "neural"]
+    },
+    "hsh": {
+      "type": "layer",
+      "label": "HSH 27",
+      "renderer": { "type": "openlime:rti", "source": "hsh" },
+      "renderings": [
+        { "id": "relight", "label": "Relight", "shader": "rti", "mode": "light", "controls": { "light": [0.25, 0.2] }, "exposeControls": ["light"] }
+      ],
+      "defaultRendering": "relight"
+    },
+    "ptm": {
+      "type": "layer",
+      "label": "PTM 18",
+      "renderer": { "type": "openlime:rti", "source": "ptm" },
+      "renderings": [
+        { "id": "relight", "label": "Relight", "shader": "rti", "mode": "light", "controls": { "light": [0.25, 0.2] }, "exposeControls": ["light"] }
+      ],
+      "defaultRendering": "relight"
+    },
+    "rbf": {
+      "type": "layer",
+      "label": "RBF 18",
+      "renderer": { "type": "openlime:rti", "source": "rbf" },
+      "renderings": [
+        { "id": "relight", "label": "Relight", "shader": "rti", "mode": "light", "controls": { "light": [0.25, 0.2] }, "exposeControls": ["light"] }
+      ],
+      "defaultRendering": "relight"
+    },
+    "rilsr": {
+      "type": "layer",
+      "label": "RILSR",
+      "renderer": { "type": "openlime:rilsr", "source": "rilsr" },
+      "renderings": [
+        { "id": "relight", "label": "Relight", "shader": "rilsr", "mode": "light", "controls": { "light": [0.25, 0.2] }, "exposeControls": ["light"] },
+        { "id": "edge", "label": "Edge", "shader": "rilsr", "mode": "edge" },
+        { "id": "avg", "label": "Average", "shader": "rilsr", "mode": "avg" }
+      ],
+      "defaultRendering": "relight"
+    },
+    "neural": {
+      "type": "layer",
+      "label": "Neural RTI",
+      "renderer": { "type": "openlime:neural", "source": "neural" },
+      "renderings": [
+        { "id": "relight", "label": "Relight", "shader": "neural", "controls": { "light": [0.25, 0.2] }, "exposeControls": ["light"] }
+      ],
+      "defaultRendering": "relight"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "_readme": [
+    "OpenLIME LayerNeuralRTI config template (what initialize() reads).",
+    "Not the training info.json: export weights/biases from the .pt/.ckpt into this shape.",
+    "Sibling image planes must be named plane_1.jpg, plane_2.jpg, plane_3.jpg (layout: image).",
+    "ChristInPity/nrti currently has plane_0..2 — rename or symlink to plane_1..3.",
+    "Classic architecture in ShaderNeural comments: samples≈49, planes=9 → n=52, c=12 after %4 pad."
+  ],
+
+  "width": 3427,
+  "height": 4117,
+  "colorspace": "rgb",
+
+  "samples": 49,
+  "planes": 9,
+
+  "min": [
+    [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0]
+  ],
+  "max": [
+    [1.0, 1.0, 1.0],
+    [1.0, 1.0, 1.0],
+    [1.0, 1.0, 1.0]
+  ],
+
+  "weights": [
+    [],
+    [],
+    []
+  ],
+  "biases": [
+    [],
+    [],
+    []
+  ],
+
+  "_shapes_for_samples_49_planes_9": {
+    "n_padded": 52,
+    "c_padded": 12,
+    "weights[0]_layer1": "length c*n = 12*52 = 624 floats (vec4 count 156)",
+    "biases[0]_layer1": "length n = 52 floats (vec4 count 13)",
+    "weights[1]_layer2": "length n*n = 52*52 = 2704 floats (vec4 count 676)",
+    "biases[1]_layer2": "length n = 52 floats (vec4 count 13)",
+    "weights[2]_layer3": "length n*3 = 52*3 = 156 floats (vec4 count 39)",
+    "biases[2]_layer3": "length 3 floats (one vec3)",
+    "min_max": "planes/3 = 3 rows of [r,g,b]; loader calls .flat(1)"
+  },
+
+  "_from_christ_in_pity_nrti": {
+    "map_minimum_maximum": "training info.json uses minimum/maximum — copy into min/max (same nesting or flat-then-reshape to 3×3)",
+    "features_9": "matches planes=9 if three RGB coefficient JPEGs",
+    "model_state_pt_best_ckpt": "source of weights/biases — not read by OpenLIME; convert offline into weights[]/biases[]",
+    "coefficient_npy": "not used by LayerNeuralRTI (web path uses plane_*.jpg only)"
+  }
+}
