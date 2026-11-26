@@ -6,6 +6,7 @@ import { ControllerFocusContext } from '../ControllerFocusContext.js';
 import '../LayerImage.js';
 import '../LayerRTI.js';
 import '../LayerRILSR.js';
+import '../LayerNeuralRTI.js';
 
 /** Asset controller ids and the classes that implement them. */
 const lensControllers = {

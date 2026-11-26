@@ -231,3 +231,94 @@ test('two RILSR instances share one source record', () => {
 	assert.notEqual(target.layers['left/base'], target.layers['right/base']);
 	assert.equal(projection.sourceRecord('left/base'), projection.sourceRecord('right/base'));
 });
+
+function neuralAsset(overrides = {}) {
+	return {
+		format: 'openlime-asset',
+		formatVersion: '1.0.0',
+		id: 'urn:example:neural',
+		sources: {
+			neural: {
+				id: 'urn:example:source:neural',
+				uri: 'config.json',
+				layout: { type: 'deepzoom' },
+				bounds: { width: 256, height: 256 }
+			}
+		},
+		root: 'root',
+		nodes: {
+			root: {
+				type: 'group',
+				activation: { mode: 'stack' },
+				children: ['base'],
+				spatial: { space: { id: 'urn:example:frame:neural:root', type: 'cartesian2d' } }
+			},
+			base: {
+				type: 'layer',
+				renderer: { type: 'openlime:neural', source: 'neural' },
+				renderings: [
+					{ id: 'relight', shader: 'neural', controls: { light: [0.2, 0.1] } },
+					{ id: 'rgb', shader: 'standard' }
+				],
+				defaultRendering: 'relight'
+			}
+		},
+		...overrides
+	};
+}
+
+test('Neural adapter projects url, layout, and optional tuning fields', () => {
+	const document = neuralAsset();
+	document.nodes.base.renderer.options = { convergenceSpeed: 1.1, maxTiles: 20 };
+	const session = SceneSession.open(scene([
+		{ id: 'only', asset: document.id, document, transform: { type: 'identity' } }
+	]));
+	const { target, created, projection } = project(session, {
+		resolveUrl(source) { return 'https://cdn.example/' + source.uri; }
+	});
+	assert.equal(target.layers['only/base'].type, 'neural');
+	assert.equal(target.layers['only/base'].url, 'https://cdn.example/config.json');
+	assert.equal(target.layers['only/base'].layout, 'deepzoom');
+	assert.equal(created[0].convergenceSpeed, 1.1);
+	assert.equal(created[0].maxTiles, 20);
+	assert.equal(projection.sourceRecord('only/base').type, 'openlime:neural');
+
+	session.setLayerRendering('only', 'base', 'rgb');
+	assert.equal(target.layers['only/base'].shaderId, 'standard');
+});
+
+test('Neural rejects modes and bad option types', () => {
+	const withMode = neuralAsset();
+	withMode.nodes.base.renderings.push({ id: 'bogus', mode: 'light' });
+	withMode.nodes.base.defaultRendering = 'bogus';
+	const session = SceneSession.open(scene([
+		{ id: 'only', asset: withMode.id, document: withMode, transform: { type: 'identity' } }
+	]));
+	assert.throws(
+		() => project(session),
+		(error) => error instanceof SceneValidationError
+			&& error.diagnostics.some(item => item.code === 'PRESET_MODE')
+	);
+
+	const badOpt = neuralAsset();
+	badOpt.nodes.base.renderer.options = { maxTiles: 'many' };
+	const again = SceneSession.open(scene([
+		{ id: 'only', asset: badOpt.id, document: badOpt, transform: { type: 'identity' } }
+	]));
+	assert.throws(
+		() => project(again),
+		(error) => error instanceof SceneValidationError
+			&& error.diagnostics.some(item => item.code === 'RENDERER_OPTION')
+	);
+});
+
+test('two Neural instances share one source record', () => {
+	const document = neuralAsset();
+	const session = SceneSession.open(scene([
+		{ id: 'left', asset: document.id, document, transform: { type: 'identity' } },
+		{ id: 'right', asset: document.id, document, transform: { type: 'similarity2d', translation: [200, 0] } }
+	]));
+	const { target, projection } = project(session);
+	assert.notEqual(target.layers['left/base'], target.layers['right/base']);
+	assert.equal(projection.sourceRecord('left/base'), projection.sourceRecord('right/base'));
+});

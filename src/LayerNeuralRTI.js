@@ -71,26 +71,12 @@ class LayerNeuralRTI extends Layer {
 	constructor(options) {
 		super(options || {});
 		this.currentRelightFraction = 1.0; //(min: 0, max 1)
-		this.maxTiles = 40;
+		if (this.maxTiles === undefined) this.maxTiles = 40;
 		this.relighted = false;
-		this.convergenceSpeed = 1.2;
+		if (this.convergenceSpeed === undefined) this.convergenceSpeed = 1.2;
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 		this.activeFramebuffer = null;
-		
-		let textureUrls = [
-			null,
-			this.layout.imageUrl(this.url, 'plane_1'),
-			this.layout.imageUrl(this.url, 'plane_2'),
-			this.layout.imageUrl(this.url, 'plane_3'),
-		];
-
-		this.layout.setUrls(textureUrls);
-
-		for (let url of textureUrls) {
-			let raster = new Raster({ format: 'vec3' });
-			this.rasters.push(raster);
-		}
 
 		this.imageShader = new Shader({
 			'label': 'Rgb',
@@ -103,10 +89,53 @@ class LayerNeuralRTI extends Layer {
 		this.setShader('neural');
 		this.neuralShader.setLight([0, 0]);
 
+		if (this.sourceLayer) {
+			// Tiles/rasters/layout come from Layer.init; own a fresh neural shader.
+			this.syncNetworkFromSource();
+		} else {
+			let textureUrls = [
+				null,
+				this.layout.imageUrl(this.url, 'plane_1'),
+				this.layout.imageUrl(this.url, 'plane_2'),
+				this.layout.imageUrl(this.url, 'plane_3'),
+			];
 
-		if (!this.sourceLayer) {
+			this.layout.setUrls(textureUrls);
+
+			for (let url of textureUrls) {
+				let raster = new Raster({ format: 'vec3' });
+				this.rasters.push(raster);
+			}
+
 			(async () => { await this.loadNeural(this.url); })();
 		}
+	}
+
+	/**
+	 * Copy network uniforms from the shared source layer once they are loaded.
+	 * @returns {boolean} Whether the network is available on this layer
+	 * @private
+	 */
+	syncNetworkFromSource() {
+		const src = this.sourceLayer;
+		if (!src?.networkParameters) return false;
+		this.networkParameters = src.networkParameters;
+		this.max = src.max;
+		this.min = src.min;
+		this.neuralInfo = src.neuralInfo;
+		for (const [name, value] of Object.entries(this.networkParameters))
+			this.neuralShader.setUniform(name, value);
+		this.neuralShader.setUniform('min', this.min);
+		this.neuralShader.setUniform('max', this.max);
+		if (this.neuralInfo) {
+			const info = this.neuralInfo;
+			let n = info.samples;
+			let c = info.planes + 2;
+			while (n % 4 != 0) n++;
+			while (c % 4 != 0) c++;
+			this.neuralShader.setShaderInfo(info.samples, info.planes, n, c, info.colorspace);
+		}
+		return true;
 	}
 
 	/**
@@ -172,6 +201,11 @@ class LayerNeuralRTI extends Layer {
 			c++;
 		this.neuralShader.setShaderInfo(info.samples, info.planes, n, c, info.colorspace);
 
+		this.neuralInfo = {
+			samples: info.samples,
+			planes: info.planes,
+			colorspace: info.colorspace
+		};
 		this.networkParameters = parameters;
 	}
 
@@ -215,6 +249,9 @@ class LayerNeuralRTI extends Layer {
 		//TODO this is duplicated code. move this check up 
 		if (this.status != 'ready')
 			return true;
+
+		if (this.sourceLayer && this.networkParameters === undefined)
+			this.syncNetworkFromSource();
 
 		this.worldRotation = transform.a + this.transform.a;
 

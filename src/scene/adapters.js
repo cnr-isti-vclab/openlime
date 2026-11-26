@@ -112,7 +112,51 @@ const rilsrAdapter = {
 	}
 };
 
-const adapters = [imageAdapter, rtiAdapter, rilsrAdapter];
+/**
+ * `openlime:neural` → LayerNeuralRTI. Config JSON + plane tiles (single-uri package).
+ * Shader modes are not used; presets pick `neural` or `standard`.
+ */
+const neuralAdapter = {
+	type: 'openlime:neural',
+	layerType: 'neural',
+	sourceBinding: 'single',
+	knownOptions: ['convergenceSpeed', 'maxTiles'],
+	defaultShader: 'neural',
+	shaders: ['neural', 'standard'],
+	modes: [],
+	parameters: {},
+	controls: ['light'],
+	validateOptions(options = {}, path, diagnostics) {
+		if (options.convergenceSpeed !== undefined && typeof options.convergenceSpeed !== 'number') {
+			diagnostics.push({
+				severity: 'error',
+				code: 'RENDERER_OPTION',
+				path: path + '/options/convergenceSpeed',
+				message: 'Neural option "convergenceSpeed" must be a number.'
+			});
+		}
+		if (options.maxTiles !== undefined && typeof options.maxTiles !== 'number') {
+			diagnostics.push({
+				severity: 'error',
+				code: 'RENDERER_OPTION',
+				path: path + '/options/maxTiles',
+				message: 'Neural option "maxTiles" must be a number.'
+			});
+		}
+	},
+	sourceFingerprint() {
+		return {};
+	},
+	buildLayerFields(ctx) {
+		const options = ctx.renderer?.options || {};
+		const fields = singleCtxFields(ctx);
+		if (options.convergenceSpeed !== undefined) fields.convergenceSpeed = options.convergenceSpeed;
+		if (options.maxTiles !== undefined) fields.maxTiles = options.maxTiles;
+		return fields;
+	}
+};
+
+const adapters = [imageAdapter, rtiAdapter, rilsrAdapter, neuralAdapter];
 
 /** @returns {Object|null} The adapter for a manifest renderer type. */
 function adapterFor(type) {
@@ -317,6 +361,7 @@ export {
 	imageAdapter,
 	rtiAdapter,
 	rilsrAdapter,
+	neuralAdapter,
 	adapters,
 	adapterFor,
 	validateRendererOptions,
