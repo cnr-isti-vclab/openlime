@@ -11,6 +11,7 @@ import { ShaderNeural } from './ShaderNeural.js'
  * @property {Layout} layout - Layout system for image loading
  * @property {number} [convergenceSpeed=1.2] - Speed of quality convergence
  * @property {number} [maxTiles=40] - Maximum number of tiles to process
+ * @property {boolean} [adaptiveRelight=true] - When true, scale neural pass resolution from canvas FPS; when false, always relight at full resolution
  * @property {string} [colorspace='rgb'] - Color space for processing
  * @extends LayerOptions
  */
@@ -74,6 +75,7 @@ class LayerNeuralRTI extends Layer {
 		if (this.maxTiles === undefined) this.maxTiles = 40;
 		this.relighted = false;
 		if (this.convergenceSpeed === undefined) this.convergenceSpeed = 1.2;
+		if (this.adaptiveRelight === undefined) this.adaptiveRelight = true;
 		this.addControl('light', [0, 0]);
 		this.worldRotation = 0; //if the canvas or ethe layer rotate, light direction neeeds to be rotated too.
 		this.activeFramebuffer = null;
@@ -145,6 +147,27 @@ class LayerNeuralRTI extends Layer {
 	 */
 	setLight(light, dt) {
 		this.setControl('light', light, dt);
+	}
+
+	/**
+	 * Enable or disable FPS-based neural resolution scaling.
+	 * When disabled, relight always runs at full tile resolution.
+	 * @param {boolean} enabled
+	 */
+	setAdaptiveRelight(enabled) {
+		this.adaptiveRelight = !!enabled;
+		if (!this.adaptiveRelight) {
+			this.currentRelightFraction = 1.0;
+			this.relightFraction = 1.0;
+			this.refine = false;
+			if (this.refineTimeout) {
+				clearTimeout(this.refineTimeout);
+				this.refineTimeout = null;
+			}
+			for (let [, tile] of this.tiles)
+				tile.neuralUpdated = false;
+		}
+		this.emit('update');
 	}
 
 	/** @ignore */
@@ -258,28 +281,34 @@ class LayerNeuralRTI extends Layer {
 		if (this.networkParameters !== undefined) {
 
 			let previousRelightFraction = this.relightFraction;
-			//adjust maxTiles to presserve framerate only when we had a draw which included relighting (but not a refine operation!).
-			if (this.relighted) {
-				if (this.canvas.fps > this.canvas.targetfps * 1.5) {
-					this.currentRelightFraction = Math.min(1.0, this.currentRelightFraction * this.convergenceSpeed);
-					//console.log('fps fast: ', this.canvas.fps, this.currentRelightFraction);
-				} else if (this.canvas.fps < this.canvas.targetfps * 0.75) {
-					this.currentRelightFraction = Math.max(this.currentRelightFraction / this.convergenceSpeed, 1 / 128);
-					this.convergenceSpeed = Math.max(1.05, Math.pow(this.convergenceSpeed, 0.9));
-					console.log('fps slow: ', this.canvas.fps, this.currentRelightFraction);
+			if (this.adaptiveRelight) {
+				// Scale relight resolution from canvas FPS (skip refine frames).
+				if (this.relighted) {
+					if (this.canvas.fps > this.canvas.targetfps * 1.5) {
+						this.currentRelightFraction = Math.min(1.0, this.currentRelightFraction * this.convergenceSpeed);
+					} else if (this.canvas.fps < this.canvas.targetfps * 0.75) {
+						this.currentRelightFraction = Math.max(this.currentRelightFraction / this.convergenceSpeed, 1 / 128);
+						this.convergenceSpeed = Math.max(1.05, Math.pow(this.convergenceSpeed, 0.9));
+					}
 				}
+
+				if (this.refineTimeout)
+					clearTimeout(this.refineTimeout);
+
+				if (this.currentRelightFraction < 0.75 && this.refine == false)
+					this.refineTimeout = setTimeout(() => { this.emit('update'); this.refine = true; }, Math.max(400, 4000 / this.canvas.fps));
+
+				this.relightFraction = this.refine ? 1.0 : this.currentRelightFraction;
+				this.relightFraction = Math.round(this.relightFraction * 8) / 8;
+			} else {
+				if (this.refineTimeout) {
+					clearTimeout(this.refineTimeout);
+					this.refineTimeout = null;
+				}
+				this.currentRelightFraction = 1.0;
+				this.relightFraction = 1.0;
+				this.refine = false;
 			}
-			//this.refine = true;
-
-			//setup final refinement
-			if (this.refineTimeout)
-				clearTimeout(this.refineTimeout);
-
-			if (this.currentRelightFraction < 0.75 && this.refine == false)
-				this.refineTimeout = setTimeout(() => { this.emit('update'); this.refine = true; }, Math.max(400, 4000 / this.canvas.fps));
-
-			this.relightFraction = this.refine ? 1.0 : this.currentRelightFraction;
-			this.relightFraction = Math.round(this.relightFraction * 8) / 8;
 
 			let sizeChanged = this.relightFraction != previousRelightFraction;
 

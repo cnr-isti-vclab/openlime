@@ -120,7 +120,7 @@ const neuralAdapter = {
 	type: 'openlime:neural',
 	layerType: 'neural',
 	sourceBinding: 'single',
-	knownOptions: ['convergenceSpeed', 'maxTiles'],
+	knownOptions: ['convergenceSpeed', 'maxTiles', 'adaptiveRelight'],
 	defaultShader: 'neural',
 	shaders: ['neural', 'standard'],
 	modes: [],
@@ -143,6 +143,14 @@ const neuralAdapter = {
 				message: 'Neural option "maxTiles" must be a number.'
 			});
 		}
+		if (options.adaptiveRelight !== undefined && typeof options.adaptiveRelight !== 'boolean') {
+			diagnostics.push({
+				severity: 'error',
+				code: 'RENDERER_OPTION',
+				path: path + '/options/adaptiveRelight',
+				message: 'Neural option "adaptiveRelight" must be a boolean.'
+			});
+		}
 	},
 	sourceFingerprint() {
 		return {};
@@ -152,6 +160,7 @@ const neuralAdapter = {
 		const fields = singleCtxFields(ctx);
 		if (options.convergenceSpeed !== undefined) fields.convergenceSpeed = options.convergenceSpeed;
 		if (options.maxTiles !== undefined) fields.maxTiles = options.maxTiles;
+		if (options.adaptiveRelight !== undefined) fields.adaptiveRelight = options.adaptiveRelight;
 		return fields;
 	}
 };

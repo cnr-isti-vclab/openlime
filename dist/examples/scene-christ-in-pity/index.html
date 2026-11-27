@@ -148,10 +148,43 @@
 			}
 		}
 
+		const neuralOpts = document.createElement('div');
+		neuralOpts.style.marginTop = '16px';
+		const neuralHeading = document.createElement('h2');
+		neuralHeading.textContent = 'Neural';
+		neuralOpts.append(neuralHeading);
+		const adaptiveLabel = document.createElement('label');
+		const adaptiveInput = document.createElement('input');
+		adaptiveInput.type = 'checkbox';
+		adaptiveInput.checked = false; // app default: adaptive off
+		adaptiveLabel.append(adaptiveInput, document.createTextNode('Adaptive relight'));
+		neuralOpts.append(adaptiveLabel);
+		const adaptiveHint = document.createElement('span');
+		adaptiveHint.className = 'hint';
+		adaptiveHint.textContent = 'FPS-based neural resolution (layer default on; off here)';
+		neuralOpts.append(adaptiveHint);
+		formatsEl.append(neuralOpts);
+
+		function forEachNeuralLayer(fn) {
+			for (const layer of Object.values(viewer.canvas.layers || {})) {
+				if (typeof layer?.setAdaptiveRelight === 'function') fn(layer);
+			}
+		}
+
+		function applyAdaptiveRelight() {
+			forEachNeuralLayer((layer) => layer.setAdaptiveRelight(adaptiveInput.checked));
+		}
+
+		adaptiveInput.addEventListener('change', applyAdaptiveRelight);
+
 		const viewer = new OpenLIME.Viewer('.openlime', { background: '#222' });
 		new SceneProjection(session, viewer.canvas, {
-			createLayer: OpenLIME.createOpenLIMELayer
+			createLayer: (options) => OpenLIME.createOpenLIMELayer({
+				...options,
+				...(options.type === 'neural' ? { adaptiveRelight: adaptiveInput.checked } : {})
+			})
 		});
+		applyAdaptiveRelight();
 
 		OpenLIME.Skin.setUrl('../../skin/skin.svg');
 		const ui = new OpenLIME.UIBasic(viewer, { layerVisibilityMode: 'nonExclusive' });
