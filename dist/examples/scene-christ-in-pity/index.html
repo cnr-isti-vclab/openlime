@@ -165,6 +165,23 @@
 		neuralOpts.append(adaptiveHint);
 		formatsEl.append(neuralOpts);
 
+		const perfOpts = document.createElement('div');
+		perfOpts.style.marginTop = '16px';
+		const perfHeading = document.createElement('h2');
+		perfHeading.textContent = 'Perf';
+		perfOpts.append(perfHeading);
+		const pumpLabel = document.createElement('label');
+		const pumpInput = document.createElement('input');
+		pumpInput.type = 'checkbox';
+		pumpInput.checked = true; // keep canvas.fps live by default
+		pumpLabel.append(pumpInput, document.createTextNode('Pump rendering'));
+		perfOpts.append(pumpLabel);
+		const pumpHint = document.createElement('span');
+		pumpHint.className = 'hint';
+		pumpHint.textContent = 'Continuous redraw so the FPS meter stays updated when idle';
+		perfOpts.append(pumpHint);
+		formatsEl.append(perfOpts);
+
 		function forEachNeuralLayer(fn) {
 			for (const layer of Object.values(viewer.canvas.layers || {})) {
 				if (typeof layer?.setAdaptiveRelight === 'function') fn(layer);
@@ -192,9 +209,15 @@
 		ui.actions.zoomin.display = false;
 		ui.actions.zoomout.display = false;
 
+		// Demo-only: keep redrawing so canvas.fps stays live (Viewer stops when draw is done).
+		(function pumpRender() {
+			if (pumpInput.checked) viewer.redraw();
+			requestAnimationFrame(pumpRender);
+		})();
+
 		// Display-only smoothing — does not touch Canvas.timingLength (adaptive stays reactive).
 		const fpsWindow = [];
-		const fpsWindowSize = 45;
+		const fpsWindowSize = 10;
 		function tickFps() {
 			const fps = viewer.canvas?.fps;
 			if (Number.isFinite(fps) && fps > 0) {
