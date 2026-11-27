@@ -192,9 +192,19 @@
 		ui.actions.zoomin.display = false;
 		ui.actions.zoomout.display = false;
 
+		// Display-only smoothing — does not touch Canvas.timingLength (adaptive stays reactive).
+		const fpsWindow = [];
+		const fpsWindowSize = 45;
 		function tickFps() {
 			const fps = viewer.canvas?.fps;
-			fpsEl.textContent = Number.isFinite(fps) ? `FPS ${fps.toFixed(1)}` : 'FPS —';
+			if (Number.isFinite(fps) && fps > 0) {
+				fpsWindow.push(fps);
+				while (fpsWindow.length > fpsWindowSize) fpsWindow.shift();
+				const mean = fpsWindow.reduce((s, v) => s + v, 0) / fpsWindow.length;
+				fpsEl.textContent = `FPS ${mean.toFixed(1)}`;
+			} else {
+				fpsEl.textContent = 'FPS —';
+			}
 			requestAnimationFrame(tickFps);
 		}
 		requestAnimationFrame(tickFps);
